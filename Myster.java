@@ -292,7 +292,7 @@ public class Myster{
 	}
 	
 	/**
-	* Instead of calling System.exit() directly to quit, call this routine. It makes shure cleanup is done.
+	* Instead of calling System.exit() directly to quit, call this routine. It makes sure cleanup is done.
 	*
 	* NOTE: It's a very fequent occurence for the program to quit without calling this routine
 	*		 so your code should in no  way depend on it. (Some platform do not call this at all

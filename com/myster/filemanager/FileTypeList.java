@@ -447,7 +447,7 @@ class FileTypeList extends MysterThread{
 				else {
 					empty=new File(type+" Downloads"+counter);
 					counter++;
-					if (counter>1000) System.exit(0);//bam!
+					//if (counter>1000) System.exit(0);//bam!
 				}
 			} else {
 				break; 	//if file doesn't exist go make a dir.
