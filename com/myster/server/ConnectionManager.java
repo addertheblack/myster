@@ -14,12 +14,13 @@ package com.myster.server;
 
 import java.net.*;
 import java.io.*;
-import java.net.Socket;
+import java.util.Hashtable;
+
 import com.general.util.*;
+
 import com.myster.server.stream.*;
 import com.myster.filemanager.*;
 import com.myster.server.event.*;
-import java.util.Hashtable;
 import com.myster.net.MysterAddress;
 import com.myster.util.MysterThread;
 import com.myster.transferqueue.TransferQueue;

@@ -8,7 +8,6 @@ import com.general.util.AnswerDialog;
 import com.myster.mml.RobustMML;
 import com.myster.search.MysterFileStub;
 import com.myster.hash.FileHash;
-import com.myster.net.MysterSocket;
 
 //import Myster;
 

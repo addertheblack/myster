@@ -10,17 +10,15 @@ package com.myster.server.ui;
 
 
 import java.awt.*;
-import com.general.tab.*;
 import java.awt.image.*;
-import com.general.mclist.*;
 
-//import Myster;
 
 import com.myster.server.event.*;
 import com.myster.server.stream.*;
 import com.myster.server.ServerFacade;
-import com.myster.filemanager.FileTypeListManager;
-import com.myster.util.MysterThread;
+
+import com.general.tab.*;
+import com.general.mclist.*;
 import com.general.util.LinkedList;
 import com.general.util.Util;
 import com.general.util.Timer;

@@ -2,8 +2,6 @@
 package com.myster.filemanager;
 
 import java.io.File;
-import java.util.Hashtable;
-import com.myster.type.MysterType;
 import java.util.Enumeration;
 import java.util.zip.*;
 

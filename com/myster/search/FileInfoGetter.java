@@ -8,8 +8,6 @@ import com.myster.mml.RobustMML;
 import com.myster.util.MysterThread;
 import com.myster.tracker.*;
 import com.myster.net.MysterSocket;
-import com.myster.search.SearchResultListener;
-import com.myster.search.MysterSearchResult;
 import com.myster.net.MysterAddress;
 import com.myster.type.MysterType;
 

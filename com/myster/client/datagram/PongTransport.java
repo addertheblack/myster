@@ -3,15 +3,12 @@ package com.myster.client.datagram;
 import com.myster.net.DatagramTransport;
 import com.myster.net.MysterAddress;
 import java.util.Hashtable;
-import java.util.Vector;
 import com.general.net.ImmutableDatagramPacket;
 import com.myster.net.BadPacketException;
-import com.myster.net.PongPacket;
 import com.myster.net.PingPacket;
 import java.io.IOException;
 import com.general.util.Semaphore;
 import com.general.util.Timer;
-import java.util.Enumeration;
 import com.general.events.EventDispatcher;
 import com.general.events.SyncEventDispatcher;
 

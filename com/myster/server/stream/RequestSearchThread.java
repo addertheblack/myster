@@ -12,16 +12,14 @@ package com.myster.server.stream;
 
 import java.net.*;
 import java.io.*;
-import java.util.Vector;
-import java.util.StringTokenizer;
+
 import com.general.util.*;
+
 import com.myster.server.event.*;
-import com.general.events.EventDispatcher;
 import com.myster.server.ConnectionContext;
 import com.myster.filemanager.FileTypeListManager;
-import com.myster.type.MysterType;
-
 import com.myster.net.MysterAddress;
+import com.myster.type.MysterType;
 
 public class RequestSearchThread extends ServerThread {
 	

@@ -11,14 +11,15 @@ Copyright Andrew Trumper 2000-2001
 
 package com.myster.tracker;
 
-import com.myster.pref.Preferences;
+
 import java.io.IOException;
 import java.util.*;
+
+import com.myster.pref.Preferences;
 import com.myster.mml.MML;
 import com.myster.mml.MMLException;
-import java.net.UnknownHostException;
 import com.myster.net.MysterAddress;
-import java.io.IOException;
+
 
 /**
 *	This class exists to make sure that if a server is listed under many catagories (ie

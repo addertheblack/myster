@@ -12,13 +12,8 @@ Copyright Andrew Trumper 2000-2001
 package com.myster.net;
 
 import java.net.Socket;
-import java.io.DataInputStream;
-import java.io.DataOutputStream;
 import java.io.IOException;
-//import Myster;
-import com.general.util.Semaphore;
-import com.myster.net.MysterAddress;
-import com.myster.net.MysterSocket;
+
 import com.myster.client.stream.TCPSocket;
 
 public class MysterSocketFactory {

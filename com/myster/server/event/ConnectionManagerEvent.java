@@ -5,8 +5,6 @@
 
 package com.myster.server.event;
 
-import com.general.events.EventDispatcher;
-
 import com.myster.net.MysterAddress;
 
 public class ConnectionManagerEvent extends ServerEvent {

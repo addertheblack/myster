@@ -3,34 +3,20 @@ package com.myster.client.stream;
 
 import java.io.RandomAccessFile;
 import java.io.IOException;
-import java.io.File;
 import java.util.Stack;
 import java.util.Hashtable;
 import java.util.Enumeration;
-import java.awt.Color;
-import java.awt.event.WindowAdapter;
-import java.awt.event.WindowEvent;
 
 import com.general.events.SyncEventDispatcher;
 import com.general.events.EventDispatcher;
-import com.general.events.EventListener;
-import com.general.events.GenericEvent;
-import com.general.util.LinkedList;
-import com.general.util.AnswerDialog;
 
 import com.myster.search.MultiSourceHashSearch;
 import com.myster.search.HashSearchListener;
 import com.myster.search.HashSearchEvent;
 import com.myster.search.MysterFileStub;
-import com.myster.search.CrawlerThread;
-import com.myster.search.IPQueue;
-import com.myster.util.FileProgressWindow;
 import com.myster.util.MysterThread;
-import com.myster.util.Sayable;
 import com.myster.hash.FileHash;
-import com.myster.type.MysterType;
 import com.myster.net.MysterSocketFactory;
-import com.myster.net.MysterAddress;
 import com.myster.net.MysterSocket;
 import com.myster.mml.MMLException;
 import com.myster.mml.RobustMML;

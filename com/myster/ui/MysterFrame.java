@@ -1,15 +1,10 @@
 package com.myster.ui;
 
-import java.awt.Frame;
 
 import java.awt.event.WindowListener;
 import java.awt.event.WindowEvent;
-
 import java.awt.event.ComponentListener;
 import java.awt.event.ComponentEvent;
-
-import java.awt.Point;
-
 import java.awt.*;
 
 public class MysterFrame extends Frame {	

@@ -13,8 +13,6 @@ package com.myster.pref.ui;
 
 import java.awt.*;
 import java.awt.event.*;
-import com.myster.server.ServerFacade;
-import com.myster.menubar.MysterMenuBar; //!
 import java.util.Hashtable;
 import java.util.Enumeration;
 import com.myster.ui.MysterFrame;

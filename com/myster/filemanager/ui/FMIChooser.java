@@ -15,7 +15,6 @@ import java.awt.*;
 import java.awt.event.*;
 import com.myster.util.TypeChoice;
 import com.myster.pref.ui.PreferencesPanel;
-import com.myster.pref.Preferences;
 import java.util.Hashtable;
 import java.util.Enumeration;
 import com.myster.filemanager.FileTypeListManager;

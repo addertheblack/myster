@@ -10,14 +10,11 @@ package com.myster.server.stream;
 Copyright Andrew Trumper 2000-2001
 */
 
-import java.util.Vector;
-import java.util.StringTokenizer;
 import java.net.*;
 import java.io.*;
 
 import com.myster.server.*;
 import com.myster.mml.RobustMML;
-import com.myster.mml.MMLException;
 import com.myster.hash.SimpleFileHash;
 import com.myster.hash.FileHash;
 

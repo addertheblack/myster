@@ -5,7 +5,6 @@ package com.myster.net;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.io.IOException;
-import java.io.InterruptedIOException;
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.net.InetAddress;

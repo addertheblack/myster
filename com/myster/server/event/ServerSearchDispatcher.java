@@ -4,8 +4,6 @@
 
 package com.myster.server.event;
 
-import java.util.Vector;
-import com.general.util.Channel;
 import com.general.events.SyncEventDispatcher;
 
 

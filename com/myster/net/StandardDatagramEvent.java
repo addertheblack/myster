@@ -1,6 +1,5 @@
 package com.myster.net;
 
-import com.myster.net.MysterAddress;
 
 public class StandardDatagramEvent {
 	private final MysterAddress address;

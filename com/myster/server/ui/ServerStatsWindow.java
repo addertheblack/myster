@@ -8,13 +8,13 @@
 
 package com.myster.server.ui;
 
-import com.general.tab.*;
-import com.myster.util.Sayable;
-import com.general.util.StandardWindowBehavior;
 import java.awt.*;
 import java.awt.event.*;
 import java.awt.image.*;
-import com.myster.menubar.MysterMenuBar;
+
+import com.general.tab.*;
+
+import com.myster.util.Sayable;
 import com.myster.ui.MysterFrame;
 
 

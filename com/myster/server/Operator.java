@@ -13,15 +13,15 @@ package com.myster.server;
 
 import java.net.*;
 import java.io.*;
-import java.net.Socket;
-import com.general.util.*;
-import com.myster.util.MysterThread;
-import com.myster.tracker.IPListManager;
-import com.myster.tracker.IPListManagerSingleton;
-import com.myster.server.event.*;
-//import Myster;
 import java.util.Hashtable;
+
+import com.general.util.*;
+
+import com.myster.util.MysterThread;
+import com.myster.server.event.*;
 import com.myster.transferqueue.TransferQueue;
+
+
 
 /**
 *	This class is reponsible for "picking up the phone" or making a TCP connection with clients.

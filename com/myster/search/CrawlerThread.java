@@ -16,7 +16,6 @@ import java.io.*;
 import com.general.util.*;
 import java.util.Vector;
 import com.myster.tracker.*;
-import com.myster.search.IPQueue;
 import com.myster.net.MysterSocket;
 import com.myster.client.stream.StandardSuite;
 import com.myster.util.MysterThread;

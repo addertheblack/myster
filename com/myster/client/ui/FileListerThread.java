@@ -16,7 +16,6 @@ import java.net.*;
 import com.myster.util.MysterThread;
 import com.myster.net.MysterSocket;
 import com.myster.net.MysterAddress;
-import com.myster.search.SearchResult;
 import com.myster.util.Sayable;
 import com.myster.net.MysterSocketFactory;
 import com.general.util.TextSpinner;

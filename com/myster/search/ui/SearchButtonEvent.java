@@ -15,9 +15,8 @@ package com.myster.search.ui;
 
 import java.awt.event.*;
 import java.awt.*;
-import com.general.util.*;
+
 import com.myster.tracker.*;
-import com.general.util.*;
 import com.myster.search.SearchEngine;
 import com.myster.util.MysterThread;
 

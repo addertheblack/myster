@@ -7,9 +7,9 @@ import java.awt.event.ComponentListener;
 import java.awt.event.ComponentEvent;
 import java.awt.Toolkit;
 import java.util.StringTokenizer;
-import java.util.Hashtable;
 import java.util.Vector;
 import java.util.NoSuchElementException;
+
 import com.myster.pref.*;
 
 

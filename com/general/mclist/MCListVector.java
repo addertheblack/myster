@@ -11,7 +11,6 @@ Copyright Andrew Trumper 2001
 package com.general.mclist;
 
 import com.sun.java.util.collections.Vector;
-import com.sun.java.util.collections.Collections;
 import com.sun.java.util.collections.Comparator;
 
 public class MCListVector {

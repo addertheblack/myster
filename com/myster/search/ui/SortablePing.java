@@ -1,10 +1,10 @@
 package com.myster.search.ui;
 
 import com.general.mclist.Sortable;
+
 import com.myster.net.MysterAddress;
-import com.myster.client.datagram.UDPPingClient;
 import com.myster.client.datagram.PingEventListener;
-import java.io.IOException;
+import com.myster.client.datagram.UDPPingClient;
 import com.myster.client.datagram.PingEvent;
 
 

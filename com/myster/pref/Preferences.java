@@ -16,7 +16,6 @@ import java.util.Hashtable;
 import java.io.*;
 import com.myster.util.MysterThread;
 import com.general.util.Semaphore;
-import java.util.Vector;
 import com.myster.mml.MML;
 import com.myster.pref.ui.PreferencesDialogBox; //bad, get rid of. no GUI stuff should be references directly here.
 import com.myster.pref.ui.PreferencesPanel; //bad, get rid of. no GUI stuff should be references directly here.

@@ -14,7 +14,7 @@ package com.myster.tracker.ui;
 import java.awt.*;
 import java.awt.event.*;
 import java.net.*;
-import com.myster.util.MysterThread;
+
 import com.myster.tracker.IPListManagerSingleton;
 import com.myster.net.MysterAddress;
 

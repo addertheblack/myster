@@ -13,7 +13,6 @@ package com.myster.server.stream;
 
 import java.net.*;
 import java.io.*;
-import java.net.Socket;
 import com.general.util.*;
 import com.myster.filemanager.*;
 import com.myster.server.ConnectionContext;

@@ -5,7 +5,6 @@ import java.io.OutputStream;
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.io.IOException;
-import java.io.InterruptedIOException;
 import com.myster.net.MysterSocket;
 import java.net.InetAddress;
 import java.net.Socket;

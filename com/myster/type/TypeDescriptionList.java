@@ -3,11 +3,12 @@ package com.myster.type;
 import java.io.*;
 import java.util.Vector;
 import java.util.Hashtable;
-import java.util.StringTokenizer;
+
+import com.general.events.SyncEventDispatcher;
 
 import com.myster.pref.PreferencesMML;
 import com.myster.mml.RobustMML;
-import com.general.events.SyncEventDispatcher;
+
 
 
 /**

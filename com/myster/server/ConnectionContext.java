@@ -1,6 +1,5 @@
 package com.myster.server;
 
-import java.net.Socket;
 import com.myster.net.MysterAddress;
 import com.myster.net.MysterSocket;
 import com.myster.transferqueue.TransferQueue;

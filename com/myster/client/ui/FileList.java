@@ -12,7 +12,6 @@ package com.myster.client.ui;
 
 import java.awt.*;
 import java.io.*;
-import java.lang.*;
 import java.net.*;
 
 public class FileList extends List {

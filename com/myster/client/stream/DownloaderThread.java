@@ -24,14 +24,11 @@ import java.awt.*;
 import com.general.util.*;
 import com.myster.filemanager.*;
 import com.myster.net.MysterSocket;
-import com.myster.net.MysterAddress;
 import com.myster.search.MysterFileStub;
 import com.myster.util.ProgressWindow;
 import com.myster.util.FileProgressWindow;
 import com.myster.util.ProgressWindowClose;
-import com.myster.net.MysterSocketFactory;
 import com.myster.type.MysterType;
-import java.util.Locale;
 
 
 /**

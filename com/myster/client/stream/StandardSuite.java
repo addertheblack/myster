@@ -4,7 +4,6 @@ package com.myster.client.stream;
 
 import java.util.Vector;
 import java.io.DataInputStream;
-import java.io.DataOutputStream;
 import java.io.IOException;
 import java.io.RandomAccessFile;
 import java.io.File;
@@ -18,7 +17,6 @@ import com.myster.search.MysterFileStub;
 import com.myster.type.MysterType;
 import com.myster.hash.FileHash;
 
-import com.myster.util.FileProgressWindow;
 /**
 	Contains many of the more common (simple!) stream based connection sections.
 */

@@ -14,24 +14,20 @@ package com.myster.server.stream;
 import java.net.*;
 import java.io.*;
 import java.awt.*;
-import com.myster.tracker.IPListManagerSingleton;
-import java.awt.Dimension;
+
 import com.general.util.*;
+
 import com.myster.filemanager.*;
-//import Myster;
 import com.myster.server.event.*;
 import com.myster.server.DownloadInfo;
-import com.general.events.EventDispatcher;
-//import com.myster.server.DownloadQueue;
-//import com.myster.server.QueuedTransfer;
+import com.myster.server.BannersManager;
 import com.myster.server.ConnectionContext;
-import com.myster.net.MysterAddress;
-import com.myster.pref.Preferences;
 import com.myster.client.stream.StandardSuite;
 import com.myster.net.MysterSocketFactory;
+import com.myster.net.MysterAddress;
 import com.myster.net.MysterSocket;
+import com.myster.pref.Preferences;
 import com.myster.type.MysterType;
-import com.myster.server.BannersManager;
 
 import com.myster.transferqueue.*;
 

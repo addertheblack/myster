@@ -1,6 +1,5 @@
 package com.myster.transaction;
 
-import com.myster.net.MysterAddress;
 import com.myster.net.DataPacket;
 
 public class TransactionSocket {
@@ -19,6 +18,6 @@ public class TransactionSocket {
 	//}
 	
 	public void close() {
-		//nothing (not nessesairy for transactions)
+		//nothing (not nessesairy for transactions, they are one shot.)
 	}
 }

@@ -12,20 +12,19 @@ Copyright Andrew Trumper 2000-2001
 
 package com.myster.tracker;
 
-import java.util.StringTokenizer;
 import java.util.Vector;
 import java.net.*;
 import java.io.*;
+
 import com.general.util.BlockingQueue;
+
 import com.myster.mml.RobustMML;
 import com.myster.mml.MML;
 import com.myster.mml.MMLException;
-import com.myster.util.*;
+import com.myster.util.MysterThread;
 import com.myster.client.datagram.UDPPingClient;
 import com.myster.client.stream.StandardSuite;
-import com.myster.net.MysterSocket;
 import com.myster.net.MysterAddress;
-import com.myster.net.MysterSocketFactory;
 import com.myster.client.datagram.PingEventListener;
 import com.myster.client.datagram.PingEvent;
 import com.myster.type.MysterType;

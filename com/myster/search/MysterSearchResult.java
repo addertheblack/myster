@@ -2,11 +2,8 @@ package com.myster.search;
 
 import com.myster.net.MysterAddress;
 import com.myster.mml.RobustMML;
-import com.myster.client.stream.DownloaderThread;
 import java.util.Vector;
 
-import com.myster.client.stream.MultiSourceDownload;
-import com.myster.hash.SimpleFileHash;
 
 public class MysterSearchResult implements SearchResult {
 	RobustMML mml;

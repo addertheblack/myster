@@ -6,13 +6,10 @@ import java.io.InputStream;
 import java.io.FileInputStream;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
-import java.util.Hashtable;
 
-import com.general.util.Util;
 import com.general.util.BlockingQueue;
 import com.general.events.SyncEventDispatcher;
 
-import com.myster.util.ProgressWindow;
 import com.myster.pref.Preferences;
 
 

@@ -4,8 +4,6 @@ package com.myster.server.datagram;
 
 import java.net.*;
 import java.io.*;
-import java.util.Hashtable;
-import com.myster.net.MysterAddress;
 import com.general.net.AsyncDatagramListener;
 import com.general.net.ImmutableDatagramPacket;
 import com.general.net.AsyncDatagramSocket;

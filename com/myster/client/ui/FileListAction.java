@@ -10,13 +10,11 @@ Copyright Andrew Trumper 2000-2001
 */
 package com.myster.client.ui;
 
-import com.myster.client.stream.DownloaderThread;
-import com.myster.search.MysterFileStub;
-import com.myster.net.MysterAddress;
-
 import java.awt.event.*;
 import java.awt.*;
-import java.net.UnknownHostException;
+
+import com.myster.search.MysterFileStub;
+import com.myster.net.MysterAddress;
 
 public class FileListAction implements ActionListener {
 	ClientWindow w;

@@ -3,7 +3,6 @@ package com.general.util;
 import java.awt.*;
 import java.awt.event.*;
 import java.util.*;
-import com.general.util.MrWrap;
 
 public class AnswerDialog extends Dialog {
 	Button[] buttons;

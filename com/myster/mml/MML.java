@@ -1,7 +1,6 @@
 package com.myster.mml;
 
 import java.util.Vector;
-import java.util.StringTokenizer;
 import java.io.*;
 	
 public class MML implements Serializable {

@@ -11,10 +11,6 @@ Copyright Andrew Trumper 2000-2001
 
 package com.myster.type;
 
-import java.util.*;
-//import Myster;
-import java.io.InputStream;
-
 public class TypeDescription {
 	MysterType 	type;
 	String 		description;

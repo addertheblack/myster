@@ -6,8 +6,6 @@
 
 package com.myster.server.event;
 
-import java.util.EventObject;
-
 import com.general.events.GenericEvent;
 
 import com.myster.net.MysterAddress;

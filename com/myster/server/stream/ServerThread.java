@@ -13,9 +13,7 @@ package com.myster.server.stream;
 
 import java.net.*;
 import java.io.*;
-import java.net.Socket;
 import com.general.util.*;
-import com.general.events.EventDispatcher;
 import com.myster.server.ConnectionContext;
 import com.myster.server.ConnectionSection;
 

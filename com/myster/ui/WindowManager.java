@@ -4,10 +4,11 @@ import java.util.Vector;
 import java.awt.event.ActionListener;
 import java.awt.event.ActionEvent;
 import java.awt.event.KeyEvent;
+
 import com.myster.menubar.MysterMenuItemFactory;
 import com.myster.menubar.MysterMenuFactory;
 import com.myster.menubar.MysterMenuBar;
-import com.general.util.Timer;
+
 
 public class WindowManager {
 	static Vector windows=new Vector();

@@ -4,14 +4,7 @@ import java.util.Vector;
 import java.awt.event.*;
 import java.awt.*;
 
-import com.general.events.SyncEventDispatcher;
-import com.general.events.EventListener;
-import com.general.events.GenericEvent;
-
 import com.general.util.MessagePanel;
-import com.general.util.Semaphore;
-import com.general.util.Timer;
-import com.general.util.MrWrap;
 
 import com.myster.pref.ui.PreferencesPanel;
 import com.myster.pref.Preferences;

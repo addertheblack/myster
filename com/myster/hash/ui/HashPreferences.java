@@ -5,7 +5,6 @@ import java.awt.Checkbox;
 import com.general.events.*;
 import com.general.util.MessagePanel;
 
-import com.myster.pref.Preferences;
 import com.myster.pref.ui.PreferencesPanel;
 import com.myster.hash.HashManager;
 

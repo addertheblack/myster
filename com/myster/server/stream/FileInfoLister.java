@@ -13,15 +13,17 @@ package com.myster.server.stream;
 
 import java.net.*;
 import java.io.*;
-import java.net.Socket;
+
+import helliker.id3.ID3v2Tag;
+import helliker.id3.ID3v2Frames;
+import helliker.id3.ID3v2FormatException;
+
 import com.general.util.*;
+
 import com.myster.mml.MML;
 import com.myster.filemanager.*;
 import com.myster.server.ConnectionContext;
 import com.myster.util.MP3Header;
-import helliker.id3.ID3v2Tag;
-import helliker.id3.ID3v2Frames;
-import helliker.id3.ID3v2FormatException;
 import com.myster.type.MysterType;
 
 public class FileInfoLister extends ServerThread {

@@ -1,9 +1,6 @@
 package com.myster.search;
 
-
 import com.general.events.GenericEvent;
-
-import com.myster.search.MysterFileStub;
 
 public class HashSearchEvent extends GenericEvent {
 	public static final int START_SEARCH 	= 0;

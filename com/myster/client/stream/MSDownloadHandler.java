@@ -5,8 +5,6 @@ import java.util.Hashtable;
 import java.io.File;
 import java.io.IOException;
 
-import com.general.util.AnswerDialog;
-
 import com.myster.util.FileProgressWindow;
 
 

@@ -1,7 +1,5 @@
 package com.general.util;
 
-import com.general.util.LinkedList;
-
 public class BlockingQueue {
 	protected LinkedList list=new LinkedList();
 	Semaphore sem=new Semaphore(0);

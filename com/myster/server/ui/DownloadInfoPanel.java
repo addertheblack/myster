@@ -10,18 +10,19 @@ package com.myster.server.ui;
 
 
 import java.awt.*;
-import com.general.tab.*;
 import java.awt.image.*;
-import com.general.mclist.*;
-import com.myster.server.event.*;
-import com.myster.server.ServerFacade;
-import java.util.Vector;
-import com.myster.server.stream.FileSenderThread;
-import com.myster.util.MysterThread;
 import java.awt.event.ActionListener;
 import java.awt.event.ActionEvent;
-import com.myster.client.ui.ClientWindow;
+
+import com.general.tab.*;
+import com.general.mclist.*;
 import com.general.util.Timer;
+
+import com.myster.server.event.*;
+import com.myster.server.ServerFacade;
+import com.myster.server.stream.FileSenderThread;
+import com.myster.util.MysterThread;
+import com.myster.client.ui.ClientWindow;
 import com.myster.message.MessageWindow;
 
 

@@ -2,7 +2,6 @@
 package com.myster.client.datagram;
 
 import java.net.*;
-import java.io.InterruptedIOException;
 import java.io.IOException;
 import com.general.util.Semaphore;
 import com.myster.net.MysterAddress;

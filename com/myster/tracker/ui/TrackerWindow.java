@@ -1,13 +1,15 @@
 package com.myster.tracker.ui;
 
-import java.util.Vector;
 import java.awt.*;
 import java.awt.event.*;
+import java.util.Vector;
+
 import com.general.util.*;
 import com.general.mclist.*;
-import com.myster.tracker.*;
-import com.myster.menubar.MysterMenuBar;
-//import Myster;
+
+import com.myster.tracker.MysterServer;
+import com.myster.tracker.IPListManager;
+import com.myster.tracker.IPListManagerSingleton;
 import com.myster.util.MysterThread;
 import com.myster.util.OpenConnectionHandler;
 import com.myster.ui.MysterFrame;
