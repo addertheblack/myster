@@ -543,11 +543,11 @@ class MysterIP {
 			if (e.isTimeout()) {
 				ip.setStatus(false);
 				ip.lastPingTime=-2;
+				ip.occupied = false;
 			} else {
 				ip.setStatus(true);
 				ip.lastPingTime=e.getPingTime();
 				statusQueue.add(ip); //doesn't block...
-				ip.occupied = false;
 			}
 			ip.lastminiupdate=System.currentTimeMillis();
 			
