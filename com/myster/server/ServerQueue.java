@@ -28,7 +28,7 @@ public class ServerQueue extends AbstractDownloadQueue {
 		if (s_spots!=null) {
 			try {
 				int spots=Integer.parseInt(s_spots);
-				if (spots < 2) spots = DEFAULT_POSITIONS;
+				if (spots < 2) spots = defaultValue;
 				return spots;
 			} catch (NumberFormatException ex) {}
 		}

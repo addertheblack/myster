@@ -335,7 +335,7 @@ public class MultiSourceDownload {
 		
 		public void endConnection(SegmentDownloaderEvent e) {
 			progress.setValue(0, bar);
-			if (!stopDownload) progress.setText("Searching for new source...", bar);
+			//if (!stopDownload) progress.setText("Searching for new source...", bar);
 			removeDownload(bar);
 		}
 	}
