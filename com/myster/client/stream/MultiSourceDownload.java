@@ -35,6 +35,19 @@ import com.myster.net.MysterSocket;
 import com.myster.mml.MMLException;
 import com.myster.mml.RobustMML;
 
+
+/*
+	Things to do
+	
+	make it so that 1 queued download is canceled if there is an active download
+	
+	make it so that searches don't stop
+	
+	change the color of the bars to green again
+	
+	hook up queued message to something.
+*/
+
 public class MultiSourceDownload implements Runnable, Controller {
 	final MysterFileStub stub;					//starter stub (contains first address and filename and type)
 	final FileHash hash;								//should be final but can't be...
@@ -196,6 +209,8 @@ public class MultiSourceDownload implements Runnable, Controller {
 	}
 	
 	public synchronized void flagToEnd() {
+		if (endFlag) return; //shouldn't be called twice..
+	
 		endFlag = true;
 	
 		Enumeration enumeration = downloaders.elements();
