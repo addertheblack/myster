@@ -23,8 +23,8 @@ public class KeyValue {
 	}
 	
 	public void addValue(Object key, Object value) {
-		keys.addElement(key);
-		values.addElement(value);
+		keys.addElement(key==null?"":key);
+		values.addElement(value==null?"":value);
 	}
 	
 	public int length() {

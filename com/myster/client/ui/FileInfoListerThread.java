@@ -44,17 +44,14 @@ public class FileInfoListerThread extends MysterThread {
 			msg.say("Getting file information...");
 			
 			RobustMML mml=new RobustMML(StandardSuite.getFileStats(socket, new MysterFileStub(new MysterAddress(w.getCurrentIP()), w.getCurrentType(), w.getCurrentFile())));
-			
+
 			msg.say("Parsing file information...");
 			
 			KeyValue keyvalue=new KeyValue();
-			Vector mmllisting=mml.list("/");
 			keyvalue.addValue("File Name",w.getCurrentFile());
-			keyvalue.addValue("Of Type",w.getCurrentFile()); 
+			//keyvalue.addValue("Of Type","moo"); 
 
-			for (int i=0; i<mmllisting.size(); i++) {
-				keyvalue.addValue((String)(mmllisting.elementAt(i)), mml.get("/"+(String)(mmllisting.elementAt(i))));
-			}
+			listDir(mml, keyvalue, "/", "");
 			
 			w.showFileStats(keyvalue);
 			
@@ -66,6 +63,27 @@ public class FileInfoListerThread extends MysterThread {
 			try {
 				socket.close();
 			} catch (Exception ex) {}
+		}
+	}
+	
+	private void listDir(RobustMML mml, KeyValue keyValue, String directory, String prefix) {
+		Vector dirList = mml.list(directory);
+		
+		if (dirList == null) return;
+		
+		for (int i = 0; i < dirList.size(); i++) {
+			String name = (String)dirList.elementAt(i);
+			
+			if (name == null) return;
+			
+			String newPath = directory + name;
+			
+			if (mml.isADirectory(newPath+"/")) {
+				keyValue.addValue(name, " ->");
+				listDir(mml,keyValue,newPath+"/", prefix + "  ");
+			} else {
+				keyValue.addValue(prefix + ((String)dirList.elementAt(i)), mml.get(newPath));
+			}
 		}
 	}
 }

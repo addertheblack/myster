@@ -144,6 +144,39 @@ class FileTypeList extends MysterThread{
 	}
 	
 	/**
+	*	Returns a list of all shared files. If getShared is false, no filesa are returned.
+	*
+	*	@return	an array of all the shared file with the hashes
+	*/
+	public synchronized FileItem[] getListFromHash(FileHash[] hashes) {
+		assertFileList();	//This must be called before working with filelist or rootdir internal variables.
+	
+		Vector files = new Vector(10,10);
+		for (int i=0; i<filelist.size(); i++) {
+			if (isMatch((FileItem)filelist.elementAt(i), hashes)) files.addElement(filelist.elementAt(i));
+		}
+		
+		FileItem[] items = new FileItem[files.size()];
+		for (int i=0; i<items.length; i++) {
+			items[i] = (FileItem)files.elementAt(i);
+		}
+		
+		return items;
+	}
+	
+	private boolean isMatch(FileItem item, FileHash[] hashes) {
+		for (int i=0; i<hashes.length; i++) {
+			FileHash hash = item.getHash(hashes[i].getHashName());
+			
+			if (hash == null) continue;
+			
+			if (!hash.equals(hashes[i])) return false;
+		}
+		
+		return true;
+	}
+	
+	/**
 	*	Returns a list of files that match the query string
 	*
 	*	Matching ALGORYTHM IS: -Fill this in.-

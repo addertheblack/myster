@@ -27,6 +27,7 @@ import com.myster.filemanager.ui.FMIChooser;
 import com.myster.type.TypeDescriptionList;
 import com.myster.type.TypeDescription;
 import com.myster.type.MysterType;
+import com.myster.hash.FileHash;
 
 
 public class FileTypeListManager{
@@ -108,8 +109,8 @@ public class FileTypeListManager{
 	*	NOTE: In the Myster protocol, when files are listed, these file names are not so much file names as
 	*	a way of identifying a unique file given a type.
 	*
-	*	@param	a[] a Myster file type as a byte[4]
-	*	@return	an array of Myster file identifiers. In this implementation, a list of file names.
+	*	@param	a MysterType
+	*	@return	an array of Myster file identifiers. In this implementation, a list of file names. (else null if invalid fil type)
 	*/
 	public String[] getDirList(MysterType type) {
 		FileTypeList list=getFileTypeList(type);
@@ -124,6 +125,21 @@ public class FileTypeListManager{
         FileTypeList list = getFileTypeList(type);
         if (list == null) return null;
         return list.getFileListAsStrings(queryStr);
+    }
+    
+    
+    /**
+	*	Gets a list of file reference strings for a type and an array of
+	*	file hashes. A file will be retruned only if it contains all
+	*	file hashes.
+	*
+	*	@param	a MysterType
+	*	@return	an array of Myster file identifiers. In this implementation, a list of file names. (else null if invalid fil type)
+	*/
+    public FileItem[] getListFromHash(MysterType type, FileHash[] hashes) {
+    	FileTypeList list = getFileTypeList(type);
+        if (list == null) return null;
+        return list.getListFromHash(hashes);
     }
 
 
