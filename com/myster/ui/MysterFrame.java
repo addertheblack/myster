@@ -127,4 +127,9 @@ public class MysterFrame extends Frame {
 	public void closeWindowEvent() {
 		processWindowEvent(new WindowEvent(this,WindowEvent.WINDOW_CLOSING));
 	}
+	
+	public void close() {
+		processWindowEvent(new WindowEvent(this,WindowEvent.WINDOW_CLOSING));
+		setVisible(true);
+	}
 }
