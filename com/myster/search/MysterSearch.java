@@ -425,7 +425,7 @@ public class MysterSearch {
                 ipQueue.addIP(addresses[i]);
                 IPListManagerSingleton.getIPListManager().addIP(addresses[i]);
             }
-
+            
             processNewAddresses(ipQueue);
         }
 
