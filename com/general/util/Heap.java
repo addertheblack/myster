@@ -1,5 +1,5 @@
 package com.general.util;
-import java.util.*;
+import com.sun.java.util.collections.Collection;
 
 public interface Heap extends Collection {
     public Object extractTop();
