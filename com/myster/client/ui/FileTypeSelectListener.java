@@ -11,11 +11,12 @@ Copyright Andrew Trumper 2000-2001
 
 package com.myster.client.ui;
 
-import java.awt.event.*;
-import java.awt.*;
+import com.general.mclist.MCListEventAdapter;
+import com.general.mclist.MCListEvent;
+
 import com.myster.util.MysterThread;
 
-public class FileTypeSelectListener implements ItemListener {
+public class FileTypeSelectListener extends MCListEventAdapter {
 	ClientWindow w;
 	MysterThread t;
 	
@@ -23,16 +24,14 @@ public class FileTypeSelectListener implements ItemListener {
 		this.w=w;
 	} 
 	
-	public void itemStateChanged(ItemEvent e) {
-		synchronized (this){
-			try {t.end();} catch (Exception ex) {}
-			if (e.getStateChange()==ItemEvent.SELECTED) {
-				w.clearFileList();
-				t=(new FileListerThread(w));//a, w, w.getCurrentIP(), w.getCurrentType()));
-				t.start();
-			} else {
-				w.clearFileList();
-			}
-		}
+	public void selectItem(MCListEvent e) {
+			w.clearFileList();
+			t=(new FileListerThread(w));//a, w, w.getCurrentIP(), w.getCurrentType()));
+			t.start();
+	}
+	
+	public void unselectItem(MCListEvent e) {
+		try {t.end();} catch (Exception ex) {}
+		w.clearFileList();
 	}
 }

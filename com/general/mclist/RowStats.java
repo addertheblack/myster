@@ -12,7 +12,7 @@ package com.general.mclist;
 
 public class RowStats {
 	int numberofcolumns;
-	int[]columnwidtharray;
+	int[]	columnwidtharray;
 	int padding;
 	
 	public RowStats(int[] columnwidtharray, int padding) {

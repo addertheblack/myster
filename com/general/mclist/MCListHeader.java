@@ -19,7 +19,7 @@ public class MCListHeader extends Panel {
 	private static final int HEIGHT=17;
 	
 	//Book Keeping
-	private int numberofcolumns;
+	private int numberOfColumns;
 	private String[] columnarray;
 	private int[] columnWidthArray;	// A value of -1 means value should default to width of header string.
 	private int sortby=0;
@@ -27,11 +27,11 @@ public class MCListHeader extends Panel {
 	private static final int CLICK_LATITUDE=5;
 	private static final int MIN_COLUMN_WIDTH=15;
 
-	public MCListHeader(MCList c, int numberofcolumns) {
+	public MCListHeader(MCList c, int numberOfColumns) {
 		callback=c;
-		this.numberofcolumns=numberofcolumns;
-		columnarray=new String[numberofcolumns];
-		for(int i=0; i<numberofcolumns; i++) columnarray[i] = "unnamed";
+		this.numberOfColumns=numberOfColumns;
+		columnarray=new String[numberOfColumns];
+		for(int i=0; i<numberOfColumns; i++) columnarray[i] = "unnamed";
 		
 		initColumnWidthArray();
 		repaint();
@@ -45,7 +45,7 @@ public class MCListHeader extends Panel {
 		int[] oldArray={};
 		if (columnWidthArray!=null) oldArray=columnWidthArray; //line to take care of case where columnWidthArray is not inited. See constructor.
 		int i;
-		columnWidthArray=new int[numberofcolumns];
+		columnWidthArray=new int[numberOfColumns];
 		for (i=0; i<oldArray.length&&i<columnWidthArray.length; i++) {
 			columnWidthArray[i]=oldArray[i];
 		}
@@ -118,23 +118,23 @@ public class MCListHeader extends Panel {
 		g.setColor(Color.black);
 		hozoffset=0;
 		int yplace=padding+ascent;
-		for (int i=0; i<numberofcolumns;i++) {
+		for (int i=0; i<numberOfColumns;i++) {
 			g.drawString(makeFit(columnarray[i], rowstats.getWidthOfColumn(i)), hozoffset+padding+2, yplace);
 			hozoffset+=padding+rowstats.getWidthOfColumn(i);
 		}
 	}
 	
-	public void setNumberOfColumns(int numberofcolumns) {
-		this.numberofcolumns=numberofcolumns;
-		columnarray=new String[numberofcolumns];
-		for(int i=0; i<numberofcolumns; i++) columnarray[i] = "unnamed";
+	public void setNumberOfColumns(int numberOfColumns) {
+		this.numberOfColumns=numberOfColumns;
+		columnarray=new String[numberOfColumns];
+		for(int i=0; i<numberOfColumns; i++) columnarray[i] = "unnamed";
 		initColumnWidthArray();
 		invalidate();
 		repaint();
 	}
 	
 	public int getNumberOfColumns() {
-		return numberofcolumns;
+		return numberOfColumns;
 	}
 	
 	public void setColumnWidth(int index, int size) {
@@ -156,16 +156,23 @@ public class MCListHeader extends Panel {
 	}
 	
 	public Dimension getMinimumSize() {
-		return new Dimension(100,100);
-		
-		//return getPreferredSize();
+		return new Dimension(15,5);
 	}
 	
 	public Dimension getPreferredSize() {
+		int plength = callback.PADDING;
+		for (int i = 0; i < numberOfColumns; i++) {
+			plength += Math.min(getPreferredColumnWidth(i), getColumnWidth(i)) + callback.PADDING;
+		}
+		
+		return new Dimension(plength, getHeight());
+	}
+	
+	public Dimension calculateSize() {
 		int plength=getRowStats().getTotalLength();
 		int olength=callback.getSize().width+250; 	//not, this is done to avoid a flickering effect that occures when
 												// a panel is resized (and repainted);
-												//The idea is to avoid resizing by making the panel JUST big enought 
+												//The idea is to avoid resizing by making the panel JUST big enough
 												//to not flicker most of the time.
 												//The flickering stll occures, however if a list is grown more than 250
 												//pixels over it's current size. oh well..
@@ -175,23 +182,43 @@ public class MCListHeader extends Panel {
 	}
 	
 	public void setColumnName(int columnnumber, String name) {
-		if (columnnumber>=numberofcolumns) return;
+		if (columnnumber>=numberOfColumns) return;
 		columnarray[columnnumber]=name;
 		repaint();
 	}
+	
+	/**
+	*	If there is only one column then fill all the space available
+	*	else if the column width is unspecified use the header title sting width else use the value form the column width array
+	*/
 	public int getColumnWidth(int i) {
-		return getColumnWidthArray()[i];
+		return (numberOfColumns == 1 ? callback.getPane().getViewportSize().width - (2*callback.PADDING) : 
+				getPreferredColumnWidth(i));
+	}
+	
+	private int getPreferredColumnWidth(int i) {
+		return (columnWidthArray[i]==-1 ?
+					getFontMetrics(getFont()).stringWidth(columnarray[i]+1)+callback.PADDING :
+					columnWidthArray[i]);
 	}
 	
 	public int[] getColumnWidthArray() {
-		int[] columnWidthArray=new int[numberofcolumns];
+		int[] columnWidthArray=new int[numberOfColumns];
 		
-		for (int i=0; i<numberofcolumns; i++) {
-			if (this.columnWidthArray[i]==-1) columnWidthArray[i]=getFontMetrics(getFont()).stringWidth(columnarray[i]+1)+callback.PADDING;
-			else columnWidthArray[i]=this.columnWidthArray[i];
+		for (int i=0; i<numberOfColumns; i++) {
+			columnWidthArray[i]=getColumnWidth(i);
 		}
 		return columnWidthArray;
+	}
 	
+	public int[] getPreferredColumnWidthArray() {
+		int[] columnWidthArray=new int[numberOfColumns];
+		
+		for (int i=0; i<numberOfColumns; i++) {
+			columnWidthArray[i]=getPreferredColumnWidth(i);
+		}
+		
+		return columnWidthArray;
 	}
 	
 	public int getHeight() {
@@ -217,11 +244,11 @@ public class MCListHeader extends Panel {
 		RowStats rowstats=getRowStats();
 
 		int xcounter=0;
-		for (int i=0; i<numberofcolumns; i++) {
+		for (int i=0; i<numberOfColumns; i++) {
 			if (x>=xcounter&&x<(rowstats.getTotalWidthOfColunm(i)+xcounter)) return i;
 			xcounter+=rowstats.getTotalWidthOfColunm(i);
 		}
-		return numberofcolumns-1; //if click is bigger then last column, return last column
+		return numberOfColumns-1; //if click is bigger then last column, return last column
 	}
 	
 	public void sortBy(int x) {
@@ -241,7 +268,7 @@ public class MCListHeader extends Panel {
 		int counter=0;
 		
 		RowStats rowstats=getRowStats();
-		for (int i=0; i<numberofcolumns; i++) {
+		for (int i=0; i<numberOfColumns; i++) {
 			counter+=rowstats.getTotalWidthOfColunm(i);
 			if (x<counter+CLICK_LATITUDE&&x>counter-CLICK_LATITUDE) {
 				return i;

@@ -34,7 +34,7 @@ public class MCListVector {
 						
 						if (sa.equals(sb)) return 0;
 						
-						int cmp = (sa.isLessThan(sb) ? 1 : -1);
+						int cmp = (sa.isLessThan(sb) ? -1 : 1);
 						return (lessthan ? cmp : -cmp);
 					}
 					

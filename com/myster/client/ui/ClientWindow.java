@@ -16,6 +16,7 @@ import java.awt.*;
 import java.awt.event.*;
 
 import com.general.util.*;
+import com.general.mclist.*;
 
 import com.myster.util.Sayable;
 import com.myster.ui.MysterFrame;
@@ -26,8 +27,8 @@ public class ClientWindow extends MysterFrame implements Sayable{
 	GridBagConstraints gbconstrains;
 	Button connect;
 	TextField IP;
-	List filetypelist;
-	FileList filelist;
+	MCList fileTypeList;
+	MCList fileList;
 	FileInfoPane pane;
 	String currentip;
 	Button instant;
@@ -83,7 +84,7 @@ public class ClientWindow extends MysterFrame implements Sayable{
 		setLayout(gblayout);
 		gbconstrains=new GridBagConstraints();
 		gbconstrains.fill=GridBagConstraints.BOTH;
-		gbconstrains.insets=new Insets(1,1,1,1);
+		gbconstrains.insets=new Insets(5,5,5,5);
 		gbconstrains.ipadx=1;
 		gbconstrains.ipady=1;
 		
@@ -98,10 +99,13 @@ public class ClientWindow extends MysterFrame implements Sayable{
 		IP.setEditable(true);
 		
 		
-		filetypelist = new FileList();
-		filetypelist.setSize(50, 40);
- 		filelist = new FileList();
-
+		fileTypeList = new MCList(1, true, this);
+		fileTypeList.setColumnName(0, "Type");
+		
+		
+ 		fileList = new MCList(1, true, this);
+		fileList.setColumnName(0, "Files");
+		//fileList.setColumnWidth(0, 300);
 		
 		msg=new MessageField("Idle...");
 		msg.setEditable(false);
@@ -123,26 +127,27 @@ public class ClientWindow extends MysterFrame implements Sayable{
 		
 		//reshape(0, 0, XDEFAULT, YDEFAULT);
 		
-		addComponent(connect,0,0,1,1,0,0);
-		addComponent(IP,0,1,2,1,0,0);
-		addComponent(instant,0,3,1,1,0,0);
-		addComponent(filetypelist,1,0,1,1,1,99);
-		addComponent(filelist,1,1,2,1,6,99);
+		addComponent(connect,0,0,1,1,1,0);
+		addComponent(IP,0,1,2,1,6,0);
+		addComponent(instant,0,3,1,1,5,0);
+		addComponent(fileTypeList.getPane(),1,0,1,1,1,99);
+		addComponent(fileList.getPane(),1,1,2,1,6,99);
 		addComponent(pane,1,3,1,1,5,99);
 		addComponent(msg,2,0,4,1,99,0);
 		
-		show(true);
 		setResizable(true);
 		setSize(XDEFAULT,YDEFAULT);
+		show(true);
+
 		
 		//filelisting.addActionListener(???);
 		ConnectButtonEvent connectButtonEvent=new ConnectButtonEvent(this);
 		connect.addActionListener(connectButtonEvent);
 		IP.addActionListener(connectButtonEvent);
 		
-		filetypelist.addItemListener(new FileTypeSelectListener(this));
-		filelist.addActionListener(new FileListAction(this));
-		filelist.addItemListener(new FileStatsAction(this));
+		fileTypeList.addMCListEventListener(new FileTypeSelectListener(this));
+		fileList.addMCListEventListener(new FileListAction(this));
+		fileList.addMCListEventListener(new FileStatsAction(this));
 		
 		addWindowListener(new StandardWindowBehavior());
 		
@@ -166,15 +171,19 @@ public class ClientWindow extends MysterFrame implements Sayable{
 	}
 	
 	public void addItemToTypeList(String s) {
-		filetypelist.add(s);
+		fileTypeList.addItem(new GenericMCListItem(new Sortable[]{new SortableString(s)}, s));
 	}	
 	
-	public void addItemToFileList(String s) {
-		filelist.add(s);
+	public void addItemsToFileList(String[] files) {
+		GenericMCListItem[] items = new GenericMCListItem[files.length];
+		
+		for (int i = 0; i < items.length; i++) items[i] = new GenericMCListItem(new Sortable[]{new SortableString(files[i])}, files[i]);
+	
+		fileList.addItem(items);
 	}
 	
 	public void clearFileList() {
-		filelist.clear();
+		fileList.clearAll();
 		pane.clear();
 	}
 	
@@ -192,20 +201,26 @@ public class ClientWindow extends MysterFrame implements Sayable{
 	}
 	
 	public MysterType getCurrentType() {
-		try {
-			return new MysterType((filetypelist.getSelectedItem()).getBytes());
-		} catch (Exception ex) {
-			return new MysterType(new byte[]{(byte)'M',(byte)'P',(byte)'G',(byte)'3'});
-		}
+		int selectedIndex = fileTypeList.getSelectedIndex();
+		
+		if (selectedIndex != -1)
+				return new MysterType(((String)(fileTypeList.getItem(selectedIndex))).getBytes());
+	
+		return new MysterType(new byte[]{(byte)'M',(byte)'P',(byte)'G',(byte)'3'});
 	}
 	
 	public String getCurrentFile() {
-		return filelist.getSelectedItem();
+		int selectedIndex = fileList.getSelectedIndex();
+		
+		if (selectedIndex == -1) return "";
+	
+	
+		return (String)fileList.getItem(selectedIndex);
 	}
 
 	public void clearAll() {
-		filetypelist.clear();
-		filelist.clear();
+		fileTypeList.clearAll();
+		fileList.clearAll();
 		pane.clear();
 	}
 	

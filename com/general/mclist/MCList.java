@@ -59,7 +59,7 @@ public class MCList extends Panel {
 		singleselectboolean=singleselect;
 		list=new MCListVector();
 		
-		pane=new ScrollPane(ScrollPane.SCROLLBARS_AS_NEEDED);
+		pane=new MCListScrollPane(ScrollPane.SCROLLBARS_AS_NEEDED);
 		setSize(1024,1024);
 		setLayout(null);
 		pane.add(this);
@@ -119,16 +119,15 @@ public class MCList extends Panel {
 	
 	//Important for canvas
 	public synchronized Dimension getPreferredSize() {
-	 	RowStats rowstats=header.getRowStats();
+		RowStats rowstats=header.getRowStats();
 		
 		int ysize=list.size()*rowtheme.getHeight()-1+header.getHeight();
 		
-		int xsize=rowstats.getTotalLength();
+		int xsize=header.getPreferredSize().width;
+
+		//if (pane.getViewportSize().width>xsize) xsize=pane.getViewportSize().width;
 		
-		if (pane.getViewportSize().width>xsize) xsize=pane.getViewportSize().width;
-		
-		if (pane.getViewportSize().height>ysize) ysize=pane.getViewportSize().height;
-		
+		//if (pane.getViewportSize().height>ysize) ysize=pane.getViewportSize().height;
 		return new Dimension(xsize, ysize);
 	}
 	
@@ -166,7 +165,7 @@ public class MCList extends Panel {
 	
 	public void paint(Graphics g) {		//done.
 		header.setLocation(0, pane.getScrollPosition().y);
-		header.setSize(header.getPreferredSize());
+		header.setSize(header.calculateSize());
 		updatey(g);
 		//paint(g, pane.getScrollPosition().y, pane.getViewportSize().height+pane.getScrollPosition().y);	//imporant.
 	}	
@@ -331,5 +330,24 @@ public class MCList extends Panel {
 			return new Font("Courier", 0, 12);
 		}
 		return font;
+	}
+	
+	private class MCListScrollPane extends ScrollPane {
+		public MCListScrollPane (int m) {
+			super(m);
+		}
+		
+		public Dimension getPreferredSize() {
+			//return new Dimension(0,0);
+			return MCList.this.getPreferredSize();
+		}
+		
+		public Dimension getMinimumSize() {
+			return new Dimension(20,20);
+		}
+		
+		public Dimension getMaximumSize() {
+			return new Dimension(999999,999999);
+		}
 	}
 }

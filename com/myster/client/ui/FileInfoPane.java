@@ -62,6 +62,6 @@ public class FileInfoPane extends Panel {
 	}
 	
 	public Dimension getPreferredSize() {
-		return getSize();
+		return new Dimension(10,10);
 	}
 }

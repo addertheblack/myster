@@ -12,11 +12,12 @@ Copyright Andrew Trumper 2000-2001
 
 package com.myster.client.ui;
 
-import java.awt.event.*;
-import java.awt.*;
+import com.general.mclist.MCListEventAdapter;
+import com.general.mclist.MCListEvent;
+
 import com.myster.util.MysterThread;
 
-public class FileStatsAction implements ItemListener {
+public class FileStatsAction extends MCListEventAdapter {
 	ClientWindow w;
 	MysterThread t;
 	
@@ -24,16 +25,15 @@ public class FileStatsAction implements ItemListener {
 		this.w=w;
 	} 
 	
-	public void itemStateChanged(ItemEvent a) {
-		synchronized (a){
-			try {t.end();} catch (Exception ex) {}
-			if (a.getStateChange()==ItemEvent.SELECTED) {
-				w.clearFileStats();
-				t=(new FileInfoListerThread(w));
-				t.start();
-			} else {
-				w.clearFileStats();
-			}
-		}
+	public void selectItem(MCListEvent e) {
+		try {t.end();} catch (Exception ex) {}
+		w.clearFileStats();
+		t=(new FileInfoListerThread(w));
+		t.start();
+	}
+	
+	public void unselectItem(MCListEvent e) {
+		try {t.end();} catch (Exception ex) {}
+		w.clearFileStats();
 	}
 }

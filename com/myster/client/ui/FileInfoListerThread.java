@@ -33,6 +33,8 @@ public class FileInfoListerThread extends MysterThread {
 	}
 	
 	public void run() {
+		try {Thread.sleep(500);} catch (InterruptedException ex) {}
+	
 		MysterSocket socket=null;
 		DataOutputStream out;
 		DataInputStream in;

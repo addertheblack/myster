@@ -239,7 +239,7 @@ public class MultiSourceSender extends ServerThread {
 			if (FileSenderThread.kickFreeloaders()) {
 				try {
 					com.myster.client.stream.StandardSuite.disconnectWithoutException(com.myster.net.MysterSocketFactory.makeStreamConnection(new com.myster.net.MysterAddress(socket.getInetAddress())));
-				} catch (Exception ex) { //if host is not reachable it will end up here.
+				} catch (IOException ex) { //if host is not reachable it will end up here.
 					sendQueuePosition(socket.out, 0, "You are not reachable from the outside");
 					
 					FileSenderThread.ServerTransfer.freeloaderComplain(socket.out); //send an image + URL about firewalls.

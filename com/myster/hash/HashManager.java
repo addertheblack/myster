@@ -178,6 +178,9 @@ public class HashManager implements Runnable {
 			} catch (InterruptedException ex) {
 				ex.printStackTrace();
 				// Should never happen.
+			} catch (Exception ex) {
+				ex.printStackTrace();
+				// Should REALLY never happen
 			}
 		}
 	}

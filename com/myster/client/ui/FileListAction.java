@@ -10,13 +10,13 @@ Copyright Andrew Trumper 2000-2001
 */
 package com.myster.client.ui;
 
-import java.awt.event.*;
-import java.awt.*;
+import com.general.mclist.MCListEventAdapter;
+import com.general.mclist.MCListEvent;
 
 import com.myster.search.MysterFileStub;
 import com.myster.net.MysterAddress;
 
-public class FileListAction implements ActionListener {
+public class FileListAction extends MCListEventAdapter {
 	ClientWindow w;
 	
 	
@@ -24,13 +24,9 @@ public class FileListAction implements ActionListener {
 		this.w=w;
 	} 
 	
-	static volatile long timeOfLast=0;
-	
-	public synchronized void actionPerformed(ActionEvent a) {
+	public void doubleClick(MCListEvent e) {
 		try {
-			if (System.currentTimeMillis()-timeOfLast<1000) return;
-			timeOfLast=System.currentTimeMillis();
-			MysterFileStub stub = new MysterFileStub(new MysterAddress(w.getCurrentIP()), w.getCurrentType(), a.getActionCommand());
+			MysterFileStub stub = new MysterFileStub(new MysterAddress(w.getCurrentIP()), w.getCurrentType(), w.getCurrentFile());
 			com.myster.client.stream.StandardSuite.downloadFile(stub.getMysterAddress(), stub);
 		} catch (java.io.IOException ex) {
 			com.general.util.AnswerDialog.simpleAlert(w, "Could not connect to server.");

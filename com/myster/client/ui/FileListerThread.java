@@ -82,20 +82,15 @@ public class FileListerThread extends MysterThread {
 	
 				TextSpinner spinner=new TextSpinner();
 				
-				
+				String[] files = new String[numberoffiles];
 				for (int i=0; i<numberoffiles; i++) {
-				
-					try {
-						w.addItemToFileList(in.readUTF());
-						msg.say("Requesting File List: "+type+ " " + spinner.getSpin());
-					} catch (Exception ex) {
-						msg.say("A Minor error occured, file list shorter than expected.");
-						System.out.println("A Minor error occured, file list shorter than expected.");
-						break;
-					}
-					
+					files[i] = in.readUTF();
+					if (i%10 == 0) msg.say("Downloading file list: "+type+ " " + ((i*100)/numberoffiles) + "%");
 				}
+				
 				out.writeInt(2);
+				
+				w.addItemsToFileList(files);
 				
 				in.read();
 				
