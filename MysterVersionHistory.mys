@@ -941,3 +941,7 @@ Work on DEV 8:
 			Need to fix stupid none batching behavior (MSDownload is slower than it should be)
 			Make it so multi source resumables are named different (idiot)
 			Make sensible behavior for queued multi source downloads.
+			
+	//?
+	Re-qrote most of the multi source download client code. It now is much nocer to work with
+	- Myste ris now 27 000 line of yummy java goodness
