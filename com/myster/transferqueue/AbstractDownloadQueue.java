@@ -15,24 +15,22 @@ public abstract class AbstractDownloadQueue extends TransferQueue {
 
 	private static final int WAIT_TIME = 30*1000; //30 secs
 
-
-	private Vector downloadSpots = new Vector();
+	private Vector downloads = new Vector();
 	private LinkedList downloadQueue = new LinkedList();
-	private int activeDownloadCount = 0;
+	private int maxDownloads;
 	private int maxDownloadQueueLength = UNLIMITED_QUEUE_LENGTH;
 	
 	protected AbstractDownloadQueue(int numberOfDownloadSpots) {
-		downloadSpots.setSize(numberOfDownloadSpots);
+		maxDownloads = numberOfDownloadSpots;
 	}
 	
 	public final void doDownload(Downloader download) throws IOException, MaxQueueLimitException {
 		DownloadTicket ticket = registerDownload(download);
+		
 		try {
 			waitForMyTurn(ticket);
 			
-			synchronized (this) {activeDownloadCount++;} //slightly overkill but what the hell..
 			doDownload(ticket);
-			synchronized (this) {activeDownloadCount--;}
 		} finally {
 			unregisterDownload(ticket);
 		}
@@ -43,7 +41,7 @@ public abstract class AbstractDownloadQueue extends TransferQueue {
 	}
 	
 	public final int getActiveDownloads() {
-		return activeDownloadCount;
+		return downloads.size();
 	}
 	
 	public int getQueuedDownloads() {
@@ -51,15 +49,19 @@ public abstract class AbstractDownloadQueue extends TransferQueue {
 	}
 	
 	public final int getDownloadSpots() {
-		return downloadSpots.size();
+		return maxDownloads;
 	}
 	
 	/**
 	*	Subsclasses wishing to save their values between program launches should over-ride 
 	*	saveDownloadSpots(int newSpots)
 	*/
-	public final void setDownloadSpots(int newSpots) {
-		downloadSpots.setSize(newSpots);
+	public final synchronized void setDownloadSpots(int newSpots) {
+		maxDownloads = newSpots;
+		
+		saveDownloadSpotsInPrefs(newSpots);
+		
+		updateQueue();
 	}
 	
 	public void saveDownloadSpotsInPrefs(int newSpots) {}
@@ -73,11 +75,30 @@ public abstract class AbstractDownloadQueue extends TransferQueue {
 	}
 	
 	private synchronized void waitForMyTurn(DownloadTicket ticket) throws IOException {
-		while(! ticket.isReadyToDownload()) {
-			ticket.getDownloader().queued(getQueuedStats(ticket));
-			try {
-				wait(WAIT_TIME);	//wait on Lock
-			} catch(InterruptedException ex) {}
+		while(true) {
+			int lastQueuePosition;
+			QueuedStats stats;
+			synchronized (this) {
+				if (ticket.isReadyToDownload()) return;
+			
+				stats = getQueuedStats(ticket);
+			}
+			
+			
+			lastQueuePosition = stats.getQueuePosition();
+			ticket.getDownloader().queued(stats);
+			
+			
+			
+			synchronized (this) {
+				if (ticket.isReadyToDownload()) return; //just before sleep double check
+				
+				if (lastQueuePosition != getQueuedStats(ticket).getQueuePosition()) continue;
+				
+				try {
+					wait(WAIT_TIME);	//wait on Lock
+				} catch(InterruptedException ex) {}
+			}
 		}
 
 	}
@@ -90,25 +111,26 @@ public abstract class AbstractDownloadQueue extends TransferQueue {
 		ticket.getDownloader().download();
 	}
 	
+	
+	// moves tickets from queue to download slow and sets their "go" flag.
+	// Also notifys the other thread in the queue if a change has occured..
 	private synchronized void updateQueue() {
-		int freeSpot = getEmptyDownloadSpots();
-		
-		if (freeSpot != -1) { //but he murdered 23 babies! Time for a cool island song..
+		while (isExistFreeSpot()) {
 			DownloadTicket ticket = (DownloadTicket)downloadQueue.removeFromHead();
-			downloadSpots.setElementAt(ticket, freeSpot);
-			ticket.setReadyToDownload();
-			notifyAll();
+			
+			if (ticket!=null) {
+				downloads.addElement(ticket);
+				ticket.setReadyToDownload();
+				
+				notifyAll();
+			} else {
+				break;
+			}
 		}
 	}
 	
-	private synchronized int getEmptyDownloadSpots() {
-		if (getActiveDownloads() > downloadSpots.size()) return -1; //woops to many downloads already.
-	
-		for (int i = 0; i < downloadSpots.size() ; i++) {
-			if (downloadSpots.elementAt(i) == null) return i;
-		}
-		
-		return -1;
+	private synchronized boolean isExistFreeSpot() {
+		return (maxDownloads == UNLIMITED_QUEUE_LENGTH ? true : (maxDownloads - downloads.size()) > 0);
 	}
 	
 	
@@ -126,8 +148,8 @@ public abstract class AbstractDownloadQueue extends TransferQueue {
 	}
 	
 	private synchronized void unregisterDownload(DownloadTicket ticket) {
-		downloadQueue.remove(ticket);
-		downloadSpots.removeElement(ticket);
+		downloadQueue.remove(ticket); 		//if exists removes
+		downloads.removeElement(ticket);	//if exists removes
 		
 		updateQueue();
 	}
@@ -141,7 +163,7 @@ public abstract class AbstractDownloadQueue extends TransferQueue {
 		volatile boolean readyToDownload = false;
 		
 		public DownloadTicket(Downloader downloader) {
-			this.readyToDownload 	= readyToDownload;
+			this.downloader 	= downloader;
 		}
 		
 		public Downloader getDownloader() {

@@ -117,7 +117,7 @@ public class ServerFacade {
 			//setBackground(Color.red);
 			setLayout(new GridLayout(5,2,5,5));
 			
-			openSlotLabel=new Label("Download Spots: *");
+			openSlotLabel=new Label("Download Spots:");
 			add(openSlotLabel);
 			
 			openSlotChoice=new Choice();

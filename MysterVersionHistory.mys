@@ -912,7 +912,10 @@ Work on DEV 8:
 		-> Changed the 6669 firewall image
 	
 	2003/09/18
-		-> Started work on new download queue program
+		-> Completely re-wrote download queue manager. It now doesn't use any thread (it used to use 4)
+				it's much easyer to debug (7 hours to write instead of 20 hours). Also
+				DOES NOT REQUIRE MYSTER TO BE RESTARTED! Hurray!
+		
 		
 			Need to fix bug with caching MP3 ID3 info
 			Need to fix freeze on cancel
@@ -922,3 +925,8 @@ Work on DEV 8:
 			
 			
 		Tim's number? 442-0097
+		
+		| <-- Stupid error
+		| <-- this.xx = xx problem (not common)
+		| <-- confusing removeElement with setElementAt(i to null)
+		| <-- Free spot problem.. stupid error
