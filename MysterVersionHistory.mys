@@ -902,4 +902,7 @@ Work on DEV 8:
 		-> k/s counter keeps going down, now fixed
 		-> change "Last Ping Time" to "Ping" in the tracker
 		-> For types in the type preferences true/false to on/off
-		-> TO DO : Which file is it attached to?
+		-> Put a proper title on the progress window for MS download
+		-> Created a MacOS 9 plugin so that browsers will auto-launch on banner clicks & menubar won't disapear
+		-> Changed the queue Int to an MML structure with queue postition and message tags in MS protocol
+				This new DEV will not work with previous DEVs.

@@ -220,7 +220,7 @@ public class MultiSourceDownload {
 	
 		if (!assertLengthAndHash()) return false;
 	
-		progress.setTitle("Downloading From Multiple Sources..");
+		progress.setTitle("MS Download: "+stub.getName());
 		progress.setProgressBarNumber(1);
 		
 		try {
@@ -373,13 +373,15 @@ public class MultiSourceDownload {
 	private synchronized void done() {
 		cleanUp();
 		progress.setText("File transfer complete.");
-		
-		File someFile = null;
-		//try {
-		
-			String path = theFile.getAbsolutePath();
-			someFile = new File(path.substring(0, path.length()-2)); //-2 is for .i
 
+		for (int i = 1; i < progress.getProgressBarNumber(); i++) {
+			progress.setText(" ", i);
+		}
+		
+		progress.setText("File downloaded");
+
+		String path = theFile.getAbsolutePath();
+		File someFile = someFile = new File(path.substring(0, path.length()-2)); //-2 is for .i
 		
 		if (someFile.exists()) {
 			AnswerDialog.simpleAlert(progress, "Could not rename file from \""+theFile.getName()+"\" to \""+someFile.getName()+"\" because a file by that name already exists.");
@@ -390,14 +392,6 @@ public class MultiSourceDownload {
 			AnswerDialog.simpleAlert(progress, "Could not rename file from \""+theFile.getName()+"\" to \""+someFile.getName()+"\" because an unspecified error occured.");
 			return;
 		}
-		
-		for (int i = 1; i < progress.getProgressBarNumber(); i++) {
-			progress.setText("", i);
-		}
-		
-		progress.setText("File downloaded");
-
-		
 	}
 	
 	//call when download is over but not done.
