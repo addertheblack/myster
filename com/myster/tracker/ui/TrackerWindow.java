@@ -271,12 +271,25 @@ public class TrackerWindow extends MysterFrame {
 		}
 		
 		private static class SortablePing extends SortableLong {
-			public SortablePing(long c) {super(c);}
+			public static final int UNKNOWN=1000000;
+			public static final int DOWN=1000001;
+		
+			public SortablePing(long c) {
+				super(c);
+				if (c==-1) {
+					number=UNKNOWN;
+				} else if (c==-2) {
+					number=DOWN;
+				} else {
+					number=c;
+				}
+			}
+			
 			public String toString() {
 				switch ((int)number) {
-					case -1:
+					case UNKNOWN:
 						return "-";
-					case -2:
+					case DOWN:
 						return "Timeout";
 					default:
 						return number+"ms";

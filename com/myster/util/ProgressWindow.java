@@ -140,6 +140,7 @@ public class ProgressWindow extends Frame {
        //	repaint();
        	t=new ThreadedProgressWindow();
        	t.start();
+       	setLocation(10,getInsets().top+10);
        	//addWindowListener(new StandardWindowBehavior());
     }
 

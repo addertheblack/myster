@@ -115,7 +115,7 @@ public class WindowManager {
 			
 			synchronized (windows) {
 				for (int i=0; i<windows.size(); i++) {
-					((MysterFrame)(windows.elementAt(i))).setLocation(new java.awt.Point(((i%MOD)*20)+10, (i%MOD)*20+((i/MOD)*20)+10));
+					((MysterFrame)(windows.elementAt(i))).setLocation(new java.awt.Point(((i%MOD)*20)+10, (i%MOD)*20+((i/MOD)*20)+10+((MysterFrame)(windows.elementAt(i))).getInsets().top));
 				}
 				
 				for (int i=0; i<windows.size(); i++) {

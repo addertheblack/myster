@@ -769,5 +769,6 @@ Work on DEV 8:
     	-> Eleminated one thread per download (progress windows now use Timer Class)
     	-> Tweaked thread distribution.
     	-> tweaked font usgae in MacOS X
+    	-> Made ping sort properly in tracker
     	
     	
