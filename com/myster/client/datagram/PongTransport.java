@@ -49,7 +49,7 @@ public class PongTransport extends DatagramTransport {
 			pongItem=((PongItemStruct)(requests.get(param_address)));
 			
 			if (pongItem==null) {
-				System.out.println("Got pong from address I've never heard of..");
+				System.out.println("Got pong from address I've never heard of.."+param_address);
 				return;
 			}
 			
