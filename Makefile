@@ -18,7 +18,6 @@ EXTRAFILES = ./com/myster/server/stream/firewall.gif \
 	./com/general/tab/right.gif \
 	./com/general/tab/serverstats.gif \
 	./com/myster/typedescriptionlist.txt \
-	./mysterprefs.mml \
 	./com/properties/Myster.properties \
 	./com/properties/Myster_ja.properties
 
@@ -52,6 +51,6 @@ ${DESTINATION}:
 	mkdir -p ${DESTINATION}
 	for f in ${EXTRAFILES} ${LIBRARIES}; \
 		do mkdir -p ${DESTINATION}/`dirname $$f`; \
-		   cp $$f ${DESTINATION}/$$f; \
+		   cp -r $$f ${DESTINATION}/$$f; \
 	done
 

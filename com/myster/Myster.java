@@ -398,7 +398,7 @@ public class Myster {
 	public static File getCurrentDirectory() {
 		if (System.getProperty("os.name").equals("Linux"))
 		{
-			File result = new File(new File(System.getProperty("user.home")), ".myster");
+			File result = new File(new File(System.getProperty("user.home")), "myster");
 			if (!result.exists()) result.mkdir();
 			return result;
 		}
