@@ -84,6 +84,7 @@ public class ServerFacade {
 		opp.addConnectionSection(new com.myster.server.stream.RequestSearchThread());
 		opp.addConnectionSection(new com.myster.server.stream.HandshakeThread());
 		opp.addConnectionSection(new com.myster.server.stream.FileInfoLister());
+		opp.addConnectionSection(new com.myster.server.stream.SearchByHash());
 	}
 	
 	private static class PrefPanel extends PreferencesPanel {

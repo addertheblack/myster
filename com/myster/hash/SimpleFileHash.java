@@ -42,4 +42,8 @@ public class SimpleFileHash extends FileHash implements Serializable {
 
 	    return buf.toString();
   	}
+  	
+  	public static FileHash buildFileHash(String hashName, byte[] hash) {
+  		return new SimpleFileHash(hashName, hash);
+  	}
 }
