@@ -20,22 +20,24 @@ public class TypeDescription {
 	String 		description;
 	String[]	extensions;
 	boolean		isArchived;
+	boolean		isEnabledByDefault;
 
 	public TypeDescription(MysterType type, String description,
-				String[] extensions, boolean isArchived) { 
-		commonInit(type, description, extensions, isArchived);
+				String[] extensions, boolean isArchived, boolean isEnabledByDefault) { 
+		commonInit(type, description, extensions, isArchived, isEnabledByDefault);
 	}
 	
 	public TypeDescription(MysterType type, String description) { 
-		commonInit(type, description, new String[]{}, false);
+		commonInit(type, description, new String[]{}, false, false);
 	}
 	
 	private void commonInit(MysterType type, String description,
-				String[] extensions, boolean isArchived) {
-		this.type			= type;
-		this.description	= description;
-		this.extensions		= extensions;
-		this.isArchived		= isArchived;
+				String[] extensions, boolean isArchived, boolean isEnabledByDefault) {
+		this.type				= type;
+		this.description		= description;
+		this.extensions			= extensions;
+		this.isArchived			= isArchived;
+		this.isEnabledByDefault	= isEnabledByDefault;
 	}
 	
 	public String getTypeAsString() {
@@ -61,6 +63,10 @@ public class TypeDescription {
 	
 	public boolean isArchived() {
 		return isArchived;
+	}
+	
+	public boolean isEnabledByDefault() {
+		return isEnabledByDefault;
 	}
 	
 	public String toString() {

@@ -8,6 +8,7 @@ In order to get the literal string "LTS" use the string "LTTS"
 In order to get the string "LTTS" use "LTTTS" (this pattern continues)
 Tags are case sensitive
 Duplicate tags at the same level are ignored.
+Using the forward slash in a *tag name* is not allowed.
 
 NOTE:
 If you add more types to the file list PLEASE SEND THEM TO info at mysternetworks.com!
@@ -29,6 +30,8 @@ Any type you make will not work (well) with the automatic bootstraping system so
 the "add ip" command in Myster under the "Special" menu too allow new nodes to join
 your new type.
 </Comment>
+
+
 <List>
 	<1>
 		<Type>MPG3</Type>
@@ -44,6 +47,7 @@ your new type.
 		         <30>.voc</30> <31>.ra</31> <32>.m4a</32>
 		</Extensions>
 		<Archived>True</Archived>
+		<Enabled By Default>true</Enabled By Default>
 	</1>
 	<2>
 		<Type>MACS</Type>
@@ -52,6 +56,7 @@ your new type.
 		         <0>.bin</0> <1>.hqx</1> <2>.sit</2> <3>.cpt</3> <4>.dmg</4> <5>.sea</5>
 		         <6>.nfs</6> <7>.sitx</7> <8>.image</8> <9>.img</9> <10>.pkg</10> <11>.smi</11>
 		</Extensions>
+		<Enabled By Default>true</Enabled By Default>
 	</2>
 	<3>
 		<Type>WINT</Type>
@@ -61,6 +66,7 @@ your new type.
 		         <7>.iso</7> <8>.cue</8> <9>.iso</9> <10>.ccd</10> <11>.rar</11> <12>.ace</12>
 		         <13>.cdr</13> <14>.gzip</14> <15>.lzh</15> <16>.lha</16>
 		</Extensions>
+		<Enabled By Default>true</Enabled By Default>
 	</3>
 	<4>
 		<Type>PICT</Type>
@@ -71,6 +77,7 @@ your new type.
 		         <12>.xpm</12> <13>.tga</13> <14>.xcf</14> <15>.pict</15>
 		</Extensions>
 		<Archived>True</Archived>
+		<Enabled By Default>true</Enabled By Default>
 	</4>
 	<5>
 		<Type>PORN</Type>
@@ -86,16 +93,18 @@ your new type.
 		         <18>.wm</18> <19>.vob</19> <20>.ifo</20>
 		</Extensions>
 		<Archived>True</Archived>
+		<Enabled By Default>true</Enabled By Default>
 	</6>
-		<7>
+	<7>
 		<Type>TEXT</Type>
 		<Description>Documents</Description>
 		<Extensions>
 		         <0>.txt</0> <1>.doc</1> <2>.abw</2> <3>.rtf</3> <4>.pdf</4> <5>.ps</5>
 		         <6>.htm</6> <7>.html</7> <8>.xml</8> <9>.wp4</9>
 		</Extensions>
+		<Enabled By Default>true</Enabled By Default>
 	</7>
-		<8>
+	<8>
 		<Type>ROMS</Type>
 		<Description>Emulation</Description>
 		<Extensions>
@@ -103,8 +112,9 @@ your new type.
 		         <6>.mod</6> <7>.nes</7> <8>.dsk</8>
 		</Extensions>
 		<Archived>True</Archived>
+		<Enabled By Default>true</Enabled By Default>
 	</8>
-		<9>
+	<9>
 		<Type>RING</Type>
 		<Description>Ring tones</Description>
 		<Extensions>
@@ -112,6 +122,7 @@ your new type.
 		         <6>.mmd</6>
 		</Extensions>
 		<Archived>True</Archived>
+		<Enabled By Default>true</Enabled By Default>
 	</9>
 </List>
 

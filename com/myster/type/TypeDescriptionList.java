@@ -108,11 +108,7 @@ class DefaultTypeDescriptionList extends TypeDescriptionList {
 			String string_bool = (String)(hash.get(list[i].getType().toString()));
 			
 			if (string_bool == null) {
-				if (list[i].getType().toString().equals("PORN")) {
-					string_bool = "FALSE";
-				} else {
-					string_bool = "TRUE";
-				}
+				string_bool =(list[i].isEnabledByDefault() ? "TRUE" : "FALSE");
 			}
 			
 			types[i] = new TypeDescriptionElement(list[i], (string_bool.equals("TRUE") ? true : false));
@@ -298,20 +294,23 @@ class DefaultTypeDescriptionList extends TypeDescriptionList {
 
 	private static TypeDescription getTypeDescriptionAtPath(RobustMML mml, String path) {
 		final String 					
-				TYPE 			= "Type",
-				DESCRIPTION		= "Description",
-				EXTENSIONS		= "Extensions/",
-				ARCHIVED		= "Archived";
+				TYPE 				= "Type",
+				DESCRIPTION			= "Description",
+				EXTENSIONS			= "Extensions/",
+				ARCHIVED			= "Archived",
+				ENABLED_BY_DEFAULT	= "Enabled By Default";
 		
-		String type 				= mml.get(path + TYPE);
-		String description			= mml.get(path + DESCRIPTION);
+		String type 				= mml.get(path 	+ TYPE);
+		String description			= mml.get(path 	+ DESCRIPTION);
 		Vector extensionsDirList	= mml.list(path + EXTENSIONS);
-		String archived				= mml.get(path + ARCHIVED);
+		String archived				= mml.get(path 	+ ARCHIVED);
+		String enabled			= mml.get(path 	+ ENABLED_BY_DEFAULT);
 		
 		if ((type == null) & (description == null)) return null;
 		
-		boolean isArchived = (archived == null ? false : (archived.equalsIgnoreCase("True")));
+		boolean isArchived 	= (archived == null ? false : (archived.equalsIgnoreCase("True")));
 		
+		boolean isEnable	= (enabled == null ? false : (enabled.equalsIgnoreCase("True")));
 		
 		String[] extensions = new String[0];
 		if (extensionsDirList != null) {
@@ -332,7 +331,7 @@ class DefaultTypeDescriptionList extends TypeDescriptionList {
 		}
 		
 		try {
-			return new TypeDescription(new MysterType(type.getBytes(com.myster.Myster.DEFAULT_ENCODING)), description, extensions, isArchived);
+			return new TypeDescription(new MysterType(type.getBytes(com.myster.Myster.DEFAULT_ENCODING)), description, extensions, isArchived, isEnable);
 		} catch (Exception ex) {
 			throw new com.general.util.UnexpectedException(ex);
 		}
