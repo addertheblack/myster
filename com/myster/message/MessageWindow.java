@@ -41,7 +41,7 @@ public class MessageWindow extends MysterFrame {
 		this(NEW_MESSAGE, "", null, null);
 	}
 	
-	private MessageWindow(final boolean type, final String message, final String quote, MysterAddress address) {
+	private MessageWindow(final boolean type, final String message, final String quote, final MysterAddress address) {
 		setSize(320,400);
 		
 		//Do interface setup:
@@ -82,6 +82,12 @@ public class MessageWindow extends MysterFrame {
 		add(mainPanel);
 		
 		setTitle(address==null?"Instant Message":""+address);
+		
+		addComponentListener(new ComponentAdapter() {
+			public void componentShown(ComponentEvent e) {
+				if (address != null) messageArea.focusBaby();
+			}
+		});
 	}
 	
 	public boolean hasReply() {
@@ -121,7 +127,7 @@ public class MessageWindow extends MysterFrame {
 	private String getQuote() {
 		return (quoteArea==null?null:quoteArea.getText());
 	}
-	
+
 	private class MessageWindowButtonBar extends Panel {
 		Button accept; //can be reply or send
 		Button cancel; //can be dismiss or cancel
@@ -301,6 +307,11 @@ class MessageTextArea extends Panel {
 	
 	public String getText() {
 		return area.getText();
+	}
+	
+	public void focusBaby() {
+		requestFocus();
+		area.requestFocus();
 	}
 }
 
