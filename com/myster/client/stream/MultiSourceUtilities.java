@@ -223,6 +223,21 @@ public class MultiSourceUtilities {
     public static void debug(String string) {
         System.out.println(string);
     }
+
+    
+    private static final String STOP_DOWNLOAD = "Kill";
+    private static final String CANCEL = "Don't Kill";
+    /**
+     * Asks the user to confirm stopping this download.
+     * 
+     * @return
+     */
+    public static boolean confirmCancel(Frame progress) {
+        final String choice = AnswerDialog.simpleAlert(progress,
+                "Are you sure you want to kill this download?", new String[] {
+                STOP_DOWNLOAD, CANCEL });
+        return (choice.equals(STOP_DOWNLOAD));
+    }
 }
 
 /*

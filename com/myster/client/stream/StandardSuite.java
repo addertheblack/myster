@@ -6,6 +6,7 @@ import java.io.IOException;
 import java.io.RandomAccessFile;
 import java.util.Vector;
 
+import com.general.util.AnswerDialog;
 import com.myster.hash.FileHash;
 import com.myster.mml.MMLException;
 import com.myster.mml.RobustMML;
@@ -191,6 +192,9 @@ public class StandardSuite {
 
             progress.addWindowListener(new java.awt.event.WindowAdapter() {
                 public void windowClosing(java.awt.event.WindowEvent e) {
+                    if (!MultiSourceUtilities.confirmCancel(progress))
+                        return;
+
                     StandardSuite.DownloadThread.this.flagToEnd();
 
                     progress.hide();
@@ -216,12 +220,12 @@ public class StandardSuite {
         }
 
         // should not be public
-        private void downloadFile(final MysterSocket socket, final MysterFileStub stub, final FileProgressWindow progress)
-                throws IOException {
+        private void downloadFile(final MysterSocket socket, final MysterFileStub stub,
+                final FileProgressWindow progress) throws IOException {
 
             try {
                 progress.setText("Getting File Statistics...");
-				
+
                 if (endFlag)
                     return;
                 RobustMML mml = getFileStats(socket, stub);
@@ -236,13 +240,13 @@ public class StandardSuite {
                     return;
 
                 FileHash hash = MultiSourceUtilities.getHashFromStats(mml);
-				
+
                 final File theFile = MultiSourceUtilities.getFileToDownloadTo(stub, progress);
 
-				if (theFile == null) {
-					progress.setText("User canceled...");
-					return;
-				}
+                if (theFile == null) {
+                    progress.setText("User canceled...");
+                    return;
+                }
 
                 synchronized (StandardSuite.DownloadThread.this) {
                     if (endFlag)

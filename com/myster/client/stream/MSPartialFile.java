@@ -48,18 +48,16 @@ public class MSPartialFile {
         try {
             mml = new RobustMML(maskFile.readUTF());
         } catch (MMLException ex) {
-            throw new IOException(
-                    "MML Meta data was badly formed. This file is corrupt.");
+            throw new IOException("MML Meta data was badly formed. This file is corrupt.");
         }
 
         return new MSPartialFile(file, maskFile, new PartialFileHeader(mml));
     }
 
-    public static MSPartialFile create(String filename, MysterType type,
-            int blockSize, FileHash[] hashes, long fileLength)
-            throws IOException {
-        File fileReference = new File(MultiSourceUtilities
-                .getIncomingDirectory(), filename + FILE_ENDING);
+    public static MSPartialFile create(String filename, MysterType type, int blockSize,
+            FileHash[] hashes, long fileLength) throws IOException {
+        File fileReference = new File(MultiSourceUtilities.getIncomingDirectory(), filename
+                + FILE_ENDING);
 
         if (fileReference.exists()) {
             if (!fileReference.delete())
@@ -68,8 +66,8 @@ public class MSPartialFile {
         }
 
         RandomAccessFile maskFile = new RandomAccessFile(fileReference, "rw");
-        PartialFileHeader header = new PartialFileHeader(filename, type,
-                blockSize, hashes, fileLength);
+        PartialFileHeader header = new PartialFileHeader(filename, type, blockSize, hashes,
+                fileLength);
 
         maskFile.write(header.toBytes());
 
@@ -80,12 +78,12 @@ public class MSPartialFile {
         File dir = MultiSourceUtilities.getIncomingDirectory();
 
         String[] file_list = dir.list(new FilenameFilter() { //I love this
-                                                             // idea. way to go
-                                                             // java guys. pitty
-                                                             // there's no half
-                                                             // decent way to
-                                                             // make it generic
-                                                             // (yet?)
+                    // idea. way to go
+                    // java guys. pitty
+                    // there's no half
+                    // decent way to
+                    // make it generic
+                    // (yet?)
                     public boolean accept(File dir, String name) {
                         if (!name.endsWith(".p"))
                             return false;
@@ -116,8 +114,7 @@ public class MSPartialFile {
         }
     }
 
-    private static class PrivateDownloaderThread extends
-            com.myster.util.MysterThread {
+    private static class PrivateDownloaderThread extends com.myster.util.MysterThread {
         MSPartialFile partialFile;
 
         public PrivateDownloaderThread(MSPartialFile partialFile) {
@@ -130,8 +127,7 @@ public class MSPartialFile {
             } catch (IOException ex) {
                 ex.printStackTrace();
                 //partialFile.done();
-                System.out
-                        .println("Tried to start an old download but couldn't.");
+                System.out.println("Tried to start an old download but couldn't.");
             }
         }
 
@@ -140,8 +136,8 @@ public class MSPartialFile {
             final String finalFileName = partialFile.getFilename() + ".i";
             final FileProgressWindow progress = new FileProgressWindow();
             boolean shortCircuitFlag = false;
-            String pathToType = com.myster.filemanager.FileTypeListManager
-                    .getInstance().getPathFromType(partialFile.getType());
+            String pathToType = com.myster.filemanager.FileTypeListManager.getInstance()
+                    .getPathFromType(partialFile.getType());
 
             progress.setTitle("Downloading " + partialFile.getFilename());
 
@@ -151,28 +147,27 @@ public class MSPartialFile {
 
             if (pathToType == null) {
                 shortCircuitFlag = true; //Without this a null pointer error
-                                         // shall occur
+                // shall occur
             } else {
                 dir = new File(pathToType);
                 file = new File(dir, partialFile.getFilename() + ".i");
             }
             System.out.println("GMResuming:" + file);
             for (int loopCounter = 0; (loopCounter < 3)
-                    && (shortCircuitFlag || (!dir.exists()) || dir.isFile()
-                            || (!file.exists()) || (!file.isFile())); loopCounter++) {
+                    && (shortCircuitFlag || (!dir.exists()) || dir.isFile() || (!file.exists()) || (!file
+                            .isFile())); loopCounter++) {
                 shortCircuitFlag = false;
 
-                final String DIALOG_PROMPT = "Where is the file "
-                        + partialFile.getFilename() + "?";
+                final String DIALOG_PROMPT = "Where is the file " + partialFile.getFilename() + "?";
 
-                final java.awt.FileDialog dialog = new java.awt.FileDialog(
-                        progress, DIALOG_PROMPT, java.awt.FileDialog.LOAD);
+                final java.awt.FileDialog dialog = new java.awt.FileDialog(progress, DIALOG_PROMPT,
+                        java.awt.FileDialog.LOAD);
 
                 dialog.show();
 
                 if (dialog.getFile() == null)
                     userCancelled(progress, partialFile); //always throws
-                                                          // exception !
+                // exception !
 
                 if (!dialog.getFile().equals(finalFileName)) {
                     final String YES_ANSWER = "Yes", NO_ANSWER = "No", CANCEL_ANSWER = "Cancel";
@@ -184,17 +179,16 @@ public class MSPartialFile {
                                     + finalFileName
                                     + "\n\n. If this is not the right file, it will be "
                                     + "rendered unusable. Are you sure you want to resume this download"
-                                    + " with this file?", new String[] {
-                                    YES_ANSWER, NO_ANSWER, CANCEL_ANSWER });
+                                    + " with this file?", new String[] { YES_ANSWER, NO_ANSWER,
+                                    CANCEL_ANSWER });
 
                     fileIsNotTheSameDialog.answer();
                     if (fileIsNotTheSameDialog.getIt().equals(NO_ANSWER)) {
                         shortCircuitFlag = true;
                         continue;
-                    } else if (fileIsNotTheSameDialog.getIt().equals(
-                            CANCEL_ANSWER)) {
+                    } else if (fileIsNotTheSameDialog.getIt().equals(CANCEL_ANSWER)) {
                         userCancelled(progress, partialFile); //always throws
-                                                              // exception !
+                        // exception !
                     }
                 }
 
@@ -204,15 +198,17 @@ public class MSPartialFile {
 
             RandomAccessFile randomAccessFile = new RandomAccessFile(file, "rw");
 
-            final MultiSourceDownload download = new MultiSourceDownload(
-                    randomAccessFile, new MSDownloadHandler(progress, file,
-                            partialFile), partialFile);
+            final MultiSourceDownload download = new MultiSourceDownload(randomAccessFile,
+                    new MSDownloadHandler(progress, file, partialFile), partialFile);
 
             //there are no exceptions after this so that is why we can get away
             // with it.
 
             progress.addWindowListener(new java.awt.event.WindowAdapter() {
                 public void windowClosing(java.awt.event.WindowEvent e) {
+                    if (!MultiSourceUtilities.confirmCancel(progress))
+                        return;
+
                     download.cancel();
 
                     progress.hide();
@@ -228,8 +224,8 @@ public class MSPartialFile {
             }
         }
 
-        private static void userCancelled(FileProgressWindow progress,
-                MSPartialFile file) throws UserCanceledException {
+        private static void userCancelled(FileProgressWindow progress, MSPartialFile file)
+                throws UserCanceledException {
             progress.hide();
             file.done();
             throw new UserCanceledException();
@@ -247,8 +243,7 @@ public class MSPartialFile {
 
     PartialFileHeader header;
 
-    private MSPartialFile(File fileReference, RandomAccessFile maskFile,
-            PartialFileHeader header) {
+    private MSPartialFile(File fileReference, RandomAccessFile maskFile, PartialFileHeader header) {
         this.maskFile = maskFile;
         this.header = header;
         this.fileReference = fileReference;
@@ -292,27 +287,26 @@ public class MSPartialFile {
         final byte[] buffer = new byte[blockSize];
 
         int numberOfBlocks = (int) ((maskFile.length() - offset) / buffer.length); //DANGER!
-                                                                                   // UNSAFE
-                                                                                   // CAST
-                                                                                   // TO
-                                                                                   // INT!
-                                                                                   // THIS
-                                                                                   // CODE
-                                                                                   // CAN
-                                                                                   // FAIL
-                                                                                   // FOR
-                                                                                   // LARGE
-                                                                                   // FILE
-                                                                                   // SIZES!
-                                                                                   // (very,
-                                                                                   // very
-                                                                                   // large
-                                                                                   // but
-                                                                                   // whatever)
+        // UNSAFE
+        // CAST
+        // TO
+        // INT!
+        // THIS
+        // CODE
+        // CAN
+        // FAIL
+        // FOR
+        // LARGE
+        // FILE
+        // SIZES!
+        // (very,
+        // very
+        // large
+        // but
+        // whatever)
 
         for (long blockCounter = 0; blockCounter <= numberOfBlocks; blockCounter++) {
-            int currentBlockSize = (int) (blockCounter >= numberOfBlocks ? (maskFile
-                    .length() - offset)
+            int currentBlockSize = (int) (blockCounter >= numberOfBlocks ? (maskFile.length() - offset)
                     % buffer.length
                     : buffer.length); //UNSAFE CAST
 
@@ -425,8 +419,8 @@ public class MSPartialFile {
                 throw new IOException("Unexpect null object");
         }
 
-        PartialFileHeader(String filename, MysterType type, long blockSize,
-                FileHash[] hashes, long fileLength) {
+        PartialFileHeader(String filename, MysterType type, long blockSize, FileHash[] hashes,
+                long fileLength) {
             this.filename = filename;
             this.type = type;
             this.blockSize = blockSize;
@@ -492,9 +486,9 @@ public class MSPartialFile {
             mml.put(BLOCK_SIZE_PATH, "" + blockSize);
             mml.put(FILE_LENGTH, "" + fileLength);
             mml.put(TYPE, "" + type.getAsInt()); //! is encoded as an int
-                                                 // instead of a string because
-                                                 // the string encoding is not
-                                                 // exactly equivalent
+            // instead of a string because
+            // the string encoding is not
+            // exactly equivalent
 
             addHashesToHeader(hashes, mml, HASHES_PATH);
 
@@ -509,8 +503,7 @@ public class MSPartialFile {
             try {
                 out.writeUTF(toMML().toString());
             } catch (IOException ex) {
-                throw new com.general.util.UnexpectedError(
-                        "This line should not throw and error.");
+                throw new com.general.util.UnexpectedError("This line should not throw and error.");
             }
 
             return b_out.toByteArray(); // lots of "to" methods here.
@@ -526,8 +519,7 @@ public class MSPartialFile {
 
     static final String HASH_AS_STRING = "Hash Value";
 
-    private static void addHashesToHeader(FileHash[] hashes, RobustMML mml,
-            String path) {
+    private static void addHashesToHeader(FileHash[] hashes, RobustMML mml, String path) {
         for (int i = 0; i < hashes.length; i++) {
             FileHash hash = hashes[i];
 
@@ -541,8 +533,7 @@ public class MSPartialFile {
         }
     }
 
-    private static FileHash[] getHashesFromHeader(RobustMML mml, String path)
-            throws IOException {
+    private static FileHash[] getHashesFromHeader(RobustMML mml, String path) throws IOException {
         java.util.Vector itemsToDecode = mml.list(path);
         if (itemsToDecode == null)
             throwIOException("itemsToDecode is null");
@@ -558,15 +549,13 @@ public class MSPartialFile {
             if (hashName == null || hashAsString == null)
                 throwIOException("Could not find a hash name or value");
 
-            hashes[i] = SimpleFileHash.buildFromHexString(hashName,
-                    hashAsString);
+            hashes[i] = SimpleFileHash.buildFromHexString(hashName, hashAsString);
         }
 
         return hashes;
     }
 
-    private static void throwIOException(String errorMessage)
-            throws IOException {
+    private static void throwIOException(String errorMessage) throws IOException {
         throw new IOException(errorMessage);
     }
 }
