@@ -22,6 +22,16 @@ public class MysterType {
 		return true;
 	}
 	
+	public int hashCode() {
+		int temp = 0;
+		for (int i = type.length; i >0; i--) {
+			temp <<= 8;
+			temp |= ((int)(type[i-1]) & 0xFF);
+		}
+		
+		return temp;
+	}
+	
 	public boolean equals(String o) {
 		return o.equals(toString());
 	}

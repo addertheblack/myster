@@ -70,12 +70,11 @@ public class Myster{
 		
 		programLaunchTime = System.currentTimeMillis();
 		
-		
 		I18n.init();
 
 		//if (true==true) return;
 		
-
+		
 		start();
 		
 		

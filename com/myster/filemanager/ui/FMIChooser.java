@@ -54,7 +54,6 @@ public class FMIChooser extends PreferencesPanel {
 		choice.setSize(STD_XSIZE-XPAD-XPAD-SAB,20);
 		choice.addItemListener(new ItemListener() {
 			public synchronized void itemStateChanged (ItemEvent a) {
-				//checkbox.setState(manager.isShared(choice.getType()));
 				restoreState();
 				repaint();
 			}
@@ -93,9 +92,7 @@ public class FMIChooser extends PreferencesPanel {
 		checkbox.setSize(150,25);
 		checkbox.addItemListener(new ItemListener() {
 			public void itemStateChanged(ItemEvent e) {
-				//manager.setShared(choice.getType(), checkbox.getState());
-				//refreshFileList();
-				hash.put(choice.getType()+"", new SettingsStruct(choice.getType(), path, checkbox.getState()));
+				hash.put(choice.getType(), new SettingsStruct(choice.getType(), path, checkbox.getState()));
 			} 
 		});
 		add(checkbox);
@@ -117,11 +114,7 @@ public class FMIChooser extends PreferencesPanel {
 				}
 				path=p;
 				textfeild.setText(TIM(path));
-				hash.put(choice.getType()+"", new SettingsStruct(choice.getType(), path, checkbox.getState()));
-				
-				//manager.setPathFromType(choice.getType(), path);
-				
-				//refreshFileList();
+				hash.put(choice.getType(), new SettingsStruct(choice.getType(), path, checkbox.getState()));
 			}
 		
 		});
@@ -236,7 +229,7 @@ public class FMIChooser extends PreferencesPanel {
 		}
 	}
 	/*
-	*	TIM = Timre in the Middle. This is a utility function that keepos strings under 69 characters
+	*	TIM = Trim in the Middle. This is a utility function that keepos strings under 69 characters
 	*	and removes characters from the middle and adding "..."
 	*/
 	private String TIM(String input){
