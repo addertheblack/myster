@@ -233,6 +233,10 @@ public class MCList extends Panel {
 		return -1;
     }
     
+    public boolean isAnythingSelected() {
+    	return list.isAnythingSelected();
+    }
+    
     public int[] getSelectedIndexes() {
     	return list.getSelectedIndexes();
     }

@@ -114,6 +114,14 @@ public class MCListVector {
 		}
 	}
 	
+	protected synchronized boolean isAnythingSelected() {
+		for (int i=0; i<size(); i++) {
+    		if (getElement(i).isSelected()) return true;
+    	}
+    	
+    	return false;
+	}
+	
 	protected synchronized int[] getSelectedIndexes() {
 		int counter=0;
     	for (int i=0; i<size(); i++) {

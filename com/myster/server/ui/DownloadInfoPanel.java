@@ -76,21 +76,32 @@ public class DownloadInfoPanel extends Panel {
 		ButtonPanel panel = new ButtonPanel();
 		
 		
-		disconnect	=new Button("Disconnect User");
-		//disconnect.setSize(175,25);
-		//disconnect.setLocation(10, 255);
-		panel.add(disconnect);
-		disconnect.addActionListener(chandler.new DisconnectHandler());
-		
-		
-		browse		=new Button("Browse Files");
-		//browse.setSize(175,25);
-		//browse.setLocation(10, 285);
+		browse		= new Button("Browse Files");
 		panel.add(browse);
 		browse.addActionListener(chandler.new ConnectHandler());
 		
+		message		= new Button("Instant Message");
+		panel.add(message);
+		message.addActionListener(new ActionListener() {
+			public void actionPerformed(ActionEvent e) {
+				int[] array=list.getSelectedIndexes();
+				for (int i=0; i<array.length; i++) {
+					try {
+						MessageWindow window=new MessageWindow(new com.myster.net.MysterAddress((((DownloadMCListItem)(list.getMCListItem(array[i])))).getAddress()));
+						window.setVisible(true);
+					} catch (java.net.UnknownHostException ex) {
+					
+					}
+				}
 
-		clearAll	=new Button("Clear All Done");
+			}
+		});
+		
+		disconnect	= new Button("Disconnect User");
+		panel.add(disconnect);
+		disconnect.addActionListener(chandler.new DisconnectHandler());
+		
+		clearAll	= new Button("Clear All Done");
 		clearAll.setSize(175,25);
 		clearAll.setLocation(10, 315);
 		panel.add(clearAll);
@@ -108,32 +119,14 @@ public class DownloadInfoPanel extends Panel {
 		});
 		
 		
-		message		=new Button("Instant Message");
-		message.setSize(175,25);
-		message.setLocation(200, 255);
-		panel.add(message);
-		message.addActionListener(new ActionListener() {
-			public void actionPerformed(ActionEvent e) {
-				int[] array=list.getSelectedIndexes();
-				for (int i=0; i<array.length; i++) {
-					try {
-						MessageWindow window=new MessageWindow(new com.myster.net.MysterAddress((((DownloadMCListItem)(list.getMCListItem(array[i])))).getAddress()));
-						window.setVisible(true);
-					} catch (java.net.UnknownHostException ex) {
-					
-					}
-				}
-
-			}
-		});
-		
 		panel.setSize(590, 25);
 		panel.setLocation(5, 317);
-		//panel.setBackground(Color.red);
 		add(panel);
 		panel.doLayout();
 		
 		Timer timer=new Timer(new RepaintLoop(), 10000);
+		
+		buttonsEnable(list.isAnythingSelected());
 	}
 	
 	private Image doubleBuffer;		//adds double buffering
@@ -146,7 +139,10 @@ public class DownloadInfoPanel extends Panel {
 		g.drawImage(doubleBuffer, 0, 0, this);
 	}
 
-	public void paint(Graphics g) {
+	public void buttonsEnable(boolean enable) {
+		disconnect.setEnabled(enable);
+		browse.setEnabled(enable);
+		message.setEnabled(enable);
 	}
 	
 	private class ConnectionHandler implements ConnectionManagerListener {
@@ -204,11 +200,11 @@ public class DownloadInfoPanel extends Panel {
 			}
 			
 			public void selectItem(MCListEvent e) {
-				//nothing
+				buttonsEnable(e.getParent().isAnythingSelected());
 			}
 			
 			public void unselectItem(MCListEvent e) {
-				//nothing
+				buttonsEnable(e.getParent().isAnythingSelected());
 			}
 		}
 		
