@@ -51,6 +51,7 @@ public class Myster {
 	public static void main(String args[]) {
 		final boolean isServer=(args.length>0&&args[0].equals("-s"));
 		
+		/*
 		(new Thread() {
 			public void run() {
 				for (;;) {
@@ -64,7 +65,7 @@ public class Myster {
 					}
 				}
 			}
-		}).start(); 
+		}).start(); */
 
 		
 		System.out.println("java.vm.specification.version:"+System.getProperty("java.vm.specification.version"));

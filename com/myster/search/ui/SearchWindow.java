@@ -64,7 +64,7 @@ public class SearchWindow extends MysterFrame implements SearchResultListener, S
 		gbconstrains.ipadx=1;
 		gbconstrains.ipady=1;
 		
-		searchbutton=new Button("Search Myster");
+		searchbutton=new Button("Search");
 		searchbutton.setSize(100, 20);
 		
 		textentry=new TextField("");
