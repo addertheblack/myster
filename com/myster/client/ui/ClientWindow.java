@@ -29,6 +29,7 @@ public class ClientWindow extends MysterFrame implements Sayable{
 	FileInfoPane pane;
 	String currentip;
 	MysterMenuBar menubar;
+	Button instant;
 	
 	MessageField msg;
 	
@@ -104,14 +105,28 @@ public class ClientWindow extends MysterFrame implements Sayable{
 		msg=new MessageField("Idle...");
 		msg.setEditable(false);
 		msg.setSize(XDEFAULT,GYDEFAULT);
+		
+		instant = new Button("Instant Message");
+		instant.addActionListener(new ActionListener() {
+			public void actionPerformed(ActionEvent e) {
+				try {
+					com.myster.net.MysterAddress address =  new com.myster.net.MysterAddress(IP.getText());
+					com.myster.message.MessageWindow window=new com.myster.message.MessageWindow(address);
+					window.setVisible(true);
+				} catch (java.net.UnknownHostException ex) {
+					(new AnswerDialog(ClientWindow.this,"The address "+IP.getText()+" does not apear to be a valid internet address.")).answer();
+				}
+			}
+		});
 
 		
 		//reshape(0, 0, XDEFAULT, YDEFAULT);
 		
 		addComponent(connect,0,0,1,1,0,0);
 		addComponent(IP,0,1,2,1,0,0);
+		addComponent(instant,0,3,1,1,0,0);
 		addComponent(filetypelist,1,0,1,1,1,99);
-		addComponent(filelist,1,1,1,1,6,99);
+		addComponent(filelist,1,1,2,1,6,99);
 		addComponent(pane,1,2,1,1,5,99);
 		addComponent(msg,2,0,3,1,99,0);
 		

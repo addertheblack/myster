@@ -50,6 +50,12 @@ public class MysterMenuBar extends MenuBar {
 			//File menu items
 			file.addElement(new MysterMenuItemFactory("New Search", 						new NewSearchWindowAction(), 		java.awt.event.KeyEvent.VK_N));
 			file.addElement(new MysterMenuItemFactory("New Peer-to-Peer Connection", 		new NewClientWindowAction(), 		java.awt.event.KeyEvent.VK_N, true));
+			file.addElement(new MysterMenuItemFactory("New Instant Message", 				new java.awt.event.ActionListener() {
+				public void actionPerformed(java.awt.event.ActionEvent e) {
+					com.myster.message.MessageWindow window=new com.myster.message.MessageWindow();
+					window.setVisible(true);
+				}
+			}));
 			file.addElement(new MysterMenuItemFactory("Close Window", 						new CloseWindowAction(),	java.awt.event.KeyEvent.VK_W));
 			file.addElement(new MysterMenuItemFactory("-", 									NULL));
 			file.addElement(new MysterMenuItemFactory("Quit", 								new QuitMenuAction(),				java.awt.event.KeyEvent.VK_Q));

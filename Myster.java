@@ -45,7 +45,7 @@ import com.myster.bandwidth.BandwidthManager;
 import java.util.Locale;
 
 import com.myster.transaction.*; //test
-import com.myster.message.*;
+
 
 public class Myster{
 
@@ -85,13 +85,7 @@ public class Myster{
 
 		
 
-		
-		com.myster.menubar.MysterMenuBar.addMenuItem(new com.myster.menubar.MysterMenuItemFactory("Instant Message...", new java.awt.event.ActionListener() {
-			public void actionPerformed(java.awt.event.ActionEvent e) {
-				MessageWindow window=new MessageWindow();
-				window.setVisible(true);
-			}
-		}));
+
 
 		
 		//if (true==true) return ;
@@ -153,7 +147,7 @@ public class Myster{
 				
 				progress.say(Myster.tr("Loading Instant Messaging...")+macHack);
 				progress.update(72);
-				MessageManager.init();
+				com.myster.message.MessageManager.init();
 				
 				progress.say(Myster.tr(Myster.tr("Loading WindowManager..."))+macHack);
 				progress.update(78);

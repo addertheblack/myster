@@ -797,6 +797,7 @@ Work on DEV 8:
      	-> Fixed a bug in my new MML parser implementation (<></> error).
      			It was dicovered when I was working on the chat plugin.
      	-> Started work on changing the chat plugin architecture into something less crap.
+     	
     Work on DEV 17
       2003/02/22
      	-> Made it so that clicking an entry in the download stats (server stats) makes a connect window pop up
@@ -808,8 +809,13 @@ Work on DEV 8:
      			with it. This might take a while. Wondering if I should release chat as is and fix it later. :-)
      	-> Finished instant messaging. Is good enough for a release.
      	-> Added a button to the Server Stats so people who are downloading form you cna be messaged.
+
     Work on DEV 18
       2003/03/23
       	-> Fixed some minor bugs in the Instant Messaging GUI.
       	-> MacOS X tweaking...
-      	-> Fixed a window manager bug to do with resize/move events being sent when the window is not visible...
+      	-> Fixed a window manager bug to do with resize/move events being sent when the window is not visible... (MacOS X)
+      	-> Fixed a plugin loader bug
+      	-> Ported Space Smillies to Myster 'cause I felt like it.
+      	-> Move the instant message menu item to its permanent location
+      	-> Added an instant message button to the p2p window.

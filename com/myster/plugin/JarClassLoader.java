@@ -11,6 +11,7 @@ package com.myster.plugin;
 
 import java.util.*;
 import java.io.*;
+import java.net.URL;
 import java.util.zip.*;
 
 public class JarClassLoader extends ClassLoader {
@@ -56,8 +57,10 @@ public class JarClassLoader extends ClassLoader {
 				System.out.println("This file is broken");
 				throw new ClassNotFoundException ("Fuck");
 			}
+			DataInputStream dataIn = new DataInputStream(in);
+			
 			byte[] b=new byte[(int)size];
-			in.read(b);
+			dataIn.readFully(b);
 			return b;
 		} catch (Exception ex) {
 			throw new ClassNotFoundException("I hate shit.");
@@ -78,6 +81,7 @@ public class JarClassLoader extends ClassLoader {
 	     } catch (ClassNotFoundException ex) {
 			 Class c = (Class)(cache.get(name));
 			 if (c == null) {
+			 	System.out.println("Loading class : "+name);
 			     byte data[] = loadClassData(name);
 			     c = defineClass(data, 0, data.length);
 			     cache.put(name, c);
@@ -86,5 +90,17 @@ public class JarClassLoader extends ClassLoader {
 			     resolveClass(c);
 			 return c;
 		}
-	}	
+	}
+	
+	public URL getResource(String name) {
+		String pathName = "jar:file:"+zip.getName()+"!/"+name;
+		try {
+			URL url = new URL(pathName);
+			return url;
+		} catch (java.net.MalformedURLException ex) {
+			ex.printStackTrace();
+			return null;
+		}
+	}
+	
 }
