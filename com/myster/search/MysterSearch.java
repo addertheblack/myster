@@ -97,6 +97,8 @@ public class MysterSearch {
 
         Util.invoke(new Runnable() {
             public void run() {
+                listener.startSearch();
+                
                 IPQueue queue = createPrimedIpQueue();
                 processNewAddresses(queue);
 
@@ -353,6 +355,7 @@ public class MysterSearch {
                 notifyAll();
                 System.out.println("DONE search!");
             }
+            listener.searchOver();
         }
     }
 

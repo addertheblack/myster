@@ -33,35 +33,7 @@ public class SearchEngine extends MysterThread {
     }
 
     public void run() {
-        try {
-            Util.invokeAndWait(new Runnable() {
-                public void run() {
-                    window.startSearch();
-                }
-            });
-        } catch (InterruptedException ex) {
-            // TODO Auto-generated catch block
-            throw new UnexpectedException(ex);
-        }
-
         msearch.run();
-
-        try {
-            msearch.waitForEnd();
-        } catch (Exception ex) {
-            ex.printStackTrace();
-        }
-
-        try {
-            Util.invokeAndWait(new Runnable() {
-                public void run() {
-                    window.searchOver();
-                }
-            });
-        } catch (InterruptedException ex) {
-            // TODO Auto-generated catch block
-            throw new UnexpectedException(ex);
-        }
     }
 
     public void end() {
@@ -76,5 +48,4 @@ public class SearchEngine extends MysterThread {
     public void flagToEnd() {
         msearch.flagToEnd();
     }
-
 }

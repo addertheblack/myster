@@ -49,7 +49,7 @@ public class SearchButtonEvent implements ActionListener {
             searchButton.setEnabled(false);
             searchButton.setLabel("Stop");
             sengine = new SearchEngine(searchWindow);
-            sengine.start();
+            sengine.run();
             searchWindow.setTitle("Search for \"" + searchWindow.getSearchString() + "\"");
         }
     }

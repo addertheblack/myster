@@ -14,8 +14,8 @@ import com.general.util.Util;
  * available sockets.
  * 
  * NOTE: The user of this pool should remember not to spam it. This class is not
- * responsible for prioritising requests. Well behaved clients should throttle
- * their own number of requests so as to not monopolise this resource.
+ * responsible for prioritize requests. Well behaved clients should throttle
+ * their own number of requests so as to not monopolize this resource.
  * 
  * @see com.general.thread.Executor
  */
