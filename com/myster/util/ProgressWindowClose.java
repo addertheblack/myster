@@ -29,7 +29,7 @@ public class ProgressWindowClose extends WindowAdapter {
         } catch (Exception ex) {
         }
         e.getWindow().setVisible(false);
-        //e.getWindow().dispose();
+        e.getWindow().dispose();
     }
 
 }

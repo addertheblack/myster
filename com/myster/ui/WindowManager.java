@@ -48,7 +48,7 @@ public class WindowManager {
             init();
 
             finalMenu.removeAllElements();
-            finalMenu.ensureCapacity(windows.size() + menuItems.size());
+			finalMenu.ensureCapacity(windows.size() + menuItems.size());
 
             for (int i = 0; i < menuItems.size(); i++) {
                 finalMenu.addElement(menuItems.elementAt(i));

@@ -84,7 +84,7 @@ public class ClientWindow extends MysterFrame implements Sayable {
 
         makeClientWindow();
 
-        windowKeeper.addFrame(this);
+        //windowKeeper.addFrame(this);
     }
 
     public ClientWindow(String ip) {

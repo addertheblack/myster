@@ -56,6 +56,7 @@ public class MysterMenuBar extends MenuBar {
             special = new Vector();
 
             //File menu items
+            
             file.addElement(new MysterMenuItemFactory("New Search", new NewSearchWindowAction(),
                     java.awt.event.KeyEvent.VK_N));
             file.addElement(new MysterMenuItemFactory("New Peer-to-Peer Connection",
@@ -70,8 +71,10 @@ public class MysterMenuBar extends MenuBar {
             file.addElement(new MysterMenuItemFactory("Close Window", new CloseWindowAction(),
                     java.awt.event.KeyEvent.VK_W));
             file.addElement(new MysterMenuItemFactory("-", NULL));
+            
             file.addElement(new MysterMenuItemFactory("Quit", new QuitMenuAction(),
                     java.awt.event.KeyEvent.VK_Q));
+
 
             //Edit menu items
             edit.addElement(new MysterMenuItemFactory("Undo", NULL));
@@ -121,9 +124,10 @@ public class MysterMenuBar extends MenuBar {
         listener.fireEvent(new MenuBarEvent(MenuBarEvent.BAR_CHANGED, getFactory()));
     }
 
-    public static void removeMenuLister(MenuBarListener listener) { //Not
+    public static void removeMenuListener(MenuBarListener listener) { //Not
         // synchronized
         dispatcher.removeListener(listener);
+        //System.gc();
     }
 
     public static boolean removeBuiltInMenu(String menuName) {
@@ -176,11 +180,11 @@ public class MysterMenuBar extends MenuBar {
     }
 
     public static void updateMenuBars() {
-        Util.invoke(new Runnable() {
-            public void run() {
+        //Util.invoke(new Runnable() {
+            //public void run() {
                 dispatcher.fireEvent(new MenuBarEvent(MenuBarEvent.BAR_CHANGED, getFactory()));
-            }
-        });
+           // }
+        //});
     }
 
     public static void addMenu(MysterMenuFactory factory) {

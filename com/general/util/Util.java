@@ -178,7 +178,7 @@ public class Util { //This code was taken from an Apple Sample Code package,
                 try {
                     throw new Exception("Took too long"); //toss and catch.
                 } catch (Exception ex) {
-                    ex.printStackTrace();
+                    //ex.printStackTrace();
                 }
             }
         }

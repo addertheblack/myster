@@ -318,6 +318,20 @@ public class Myster {
                                 ex.printStackTrace();
                             }
                             
+                            
+                            /*
+                            for (int i = 0; i < 100; i++) {
+                            	java.awt.Frame f = new com.myster.search.ui.SearchWindow();
+                            	//f.setSize(100,100);
+                            	f.setVisible(true);
+                            	f.dispose();
+                            	System.gc();
+                            }
+                            
+                            System.gc();System.gc();System.gc();System.gc();System.gc();System.gc();System.gc();
+                            System.gc();System.gc();System.gc();System.gc();System.gc();System.gc();System.gc();
+                           */ 
+                            
                             MysterMenuBar.addMenuItem(new MysterMenuItemFactory("Free Memory", new ActionListener() {
                                 public void actionPerformed(ActionEvent e) {
                                     System.gc();System.gc();System.gc();System.gc();System.gc();

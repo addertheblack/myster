@@ -1,17 +1,17 @@
 package com.myster.ui;
 
-import java.awt.Frame;
-import java.awt.MenuBar;
-import java.awt.Point;
-import java.awt.event.ComponentEvent;
-import java.awt.event.ComponentListener;
-import java.awt.event.WindowEvent;
-import java.awt.event.WindowListener;
+import java.awt.*;
+import java.awt.event.*;
+
+import com.myster.menubar.event.MenuBarListener;
+import com.myster.menubar.MysterMenuBar;
 
 public class MysterFrame extends Frame {
     static int xStart = 5;
 
     static int yStart = 5;
+    
+    MenuBarListener menuListener;
 
     public MysterFrame() {
         super();//explicit good
@@ -100,8 +100,8 @@ public class MysterFrame extends Frame {
 
         });
 
-        com.myster.menubar.MysterMenuBar
-                .addMenuListener(new com.myster.menubar.event.MenuBarListener() {
+
+		menuListener = new MenuBarListener() {
                     public void stateChanged(
                             com.myster.menubar.event.MenuBarEvent e) {
                         MenuBar oldMenuBar = getMenuBar();
@@ -109,6 +109,7 @@ public class MysterFrame extends Frame {
                         if (oldMenuBar == null) {
                             setMenuBar(e.makeNewMenuBar());
                         } else {
+                        
                             MenuBar newMenuBar = e.makeNewMenuBar();
                             int maxOldMenus = oldMenuBar.getMenuCount();
                             int maxNewMenus = newMenuBar.getMenuCount();
@@ -123,10 +124,12 @@ public class MysterFrame extends Frame {
                             for (int i = 1; i < maxNewMenus; i++) {
                                 oldMenuBar.add(newMenuBar.getMenu(0));
                             }
+                            
                         }
                     }
-                });
+                };
 
+        MysterMenuBar.addMenuListener(menuListener);
     }
 
     public void closeWindowEvent() {
@@ -136,5 +139,10 @@ public class MysterFrame extends Frame {
     public void close() {
         closeWindowEvent();
         setVisible(false);
+    }
+    
+    public void dispose() {
+    	MysterMenuBar.removeMenuListener(menuListener);
+    	super.dispose();
     }
 }

@@ -64,6 +64,10 @@ public class SyncEventDispatcher extends EventDispatcher {
 
         listeners.removeElement(l);
     }
+    
+    public synchronized int getListenerCount() {
+    	return listeners.size();
+    }
 
     private class ModifyListCommand {
         private final EventListener listener;

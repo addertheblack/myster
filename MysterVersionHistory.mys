@@ -1055,6 +1055,7 @@ Work on DEV 8:
 		-> Fixed a bug where clicking cancel on a dialog for multisource download would cause regular download to start.
 		-> Fixed a bug where Myster jsut plain froze.
 		-> Added two routines that allow for code to be execute on the event thread. is 1.1 compatible! yeah!
+		-> Made as much of Myster as possible run on the event thread.
 		
 		
 (Red List)
