@@ -1,3 +1,14 @@
+/* 
+
+	Title:			Myster Open Source
+	Author:			Andrew Trumper
+	Description:	Generic Myster Code
+	
+	This code is under GPL
+
+Copyright Andrew Trumper 2003
+*/
+
 package com.myster.type;
 
 import java.io.UnsupportedEncodingException;
@@ -13,7 +24,10 @@ public class MysterType {
 	}
 	
 	public MysterType(int type) {
-		this(new byte[]{(byte)((type>>24) & 0xFF), (byte)((type>>16) & 0xFF),(byte)((type>>8) & 0xFF), (byte)((type>>0) & 0xFF)});
+		this(new byte[]{(byte)((type>>24) & 0xFF),
+						(byte)((type>>16) & 0xFF),
+						(byte)((type>>8) & 0xFF),
+						(byte)((type>>0) & 0xFF)});
 	}
 	
 	public boolean equals(Object o) {
@@ -50,7 +64,7 @@ public class MysterType {
 	
 	public String toString() {
 		try {
-			return new String(type, "ascii");
+			return new String(type, "ASCII");
 		} catch (UnsupportedEncodingException ex) {
 			ex.printStackTrace();
 			return new String(type);

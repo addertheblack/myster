@@ -65,31 +65,29 @@ public class Util { //This code was taken from an Apple Sample Code package,
 	
 	public static String getStringFromBytes(long bytes) {
 		if (bytes<1024) {
-			return (""+bytes+"bytes");
+			return bytes+"bytes";
 		}
 		
 		long kilo=bytes/1024;
 		if (kilo<1024) {
-			return new String(""+kilo+"K");
-			
+			return kilo+"K";
 		}
 		
-		double megs=(double)kilo/1024;
+		double megs = (double)kilo/1024;
 		if (megs<1024) {
-			String temp=new String(""+megs);
-			return new String(temp.substring(0,temp.indexOf(".")+2)+"MB");
-			
+			String temp = "" + megs;
+			return temp.substring(0, temp.indexOf(".") + 2) + "MB";
 		}
 		
-		double gigs=(double)megs/1024;
+		double gigs = megs/1024;
 		if (gigs<1024) {
-			String temp=new String(""+gigs);
-			return new String(temp.substring(0,temp.indexOf(".")+2)+"GB");
+			String temp = ""+gigs;
+			return temp.substring(0, temp.indexOf(".")  + 2) + "GB";
 		}
 		
-		double tera=(double)gigs/1024;
-		String temp=new String(""+tera);
-		return new String(temp.substring(0,temp.indexOf(".")+2)+"GB");
+		double tera = gigs/1024;
+		String temp = "" + tera;
+		return temp.substring(0, temp.indexOf(".") + 2) + "TB";
 	}
 	
 	public static byte[] concatenateBytes(byte[] array, byte[] array2) {

@@ -866,7 +866,7 @@ Work on DEV 8:
 	  2003/06/20
 	  	-> Worked on getFileByHash
 	  	-> took rest of the month off.
-	  1003/07/20
+	  2003/07/20
 	  	-> created multi-source server section
 	  	-> hoooked it up to server GUI
 	  	-> created Multi source client project am testing it with server.
@@ -875,3 +875,5 @@ Work on DEV 8:
 	  	-> Merged multi-source download client project with main Myster source
 	  	-> hooked up 6669 error message to FAQ on the myster web page.
 	  	-> Replace Operator reseter thread with a timer.
+	  2003/08/20
+	  	-> Fixed bug in getStringFromBytes that would show terabytes as gigabytes. (Thanx Rev)

@@ -45,7 +45,7 @@ public class MultiSourceDownload {
 	
 	long fileProgress= 0;
 	long bytesWrittenOut = 0;
-	long fileLength = 81415201; //for testing.
+	long fileLength;
 	ProgressWindow progress;
 	//SimpleHash
 	
@@ -84,6 +84,7 @@ public class MultiSourceDownload {
 		}
 	}
 	
+	//remoes a download but doesn't stop a download.
 	private synchronized void removeDownload(int barNumber) {
 		downloaders[barNumber] = null;
 	}
@@ -96,6 +97,12 @@ public class MultiSourceDownload {
 		for (int i=0; i<downloaders.length; i++) {
 			if (downloaders[i]!=null) downloaders[i].endWhenPossible();
 		}
+
+		cleanUp();
+	}
+	
+	public void end() {
+		
 	}
 
 	public synchronized void start() {
@@ -109,6 +116,7 @@ public class MultiSourceDownload {
 		progress.addWindowListener(new WindowAdapter() {
 			public void windowClosing(WindowEvent e) {
 				flagToEnd();
+				end();
 				progress.setVisible(false);
 			}
 		});
@@ -251,9 +259,24 @@ public class MultiSourceDownload {
 			
 			bytesWrittenOut+=dataBlock.bytes.length;
 			progress.setValue(bytesWrittenOut);
+			
+			if (bytesWrittenOut == fileLength) {
+				done();
+			}
 		} catch (IOException ex) {
 			ex.printStackTrace(); //fix
 		}
+	}
+	
+	//call when downlaod has completed sucessfully.
+	private synchronized void done() {
+		cleanUp();
+		progress.setText("File transfer complete.");
+	}
+	
+	//call when download is over but not done.
+	private synchronized void cleanUp() {
+		try {randomAccessFile.close();} catch (IOException ex) {}
 	}
 	
 	public synchronized void receiveExtraSegments(WorkSegment[] workSegments) {
@@ -304,7 +327,7 @@ public class MultiSourceDownload {
 		}
 	
 		public void run() {
-			MysterSocket socket ;
+			MysterSocket socket = null;
 			try {
 				socket = MysterSocketFactory.makeStreamConnection(stub.getMysterAddress());
 				
@@ -329,6 +352,9 @@ public class MultiSourceDownload {
 			} catch (IOException ex) {
 				ex.printStackTrace();
 			} finally {
+				try {
+					socket.close();
+				} catch (Exception ex) {}
 				finishUp();
 			}
 		}

@@ -97,7 +97,7 @@ public class Operator extends MysterThread{
 			try {
 				if (serverSocket!=null) try {serverSocket.close();} catch (IOException ex) {}
 				
-				serverSocket=new ServerSocket(Myster.PORT, 2);
+				serverSocket=new ServerSocket(Myster.DEFAULT_PORT, 2);
 				break;
 			} catch (IOException ex) {
 				try {sleep(10*1000);} catch (InterruptedException exp) {} //wait 10 seconds then try to make the socket again.

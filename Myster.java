@@ -175,15 +175,6 @@ public class Myster{
 					//sw.say(I18n.tr("Idle.."));
 				}
 				
-				/*
-				System.out.println("Hello????");
-				try {
-					System.out.println("-------------->"+com.myster.client.stream.StandardSuite.getFileFromHash(new MysterAddress("127.0.0.1"), new com.myster.type.MysterType((new String("MPG3")).getBytes()), FileTypeListManager.getInstance().getFileItem(new com.myster.type.MysterType((new String("MPG3")).getBytes()), "moo.mp3").getHash("md5")));
-				} catch (Exception ex) {
-					ex.printStackTrace();
-				}
-				System.out.println("Hello????     ....");
-				*/
 			}
 		}).start();
 	}
@@ -193,10 +184,10 @@ public class Myster{
 	
 	//These variables are System wide variables that 
 	//dictate how long things are or what port were's on or whatever...
-	public static final int PORT=6669;			//Default port.
+	public static final int DEFAULT_PORT=6669;			//Default port.
 	public static final String SPEEDPATH="Globals/speed/";
 	public static final String ADDRESSPATH="Globals/address/";
-	public static final String DEFAULT_ENCODING = "ascii";
+	public static final String DEFAULT_ENCODING = "ASCII";
 	
 
 	//public static double speed=14.4;
@@ -308,11 +299,11 @@ public class Myster{
 	*		 when quitting!).
 	*/
 	public static void quit() {
-		//Preferences.getInstance().flush(); //flushes prefs to disk.
-		//File file =new File(fileLockName);
-		//if (file.exists()) {
-		//	file.delete();
-		//}
+		Preferences.getInstance().flush(); //flushes prefs to disk.
+		File file =new File(fileLockName);
+		if (file.exists()) {
+			file.delete();
+		}
 		System.out.println("Byeeeee.");
 		System.exit(0);
 	}

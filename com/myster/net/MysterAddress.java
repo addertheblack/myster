@@ -1,48 +1,57 @@
+/* 
+
+	Title:			Myster Open Source
+	Author:			Andrew Trumper
+	Description:	Generic Myster Code
+	
+	This code is under GPL
+
+Copyright Andrew Trumper 2002-2003
+*/
+
 package com.myster.net;
 
-import java.net.*;
+import Myster;
+
+import java.net.InetAddress;
+import java.net.UnknownHostException;
 
 public class MysterAddress {
-	int port=6669;
 	InetAddress fullAddress;
-	
-	public static final boolean DNS_ON=true;
+	int port;
 
-	public MysterAddress(String s) throws UnknownHostException { //somethign similar here too.
+	public MysterAddress(String s) throws UnknownHostException { //should throw a runtime error.
 		String ip=s;
-		if (s.indexOf(":")!=-1) {
-			String portstr=s.substring(s.indexOf(":")+1);
-			port=Integer.parseInt(portstr);
-			ip=s.substring(0, s.indexOf(":"));
+		int port = Myster.DEFAULT_PORT;
+		
+		if (s.indexOf(":") != -1) {
+			String portstr = s.substring(s.indexOf(":")+1);
+			try {
+				port = Integer.parseInt(portstr); //need some checks here.
+			} catch (NumberFormatException ex) {
+				throw new UnknownHostException("Port value is not a number");
+			}
+			ip = s.substring(0, s.indexOf(":"));
 		}
 
-		fullAddress=InetAddress.getByName(ip);
-
+		init(InetAddress.getByName(ip), port);
 	}
 	
 	public MysterAddress(InetAddress i) {
-		fullAddress=i;
+		init(i, Myster.DEFAULT_PORT);
 	}
 	
 	public MysterAddress(InetAddress i, int port) { //should throw a runtime error.
+		init(i, port);
+	}
+	
+	private void init(InetAddress i, int port) {
 		fullAddress=i;
-		this.port=port; //need some checks here.
-	}
-	
-	public static String getResolved(String s) throws UnknownHostException { //resolves an domain anme to ip.
-		String ip=s;
-		int port=6669;
+		this.port=port; //need some checks here
 		
-		if (s.indexOf(":")!=-1) {
-			String portstr=s.substring(s.indexOf(":")+1);
-			port=Integer.parseInt(portstr);
-			ip=s.substring(0, s.indexOf(":"));
-		}
-		
-		if (DNS_ON) ip=InetAddress.getByName(ip).getHostAddress();
-		return (port==6669?ip:ip+":"+port);
+		if (port > 0xFFFF) throw new IllegalArgumentException("Port is out of range -> "+port);
 	}
-	
+
 	public String getIP() {
 		return fullAddress.getHostAddress();
 	}
@@ -56,7 +65,7 @@ public class MysterAddress {
 	}
 	
 	public String toString() {
-		return (port!=6669?getIP()+":"+port:getIP());
+		return (port!=Myster.DEFAULT_PORT?getIP()+":"+port:getIP());
 	}
 	
 	public boolean equals(Object aa) {
