@@ -39,7 +39,7 @@ public class IPListManager { //aka tracker
 	
 	BlockingQueue blockingQueue=new BlockingQueue();
 	
-	AddIP[] adderWorkers=new AddIP[3];
+	AddIP[] adderWorkers=new AddIP[5];
 
 	protected IPListManager() {
 		blockingQueue.setRejectDuplicates(true);

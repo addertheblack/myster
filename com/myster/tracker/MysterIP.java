@@ -75,7 +75,7 @@ class MysterIP {
 	private static final long UPDATETIME=3600000;// 86400000==1 day, 3600000==1 hour ;
 	private static final long MINIUPDATETIME=10*60*1000;//600000;//5 minutes = 300 seconds;
 	
-	private static final int NUMBER_OF_UPDATER_THREADS=5;
+	private static final int NUMBER_OF_UPDATER_THREADS=3;
 
 	
 	protected MysterIP(String ip) throws Exception{
@@ -180,7 +180,7 @@ class MysterIP {
 				(double)Math.log(HITSCONSTANT+1)*numberofhits+ 									//not used
 				(double)UPVSDOWNCONSTANT*((double)timeup/(double)(timeup+timedown))+			//up vs down
 				(double)(STATUSCONSTANT*(upordown ? 4 : 0)))+									//up or down
-				(lastPingTime==-1||lastPingTime==-2?(0.1-(double)2000/2500):(0.1-(double)lastPingTime/2500)); 	//ping
+				(lastPingTime==-1||lastPingTime==-2?(0.1-(double)20000/2500):(0.1-(double)lastPingTime/2500)); 	//ping
 		}
 		
 		public String getServerIdentity() {
