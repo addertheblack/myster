@@ -324,10 +324,10 @@ public class MSPartialFile {
         return 8 * (maskFile.length() - offset);
     }
 
-    private boolean getBit(long bit) throws IOException {
-        maskFile.seek(getSeek(bit));
-        return (maskFile.read() & getMask(bit)) != 0;
-    }
+//    private boolean getBit(long bit) throws IOException {
+//        maskFile.seek(getSeek(bit));
+//        return (maskFile.read() & getMask(bit)) != 0;
+//    }
 
     public void setBit(long bit) throws IOException {
         long seek = getSeek(bit);
