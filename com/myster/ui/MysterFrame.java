@@ -56,7 +56,7 @@ public class MysterFrame extends Frame {
     }
 
     private void initEvents() {
-        Image image =  com.general.util.Util.loadImage("myster_logo.gif", this);
+        Image image =  com.general.util.Util.loadImage("myster_logo.gif", this, MysterFrame.class.getResource("myster_logo.gif"));
         if (image != null) {
             setIconImage(image);
         }
