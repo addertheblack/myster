@@ -128,14 +128,28 @@ public class FileProgressWindow extends ProgressWindow {
 		}
 	}
 	
-	private class AdClickHandler extends MouseAdapter {
+	private class AdClickHandler extends MouseAdapter  {
+		public long lastMouseReleaseTime = 0;
+		
+		public void mouseEntered(MouseEvent e) {
+			if (url != null) adPanel.setLabelText(url);
+		}
+		
+		public void mouseExited(MouseEvent e) {
+			adPanel.setLabelText("");
+		}
+	
 		public void mouseReleased(MouseEvent e) {		
 			if ((e.getX() > 0 && e.getX() < X_SIZE) && (e.getY() >0 && e.getY() < AD_HEIGHT)) {
-				try {
-					if (url!=null) WebLinkManager.openURL(new URL(url));
-				} catch (MalformedURLException ex) {
-					ex.printStackTrace();
+				if (System.currentTimeMillis() - lastMouseReleaseTime > 500) {
+					try {
+						WebLinkManager.openURL(new URL(url));
+					} catch (MalformedURLException ex) {
+						ex.printStackTrace();
+					}
 				}
+				
+				lastMouseReleaseTime = System.currentTimeMillis(); //so that double - triple clicks by spastic people don't generate multipe browsers
 			}
 		}
 	}

@@ -318,6 +318,7 @@ public class ProgressWindow extends Frame {
 	
 	private static class AdPanel extends DoubleBufferPanel {
 		Image ad;
+		String labelText = "";
 		
 		public void setAd(Image im) {
 			ad = im;
@@ -327,6 +328,23 @@ public class ProgressWindow extends Frame {
 			if (ad == null) return;
 			
 			g.drawImage(ad, 0, 0, X_SIZE, AD_HEIGHT, this);
+			
+			if (!labelText.equals("")) {
+				final int xPadding = 3;
+				
+				FontMetrics metrics = getFontMetrics(getFont());
+				
+				int descent = metrics.getDescent();
+				int ascent 	= metrics.getAscent();
+				int leading = metrics.getLeading();
+				int height 	= metrics.getHeight();
+				
+				g.setColor(new Color(255,255,200));
+				g.fillRect(0,0, metrics.stringWidth(labelText) + xPadding + xPadding,height);
+				
+				g.setColor(Color.black);
+				g.drawString(labelText, xPadding, ascent + leading/2);
+			}
 		}
 		
 		public Dimension getPreferredSize() {
@@ -335,6 +353,11 @@ public class ProgressWindow extends Frame {
 		
 		public void addImage(Image newAd) {
 			ad = newAd;
+			repaint();
+		}
+		
+		public void setLabelText(String someText) {
+			labelText = someText;
 			repaint();
 		}
 	}
