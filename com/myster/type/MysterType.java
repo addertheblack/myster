@@ -22,6 +22,10 @@ public class MysterType {
 	
 		this.type = (byte[]) type.clone();
 	}
+
+	public MysterType(String type) {
+		this(type.getBytes());
+	}
 	
 	public MysterType(int type) {
 		this(new byte[]{(byte)((type>>24) & 0xFF),
