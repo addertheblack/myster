@@ -4,7 +4,6 @@ import java.awt.Color;
 import java.awt.Dimension;
 import java.awt.FlowLayout;
 import java.awt.FontMetrics;
-import java.awt.Frame;
 import java.awt.Graphics;
 import java.awt.Image;
 import java.awt.Insets;
@@ -15,8 +14,9 @@ import java.awt.event.MouseListener;
 import java.util.Vector;
 
 import com.general.util.ProgressBar;
+import com.myster.ui.MysterFrame;
 
-public class ProgressWindow extends Frame {
+public class ProgressWindow extends MysterFrame {
     public static final int X_SIZE = 468;
 
     public static final int Y_SIZE = 50;
@@ -53,8 +53,7 @@ public class ProgressWindow extends Frame {
 
         setResizable(false);
 
-        Image adImage = com.general.util.Util.loadImage(
-                "defaultProgressImage.jpg", adPanel);
+        Image adImage = com.general.util.Util.loadImage("defaultProgressImage.jpg", adPanel);
 
         if (adImage != null)
             adPanel.addImage(adImage);
@@ -65,7 +64,7 @@ public class ProgressWindow extends Frame {
         resize();
         doLayout();
     }
-    
+
     public void pack() {
         super.pack();
         resize();
@@ -79,8 +78,7 @@ public class ProgressWindow extends Frame {
         //the user is dragging the window and/or crash if
         //I continue too soon after sending it. *sigh*
         int xSize = X_SIZE + insets.right + insets.left;
-        int ySize = AD_HEIGHT + (Y_SIZE * progressPanels.size()) + insets.top
-                + insets.bottom;
+        int ySize = AD_HEIGHT + (Y_SIZE * progressPanels.size()) + insets.top + insets.bottom;
         int counter = 0;
         while ((getSize().width != xSize) || (getSize().height != ySize)) {
             setSize(xSize, ySize);
@@ -210,8 +208,7 @@ public class ProgressWindow extends Frame {
     //I guess you can never be too safe.
     private void checkBounds(int index) {
         if (index < 0 || index > progressPanels.size())
-            throw new IndexOutOfBoundsException(index
-                    + " is not a valid progress bar");
+            throw new IndexOutOfBoundsException(index + " is not a valid progress bar");
     }
 
     private ProgressPanel getProgressPanel(int index) {
@@ -258,8 +255,7 @@ public class ProgressWindow extends Frame {
         double percent = 0;
 
         percent = (getValue() < getMin() || getValue() > getMax() ? 0
-                : ((double) (getValue() - getMin()))
-                        / ((double) (getMax() - getMin())));
+                : ((double) (getValue() - getMin())) / ((double) (getMax() - getMin())));
 
         int int_temp = (int) (percent * 100);
 
@@ -329,8 +325,7 @@ public class ProgressWindow extends Frame {
             add(textLabel);
 
             additionalLabel = new Label();
-            additionalLabel.setLocation(X_SIZE - ADDITIONAL_X_SIZE,
-                    Y_TEXT_OFFSET);
+            additionalLabel.setLocation(X_SIZE - ADDITIONAL_X_SIZE, Y_TEXT_OFFSET);
             additionalLabel.setSize(ADDITIONAL_X_SIZE, 20);
             add(additionalLabel);
         }
@@ -409,8 +404,7 @@ public class ProgressWindow extends Frame {
                 int height = metrics.getHeight();
 
                 g.setColor(new Color(255, 255, 200));
-                g.fillRect(0, 0, metrics.stringWidth(labelText) + xPadding
-                        + xPadding, height);
+                g.fillRect(0, 0, metrics.stringWidth(labelText) + xPadding + xPadding, height);
 
                 g.setColor(Color.black);
                 g.drawString(labelText, xPadding, ascent + leading / 2);
@@ -445,8 +439,7 @@ public class ProgressWindow extends Frame {
             if ((im == null) || (!currentBufferSize.equals(getSize()))) {
                 currentBufferSize = getSize();
 
-                im = createImage(currentBufferSize.width,
-                        currentBufferSize.height);
+                im = createImage(currentBufferSize.width, currentBufferSize.height);
             }
 
             paint(im.getGraphics());

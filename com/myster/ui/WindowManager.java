@@ -5,8 +5,6 @@ import java.awt.Menu;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.KeyEvent;
-import java.lang.reflect.InvocationTargetException;
-import java.lang.reflect.Method;
 import java.util.Enumeration;
 import java.util.Hashtable;
 import java.util.Vector;
@@ -44,7 +42,7 @@ public class WindowManager {
 
     }
 
-    protected static void removeWindow(MysterFrame frame) {
+    static void removeWindow(MysterFrame frame) {
         boolean yep = windows.removeElement(frame);
         windowMenuHash.remove(frame);
         if (yep) {
@@ -104,15 +102,13 @@ public class WindowManager {
         return menu;
     }
 
-    protected static void setFrontWindow(MysterFrame frame) {
+    static void setFrontWindow(MysterFrame frame) {
         frontMost = frame;
     }
 
     public static MysterFrame getFrontMostWindow() {
         return frontMost;
     }
-
-
 
     static boolean isInited;
 
@@ -145,8 +141,7 @@ public class WindowManager {
 
             synchronized (windows) {
                 if (windows.size() <= 0)
-                    return; //(could happen if none-tracked window is
-                // frontmost)
+                    return; //(could happen if none-tracked window is frontmost)
 
                 int index = windows.indexOf(getFrontMostWindow());
 
@@ -154,13 +149,22 @@ public class WindowManager {
                     index = 0;
                 }
 
-                index++;
+                MysterFrame frame;
+                int counter = 0;
+                do {
+                    index++;
+                    if (index >= windows.size()) {
+                        index = 0;
+                    }
 
-                if (index >= windows.size()) {
-                    index = 0;
-                }
-
-                ((MysterFrame) windows.elementAt(index)).toFrontAndUnminimize();
+                    frame = (MysterFrame) windows.elementAt(index);
+                    if (counter > windows.size()) {
+                        throw new IllegalStateException(
+                                "No MysterFrames with menu bars exist and yet we have been asked to do a window cycle!");
+                    }
+                    counter++;
+                } while (!frame.isMenuBarEnabled());
+                frame.toFrontAndUnminimize();
             }
         }
     }

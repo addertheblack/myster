@@ -1,6 +1,7 @@
 package com.myster.ui;
 
 import java.awt.Frame;
+import java.awt.Image;
 import java.awt.MenuBar;
 import java.awt.Point;
 import java.awt.event.ComponentEvent;
@@ -19,6 +20,8 @@ public class MysterFrame extends Frame {
     static int yStart = 5;
 
     MenuBarListener menuListener;
+
+    private boolean menuBarEnabled = true;
 
     public MysterFrame() {
         super();//explicit good
@@ -53,6 +56,11 @@ public class MysterFrame extends Frame {
     }
 
     private void initEvents() {
+        Image image =  com.general.util.Util.loadImage("myster_logo.gif", this);
+        if (image != null) {
+            setIconImage(image);
+        }
+        
         setLocation(getWindowStartingLocation());
 
         addWindowListener(new WindowListener() {
@@ -116,9 +124,39 @@ public class MysterFrame extends Frame {
 
     public void show() {
         WindowManager.addWindow(MysterFrame.this);
+
+        if (menuBarEnabled) {
+            enableMenuBar();
+        }
+        super.show();
+    }
+
+    public void setMenuBarEnabled(boolean enable) {
+        if (menuBarEnabled == enable)
+            return;
+
+        this.menuBarEnabled = enable;
+
+        if (enable) {
+            if (menuListener != null) {
+                MysterMenuBar.removeMenuListener(menuListener);
+            }
+
+            setMenuBar(null);
+        } else {
+            if (isVisible()) {
+                enableMenuBar();
+            }
+        }
+    }
+
+    private void enableMenuBar() {
         MysterMenuBar.addMenuListener(menuListener);
         setMenuBar(MysterMenuBar.getFactory().makeMenuBar(MysterFrame.this));
-        super.show();
+    }
+
+    public boolean isMenuBarEnabled() {
+        return menuBarEnabled;
     }
 
     /**

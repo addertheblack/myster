@@ -10,7 +10,6 @@
 
 package com.myster;
 
-import java.awt.Point;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.io.DataInputStream;
@@ -100,6 +99,7 @@ public class Myster {
                         public void run() {
                             tempArray[0] = new com.myster.util.ProgressWindow();
                             ProgressWindow progress = tempArray[0];
+                            progress.setMenuBarEnabled(false);
                             progress.setTitle(I18n.tr("Loading Myster..."));
                             progress.pack();
                             com.general.util.Util.centerFrame(progress, 0, -50);
