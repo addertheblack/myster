@@ -93,8 +93,8 @@ public class WindowManager {
     private static Menu getCorrectWindowsMenu(Frame frame) {
         Menu menu = (Menu) windowMenuHash.get(frame);
         if (menu == null) {
-            // return new Menu("jello");
-            throw new IllegalStateException("This frame has no windows menu! " + frame.getTitle());
+            return new Menu("Windows");
+            //throw new IllegalStateException("This frame has no windows menu! " + frame.getTitle());
             //menu = (new MysterMenuFactory("Windows",
             // finalMenu)).makeMenu(frame);
             //windowMenuHash.put(frame, menu);

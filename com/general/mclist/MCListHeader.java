@@ -146,7 +146,7 @@ public class MCListHeader extends Panel {
             int internalPadding, boolean isSelected, boolean isMouseOver) {
         //Calculates the "Selected Column" and/or "Mouser Over" colors.
         if (isSelected) {
-            g.setColor(isMouseOver ? new Color(222, 222, 222) : new Color(210, 210, 210));
+            g.setColor(isMouseOver ? new Color(222, 222, 255) : new Color(210, 210, 240));
         } else {
             g.setColor(isMouseOver ? new Color(222, 222, 222) : new Color(210, 210, 210));
         }
@@ -173,10 +173,10 @@ public class MCListHeader extends Panel {
         g.setColor(new Color(100, 100, 100));
         g.fillRect(padding + hozoffset + width - 1, height - 1, 1, 1);
         
-        if (isSelected) {
-            g.setColor(new Color(50,50,255,45));
-            g.fillRect(padding + hozoffset, padding, width, 2 * internalPadding + HEIGHT);
-        }
+       // if (isSelected) {
+       //     g.setColor(new Color(50,50,255,45));
+       //     g.fillRect(padding + hozoffset, padding, width, 2 * internalPadding + HEIGHT);
+        //}
 
     }
 

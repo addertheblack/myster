@@ -251,9 +251,7 @@ public class TrackerWindow extends MysterFrame {
         }
 
         public void refresh() {
-            server = manager.getQuickServerStats(server.getAddress());
-
-            if (server == null) {
+            if (manager.getQuickServerStats(server.getAddress()) == null) {
                 sortables[0] = new SortableString("" + server.getAddress());
                 sortables[1] = new SortableLong(0);
                 sortables[2] = new SortableStatus(false, true);
