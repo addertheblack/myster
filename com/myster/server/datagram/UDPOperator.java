@@ -10,6 +10,10 @@ import com.general.net.AsyncDatagramListener;
 import com.general.net.ImmutableDatagramPacket;
 import com.general.net.AsyncDatagramSocket;
 
+
+/**
+	deprecated. now useless.. To be removed.
+*/
 public class UDPOperator implements AsyncDatagramListener{
 	int port;
 	AsyncDatagramSocket dsocket=null;
@@ -22,7 +26,7 @@ public class UDPOperator implements AsyncDatagramListener{
 		//dsocket.setPortListener(this);
 	}
 
-	public void start() {
+	public void start() { //hahaha
 
 	}
 

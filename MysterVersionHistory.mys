@@ -1,5 +1,5 @@
 //!Internal! version history from Dev6 onward
-//© Andrew Trumper 2001
+//© Andrew Trumper 2001-2003
 
 //NOTE TO READERS:
 //THIS DOCUMENT IS MENT FOR INTERNAL USE ONLY
@@ -232,7 +232,7 @@ Work on DEV 8:
 		NOTE TO ALL : ALL PREVIOUS VERSIONS HAVE A TOTALY BROKEN TRACKERS!
 		NOTE TO SELF: Encapsulate the fucking protocol, dumbass!
 		(wow, that was old code. The protocol it implemented was DEV 7's version!)
-	-> Removed some a few stupid debugging messages.
+	-> Removed a few stupid debugging messages.
 	-> Added a few more stupid debugging messages.
 	-> Fixed a socket not being closed.
 	
@@ -761,7 +761,7 @@ Work on DEV 8:
     	-> Added new WindowManager
     	-> re-wrote menubar code
     	-> Finished MacOS X plugin.
-    	-> Myster is now 18429 lines of yummy java goodness
+    	-> Myster is now 18 429 lines of yummy java goodness
 
   Work on DEV 16
     2002/10/26
@@ -788,5 +788,11 @@ Work on DEV 8:
      	-> added a ROMS type.
      	-> Working on a Chat plugin (not finished)
      	-> Working on a UDP Transaction system
+     	-> Finished UDP Transaction sub system
+     	-> Added proper window behavior (Windows now remember their location on close and pop back when opened)
+     	-> Myster is now ~20 000 lines of code
+     	-> Fixed a bug in my new MML parser implementation (<></> error).
+     			It was dicovered when I was working on the chat plugin.
+     	-> Started work on changing the chat plugin architecture into something less crap.
      	
      	

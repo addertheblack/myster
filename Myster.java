@@ -44,7 +44,6 @@ import com.myster.bandwidth.BandwidthManager;
 
 import java.util.Locale;
 
-import com.myster.transaction.*; //testing
 
 public class Myster{
 
@@ -56,22 +55,26 @@ public class Myster{
 	public static void main(String args[]) {
 		final boolean isServer=(args.length>0&&args[0].equals("-s"));
 		
+
+		
+		System.out.println("java.vm.specification.version:"+System.getProperty("java.vm.specification.version"));
+		System.out.println("java.vm.specification.vendor :"+System.getProperty("java.vm.specification.vendor"));
+		System.out.println("java.vm.specification.name   :"+System.getProperty("java.vm.specification.name"));
+		System.out.println("java.vm.version              :"+System.getProperty("java.vm.version"));
+		System.out.println("java.vm.vendor               :"+System.getProperty("java.vm.vendor"));
+		System.out.println("java.vm.name                 :"+System.getProperty("java.vm.name"));
+		
+		
+		
 		//Locale.setDefault(new Locale(Locale.JAPANESE.getLanguage(),Locale.JAPAN.getCountry()));
+		/*
 		try {
 			resources = ResourceBundle.getBundle("com.properties.Myster");
 		}
 		catch (MissingResourceException e) {
 			System.err.println("resources not found");
 			//System.exit(1);
-		}
-		
-		System.out.println("java.vm.specification.version:"+System.getProperty("java.vm.specification.version"));
-		System.out.println("java.vm.specification.vendor :"+System.getProperty("java.vm.specification.vendor"));
-		System.out.println("java.vm.specification.name   :"+System.getProperty("java.vm.specification.name"));
-		System.out.println("java.vm.version	             :"+System.getProperty("java.vm.version"));
-		System.out.println("java.vm.vendor               :"+System.getProperty("java.vm.vendor"));
-		System.out.println("java.vm.name                 :"+System.getProperty("java.vm.name"));
-		
+		}*/
 		
 		/*
 		int i_temp=0;
@@ -84,14 +87,11 @@ public class Myster{
 		System.out.println(""+ i_temp);
 		*/
 
-		
 		/*
 		Useless code:
 		System.setProperty("sun.net.inetaddr.ttl", "0");	//gets around DNS caching problem. not supported in 1.1
-		if (UDPPingClient.ping("127.0.0.1")) System.out.println("yep.");
-		else System.out.println("nope.");
-		try { Runtime.getRuntime().exec("explorer http://www.apple.com/"); } catch (Exception ex) {}
 		*/
+
 
 		/*
 		try {
@@ -129,21 +129,11 @@ public class Myster{
 		
 		if (true==true) return;
 		*/
+
 		start();
 		
 		
-		try {
-			PongTransport ponger=new PongTransport();UDPPingClient.setPonger(ponger);
-			DatagramProtocolManager.addTransport(ponger);
-			DatagramProtocolManager.addTransport(new PingTransport());
-			//System.out.println("Ping was "+(ponger.ping(new MysterAddress("127.0.0.1"))?"a success":"a timeout"));
-		} catch (Exception ex) {
-			ex.printStackTrace();
-			com.general.util.AnswerDialog.simpleAlert("Myster's UDP sub-system could not initialize. This means Myster will probably not work correctly. Here is the official error:\n\n"+ex);
-		}
 
-
-		
 		
 		System.out.println( "MAIN THREAD: Starting loader Thread.." );
 		(new Thread() {
@@ -156,10 +146,19 @@ public class Myster{
 				progress.setLocation(100,100);
 				progress.setTitle(Myster.tr("Loading Myster..."));
 				progress.showBytes=false;
+				
+				
 				progress.say(Myster.tr("Loading UDP Operator...")+macHack);
 				progress.update(10);
-				
-				(new UDPOperator(DatagramProtocolManager.getSocket())).start();
+				try { //this stuff is a bit of a hack.. to be fixed later..
+					PongTransport ponger=new PongTransport();UDPPingClient.setPonger(ponger);
+					DatagramProtocolManager.addTransport(ponger);
+					DatagramProtocolManager.addTransport(new PingTransport());
+					//System.out.println("Ping was "+(ponger.ping(new MysterAddress("127.0.0.1"))?"a success":"a timeout"));
+				} catch (Exception ex) {
+					ex.printStackTrace();
+					com.general.util.AnswerDialog.simpleAlert("Myster's UDP sub-system could not initialize. This means Myster will probably not work correctly. Here is the official error:\n\n"+ex);
+				}
 				
 				progress.say(Myster.tr("Loading Server Stats Window...")+macHack);
 				progress.update(15);
@@ -304,7 +303,7 @@ public class Myster{
 							sout=new DataOutputStream(socket.getOutputStream());
 							
 							try {
-								System.out.println("getting conneciton form self");
+								System.out.println("getting connection form self");
 								sin.readInt();
 								sin.readInt();
 								sout.write(1);
