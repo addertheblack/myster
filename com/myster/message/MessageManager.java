@@ -178,23 +178,38 @@ class InstantMessageTransport extends TransactionProtocol {
 	}
 }
 
-class MessagePreferencesPanel extends PreferencesPanel {	
+class MessagePreferencesPanel extends PreferencesPanel {
+	Checkbox acceptMessages;
+	Label denyMessageLabel;
+	TextField denyMessageText;
+
 	public MessagePreferencesPanel() {
 		setLayout(null);
 		
-		Checkbox acceptMessages = new Checkbox("Accept Messages");
-		acceptMessages.setSize(100,25);
-		acceptMessages.setLocation(25,25);
+		acceptMessages = new Checkbox("Refuse Messages");
+		acceptMessages.setSize(150,25);
+		acceptMessages.setLocation(10,25);
+		acceptMessages.addItemListener(new ItemListener() {
+			public void itemStateChanged(ItemEvent e) {
+				if (e.getStateChange()==ItemEvent.SELECTED) {
+					denyMessageLabel.setEnabled(true);
+					denyMessageText.setEnabled(true);
+				} else {
+					denyMessageLabel.setEnabled(false);
+					denyMessageText.setEnabled(false);
+				}
+			}
+		});
 		add(acceptMessages);
 		
-		Label denyMessageLabel = new Label("Deny Message:");
-		denyMessageLabel.setSize(100,25);
-		denyMessageLabel.setLocation(25,50);
+		denyMessageLabel = new Label("Refusal Message:");
+		denyMessageLabel.setSize(150,25);
+		denyMessageLabel.setLocation(20,50);
 		add(denyMessageLabel);
 		
-		TextField denyMessageText = new TextField("Not accepting messages at this time.");
-		denyMessageText.setSize(200,25);
-		denyMessageText.setLocation(150,50);
+		denyMessageText = new TextField("Not accepting messages at this time.");
+		denyMessageText.setSize(300,25);
+		denyMessageText.setLocation(25,75);
 		add(denyMessageText);
 
 		setSize(STD_XSIZE,STD_YSIZE);
