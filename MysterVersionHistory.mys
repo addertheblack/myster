@@ -1032,6 +1032,23 @@ Work on DEV 8:
 				resize the window 20 times (once every half second) before giving up.
 		-> Mster is now 28414 lines of code.
 		
+	Work on DEV 21.1
+		2004/08/21  4 months with not much happening. wow.
+		-> Got Myster running and compiling under eclipse. Nice.
+		-> Fixed lots of minor bugs and reformated all the code to comply with java coding standard.
+		-> Added a bunch of comments. Myster is now 31000+ lines of code.
+		-> Converted the search endgine to search UDP first. 
+			- TopTen and SearchRequest are now done in parallel with one packet each.
+			- No limit to number of UDP connections, so Myster can now search everyone on the network
+					at the same time.
+			- For backwards compatability there is a thread pool to do TCP connections if the UDP
+					request is not understood.
+		-> Fixed a bug where certain japaneese files without "merged punctuation" don't
+				resume. (Thanx "DIALTONE")
+		-> Fixed a bug where no feedback was given after downloading a file because the server was down.
+				A progress dialog now is shown befre connecting to the first server.
+		
+		
 		
 (Red List)
 to do:
