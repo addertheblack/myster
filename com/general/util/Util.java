@@ -4,7 +4,7 @@ import java.awt.*;
 import java.io.*;
 import java.net.*;
 import java.util.*;
-import Myster;
+//import Myster;
 
 public class Util { //This code was taken from an Apple Sample Code package,
 

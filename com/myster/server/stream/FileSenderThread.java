@@ -18,7 +18,7 @@ import com.myster.tracker.IPListManagerSingleton;
 import java.awt.Dimension;
 import com.general.util.*;
 import com.myster.filemanager.*;
-import Myster;
+//import Myster;
 import com.myster.server.event.*;
 import com.myster.server.DownloadInfo;
 import com.general.events.EventDispatcher;

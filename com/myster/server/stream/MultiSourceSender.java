@@ -277,7 +277,7 @@ public class MultiSourceSender extends ServerThread {
 		
 		}
 		
-		private static class UploadBlock {
+		private class UploadBlock {
 			public final long start;
 			public final long size;
 			
@@ -341,7 +341,7 @@ public class MultiSourceSender extends ServerThread {
 		}
 	}
 	
-	private class DisconnectCommandException extends RuntimeException  {
+	private static class DisconnectCommandException extends RuntimeException  {
 	
 	}
 }

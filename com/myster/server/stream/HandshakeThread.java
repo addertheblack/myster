@@ -16,7 +16,7 @@ import com.general.util.*;
 import com.myster.mml.MML;
 import com.myster.filemanager.*;
 import com.myster.pref.Preferences;
-import Myster;
+//import Myster;
 import com.myster.tracker.*;
 import com.myster.server.ServerFacade;
 import com.myster.server.ConnectionContext;
@@ -43,7 +43,7 @@ public class HandshakeThread extends ServerThread {
 			Preferences prefs;
 			prefs=Preferences.getInstance();
 			
-			String tempstring=prefs.query(Myster.SPEEDPATH);
+			String tempstring=prefs.query(com.myster.Myster.SPEEDPATH);
 			if (!(tempstring.equals(""))) {
 				mml.put("/Speed", tempstring);
 			}
@@ -52,7 +52,7 @@ public class HandshakeThread extends ServerThread {
 			
 			mml.put("/Myster Version", "1.0");
 			
-			tempstring=prefs.query(Myster.ADDRESSPATH);
+			tempstring=prefs.query(com.myster.Myster.ADDRESSPATH);
 			if (!(tempstring.equals(""))) {						//If there is no value for the address it doesn't send this info.
 				mml.put("/Address", tempstring);	//Note: "" is no data. see qweryValue();
 			}
@@ -66,7 +66,7 @@ public class HandshakeThread extends ServerThread {
 				}
 			}
 			
-			mml.put("/uptime", ""+(System.currentTimeMillis() - Myster.getLaunchedTime()));
+			mml.put("/uptime", ""+(System.currentTimeMillis() - com.myster.Myster.getLaunchedTime()));
 			
 			return mml;
 		} catch (Exception ex) {

@@ -15,7 +15,8 @@ public class SearchByHash implements MysterSearchClientSection {
 	
 	public SearchByHash(String searchString, MysterType type, SearchResultListener listener) {
 		this.type = type;
-		this.hash = hash;
+		//this.hash = hash;
+		this.hash = null;
 		this.listener = listener;
 	}
 	

@@ -10,7 +10,7 @@ import com.myster.search.MysterFileStub;
 import com.myster.hash.FileHash;
 import com.myster.net.MysterSocket;
 
-import Myster;
+//import Myster;
 
 public class MultiSourceUtilities {
 
@@ -132,7 +132,7 @@ public class MultiSourceUtilities {
 	*	This routine is not stable as it is dependent on the way multi-source downloads are downloaded.
 	*/
 	public static File getIncomingDirectory() throws IOException {
-		File file = new File(Myster.getCurrentDirectory(), "Incoming"); //! This will only ever return null;
+		File file = new File(com.myster.Myster.getCurrentDirectory(), "Incoming"); //! This will only ever return null;
 		
 		if ((file.exists()) && (file.isDirectory())) return file;
 		

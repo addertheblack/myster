@@ -7,7 +7,7 @@ import java.util.StringTokenizer;
 
 import com.myster.pref.PreferencesMML;
 import com.general.events.SyncEventDispatcher;
-import Myster;
+//import Myster;
 
 /**
 * 
@@ -205,7 +205,7 @@ class DefaultTypeDescriptionList extends TypeDescriptionList {
 			for (count=0; true; count++) {
 				try {
 					StringTokenizer tokens = new StringTokenizer(readLine(in),"\\",false);
-					vector.addElement(new TypeDescription(new MysterType(tokens.nextToken().getBytes(Myster.DEFAULT_ENCODING)),tokens.nextToken()));
+					vector.addElement(new TypeDescription(new MysterType(tokens.nextToken().getBytes(com.myster.Myster.DEFAULT_ENCODING)),tokens.nextToken()));
 				} catch (Exception ex) {
 					break;
 				}

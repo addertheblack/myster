@@ -50,7 +50,7 @@ public class MysterType {
 }
 
 
-public class NotAMysterTypeException extends RuntimeException {
+class NotAMysterTypeException extends RuntimeException {
 
 	public NotAMysterTypeException(String message) {
 		super(message);

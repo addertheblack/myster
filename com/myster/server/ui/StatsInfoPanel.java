@@ -14,7 +14,7 @@ import com.general.tab.*;
 import java.awt.image.*;
 import com.general.mclist.*;
 
-import Myster;
+//import Myster;
 
 import com.myster.server.event.*;
 import com.myster.server.stream.*;
@@ -349,7 +349,7 @@ public class StatsInfoPanel extends Panel{
 		
 		public void run() {
 				searchperhour.setValue(calculateSearchesPerHour());
-				uptime.setText(Myster.getUptimeAsString(System.currentTimeMillis()-Myster.getLaunchedTime()));
+				uptime.setText(com.myster.Myster.getUptimeAsString(System.currentTimeMillis()-com.myster.Myster.getLaunchedTime()));
 				if (!flag) return;
 				Timer timer=new Timer(this, 5000);
 		}

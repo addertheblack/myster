@@ -7,7 +7,7 @@ import com.general.util.*;
 import com.general.mclist.*;
 import com.myster.tracker.*;
 import com.myster.menubar.MysterMenuBar;
-import Myster;
+//import Myster;
 import com.myster.util.MysterThread;
 import com.myster.util.OpenConnectionHandler;
 import com.myster.ui.MysterFrame;
@@ -393,7 +393,7 @@ public class TrackerWindow extends MysterFrame {
 			}
 			
 			public String toString() {
-				return Myster.getUptimeAsString(number);
+				return com.myster.Myster.getUptimeAsString(number);
 			}
 		}
 	}

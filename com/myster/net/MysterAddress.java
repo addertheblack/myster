@@ -11,7 +11,7 @@ Copyright Andrew Trumper 2002-2003
 
 package com.myster.net;
 
-import Myster;
+//import Myster;
 
 import java.net.InetAddress;
 import java.net.UnknownHostException;
@@ -22,7 +22,7 @@ public class MysterAddress {
 
 	public MysterAddress(String s) throws UnknownHostException { //should throw a runtime error.
 		String ip=s;
-		int port = Myster.DEFAULT_PORT;
+		int port = com.myster.Myster.DEFAULT_PORT;
 		
 		if (s.indexOf(":") != -1) {
 			String portstr = s.substring(s.indexOf(":")+1);
@@ -38,7 +38,7 @@ public class MysterAddress {
 	}
 	
 	public MysterAddress(InetAddress i) {
-		init(i, Myster.DEFAULT_PORT);
+		init(i, com.myster.Myster.DEFAULT_PORT);
 	}
 	
 	public MysterAddress(InetAddress i, int port) { //should throw a runtime error.
@@ -65,7 +65,7 @@ public class MysterAddress {
 	}
 	
 	public String toString() {
-		return (port!=Myster.DEFAULT_PORT?getIP()+":"+port:getIP());
+		return (port!=com.myster.Myster.DEFAULT_PORT?getIP()+":"+port:getIP());
 	}
 	
 	public boolean equals(Object aa) {

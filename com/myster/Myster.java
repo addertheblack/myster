@@ -9,6 +9,7 @@
 Copyright Andrew Trumper 2000-2001
 */
 
+package com.myster;
 
 import java.io.*;
 import java.net.*;
@@ -49,7 +50,7 @@ import com.myster.transaction.*; //test
 import com.myster.util.I18n;
 
 
-public class Myster{
+public class Myster {
 
 	public static File file;
 	public static final String fileLockName=".lockFile";
