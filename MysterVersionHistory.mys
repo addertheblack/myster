@@ -980,7 +980,10 @@ Work on DEV 8:
 		-> Guillaume added code to move the preference file lcoation around on Linux & added an architechture to
 				find the current working folder consistantly.
 		-> Added the RING type.
-		-> 
+		-> Guillaume added some code to check INSIDE OF ZIP FILES for files that match the right types..
+				so if you have an ".nes" file but it's inside a .zip file, Myster will now OPEN
+				THE ZIP FILE and find it and make it downloadable! Isn't that great!
+		-> I re-did the TypeDescription list to add file types
 		
 		
 (Red List)

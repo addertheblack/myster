@@ -44,7 +44,7 @@ public class FileItem {
 		return -1;
 	}
 	
-	private synchronized void setHash(FileHash fileHashes) {
+	private synchronized void setHash(FileHash[] fileHashes) {
 		this.fileHashes = fileHashes;
 	}
 

@@ -174,7 +174,7 @@ class DefaultTypeDescriptionList extends TypeDescriptionList {
 	
 	public TypeDescription get(MysterType type) {
 		for (int i = 0; i < types.length; i++) {
-			if (types.equals(type)) {
+			if (types[i].getTypeDescription().getType().equals(type)) {
 				return types[i].getTypeDescription();
 			}
 		}

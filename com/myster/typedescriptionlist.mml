@@ -1,3 +1,31 @@
+<Comment>
+NOTE: This is not HTML. This is NOT XML.
+Whitespace is significant inside tags.
+Every begin tag needs and end tag.
+No attributes
+No LTS (Less than symbol) character inside tags use the string "LTS"
+Tags are case sensitive
+Duplicate tags at the same level are ignored.
+
+NOTE:
+If you add more types to the file list PLEASE SEND THEM TO info at mysternetworks.com!
+We can't add them to Myster if you don't tell us about them!
+
+NOTE:
+Don't add new file catagories.. Unless they are of the form:
+!XXX 
+
+that is they start with an "!"..
+
+So
+!PIG is ok but PIGS is not.
+
+The "!" is know by Myster to be a none-standard type.
+
+NOTE:
+Any type you make will not work with automatic bootstrping system so use
+the "add ip" command in Myster under the "Special" menu.
+</Comment>
 <List>
 	<1>
 		<Type>MPG3</Type>
