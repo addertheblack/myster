@@ -459,7 +459,11 @@ class FileTypeList extends MysterThread{
 			for(int i=1; i<text.length();i++){
 				char ch = text.charAt(i);
 				if(ch == '\u3099'){
-					pre=(char)(pre + 1);
+					if(pre=='\u30a6'){
+						pre=(char)('\u30f4');
+					} else {
+						pre=(char)(pre+1);
+					}
 				} else if(ch == '\u309a'){
 					pre=(char)(pre + 2);
 				} else {
