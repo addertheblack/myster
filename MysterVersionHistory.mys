@@ -985,4 +985,6 @@ Work on DEV 8:
 				aquire a double ".i".
 	
 	Work on Dev 19.6
-		
+		-> Guillaume added code to move the preference file lcoation around on Linux & added an architechture to
+				find the current working folder consistantly.
+		-> Added the RING type.
