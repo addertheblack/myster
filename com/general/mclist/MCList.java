@@ -19,15 +19,6 @@ import java.util.Vector;
 public class MCList extends Panel {
 	private Image im;
 	
-	//My Size..?
-	private Dimension bounds;
-	
-	//GUI Flags
-	private long clickedtime=0;
-	private boolean doubleclickflag=true;
-	private boolean select=true; 		//True: Add items False=RemoveItems
-	
-	
 	//For image double buffer:
 	private int previousimagex=-1;
 	private int previousimagey=-1;

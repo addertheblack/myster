@@ -105,18 +105,14 @@ public class FileListerThread extends MysterThread {
 			} catch (Exception ex) {
 				msg.say("An unexpected error occured during the transfer of the file list.");
 				ex.printStackTrace();
+			} finally {
+				try {
+					socket.close();
+				} catch (Exception ex) {
+					msg.say("There was a problem closing the socket..");
+					return;
+				}
 			}
-		}
-		
-		try {
-			socket.close();
-		} catch (Exception ex) {
-			msg.say("There was a problem closing the socket..");
-			return;
-		}
-	
-		
-		
+		} 
 	}
-
 }

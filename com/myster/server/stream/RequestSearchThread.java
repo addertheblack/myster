@@ -50,7 +50,7 @@ public class RequestSearchThread extends ServerThread {
 		String tempstring;
 		
 		in.readFully(type);
-		searchstring=new String(in.readUTF());
+		searchstring=in.readUTF();
 		
 		String[] stringarray;
 		

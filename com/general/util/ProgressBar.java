@@ -11,7 +11,7 @@ public class ProgressBar extends Panel {
 	volatile long max;
 	volatile long value;
 	
-	boolean hasBorder = true;
+	volatile boolean hasBorder = true;
 	
 	Dimension doubleBufferSize;
 	

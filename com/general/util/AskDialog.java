@@ -12,11 +12,7 @@ public class AskDialog extends Dialog {
 	
 	TextField messagebox;
 	
-	MrWrap wrapper;
-	
 	int height;
-	int ascent;
-	int descent;
 	
 	FontMetrics metrics;
 	
@@ -89,8 +85,6 @@ public class AskDialog extends Dialog {
 		metrics=getFontMetrics(getFont());
 		
 		height=metrics.getHeight();
-		ascent=metrics.getAscent();
-		descent=metrics.getDescent();
 
 		
 		MrWrap wrapper=new MrWrap(question, XSIZE-2*XPAD, metrics);

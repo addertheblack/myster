@@ -126,10 +126,6 @@ class IPList {
 		return type;
 	}
 	
-	public synchronized MysterServer[] getAsArray() {
-		return array;	//Needs to send a copy!
-	}
-	
 	private synchronized void swap(MysterServer[] array, int i, int j) {
 		MysterServer temp;
 		temp=array[i];

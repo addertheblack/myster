@@ -28,10 +28,8 @@ public class MysterSocketFactory {
 		
 		socket = new Socket(ip.getInetAddress(), ip.getPort());
 
-		if (socket!=null) {
-			socket.setSoTimeout(2*60*1000);// timeout 2 mins
-		}
-		
+		socket.setSoTimeout(2*60*1000);// timeout 2 mins
+
 		return socket;
 	}
 		

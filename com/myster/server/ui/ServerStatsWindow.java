@@ -176,7 +176,7 @@ public class ServerStatsWindow extends MysterFrame implements Sayable {
 		}
 	}
 	
-	private class TabHandler implements TabListener {
+	private static class TabHandler implements TabListener {
 		int tabNumber;
 		Panel panel;
 	

@@ -89,16 +89,13 @@ public abstract class AbstractDownloadQueue extends TransferQueue {
 			ticket.getDownloader().queued(stats);
 			
 			
+			if (ticket.isReadyToDownload()) return; //just before sleep double check
 			
-			synchronized (this) {
-				if (ticket.isReadyToDownload()) return; //just before sleep double check
-				
-				if (lastQueuePosition != getQueuedStats(ticket).getQueuePosition()) continue;
-				
-				try {
-					wait(WAIT_TIME);	//wait on Lock
-				} catch(InterruptedException ex) {}
-			}
+			if (lastQueuePosition != getQueuedStats(ticket).getQueuePosition()) continue;
+			
+			try {
+				wait(WAIT_TIME);	//wait on Lock
+			} catch(InterruptedException ex) {}
 		}
 
 	}

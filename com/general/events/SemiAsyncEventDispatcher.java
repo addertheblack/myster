@@ -8,7 +8,7 @@ import com.general.util.Channel;
 *	Warning this call creates yet another thread.. 
 */
 
-public class SemiAsyncEventDispatcher extends EventDispatcher { //untested
+public final class SemiAsyncEventDispatcher extends EventDispatcher { //untested
 	MysterThread thread;
 	Channel channel=new Channel();
 
@@ -21,9 +21,12 @@ public class SemiAsyncEventDispatcher extends EventDispatcher { //untested
 		channel.in.put(e);
 	}
 	
-	public void finalize () {
-		System.out.println("THIS HAS BEEN CALLED:");
-		thread.end();
+	protected void finalize () throws Throwable {
+		try {
+			thread.end();
+		} finally {
+			super.finalize();
+		}
 	}
 	
 	private static class FireEvent extends MysterThread {

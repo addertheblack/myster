@@ -84,7 +84,7 @@ class FileTypeList extends MysterThread{
 	*			There might be any files shared even if this function returns true. If this function returns false
 	*			it is guarenteed that no files are being shared.
 	*/
-	public boolean isShared() {
+	public synchronized boolean isShared() {
 		String s=local_prefs.get(ACTIVE_PREF);
 		if (s==null) {
 			//init this
@@ -102,7 +102,7 @@ class FileTypeList extends MysterThread{
 	*
 	*	@param	b if b is false, no files will be shared.
 	*/
-	public void setShared(boolean b) {
+	public synchronized  void setShared(boolean b) {
 		local_prefs.put(ACTIVE_PREF, (b?"true":"false"));
 		savePrefs();
 	}
@@ -122,7 +122,7 @@ class FileTypeList extends MysterThread{
 	*
 	*	@return	the root directory associated with this object as saved in the preferences.
 	*/
-	public String getPath() {
+	public synchronized String getPath() {
 		if (!hasSetPath()) {
 			setPath(getDefaultDirectoryPath());
 		}
@@ -175,7 +175,7 @@ class FileTypeList extends MysterThread{
 	*	@param	query string
 	*	@return a list of files maching the query string
 	*/
-    public String[] getFileListAsStrings(String queryStr) {
+    public synchronized String[] getFileListAsStrings(String queryStr) {
         if (queryStr.equals("")) return getFileListAsStrings();	//not limited by MAX_RESULTS
         
         assertFileList();
@@ -421,7 +421,7 @@ class FileTypeList extends MysterThread{
 	*/
 	long timeoflastupdate=0;	//globalish	Needed to make sure the list is not too old.
 								//NOTE: The user could also change the DIR to force and update... He could also re-start Myster.
-	private boolean isOld() {
+	private synchronized  boolean isOld() {
 		if (System.currentTimeMillis()-timeoflastupdate>(1000*60*60)) return true;	//If list is older than 1 hour...
 		return false;
 	}
@@ -438,7 +438,7 @@ class FileTypeList extends MysterThread{
 	/*
 	*	Suggests a default root directory in the fileing system. Should only be used by getDefaultDirectoryPath();
 	*/
-	private File getDefaultDirectory() {
+	private synchronized File getDefaultDirectory() {
 		File empty=new File(Myster.getCurrentDirectory(), type+" Downloads");
 		int counter=1;
 		do {

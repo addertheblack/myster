@@ -54,6 +54,6 @@ public class PingPongPacket {
 	
 	public static ImmutableDatagramPacket getImmutablePacket(MysterAddress a, boolean param_packetType) {
 		return new ImmutableDatagramPacket(a.getInetAddress(), a.getPort(),
-				((param_packetType==PING?new String("PING"):new String("PONG")).getBytes()));
+				((param_packetType==PING?"PING":"PONG").getBytes()));
 	}
 }

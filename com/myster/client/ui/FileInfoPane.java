@@ -16,11 +16,8 @@ import com.general.util.KeyValue;
 public class FileInfoPane extends Panel {
 	KeyValue keyvalue;
 
-	private int VOFFSET=25;
-	private int HOFFSET=3;
-	
-	private Dimension mysize=new Dimension(200,200);
-	private Dimension mind=new Dimension(50,100);
+	private static final int VOFFSET=25;
+	private static final int HOFFSET=3;
 
 	public FileInfoPane(){keyvalue=new KeyValue();}
 	
@@ -67,29 +64,4 @@ public class FileInfoPane extends Panel {
 	public Dimension getPreferredSize() {
 		return getSize();
 	}
-	/*
-	public Dimension getMinimumSize() {
-		Font f=getFont();
-		FontMetrics m=null;
-		if (f==null) {
-			mysize=mind;
-		} else {
-			m=getFontMetrics(f);
-		}
-		if (m==null||keyvalue==null) {
-			mysize=mind;
-		} else {
-			if (keyvalue.length()>0) mysize=new Dimension(m.stringWidth(""+(String)(keyvalue.keyAt(0))+" : "+(String)keyvalue.valueAt(0)), 200);
-			else mysize=mind;
-		}
-
-		
-		return mysize;
-	}
-	
-	public Dimension getPreferredSize() {
-		return getMinimumSize();
-	}
-	*/
-
 }

@@ -38,7 +38,10 @@ public class MCListVector {
 						int cmp = (sa.isLessThan(sb) ? 1 : -1);
 						return (lessthan ? cmp : -cmp);
 					}
-					public boolean equals(Object other) { return this == other; }
+					
+					//Find bugs is complaining about this line. Why is it here? The code below is the
+					// default implementation provided by Object class
+					//public boolean equals(Object other) { return this == other; }
 				});
 		}
 	

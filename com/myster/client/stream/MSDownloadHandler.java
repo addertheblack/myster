@@ -320,7 +320,7 @@ class Banner {
 	public final byte[] image;
 	public final String url;
 	
-	public Banner(byte[] image, String url) {
+	protected Banner(byte[] image, String url) {
 		this.image 	= image;
 		this.url 	= url;
 	}
@@ -341,5 +341,9 @@ class Banner {
 		}
 		
 		return true;
+	}
+	
+	public int hashCode() {
+		return image.length;
 	}
 }

@@ -10,11 +10,8 @@ public class AnswerDialog extends Dialog {
 	String it;	//just like hypercard :-)
 	Vector message=new Vector(10,40);
 	
-	MrWrap wrapper;
-	
 	int height;
 	int ascent;
-	int descent;
 	
 	FontMetrics metrics;
 	
@@ -36,7 +33,7 @@ public class AnswerDialog extends Dialog {
 		
 		if (b.length==0) {
 			b=new String[1];
-			b[0]=new String("Ok");
+			b[0] = "Ok";
 		}
 		
 		initComponents(b);
@@ -112,7 +109,6 @@ public class AnswerDialog extends Dialog {
 		
 		height=metrics.getHeight();
 		ascent=metrics.getAscent();
-		descent=metrics.getDescent();
 
 		
 		MrWrap wrapper=new MrWrap(q, 380, metrics);

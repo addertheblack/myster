@@ -217,7 +217,7 @@ public class TabPanel extends Panel {
 		}
 	}
 	
-	private class ListenerVector extends Vector {
+	private static class ListenerVector extends Vector {
 		public ListenerVector() {
 			super(10,10);
 		}

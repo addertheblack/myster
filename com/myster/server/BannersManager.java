@@ -226,7 +226,7 @@ public class BannersManager {
 			refreshImagesList();
 		}
 		
-		private static final String IMAGE_DIRECTORY=new String("Images/");//fix
+		private static final String IMAGE_DIRECTORY="Images/";//fix
 		private void refreshImagesList() {
 			list.clear();
 			

@@ -78,16 +78,16 @@ abstract public class AbstractHeap extends AbstractCollection implements Heap {
 		private int index = 0;
 		private boolean removeLegal = false;
 		public Object next() { 
-		if (index == size_) throw new NoSuchElementException();
-		removeLegal = true;
-		return data[index++];
-		}
-		public boolean hasNext() { return index < size_; }
-		public void remove() {
-		if (!removeLegal) throw new IllegalStateException();
-		removeLegal = false;
-		data[index] = data[--size_];
-		heapify(index);
+			if (index == size_) throw new NoSuchElementException();
+			removeLegal = true;
+			return data[index++];
+			}
+			public boolean hasNext() { return index < size_; }
+			public void remove() {
+			if (!removeLegal) throw new IllegalStateException();
+			removeLegal = false;
+			data[index] = data[--size_];
+			heapify(index);
 		}
 	}
 	

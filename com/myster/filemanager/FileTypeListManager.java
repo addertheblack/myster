@@ -37,7 +37,7 @@ public class FileTypeListManager{
 	private static FileTypeListManager f;				//For singleton.
 	private FileTypeList filelist[];					//An array of all file lists. 1 Per type.
 	
-	public static String PATH="/File Lists/";			//Path the File Lists information is stored in the prefs.
+	public static final String PATH="/File Lists/";			//Path the File Lists information is stored in the prefs.
 														//Each File List decides what information it will store
 														//under this path.
 	

@@ -170,7 +170,7 @@ public class FileSenderThread extends ServerThread {
 		private FileTypeListManager typelist;
 		
 		//private constants
-		private static final String IMAGE_DIRECTORY=new String("Images/");
+		private static final String IMAGE_DIRECTORY="Images/";
 		private static final int BUFFERSIZE=8192;
 		private static final int BURSTSIZE=512*1024;	
 			
@@ -276,13 +276,12 @@ public class FileSenderThread extends ServerThread {
 			remoteIP=new MysterAddress(socket.getInetAddress());	//stats
 			
 			starttime=System.currentTimeMillis();
+
+			MysterType type = new MysterType(in.readInt());
 			
-			byte[] b=new byte[4];
-			in.read(b,0,4);
-			
-			filetype=(new String(b));			//stats
-			filename=new String(in.readUTF());	//stats
-			file=typelist.getFile(new MysterType(b), filename);	//io
+			filetype="" + type;			//stats
+			filename=in.readUTF();	//stats
+			file=typelist.getFile(type, filename);	//io
 			filelength=file.length();			//stats
 			initialOffset=in.readLong();		//initial offset for restarting file transfers half way done!
 			bytessent=initialOffset;			//hereafter refered to as....
@@ -463,11 +462,9 @@ public class FileSenderThread extends ServerThread {
 
 			
 				byte[] bytearray=new byte[(int)file.length()];
-				
 
-				in.read(bytearray, 0, (int)file.length());
+				in.readFully(bytearray, 0, (int)file.length());
 				
-
 				out.writeInt(6669);
 				out.write('i');
 				out.writeLong(bytearray.length);
@@ -486,10 +483,10 @@ public class FileSenderThread extends ServerThread {
 		private int readWrite(DataInputStream in, int size, byte[] buffer) {
 			if (size==0) return 0;
 			try {
-				in.read(buffer,0,size);
+				in.readFully(buffer,0,size);
 				out.write(buffer,0,size);
 				bytessent+=size;
-			} catch (Exception ex) {return -1;}
+			} catch (IOException ex) {return -1;}
 			return size;
 		}
 		

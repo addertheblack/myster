@@ -673,7 +673,7 @@ public class MML implements Serializable {
 		}
 		
 		public boolean equals(Branch b) {
-			return ((new String(b.tag)).equals(tag));
+			return b.tag.equals(tag);
 		}
 	}
 	

@@ -111,7 +111,7 @@ public class AddIPDialog extends Dialog {
 	*	ohhh cool, a private class.. This is the ok button action handler. It's a private class
 	*	so I don't have to put it into a seperate file.
 	*/
-	private class AddIPAction implements ActionListener {
+	private static class AddIPAction implements ActionListener {
 		AddIPDialog a;
 		
 		public AddIPAction(AddIPDialog a) {

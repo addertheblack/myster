@@ -196,8 +196,9 @@ class MysterIP {
 			return lastPingTime;
 		}
 		
-		public void finalize() {
+		protected void finalize() throws Throwable {
 			interfaceCounter--; //used for garbage collection. I love the VM sometimes.
+			super.finalize();
 		}
 		
 		public String toString() {
@@ -248,8 +249,15 @@ class MysterIP {
 	 *
 	 */
 	
-	public boolean equals(MysterIP m) {
-		return ip.equals(m.getAddress());
+	public boolean equals(Object m) {
+		MysterIP mysterIp;
+		try {
+			mysterIp = (MysterIP)m;
+		} catch (ClassCastException ex) {
+			return false;
+		}
+	
+		return ip.equals(mysterIp.ip);
 	}
 	
 	protected MML toMML() {

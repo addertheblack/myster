@@ -305,8 +305,12 @@ public class MSPartialFile {
 		
 	private static int getMask(long bit) { return 0x80 >> (bit % 8); } 
 	
-	public void finalize() {
-		dispose();
+	protected void finalize() throws Throwable {
+		try {
+			dispose();
+		} finally {
+			super.finalize();
+		}
 	}
 	
 	public void dispose() {
@@ -405,11 +409,11 @@ public class MSPartialFile {
 			return null;// !
 		}
 		
-		final String FILENAME_PATH 		= "/Filename";
-		final String BLOCK_SIZE_PATH 	= "/Block Size Path";
-		final String HASHES_PATH 		= "/Hashes/";
-		final String TYPE				= "/Type";
-		final String FILE_LENGTH		= "/File Length";
+		static final String FILENAME_PATH 		= "/Filename";
+		static final String BLOCK_SIZE_PATH 	= "/Block Size Path";
+		static final String HASHES_PATH 		= "/Hashes/";
+		static final String TYPE				= "/Type";
+		static final String FILE_LENGTH		= "/File Length";
 		
 		public com.myster.mml.MML toMML() {
 			RobustMML mml = new RobustMML();

@@ -13,7 +13,6 @@ package com.general.mclist;
 public class GenericMCListItem extends MCListItemInterface {
 	protected Sortable[] sortables;
 	protected Object object;
-	boolean selected=false;
 	
 	public GenericMCListItem(Sortable[] s) {
 		this(s,null);

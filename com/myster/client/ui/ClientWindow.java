@@ -34,14 +34,14 @@ public class ClientWindow extends MysterFrame implements Sayable{
 	
 	MessageField msg;
 	
-	final int XDEFAULT=600;
-	final int YDEFAULT=400;
+	static final int XDEFAULT=600;
+	static final int YDEFAULT=400;
 	
 	
-	final int SBXDEFAULT=72;	//send button X default
+	static final int SBXDEFAULT=72;	//send button X default
 	
 	
-	final int GYDEFAULT=50;		//Generic Y default
+	static final int GYDEFAULT=50;		//Generic Y default
 	
 	private static int counter=0;
 	
@@ -193,7 +193,7 @@ public class ClientWindow extends MysterFrame implements Sayable{
 	
 	public MysterType getCurrentType() {
 		try {
-			return new MysterType((new String(filetypelist.getSelectedItem())).getBytes());
+			return new MysterType((filetypelist.getSelectedItem()).getBytes());
 		} catch (Exception ex) {
 			return new MysterType(new byte[]{(byte)'M',(byte)'P',(byte)'G',(byte)'3'});
 		}

@@ -285,7 +285,7 @@ public class MultiSourceSender extends ServerThread {
 		
 		}
 		
-		private class UploadBlock {
+		private static class UploadBlock {
 			public final long start;
 			public final long size;
 			

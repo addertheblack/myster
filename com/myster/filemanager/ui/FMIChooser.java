@@ -156,7 +156,7 @@ public class FMIChooser extends PreferencesPanel {
 		reset();//funky.
 	}
 	
-	private class SettingsStruct {
+	private static class SettingsStruct {
 		String path;
 		boolean shared;
 		MysterType type;

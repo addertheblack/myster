@@ -21,7 +21,7 @@ public class DefaultMCRowTheme implements MCRowThemeInterface {
 	private	FontMetrics tempfont;
 	private	int height;
 	private	int ascent;
-	private int descent;
+	//private int descent;
 	
 	//Colors
 	private static final Color lightselectedc=new Color(205,205,255), selectedc=new Color(200,200,250) , lightc=new Color(240,240,240), c=new Color(230,230,230);
@@ -58,13 +58,13 @@ public class DefaultMCRowTheme implements MCRowThemeInterface {
 				tempfont = component.getFontMetrics(component.getFont());	//uses default font
 				height = tempfont.getHeight();
 				ascent = tempfont.getAscent();
-				descent= tempfont.getDescent();
+				//descent= tempfont.getDescent();
 			}
 		} catch (Exception ex) {
 			tempfont=null;
 			height = 10;
 			ascent = 10;
-			descent= 10;
+			//descent= 10;
 		}
 		
 		//Clear secleciton to white:
@@ -110,7 +110,7 @@ public class DefaultMCRowTheme implements MCRowThemeInterface {
 			tempfont = component.getFontMetrics(component.getFont());	//uses default font
 			height = tempfont.getHeight();
 			ascent = tempfont.getAscent();
-			descent= tempfont.getDescent();
+			//descent= tempfont.getDescent();
 		}
 		
 		if (filterNonEnglish) {

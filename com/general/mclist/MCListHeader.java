@@ -31,7 +31,7 @@ public class MCListHeader extends Panel {
 		callback=c;
 		this.numberofcolumns=numberofcolumns;
 		columnarray=new String[numberofcolumns];
-		for(int i=0; i<numberofcolumns; i++) columnarray[i]=new String ("unnamed");
+		for(int i=0; i<numberofcolumns; i++) columnarray[i] = "unnamed";
 		
 		initColumnWidthArray();
 		repaint();
@@ -50,7 +50,8 @@ public class MCListHeader extends Panel {
 			columnWidthArray[i]=oldArray[i];
 		}
 		
-		for (i=i; i<columnWidthArray.length; i++) {
+		//If the column width array is larger than the previous array then init those values
+		for ( ; i<columnWidthArray.length; i++) {
 			columnWidthArray[i]=-1;
 		}
 	}
@@ -126,7 +127,7 @@ public class MCListHeader extends Panel {
 	public void setNumberOfColumns(int numberofcolumns) {
 		this.numberofcolumns=numberofcolumns;
 		columnarray=new String[numberofcolumns];
-		for(int i=0; i<numberofcolumns; i++) columnarray[i]=new String ("unnamed");
+		for(int i=0; i<numberofcolumns; i++) columnarray[i] = "unnamed";
 		initColumnWidthArray();
 		invalidate();
 		repaint();

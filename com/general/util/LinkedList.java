@@ -135,7 +135,7 @@ public class LinkedList {
 		if (numOfItems<2) findTheEnd();	//if (head==tail) won't work!
 	}
 
-	private class Element {
+	private static class Element {
 		public Object value;
 		public Element next;
 		

@@ -55,7 +55,7 @@ public class DownloaderThread extends SafeThread {
 	File fileToWriteTo;
 
 	
-	final int BUFFERSIZE=2024;	//I like turnips
+	static final int BUFFERSIZE=2024;	//I like turnips
 	
 	//String downloadpath;
 	long amountToSkip=0;

@@ -96,7 +96,7 @@ public class Timer implements Comparable { //almost but not quite immutable.
 	static private void addEvent(Timer timer) {
 		synchronized (timers) {
 			timers.add(timer);
-			timers.notify(); //instead of sem.getLock(time);
+			timers.notifyAll(); //instead of sem.getLock(time);
 			
 			if (thread == null)  { 
 				thread = (new Thread("Timer Thread!!") {

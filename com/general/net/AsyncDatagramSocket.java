@@ -14,7 +14,7 @@ import java.net.*;
 import java.io.*;
 import com.general.util.LinkedList;
 
-public class AsyncDatagramSocket {
+public final class AsyncDatagramSocket {
 	private AsyncDatagramListener portListener;
 	private DatagramSocket dsocket;
 	private ManagerThread managerThread;

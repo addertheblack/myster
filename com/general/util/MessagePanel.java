@@ -14,7 +14,6 @@ import java.util.Vector;
 public class MessagePanel extends Panel {
 	int height;
 	int ascent;
-	int descent;
 	
 	FontMetrics metrics;
 	
@@ -35,7 +34,6 @@ public class MessagePanel extends Panel {
 		
 		height=metrics.getHeight();
 		ascent=metrics.getAscent();
-		descent=metrics.getDescent();
 
 		
 		MrWrap wrapper=new MrWrap(message, 380, metrics);

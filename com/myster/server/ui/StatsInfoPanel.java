@@ -378,7 +378,7 @@ public class StatsInfoPanel extends Panel{
 		}
 	}
 	
-	private class ByteCounter extends Label {
+	private static class ByteCounter extends Label {
 		long value=0;
 		
 		public long getValue() {

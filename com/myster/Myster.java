@@ -52,7 +52,7 @@ import com.myster.util.I18n;
 
 public class Myster {
 
-	public static File file;
+	//public static File file;
 	public static final String fileLockName=".lockFile";
 
 	private static long programLaunchTime = 0;
@@ -276,15 +276,18 @@ public class Myster {
 	}
 	
 	public static void fileExists(File file) {
+		DataInputStream in = null, sin = null;
+		DataOutputStream  sout = null;
+		
 		try {
-			DataInputStream in = new DataInputStream(new FileInputStream(file));
+			in = new DataInputStream(new FileInputStream(file));
 			int passWord=in.readInt();
 			int port=in.readInt();
 			
 			try {
 				Socket socket=new Socket(InetAddress.getLocalHost(), 10457);
-				DataInputStream sin=new DataInputStream(socket.getInputStream());
-				DataOutputStream sout=new DataOutputStream(socket.getOutputStream());
+				sin=new DataInputStream(socket.getInputStream());
+				sout=new DataOutputStream(socket.getOutputStream());
 				
 				sout.writeInt(passWord);
 				sout.writeInt(0); //a command
@@ -296,18 +299,23 @@ public class Myster {
 					System.exit(1);
 				}
 			
-			} catch (Exception ex) {
+			} catch (IOException ex) {
 				newFile(file);
 				System.out.println("Could not connect to self... Deleting the lock file");
+			} finally {
+				try {sin.close();} catch (Exception ex) {}
+				try {sout.close();} catch (Exception ex) {}
 			}
-		} catch (Exception ex) {
+		} catch (IOException ex) {
 			System.out.println("Big error, chief. Now would be a good time to panic.");
 			ex.printStackTrace();System.exit(1);
 			
+		} finally {
+			try {in.close();} catch (Exception ex) {}
 		}
 	}
 	
-	public static int password=-1;
+	//public static int password=-1;
 	public static void newFile(File file) {
 		try {
 			DataOutputStream out = new DataOutputStream(new FileOutputStream(file));
@@ -315,7 +323,7 @@ public class Myster {
 			Math.random();
 			Math.random();
 			double temp=Math.random();
-			password=(int)(32000*temp);
+			int password=(int)(32000*temp);
 			
 			(new Thread(){
 				public void run() {

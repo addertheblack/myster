@@ -105,7 +105,7 @@ public class MessageManager {
 		}).start();
 	}
 	
-	public static int counter=1;
+	private static int counter=1;
 	private static synchronized int generateID() {
 		return counter++;
 	}

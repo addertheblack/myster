@@ -18,7 +18,7 @@ public class SortableBoolean implements Sortable{
 	}
 	
 	public Object getValue() {
-		return new Boolean(bool);
+		return (bool ? Boolean.TRUE : Boolean.FALSE);
 	}
 	
 	public boolean isLessThan(Sortable temp) {

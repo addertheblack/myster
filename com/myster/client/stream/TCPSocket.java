@@ -70,7 +70,7 @@ public class TCPSocket extends MysterSocket {
     	return internalSocket.getSoLinger();
     }
 
-    public synchronized void setSoTimeout(int timeout) throws SocketException {
+    public void setSoTimeout(int timeout) throws SocketException {
     	internalSocket.setSoTimeout(timeout);
     }
 
@@ -78,7 +78,7 @@ public class TCPSocket extends MysterSocket {
     	return internalSocket.getSoTimeout();
     }
 
-    public synchronized void close() throws IOException {
+    public void close() throws IOException {
     	internalSocket.close();
     }
 

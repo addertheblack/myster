@@ -249,7 +249,7 @@ public class MP3Header {
 			
 			in.seek(f.length()-128);
 			byte[] threeBytes=new byte[3];
-			in.read(threeBytes);
+			in.readFully(threeBytes);
 			String head=new String(threeBytes);
 			if (head.equals("TAG")) {
 				try {

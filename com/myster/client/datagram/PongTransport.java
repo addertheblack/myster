@@ -23,9 +23,6 @@ public class PongTransport extends DatagramTransport {
 	private Hashtable requests=new Hashtable();
 	
 	
-	MysterAddress a;
-	
-	
 	public short getTransportCode() {
 		return transportNumber;
 	}
@@ -85,7 +82,6 @@ public class PongTransport extends DatagramTransport {
 			
 			
 			pongItemStruct.dispatcher.addListener(listener);
-			a=param_address;
 		}
 	}
 	
