@@ -62,11 +62,11 @@ public class ServerFacade {
 	private static String serverThreadKey="MysterTCPServerThreads/";
 	private static int getServerThreads() {
 		String info=Preferences.getInstance().get(serverThreadKey);
-		if (info==null) info="40"; //default value;
+		if (info==null) info="35"; //default value;
 		try {
 			return Integer.parseInt(info);
 		} catch (NumberFormatException ex) {
-			return 40; //should *NEVER* happen.
+			return 35; //should *NEVER* happen.
 		}
 	}
 	
@@ -117,6 +117,7 @@ public class ServerFacade {
 			add(serverThreadsLabel);
 			
 			serverThreadsChoice=new Choice();
+			serverThreadsChoice.add(""+35);
 			serverThreadsChoice.add(""+40);
 			serverThreadsChoice.add(""+60);
 			serverThreadsChoice.add(""+80);

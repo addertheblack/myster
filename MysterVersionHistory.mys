@@ -236,7 +236,7 @@ Work on DEV 8:
 	-> Added a few more stupid debugging messages.
 	-> Fixed a socket not being closed.
 	
-	2001/08/1
+	2001/09/1
 	-> Fixed a problem to do with "Other Downloads" folder. The setup wizard wasen't writting a correct path 
 		to the FileManager
 	-> Fixed a few typos.
@@ -244,58 +244,58 @@ Work on DEV 8:
 	
  Work on DEV 9.5:
 	
-	2001/08/05
+	2001/09/05
 	-> Playing with myster to try and speed things up a bit.
 	
-	2001/08/09
+	2001/09/09
 	-> made the MCList allow for listing by greatest to smallest as well as the oposite.
 	-> made the return key start a new search in the search window.
 	
-	2001/08/10
+	2001/09/10
 	-> changed some of the names to be more mac friendly.
 	
-	2001/08/11
+	2001/09/11
 	-> Planes run into world trade center.
 	
-	2001/08/13
+	2001/09/13
 	-> nothing.
 	
-	2001/08/14
+	2001/09/14
 	-> Added auto scroll to the MCList
 	
-	2001/08/15
+	2001/09/15
 	-> Redid the file manager's default paths.
 	-> Made the disable sharing checkmark actually stop the file sharing.
 	
-	2001/08/16
+	2001/09/16
 	-> Worked on updating the wizard and file manager to work with a new folder system.
 	-> updated the wizard back end hooks to work with the new filemanager interface.
 	
-	2001/08/17
+	2001/09/17
 	-> worked on a new interface (GUI) for the new filemanager and folder system.
 	
-	2001/08/18
+	2001/09/18
 	-> job hunting
 	
-	2001/08/19
+	2001/09/19
 	-> finished up the new file manager interface
 	-> job hunting.
 	
-	2001/08/20
+	2001/09/20
 	-> nothing.
 	
-	2001/08/21
+	2001/09/21
 	-> Made a few of the source files follow DOS formating conventions.. it means CVS is less confused...
 	
 	<void in space time>
 	
-	2001/08/29
+	2001/09/29
 	-> ? forget
 	
-	2001/08/30
+	2001/09/30
 	-> ? forget
 	
-	2001/09/01
+	2001/10/01
 	-> Got the MCList setColumnWidth() function working. Updated a bunch of things to make use of that new method
 	-> Fixed a bug that was confusing MaxOS X.
 	
@@ -740,13 +740,22 @@ Work on DEV 8:
    	
   Work on DEV 15
     2002/09/24
-    	-> Created basic ansynchrous UDP framework.
+    	-> Created basic ansynchrous UDP framework. (works over NAT)
     	-> Created PING ad PONG protocols.
     	-> Modified addIP to make use of asynchrous ping/pong.
     	-> Modified MysterIPPool to use a hashtable.
     	-> Made it so the search windows open with the text selected.
-    	-> Set the tracker to 100 items
     	-> added a bucnh of keyboard shortcuts to menu items in myster
-    	-> Made a MacOS X compatibility plugin
-    	-> Added a timer class
+    	-> Made a MacOS X compatibility plugin (enables basic about box, preferences and quit functions)
+    	-> Added a timer class (thanx Guillaume!)
     	-> Added some optimisations for MacOS 9.
+    	-> Dropped the number of server threads by default down to 35 from 40
+    	-> Increased the number of items in the tracker to 100 from 50.
+    	-> Dropped the number of stats thread to 5 from 15.
+    	-> Set the number of add IP threads to 3.
+    	-> Removed the Server stats thread (replaced with timer event)
+    	-> NOTE: Removed about 18 threads in total 
+    			in this version of Myster for greater stability and responsiveness..
+    	-> modified parts of the tracker to take advantage of new pinger
+    	-> added a "ping" column to search results.
+    	-> Myster is now 17584 lines of yummy java goodness

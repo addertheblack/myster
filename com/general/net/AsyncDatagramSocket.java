@@ -19,10 +19,12 @@ public class AsyncDatagramSocket {
 	private DatagramSocket dsocket;
 	private ManagerThread managerThread;
 	private LinkedList queue=new LinkedList();
+	private int port;
 
 	public AsyncDatagramSocket(int port) throws IOException {
-		dsocket=new DatagramSocket(port);
-		dsocket.setSoTimeout(100);
+		this.port=port;
+		
+		open(port);
 		
 		managerThread=new ManagerThread();
 		managerThread.start();
@@ -38,13 +40,16 @@ public class AsyncDatagramSocket {
 	public void sendPacket(ImmutableDatagramPacket p) {
 		queue.addToTail(p);
 	}
+	
+	private void open(int port) throws IOException {
+		dsocket=new DatagramSocket(port);
+		dsocket.setSoTimeout(100);
+	}
 		
 	public void close() {
-		//try {
-			dsocket.close();
-		//} catch (IOException ex) {}
+		dsocket.close();
 		
-		managerThread.end();
+		//managerThread.end();
 	}
 	
 	private void doGetNewPackets() throws IOException {
@@ -79,7 +84,7 @@ public class AsyncDatagramSocket {
 				try {
 					doGetNewPackets();
 				} catch (IOException ex) {
-					close();
+					//close();
 				} catch (Exception ex) {
 					ex.printStackTrace();
 				}
@@ -88,10 +93,17 @@ public class AsyncDatagramSocket {
 				
 				try {
 					doSendNewPackets();
-				} catch (IOException ex) {
+				} catch (IOException exp) {
 					close();
+					try {
+						open(port);
+						//com.general.util.AnswerDialog.simpleAlert("The UDP sub-system was acting up. It has been restarted successfully. If this message appears frequently, ");
+					} catch (Exception ex) {
+						com.general.util.AnswerDialog.simpleAlert("The UDP sub-system crashed and could not be re-started. Consider restarting the computer. Myster can not work properly without a UDP sub-system.");
+						end();
+					}
 				} catch (Exception ex) {
-					//todo.
+					ex.printStackTrace();
 				}
 			}
 		}
