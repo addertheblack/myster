@@ -254,7 +254,7 @@ public class MCListHeader extends Panel {
 			if (x>=xcounter&&x<(rowstats.getTotalWidthOfColunm(i)+xcounter)) return i;
 			xcounter+=rowstats.getTotalWidthOfColunm(i);
 		}
-		return numberOfColumns-1; //if click is bigger then last column, return last column
+		return -1; 
 	}
 	
 	public void sortBy(int x) {
