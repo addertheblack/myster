@@ -720,7 +720,7 @@ Work on DEV 8:
    		menubar
    		menubar and menubar actions (events)
    		
-   		IN GENERAL: (files in general SHOULD NOT access calsses in com.myster!!!!!!!!)
+   		IN GENERAL: (files in general SHOULD NOT access classes in com.myster!!!!!!!!)
    		
    		util
    		Misc utilitiy classes
@@ -740,3 +740,5 @@ Work on DEV 8:
    	
   Work on DEV 15
     2002/09/24
+    	Created basic ansynchrous UDP framework.
+    	Modified MysterIPPool to use a hashtable.

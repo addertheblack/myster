@@ -15,7 +15,7 @@ import java.util.Enumeration;
 
 public class PongTransport extends DatagramTransport {
 	static final int transportNumber=1347374663;
-	static final int TIMEOUT=20000;
+	static final int TIMEOUT=60000;
 	
 	private Hashtable requests=new Hashtable();
 	

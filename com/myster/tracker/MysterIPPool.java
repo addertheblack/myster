@@ -18,6 +18,7 @@ import com.myster.mml.MML;
 import com.myster.mml.MMLException;
 import java.net.UnknownHostException;
 import com.myster.net.MysterAddress;
+import java.io.IOException;
 
 /**
 *	This class exists to make sure that if a server is listed under many catagories (ie
@@ -30,7 +31,7 @@ import com.myster.net.MysterAddress;
 */
 
  class MysterIPPool {
-	Vector vector;							//I have a grand imagination!
+	Hashtable hashtable;							//I have a grand imagination!
 	static final String pref_key="Tracker.MysterIPPool";	//This is where MysterIPPools stores all it's IPs..
 	static MysterIPPool instance;			//Part of the singleton desing pattern.
 	Preferences prefs;						//So I don't have to call preferences.getInstance() all the time.
@@ -44,7 +45,7 @@ import com.myster.net.MysterAddress;
 	
 	private MysterIPPool() {
 		System.out.println("Loading IPPool.....");
-		vector=new Vector(VECTOR_INITIAL_SIZE, VECTOR_GROWTH_FACTOR);				//It's not only a cereal, it's a data structure.
+		hashtable=new Hashtable();		//You put cereal on the Hashtable. In a bowl of course...
 		Preferences prefs=Preferences.getInstance();
 		
 		//try {
@@ -63,8 +64,8 @@ import com.myster.net.MysterAddress;
 			Vector dirList=mml.list("/"); //list root dir
 			for (int i=0; i<dirList.size(); i++) {
 				try {
-					vector.addElement(new MysterIP(new MML(mml.get("/"+(String)(dirList.elementAt(i))))));	//make a new MysterIP from each file.
-					Thread.currentThread().yield();
+					MysterIP mysterip=new MysterIP(new MML(mml.get("/"+(String)(dirList.elementAt(i)))));
+					hashtable.put(mysterip.getAddress(), mysterip);	//make a new MysterIP from each file.
 				} catch (MMLException ex) {
 					ex.printStackTrace();
 				}
@@ -97,24 +98,26 @@ import com.myster.net.MysterAddress;
 		}
 	}
 	
+	
+	
+	
+	
+	
+	
 	/**
-	*	Given a string address, it returns a com.myster object. com.myster objects at like little
+	*	Given a string address, it returns a com.myster object. com.myster objects are like little
 	*	statistics objects. You can get these objects and use these objects from anywhere in the
 	*	program thanks to the new garbage collector based system.
-	*
 	*/
 	DeadIPCache deadCache=new DeadIPCache();
-	public MysterServer getMysterServer(MysterAddress address) throws IOException{
-		//If the IP isn't in the list it checks to make sure the sever at the IP isn't registered under
-		//a different alias; thanks to the getRootIP method.. This should never actually happen, but, hey,
-		//it doesn't cost anything to check.
+	public MysterServer getMysterServer(MysterAddress address) throws IOException {
 		
+		
+		//Below is where the blacklisting code will eventually go.
 		if (address.getIP().equals("")||address.getIP().equals("127.0.0.1")||address.getIP().equals("0.0.0.0")) {
 			throw new IOException("Black listed internet address");
 		}
 
-		//if (deadCache.isDeadAddress(address)) throw new IOException("It's dead, Jim.");
-		//try  {Thread.currentThread().sleep(1000);} catch (Exception ex){}
 		MysterServer temp=getMysterIPLevelOne(address);
 		
 		if (temp==null) {
@@ -143,14 +146,15 @@ import com.myster.net.MysterAddress;
 	
 	
 	public MysterServer getMysterIPLevelOne(MysterAddress address) {
-		int index=indexOf(address);
-		if (index==-1) return null;		//no object could be found so return null;
+		MysterIP mysterip=getMysterIP(address);
 		
-		return getObjectAtIndex(index).getInterface();
+		if (mysterip==null) return null;
+		
+		return mysterip.getInterface();
 	}
 	
 	public boolean existsInPool(MysterAddress s) {
-		return (indexOf(s)!=-1);
+		return (getMysterIP(s)!=null);
 	}
 	
 	public boolean existsInPool(String s) { 
@@ -168,11 +172,12 @@ import com.myster.net.MysterAddress;
 			return addANewMysterObjectToThePool(m).getInterface();
 	}
 	
-	
+	/*
 	private MysterIP getObjectAtIndex(int index) {
 		MysterIP temp=(MysterIP)vector.elementAt(index);
 		return temp;
 	}
+	*/
 	
 	/**
 	*	this function adds a new IP to the MysterIPPool data structure.. It's 
@@ -183,15 +188,13 @@ import com.myster.net.MysterAddress;
 	*/
 	
 	private synchronized MysterIP addANewMysterObjectToThePool(MysterIP ip) {
-		int index=vector.indexOf(ip);
-		
-		if (index==-1) {				
+		if (!existsInPool(ip.getAddress())) {				
 			deleteUseless();			//Cleans up the pool, deletes useless MysterIP objects!
-			vector.addElement(ip);		//if deleteUseless went first, the garbag collector would get the ip we just added! DOH!
+			hashtable.put(ip.getAddress(),ip);		//if deleteUseless went first, the garbag collector would get the ip we just added! DOH!
 			save();
 			return ip;
 		} else {
-			return (MysterIP)vector.elementAt(index);
+			return getMysterIP(ip.getAddress());
 		}
 	}
 	
@@ -201,43 +204,47 @@ import com.myster.net.MysterAddress;
 	*/
 	
 	private synchronized void deleteUseless() {
-		if (vector.size()<=GC_UPPER_LIMIT) return;
+		if (hashtable.size()<=GC_UPPER_LIMIT) return;
 		
-		int counter=0;
-		for (int i=0; i<vector.size();i++) {
-			if (((MysterIP)(vector.elementAt(i))).getMysterCount()<=0){
-				if (!((MysterIP)(vector.elementAt(i))).getStatus()) {
-					vector.removeElementAt(i);
-					i--;
-					counter++;
+		
+		Enumeration enum=hashtable.keys();	//ugh.. This syntax SUCKS!
+		Vector keysToDelete=new Vector(100,100);
+		
+		//Collect worthless....
+		while (enum.hasMoreElements()) {
+			MysterAddress workingKey=(MysterAddress)(enum.nextElement());
+			
+			MysterIP mysterip=(MysterIP)(hashtable.get(workingKey));
+			
+			if (mysterip.getMysterCount()<=0){
+				if (!mysterip.getStatus()) {
+					keysToDelete.addElement(workingKey);
 				}
 			}
 		}
 		
-		
-		if (counter>=100) {
-			System.out.println(counter+" useless MysterIP objects found. Cleaning up...");
-			System.gc();
-			System.out.println("Deleted "+counter+" useless MysterIP objects from the Myster pool.");
+		//remove worthless...
+		for (int i=0; i<keysToDelete.size(); i++) {
+			hashtable.remove(keysToDelete.elementAt(i)); //weeee...
 		}
-		System.out.println("IPPool cleaned up. There are now "+vector.size()+" objects in the pool");
+		
+		
+		//brag about it...
+		if (keysToDelete.size()>=100) {
+			System.out.println(keysToDelete.size()+" useless MysterIP objects found. Cleaning up...");
+			System.gc();
+			System.out.println("Deleted "+keysToDelete.size()+" useless MysterIP objects from the Myster pool.");
+		}
+		System.out.println("IPPool cleaned up. There are now "+hashtable.size()+" objects in the pool");
+		
+		
+		//signal that the changes should be saved asap...
 		save();
 	}
 	
 	//Private Should be pretty obvious.
-	private synchronized int indexOf(MysterAddress address) {
-		try {
-		int max=vector.size();
-		for (int i=0; i<max; i++) {
-			if ((((MysterIP)(vector.elementAt(i))).getAddress().equals(address))){
-				return i;
-			}
-		}
-		} catch (Exception ex) {
-			System.out.println(""+ex);
-			ex.printStackTrace();
-		}
-		return -1;
+	private synchronized MysterIP getMysterIP(MysterAddress address) {
+		return (MysterIP)(hashtable.get(address));
 	}
 	
 	/**
@@ -247,12 +254,19 @@ import com.myster.net.MysterAddress;
 	private synchronized void save() {
 		MML mml=new MML(); //make a new file system.
 
-		int counter=0;
-		for (int i=0;i<vector.size(); i++) {	//saves everything..
-			if (((MysterIP)(vector.elementAt(i))).getMysterCount()>0) {
-				mml.put("/"+i,((MysterIP)(vector.elementAt(i))).toMML().toString());	//write the MysterIP's MML representation as a string.														//directories are numbered 1, 2, 3 etc...
+		Enumeration enum=hashtable.elements();	//ugh.. This syntax SUCKS!
+		
+		//Collect worthless....
+		int i=0;
+		while (enum.hasMoreElements()) {
+			MysterIP mysterip=(MysterIP)(enum.nextElement());
+			
+			if (mysterip.getMysterCount()>0) {
+				mml.put("/"+i,mysterip.toMML().toString());	//write the MysterIP's MML representation as a string.														//directories are numbered 1, 2, 3 etc...
 			}
+			i++; //needed..
 		}
+		
 		//System.out.println("Saving: "+mml.toString());
 		Preferences.getInstance().put(pref_key, mml);
 	}
