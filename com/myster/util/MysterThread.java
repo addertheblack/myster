@@ -19,6 +19,11 @@ public abstract class MysterThread extends SafeThread {
 		setPriority(Thread.MIN_PRIORITY);
 	}
 	
+	public MysterThread(String s){
+		super(s);
+		setPriority(Thread.MIN_PRIORITY);
+	}
+	
 	public void end() {
 		stop();
 	}

@@ -346,7 +346,7 @@ public class DownloaderThread extends SafeThread {
 	
 		fileToWriteTo=new File(dp+theFileName+".i");
 		
-		if (fileToWriteTo.exists()) {
+		if (fileToWriteTo.exists() && (fileToWriteTo.length()!=0)) {
 			
 			
 			String it=(new AnswerDialog(progress, "A file by this name already exists. Would you like to restart this download or continue?" , new String[]{"restart", "continue", "cancel"})).answer();

@@ -459,6 +459,11 @@ class MysterIP {
 	}*/
 	
 	private static class IPStatusUpdaterThread extends MysterThread {
+		
+		public IPStatusUpdaterThread() {
+			super("IPStatusUpdaterThread");
+		}
+		
 		public void run() {
 			try {
 				for (;;) MysterIP.internalRefreshAll((MysterIP)(MysterIP.statusQueue.get()));

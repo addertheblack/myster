@@ -37,6 +37,8 @@ class FileFilter {
 	};
 	
 	public static boolean isCorrectType(String type, File file) {
+		if (file.length()==0) return false; //all 0k files are bad.
+		
 		if (type.equals("MPG3")) {
 			return getThingy(MPG3, file);
 		} else if (type.equals("MooV")) {

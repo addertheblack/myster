@@ -202,6 +202,10 @@ public class IPListManager { //aka tracker
 		*
 		*/
 		
+		public IPWalker() {
+			super("IPWalker thread");
+		}
+		
 		
 		public void run() {
 			
@@ -267,6 +271,9 @@ public class IPListManager { //aka tracker
 static volatile int counter=0;
 	private class AddIP extends MysterThread {
 		
+		public AddIP() {
+			super("AddIP Thread");
+		}
 		
 		
 		public void run() {

@@ -41,7 +41,11 @@ public class ConnectionManager extends MysterThread {
 	
 	private ConnectionContext context;
 	
+	private static volatile int threadCounter=0;
+	
 	public ConnectionManager(BlockingQueue q, ServerEventManager eventSender, DownloadQueue downloadQueue, Hashtable connectionSections) {
+		super("Server Thread "+(++threadCounter));
+		
 		socketQueue=q;
 		this.downloadQueue=downloadQueue;
 		this.eventSender=eventSender;

@@ -86,78 +86,47 @@ public class Timer implements Comparable {
 	
 	
 	
-	/**
-		 
+	/** 
 	*	Called by dispatcher thread to start event.
-	
 	*
-	
 	*/ 
 	
 	private void doEvent() {
-		
 		if (runAsThread) {
-			
 			(new Thread(runnable)).start();
-			
 		} else {
-			
 			try {
-				
 				runnable.run();
-				
 			} catch (Exception ex) {
-				
 				ex.printStackTrace();
-				
 			}
-			
 		}
-		
 	}
+
 	
 	
 	
 	
 	
 	static private Semaphore semaphore = new Semaphore(0);
-	
 	static private MinHeap timers = new MinHeap();
-	
 	static private Thread thread;
 	
-	
-	
 	static private void addEvent(Timer timer) {
-		
 		synchronized (timers) {
-			
 			timers.add(timer);
-			
 			timers.notify(); //instead of sem.getLock(time);
 			
-			
-			
 			if (thread == null)  { 
-				
-				thread = (new Thread() {
-					
+				thread = (new Thread("Timer Thread!!") {
 					public void run() {
-						
 						try {timerLoop();} catch (Exception ex) { ex.printStackTrace(); }
-						
 					}
-					
 				});
 				
-				
-				
 				thread.start();
-				
 			}
-			
 		}
-		
 	}
 
 	

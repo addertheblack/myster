@@ -14,6 +14,12 @@ package com.general.util;
 public abstract class SafeThread extends Thread {
 	protected boolean endFlag=false;
 	
+	public SafeThread() {}
+	
+	public SafeThread(String name) {
+		super(name);
+	}
+	
 	public void flagToEnd() {
 		endFlag=true;
 	}
