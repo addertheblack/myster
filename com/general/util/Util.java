@@ -2,7 +2,6 @@ package com.general.util;
 
 import java.awt.AWTEvent;
 import java.awt.Component;
-import java.awt.EventQueue;
 import java.awt.Frame;
 import java.awt.Image;
 import java.awt.MediaTracker;
