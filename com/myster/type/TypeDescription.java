@@ -50,6 +50,11 @@ public class TypeDescription {
 		return description;
 	}
 	
+	
+	/**
+	*	If this array is of length = 0 then simply allow every file
+	*	regardless of extension
+	*/
 	public String[] getExtensions() {
 		return (String[])extensions.clone();
 	}
