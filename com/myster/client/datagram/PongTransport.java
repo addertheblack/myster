@@ -12,6 +12,8 @@ import java.io.IOException;
 import com.general.util.Semaphore;
 import com.general.util.Timer;
 import java.util.Enumeration;
+import com.general.events.EventDispatcher;
+import com.general.events.SyncEventDispatcher;
 
 public class PongTransport extends DatagramTransport {
 	static final int transportNumber=1347374663;
@@ -20,6 +22,7 @@ public class PongTransport extends DatagramTransport {
 	
 	private Hashtable requests=new Hashtable();
 	
+	
 	MysterAddress a;
 	
 	
@@ -27,7 +30,7 @@ public class PongTransport extends DatagramTransport {
 		return transportNumber;
 	}
 	
-	public synchronized void packetReceived(ImmutableDatagramPacket immutablePacket) throws BadPacketException {
+	public void packetReceived(ImmutableDatagramPacket immutablePacket) throws BadPacketException {
 		try {
 			
 			//PongPacket packet=new PongPacket(immutablePacket);
@@ -41,22 +44,23 @@ public class PongTransport extends DatagramTransport {
 	}
 	
 	private void dispatch(MysterAddress param_address, ImmutableDatagramPacket immutablePacket) {
-		PongItemStruct pongItem=((PongItemStruct)(requests.get(param_address)));
-		
-		if (pongItem==null) {
-			System.out.println("Got pong from address I've never heard of..");
-			return;
+		PongItemStruct pongItem;
+		synchronized (this) {
+			pongItem=((PongItemStruct)(requests.get(param_address)));
+			
+			if (pongItem==null) {
+				System.out.println("Got pong from address I've never heard of..");
+				return;
+			}
+			
+			requests.remove(param_address);
 		}
 		
 		long pingTime=System.currentTimeMillis()-pongItem.timeStamp;
-		Vector pingListeners=pongItem.vector;
 		
+		pongItem.dispatcher.fireEvent(new PingEvent(PingEvent.PING, immutablePacket, (int)pingTime, param_address));
+
 		
-		for (int i=0; i<pingListeners.size(); i++) {
-			((PingEventListener)(pingListeners.elementAt(i))).fireEvent(new PingEvent(PingEvent.PING, immutablePacket, (int)pingTime, param_address));
-		}
-		
-		requests.remove(param_address);
 	}
 
 	
@@ -71,7 +75,7 @@ public class PongTransport extends DatagramTransport {
 		}
 		
 		
-		pongItemStruct.vector.addElement(listener);
+		pongItemStruct.dispatcher.addListener(listener);
 		a=param_address;
 	}
 	
@@ -103,13 +107,13 @@ public class PongTransport extends DatagramTransport {
 	}
 	
 	private static class PongItemStruct {
-		public final Vector vector;
+		public final EventDispatcher dispatcher;
 		public final long timeStamp;
 		public boolean secondPing=false;	//used when the connection has timeout on one packet to send a second.
 		
 		public PongItemStruct() {
 			timeStamp=System.currentTimeMillis();
-			vector=new Vector(10,10);
+			dispatcher=new SyncEventDispatcher();
 		}
 	}
 	
@@ -143,11 +147,10 @@ public class PongTransport extends DatagramTransport {
 						if (!enum.hasMoreElements()) break;
 					}
 				}
-				
-				for (int i=0; i<itemsToDelete.size(); i++) {
-					dispatch((MysterAddress)(itemsToDelete.elementAt(i)), null);
-					requests.remove(itemsToDelete.elementAt(i));
-				}
+			}
+			
+			for (int i=0; i<itemsToDelete.size(); i++) {
+				dispatch((MysterAddress)(itemsToDelete.elementAt(i)), null);
 			}
 		}
 	}

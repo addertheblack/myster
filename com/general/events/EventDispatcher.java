@@ -15,5 +15,5 @@ public abstract class EventDispatcher {
 
 	protected Vector getListeners() {return listeners;}
 	
-	protected abstract void fireEvent(GenericEvent e) ;
+	public abstract void fireEvent(GenericEvent e) ;
 }
