@@ -69,7 +69,7 @@ public abstract class AbstractDownloadQueue extends TransferQueue {
         updateQueue();
     }
 
-    public void saveDownloadSpotsInPrefs(int newSpots) {
+    protected void saveDownloadSpotsInPrefs(int newSpots) {
     }
 
     public final int getMaxQueueLength() {

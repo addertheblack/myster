@@ -64,7 +64,6 @@ public class FileSenderThread extends ServerThread {
                     StandardSuite
                             .disconnectWithoutException(MysterSocketFactory
                                     .makeStreamConnection(context.serverAddress));
-                    throw new IOException("Test code");
                     //}
                 } catch (Exception ex) { //if host is not reachable it will end
                                          // up here.
