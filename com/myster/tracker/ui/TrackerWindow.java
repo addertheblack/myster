@@ -74,13 +74,13 @@ public class TrackerWindow extends MysterFrame {
 
         //other stuff
 
-        list.setColumnName(0, "Server Name: ");
-        list.setColumnName(1, "# Files:");
-        list.setColumnName(2, "Status:");
-        list.setColumnName(3, "IP:");
-        list.setColumnName(4, "Ping:");
-        list.setColumnName(5, "Rank:");
-        list.setColumnName(6, "Uptime:");
+        list.setColumnName(0, "Server Name");
+        list.setColumnName(1, "# Files");
+        list.setColumnName(2, "Status");
+        list.setColumnName(3, "IP");
+        list.setColumnName(4, "Ping");
+        list.setColumnName(5, "Rank");
+        list.setColumnName(6, "Uptime");
 
         list.setColumnWidth(0, 150);
         list.setColumnWidth(1, 70);
