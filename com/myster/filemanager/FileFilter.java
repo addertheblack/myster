@@ -66,28 +66,22 @@ class FileFilter {
 		if (hasExtension(file.getName(), entry.extensions))
 			return true;
 
-		if (entry.archivable)
-		{
-			try
-			{
+		if (entry.archivable) {
+			try {
 				ZipFile zipFile = new ZipFile(file);
-				try
-				{
-					for(Enumeration entries = zipFile.entries(); entries.hasMoreElements(); )
-					{
+				try {
+					for(Enumeration entries = zipFile.entries(); entries.hasMoreElements(); ) {
 						ZipEntry zipEntry = (ZipEntry)entries.nextElement();
 						if (hasExtension(zipEntry.getName(), entry.extensions))
 							return true;
 					}
 				} finally { zipFile.close(); }
-			}
-			catch(java.io.IOException e) { return false; }
+			} catch(java.io.IOException e) { return false; }
 		}
 		return false;
 	}
 
-	private static boolean hasExtension(String filename, String[] extensions)
-	{
+	private static boolean hasExtension(String filename, String[] extensions) {
 		String lowFilename = filename.toLowerCase();
 		for(int i=0; i<extensions.length; i++)
 			if (lowFilename.endsWith(extensions[i])) 
