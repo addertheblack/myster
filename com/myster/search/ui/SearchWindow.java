@@ -67,7 +67,7 @@ public class SearchWindow extends MysterFrame implements SearchResultListener, S
 		searchbutton=new Button("Search");
 		searchbutton.setSize(50, 20);
 		
-		textentry=new TextField("Enter a search string here");
+		textentry=new TextField("");
 		textentry.setEditable(true);
 		
 		//connect.dispatchEvent(new KeyEvent(connect, KeyEvent.KEY_PRESSED, System.currentTimeMillis(), 0, KeyEvent.VK_ENTER, (char)KeyEvent.VK_ENTER));
