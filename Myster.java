@@ -110,6 +110,10 @@ public class Myster{
 					com.general.util.AnswerDialog.simpleAlert("Myster's UDP sub-system could not initialize. This means Myster will probably not work correctly. Here is the official error:\n\n"+ex);
 				}
 				
+				
+				//UDP Server INIT
+				com.myster.server.datagram.TopTenDatagramServer.init();
+				
 				progress.setText(I18n.tr("Loading Server Stats Window... %1%%", ""+15)+macHack);
 				progress.setValue(15);
 				
@@ -174,6 +178,22 @@ public class Myster{
 					//SearchWindow sw=new SearchWindow();
 					//sw.say(I18n.tr("Idle.."));
 				}
+				
+				/*
+				try {
+					TopTenDatagramClient.getTopTen(new MysterAddress("127.0.0.1"), new com.myster.type.MysterType("MPG3".getBytes()), 
+							new StandardDatagramListener() {
+								public void response(StandardDatagramEvent event) {
+									AnswerDialog.simpleAlert("Number of thingies returned = "+((Object[])event.getData()).length);
+								}
+								
+								public void timeout(StandardDatagramEvent event) {
+									AnswerDialog.simpleAlert("Timeout");
+								}
+							});
+				} catch (Exception ex) {
+					ex.printStackTrace();
+				}*/
 				
 			}
 		}).start();

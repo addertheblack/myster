@@ -915,18 +915,12 @@ Work on DEV 8:
 		-> Completely re-wrote download queue manager. It now doesn't use any thread (it used to use 4)
 				it's much easyer to debug (7 hours to write instead of 20 hours). Also
 				DOES NOT REQUIRE MYSTER TO BE RESTARTED! Hurray!
+		-> Work around freeze on cancel.
 		
 		
+		to do:
 			Need to fix bug with caching MP3 ID3 info
 			Need to fix freeze on cancel
-			Need to fix stupid none batching behavior
+			Need to fix stupid none batching behavior (MSDownload is slower than it should be)
 			Make it so multi source resumables are named different (idiot)
 			Make sensible behavior for queued multi source downloads.
-			
-			
-		Tim's number? 442-0097
-		
-		| <-- Stupid error
-		| <-- this.xx = xx problem (not common)
-		| <-- confusing removeElement with setElementAt(i to null)
-		| <-- Free spot problem.. stupid error

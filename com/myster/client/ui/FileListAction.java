@@ -30,7 +30,7 @@ public class FileListAction implements ActionListener {
 	
 	public synchronized void actionPerformed(ActionEvent a) {
 		try {
-			if (System.currentTimeMillis()-timeOfLast<500) return;
+			if (System.currentTimeMillis()-timeOfLast<1000) return;
 			timeOfLast=System.currentTimeMillis();
 			MysterFileStub stub = new MysterFileStub(new MysterAddress(w.getCurrentIP()), w.getCurrentType(), a.getActionCommand());
 			com.myster.client.stream.StandardSuite.downloadFile(stub.getMysterAddress(), stub);
