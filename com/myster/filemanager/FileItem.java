@@ -38,9 +38,10 @@ public class FileItem {
 		if (fileHashes == null) return -1;
 	
 		for (int i = 0; i < fileHashes.length; i++) {
-			if (fileHashes[i].getHashName().equals(hashType)) return i;
+			if (fileHashes[i].getHashName().equalsIgnoreCase(hashType)) return i;
 		}
 		
+		System.out.println("Could not find hash type: " + hashType);
 		return -1;
 	}
 	

@@ -9,7 +9,7 @@ public class SimpleFileHash extends FileHash implements Serializable {
 	private SimpleFileHash(){}
 	
 	protected SimpleFileHash(String hashName, byte[] hash) {
-		this.hashName = hashName;
+		this.hashName = hashName.toLowerCase();
 		this.hash = (byte[])hash.clone();
 	}
 	

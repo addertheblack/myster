@@ -406,6 +406,7 @@ public class MSPartialFile {
 				if (hashes[i].getHashName().equalsIgnoreCase(hashType)) return hashes[i];
 			}
 			
+			System.out.println("Could not find hash of type "+hashType);
 			return null;// !
 		}
 		

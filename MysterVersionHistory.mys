@@ -992,6 +992,7 @@ Work on DEV 8:
 		-> Added ability to set types as on/off by default in typedescriptionlist.mml
 		-> Corrected oddities found by FindBugs.
 		-> Changed the tabs in the server stats so they actually look like tabs (thanx rev)
+		-> Made " - Myster" appear after every window name in Linux (Exception Progress windows)
 		
 		
 (Red List)

@@ -45,6 +45,8 @@ public class Myster {
 	private static long programLaunchTime = 0;
 	
 	private static final File WORKING_DIRECTORY = new File(System.getProperty("user.dir"));
+	
+	public static final boolean ON_LINUX = (System.getProperty("os.name")!=null?System.getProperty("os.name").equals("Linux"):false);
 
 	public static void main(String args[]) {
 		final boolean isServer=(args.length>0&&args[0].equals("-s"));
@@ -428,8 +430,7 @@ public class Myster {
 	
 	
 	public static File getCurrentDirectory() {
-		if (System.getProperty("os.name").equals("Linux"))
-		{
+		if (ON_LINUX) {
 			File result = new File(new File(System.getProperty("user.home")), "myster");
 			if (!result.exists()) result.mkdir();
 			return result;

@@ -46,7 +46,7 @@ public class FileByHash extends ServerThread {
 				byte[] hashBytes = new byte[lengthOfHash];
 				context.socket.in.readFully(hashBytes,0,hashBytes.length);
 				
-				if (hashType.equals("md5")) {
+				if (hashType.equalsIgnoreCase(com.myster.hash.HashManager.MD5)) {
 					md5Hash = SimpleFileHash.buildFileHash(hashType, hashBytes);
 				}
 			}

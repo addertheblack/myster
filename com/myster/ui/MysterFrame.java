@@ -20,7 +20,13 @@ public class MysterFrame extends Frame {
 	public MysterFrame(String windowName) {
 		super(windowName);
 		
+		setTitle(windowName);
+		
 		initEvents();
+	}
+	
+	public void setTitle(String windowName) {
+		super.setTitle(com.myster.Myster.ON_LINUX?windowName+" - Myster":windowName);
 	}
 	
 	private static synchronized Point getWindowStartingLocation() {
