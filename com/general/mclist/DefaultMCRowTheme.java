@@ -68,8 +68,8 @@ public class DefaultMCRowTheme implements MCRowThemeInterface {
 		}
 		
 		//Clear secleciton to white:
-		//g.setColor(Color.white);
-		//g.fillRect(0, yoffset, row.getTotalLength(), getHeight());
+		g.setColor(Color.white);
+		g.fillRect(0, yoffset, row.getTotalLength(), getHeight());
 		
 		//Paint boxes - padding on ONE SIDE!
 		if (itemnumber%2==0) {
