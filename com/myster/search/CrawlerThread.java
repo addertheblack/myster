@@ -74,7 +74,7 @@ public class CrawlerThread extends MysterThread {
 						return;
 					}
 
-					socket=MysterSocketFactory.makeStreamConnection(currentIp);
+					socket = null;
 					
 					if (endFlag) {
 						cleanUp();
@@ -82,21 +82,34 @@ public class CrawlerThread extends MysterThread {
 					}
 					
 					if (counter<DEPTH) {
-						Vector ipList=StandardSuite.getTopServers(socket, searchType);
+						MysterAddress[] addresses;
+						try {
+							addresses = com.myster.client.datagram.StandardDatagramSuite.getTopServers(currentIp, searchType);
+							
+							System.out.println("We got a UDP top ten!");
+						} catch (IOException ex) {
+							if (endFlag) {
+								cleanUp();
+								return;
+							}
+						
+							socket = MysterSocketFactory.makeStreamConnection(currentIp);
+							Vector ipList = StandardSuite.getTopServers(socket, searchType);
+							
+							addresses = new MysterAddress[ipList.size()];
+							for (int i = 0; i<addresses.length; i++) addresses[i] = new MysterAddress((String)(ipList.elementAt(i)));
+							
+							System.out.println("We got a TCP top ten! -> " + ex);
+						}
 						
 						if (endFlag) {
 							cleanUp();
 							return;
 						}
 						
-						for (int i=0; i<ipList.size(); i++) {
-							try {
-								MysterAddress temp=new MysterAddress((String)(ipList.elementAt(i)));
-								ipQueue.addIP(temp);
-								IPListManagerSingleton.getIPListManager().addIP(temp);
-							} catch (UnknownHostException es) {
-								//nothing.
-							}
+						for (int i=0; i<addresses.length; i++) {
+							ipQueue.addIP(addresses[i]);
+							IPListManagerSingleton.getIPListManager().addIP(addresses[i]);
 						}
 					}
 					
@@ -105,9 +118,8 @@ public class CrawlerThread extends MysterThread {
 						return;
 					}
 					
+					if (socket == null) socket = MysterSocketFactory.makeStreamConnection(currentIp);
 					searcher.search(socket, currentIp, searchType);
-					
-					msg.say("Searched "+ipQueue.getIndexNumber()+" Myster servers.");
 					
 					StandardSuite.disconnectWithoutException(socket);
 				} catch (IOException ex) {
@@ -117,6 +129,8 @@ public class CrawlerThread extends MysterThread {
 						} catch (IOException exp){}
 					}
 				}
+				
+				msg.say("Searched "+ipQueue.getIndexNumber()+" Myster servers.");
 
 			}
 			
@@ -154,6 +168,8 @@ public class CrawlerThread extends MysterThread {
 		} catch (Exception ex) {
 			System.out.println("Crawler thread was not happy about being asked to close.");
 		}
+		
+		interrupt();
 		
 	}
 }

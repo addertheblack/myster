@@ -160,7 +160,7 @@ public class TransactionManager implements TransactionSender {
 		}
 		
 		private class TimeoutTimer implements Runnable {
-			private final int[] TIMEOUTS = {5000,10000,20000,40000};
+			private final int[] TIMEOUTS = {2500,5000,10000,20000};
 			
 			int timeoutCycle = 0;
 			

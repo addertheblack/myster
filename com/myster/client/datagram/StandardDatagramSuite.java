@@ -173,7 +173,7 @@ public class StandardDatagramSuite {
 		try {
 			sem.getLock();
 		} catch (InterruptedException ex) {
-			throw new IOException("Timeout"); 
+			throw new IOException("Interrupted Thread Wait.."); 
 		}
 		
 		if (blockingResult.getData() == null) {
