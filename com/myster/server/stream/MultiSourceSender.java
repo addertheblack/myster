@@ -49,9 +49,8 @@ public class MultiSourceSender extends ServerThread {
 
     public void section(ConnectionContext context) throws IOException {
         MultiSourceDownloadInstance download = new MultiSourceDownloadInstance(
-                (ServerDownloadDispatcher) (context.sectionObject),
-                context.transferQueue, new MysterAddress(context.socket
-                        .getInetAddress()));
+                (ServerDownloadDispatcher) (context.sectionObject), context.transferQueue,
+                new MysterAddress(context.socket.getInetAddress()));
 
         try {
             download.download(context.socket);
@@ -91,8 +90,8 @@ public class MultiSourceSender extends ServerThread {
 
         MysterType type = new MysterType("????".getBytes());
 
-        long fileLength = 0, startTime = System.currentTimeMillis(),
-                amountDownloaded = 0, myCounter = 0, offset = 0;
+        long fileLength = 0, startTime = System.currentTimeMillis(), amountDownloaded = 0,
+                myCounter = 0, offset = 0;
 
         DownloadInfo downloadInfo;
 
@@ -111,7 +110,7 @@ public class MultiSourceSender extends ServerThread {
         public void download(final MysterSocket socket) throws IOException {
             try {
                 this.socket = socket;//this is so I can disconnect the stupid
-                                     // socket.
+                // socket.
 
                 final DataOutputStream out = socket.out;
                 final DataInputStream in = socket.in;
@@ -120,8 +119,7 @@ public class MultiSourceSender extends ServerThread {
 
                 fileName = in.readUTF();
 
-                final File file = FileTypeListManager.getInstance().getFile(
-                        type, fileName);
+                final File file = FileTypeListManager.getInstance().getFile(type, fileName);
 
                 if (file == null) {
                     out.write(0);
@@ -131,49 +129,44 @@ public class MultiSourceSender extends ServerThread {
                 }
 
                 checkForLeechers(socket); //throws an IO Exception if there's a
-                                          // leech.
+                // leech.
 
                 final UploadBlock currentBlock = startNewBlock(socket, file);
 
                 fileLength = file.length();
 
                 if (currentBlock.isEndSignal()) { //must fix this duplicate
-                                                  // code!!!!!! AGHHH!!
+                    // code!!!!!! AGHHH!!
                     this.offset = this.fileLength;
                     amountDownloaded = 0;
-                    System.out.println("GOT END SIGNAL: " + this.offset + " : "
-                            + this.fileLength);
+                    System.out.println("GOT END SIGNAL: " + this.offset + " : " + this.fileLength);
                     return;
                 }
 
                 try { //the first loop is special because it can be queued.
-                      // Other loops do not get queued...
+                    // Other loops do not get queued...
                     transferQueue.doDownload(new Downloader() {
                         public void download() throws IOException {
-                            sendQueuePosition(socket.out, 0,
-                                    "You are ready to download..");
+                            sendQueuePosition(socket.out, 0, "You are ready to download..");
 
                             fireEvent(ServerDownloadEvent.STARTED, -1);
 
-                            FileSenderThread.ServerTransfer
-                                    .sendImage(socket.out); //sends an "ad"
-                                                            // image and URL
+                            FileSenderThread.ServerTransfer.sendImage(socket.out); //sends an "ad"
+                            // image and URL
 
                             startTime = System.currentTimeMillis();
                             sendFileSection(socket, file, currentBlock); //send
-                                                                         // the
-                                                                         // first
-                                                                         // block
+                            // the
+                            // first
+                            // block
 
                             fireEvent(ServerDownloadEvent.FINISHED, -1);
 
                             blockSendingLoop(socket, file);
                         }
 
-                        public void queued(QueuedStats stats)
-                                throws IOException {
-                            sendQueuePosition(socket.out, stats
-                                    .getQueuePosition(),
+                        public void queued(QueuedStats stats) throws IOException {
+                            sendQueuePosition(socket.out, stats.getQueuePosition(),
                                     "You are in a queue to download..");
                         }
 
@@ -182,23 +175,17 @@ public class MultiSourceSender extends ServerThread {
                         }
                     });
                 } catch (MaxQueueLimitException ex) {
-                    throw new IOException(
-                            "Over the queue limit, disconnecting..");
+                    throw new IOException("Over the queue limit, disconnecting..");
                 }
-
-                //fireEvent(ServerDownloadEvent.FINISHED, -1);
-
             } catch (IOException ex) {
                 ex.printStackTrace();
-                //fireEvent(ServerDownloadEvent.FINISHED, -1);
                 throw ex;
             } finally {
                 fireEvent(ServerDownloadEvent.FINISHED, -1);
             }
         }
 
-        private UploadBlock startNewBlock(MysterSocket socket, File file)
-                throws IOException {
+        private UploadBlock startNewBlock(MysterSocket socket, File file) throws IOException {
             startTime = System.currentTimeMillis();
 
             UploadBlock uploadBlock = getNextBlockToSend(socket, file);
@@ -207,16 +194,14 @@ public class MultiSourceSender extends ServerThread {
         }
 
         //NOTE: The first loop is not done here.
-        private void blockSendingLoop(MysterSocket socket, File file)
-                throws IOException {
+        private void blockSendingLoop(MysterSocket socket, File file) throws IOException {
             for (;;) {
                 UploadBlock currentBlock = startNewBlock(socket, file);
 
                 if (currentBlock.isEndSignal()) {
                     this.offset = this.fileLength;
                     amountDownloaded = 0;
-                    System.out.println("GOT END SIGNAL: " + this.offset + " : "
-                            + this.fileLength);
+                    System.out.println("GOT END SIGNAL: " + this.offset + " : " + this.fileLength);
                     break;
                 }
 
@@ -227,11 +212,11 @@ public class MultiSourceSender extends ServerThread {
                 fireEvent(ServerDownloadEvent.STARTED, -1);
 
                 FileSenderThread.ServerTransfer.sendImage(socket.out); //sends
-                                                                       // an
-                                                                       // "ad"
-                                                                       // image
-                                                                       // and
-                                                                       // URL
+                // an
+                // "ad"
+                // image
+                // and
+                // URL
 
                 sendFileSection(socket, file, currentBlock);
 
@@ -240,8 +225,8 @@ public class MultiSourceSender extends ServerThread {
         }
 
         //Encapsulates the stuff required to send a queue position
-        private void sendQueuePosition(DataOutputStream out, int queued,
-                String message) throws IOException {
+        private void sendQueuePosition(DataOutputStream out, int queued, String message)
+                throws IOException {
             RobustMML mml = new RobustMML();
 
             mml.put(QUEUED_PATH, "" + queued); //no queing
@@ -259,17 +244,16 @@ public class MultiSourceSender extends ServerThread {
                 try {
                     com.myster.client.stream.StandardSuite
                             .disconnectWithoutException(com.myster.net.MysterSocketFactory
-                                    .makeStreamConnection(new com.myster.net.MysterAddress(
-                                            socket.getInetAddress())));
+                                    .makeStreamConnection(new com.myster.net.MysterAddress(socket
+                                            .getInetAddress())));
                 } catch (IOException ex) { //if host is not reachable it will
-                                           // end up here.
-                    sendQueuePosition(socket.out, 0,
-                            "You are not reachable from the outside");
+                    // end up here.
+                    sendQueuePosition(socket.out, 0, "You are not reachable from the outside");
 
-                    FileSenderThread.ServerTransfer
-                            .freeloaderComplain(socket.out); //send an image +
-                                                             // URL about
-                                                             // firewalls.
+                    FileSenderThread.ServerTransfer.freeloaderComplain(socket.out); //send an image
+                                                                                    // +
+                    // URL about
+                    // firewalls.
 
                     throw new IOException("Downloader is a leech");
                 }
@@ -282,9 +266,8 @@ public class MultiSourceSender extends ServerThread {
 
         long CHUNK_SIZE = 8000;
 
-        private void sendFileSection(final MysterSocket socket,
-                final File file_arg, final UploadBlock currentBlock)
-                throws IOException {
+        private void sendFileSection(final MysterSocket socket, final File file_arg,
+                final UploadBlock currentBlock) throws IOException {
             long offset = currentBlock.start, length = currentBlock.size;
             RandomAccessFile file = null;
 
@@ -299,8 +282,7 @@ public class MultiSourceSender extends ServerThread {
                 socket.out.writeLong(length);
 
                 for (long counter = 0; counter < (length);) {
-                    long calcBlockSize = (length - counter < CHUNK_SIZE ? length
-                            - counter
+                    long calcBlockSize = (length - counter < CHUNK_SIZE ? length - counter
                             : CHUNK_SIZE);
 
                     if (endFlag)
@@ -315,31 +297,27 @@ public class MultiSourceSender extends ServerThread {
                 }
 
                 myCounter += length; //this is so a client cannot suck data
-                                     // forever.
+                // forever.
             } finally {
                 if (file != null)
                     file.close();
             }
         }
 
-        private UploadBlock getNextBlockToSend(MysterSocket socket, File file)
-                throws IOException {
+        private UploadBlock getNextBlockToSend(MysterSocket socket, File file) throws IOException {
             final long offset = socket.in.readLong();
             long fileLength = socket.in.readLong();
 
-            if ((fileLength < 0) | (offset < 0)
-                    | ((fileLength == 0) & (offset != 0))
+            if ((fileLength < 0) | (offset < 0) | ((fileLength == 0) & (offset != 0))
                     | (fileLength + offset > file.length())) {
-                throw new IOException(
-                        "Client sent garbage fileLengths and offsets of "
-                                + fileLength + " and " + offset);
+                throw new IOException("Client sent garbage fileLengths and offsets of "
+                        + fileLength + " and " + offset);
             }
 
             //if (fileLength == -1) fileLength = file.length();
 
             if (myCounter > file.length())
-                throw new IOException(
-                        "User has request more bytes than there are in the file!");
+                throw new IOException("User has request more bytes than there are in the file!");
 
             this.offset = offset;
 
@@ -348,10 +326,9 @@ public class MultiSourceSender extends ServerThread {
         }
 
         private void fireEvent(int id, int queuePosition) {
-            dispatcher.fireEvent(new ServerDownloadEvent(id, remoteIP,
-                    getSectionNumber(), fileName, type.toString(),
-                    queuePosition, offset + amountDownloaded, fileLength,
-                    downloadInfo));
+            dispatcher.fireEvent(new ServerDownloadEvent(id, remoteIP, getSectionNumber(),
+                    fileName, type.toString(), queuePosition, offset + amountDownloaded,
+                    fileLength, downloadInfo));
         }
 
         private class Stats implements DownloadInfo {
@@ -363,8 +340,7 @@ public class MultiSourceSender extends ServerThread {
                 if ((elapsedTime < ONE_SECOND) || (amountDownloaded == 0))
                     return 0;
 
-                return (double) amountDownloaded
-                        / (double) (elapsedTime / ONE_SECOND);
+                return (double) amountDownloaded / (double) (elapsedTime / ONE_SECOND);
             }
 
             public long getStartTime() {

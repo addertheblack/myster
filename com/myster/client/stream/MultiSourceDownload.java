@@ -205,7 +205,7 @@ public class MultiSourceDownload implements Runnable, Controller {
 
     public synchronized WorkSegment getNextWorkSegment(int requestedBlockSize) {
         if (unfinishedSegments.size() > 0)
-            return (WorkSegment) (unfinishedSegments.pop());
+            return ((WorkSegment)unfinishedSegments.pop()).recycled(true);
         
         final int multiBlockSize = Math.max(1, requestedBlockSize / DEFAULT_CHUNK_SIZE) * DEFAULT_CHUNK_SIZE; //quick round off to nearest chunk.
         
@@ -510,8 +510,14 @@ class InternalSegmentDownloader extends MysterThread implements
     //progress is the progress through the segment (exclusing offset)
     private void fireEvent(int id, long offset, long progress,
             int queuePosition, long length) {
+        fireEvent(id, offset,
+                progress, queuePosition, length, "");
+    }
+    
+    private void fireEvent(int id, long offset, long progress,
+            int queuePosition, long length, String queuedMessage) {
         dispatcher.fireEvent(new SegmentDownloaderEvent(id, this, offset,
-                progress, queuePosition, length, stub));
+                progress, queuePosition, length, stub, queuedMessage));
     }
 
     private void fireEvent(byte type, byte[] data) {
@@ -597,7 +603,7 @@ class InternalSegmentDownloader extends MysterThread implements
                 if (!controller.isOkToQueue())
                     throw new IOException("Should not be queued!");
 
-                fireEvent(SegmentDownloaderEvent.QUEUED, 0, 0, queuePosition, 0);
+                fireEvent(SegmentDownloaderEvent.QUEUED, 0, 0, queuePosition, 0, message);
             } catch (NumberFormatException ex) {
                 throw new IOException(
                         "Server sent garble as queue position -> " + mml);
@@ -638,10 +644,14 @@ class InternalSegmentDownloader extends MysterThread implements
                 break;
             }
         }
-
-        debug("Work Thread " + getName() + " -> Took " + (timeTakenToDownloadSegment / 1000) +"s to download "+(workingSegment.workSegment.length/1024)+"k");
-        idealBlockSize = calculateNextBlockSize(workingSegment.workSegment.length, timeTakenToDownloadSegment);
-        debug("Work Thread " + getName() + " -> next block will be "+(idealBlockSize/1024)+"k");
+        if (!workingSegment.workSegment.isRecycled) {
+            debug("Work Thread " + getName() + " -> Took " + (timeTakenToDownloadSegment / 1000)
+                    + "s to download " + (workingSegment.workSegment.length / 1024) + "k");
+            idealBlockSize = calculateNextBlockSize(workingSegment.workSegment.length,
+                    timeTakenToDownloadSegment);
+            debug("Work Thread " + getName() + " -> next block will be " + (idealBlockSize / 1024)
+                    + "k");
+        }
         fireEvent(SegmentDownloaderEvent.END_SEGMENT,
                 workingSegment.workSegment.startOffset,
                 workingSegment.workSegment.startOffset
@@ -794,17 +804,29 @@ class DataBlock {
     }
 }
 
-class WorkSegment {
+//immutable!
+final class WorkSegment {
+    public final boolean isRecycled;
     public final long startOffset, length;
 
     public WorkSegment(long startOffset, long length) {
+        this(startOffset, length, false);
+    }
+    
+    private WorkSegment(long startOffset, long length, boolean isRecycled) {
         this.startOffset = startOffset;
         this.length = length;
+        this.isRecycled = isRecycled;
     }
+
 
     public boolean isEndSignal() {
         return (startOffset == 0) && (length == 0);
     }
+    
+    public WorkSegment recycled(boolean isRecycled){
+        return new WorkSegment(startOffset, length, isRecycled);
+    } 
 }
 
 interface Controller {

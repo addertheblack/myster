@@ -39,9 +39,26 @@ import com.myster.tracker.IPListManagerSingleton;
 import com.myster.tracker.MysterServer;
 import com.myster.type.MysterType;
 import com.myster.ui.MysterFrame;
+import com.myster.ui.WindowLocationKeeper;
 import com.myster.util.Sayable;
 
 public class ClientWindow extends MysterFrame implements Sayable {
+    private static final int XDEFAULT = 600;
+
+    private static final int YDEFAULT = 400;
+
+    private static final int SBXDEFAULT = 72; //send button X default
+
+    private static final int GYDEFAULT = 50; //Generic Y default
+
+    private static int counter = 0;
+
+    private static final String WINDOW_KEEPER_KEY = "Myster's Client Windows";
+
+    private static final String CLIENT_WINDOW_TITLE_PREFIX = "Direct Connection ";
+    
+    private static WindowLocationKeeper keeper;
+    
     private GridBagLayout gblayout;
 
     private GridBagConstraints gbconstrains;
@@ -62,20 +79,6 @@ public class ClientWindow extends MysterFrame implements Sayable {
 
     private MessageField msg;
 
-    private static final int XDEFAULT = 600;
-
-    private static final int YDEFAULT = 400;
-
-    private static final int SBXDEFAULT = 72; //send button X default
-
-    private static final int GYDEFAULT = 50; //Generic Y default
-
-    private static int counter = 0;
-
-    private static final String WINDOW_KEEPER_KEY = "Myster's Client Windows";
-
-    private static final String CLIENT_WINDOW_TITLE_PREFIX = "Direct Connection ";
-
     private TypeListerThread connectToThread;
 
     private FileListerThread fileListThread;
@@ -85,6 +88,8 @@ public class ClientWindow extends MysterFrame implements Sayable {
     public static void initWindowLocations() {
         Rectangle[] rectangles = com.myster.ui.WindowLocationKeeper.getLastLocs(WINDOW_KEEPER_KEY);
 
+        keeper = new WindowLocationKeeper(WINDOW_KEEPER_KEY);
+        
         for (int i = 0; i < rectangles.length; i++) {
             ClientWindow window = new ClientWindow();
             window.setBounds(rectangles[i]);
@@ -96,7 +101,7 @@ public class ClientWindow extends MysterFrame implements Sayable {
 
         init();
 
-        //windowKeeper.addFrame(this);
+        keeper.addFrame(this);
     }
 
     public ClientWindow(String ip) {

@@ -37,7 +37,7 @@ public class ServerFacade {
             BannersManager.init(); //init banners stuff..
 
             downloadQueue = new ServerQueue();
-            downloadQueue.setMaxQueueLength(21);
+            downloadQueue.setMaxQueueLength(20);
             opp = new Operator(downloadQueue, getServerThreads());
             Preferences.getInstance().addPanel(new PrefPanel());
             addStandardConnectionSections();

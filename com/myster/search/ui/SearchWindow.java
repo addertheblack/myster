@@ -18,7 +18,6 @@ import java.awt.Graphics;
 import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
 import java.awt.Insets;
-import java.awt.Panel;
 import java.awt.Rectangle;
 import java.awt.TextField;
 import java.awt.event.ActionEvent;
@@ -57,6 +56,8 @@ public class SearchWindow extends MysterFrame implements SearchResultListener, S
     private MessageField msg;
 
     private ClientHandleObject metaDateHandler;
+
+    private SearchEngine searchEngine;
 
     private final int XDEFAULT = 640;
 
@@ -159,9 +160,7 @@ public class SearchWindow extends MysterFrame implements SearchResultListener, S
 
     }
 
-    static WindowLocationKeeper keeper;//cheat to save scrolling. put at top
-
-    private SearchEngine searchEngine;
+    private static WindowLocationKeeper keeper;//cheat to save scrolling. put at top
 
     // later.
 

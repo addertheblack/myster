@@ -195,7 +195,7 @@ public class TrackerWindow extends MysterFrame {
 
     /**
      * This thread is responsible for keeping the tracker window updated. It does so by polling the
-     * IPListManager repeataly. Every once in a while it reloads the information complely.
+     * IPListManager repeataly. Every once in a while it reloads the information completely.
      */
     private class MyThread extends TimerThread {
         private long counter = 0;

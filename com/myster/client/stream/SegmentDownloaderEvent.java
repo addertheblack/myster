@@ -18,21 +18,23 @@ public class SegmentDownloaderEvent extends GenericEvent {
 
     public static final int END_CONNECTION = 6;
 
-    final long offset;
+    private final long offset;
 
-    final long progress;
+    private final long progress;
 
-    final int queuePosition;
+    private final int queuePosition;
 
-    final long length;
+    private final long length;
 
-    final SegmentDownloader segmentDownloader;
+    private final SegmentDownloader segmentDownloader;
 
-    final MysterFileStub stub;
+    private final MysterFileStub stub;
+
+    private final String queuedMessage;
 
     public SegmentDownloaderEvent(int id, SegmentDownloader segmentDownloader,
             long offset, long progress, int queuePosition, long length,
-            MysterFileStub stub) {
+            MysterFileStub stub, String queuedMessage) {
         super(id);
 
         this.offset = offset;
@@ -41,6 +43,7 @@ public class SegmentDownloaderEvent extends GenericEvent {
         this.length = length;
         this.segmentDownloader = segmentDownloader;
         this.stub = stub;
+        this.queuedMessage = queuedMessage;
     }
 
     public int getQueuePosition() {
@@ -65,5 +68,15 @@ public class SegmentDownloaderEvent extends GenericEvent {
 
     public MysterFileStub getMysterFileStub() {
         return stub;
+    }
+
+    /**
+     * If the download is being queued (ie: this event is a queued event), the remote server might
+     * send a message as well. You can access this message using this command.
+     * 
+     * @return the server queued message or "" if no message.
+     */
+    public String getQueuedMessage() {
+        return queuedMessage;
     }
 }

@@ -6,15 +6,15 @@ import java.awt.MenuShortcut;
 import java.awt.event.ActionListener;
 
 public class MysterMenuItemFactory {
-    ActionListener action;
+    private ActionListener action;
 
-    String name;
+    private String name;
 
-    int shortcut;
+    private int shortcut;
 
-    boolean useShift;
+    private boolean useShift;
 
-    boolean isDisabled = false;
+    private boolean isDisabled = false;
 
     public MysterMenuItemFactory() {
         this("-");

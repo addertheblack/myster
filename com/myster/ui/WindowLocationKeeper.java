@@ -77,6 +77,10 @@ public class WindowLocationKeeper {
         	public void windowClosing(WindowEvent e) {
         		deleteLocation(((Component) (e.getSource())), privateID);
         	}
+        	
+        	public void windowClosed(WindowEvent e) {
+        		deleteLocation(((Component) (e.getSource())), privateID);
+        	}
         });
     }
 
