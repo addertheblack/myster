@@ -165,6 +165,10 @@ public class MultiSourceDownload implements Runnable, Controller {
 		return fileLength;
 	}
 	
+	public MysterFileStub getStub() {
+		return stub;
+	}
+	
 	public synchronized boolean isDead() {
 		return isDead;
 	}

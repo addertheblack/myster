@@ -27,8 +27,6 @@ public class StandardMysterSearch implements MysterSearchClientSection {
 	}
 
 	public void search(MysterSocket socket, MysterAddress address, MysterType type) throws IOException {
-		System.out.println("Standard search for: "+searchString);
-		
 		if (endFlag) return;
 		
 		Vector searchResults=com.myster.client.stream.StandardSuite.getSearch(socket, type, searchString);

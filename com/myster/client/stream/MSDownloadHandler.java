@@ -2,21 +2,27 @@ package com.myster.client.stream;
 
 import java.util.Vector;
 import java.util.Hashtable;
+import java.io.File;
+
+import com.general.util.AnswerDialog;
 
 import com.myster.util.FileProgressWindow;
+
 
 public class MSDownloadHandler extends MSDownloadListener {
 	private FileProgressWindow 	progress;
 	private int 				macBarCounter;
 	private Vector				freeBars;
 	private Hashtable			segmentListeners;
+	private File				fileBeingDownloadedTo;
 	
-	public MSDownloadHandler(FileProgressWindow progress) {
+	public MSDownloadHandler(FileProgressWindow progress, File fileBeingDownloadedTo) {
 		this.progress 	= progress;
 		
 		macBarCounter		= 1; // the first bar is used for overall progress
 		freeBars			= new Vector();
 		segmentListeners 	= new Hashtable();
+		this.fileBeingDownloadedTo =	fileBeingDownloadedTo;
 	}
 	
 	public void startDownload(MultiSourceEvent event) {
@@ -53,10 +59,19 @@ public class MSDownloadHandler extends MSDownloadListener {
 	
 	public void doneDownload(MultiSourceEvent event) {
 		progress.setText("Download Finished");
+		progress.done();
+		
+		final String FILE_ENDING = ".i";
 	
-		/*
+		File theFile = fileBeingDownloadedTo; //!
+	
+		if (! theFile.getName().endsWith(FILE_ENDING)) {
+			AnswerDialog.simpleAlert(progress, "Could not rename file \""+theFile.getName()+"\" because it does not end with "+FILE_ENDING+".");
+			return;
+		}
+	
 		String path = theFile.getAbsolutePath();
-		File someFile = someFile = new File(path.substring(0, path.length()-2)); //-2 is for .i
+		File someFile = someFile = new File(path.substring(0, path.length()-(FILE_ENDING.length()))); //-2 is for .i
 		
 		if (someFile.exists()) {
 			AnswerDialog.simpleAlert(progress, "Could not rename file from \""+theFile.getName()+"\" to \""+someFile.getName()+"\" because a file by that name already exists.");
@@ -67,7 +82,7 @@ public class MSDownloadHandler extends MSDownloadListener {
 			AnswerDialog.simpleAlert(progress, "Could not rename file from \""+theFile.getName()+"\" to \""+someFile.getName()+"\" because an unspecified error occured.");
 			return;
 		}
-		*/
+	
 	}
 	
 	/**
@@ -142,7 +157,7 @@ class SegmentDownloaderHandler extends SegmentDownloaderListener {
 	
 	public void endConnection(SegmentDownloaderEvent e) {
 		progress.setValue(0, bar);
-		//if (!stopDownload) progress.setText("Searching for new source...", bar);
+		progress.setText("This spot is Idle..", bar);
 	}
 	
 	public int getBarNumber() {

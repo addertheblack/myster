@@ -7,6 +7,7 @@ import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.io.IOException;
 import java.io.RandomAccessFile;
+import java.io.File;
 
 import com.myster.net.MysterSocket;
 import com.myster.net.MysterSocketFactory;
@@ -164,7 +165,9 @@ public class StandardSuite {
 					RobustMML mml = getFileStats(socket, stub);
 				
 					progress.setText("Trying to use multi-source download...");
-					MultiSourceDownload download = new MultiSourceDownload(stub, MultiSourceUtilities.getHashFromStats(mml), MultiSourceUtilities.getLengthFromStats(mml), new MSDownloadHandler(progress), new RandomAccessFile(MultiSourceUtilities.getFileToDownloadTo(stub, progress), "rw"));
+					
+					File theFile = MultiSourceUtilities.getFileToDownloadTo(stub, progress);
+					MultiSourceDownload download = new MultiSourceDownload(stub, MultiSourceUtilities.getHashFromStats(mml), MultiSourceUtilities.getLengthFromStats(mml), new MSDownloadHandler(progress, theFile), new RandomAccessFile(theFile, "rw"));
 					
 					download.run();
 				} catch (IOException ex) {

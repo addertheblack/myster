@@ -75,7 +75,7 @@ public class CrawlerThread extends MysterThread {
 					cleanUp();
 					return;
 				}
-				System.out.println("Connecting to "+currentIp);
+
 				socket=MysterSocketFactory.makeStreamConnection(currentIp);
 				
 				if (endFlag) {
@@ -84,13 +84,12 @@ public class CrawlerThread extends MysterThread {
 				}
 				
 				if (counter<DEPTH) {
-			System.out.println("Getting top servers");
 					Vector ipList=StandardSuite.getTopServers(socket, searchType);
-					System.out.println("GOTTEN top servers");
-						if (endFlag) {
-							cleanUp();
-							return;
-						}
+					
+					if (endFlag) {
+						cleanUp();
+						return;
+					}
 					
 					for (int i=0; i<ipList.size(); i++) {
 						try {
