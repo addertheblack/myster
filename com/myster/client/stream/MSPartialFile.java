@@ -206,7 +206,7 @@ public class MSPartialFile {
 
             progress.addWindowListener(new java.awt.event.WindowAdapter() {
                 public void windowClosing(java.awt.event.WindowEvent e) {
-                    if (!MultiSourceUtilities.confirmCancel(progress))
+                    if (!MultiSourceUtilities.confirmCancel(progress, download))
                         return;
 
                     download.cancel();

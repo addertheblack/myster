@@ -232,7 +232,9 @@ public class MultiSourceUtilities {
      * 
      * @return
      */
-    public static boolean confirmCancel(Frame progress) {
+    public static boolean confirmCancel(Frame progress, MultiSourceDownload download) {
+    	if (download.isDone()) return true;
+    	
         final String choice = AnswerDialog.simpleAlert(progress,
                 "Are you sure you want to kill this download?", new String[] {
                 STOP_DOWNLOAD, CANCEL });
