@@ -25,6 +25,7 @@ import com.myster.Myster;
 import com.myster.mml.MML;
 import com.myster.pref.ui.PreferencesDialogBox;
 import com.myster.pref.ui.PreferencesPanel;
+import com.myster.ui.WindowManager;
 import com.myster.util.MysterThread;
 
 /**
@@ -100,6 +101,7 @@ public class Preferences {
     public synchronized void setGUI(boolean b) {
         if (b) {
             prefsWindow.show();
+            prefsWindow.toFrontAndUnminimize();
         } else {
             prefsWindow.hide();
         }

@@ -48,6 +48,7 @@ public class HashManagerGUI extends MysterFrame {
                 "Show Hash Manager", new ActionListener() {
                     public void actionPerformed(ActionEvent e) {
                         singleton.setVisible(true);
+                        singleton.toFrontAndUnminimize();
                     }
                 }, java.awt.event.KeyEvent.VK_H);
     }

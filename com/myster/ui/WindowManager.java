@@ -5,6 +5,8 @@ import java.awt.Menu;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.KeyEvent;
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
 import java.util.Enumeration;
 import java.util.Hashtable;
 import java.util.Vector;
@@ -68,10 +70,10 @@ public class WindowManager {
                 finalMenu.addElement(new MysterMenuItemFactory(frame.getTitle(),
                         new OtherWindowHandler(frame)));
             }
-            
+
             Enumeration enum = windowMenuHash.elements();
             while (enum.hasMoreElements()) {
-                fixMenu((Menu)enum.nextElement());
+                fixMenu((Menu) enum.nextElement());
             }
         }
     }
@@ -93,8 +95,8 @@ public class WindowManager {
     private static Menu getCorrectWindowsMenu(Frame frame) {
         Menu menu = (Menu) windowMenuHash.get(frame);
         if (menu == null) {
-       // return new Menu("jello");
-            throw new IllegalStateException("This frame has no windows menu! "+frame.getTitle());
+            // return new Menu("jello");
+            throw new IllegalStateException("This frame has no windows menu! " + frame.getTitle());
             //menu = (new MysterMenuFactory("Windows",
             // finalMenu)).makeMenu(frame);
             //windowMenuHash.put(frame, menu);
@@ -109,6 +111,8 @@ public class WindowManager {
     public static MysterFrame getFrontMostWindow() {
         return frontMost;
     }
+
+
 
     static boolean isInited;
 
@@ -156,7 +160,7 @@ public class WindowManager {
                     index = 0;
                 }
 
-                ((MysterFrame) (windows.elementAt(index))).toFront();
+                ((MysterFrame) windows.elementAt(index)).toFrontAndUnminimize();
             }
         }
     }

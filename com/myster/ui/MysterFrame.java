@@ -7,6 +7,8 @@ import java.awt.event.ComponentEvent;
 import java.awt.event.ComponentListener;
 import java.awt.event.WindowEvent;
 import java.awt.event.WindowListener;
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
 
 import com.myster.menubar.MysterMenuBar;
 import com.myster.menubar.event.MenuBarListener;
@@ -53,23 +55,18 @@ public class MysterFrame extends Frame {
     private void initEvents() {
         setLocation(getWindowStartingLocation());
 
-        addWindowListener(new WindowListener() { //inline class
-
+        addWindowListener(new WindowListener() {
             public void windowOpened(WindowEvent e) {
 
             }
 
             public void windowClosing(WindowEvent e) {
-                //cleanup goes here
-                System.out.println("Closing");
                 WindowManager.removeWindow(MysterFrame.this);
-                                WindowManager.removeWindow(MysterFrame.this);
                 MysterMenuBar.removeMenuListener(menuListener);
             }
 
             public void windowClosed(WindowEvent e) {
-                            WindowManager.removeWindow(MysterFrame.this);
-                                WindowManager.removeWindow(MysterFrame.this);
+                WindowManager.removeWindow(MysterFrame.this);
                 MysterMenuBar.removeMenuListener(menuListener);
             }
 
@@ -91,7 +88,6 @@ public class MysterFrame extends Frame {
         });
 
         addComponentListener(new ComponentListener() {
-
             public void componentResized(ComponentEvent e) {
 
             }
@@ -101,12 +97,11 @@ public class MysterFrame extends Frame {
             }
 
             public void componentShown(ComponentEvent e) {
-               
+
             }
 
             public void componentHidden(ComponentEvent e) {
-                            WindowManager.removeWindow(MysterFrame.this);
-                                WindowManager.removeWindow(MysterFrame.this);
+                WindowManager.removeWindow(MysterFrame.this);
                 MysterMenuBar.removeMenuListener(menuListener);
             }
         });
@@ -118,13 +113,35 @@ public class MysterFrame extends Frame {
         };
 
     }
-    
+
     public void show() {
-     WindowManager.addWindow(MysterFrame.this);
-                MysterMenuBar.addMenuListener(menuListener);
-                setMenuBar(MysterMenuBar.getFactory().makeMenuBar(MysterFrame.this));
-    	super.show();
-    	
+        WindowManager.addWindow(MysterFrame.this);
+        MysterMenuBar.addMenuListener(menuListener);
+        setMenuBar(MysterMenuBar.getFactory().makeMenuBar(MysterFrame.this));
+        super.show();
+    }
+
+    /**
+     * Shows the frame if not visible and de-iconifies it if possible as well.
+     */
+    public void toFrontAndUnminimize() {
+        try {
+            Method method = Frame.class.getMethod("setState", new Class[] { Integer.TYPE });
+
+            method.invoke(this, new Object[] { new Integer(Frame.NORMAL) });
+        } catch (SecurityException ex) {
+            ex.printStackTrace();
+        } catch (NoSuchMethodException ex) {
+            ex.printStackTrace();
+        } catch (IllegalArgumentException ex) {
+            ex.printStackTrace();
+        } catch (IllegalAccessException ex) {
+            ex.printStackTrace();
+        } catch (InvocationTargetException ex) {
+            ex.printStackTrace();
+        }
+
+        toFront();
     }
 
     private void setNewMenuBar(MenuBar newMenuBar) {

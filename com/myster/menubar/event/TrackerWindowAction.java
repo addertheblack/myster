@@ -19,7 +19,7 @@ public class TrackerWindowAction implements ActionListener {
 
     public void actionPerformed(ActionEvent e) {
         TrackerWindow.getInstance().setVisible(true);
-        TrackerWindow.getInstance().toFront();
+        TrackerWindow.getInstance().toFrontAndUnminimize();
         TrackerWindow.getInstance().setEnabled(true);
     }
 

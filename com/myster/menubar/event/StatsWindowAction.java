@@ -19,6 +19,7 @@ public class StatsWindowAction implements ActionListener {
 
     public void actionPerformed(ActionEvent e) {
         ServerStatsWindow.getInstance().setVisible(true);
+        ServerStatsWindow.getInstance().toFrontAndUnminimize();
     }
 
 }
