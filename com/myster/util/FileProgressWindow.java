@@ -91,10 +91,9 @@ public class FileProgressWindow extends ProgressWindow {
         if (getValue(bar) < getMin(bar) || getValue(bar) > getMax(bar))
             return "";
 
-        return formatRate(((Long) barStartTime.elementAt(bar)).longValue(),
-                getValue(bar)
-                        - ((Long) previouslyDownloaded.elementAt(bar))
-                                .longValue());
+        return formatRate(((Long) barStartTime.elementAt(bar)).longValue(), getValue(bar)
+                - ((Long) previouslyDownloaded.elementAt(bar)).longValue() - getMin(bar));
+        
     }
 
     private long rateCalc(long startTime, long value) {
@@ -134,13 +133,12 @@ public class FileProgressWindow extends ProgressWindow {
         }
 
         public void run() {
-            if (endFlag)
-                return;
-            if (overFlag)
-                return;
-            //if (getValue() == getMax()) return;
-
             synchronized (FileProgressWindow.this) {
+                if (endFlag)
+                    return;
+                if (overFlag)
+                    return;
+
                 for (int i = 0; i < getProgressBarNumber(); i++) {
                     setAdditionalText(calculateRate(i), i);
                 }
@@ -173,10 +171,9 @@ public class FileProgressWindow extends ProgressWindow {
         }
 
         public synchronized void mouseReleased(MouseEvent e) {
-            if ((e.getX() > 0 && e.getX() < X_SIZE)
-                    && (e.getY() > 0 && e.getY() < AD_HEIGHT)) {
-                if ((System.currentTimeMillis() - lastMouseReleaseTime > 500)
-                        && url != null && (!url.equals(""))) {
+            if ((e.getX() > 0 && e.getX() < X_SIZE) && (e.getY() > 0 && e.getY() < AD_HEIGHT)) {
+                if ((System.currentTimeMillis() - lastMouseReleaseTime > 500) && url != null
+                        && (!url.equals(""))) {
                     try {
                         WebLinkManager.openURL(new URL(url));
                     } catch (MalformedURLException ex) {
@@ -185,15 +182,15 @@ public class FileProgressWindow extends ProgressWindow {
                 }
 
                 lastMouseReleaseTime = System.currentTimeMillis(); //so that
-                                                                   // double -
-                                                                   // triple
-                                                                   // clicks by
-                                                                   // spastic
-                                                                   // people
-                                                                   // don't
-                                                                   // generate
-                                                                   // multipe
-                                                                   // browsers
+                // double -
+                // triple
+                // clicks by
+                // spastic
+                // people
+                // don't
+                // generate
+                // multipe
+                // browsers
             }
         }
     }

@@ -99,6 +99,7 @@ public class MSDownloadHandler extends MSDownloadListener {
     public void doneDownload(MultiSourceEvent event) {
         progress.setText("Download Finished");
         progress.done();
+        progress.setProgressBarNumber(1);
 
         try {
             if (!MultiSourceUtilities.moveFileToFinalDestination(
@@ -194,7 +195,7 @@ class SegmentDownloaderHandler extends SegmentDownloaderListener {
 
     public void startSegment(SegmentDownloaderEvent e) {
         progress.startBlock(bar, e.getOffset(), e.getOffset() + e.getLength());
-        progress.setPreviouslyDownloaded(e.getOffset(), bar);
+        //progress.setPreviouslyDownloaded(e.getOffset(), bar);
         progress.setValue(e.getOffset(), bar);
         progress.setText("Downloading from "
                 + e.getMysterFileStub().getMysterAddress(), bar);
@@ -209,7 +210,10 @@ class SegmentDownloaderHandler extends SegmentDownloaderListener {
     }
 
     public void endConnection(SegmentDownloaderEvent e) {
+        progress.setMax(1, bar);
+        progress.setMin(0, bar);
         progress.setValue(0, bar);
+        progress.setAdditionalText("", bar);
         progress.setText("This spot is Idle..", bar);
     }
 
