@@ -197,25 +197,6 @@ public class Myster {
                     });
                     
                     ServerFacade.assertServer();
-
-					/*
-                    Util.invoke(new Runnable() {
-                        public void run() {
-                            progress.setText(I18n.tr("Loading tracker..."));
-                            progress.setValue(50);
-                        }
-                    });
-                    
-                    IPListManagerSingleton.getIPListManager();
-
-                    Util.invoke(new Runnable() {
-                        public void run() {
-                            progress.setText(I18n.tr("Loading FileManager..."));
-                            progress.setValue(70);
-                        }
-                    });
-                    FileTypeListManager.getInstance();
-					*/
 					
                     Util.invoke(new Runnable() {
                         public void run() {
@@ -309,7 +290,9 @@ public class Myster {
                             }
                         }
                     });
-
+					
+					IPListManagerSingleton.getIPListManager();
+                    FileTypeListManager.getInstance();
                 } catch (InterruptedException ex) {
                     ex.printStackTrace(); //never reached.
                 }

@@ -168,15 +168,15 @@ public class MysterFrame extends Frame {
 
             method.invoke(this, new Object[] { new Integer(0) }); // 0 == normal.. Cannot use constant becaus eit doens't exist in 1.1
         } catch (SecurityException ex) {
-            ex.printStackTrace();
+            //ex.printStackTrace();
         } catch (NoSuchMethodException ex) {
-            ex.printStackTrace();
+            //ex.printStackTrace();
         } catch (IllegalArgumentException ex) {
-            ex.printStackTrace();
+            //ex.printStackTrace();
         } catch (IllegalAccessException ex) {
-            ex.printStackTrace();
+            //ex.printStackTrace();
         } catch (InvocationTargetException ex) {
-            ex.printStackTrace();
+            //ex.printStackTrace();
         }
 
         toFront();
