@@ -24,7 +24,7 @@ public class ProgressWindowClose extends WindowAdapter {
 	
 	public void windowClosing(WindowEvent e) {
 		try {
-			t.suspend();
+			//t.suspend();
 			t.end();
 		} catch (Exception ex) {}
 		e.getWindow().setVisible(false);
