@@ -94,6 +94,7 @@ public class DatagramProtocolManager {
 				}
 			} catch (IOException ex) {
 				System.out.println("Packet too short Exception.");
+				ex.printStackTrace();
 			}
 		}
 		

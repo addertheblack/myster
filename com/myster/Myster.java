@@ -230,6 +230,7 @@ public class Myster {
 				}
 				
 				
+				/**  UDP CLIENT SECTION TESTING CODE ->>
 				try {
 					MysterAddress[] addresses = com.myster.client.datagram.StandardDatagramSuite.getTopServers(
 							new MysterAddress("127.0.0.1"), new MysterType("MPG3"));
@@ -271,6 +272,7 @@ public class Myster {
 				} catch (Exception ex) {
 					ex.printStackTrace();
 				}
+				*/
 			}
 		}).start();
 	}

@@ -4,6 +4,8 @@ import java.util.Vector;
 import java.io.*;
 	
 public class MML implements Serializable {
+	static final long serialVersionUID = 2684806215154059903L;
+	
 	
 	public MML() {
 		startNode=new RootNode();
@@ -21,6 +23,7 @@ public class MML implements Serializable {
 	
 	public MML(MML mml) {
 		startNode=mml.copyMML().startNode; //now both objects point to a copy of the same structure.
+		// Which, unfortunately, SUCKS for thread safety you freaking idiot!
 	}
 	
 	final protected Branch startNode;
@@ -550,7 +553,9 @@ public class MML implements Serializable {
 		return vector;
 	}
 	
-	private static class PathVector extends Vector{
+	private static class PathVector extends Vector {
+		static final long serialVersionUID = -1768617897371815823L;
+	
 		public PathVector(int i, int j) {
 			super(i,j);
 		}
@@ -658,6 +663,8 @@ public class MML implements Serializable {
 	}
 	
 	private abstract static class Node implements Serializable{
+		static final long serialVersionUID = -5717634105385608578L;
+	
 		public final String tag;
 		
 		public Node(String s)  throws InvalidTokenException {
@@ -677,6 +684,8 @@ public class MML implements Serializable {
 	}
 	
 	private static class Branch extends Node implements Serializable {
+		static final long serialVersionUID = 6813689234131188254L;
+	
 		public final Link head;
 		public Branch(String tag) throws InvalidTokenException {
 			super(tag);
@@ -687,6 +696,8 @@ public class MML implements Serializable {
 	
 	
 	private static class Leaf extends Node implements Serializable {
+		static final long serialVersionUID = -6999715050257382479L;
+	
 		public final String value;
 		public Leaf(String tag, String value) throws InvalidTokenException,NullValueException {
 			super(tag);
@@ -696,12 +707,16 @@ public class MML implements Serializable {
 	}
 	
 	private static class RootNode extends Branch implements Serializable {
+		static final long serialVersionUID = -1963665328432584836L;
+	
 		public RootNode() throws InvalidTokenException {
 			super(null);
 		}
 	}
 	
 	private static class Link implements Serializable {
+		static final long serialVersionUID = -4159999293078018416L;
+	
 		public Node value;
 		public Link next;
 		

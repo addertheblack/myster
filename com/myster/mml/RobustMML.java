@@ -9,6 +9,8 @@ package com.myster.mml;
 import java.util.Vector;
 
 public class RobustMML extends MML {
+	static final long serialVersionUID = -7600641043262045615L;
+
 	private boolean trace;
 	
 	public RobustMML() {

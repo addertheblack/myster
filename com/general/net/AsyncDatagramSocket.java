@@ -53,14 +53,18 @@ public final class AsyncDatagramSocket {
 	}
 	
 	private void doGetNewPackets() throws IOException {
-		DatagramPacket p=new DatagramPacket(new byte[65536], 65536);
-		
+		final int BIG_BUFFER = 65536;
+	
+		DatagramPacket p=new DatagramPacket(new byte[BIG_BUFFER], BIG_BUFFER);
+	
 		int counter=0;
 		long startTime=System.currentTimeMillis();
 		while(System.currentTimeMillis()-startTime<50) {
 			try {
+				p.setLength(BIG_BUFFER);
+			
 				dsocket.receive(p);
-	
+				
 				if (portListener!=null) portListener.packetReceived(new ImmutableDatagramPacket(p));
 			} catch (InterruptedIOException ex) {
 			

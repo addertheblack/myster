@@ -59,7 +59,6 @@ public final class Transaction implements DataPacket { 		//Immutable (Java needs
 		DataInputStream in=new DataInputStream(bin);
 		
 		int fullyQualifiedConnectionNumber;
-		
 		try {
 			int int_temp=in.readShort();
 			if (int_temp!=TRANSACTION_PROTOCOL_NUMBER) throw new NotATransactionException("Tried to make a transaction from a packet of type "+int_temp+" instead of type "+TRANSACTION_PROTOCOL_NUMBER+".");
@@ -77,7 +76,7 @@ public final class Transaction implements DataPacket { 		//Immutable (Java needs
 				errorByte=0;
 			}
 		} catch (IOException ex) {
-			throw new NotATransactionException("Formating error occured: "+ex);
+			throw new NotATransactionException("Formating error occured: "+bytes.length+" "+packet.getAddress()+" "+ex);
 		}
 
 		

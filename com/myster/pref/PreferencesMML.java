@@ -5,6 +5,8 @@ import com.myster.mml.MMLException;
 import com.myster.mml.MML;
 
 public class PreferencesMML extends RobustMML {
+	static final long serialVersionUID = -3507598447873878195L;
+
 	public PreferencesMML() {
 		super();
 	}
