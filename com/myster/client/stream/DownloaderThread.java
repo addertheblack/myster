@@ -231,7 +231,7 @@ public class DownloaderThread extends SafeThread {
 			
 			progress.startBlock(ProgressWindow.BAR_1,0,filesize+amountToSkip);
 			progress.say("Transfering: "+file.getName(),ProgressWindow.BAR_1);
-			progress.setTitle("Transfering: "+file.getName());
+			progress.setTitle("Transfering: ("+file.getIP()+")"+file.getName());
 			
 			long length;
 			char code;
