@@ -73,6 +73,8 @@ public class WindowManager {
             while (enum.hasMoreElements()) {
                 fixMenu((Menu)enum.nextElement());
             }
+            
+            System.out.println(""+windows.size());
         }
     }
 
@@ -88,11 +90,12 @@ public class WindowManager {
         }
     }
 
-    static Hashtable windowMenuHash = new Hashtable();
+    private static Hashtable windowMenuHash = new Hashtable();
 
-    static Menu getCorrectWindowsMenu(Frame frame) {
+    private static Menu getCorrectWindowsMenu(Frame frame) {
         Menu menu = (Menu) windowMenuHash.get(frame);
         if (menu == null) {
+       // return new Menu("jello");
             throw new IllegalStateException("This frame has no windows menu! "+frame.getTitle());
             //menu = (new MysterMenuFactory("Windows",
             // finalMenu)).makeMenu(frame);

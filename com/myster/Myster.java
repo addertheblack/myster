@@ -24,6 +24,7 @@ import java.net.ServerSocket;
 import java.net.Socket;
 
 import com.general.util.AnswerDialog;
+import com.general.util.StandardWindowBehavior;
 import com.general.util.Util;
 import com.myster.bandwidth.BandwidthManager;
 import com.myster.client.datagram.PongTransport;
@@ -38,7 +39,9 @@ import com.myster.server.ServerFacade;
 import com.myster.server.datagram.PingTransport;
 import com.myster.server.ui.ServerStatsWindow;
 import com.myster.tracker.IPListManagerSingleton;
+import com.myster.ui.MysterFrame;
 import com.myster.util.I18n;
+import com.myster.util.ProgressWindow;
 import com.myster.util.ProgressWindow;
 
 public class Myster {
@@ -82,7 +85,8 @@ public class Myster {
 
         I18n.init();
 
-        //if (true==true) return;
+        //if (true == true)
+        //    return;
 
         start();
 

@@ -52,7 +52,7 @@ public class MysterFrame extends Frame {
 
     private void initEvents() {
         setLocation(getWindowStartingLocation());
-
+System.out.println("Init");
         addWindowListener(new WindowListener() { //inline class
 
             public void windowOpened(WindowEvent e) {
@@ -61,11 +61,17 @@ public class MysterFrame extends Frame {
 
             public void windowClosing(WindowEvent e) {
                 //cleanup goes here
+                System.out.println("Closing");
                 WindowManager.removeWindow(MysterFrame.this);
+                                WindowManager.removeWindow(MysterFrame.this);
+                MysterMenuBar.removeMenuListener(menuListener);
             }
 
             public void windowClosed(WindowEvent e) {
-
+                            WindowManager.removeWindow(MysterFrame.this);
+                                WindowManager.removeWindow(MysterFrame.this);
+                MysterMenuBar.removeMenuListener(menuListener);
+System.out.println("Closed");
             }
 
             public void windowIconified(WindowEvent e) {
@@ -100,7 +106,9 @@ public class MysterFrame extends Frame {
             }
 
             public void componentHidden(ComponentEvent e) {
-                WindowManager.removeWindow(MysterFrame.this);
+System.out.println("hiding...");
+                            WindowManager.removeWindow(MysterFrame.this);
+                                WindowManager.removeWindow(MysterFrame.this);
                 MysterMenuBar.removeMenuListener(menuListener);
             }
         });
