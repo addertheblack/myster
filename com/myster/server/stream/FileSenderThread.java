@@ -351,7 +351,7 @@ public class FileSenderThread extends ServerThread {
 	
 				starttime=System.currentTimeMillis();
 				do {
-					sendImage();
+					sendImage(); //sends URL too.
 				} while (sendDataPacket()==BURSTSIZE);
 			} finally {
 				try {fin.close(); } catch (Exception ex) {}
@@ -380,12 +380,6 @@ public class FileSenderThread extends ServerThread {
 			//System.gc();
 			return (int)bytesremaining;
 		}
-		
-		
-		//code 'u'
-		private void sendURL() {
-		
-		}
 	
 		//code 'm'
 		private void sendMessage(String m) throws IOException {
@@ -405,6 +399,7 @@ public class FileSenderThread extends ServerThread {
 			out.writeInt(i);
 		}
 	
+		//code 'u'
 		private void sendURL(String imageName) throws IOException {
 			String url = BannersManager.getURLFromImageName(imageName);
 			

@@ -4,6 +4,9 @@ import java.awt.*;
 import java.awt.event.*;
 
 public class ProgressBar extends Panel {
+	public final static int DEFAULT_Y_SIZE = 10;
+	public final static int DEFAULT_X_SIZE = 440;
+
 	volatile long min; //valatile for threading
 	volatile long max;
 	volatile long value;
@@ -40,7 +43,7 @@ public class ProgressBar extends Panel {
 		});
 	}
 	
-	private void resetDoubleBuffer() {
+	private synchronized void resetDoubleBuffer() {
 		Dimension currentSize = getSize();
 		doubleBufferSize = currentSize;
 		
@@ -58,21 +61,26 @@ public class ProgressBar extends Panel {
        	g.drawImage(im, 0, 0, this);
 	}
 	
-	public final boolean isValueOutOfBounds() { //inline
+	public final synchronized boolean isValueOutOfBounds() { //inline
 		return (value < min || value > max);
+	}
+	
+	private synchronized void timerCode(Runnable r) {
+		syncRepaint();
+	
+		if ((! isShowing()) || (! isValueOutOfBounds())){
+			System.out.println("Stopping the Progress Window auto update timer.");
+			updaterTimer = null;
+		} else {
+			updaterTimer = new Timer(r, 50);
+		}
 	}
 
 	public void paint(Graphics g) {
 		if (updaterTimer == null && isShowing() && isValueOutOfBounds()) {
 			updaterTimer = new Timer(new Runnable() {
 				public void run() {
-					repaint();
-					if ((! isShowing()) || (! isValueOutOfBounds())){
-						System.out.println("Stopping the Progress Window auto update timer.");
-						updaterTimer = null;
-					} else {
-						updaterTimer = new Timer(this, 50);
-					}
+					timerCode(this);
 				}
 			}, 50);
 		}
@@ -102,17 +110,25 @@ public class ProgressBar extends Panel {
 		}
 	}
 	
+	private synchronized void syncRepaint() {
+		repaint();
+	}
+	
 	private int getXSize(int maxWidth) {
 		double percent = (double)(value - min) / (double)(max - min);
 
 		return (int)(percent * maxWidth);
 	}
 	
-	public Dimension getPreferredSize() {
-		return new Dimension((int)(max - min), 10);
+	public synchronized Dimension getPreferredSize() {
+		return new Dimension(DEFAULT_X_SIZE, DEFAULT_Y_SIZE);
 	}
 	
-	public void setBorder(boolean hasBorder) {
+	public synchronized Dimension getMinimumSize() {
+		return new Dimension(100, DEFAULT_Y_SIZE);
+	}
+	
+	public synchronized void setBorder(boolean hasBorder) {
 		this.hasBorder = hasBorder;
 		repaint();
 	}
@@ -121,11 +137,11 @@ public class ProgressBar extends Panel {
 		return hasBorder;
 	}
 	
-	public void setMin(long min) {
+	public synchronized void setMin(long min) {
 		this.min = min;
 	}
 	
-	public void setMax(long max) {
+	public synchronized void setMax(long max) {
 		this.max = max;
 	}
 	
@@ -142,7 +158,7 @@ public class ProgressBar extends Panel {
 	}
 	
 	int lastValue = 0;	//To make sure not repaint is done if it's not needed.
-	public void setValue(long value) {
+	public synchronized void setValue(long value) {
 		if (this.value == value) return;
 		this.value = value;
 		

@@ -72,8 +72,6 @@ public class Myster{
 		
 		
 		I18n.init();
-		
-
 
 		//if (true==true) return;
 		
@@ -95,10 +93,12 @@ public class Myster{
 				progress.setTitle(I18n.tr("Loading Myster..."));
 				
 				try {
-				com.myster.hash.HashManager.init();
-			} catch (Exception ex) {
-				ex.printStackTrace();
-			}
+					com.myster.hash.HashManager.init();
+				} catch (Exception ex) {
+					ex.printStackTrace();
+				}
+			
+				com.myster.hash.ui.HashManagerGUI.init();
 				
 				progress.setText(I18n.tr("Loading UDP Operator...")+macHack);
 				progress.setValue(10);
@@ -155,7 +155,7 @@ public class Myster{
 				
 				com.myster.hash.ui.HashPreferences.init(); //meep
 				
-				Preferences.initGui();
+				com.myster.hash.HashManager.start();
 				
 				//progress.done();
 				progress.setVisible(false);
@@ -168,8 +168,8 @@ public class Myster{
 					ServerStatsWindow.initWindowLocations();
 					com.myster.tracker.ui.TrackerWindow.initWindowLocations();
 					SearchWindow.initWindowLocations();
-					
-					
+					com.myster.hash.ui.HashManagerGUI.initGui();
+					Preferences.initGui();
 					
 					//SearchWindow sw=new SearchWindow();
 					//sw.say(I18n.tr("Idle.."));

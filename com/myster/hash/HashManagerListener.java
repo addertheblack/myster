@@ -11,10 +11,22 @@ public abstract class HashManagerListener extends EventListener {
 			case HashManagerEvent.ENABLED_STATE_CHANGED:
 				enabledStateChanged(event);
 				break;
+			case HashManagerEvent.START_HASH:
+				fileHashStart(event);
+				break;
+			case HashManagerEvent.PROGRESS_HASH:
+				fileHashProgress(event);
+				break;
+			case HashManagerEvent.END_HASH:
+				fileHasEnd(event);
+				break;
 			default:
 				err();
 		}
 	}
 	
-	public abstract void enabledStateChanged(HashManagerEvent e) ;
+	public void enabledStateChanged(HashManagerEvent e) {}
+	public void fileHashStart(HashManagerEvent e) {}
+	public void fileHashProgress(HashManagerEvent e) {}
+	public void fileHasEnd(HashManagerEvent e) {}
 }

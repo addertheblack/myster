@@ -39,6 +39,11 @@ public class WindowLocationKeeper {
 		this.key="/"+key+"/";
 	}
 	
+	
+	/**
+	*	Adds a Frame object to be *tracked*. If the frame is visible it's location is automatically
+	*	stored in the prefs else it won't be.
+	*/
 	public void addFrame(Frame frame) {
 		final int privateID=counter++;
 		

@@ -45,6 +45,13 @@ public class HashManager implements Runnable {
 		hashingIsEnabled = (TRUE_AS_STRING.equals(Preferences.getInstance().get(HASHING_ENABLED_PREF_KEY, TRUE_AS_STRING)));
 	
 		hashManager = new HashManager();
+		
+	}
+	
+	/**
+	*	Starts up the HashManager. Used to allow plugins to register themselves before the Hashing begins.
+	*/
+	public static void start() {
 		(new Thread(hashManager)).start();
 	}
 	
@@ -117,16 +124,12 @@ public class HashManager implements Runnable {
 	
 	private BlockingQueue workQueue;
 	private HashCache oldHashes;
-	private ProgressWindow progress;
 	
 	public HashManager() {
 		workQueue = new BlockingQueue();
 		workQueue.setRejectDuplicates(true);
 		
 		oldHashes = HashCache.getDefault();
-		
-		progress = new ProgressWindow("Hashing...");
-		progress.setVisible(true);
 	}
 	
 	public void findHash(File file, FileHashListener listener) {
@@ -195,9 +198,7 @@ public class HashManager implements Runnable {
 		
 		byte[] buffer = new byte[64*1024]; //64k buffer
 		
-		progress.setMin(0);
-		progress.setMax(file.length());
-		progress.setText("Hashing file \""+file.getName()+"\"");
+		hashManagerDispatcher.fireEvent(new HashManagerEvent(HashManagerEvent.START_HASH, hashingIsEnabled, file, 0));
 		
 		
 		//long sTime=System.currentTimeMillis();
@@ -207,17 +208,14 @@ public class HashManager implements Runnable {
 			
 			addBytesToDigests(buffer, bytesRead, digests);
 			
-			//System.out.println(""+currentByte);
-			progress.setValue(currentByte);
-			//progress.setAdditionalText(Util.getStringFromBytes(currentByte));
+			hashManagerDispatcher.fireEvent(new HashManagerEvent(HashManagerEvent.PROGRESS_HASH, hashingIsEnabled, file, currentByte));
 		}
 		} catch (IOException ex) {
 			System.out.println("Could not read a file.");
 		} finally {
 			try {in.close();} catch (Exception ex) {} // don't care
 		
-			progress.setValue(0);
-			progress.setText("Waiting for work...");
+			hashManagerDispatcher.fireEvent(new HashManagerEvent(HashManagerEvent.END_HASH, hashingIsEnabled, file, file.length()));
 		}
 	}
 	
