@@ -105,7 +105,7 @@ public class MysterFrame extends Frame {
             }
 
             public void componentShown(ComponentEvent e) {
-
+                
             }
 
             public void componentHidden(ComponentEvent e) {
