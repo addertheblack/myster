@@ -10,13 +10,20 @@ import com.myster.net.MysterSocket;
 import java.net.InetAddress;
 import java.net.Socket;
 import java.net.SocketException;
+import com.myster.bandwidth.*;
 
 public class TCPSocket extends MysterSocket {
 	Socket internalSocket;
 	
     public TCPSocket(Socket socket) throws IOException {
-    	super(new DataInputStream(socket.getInputStream()), new DataOutputStream(socket.getOutputStream()));
+    	super(new DataInputStream(new ThrottledInputStream(socket.getInputStream())), new DataOutputStream(new ThrottledOutputStream(socket.getOutputStream())));
     	internalSocket=socket;
+    	
+    	//myIn=internalSocket.getInputStream();
+    	//myOut=internalSocket.getOutputStream();
+    	
+    	myIn=new ThrottledInputStream(internalSocket.getInputStream());
+    	myOut=new ThrottledOutputStream(internalSocket.getOutputStream());
     }
     
     
@@ -37,12 +44,14 @@ public class TCPSocket extends MysterSocket {
     	return internalSocket.getLocalPort();
     }
 
+	public InputStream myIn;
     public InputStream getInputStream() throws IOException {
-    	return internalSocket.getInputStream();
+    	return myIn;
     }
 
+	public OutputStream myOut;
     public OutputStream getOutputStream() throws IOException {
-    	return internalSocket.getOutputStream();
+    	return myOut;
     }
 
     public void setTcpNoDelay(boolean on) throws SocketException {
@@ -65,7 +74,7 @@ public class TCPSocket extends MysterSocket {
     	internalSocket.setSoTimeout(timeout);
     }
 
-    public synchronized int getSoTimeout() throws SocketException {
+    public  int getSoTimeout() throws SocketException {
     	return internalSocket.getSoTimeout();
     }
 

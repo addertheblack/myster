@@ -87,9 +87,9 @@ public class StandardSuite {
 		Vector container=new Vector();
 	
 		socket.out.writeInt(79);
-		
+
 		checkProtocol(socket.in);
-		
+
 		for (String temp=socket.in.readUTF(); !temp.equals(""); temp=socket.in.readUTF()) {
 			container.addElement(temp);
 		}
