@@ -127,8 +127,8 @@ public class MCListHeader extends Panel {
             hozoffset += padding + rowstats.getWidthOfColumn(i);
         }
 
-        if (hozoffset < getWidth()) {
-            paintTitle(g, hozoffset, getWidth(), padding, false, false);
+        if (hozoffset < getSize().width) {
+            paintTitle(g, hozoffset, getSize().width, padding, false, false);
         }
             
         g.setColor(Color.black);
