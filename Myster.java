@@ -163,7 +163,7 @@ public class Myster{
 				
 				//progress.done();
 				progress.setVisible(false);
-				progress.dispose();
+				//progress.dispose();
 				
 				if (isServer) {}
 				else {

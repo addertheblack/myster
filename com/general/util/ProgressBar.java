@@ -30,20 +30,27 @@ public class ProgressBar extends Panel {
 	}
 	
 	private void init() {
+		doubleBufferSize = getSize(); //! important
+	
 		addComponentListener(new ComponentAdapter() {
 			
-			public void componentHidden(ComponentEvent e) {;
+			public void componentResized(ComponentEvent e) {
+				resetDoubleBuffer();
 			}
 		});
 	}
 	
-	public void update(Graphics g) {
+	private void resetDoubleBuffer() {
 		Dimension currentSize = getSize();
-	
-		if (doubleBufferSize==null) doubleBufferSize = currentSize;
+		doubleBufferSize = currentSize;
 		
-		if ((! currentSize.equals(doubleBufferSize)) || (im == null)) {
-			im = createImage(currentSize.width, currentSize.height);
+		im = createImage(currentSize.width, currentSize.height);
+	}
+	
+	public void update(Graphics g) {
+		
+		if (im == null) {
+			resetDoubleBuffer();
 		}
 		
        	paint(im.getGraphics());
@@ -70,7 +77,7 @@ public class ProgressBar extends Panel {
 			}, 50);
 		}
 		
-		Dimension size = (doubleBufferSize == null ? getSize() : doubleBufferSize);
+		Dimension size = doubleBufferSize;
 		if (max <= min) {
 			g.setColor(getBackground());
 			g.fillRect(0,0,size.width,size.height);

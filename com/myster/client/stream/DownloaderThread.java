@@ -207,7 +207,7 @@ public class DownloaderThread extends SafeThread {
 				if (fileToWriteTo==null) {
 					progress.setText("Canceling...");
 					progress.hide();
-					progress.dispose();
+					//progress.dispose();
 					break CONNECTION;
 				}
 				
