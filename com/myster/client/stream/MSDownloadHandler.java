@@ -77,6 +77,7 @@ public class MSDownloadHandler extends MSDownloadListener {
 
 		if (event.getMultiSourceDownload().isCancelled()) {
 			partialFile.done();
+			fileBeingDownloadedTo.delete();
 		}
 	}
 	

@@ -3,7 +3,9 @@ NOTE: This is not HTML. This is NOT XML.
 Whitespace is significant inside tags.
 Every begin tag needs and end tag.
 No attributes
-No LTS (Less than symbol) character inside tags use the string "LTS"
+No LTS (Less than symbol) character inside tags use the string "LTS".
+In order to get the literal string "LTS" use the string "LTTS"
+In order to get the string "LTTS" use "LTTTS" (this pattern continues)
 Tags are case sensitive
 Duplicate tags at the same level are ignored.
 
@@ -20,11 +22,12 @@ that is they start with an "!"..
 So
 !PIG is ok but PIGS is not.
 
-The "!" is know by Myster to be a none-standard type.
+The "!" is know by Myster to indicate a none-standard type.
 
 NOTE:
-Any type you make will not work with automatic bootstrping system so use
-the "add ip" command in Myster under the "Special" menu.
+Any type you make will not work (well) with the automatic bootstraping system so use
+the "add ip" command in Myster under the "Special" menu too allow new nodes to join
+your new type.
 </Comment>
 <List>
 	<1>
