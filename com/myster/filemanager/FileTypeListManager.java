@@ -21,10 +21,12 @@ package com.myster.filemanager;
 
 
 import java.io.*;
-import com.myster.util.TypeDescription;
 import com.myster.pref.Preferences;
 import java.util.Vector;
 import com.myster.filemanager.ui.FMIChooser;
+import com.myster.type.TypeDescriptionList;
+import com.myster.type.TypeDescription;
+import com.myster.type.MysterType;
 
 
 public class FileTypeListManager{
@@ -61,7 +63,7 @@ public class FileTypeListManager{
 	*	This routine is only called by FileTypeListManager().
 	*/
 	private void initFileTypeListManager() {
-		TypeDescription[] list= TypeDescription.loadTypeAndDescriptionList(this);
+		TypeDescription[] list = TypeDescriptionList.getDefaultList().getAllTypes();
 		filelist=new FileTypeList[list.length];
 		for (int i=0;i<list.length;i++) {
 			filelist[i]=new FileTypeList(list[i].getType(), PATH);	//This code is redundent with... This code.
@@ -77,7 +79,7 @@ public class FileTypeListManager{
     *	@return  The FileTypeList for that type if it exists; null otherwise.
     *	@since   JDK1.0
 	*/
-	private FileTypeList getFileTypeList(String type) {
+	private FileTypeList getFileTypeList(MysterType type) {
 		for (int i=0; i<filelist.length; i++) {
 			if (filelist[i].getType().equals(type)) return filelist[i]; 
 		}
@@ -91,8 +93,8 @@ public class FileTypeListManager{
 	* 	@return	<code>true</code> is the file type has a corresponding FileTypeList object;
 	*			<code>false</code> otherwise. returns true even if type has been set to "not shared".
 	*/
-	public boolean isAMember(byte a[]) {
-		if (getFileTypeList(new String(a))==null) return false;
+	public boolean isAMember(MysterType type) {
+		if (getFileTypeList(type)==null) return false;
 		return true;
 	}
 	
@@ -109,8 +111,8 @@ public class FileTypeListManager{
 	*	@param	a[] a Myster file type as a byte[4]
 	*	@return	an array of Myster file identifiers. In this implementation, a list of file names.
 	*/
-	public String[] getDirList(byte a[]) {
-		FileTypeList list=getFileTypeList(new String(a));
+	public String[] getDirList(MysterType type) {
+		FileTypeList list=getFileTypeList(type);
 		if (list==null) return null;	//err.
 		
 		return list.getFileListAsStrings(); //FileTypeList should do the processing for this.
@@ -118,8 +120,8 @@ public class FileTypeListManager{
 	}
 	
 
-    public String[] getDirList(byte type[], String queryStr) {
-        FileTypeList list = getFileTypeList(new String(type));
+    public String[] getDirList(MysterType type, String queryStr) {
+        FileTypeList list = getFileTypeList(type);
         if (list == null) return null;
         return list.getFileListAsStrings(queryStr);
     }
@@ -134,8 +136,8 @@ public class FileTypeListManager{
 	*	@param	a[] a Myster file type as a byte[4]; a 
 	*	@return	a java.io.File object that points to the File in question.
 	*/
-	public File getFile(byte a[], String s) {
-		FileTypeList list=getFileTypeList(new String(a));
+	public File getFile(MysterType type, String s) {
+		FileTypeList list=getFileTypeList(type);
 		if (list==null) return null;	//err.
 		
 		return list.getFileFromString(s);
@@ -148,7 +150,7 @@ public class FileTypeListManager{
 	*
 	*	@return	a String[] of shared Myster file types.
 	*/
-	public String[] getFileTypeListing() {
+	public MysterType[] getFileTypeListing() {
 		//This routine uses the old vector copied to an array trick, since the number of shared Items is not known until later
 		//so the list is put into a vector intialy then copied to an array.
 		Vector workinglist=new Vector(filelist.length);	//since the size of the final vector will always be <= filelist.length.
@@ -157,20 +159,11 @@ public class FileTypeListManager{
 			if (filelist[i].isShared()) workinglist.addElement(filelist[i].getType());
 		}
 		
-		String[] array=new String[workinglist.size()];
+		MysterType[] array=new MysterType[workinglist.size()];
 		for (int i=0; i<array.length; i++) {
-			array[i]=((String)(workinglist.elementAt(i)));
+			array[i]=((MysterType)(workinglist.elementAt(i)));
 		}
 		return array;
-	}
-	
-	/**
-	*	Gets the total number of shared files for a given type. Returns 0 if type is unknown to File Manager.
-	*	@param	type a Myster file type as a byte[4]
-	*	@return	number of shared files for a type.
-	*/
-	public int getNumberOfFiles(byte a[]) {
-		return getNumberOfFiles(new String(a));
 	}
 	
 	/**
@@ -178,8 +171,8 @@ public class FileTypeListManager{
 	*	@param	type a Myster file type as a String
 	*	@return	number of shared files for a type.
 	*/
-	public int getNumberOfFiles(String a) {
-		FileTypeList list=getFileTypeList(a);
+	public int getNumberOfFiles(MysterType type) {
+		FileTypeList list=getFileTypeList(type);
 		if (list==null) return 0;	//err.
 		
 		return list.getNumOfFiles();
@@ -190,8 +183,8 @@ public class FileTypeListManager{
 	*	@param	type a Myster file type
 	*	@return	a path in the host filing system.
 	*/
-	public String getPathFromType(String s) {
-		FileTypeList temp=getFileTypeList(s);
+	public String getPathFromType(MysterType type) {
+		FileTypeList temp=getFileTypeList(type);
 		if (temp==null) return null;
 		String path=temp.getPath();
 		return path;
@@ -202,7 +195,7 @@ public class FileTypeListManager{
 	*	@param	type a Myster file type
 	*	@param	a path in the host filing system.
 	*/
-	public void setPathFromType(String type, String path) {
+	public void setPathFromType(MysterType type, String path) {
 		FileTypeList temp=getFileTypeList(type);
 		if (temp==null) return;
 		temp.setPath(path);
@@ -215,7 +208,7 @@ public class FileTypeListManager{
 	*	@param	type a Myster file type to apply the boolean to
 	*	@param	b a boolean value to share or unshare the type list. true shares the list, false unshares it.
 	*/
-	public void setShared(String type, boolean b) {
+	public void setShared(MysterType type, boolean b) {
 		FileTypeList list=getFileTypeList(type);
 		if (list==null) return;	//err.
 		
@@ -229,7 +222,7 @@ public class FileTypeListManager{
 	*	@param	type a Myster file type to apply the boolean to
 	*	@return	true if the type is shared, false if the type is not shared or isn't known by the File Manager.
 	*/
-	public boolean isShared( String type) {
+	public boolean isShared(MysterType type) {
 		FileTypeList list=getFileTypeList(type);
 		if (list==null) return false;	//err.
 		

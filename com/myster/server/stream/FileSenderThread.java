@@ -30,6 +30,7 @@ import com.myster.pref.Preferences;
 import com.myster.client.stream.StandardSuite;
 import com.myster.net.MysterSocketFactory;
 import com.myster.net.MysterSocket;
+import com.myster.type.MysterType;
 
 public class FileSenderThread extends ServerThread {
 	//public constants
@@ -253,7 +254,7 @@ public class FileSenderThread extends ServerThread {
 			
 			filetype=(new String(b));			//stats
 			filename=new String(in.readUTF());	//stats
-			file=typelist.getFile(b, filename);	//io
+			file=typelist.getFile(new MysterType(b), filename);	//io
 			filelength=file.length();			//stats
 			initialOffset=in.readLong();		//initial offset for restarting file transfers half way done!
 			bytessent=initialOffset;			//hereafter refered to as....

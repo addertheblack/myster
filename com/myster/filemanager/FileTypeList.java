@@ -24,10 +24,11 @@ import com.myster.util.MysterThread;
 import com.myster.pref.Preferences;
 import com.myster.mml.MML;
 import com.myster.mml.MMLException;
+import com.myster.type.MysterType;
 
 class FileTypeList extends MysterThread{
 	private Vector filelist;	//List of java.io.File objects that are shared.
-	private String type;		//Myster type represented by this List.
+	private MysterType type;		//Myster type represented by this List.
 	private String rootdir;		//The root directory for this list.
 	//private boolean isShared	//This variable is accessed directly in the preferences data structure! Use isShared() to access!
 	private MML local_prefs;
@@ -47,7 +48,7 @@ class FileTypeList extends MysterThread{
 	*	@param	type is the Myster File type to be represented by this object.
 	*	@param	path is the root path IN THE PREFERENCES that this File List should store it's preferences.
 	*/
-	public FileTypeList(String type, String path) {
+	public FileTypeList(MysterType type, String path) {
 		this.type=type;
 		this.pref_key=PREF_KEY+"."+type;
 		
@@ -109,7 +110,7 @@ class FileTypeList extends MysterThread{
 	*
 	*	@return	the Myster Type associated with this object.
 	*/
-	public String getType() {
+	public MysterType getType() {
 		return type;	//note: no assertFileList(); file list ins't needed so don't load it.
 	}
 	

@@ -20,6 +20,7 @@ import Myster;
 import com.myster.tracker.*;
 import com.myster.server.ServerFacade;
 import com.myster.server.ConnectionContext;
+import com.myster.type.MysterType;
 
 public class HandshakeThread extends ServerThread {
 	public static final int NUMBER=101;
@@ -78,7 +79,7 @@ public class HandshakeThread extends ServerThread {
 	private MML getNumberOfFilesMML(MML mml) { //in-line
 		FileTypeListManager filemanager=FileTypeListManager.getInstance();
 		
-		String[] filetypelist=filemanager.getFileTypeListing();
+		MysterType[] filetypelist=filemanager.getFileTypeListing();
 		String dir="/numberOfFiles/";
 		
 		

@@ -19,6 +19,7 @@ import com.myster.pref.Preferences;
 import java.util.Hashtable;
 import java.util.Enumeration;
 import com.myster.filemanager.FileTypeListManager;
+import com.myster.type.MysterType;
 
 
 /**
@@ -94,7 +95,7 @@ public class FMIChooser extends PreferencesPanel {
 			public void itemStateChanged(ItemEvent e) {
 				//manager.setShared(choice.getType(), checkbox.getState());
 				//refreshFileList();
-				hash.put(choice.getType(), new SettingsStruct(choice.getType(), path, checkbox.getState()));
+				hash.put(choice.getType()+"", new SettingsStruct(choice.getType(), path, checkbox.getState()));
 			} 
 		});
 		add(checkbox);
@@ -116,7 +117,7 @@ public class FMIChooser extends PreferencesPanel {
 				}
 				path=p;
 				textfeild.setText(TIM(path));
-				hash.put(choice.getType(), new SettingsStruct(choice.getType(), path, checkbox.getState()));
+				hash.put(choice.getType()+"", new SettingsStruct(choice.getType(), path, checkbox.getState()));
 				
 				//manager.setPathFromType(choice.getType(), path);
 				
@@ -165,9 +166,9 @@ public class FMIChooser extends PreferencesPanel {
 	private class SettingsStruct {
 		String path;
 		boolean shared;
-		String type;
+		MysterType type;
 		
-		public SettingsStruct(String type, String path, boolean shared) {
+		public SettingsStruct(MysterType type, String path, boolean shared) {
 			this.type=type;
 			this.path=path;
 			this.shared=shared;
@@ -214,7 +215,7 @@ public class FMIChooser extends PreferencesPanel {
 		flist.removeAll();
 		flist.add("<Indexing files.... this may take a while.....>");
 		textfeild.setText(TIM(path));
-		String[] s=manager.getDirList(choice.getType().getBytes());
+		String[] s=manager.getDirList(choice.getType());
 		
 		flist.removeAll();
 		

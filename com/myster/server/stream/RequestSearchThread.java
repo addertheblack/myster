@@ -19,6 +19,7 @@ import com.myster.server.event.*;
 import com.general.events.EventDispatcher;
 import com.myster.server.ConnectionContext;
 import com.myster.filemanager.FileTypeListManager;
+import com.myster.type.MysterType;
 
 public class RequestSearchThread extends ServerThread {
 	
@@ -51,7 +52,7 @@ public class RequestSearchThread extends ServerThread {
 		
 		String[] stringarray;
 		
-        stringarray=FileTypeListManager.getInstance().getDirList(type, searchstring);
+       	stringarray = FileTypeListManager.getInstance().getDirList(new MysterType(type), searchstring);
 		
 		dispatcher.fireEvent(new ServerSearchEvent(ServerSearchEvent.REQUESTED, c.socket.getInetAddress().getHostAddress(), NUMBER, searchstring, new String(type), null));
 

@@ -29,6 +29,7 @@ import com.myster.util.Sayable;
 import com.myster.util.TypeChoice;
 import com.myster.ui.MysterFrame;
 import com.myster.ui.WindowLocationKeeper;
+import com.myster.type.MysterType;
 
 public class SearchWindow extends MysterFrame implements SearchResultListener, Sayable {
 	GridBagLayout gblayout;
@@ -219,7 +220,7 @@ public class SearchWindow extends MysterFrame implements SearchResultListener, S
 		return textentry.getText();
 	}
 	
-	public String getType() {
+	public MysterType getType() {
 		return choice.getType();	
 	}
 	

@@ -18,6 +18,7 @@ import com.general.util.*;
 import com.myster.menubar.MysterMenuBar;
 import com.myster.util.Sayable;
 import com.myster.ui.MysterFrame;
+import com.myster.type.MysterType;
 
 public class ClientWindow extends MysterFrame implements Sayable{
 	GridBagLayout gblayout;
@@ -190,8 +191,12 @@ public class ClientWindow extends MysterFrame implements Sayable{
 		return currentip;
 	}
 	
-	public String getCurrentType() {
-		return filetypelist.getSelectedItem();
+	public MysterType getCurrentType() {
+		try {
+			return new MysterType((new String(filetypelist.getSelectedItem())).getBytes());
+		} catch (Exception ex) {
+			return new MysterType(new byte[]{(byte)'M',(byte)'P',(byte)'G',(byte)'3'});
+		}
 	}
 	
 	public String getCurrentFile() {

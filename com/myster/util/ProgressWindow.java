@@ -165,7 +165,7 @@ public class ProgressWindow extends Frame {
 	}
 	
 	//Standard progress suite
-	public void setValue(int value) {
+	public void setValue(long value) {
 		setValue(value, 0);
     }
 		

@@ -18,6 +18,7 @@ import com.general.util.*;
 import com.myster.tracker.*;
 import com.myster.filemanager.*;
 import com.myster.server.ConnectionContext;
+import com.myster.type.MysterType;
 
 public class RequestDirThread extends ServerThread {
 	public static final int NUMBER=78;
@@ -34,7 +35,7 @@ public class RequestDirThread extends ServerThread {
 		
 		in.readFully(b);
 		System.out.println("Reading: "+(new String(b)));
-		String[] array=FileTypeListManager.getInstance().getDirList(b);
+		String[] array=FileTypeListManager.getInstance().getDirList(new MysterType(b));
 		if (array==null) {
 			System.out.println("Null Pointer");
 			out.writeInt(0);

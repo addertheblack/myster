@@ -12,6 +12,7 @@ package com.general.mclist;
 
 import java.awt.*;
 import java.awt.event.*;
+import javax.swing.*;
 import java.util.Vector;
 
 //import java.awt.image.BufferedImage;//testing

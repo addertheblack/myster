@@ -27,6 +27,7 @@ import java.net.UnknownHostException;
 import com.myster.util.MysterThread;
 import com.myster.util.Sayable;
 import com.myster.net.MysterAddress;
+import com.myster.type.MysterType;
 
 
 
@@ -34,12 +35,12 @@ import com.myster.net.MysterAddress;
 public class MysterSearch extends MysterThread {
 	SearchResultListener addable;
 	Sayable msg;
-	String type;
+	MysterType type;
 	String search;
 	CrawlerThread t[];
 
 
-	public MysterSearch(SearchResultListener addable, Sayable msg, String type, String searchString) {
+	public MysterSearch(SearchResultListener addable, Sayable msg, MysterType type, String searchString) {
 		this.addable=addable;
 		this.msg=msg;
 		this.type=type;

@@ -12,6 +12,7 @@ import com.myster.net.MysterAddress;
 import com.myster.mml.RobustMML;
 import com.myster.mml.MMLException;
 import com.myster.search.MysterFileStub;
+import com.myster.type.MysterType;
 
 
 /**
@@ -20,7 +21,7 @@ import com.myster.search.MysterFileStub;
 
 public class StandardSuite {
 
-	public static Vector getSearch(MysterAddress ip, String searchType, String searchString) throws IOException {
+	public static Vector getSearch(MysterAddress ip, MysterType searchType, String searchString) throws IOException {
 		MysterSocket socket=null;
 		try {
 			socket=MysterSocketFactory.makeStreamConnection(ip);
@@ -30,7 +31,7 @@ public class StandardSuite {
 		}
 	}
 	
-	public static Vector getSearch(MysterSocket socket, String searchType,String searchString) throws IOException {
+	public static Vector getSearch(MysterSocket socket, MysterType searchType,String searchString) throws IOException {
 		Vector searchResults=new Vector();
 		
 		socket.out.writeInt(35);
@@ -46,7 +47,7 @@ public class StandardSuite {
 		return searchResults;
 	}
 
-	public static Vector getTopServers(MysterAddress ip, String searchType) throws IOException {
+	public static Vector getTopServers(MysterAddress ip, MysterType searchType) throws IOException {
 		MysterSocket socket=null;
 		try {
 			socket=MysterSocketFactory.makeStreamConnection(ip);
@@ -56,7 +57,7 @@ public class StandardSuite {
 		}
 	}
 	
-	public static Vector getTopServers(MysterSocket socket, String searchType) throws IOException {
+	public static Vector getTopServers(MysterSocket socket, MysterType searchType) throws IOException {
 		Vector ipList=new Vector();
 		
 		socket.out.writeInt(10);	//Get top ten the 10 is the command code... not the length of the list!
@@ -137,7 +138,7 @@ public class StandardSuite {
 		
 		checkProtocol(socket.in);
 					
-		socket.out.writeBytes(stub.getType());
+		socket.out.writeBytes(stub.getType().toString()); //this protocol sucks
 		socket.out.writeUTF(stub.getName());
 
 		try {

@@ -3,6 +3,8 @@ package com.myster.filemanager;
 
 import java.io.File;
 
+import com.myster.type.MysterType;
+
 class FileFilter {
 	private static final int MPG3=0;
 	private static final int MooV=1;
@@ -44,7 +46,7 @@ class FileFilter {
 		}
 	};
 	
-	public static boolean isCorrectType(String type, File file) {
+	public static boolean isCorrectType(MysterType type, File file) {
 		if (file.length()==0) return false; //all 0k files are bad.
 		
 		if (type.equals("MPG3")) {

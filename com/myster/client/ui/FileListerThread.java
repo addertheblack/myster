@@ -20,13 +20,14 @@ import com.myster.search.SearchResult;
 import com.myster.util.Sayable;
 import com.myster.net.MysterSocketFactory;
 import com.general.util.TextSpinner;
+import com.myster.type.MysterType;
 
 
 public class FileListerThread extends MysterThread {
 	ClientWindow w;
 	Sayable msg;
 	String ip;
-	String type;
+	MysterType type;
 	MysterSocket socket;
 
 	public FileListerThread(ClientWindow a) {

@@ -12,25 +12,29 @@ Copyright Andrew Trumper 2000-2001
 package com.myster.util;
 
 import java.awt.Choice;
+import com.myster.type.TypeDescription;
+import com.myster.type.TypeDescriptionList;
+import com.myster.type.MysterType;
 
 public class TypeChoice extends Choice {
+	TypeDescription[] types;
 
 	public TypeChoice() {
 		addItemsToChoice();
 	}
 
-	public String getType() {
-		return getSelectedItem().substring(0,4);	
+	public MysterType getType() {
+		return getType(getSelectedIndex());	
 	}
 	
-	public String getType(int i) {
-		return getItem(i).substring(0,4);
+	public MysterType getType(int i) {
+		return types[i].getType();
 	}
 
 	private void addItemsToChoice() {
-		TypeDescription list[]=TypeDescription.loadTypeAndDescriptionList(this);
-		for (int i=0; i<list.length; i++) {
-			add(list[i].getType()+" ("+list[i].getDescription()+")");
+		types = TypeDescriptionList.getDefaultList().getAllTypes();
+		for (int i = 0; i < types.length; i++) {
+			add(types[i].getType()+" ("+types[i].getDescription()+")");
 		}
 	}
 }

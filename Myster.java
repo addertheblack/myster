@@ -191,6 +191,7 @@ public class Myster{
 	public static final int PORT=6669;			//Default port.
 	public static final String SPEEDPATH="Globals/speed/";
 	public static final String ADDRESSPATH="Globals/address/";
+	public static final String DEFAULT_ENCODING = "ascii";
 	
 
 	//public static double speed=14.4;

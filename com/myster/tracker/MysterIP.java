@@ -28,6 +28,7 @@ import com.myster.net.MysterAddress;
 import com.myster.net.MysterSocketFactory;
 import com.myster.client.datagram.PingEventListener;
 import com.myster.client.datagram.PingEvent;
+import com.myster.type.MysterType;
 
 
 /**
@@ -155,7 +156,7 @@ class MysterIP {
 		*	Returns the Number of Files associated with this MysterIP object.
 		*/
 			
-		public int getNumberOfFiles(String type) {
+		public int getNumberOfFiles(MysterType type) {
 			return MysterIP.this.getNumberOfFiles(type);
 		}
 		
@@ -173,7 +174,7 @@ class MysterIP {
 		 * Comparison to other Myster IP objects.
 		 */
 		
-		public double getRank(String type) {
+		public double getRank(MysterType type) {
 			toUpdateOrNotToUpdate();
 			return ((double)SPEEDCONSTANT*Math.log((double)speed)+								//speed constants. (not used)
 				(double)FILESCONSTANT*Math.log((double)getNumberOfFiles(type))+						//# of files
@@ -275,7 +276,7 @@ class MysterIP {
 		else timedown++;
 	}
 	
-	private int getNumberOfFiles(String type) {
+	private int getNumberOfFiles(MysterType type) {
 		toUpdateOrNotToUpdate();
 		return numberOfFiles.getNumberOfFiles(type);
 	}
@@ -488,7 +489,7 @@ class MysterIP {
 			super();
 		}
 		
-		public int getNumberOfFiles(String type) {
+		public int getNumberOfFiles(MysterType type) {
 			try {
 				return Integer.parseInt((String)(get("/"+type)));
 			} catch (NumberFormatException ex) {

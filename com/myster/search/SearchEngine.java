@@ -21,6 +21,7 @@ import com.myster.tracker.*;
 import com.general.util.*;
 import com.myster.search.ui.SearchWindow;
 import com.myster.util.MysterThread;
+import com.myster.type.MysterType;
 
 
 

@@ -30,6 +30,7 @@ import com.myster.util.ProgressWindow;
 import com.myster.util.FileProgressWindow;
 import com.myster.util.ProgressWindowClose;
 import com.myster.net.MysterSocketFactory;
+import com.myster.type.MysterType;
 import java.util.Locale;
 
 
@@ -87,13 +88,13 @@ public class DownloaderThread extends SafeThread {
 			else theFileName=theFileName.substring(theFileName.lastIndexOf("/")+1);
 		}
 		
-		String temp=file.getType();
+		MysterType temp=file.getType();
 		if (temp==null) {
 			progress.setText("No type selected Error...",FileProgressWindow.BAR_1);
 			return;
 		}
 		String dp=FileTypeListManager.getInstance().getPathFromType(temp);
-		File doubleDumbAssOnYou;
+		File doubleDumbAssOnYou; //<- Colorfull metaphore
 		if (dp!=null) doubleDumbAssOnYou=new File(dp);
 		else doubleDumbAssOnYou=new File("I love roman peaches yeah");
 		if (dp==null||!doubleDumbAssOnYou.isDirectory()) {

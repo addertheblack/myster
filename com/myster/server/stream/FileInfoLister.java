@@ -22,6 +22,7 @@ import com.myster.util.MP3Header;
 import helliker.id3.ID3v2Tag;
 import helliker.id3.ID3v2Frames;
 import helliker.id3.ID3v2FormatException;
+import com.myster.type.MysterType;
 
 public class FileInfoLister extends ServerThread {
 	public static final int NUMBER=77;
@@ -45,7 +46,7 @@ public class FileInfoLister extends ServerThread {
 
 		in.readFully(b);
 		String filename=in.readUTF();
-		File file=FileTypeListManager.getInstance().getFile(b,filename);
+		File file=FileTypeListManager.getInstance().getFile(new MysterType(b),filename);
 		
 		MML mml=new MML();
 		

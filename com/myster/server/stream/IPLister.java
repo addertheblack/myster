@@ -18,6 +18,7 @@ Copyright Andrew Trumper 2000-2001
 */
 
 import com.general.util.*;
+import com.myster.type.MysterType;
 
 public class IPLister extends ServerThread {
 	public static final int NUMBER=10;
@@ -42,7 +43,7 @@ public class IPLister extends ServerThread {
 		
 		IPListManagerSingleton.getIPListManager().addIP(new MysterAddress(context.socket.getInetAddress()));
 		
-		topten=IPListManagerSingleton.getIPListManager().getTop(new String(type),100);
+		topten=IPListManagerSingleton.getIPListManager().getTop(new MysterType(type),100);
 		if (topten!=null) {
 			for (int i=0; i<topten.length; i++) {
 				if (topten[i]==null) break;

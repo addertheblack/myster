@@ -17,6 +17,7 @@ import java.net.Socket;
 import com.general.util.*;
 import com.myster.filemanager.*;
 import com.myster.server.ConnectionContext;
+import com.myster.type.MysterType;
 
 
 public class FileTypeLister extends ServerThread {
@@ -27,16 +28,16 @@ public class FileTypeLister extends ServerThread {
 	}
 	
 	public void section(ConnectionContext context) throws IOException {
-		String[] temp;
+		MysterType[] temp;
 		
 		DataInputStream in=new DataInputStream(context.socket.getInputStream());
 		DataOutputStream out=new DataOutputStream(context.socket.getOutputStream());
 		
-		temp=FileTypeListManager.getInstance().getFileTypeListing();
+		temp = FileTypeListManager.getInstance().getFileTypeListing();
 		
 		
 		for (int i=0; i<temp.length; i++) {
-			out.writeUTF(temp[i]);
+			out.writeUTF(temp[i].toString()); //BAD protocol
 		}	
 		
 		out.writeUTF("");

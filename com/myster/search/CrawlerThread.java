@@ -23,10 +23,12 @@ import com.myster.util.MysterThread;
 import com.myster.util.Sayable;
 import com.myster.net.MysterSocketFactory;
 import com.myster.net.MysterAddress;
+import com.myster.type.MysterType;
 
 public class CrawlerThread extends MysterThread {
 	MysterAddress currentIp;
-	String searchString, searchType;
+	String searchString;
+	MysterType searchType;
 	IPQueue ipQueue;
 	SearchResultListener bucket;
 	Sayable msg;
@@ -38,7 +40,7 @@ public class CrawlerThread extends MysterThread {
 
 	public final int DEPTH=20;
 
-	public CrawlerThread(String searchString, String type, SearchResultListener bucket, IPQueue iplist, Sayable msg, GroupInt i) {
+	public CrawlerThread(String searchString, MysterType type, SearchResultListener bucket, IPQueue iplist, Sayable msg, GroupInt i) {
 		this.ipQueue=iplist;
 		this.searchString=searchString;
 		this.searchType=type;

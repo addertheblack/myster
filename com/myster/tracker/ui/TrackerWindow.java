@@ -9,9 +9,11 @@ import com.myster.tracker.*;
 import com.myster.menubar.MysterMenuBar;
 import Myster;
 import com.myster.util.MysterThread;
-import com.myster.util.TypeDescription;
 import com.myster.util.OpenConnectionHandler;
 import com.myster.ui.MysterFrame;
+import com.myster.type.TypeDescription;
+import com.myster.type.TypeDescriptionList;
+import com.myster.type.MysterType;
 
 public class TrackerWindow extends MysterFrame {
 	private static TrackerWindow me;// = new TrackerWindow();
@@ -50,7 +52,7 @@ public class TrackerWindow extends MysterFrame {
 		choice=new Choice();
 		{
 			//init choice
-			TypeDescription[] t=TypeDescription.loadTypeAndDescriptionList(this);
+			TypeDescription[] t = TypeDescriptionList.getDefaultList().getAllTypes();
 			
 			for (int i=0; i<t.length; i++) {
 				choice.add(""+t[i].getDescription()+" ("+t[i].getType()+")");
@@ -148,11 +150,11 @@ public class TrackerWindow extends MysterFrame {
 	*	Returns the selected type.
 	*/
 	
-	public synchronized String getType() {
+	public synchronized MysterType getType() { 
 		int index=choice.getSelectedIndex();
 		
-		TypeDescription[] t=TypeDescription.loadTypeAndDescriptionList(this);
-		return t[index].getType();
+		TypeDescription[] t = TypeDescriptionList.getDefaultList().getAllTypes();
+		return t[index].getType(); //BAD idea!
 	}
 	
 	Vector itemsinlist;
@@ -245,9 +247,9 @@ public class TrackerWindow extends MysterFrame {
 		MysterServer server;
 		Sortable sortables[]=new Sortable[6];
 		IPListManager manager=IPListManagerSingleton.getIPListManager();
-		String type;
+		MysterType type;
 		
-		public TrackerMCListItem(MysterServer s, String t) {
+		public TrackerMCListItem(MysterServer s, MysterType t) {
 			server=s;
 			type=t;
 			refresh();

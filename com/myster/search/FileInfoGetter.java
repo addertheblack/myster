@@ -11,19 +11,20 @@ import com.myster.net.MysterSocket;
 import com.myster.search.SearchResultListener;
 import com.myster.search.MysterSearchResult;
 import com.myster.net.MysterAddress;
+import com.myster.type.MysterType;
 
 
 public class FileInfoGetter extends MysterThread {
 	MysterSocket socket;
 	Vector vector;
 	SearchResultListener addable;
-	String type;
+	MysterType type;
 	
 	boolean endFlag=false;
 
 	
 	
-	public FileInfoGetter(MysterSocket s, SearchResultListener a, MysterAddress address, String type,Vector searchResults) {
+	public FileInfoGetter(MysterSocket s, SearchResultListener a, MysterAddress address, MysterType type,Vector searchResults) {
 		socket=s;
 		addable=a;
 		vector=new Vector(searchResults.size(), 10);
@@ -61,7 +62,7 @@ public class FileInfoGetter extends MysterThread {
 						SearchResult result=(SearchResult)(vector.elementAt(pointer));
 						socket.out.writeInt(77);
 						
-						socket.out.writeBytes(type);
+						socket.out.write(type.getBytes());
 						socket.out.writeUTF(result.getName());
 						pointer++;
 					}

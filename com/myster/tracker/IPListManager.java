@@ -18,11 +18,14 @@ import java.util.Vector;
 import com.myster.search.IPQueue;
 import com.myster.client.stream.StandardSuite;
 import com.myster.util.MysterThread;
-import com.myster.util.TypeDescription;
+import com.myster.type.TypeDescription;
 import com.myster.util.TypeChoice;
 import com.myster.net.MysterAddress;
 import com.myster.client.datagram.PingEventListener;
 import com.myster.client.datagram.PingEvent;
+import com.myster.type.TypeDescriptionList;
+import com.myster.type.TypeDescription;
+import com.myster.type.MysterType;
 
 
 public class IPListManager { //aka tracker
@@ -44,7 +47,7 @@ public class IPListManager { //aka tracker
 	protected IPListManager() {
 		blockingQueue.setRejectDuplicates(true);
 	
-		tdlist=TypeDescription.loadTypeAndDescriptionList(this);
+		tdlist = TypeDescriptionList.getDefaultList().getAllTypes();
 		
 		list=new IPList[tdlist.length];
 		for (int i=0; i<list.length; i++) {
@@ -90,7 +93,7 @@ public class IPListManager { //aka tracker
 		}
 	}
 	
-	public synchronized MysterServer[] getTopTen(String type) {
+	public synchronized MysterServer[] getTopTen(MysterType type) {
 		return getTop(type, 10);
 	}
 	
@@ -99,7 +102,7 @@ public class IPListManager { //aka tracker
 	* 	the last 5 minutes or whatever the ping polling time is. If there are not enough UP
 	*	Servers orwhatever, the rest of the array is filled with null!!!!!
 	*/	
-	public synchronized MysterServer[] getTop(String type, int x) {
+	public synchronized MysterServer[] getTop(MysterType type, int x) {
 		IPList iplist;
 		iplist=getListFromType(type);
 		if (iplist==null) return null;
@@ -126,7 +129,7 @@ public class IPListManager { //aka tracker
 	/**
 	*	Returns vector of MysterAddress of all the server addresses for that type.
 	*/
-	public synchronized Vector getAll(String type) {
+	public synchronized Vector getAll(MysterType type) {
 		IPList iplist;
 		iplist=getListFromType(type);
 		if (iplist==null) return null;
@@ -162,7 +165,7 @@ public class IPListManager { //aka tracker
 	*
 	*/
 	
-	private IPList getListFromType(String type) {
+	private IPList getListFromType(MysterType type) {
 		int index;
 		index=getIndex(type);
 		
@@ -187,7 +190,7 @@ public class IPListManager { //aka tracker
 		}
 	}
 	
-	private synchronized int getIndex(String type) {
+	private synchronized int getIndex(MysterType type) {
 		for (int i=0; i<tdlist.length; i++) {
 			if (tdlist[i].getType().equals(type)) return i;
 		}
@@ -268,7 +271,7 @@ public class IPListManager { //aka tracker
 			}
 		}
 		
-		private void addIPs(MysterAddress ip, IPQueue ipQueue, String type) throws IOException {
+		private void addIPs(MysterAddress ip, IPQueue ipQueue, MysterType type) throws IOException {
 			Vector ipList=StandardSuite.getTopServers(ip, type);
 			
 			for (int i=0; i<ipList.size(); i++) {

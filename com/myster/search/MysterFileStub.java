@@ -12,13 +12,14 @@ Copyright Andrew Trumper 2000-2001
 package com.myster.search;
 
 import com.myster.net.MysterAddress;
+import com.myster.type.MysterType;
 
 public class MysterFileStub {
 	MysterAddress ip;
-	String type;
+	MysterType type;
 	String name;
 
-	public MysterFileStub(MysterAddress ip, String type, String name) {
+	public MysterFileStub(MysterAddress ip, MysterType type, String name) {
 		this.ip=ip;
 		this.type=type;
 		this.name=name;
@@ -37,7 +38,7 @@ public class MysterFileStub {
 	}
 	
 	
-	public String getType() {
+	public MysterType getType() {
 		return type;
 	}
 }

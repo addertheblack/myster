@@ -51,7 +51,7 @@ public class TypeListerThread extends MysterThread {
 			
 			msg.say("Adding Items...");
 			for (int i=0; i<typeList.size(); i++){
-				container.addItemToTypeList((String)(typeList.elementAt(i)));
+				container.addItemToTypeList(typeList.elementAt(i).toString());
 			}
 			
 			msg.say("Idle...");

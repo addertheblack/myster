@@ -25,10 +25,11 @@ import java.util.StringTokenizer;
 import java.util.Vector;
 import com.myster.pref.*;
 import com.myster.net.MysterAddress;
+import com.myster.type.MysterType;
 
 class IPList {
 	MysterServer[] array=new MysterServer[IPListManager.LISTSIZE];
-	String type;
+	MysterType type;
 	String mypath;
 	
 	private static final String PATH="/IPLists/";
@@ -38,7 +39,7 @@ class IPList {
 	 * com.myster objects.
 	 */
 
-	protected IPList(String type) {
+	protected IPList(MysterType type) {
 		String list[];
 		mypath=PATH+type;
 
@@ -121,7 +122,7 @@ class IPList {
 		insertionSort(ip);
 	}
 	
-	public String getType() {
+	public MysterType getType() {
 		return type;
 	}
 	
