@@ -977,6 +977,9 @@ Work on DEV 8:
 		-> Fixed bug where files downloaded to an unexpected location would not rename properly>>>>>>> 1.67
 		-> Made it so that server stats actually report how far through the FILE they are as opposed to simply
 				how far through the current block.
+		-> Fixed bug where the wrong amount would be added to bytes transfered if the download had an 
+				initial offset.
+		-> Added ".m4a", ".XXX.zip" where "XXX" is a sound type to .mp3
 
 todo:
 

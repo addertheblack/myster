@@ -331,6 +331,10 @@ public class MultiSourceSender extends ServerThread {
 				return offset + amountDownloaded;
 			}
 			
+			public long getInititalOffset() {
+				return offset;
+			}
+			
 			public String getFileName() {
 				return fileName;
 			}

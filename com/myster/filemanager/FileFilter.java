@@ -19,7 +19,7 @@ class FileFilter {
 			".mp3",".mid",".midi",".gm",".au",".wav",".ogg",".snd",
 			".mod",".s3m",".aif",".aiff",".aiff1",".m3d",".mpeghdr",
 			".iff","aifc",".avr",".adpcm",".gsm",".sf",".kar",".s3m",
-			".mtm",".swa",".m1a",".m2a",".mp2",".paf",".wve",".voc",".ra"
+			".mtm",".swa",".m1a",".m2a",".mp2",".paf",".wve",".voc",".ra",".m4a"
 		},
 		new String[]{
 			".mov",".avi",".asf",".rm",".ram",".mpg",".mp4",".mpeg",".3iv",

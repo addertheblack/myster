@@ -12,5 +12,6 @@ public interface DownloadInfo {
 	public String getFileName();
 	public String getFileType();
 	public long getFileSize();
+	public long getInititalOffset();
 	public void disconnectClient();
 }

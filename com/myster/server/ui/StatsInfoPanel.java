@@ -374,7 +374,7 @@ public class StatsInfoPanel extends Panel{
 	
 	private class DownloadHandler extends ServerDownloadListener {
 		public void downloadFinished(ServerDownloadEvent e) {
-			transfered.setValue(transfered.getValue()+e.dataSoFar());
+			transfered.setValue(transfered.getValue()+e.dataSoFar()-e.getDownloadInfo().getInititalOffset());
 		}
 	}
 	
