@@ -151,30 +151,42 @@ public class StandardSuite {
 	
 	
 	public static String getFileFromHash(MysterAddress ip, MysterType type, FileHash hash) throws IOException  {
+		return getFileFromHash(ip, type, new FileHash[]{hash});
+	}
+	
+	public static String getFileFromHash(MysterAddress ip, MysterType type, FileHash[] hashes) throws IOException  {
 		MysterSocket socket=null;
 		try {
 			socket=MysterSocketFactory.makeStreamConnection(ip);
-			return getFileFromHash(socket, type, hash);
+			return getFileFromHash(socket, type, hashes);
 		} finally {
 			disconnectWithoutException(socket);
 		}
 	}
 	
 	public static String getFileFromHash(MysterSocket socket, MysterType type, FileHash hash) throws IOException  {
+		return getFileFromHash(socket, type, new FileHash[]{hash});
+	}
+	
+	public static String getFileFromHash(MysterSocket socket, MysterType type, FileHash[] hashes) throws IOException  {
 		socket.out.writeInt(150);
 		
 		checkProtocol(socket.in);
 		
 		socket.out.writeInt(type.getAsInt());
 		
-		socket.out.writeUTF(hash.getHashName());
-		
-		socket.out.writeShort(hash.getHashLength());
-		
-		byte[] byteArray = hash.getBytes();
-		
-		socket.out.write(byteArray,0,byteArray.length);
+		for (int i = 0; i < hashes.length; i++) {
+			socket.out.writeUTF(hashes[i].getHashName());
+			
+			socket.out.writeShort(hashes[i].getHashLength());
+			
+			byte[] byteArray = hashes[i].getBytes();
 
+			socket.out.write(byteArray,0,byteArray.length);
+		}
+		
+		socket.out.writeUTF("");
+		
 		return socket.in.readUTF();
 
 	}

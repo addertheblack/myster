@@ -6,7 +6,7 @@ import com.myster.search.SearchResult;
 
 public class ClientMPG3HandleObject extends ClientGenericHandleObject {
 	protected String[] 	headerarray={"Bit Rate", "Hz", "Song Title", "Artist", "Album"};
-	protected String[] 	keyarray={"BitRate","Hz", "ID3Name", "Artist", "Album"};
+	protected String[] 	keyarray={"/BitRate","/Hz", "/ID3Name", "/Artist", "/Album"};
 	protected int[]		headerSize={100,100,100,100, 100};
 	
 	private int numOfColumns;

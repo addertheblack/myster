@@ -27,7 +27,7 @@ import com.myster.server.event.ServerDownloadEvent;
 		//repeat from 1
 
 public class MultiSourceSender extends ServerThread {
-	public static final int SECTION_NUMBER=888; 
+	public static final int SECTION_NUMBER=88888; //testing port
 
 	public int getSectionNumber() {
 		return SECTION_NUMBER;

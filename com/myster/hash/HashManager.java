@@ -52,7 +52,7 @@ public class HashManager implements Runnable {
 	*	Starts up the HashManager. Used to allow plugins to register themselves before the Hashing begins.
 	*/
 	public static void start() {
-		//(new Thread(hashManager)).start();
+		(new Thread(hashManager)).start();
 	}
 	
 	/**

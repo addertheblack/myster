@@ -5,6 +5,9 @@ import com.myster.mml.RobustMML;
 import com.myster.client.stream.DownloaderThread;
 import java.util.Vector;
 
+import com.myster.client.stream.MultiSourceDownload;
+import com.myster.hash.SimpleFileHash;
+
 public class MysterSearchResult implements SearchResult {
 	RobustMML mml;
 	MysterFileStub stub;
@@ -15,10 +18,25 @@ public class MysterSearchResult implements SearchResult {
 	
 	public void setMML(RobustMML m) {
 		mml=m;
+		System.out.println(mml.toString());
 	}
 	
 	//is called when the user decides to download the item
 	public void download() {
+		String hashAsString = (mml != null ? mml.get("/hash/md5") : null);
+		
+		System.out.println("-->"+mml.toString());
+		
+		try {
+			if (hashAsString != null) {
+				MultiSourceDownload download = new MultiSourceDownload(stub, SimpleFileHash.buildFromHexString("md5", hashAsString));
+				download.start();
+				return; //!!!!!!!!!!!!!!!!!! tricky
+			}
+		} catch (NumberFormatException ex) {
+			System.out.println("Could not download multi source because hash was not properly formated");
+		}
+		
 		Thread t=new DownloaderThread((MysterFileStub)stub);
 		t.start();
 	}
@@ -30,7 +48,7 @@ public class MysterSearchResult implements SearchResult {
 	
 	//gets a value for a meta data thingy
 	public String getMetaData(String key) {
-		return (mml==null?null:mml.get("/"+key));
+		return (mml==null?null:mml.get(key));
 	}
 
 	//gets the list of known meta data types for this item.
@@ -44,7 +62,7 @@ public class MysterSearchResult implements SearchResult {
 		for (int i=0; i<items.size(); i++) {
 			String s_temp=(String)(items.elementAt(i));
 			if (mml.isAFile("/"+s_temp)) {
-				v_temp.addElement(s_temp);
+				v_temp.addElement("/"+s_temp);
 			}
 		}
 		

@@ -10,7 +10,7 @@ import com.myster.net.*;
 public class ClientGenericHandleObject implements ClientHandleObject {
 	protected String[] 	headerarray={"File Name","File Size","Server", "Ping"};
 	protected int[]		headerSize={300,70,150, 70};
-	protected String[] 	keyarray={"n/a","size","n/a","n/a"};
+	protected String[] 	keyarray={"n/a","/size","n/a","n/a"};
 	
 	public String getHeader(int index) {
 		return headerarray[index];

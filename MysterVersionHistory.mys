@@ -865,4 +865,11 @@ Work on DEV 8:
 	  	-> Made behavior consistant with itself
 	  2003/06/20
 	  	-> Worked on getFileByHash
+	  	-> took rest of the month off.
+	  1003/07/20
+	  	-> created multi-source server section
+	  	-> hoooked it up to server GUI
+	  	-> created Multi source client project am testing it with server.
+	  	-> fixed a slew of bugs and oddities
+	  	-> enhanced the file server event model.
 	  	

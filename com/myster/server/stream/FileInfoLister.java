@@ -62,7 +62,7 @@ public class FileInfoLister extends ServerThread {
 		//System.out.println(mml.toString());
 	}
 	
-
+	//ugh.. for Mp3 stuff
 	private void patchFunction2(MML mml, File file, byte[] b)  {
 		if (!(new String(b)).equals("MPG3")) return;
 		ID3v2Tag tag=null;
@@ -98,7 +98,7 @@ public class FileInfoLister extends ServerThread {
 
 	}
 	
-	///*
+	// ugh.. mp3 stuff
 	private void patchFunction(MML mml, File file, byte[] b)  {
 		if (!(new String(b)).equals("MPG3")) return;
 		MP3Header head=null;

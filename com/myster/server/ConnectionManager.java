@@ -67,7 +67,7 @@ public class ConnectionManager extends MysterThread {
 	private void doConnection() {
 		try {
 			++waitingThreads;
-			System.out.println("Wating Threads in server "+waitingThreads);
+			//System.out.println("Wating Threads in server "+waitingThreads);
 			socket=(Socket)(socketQueue.get());
 			--waitingThreads;
 			System.out.println("Wating Threads in server "+waitingThreads);

@@ -173,8 +173,6 @@ public class FileSenderThread extends ServerThread {
 			
 			starttime=System.currentTimeMillis();
 			
-			System.out.println("==============="+downloadInfo);
-			
 			fireEvent(ServerDownloadEvent.SECTION_STARTED,0);
 		}
 		
@@ -205,6 +203,8 @@ public class FileSenderThread extends ServerThread {
 			out.writeByte('i');
 			out.writeLong(sizeOfImage);
 			out.write(queuedImage, 0, sizeOfImage);
+			
+			sendURL("http://mysternetworks.com/information/faq.html#anchor9353424");
 		}
 		
 		
@@ -411,17 +411,20 @@ public class FileSenderThread extends ServerThread {
 		}
 	
 		//code 'u'
-		private void sendURL(String imageName) throws IOException {
+		private void sendURLFromImageName(String imageName) throws IOException {
 			String url = BannersManager.getURLFromImageName(imageName);
 			
-			if (url == null) url = "";
+			if (url == null) return;
 			
+			sendURL(url);
+		}
+		
+		private void sendURL(String url) throws IOException {
 			out.writeInt(6669);
 			out.write('u');
 			out.writeInt(0);  //padding 'cause writeUTF preceed the UTF with a short.
 			out.writeShort(0);
 			out.writeUTF(url);
-
 		}
 	
 		//code 'i'
@@ -459,7 +462,7 @@ public class FileSenderThread extends ServerThread {
 			
 			//OUTPUT::::::::
 			try {
-				sendURL(imageName);
+				sendURLFromImageName(imageName);
 				
 				out.writeInt(6669);
 				out.write('i');

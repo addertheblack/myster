@@ -37,16 +37,29 @@ public class FileByHash extends ServerThread {
 		try {
 			MysterType type = new MysterType(context.socket.in.readInt()); //type
 		
-			String hashType = context.socket.in.readUTF();
-			int lengthOfHash = 0xffff & (int)(context.socket.in.readShort());
+			FileHash md5Hash = null;  
+		
+			for (;;) { //get hash name, get hash length, get hash data until hashname is ""
+				String hashType = context.socket.in.readUTF();
+				if (hashType.equals("")) {
+					break;
+				} 
+				int lengthOfHash = 0xffff & (int)(context.socket.in.readShort());
+				
+				byte[] hashBytes = new byte[lengthOfHash];
+				context.socket.in.readFully(hashBytes,0,hashBytes.length);
+				
+				if (hashType.equals("md5")) {
+					md5Hash = SimpleFileHash.buildFileHash(hashType, hashBytes);
+				}
+			}
 			
-			byte[] hashBytes = new byte[lengthOfHash];
 			
-			context.socket.in.readFully(hashBytes,0,hashBytes.length);
+			com.myster.filemanager.FileItem file = null;
 			
-			System.out.println("!!!");
-			com.myster.filemanager.FileItem file = com.myster.filemanager.FileTypeListManager.getInstance().getFileFromHash(type, SimpleFileHash.buildFileHash(hashType, hashBytes));
-			System.out.println("!??");
+			if (md5Hash != null) {
+				file = com.myster.filemanager.FileTypeListManager.getInstance().getFileFromHash(type, md5Hash);
+			}
 		
 			if (file == null) {
 				context.socket.out.writeUTF("");
