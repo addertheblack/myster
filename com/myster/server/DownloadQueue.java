@@ -69,7 +69,9 @@ public class DownloadQueue {
 		
 		if (s_spots!=null) {
 			try {
-				return Integer.parseInt(s_spots);
+				int spots=Integer.parseInt(s_spots);
+				if (spots<MIN_SPOTS) return MIN_SPOTS;
+				return spots;
 			} catch (NumberFormatException ex) {}
 		}
 		return DEFAULT_DOWNLOAD_SPOTS;

@@ -770,5 +770,9 @@ Work on DEV 8:
     	-> Tweaked thread distribution.
     	-> tweaked font usgae in MacOS X
     	-> Made ping sort properly in tracker
-    	
-    	
+    	==== Release PR 5
+    	-> More tweaking to the ping times and tracker
+    	-> MCList fix a bug where the place you click on to move a column moved sideways each column
+    	-> MCList now sorts japaneese (and other languages) text better. (Why did no one mention this bug to me?!?!?!)
+    	-> Ponger is now O(1) and not O(n) (should be faster)
+    	-> Made it so that 0 spots in the download queue is not allowed.

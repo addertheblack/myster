@@ -10,11 +10,15 @@ Copyright Andrew Trumper 2001
 
 package com.general.mclist;
 
-
+import java.text.Collator;
 
 
 public class SortableString implements Sortable{
 	protected String string;
+	
+	private static final Collator collator=Collator.getInstance();
+
+
 	
 	public SortableString(String s) {
 		string=s;
@@ -31,8 +35,8 @@ public class SortableString implements Sortable{
 	    	return false;
 	    String s=(String) temp.getValue();	
 	    
-	   	if (string.toUpperCase().compareTo(s.toUpperCase())<0) return true;
-	   	return false;
+	    return collator.compare(string,s)<0;
+		//return collator(string.toUpperCase(),s.toUpperCase())<0;
 	}
 	
 	public boolean isGreaterThan(Sortable temp) {
@@ -42,8 +46,8 @@ public class SortableString implements Sortable{
 	    	return false;
 	    String s=(String) temp.getValue();
 	    
-	   	if (string.toUpperCase().compareTo(s.toUpperCase())>0) return true;
-	   	return false;
+	    return collator.compare(string,s)>0;
+	   	//return collator(string.toUpperCase(),s.toUpperCase())>0;
 	}
 	
 	public boolean equals(Sortable temp) {
@@ -53,8 +57,8 @@ public class SortableString implements Sortable{
 	    	return false;
 	    String s=(String) temp.getValue();	
 	    
-	    if (string.toUpperCase().compareTo(s.toUpperCase())==0) return true;
-	    return false;
+	   return collator.compare(string,s)==0;
+	   //return collator(string.toUpperCase(),s.toUpperCase())==0;
 	}
 	
 	public String toString() {

@@ -84,7 +84,7 @@ public class Myster{
 			PongTransport ponger=new PongTransport();UDPPingClient.setPonger(ponger);
 			DatagramProtocolManager.addTransport(ponger);
 			DatagramProtocolManager.addTransport(new PingTransport());
-			System.out.println("Ping was "+(ponger.ping(new MysterAddress("127.0.0.1"))?"a success":"a timeout"));
+			//System.out.println("Ping was "+(ponger.ping(new MysterAddress("127.0.0.1"))?"a success":"a timeout"));
 		} catch (Exception ex) {
 			ex.printStackTrace();
 			com.general.util.AnswerDialog.simpleAlert("Myster's UDP sub-system could not initialize. This means Myster will probably not work correctly. Here is the official error:\n\n"+ex);
