@@ -1,18 +1,20 @@
-/* 
-	Main.java
-
-	Title:			Server Stats Window Test App
-	Author:			Andrew Trumper
-	Description:	An app to test the server stats window
-*/
+/*
+ * Main.java
+ * 
+ * Title: Server Stats Window Test App Author: Andrew Trumper Description: An
+ * app to test the server stats window
+ */
 
 package com.general.tab;
 
-import java.awt.*;
+import java.awt.Dimension;
+import java.awt.Graphics;
 
 public interface TabInterface {
-	
-	public boolean isSelected();
-	public Dimension getSize();
-	public void paint(Graphics g);
+
+    public boolean isSelected();
+
+    public Dimension getSize();
+
+    public void paint(Graphics g);
 }

@@ -1,91 +1,102 @@
-/* 
-
-	Title:			Myster Open Source
-	Author:			Andrew Trumper
-	Description:	Generic Myster Code
-	
-	This code is under GPL
-
-Copyright Andrew Trumper 2000-2001
-*/
+/*
+ * 
+ * Title: Myster Open Source Author: Andrew Trumper Description: Generic Myster
+ * Code
+ * 
+ * This code is under GPL
+ * 
+ * Copyright Andrew Trumper 2000-2001
+ */
 
 package com.myster.client.ui;
 
-import java.awt.*;
-import java.io.*;
-import java.net.*;
-import com.myster.mml.*;
-import com.myster.util.MysterThread;
+import java.io.DataInputStream;
+import java.io.DataOutputStream;
+import java.io.IOException;
 import java.util.Vector;
-import com.myster.net.MysterSocket;
-import com.myster.client.stream.StandardSuite;
-import com.myster.net.MysterAddress;
-import com.myster.search.*;
+
 import com.general.util.KeyValue;
 import com.general.util.MessageField;
+import com.myster.client.stream.StandardSuite;
+import com.myster.mml.RobustMML;
+import com.myster.net.MysterAddress;
+import com.myster.net.MysterSocket;
 import com.myster.net.MysterSocketFactory;
+import com.myster.search.MysterFileStub;
+import com.myster.util.MysterThread;
 
 public class FileInfoListerThread extends MysterThread {
-	ClientWindow w;
+    ClientWindow w;
 
-	public FileInfoListerThread(ClientWindow w) {
-		this.w=w;
-	}
-	
-	public void run() {
-		try {Thread.sleep(500);} catch (InterruptedException ex) {}
-	
-		MysterSocket socket=null;
-		DataOutputStream out;
-		DataInputStream in;
-		MessageField msg=w.getMessageField();
-		
-		try {
-			msg.say("Connecting to server...");
-			socket=MysterSocketFactory.makeStreamConnection(new MysterAddress(w.getCurrentIP()));
-			msg.say("Getting file information...");
-			
-			RobustMML mml=new RobustMML(StandardSuite.getFileStats(socket, new MysterFileStub(new MysterAddress(w.getCurrentIP()), w.getCurrentType(), w.getCurrentFile())));
+    public FileInfoListerThread(ClientWindow w) {
+        this.w = w;
+    }
 
-			msg.say("Parsing file information...");
-			
-			KeyValue keyvalue=new KeyValue();
-			keyvalue.addValue("File Name",w.getCurrentFile());
-			//keyvalue.addValue("Of Type","moo"); 
+    public void run() {
+        try {
+            Thread.sleep(500);
+        } catch (InterruptedException ex) {
+        }
 
-			listDir(mml, keyvalue, "/", "");
-			
-			w.showFileStats(keyvalue);
-			
-			msg.say("Idle...");
-			
-		} catch (IOException ex) {
-			msg.say("Transmission errorm could not get File Stats.");
-		} finally {
-			try {
-				socket.close();
-			} catch (Exception ex) {}
-		}
-	}
-	
-	private void listDir(RobustMML mml, KeyValue keyValue, String directory, String prefix) {
-		Vector dirList = mml.list(directory);
-		
-		if (dirList == null) return;
-		
-		for (int i = 0; i < dirList.size(); i++) {
-			String name = (String)dirList.elementAt(i);
-			
-			if (name == null) return;
-			
-			String newPath = directory + name;
-			
-			if (mml.isADirectory(newPath+"/")) {
-				keyValue.addValue(name, " ->");
-				listDir(mml,keyValue,newPath+"/", prefix + "  ");
-			} else {
-				keyValue.addValue(prefix + ((String)dirList.elementAt(i)), mml.get(newPath));
-			}
-		}
-	}
+        MysterSocket socket = null;
+        DataOutputStream out;
+        DataInputStream in;
+        MessageField msg = w.getMessageField();
+
+        try {
+            msg.say("Connecting to server...");
+            socket = MysterSocketFactory
+                    .makeStreamConnection(new MysterAddress(w.getCurrentIP()));
+            msg.say("Getting file information...");
+
+            RobustMML mml = new RobustMML(StandardSuite.getFileStats(socket,
+                    new MysterFileStub(new MysterAddress(w.getCurrentIP()), w
+                            .getCurrentType(), w.getCurrentFile())));
+
+            msg.say("Parsing file information...");
+
+            KeyValue keyvalue = new KeyValue();
+            keyvalue.addValue("File Name", w.getCurrentFile());
+            //keyvalue.addValue("Of Type","moo");
+
+            listDir(mml, keyvalue, "/", "");
+
+            w.showFileStats(keyvalue);
+
+            msg.say("Idle...");
+
+        } catch (IOException ex) {
+            msg.say("Transmission errorm could not get File Stats.");
+        } finally {
+            try {
+                socket.close();
+            } catch (Exception ex) {
+            }
+        }
+    }
+
+    private void listDir(RobustMML mml, KeyValue keyValue, String directory,
+            String prefix) {
+        Vector dirList = mml.list(directory);
+
+        if (dirList == null)
+            return;
+
+        for (int i = 0; i < dirList.size(); i++) {
+            String name = (String) dirList.elementAt(i);
+
+            if (name == null)
+                return;
+
+            String newPath = directory + name;
+
+            if (mml.isADirectory(newPath + "/")) {
+                keyValue.addValue(name, " ->");
+                listDir(mml, keyValue, newPath + "/", prefix + "  ");
+            } else {
+                keyValue.addValue(prefix + ((String) dirList.elementAt(i)), mml
+                        .get(newPath));
+            }
+        }
+    }
 }

@@ -1,71 +1,61 @@
 /**
-
-	A rather primitive Channels implementation.
-
-
-
-	Usage: 
-
-*/
-
-
+ * 
+ * A rather primitive Channels implementation.
+ * 
+ * 
+ * 
+ * Usage:
+ *  
+ */
 
 package com.general.util;
 
-
-
 public class Channel {
 
-	private Object data;
+    private Object data;
 
-	private Semaphore semIn=new Semaphore(0);
+    private Semaphore semIn = new Semaphore(0);
 
-	private Semaphore semOut=new Semaphore(0);
+    private Semaphore semOut = new Semaphore(0);
 
-	public final In in=new In();
+    public final In in = new In();
 
-	public final Out out=new Out(); 
+    public final Out out = new Out();
 
+    public class In {
 
+        Semaphore me = new Semaphore(1);
 
-	public class In {
+        public synchronized void put(Object o) {
 
-		Semaphore me=new Semaphore(1);
+            me.waitx();
 
-		public synchronized void put(Object o) {
+            data = o;
 
-			me.waitx();
+            semOut.signalx();
 
-			data=o;
+            semIn.waitx();
 
-			semOut.signalx();
+            me.signalx();
 
-			semIn.waitx();
+        }
 
-			me.signalx();
+    }
 
-		}
+    public class Out {
 
-	}
+        public synchronized Object get() {
 
-	
+            semOut.waitx();
 
-	public class Out {
+            Object o = data;
 
-		public synchronized Object get() {
+            semIn.signalx();
 
-			semOut.waitx();
+            return o;
 
-			Object o=data;
+        }
 
-			semIn.signalx();
-
-			return o;
-
-		}
-
-	} 
-
-
+    }
 
 }
