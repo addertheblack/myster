@@ -281,6 +281,7 @@ public class DownloaderThread extends SafeThread {
 							progress.setText("Receiving unknown data of type: "+code,FileProgressWindow.BAR_1);
 							byte[] b=new byte[(int)length];
 							in.readFully(b);
+							progress.setValue(-1,FileProgressWindow.BAR_2);
 							break;
 					}
 				}

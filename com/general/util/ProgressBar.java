@@ -14,7 +14,7 @@ public class ProgressBar extends Panel {
 	
 	Image im;
 	
-	Timer updaterTimer;
+	volatile Timer updaterTimer;
 
 	public ProgressBar() {
 		this(0,100);

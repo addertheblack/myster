@@ -113,8 +113,6 @@ public class DefaultMCRowTheme implements MCRowThemeInterface {
 			descent= tempfont.getDescent();
 		}
 		
-		filterNonEnglish=true;
-		
 		if (filterNonEnglish) {
 			char[] array=s.toCharArray();
 			for (int i=0; i<array.length; i++) {
