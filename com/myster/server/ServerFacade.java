@@ -114,7 +114,7 @@ public class ServerFacade {
 		
 		private final com.myster.server.stream.FileSenderThread.FreeLoaderPref leech;
 		
-		private PrefPanel () {
+		public PrefPanel () {
 			//setBackground(Color.red);
 			setLayout(new GridLayout(5,2,5,5));
 			

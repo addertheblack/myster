@@ -965,7 +965,7 @@ Work on DEV 8:
 		-> Added number of pings to server stats.
 		-> added number of connections to server stats.
 		-> Added uptime to server stats
-		-> Fixed bug where files downloaded to an unexpected location would not rename properly>>>>>>> 1.67
+		-> Fixed bug where files downloaded to an unexpected location would not rename properly
 		-> Made it so that server stats actually report how far through the FILE they are as opposed to simply
 				how far through the current block.
 		-> Fixed bug where the wrong amount would be added to bytes transfered if the download had an 
@@ -986,6 +986,11 @@ Work on DEV 8:
 		-> I re-did the TypeDescription list to add file types. ".extensions" can now be configured via the
 				typdescriptlist.mml
 		-> Added an "is Archivable" flag to say if the type can be in an archive.
+		
+	Work on DEV 19.7 (PR 7.6)
+		-> Merged Guillame's new MCList sort algorythm.
+		-> Added ability to set types as on/off by default in typedescriptionlist.mml
+		-> Corrected oddities found by FindBugs.
 		
 		
 (Red List)

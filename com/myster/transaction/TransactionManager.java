@@ -112,7 +112,7 @@ public class TransactionManager implements TransactionSender {
 			record.timer.cancleTimer();
 			
 			//if it's not from the right address ignore.. Anti-spoofing
-			if (transaction!=null) {if (transaction.getAddress().equals(record.address)==false) return;}
+			if (transaction!=null) {if (! transaction.getAddress().equals(record.address)) return;}
 			
 			record.listener.fireEvent(
 					new TransactionEvent(

@@ -36,16 +36,13 @@ public class FileInfoGetter extends MysterThread {
 	}
 
 	public void run() {
+		SearchResult[] searchArray=new SearchResult[vector.size()];
 		
-		{
-			SearchResult[] searchArray=new SearchResult[vector.size()];
-			
-			for (int i=0; i<searchArray.length; i++) {
-				searchArray[i]=(SearchResult)(vector.elementAt(i));
-			}
-			
-			addable.addSearchResults(searchArray);
+		for (int i=0; i<searchArray.length; i++) {
+			searchArray[i]=(SearchResult)(vector.elementAt(i));
 		}
+		
+		addable.addSearchResults(searchArray);
 		
 		if(endFlag) {
 			cleanUp();

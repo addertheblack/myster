@@ -410,7 +410,7 @@ class InternalSegmentDownloader extends MysterThread implements SegmentDownloade
 				
 				workingSegment = new WorkingSegment(workSegment);
 
-				if (doWorkBlock(socket, workingSegment)==false) return; //this is for kill signals.. there are also exceptions
+				if (! doWorkBlock(socket, workingSegment)) return; //this is for kill signals.. there are also exceptions
 				
 				workingSegment = null;
 			}

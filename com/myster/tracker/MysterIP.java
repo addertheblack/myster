@@ -84,7 +84,7 @@ class MysterIP {
 		if (ip.equals("127.0.0.1")) throw new Exception("IP is local host.");
 		MysterAddress t=new MysterAddress(ip); //to see if address is valid.
 		createNewMysterIP(ip, 1, 50, 50, 1, 1, "", null, (long)-1);
-		if (MysterIP.internalRefreshAll(this)==false) throw new Exception("Failed to created new Myster IP");
+		if (! MysterIP.internalRefreshAll(this)) throw new Exception("Failed to created new Myster IP");
 		//System.out.println("A New MysterIP Object = "+getAddress());
 	}
 	

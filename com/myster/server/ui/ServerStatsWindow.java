@@ -101,7 +101,7 @@ public class ServerStatsWindow extends MysterFrame implements Sayable {
 	//}
 	
 	private void initSelf() {
-		if (inited==true) return; //this should NEVER happen
+		if (inited) return; //this should NEVER happen
 		inited=true;
 		
 		//pack();

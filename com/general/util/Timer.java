@@ -143,7 +143,7 @@ public class Timer implements Comparable { //almost but not quite immutable.
 			
 			
 			if (timer != null) {//should never happen that timer==null;
-				if (timer.isCancelled()==false) timer.doEvent();
+				if (! timer.isCancelled()) timer.doEvent();
 			}
 		}
 	}
