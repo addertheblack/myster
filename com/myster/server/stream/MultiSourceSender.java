@@ -109,6 +109,8 @@ public class MultiSourceSender extends ServerThread {
 
 				final UploadBlock currentBlock = startNewBlock(socket, file);
 				
+				fileLength = file.length();
+				
 				if (currentBlock.isEndSignal()) { //must fix this duplicate code!!!!!! AGHHH!!
 					this.offset = this.fileLength;
 					amountDownloaded=0;
@@ -116,7 +118,6 @@ public class MultiSourceSender extends ServerThread {
 					return;
 				}
 				
-				fileLength = file.length();
 
 				try { //the first loop is special because it can be queued. Other loops do not get queued...
 					transferQueue.doDownload(new Downloader() {

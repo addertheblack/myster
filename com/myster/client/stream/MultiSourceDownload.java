@@ -485,7 +485,7 @@ class InternalSegmentDownloader extends MysterThread implements SegmentDownloade
 	
 	private boolean doWorkBlock(MysterSocket socket, WorkingSegment workingSegment) throws IOException {
 		debug("Work Thread "+getName()+" -> Reading data "+workingSegment.workSegment.startOffset+" "+workingSegment.workSegment.length);
-		
+
 		socket.out.writeLong(workingSegment.workSegment.startOffset);
 		socket.out.writeLong(workingSegment.workSegment.length);
 		
