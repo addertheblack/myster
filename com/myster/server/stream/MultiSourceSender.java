@@ -71,7 +71,7 @@ public class MultiSourceSender extends ServerThread {
 		MysterAddress remoteIP;
 		String fileName = "??";
 		MysterType type = new MysterType("????".getBytes());
-		long fileLength = 0, startTime = System.currentTimeMillis(), amountDownloaded= 0, myCounter = 0;
+		long fileLength = 0, startTime = System.currentTimeMillis(), amountDownloaded= 0, myCounter = 0, offset = 0;
 		DownloadInfo downloadInfo;
 		
 		TransferQueue transferQueue;
@@ -152,11 +152,10 @@ public class MultiSourceSender extends ServerThread {
 		}
 		
 		private UploadBlock startNewBlock(MysterSocket socket, File file) throws IOException {
-			amountDownloaded=0;
 			startTime = System.currentTimeMillis();
 		
 			UploadBlock uploadBlock = getNextBlockToSend(socket, file);
-			fileLength = uploadBlock.size;
+			fileLength = file.length();
 			return uploadBlock;
 		}
 		
@@ -166,7 +165,13 @@ public class MultiSourceSender extends ServerThread {
 			for (;;) {
 				UploadBlock currentBlock = startNewBlock(socket, file);
 				
-				if (currentBlock.isEndSignal()) break;
+				if (currentBlock.isEndSignal()) {
+					this.offset = this.fileLength;
+					System.out.println("GOT END SIGNAL: "+this.offset+" : "+this.fileLength);
+					break;
+				}
+				
+				amountDownloaded=0; //reset amount to 0.
 				
 				sendQueuePosition(socket.out, 0, "Download is starting now..");
 					
@@ -245,7 +250,7 @@ public class MultiSourceSender extends ServerThread {
 					amountDownloaded = counter ; // for stats
 				}
 			
-				myCounter += fileLength; //this is so a client cannot suck data forever.
+				myCounter += length; //this is so a client cannot suck data forever.
 			} finally {
 				if (file != null) file.close();
 			}
@@ -265,6 +270,8 @@ public class MultiSourceSender extends ServerThread {
 			//if (fileLength == -1) fileLength = file.length();
 			
 			if (myCounter > file.length()) throw new IOException("User has request more bytes than there are in the file!");
+			
+			this.offset = offset;
 			
 			return new UploadBlock(offset, fileLength);
 		
@@ -291,7 +298,7 @@ public class MultiSourceSender extends ServerThread {
 														fileName,
 														type.toString(),
 														queuePosition, 
-														amountDownloaded, 
+														offset + amountDownloaded, 
 														fileLength,
 														downloadInfo));
 		}
@@ -313,7 +320,7 @@ public class MultiSourceSender extends ServerThread {
 			}
 			
 			public long getAmountDownloaded() {
-				return amountDownloaded;
+				return offset + amountDownloaded;
 			}
 			
 			public String getFileName() {
