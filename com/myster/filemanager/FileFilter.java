@@ -13,6 +13,7 @@ class FileFilter {
 	private static final int MACS=4;
 	private static final int WINT=5;
 	private static final int ROMS=6;
+	private static final int RING=7;
 	
 	private static String[][] fileextensions=new String[][]{
 		new String[]{
@@ -43,6 +44,9 @@ class FileFilter {
 		},
 		new String[]{
                         ".rom",".smc",".n64",".v64",".gba",".gb",".mod",".nes",".dsk"
+		},
+		new String[]{
+                        ".csx", ".gsm", ".qcp", ".jmp", ".mid", ".midi", ".mmd"
 		}
 	};
 	
