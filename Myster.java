@@ -84,7 +84,7 @@ public class Myster{
 
 
 		
-		
+
 		
 		com.myster.menubar.MysterMenuBar.addMenuItem(new com.myster.menubar.MysterMenuItemFactory("Instant Message...", new java.awt.event.ActionListener() {
 			public void actionPerformed(java.awt.event.ActionEvent e) {
@@ -92,6 +92,7 @@ public class Myster{
 				window.setVisible(true);
 			}
 		}));
+
 		
 		//if (true==true) return ;
 		
@@ -104,8 +105,7 @@ public class Myster{
 		System.out.println( "MAIN THREAD: Starting loader Thread.." );
 		(new Thread() {
 			public void run() {
-				//if (true) return;
-				try {Thread.currentThread().sleep(1000);} catch (Exception ex) {}
+				try {Thread.currentThread().sleep(500);} catch (Exception ex) {}
 				
 				String macHack="";//(System.getProperty("java.vm.vendor")==null?" (unknown 1.1 java)":System.getProperty("java.vm.vendor"));
 				com.myster.util.ProgressWindow progress=new com.myster.util.ProgressWindow();
@@ -131,7 +131,7 @@ public class Myster{
 				
 				//System.out.println( "MAIN THREAD: Starting Operator.."+macHack);
 				Point p=ServerStatsWindow.getInstance().getLocation();
-				ServerStatsWindow.getInstance().setLocation(-1111,-1111);
+				ServerStatsWindow.getInstance().setLocation(-500,-500);
 				ServerStatsWindow.getInstance().setVisible(true);
 				progress.say(Myster.tr("Loading Server Stats Window....")+macHack);
 				progress.update(18);
@@ -312,18 +312,20 @@ public class Myster{
 		if (file.exists()) {
 			file.delete();
 		}
+		System.out.println("Byeeeee.");
 		System.exit(0);
 	}
 
 	public static final String tr(String text) {
-		if (true==true) return text;
-		
+		return text;
+		/*
+
 		try {
 			return resources.getString(text);
 		} catch (MissingResourceException ex) {
 			//System.err.println("missing translation key: \"" + text + "\"");
 			//ex.printStackTrace();
 			return text;
-		}
+		}*/
 	}
 }

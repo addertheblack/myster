@@ -88,6 +88,16 @@ public class MessageWindow extends MysterFrame {
 				if (address != null) messageArea.focusBaby();
 			}
 		});
+		
+		addWindowListener(new WindowAdapter() {
+			public void windowClosing(WindowEvent e) {
+				setVisible(false);
+			}
+			
+			public void windowClosed(WindowEvent e) {
+				dispose();
+			}
+		});
 	}
 	
 	public boolean hasReply() {

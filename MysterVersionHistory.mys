@@ -781,6 +781,7 @@ Work on DEV 8:
    Work on DEV 16.2
      2002/12/19
      	-> Removed an extra thread for server stats.. Replaced with a timer..
+     	-> Made some minor changes/bug fixes for chat.
      	-> Made a bandwidth throttling system that worked
      	-> made bandwidth throttling system work with prefs
      	-> made bandwidth prefs pane UI
@@ -796,7 +797,6 @@ Work on DEV 8:
      	-> Fixed a bug in my new MML parser implementation (<></> error).
      			It was dicovered when I was working on the chat plugin.
      	-> Started work on changing the chat plugin architecture into something less crap.
-     	
     Work on DEV 17
       2003/02/22
      	-> Made it so that clicking an entry in the download stats (server stats) makes a connect window pop up
@@ -808,6 +808,8 @@ Work on DEV 8:
      			with it. This might take a while. Wondering if I should release chat as is and fix it later. :-)
      	-> Finished instant messaging. Is good enough for a release.
      	-> Added a button to the Server Stats so people who are downloading form you cna be messaged.
-     	
-     			
-	  	
+    Work on DEV 18
+      2003/03/23
+      	-> Fixed some minor bugs in the Instant Messaging GUI.
+      	-> MacOS X tweaking...
+      	-> Fixed a window manager bug to do with resize/move events being sent when the window is not visible...

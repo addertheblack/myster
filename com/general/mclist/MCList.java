@@ -14,6 +14,8 @@ import java.awt.*;
 import java.awt.event.*;
 import java.util.Vector;
 
+import java.awt.image.BufferedImage;//testing
+
 public class MCList extends Panel {
 	private Image im;
 	
@@ -144,11 +146,12 @@ public class MCList extends Panel {
 		paint(g);
 	}
     
+    
     private void updatey(Graphics g) {	//done.
 		if (pane.getViewportSize().height-header.getHeight()<0) return;
        	if (previousimagex!=pane.getViewportSize().width||	//makes sure the image buffer is up to date!
        			previousimagey!=pane.getViewportSize().height){
-       		im=createImage(pane.getViewportSize().width, pane.getViewportSize().height-header.getHeight());
+       		im=createImage(pane.getViewportSize().width, pane.getViewportSize().height-header.getHeight());//new BufferedImage(pane.getViewportSize().width,pane.getViewportSize().height-header.getHeight(),BufferedImage.TYPE_INT_BGR);//
        		previousimagex=pane.getViewportSize().width;
        		previousimagey=pane.getViewportSize().height;
        	}
@@ -156,6 +159,19 @@ public class MCList extends Panel {
        	g.setClip(pane.getScrollPosition().x, pane.getScrollPosition().y ,pane.getViewportSize().width,pane.getViewportSize().height);
        	g.drawImage(im, pane.getScrollPosition().x , pane.getScrollPosition().y+header.getHeight(), this);
     }
+    
+   // private void updatey(Graphics g) {	//not double buffered.
+		//if (pane.getViewportSize().height-header.getHeight()<0) return;
+       //	if (previousimagex!=pane.getViewportSize().width||	//makes sure the image buffer is up to date!
+       	//		previousimagey!=pane.getViewportSize().height){
+       //		im=createImage(pane.getViewportSize().width, pane.getViewportSize().height-header.getHeight());
+       //		previousimagex=pane.getViewportSize().width;
+       //		previousimagey=pane.getViewportSize().height;
+     //  	}
+    //   	paint(g, pane.getScrollPosition().x, pane.getScrollPosition().x+pane.getViewportSize().width ,pane.getScrollPosition().y, pane.getScrollPosition().y+pane.getViewportSize().height);
+       	//g.setClip(pane.getScrollPosition().x, pane.getScrollPosition().y ,pane.getViewportSize().width,pane.getViewportSize().height);
+       	//g.drawImage(im, pane.getScrollPosition().x , pane.getScrollPosition().y+header.getHeight(), this);
+    //}
 
 	
 	public void paint(Graphics g) {		//done.
@@ -166,8 +182,10 @@ public class MCList extends Panel {
 	}	
 	
 	public void paint(Graphics g, int x1, int x2, int y1, int y2) { //uppper and lower bounds to draw
+		//if (true==true) return ;
 		g.setColor(getBackground());
 		g.fillRect(0,0,im.getWidth(this),im.getHeight(this));
+		//g.fillRect(0,0,y2-y1,x2-x1);
 		if (list.size()==0) return;
 		y1+=header.getHeight(); //why bother over drawing like this?
 		int c1=getClicked(1, y1);

@@ -30,7 +30,7 @@ public class FileListAction implements ActionListener {
 	
 	public void actionPerformed(ActionEvent a) {
 		try {
-			if (System.currentTimeMillis()-timeOfLast<20) return;
+			if (System.currentTimeMillis()-timeOfLast<100) return;
 			timeOfLast=System.currentTimeMillis();
 			(new DownloaderThread(new MysterFileStub(new MysterAddress(w.getCurrentIP()), w.getCurrentType(), a.getActionCommand()))).start();
 		} catch (UnknownHostException ex) {

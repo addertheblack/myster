@@ -48,11 +48,11 @@ public class WindowLocationKeeper {
 		
 		frame.addComponentListener(new ComponentListener() {
 			public void componentResized(ComponentEvent e) {
-				saveLocation(((Component)(e.getSource())), privateID);
+				if (((Component)(e.getSource())).isVisible()) saveLocation(((Component)(e.getSource())), privateID);
 			}
 
 			public void componentMoved(ComponentEvent e) {
-				saveLocation(((Component)(e.getSource())), privateID);
+				if (((Component)(e.getSource())).isVisible()) saveLocation(((Component)(e.getSource())), privateID);
 			}
 
 			public void componentShown(ComponentEvent e) {

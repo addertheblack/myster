@@ -74,7 +74,7 @@ public class WindowManager {
 		
 		menuItems=new Vector();
 		
-		menuItems.addElement(new MysterMenuItemFactory("Cycle Windows", (ActionListener)(new CycleWindowsHandler()), KeyEvent.VK_1));
+		menuItems.addElement(new MysterMenuItemFactory("Cycle Windows", (ActionListener)(new CycleWindowsHandler()), KeyEvent.VK_Z));
 		menuItems.addElement(new MysterMenuItemFactory("Stack Windows", (ActionListener)(new StackWindowsHandler())));
 		
 		finalMenu=new Vector();

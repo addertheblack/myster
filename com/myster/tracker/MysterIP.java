@@ -180,7 +180,7 @@ class MysterIP {
 				(double)Math.log(HITSCONSTANT+1)*numberofhits+ 									//not used
 				(double)UPVSDOWNCONSTANT*((double)timeup/(double)(timeup+timedown))+			//up vs down
 				(double)(STATUSCONSTANT*(upordown ? 4 : 0)))+									//up or down
-				(lastPingTime==-1||lastPingTime==-2?(0.1-(double)20000/2500):(0.1-(double)lastPingTime/2500)); 	//ping
+				(lastPingTime==-2?(0.1-(double)20000/2500):(lastPingTime==-1?(0.1-(double)5000/2500):(0.1-(double)lastPingTime/2500))); 	//ping
 		}
 		
 		public String getServerIdentity() {

@@ -129,7 +129,7 @@ public class MysterFrame extends Frame {
 	}
 	
 	public void close() {
-		processWindowEvent(new WindowEvent(this,WindowEvent.WINDOW_CLOSING));
-		setVisible(true);
+		closeWindowEvent();
+		setVisible(false);
 	}
 }
