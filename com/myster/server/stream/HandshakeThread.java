@@ -34,9 +34,7 @@ public class HandshakeThread extends ServerThread {
 		
 		String temp=""+getMMLToSend(b);
 		
-		DataOutputStream out=new DataOutputStream(context.socket.getOutputStream());
-		out.writeUTF(temp);
-		//System.out.println(temp);
+		context.socket.out.writeUTF(temp);
 	}
 
 	private MML getMMLToSend(byte[] b) {

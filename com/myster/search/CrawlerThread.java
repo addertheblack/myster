@@ -26,28 +26,24 @@ import com.myster.net.MysterAddress;
 import com.myster.type.MysterType;
 
 public class CrawlerThread extends MysterThread {
-	MysterAddress currentIp;
-	String searchString;
 	MysterType searchType;
 	IPQueue ipQueue;
-	SearchResultListener bucket;
-	Sayable msg;
-	Vector filestatsvector;
+	MysterSearchClientSection searcher;
 	GroupInt group;
 	MysterSocket socket;
+	Sayable msg;
 	
 	boolean endFlag=false;
 
 	public final int DEPTH=20;
 
-	public CrawlerThread(String searchString, MysterType type, SearchResultListener bucket, IPQueue iplist, Sayable msg, GroupInt i) {
+	public CrawlerThread(MysterSearchClientSection searcher, MysterType type, IPQueue iplist,Sayable msg, GroupInt i) {
 		this.ipQueue=iplist;
-		this.searchString=searchString;
 		this.searchType=type;
-		this.bucket=bucket;
 		this.msg=msg;
-		filestatsvector=new Vector(10,10);
-		group=i;
+		this.searcher=searcher;
+		
+		group=(i==null?new GroupInt():i); //MASSIVE CHEAT! Fix this.
 	}
 	
 	/** The thread does a top ten then searchs.. It only does a top ten on the first few IPs, so we don't
@@ -57,12 +53,12 @@ public class CrawlerThread extends MysterThread {
 	
 	public void run() {
 		int counter=0;
-		
+
 		for (MysterAddress currentIp=ipQueue.getNextIP(); currentIp!=null||counter==0; currentIp=ipQueue.getNextIP()) {
 			try {
 				counter++;
 				if (currentIp==null) {
-					try {
+					try {System.out.println("!CRAWLER THREAD FIRST LINE WOOOOO");
 						sleep(10*1000); //wait 10 seconds for more ips to come in.
 						continue;
 					} catch (InterruptedException ex) {
@@ -107,27 +103,7 @@ public class CrawlerThread extends MysterThread {
 					return;
 				}
 				
-				Vector searchResults=StandardSuite.getSearch(socket, searchType, searchString);
-
-				if (endFlag) {
-					cleanUp();
-					return;
-				}
-
-				if (searchResults.size()!=0) {
-					msg.say("Results found....");
-					
-					FileInfoGetter getter=new FileInfoGetter(socket, bucket,currentIp, searchType, searchResults);
-					
-					filestatsvector.addElement(getter);
-					
-					if (endFlag) {
-						cleanUp();
-						return;
-					}
-					
-					getter.start();
-				}
+				searcher.search(socket, currentIp);
 				
 				msg.say("Searched "+ipQueue.getIndexNumber()+" Myster servers.");
 				//don't close the connection... It's being used by the getting thread...
@@ -161,8 +137,6 @@ public class CrawlerThread extends MysterThread {
 	public void end() {
 		flagToEnd();
 		
-		endOthers();
-		
 		try {
 			join();
 		} catch (InterruptedException ex) {}
@@ -170,10 +144,7 @@ public class CrawlerThread extends MysterThread {
 	
 	public void flagToEnd() {
 		endFlag=true;
-		for (int i=0; i<filestatsvector.size(); i++) {
-			((FileInfoGetter)(filestatsvector.elementAt(i))).flagToEnd();	//tells all the threads to cancel
-		}
-		
+
 		
 		try {
 			socket.close();
@@ -181,13 +152,5 @@ public class CrawlerThread extends MysterThread {
 			System.out.println("Crawler thread was not happy about being asked to close.");
 		}
 		
-	}
-	
-	private void endOthers() {
-		for (int i=0; i<filestatsvector.size(); i++) {
-			try {
-				((FileInfoGetter)(filestatsvector.elementAt(i))).end();
-			} catch (Exception ex) {}
-		}
 	}
 }

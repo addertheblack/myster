@@ -85,6 +85,7 @@ public class ServerFacade {
 		opp.addConnectionSection(new com.myster.server.stream.HandshakeThread());
 		opp.addConnectionSection(new com.myster.server.stream.FileInfoLister());
 		opp.addConnectionSection(new com.myster.server.stream.FileByHash());
+		opp.addConnectionSection(new com.myster.server.stream.MultiSourceSender());
 	}
 	
 	private static class PrefPanel extends PreferencesPanel {

@@ -5,29 +5,36 @@
 
 package com.myster.server.event;
 
+import com.myster.server.DownloadInfo;
+
 public class ServerDownloadEvent extends ServerEvent {
+	public final static int SECTION_STARTED=-1;
 	public final static int STARTED=0;
 	public final static int BLOCKSENT=1;
 	public final static int FINISHED=2;
 	public final static int QUEUED=3;
+	public final static int SECTION_FINISHED=4;
 	
 	String type;
 	String filename;
-	int d;
+	int d; // cryptic one letter naming! Did I do this on purpose? Me: zuh.
 	long filesofar;
 	long filelength;
+	DownloadInfo downloadInfo;
 
 
 	//if id is 3 (QUEUED) the 'i' argument is queue position.
 	public ServerDownloadEvent(int id, String s, int section,
 							 String filename, String type, 
-							 int i, long filesofar, long filelength) {
+							 int i, long filesofar, long filelength, 
+							 DownloadInfo downloadInfo) {
 		super(id, s, section);
 		this.type=type;
 		this.filename=filename;
 		this.d=i;
 		this.filesofar=filesofar;
-		this.filelength=filelength;	 
+		this.filelength=filelength;	
+		this.downloadInfo=downloadInfo;
 	}
 
 	public int getBlockType() {
@@ -52,5 +59,9 @@ public class ServerDownloadEvent extends ServerEvent {
 	
 	public long getFileLength() {
 		return filelength;
+	}
+	
+	public DownloadInfo getDownloadInfo() {
+		return downloadInfo;
 	}
 }

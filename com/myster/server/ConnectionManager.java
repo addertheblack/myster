@@ -42,6 +42,7 @@ public class ConnectionManager extends MysterThread {
 	private ConnectionContext context;
 	
 	private static volatile int threadCounter=0;
+	private static volatile int waitingThreads = 0;
 	
 	public ConnectionManager(BlockingQueue q, ServerEventManager eventSender, DownloadQueue downloadQueue, Hashtable connectionSections) {
 		super("Server Thread "+(++threadCounter));
@@ -65,7 +66,11 @@ public class ConnectionManager extends MysterThread {
 	
 	private void doConnection() {
 		try {
+			++waitingThreads;
+			System.out.println("Wating Threads in server "+waitingThreads);
 			socket=(Socket)(socketQueue.get());
+			--waitingThreads;
+			System.out.println("Wating Threads in server "+waitingThreads);
 		} catch (InterruptedException ex) {
 			//should never happen
 			return;//exit quickly in case it's being called by System.exit();

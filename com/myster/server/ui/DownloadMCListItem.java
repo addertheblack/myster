@@ -21,6 +21,7 @@ public class DownloadMCListItem extends MCListItemInterface {
 	String user="??";
 	int status=LIMBO;
 	int queuePosition=0;
+	boolean endFlag;
 	
 	public final static int LIMBO=0;
 	public final static int QUEUED=1;
@@ -33,12 +34,16 @@ public class DownloadMCListItem extends MCListItemInterface {
 
 	public DownloadMCListItem(ServerDownloadDispatcher d) {
 		dispatcher=d;
-		info=d.getDownloadInfo();
 		d.addServerDownloadListener(new DownloadEventHandler());
 	}
 	
 	public Object getObject() {
 		return dispatcher;
+	}
+	
+	public synchronized void disconnectClient() {
+		endFlag = true;
+		if (info == null) info.disconnectClient();
 	}
 	
 	public synchronized  Sortable getValueOfColumn(int i) {
@@ -57,6 +62,21 @@ public class DownloadMCListItem extends MCListItemInterface {
 				default :
 					return new SortableString("Error");
 			}
+		} else if (info==null) {
+			switch (i) {
+				case 0:
+					return new SortableString(user);
+				case 1:
+					return new SortableString("?");
+				case 2:
+					return new SortableByte(0);
+				case 3:
+					return new SortableRate(0);
+				case 4:
+					return new SortableByte(0);
+				default :
+					return new SortableString("Error");
+			}		
 		} else {
 			switch (i) {
 				case 0:
@@ -122,8 +142,18 @@ public class DownloadMCListItem extends MCListItemInterface {
 	}
 	
 	private class DownloadEventHandler extends ServerDownloadListener {
-		public void downloadFinished(ServerDownloadEvent e) {
+		public void downloadSectionFinished(ServerDownloadEvent e) {
 			done();
+		}
+		
+		public void downloadSectionStarted(ServerDownloadEvent e) {
+			synchronized (DownloadMCListItem.this) {
+				info = e.getDownloadInfo();
+				if (endFlag) {
+					info.disconnectClient();
+				}
+				System.out.println("Here and "+info);
+			}		
 		}
 		
 		public void downloadStarted(ServerDownloadEvent e) {
@@ -140,6 +170,7 @@ public class DownloadMCListItem extends MCListItemInterface {
 		public static final int DONE=-1000001;
 		public static final int ABORTED=-1000002;
 		public static final int UNKNOWN=-1000000;
+		public static final int NOT_ENOUGH_DATA=-999999;
 		public static final int WAITING=0;
 		public SortableRate(long i) {
 			super(i);
@@ -149,6 +180,7 @@ public class DownloadMCListItem extends MCListItemInterface {
 			if (number==DONE) return "Done";
 			else if (number==ABORTED) return "Aborted";
 			else if (number==UNKNOWN) return "Negotiating";
+			else if (number==NOT_ENOUGH_DATA) return "-";
 			else if (number==0) return "Starting";
 			else if (number<0) return (-number)+" in queue";
 			else return ""+(Util.getStringFromBytes(number))+"/s";

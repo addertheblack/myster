@@ -852,7 +852,7 @@ Work on DEV 8:
 	  	-> Created a PC plugin to over-ride web browser launching on the pc
 	  	-> Added ability to over ride web browsing to the MacOS X plugin.
 	  	-> Did the client side code to make this work. Clickable banners now work on PC and MacOS X.
-	  2003/03/20
+	  2003/05/20
 	  	-> Fixed the HashCache so that it uses a save system similar to the prefs.
 	  	-> Made it so Transaction library retries a few times if it doesn't recieve a reply initially...
 	  	-> Added an event system to the hash manage to deal with enable / disable
@@ -863,4 +863,6 @@ Work on DEV 8:
 	  	-> Finished up the HashManagerGUI
 	  	-> Added ability to turn off and on Myster types. Porn is off by default ...
 	  	-> Made behavior consistant with itself
+	  2003/06/20
+	  	-> Worked on getFileByHash
 	  	

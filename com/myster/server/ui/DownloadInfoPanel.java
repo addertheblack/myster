@@ -25,6 +25,7 @@ import com.general.util.Timer;
 import com.myster.message.MessageWindow;
 
 
+
 public class DownloadInfoPanel extends Panel {
 	MCList list;
 	Button disconnect, browse, clearAll,message;
@@ -142,8 +143,8 @@ public class DownloadInfoPanel extends Panel {
 	private class ConnectionHandler implements ConnectionManagerListener {
 
 		public void sectionEventConnect(ConnectionManagerEvent e) {
-			if (e.getSection()==FileSenderThread.NUMBER) {
-				ServerDownloadDispatcher d=((FileSenderThread.ServerTransfer)(e.getSectionObject())).getDispatcher();
+			if ((e.getSection()==FileSenderThread.NUMBER) || (e.getSection()==com.myster.server.stream.MultiSourceSender.SECTION_NUMBER)){
+				ServerDownloadDispatcher d=(ServerDownloadDispatcher)e.getSectionObject();
 				DownloadMCListItem i=new DownloadMCListItem(d);
 				list.addItem(i);
 				i.setUser(e.getIP());
@@ -161,7 +162,7 @@ public class DownloadInfoPanel extends Panel {
 		public void disconnectSelected() {
 			int[] array=list.getSelectedIndexes();
 			for (int i=0; i<array.length; i++) {
-				((ServerDownloadDispatcher)(list.getItem(array[i]))).getDownloadInfo().disconnectClient(); //isn't this a great line or what?
+				((DownloadMCListItem)(list.getMCListItem(array[i]))).disconnectClient(); //isn't this a great line or what?
 			}
 		}
 		

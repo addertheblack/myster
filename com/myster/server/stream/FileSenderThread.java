@@ -45,12 +45,12 @@ public class FileSenderThread extends ServerThread {
 		return NUMBER;
 	}
 	
-	public Object getSectionObject() {
-		return new ServerTransfer(FileTypeListManager.getInstance());
+	public Object getSectionObject() { //session objects are sent to events
+		return new ServerDownloadDispatcher();
 	}
 	
 	public void section(ConnectionContext context) throws IOException {
-		ServerTransfer transfer=(ServerTransfer)(context.sectionObject);
+		ServerTransfer transfer = new ServerTransfer(FileTypeListManager.getInstance(), (ServerDownloadDispatcher)(context.sectionObject));
 		
 		try {
 			transfer.init(context.socket);
@@ -79,6 +79,8 @@ public class FileSenderThread extends ServerThread {
 		} catch (IOException ex) {
 			transfer.cleanUp(); //does usefull things like fires an event to say download is dead.
 			throw ex;
+		} finally {
+			transfer.endBlock();
 		}
 	}
 	
@@ -132,7 +134,8 @@ public class FileSenderThread extends ServerThread {
 	
 	public static class ServerTransfer {
 		//Events
-		ServerDownloadDispatcher dispatcher=new ServerDownloadDispatcher(new Stats());
+		ServerDownloadDispatcher dispatcher;
+		DownloadInfo downloadInfo;
 		
 		//Server stats
 		long bytessent=0;
@@ -163,9 +166,16 @@ public class FileSenderThread extends ServerThread {
 		private static final int BUFFERSIZE=8192;
 		private static final int BURSTSIZE=512*1024;	
 			
-		public ServerTransfer (FileTypeListManager t) {
-			typelist=t;
+		public ServerTransfer (FileTypeListManager typelist, ServerDownloadDispatcher dispatcher) {
+			this.typelist	= typelist;
+			this.dispatcher	= dispatcher;
+			this.downloadInfo = new Stats();
+			
 			starttime=System.currentTimeMillis();
+			
+			System.out.println("==============="+downloadInfo);
+			
+			fireEvent(ServerDownloadEvent.SECTION_STARTED,0);
 		}
 		
 		public ServerDownloadDispatcher getDispatcher() {
@@ -232,6 +242,8 @@ public class FileSenderThread extends ServerThread {
 			} catch (RuntimeException ex) {
 				ex.printStackTrace();
 				throw ex;
+			} finally {
+				fireEvent(ServerDownloadEvent.FINISHED, (char)-1);
 			}
 		}
 	
@@ -319,7 +331,6 @@ public class FileSenderThread extends ServerThread {
 		private boolean duplicate=false;
 		private void cleanUp() {
 			if (duplicate) return;
-			fireEvent(ServerDownloadEvent.FINISHED, (char)-1);
 			sem.signal();
 			duplicate=true; //just so this is not called twice.
 			endflag=true;
@@ -492,8 +503,21 @@ public class FileSenderThread extends ServerThread {
 			cleanUp();
 		}
 		
+		public void endBlock() {
+			fireEvent(ServerDownloadEvent.SECTION_FINISHED, (char)-1);
+			endflag=true;
+		}
+		
 		private void fireEvent(int id, int c) {
-			dispatcher.fireEvent(new ServerDownloadEvent(id, remoteIP, NUMBER,filename, filetype, c, bytessent-initialOffset, filelength));
+			dispatcher.fireEvent(new ServerDownloadEvent(id, 
+														remoteIP,
+														NUMBER,
+														filename,
+														filetype,
+														c, 
+														bytessent-initialOffset, 
+														filelength,
+														downloadInfo));
 		}
 
 	

@@ -309,7 +309,7 @@ public class Preferences {
 	private class SaveThread extends MysterThread {
 		private Semaphore sem=new Semaphore(0); 
 		private volatile boolean needsSave=false; //is assumed opperations are synchronized.
-		private static final long SAVETIME=5*1000; //1000 == 1 sec.
+		private static final long SAVETIME=10*1000; //1000 == 1 sec.
 		
 		public void run() {
 			setPriority(Thread.MIN_PRIORITY);

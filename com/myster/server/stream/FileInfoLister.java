@@ -59,7 +59,7 @@ public class FileInfoLister extends ServerThread {
 		patchFunction2(mml, FileTypeListManager.getInstance().getFile(new MysterType(b),filename), b);
 		
 		out.writeUTF(mml.toString());
-		System.out.println(mml.toString());
+		//System.out.println(mml.toString());
 	}
 	
 

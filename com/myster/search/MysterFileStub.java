@@ -37,9 +37,12 @@ public class MysterFileStub {
 		return ip;
 	}
 	
-	
 	public MysterType getType() {
 		return type;
+	}
+	
+	public String toString() {
+		return ip + " -> " + type + " -> "+name;
 	}
 }
 

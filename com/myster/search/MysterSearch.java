@@ -33,23 +33,25 @@ import com.myster.type.MysterType;
 
 
 public class MysterSearch extends MysterThread {
-	SearchResultListener addable;
 	Sayable msg;
-	MysterType type;
-	String search;
 	CrawlerThread t[];
+	MysterType type;
+	
+	StandardMysterSearch searcher;
 
 
-	public MysterSearch(SearchResultListener addable, Sayable msg, MysterType type, String searchString) {
-		this.addable=addable;
+	public MysterSearch(SearchResultListener listener, Sayable msg, MysterType type, String searchString) {
 		this.msg=msg;
-		this.type=type;
-		this.search=searchString;
+		this.searcher = new StandardMysterSearch(searchString, type, listener);
+		this.type = type;
+		
 		t=new CrawlerThread[15];
 	}
 	
 	public void run() {
 		msg.say("SEARCH: Starting Search..");
+		
+		searcher.start();
 		
 		MysterServer[] iparray=IPListManagerSingleton.getIPListManager().getTop(type,50);
 		
@@ -78,7 +80,7 @@ public class MysterSearch extends MysterThread {
 		
 		
 		for (i=0; i<t.length; i++) {
-			t[i]=new CrawlerThread(search,type , addable, queue, msg,group);
+			t[i]=new CrawlerThread(searcher,type ,  queue, msg,group);
 			group.addOne();
 			t[i].start();
 			msg.say("Starting a new Search Thread...");
@@ -87,10 +89,12 @@ public class MysterSearch extends MysterThread {
 		
 		msg.say("Launched "+i+" search threads");
 		System.out.println("Launched "+i+" search threads");	
-			
+		
 		for (int index=0; index<t.length; index++) {
 			try {t[index].join();} catch (InterruptedException ex) {}	// slow: change someday.
 		}
+		
+		searcher.done();
 	}
 	
 	public void flagToEnd() {
@@ -98,15 +102,19 @@ public class MysterSearch extends MysterThread {
 			try {t[i].flagToEnd();} catch (Exception ex) {}	// slow: change someday.
 		}
 		
+		searcher.flagToEnd();
+		
 	}
 	
 	public void end() {
-		msg.say("Stopping previous earch threads (if any)..");
+		msg.say("Stopping previous search threads (if any)..");
 		//Stops all previous threads
 		flagToEnd();
 		try {
 			join();
 		} catch (Exception ex) {}
+		
+		searcher.end();
 	}
 	
 	

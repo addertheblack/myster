@@ -198,9 +198,9 @@ public class StatsInfoPanel extends Panel{
 				numsearch.increment();
 				searches.addSearch(e.getTimeStamp());
 				((ServerSearchDispatcher)(e.getSectionObject())).addServerSearchListener(new SearchHandler());
-			} else if (e.getSection()==FileSenderThread.NUMBER) {
+			} else if ((e.getSection()==FileSenderThread.NUMBER) || (e.getSection()==com.myster.server.stream.MultiSourceSender.SECTION_NUMBER)) {
 				numofld.increment();
-				((FileSenderThread.ServerTransfer)(e.getSectionObject())).getDispatcher().addServerDownloadListener(new DownloadHandler());
+				((ServerDownloadDispatcher)(e.getSectionObject())).addServerDownloadListener(new DownloadHandler());
 			} else if (e.getSection()==IPLister.NUMBER) {
 				numofTT.increment();
 			} else if (e.getSection()==HandshakeThread.NUMBER) {
@@ -260,8 +260,6 @@ public class StatsInfoPanel extends Panel{
 	}
 	
 	private class DownloadHandler extends ServerDownloadListener {
-		public void downloadStarted(ServerDownloadEvent e) {}
-		public void blockSent(ServerDownloadEvent e) {}
 		public void downloadFinished(ServerDownloadEvent e) {
 			transfered.setValue(transfered.getValue()+e.dataSoFar());
 		}

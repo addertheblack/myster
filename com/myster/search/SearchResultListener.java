@@ -33,6 +33,10 @@ public interface SearchResultListener {
 	*	The addable interface should use repaint() to tell the list to
 	*	update following a change to one of its items. Think of it
 	* 	as a sort of refresh.
+	*
+	*	This routine has no guarentee of being called.
+	*
+	*	There is no gurentee of there being any meta-data before this routine is called.
 	*/
 	public void searchStats(SearchResult s);
 	

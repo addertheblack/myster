@@ -7,8 +7,6 @@ public class BlockingQueue {
 	Semaphore sem=new Semaphore(0);
 	private boolean rejectDuplicates=false;
 	
-	public BlockingQueue() {}
-	
 	/**
 	* 	This routine adds an object to the work queue. It does not block.
 	*/

@@ -71,8 +71,6 @@ public class ProgressWindow extends Frame {
 		getProgressPanel(bar).setAdditionalText(newText);
 	}
     
-    public void setQueue(int i) {}
-    
     public void setProgressBarNumber(int numberOfBars) {
     	if (numberOfBars<1) return; //yeah ha ha, less than 1, funny guy
     	if (numberOfBars>50) return; //more than 50 is rediculous for this implementation

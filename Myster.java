@@ -74,7 +74,6 @@ public class Myster{
 
 		//if (true==true) return;
 		
-		
 		start();
 		
 		
@@ -120,7 +119,7 @@ public class Myster{
 				ServerStatsWindow.getInstance().setVisible(true);
 				progress.setText(I18n.tr("Loading Server Stats Window... %1%%", ""+18)+macHack);
 				progress.setValue(18);
-				try {Thread.currentThread().sleep(1000);} catch (Exception ex) {}
+				//try {Thread.currentThread().sleep(1000);} catch (Exception ex) {}
 				ServerStatsWindow.getInstance().setVisible(false);
 				ServerStatsWindow.getInstance().setLocation(p);
 				
@@ -175,7 +174,16 @@ public class Myster{
 					//SearchWindow sw=new SearchWindow();
 					//sw.say(I18n.tr("Idle.."));
 				}
-		
+				
+				/*
+				System.out.println("Hello????");
+				try {
+					System.out.println("-------------->"+com.myster.client.stream.StandardSuite.getFileFromHash(new MysterAddress("127.0.0.1"), new com.myster.type.MysterType((new String("MPG3")).getBytes()), FileTypeListManager.getInstance().getFileItem(new com.myster.type.MysterType((new String("MPG3")).getBytes()), "moo.mp3").getHash("md5")));
+				} catch (Exception ex) {
+					ex.printStackTrace();
+				}
+				System.out.println("Hello????     ....");
+				*/
 			}
 		}).start();
 	}
@@ -300,11 +308,11 @@ public class Myster{
 	*		 when quitting!).
 	*/
 	public static void quit() {
-		Preferences.getInstance().flush(); //flushes prefs to disk.
-		File file =new File(fileLockName);
-		if (file.exists()) {
-			file.delete();
-		}
+		//Preferences.getInstance().flush(); //flushes prefs to disk.
+		//File file =new File(fileLockName);
+		//if (file.exists()) {
+		//	file.delete();
+		//}
 		System.out.println("Byeeeee.");
 		System.exit(0);
 	}

@@ -101,5 +101,15 @@ public class Util { //This code was taken from an Apple Sample Code package,
 		return buffer;
 	}
 
-	
+	public static byte[] fromHexString(String hash) throws NumberFormatException {
+		if ((hash.length() % 2) != 0) throw new NumberFormatException("Even number of byte pairs");
+		
+		byte[] bytes = new byte[hash.length()/2];
+		
+		for (int i = 0; i < hash.length(); i+=2) {
+				bytes[i/2] = (byte)(Short.parseShort(hash.substring(i,i+2), 16)); //hopefully the compiler will convert "/2" into >> 1
+		}
+		
+		return bytes;
+	}
 }
