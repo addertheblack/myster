@@ -46,6 +46,8 @@ import java.util.Locale;
 
 import com.myster.transaction.*; //test
 
+import com.myster.util.I18n;
+
 
 public class Myster{
 
@@ -68,27 +70,11 @@ public class Myster{
 		
 		
 		
-		//Locale.setDefault(new Locale(Locale.JAPANESE.getLanguage(),Locale.JAPAN.getCountry()));
-		/*
-		try {
-			resources = ResourceBundle.getBundle("com.properties.Myster");
-		}
-		catch (MissingResourceException e) {
-			System.err.println("resources not found");
-			//System.exit(1);
-		}*/
+		I18n.init();
 		
 
 
 		//if (true==true) return;
-
-
-		
-
-
-
-		
-		//if (true==true) return ;
 		
 
 		start();
@@ -105,10 +91,10 @@ public class Myster{
 				com.myster.util.ProgressWindow progress=new com.myster.util.ProgressWindow();
 				progress.setVisible(true);
 				progress.setLocation(100,100);
-				progress.setTitle(Myster.tr("Loading Myster..."));
+				progress.setTitle(I18n.tr("Loading Myster..."));
 				
 				
-				progress.setText(Myster.tr("Loading UDP Operator...")+macHack);
+				progress.setText(I18n.tr("Loading UDP Operator...")+macHack);
 				progress.setValue(10);
 				try { //this stuff is a bit of a hack.. to be fixed later..
 					PongTransport ponger=new PongTransport();UDPPingClient.setPonger(ponger);
@@ -120,42 +106,42 @@ public class Myster{
 					com.general.util.AnswerDialog.simpleAlert("Myster's UDP sub-system could not initialize. This means Myster will probably not work correctly. Here is the official error:\n\n"+ex);
 				}
 				
-				progress.setText(Myster.tr("Loading Server Stats Window...")+macHack);
+				progress.setText(I18n.tr("Loading Server Stats Window...")+macHack);
 				progress.setValue(15);
 				
 				//System.out.println( "MAIN THREAD: Starting Operator.."+macHack);
 				Point p=ServerStatsWindow.getInstance().getLocation();
 				ServerStatsWindow.getInstance().setLocation(-500,-500);
 				ServerStatsWindow.getInstance().setVisible(true);
-				progress.setText(Myster.tr("Loading Server Stats Window....")+macHack);
+				progress.setText(I18n.tr("Loading Server Stats Window...")+"."+macHack);
 				progress.setValue(18);
 				try {Thread.currentThread().sleep(1000);} catch (Exception ex) {}
 				ServerStatsWindow.getInstance().setVisible(false);
 				ServerStatsWindow.getInstance().setLocation(p);
 				
-				progress.setText(Myster.tr("Loading Server Fascade...")+macHack);
+				progress.setText(I18n.tr("Loading Server Fascade...")+macHack);
 				progress.setValue(25);
 				ServerFacade.assertServer();
 				
-				progress.setText(Myster.tr("Loading tracker...")+macHack);
+				progress.setText(I18n.tr("Loading tracker...")+macHack);
 				progress.setValue(50);
 				IPListManagerSingleton.getIPListManager();
 				
-				progress.setText(Myster.tr("Loading FileManager...")+macHack);
+				progress.setText(I18n.tr("Loading FileManager...")+macHack);
 				progress.setValue(70);
 				FileTypeListManager.getInstance();
 				
-				progress.setText(Myster.tr("Loading Instant Messaging...")+macHack);
+				progress.setText(I18n.tr("Loading Instant Messaging...")+macHack);
 				progress.setValue(72);
 				com.myster.message.MessageManager.init();
 				
-				progress.setText(Myster.tr(Myster.tr("Loading WindowManager..."))+macHack);
+				progress.setText(I18n.tr(I18n.tr("Loading WindowManager..."))+macHack);
 				progress.setValue(78);
 				com.myster.ui.WindowManager.init();
 				
 				Preferences.getInstance().addPanel(BandwidthManager.getPrefsPanel());
 			
-				progress.setText(Myster.tr("Loading Plugins...")+macHack);
+				progress.setText(I18n.tr("Loading Plugins...")+macHack);
 				progress.setValue(80);
 				try {
 					(new com.myster.plugin.PluginLoader(new File("plugins"))).loadPlugins();
@@ -176,7 +162,7 @@ public class Myster{
 					
 					
 					//SearchWindow sw=new SearchWindow();
-					//sw.say(Myster.tr("Idle.."));
+					//sw.say(I18n.tr("Idle.."));
 				}
 		
 			}
@@ -310,18 +296,5 @@ public class Myster{
 		}
 		System.out.println("Byeeeee.");
 		System.exit(0);
-	}
-
-	public static final String tr(String text) {
-		return text;
-		/*
-
-		try {
-			return resources.getString(text);
-		} catch (MissingResourceException ex) {
-			//System.err.println("missing translation key: \"" + text + "\"");
-			//ex.printStackTrace();
-			return text;
-		}*/
 	}
 }
