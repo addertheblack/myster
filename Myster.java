@@ -153,6 +153,10 @@ public class Myster{
 					(new com.myster.plugin.PluginLoader(new File("plugins"))).loadPlugins();
 				} catch (Exception ex) {}
 				
+				com.myster.hash.ui.HashPreferences.init(); //meep
+				
+				Preferences.initGui();
+				
 				//progress.done();
 				progress.setVisible(false);
 				//progress.dispose();

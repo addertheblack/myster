@@ -156,7 +156,8 @@ public class BannersManager {
 					"This panel allows you to associate a web page with a banner image " +
 					"so that people can click on a banner link and be directed to a " +
 					"web page of your choice. This is usefull if you have a web site " +
-					"you would like to tell people about."); //mental note, put in I18n
+					"you would like to tell people about. Double click on a image below to "+
+					"associate it with a web address"); //mental note, put in I18n
 			msg.setLocation(PADDING, PADDING);
 			msg.setSize(STD_XSIZE - 2*PADDING, STD_YSIZE - 4*PADDING - LIST_YSIZE - BUTTON_YSIZE);
 			add(msg);
@@ -175,7 +176,15 @@ public class BannersManager {
 			list.setLocation(PADDING, STD_YSIZE - LIST_YSIZE - PADDING);
 			list.setSize(STD_XSIZE - 2*PADDING, LIST_YSIZE);
 			list.addActionListener(new ActionListener() {
+				long lastDoubleClick = 0;
+			
 				public void actionPerformed(ActionEvent e) {
+					synchronized (this) {
+						if (System.currentTimeMillis() - lastDoubleClick < 1000) return ; //work around for stupid fucking bug in MacOS MRJ 1.3.X
+						
+						lastDoubleClick = System.currentTimeMillis();
+					}
+					
 					String currentURL = (String)hashtable.get(e.getActionCommand());
 					
 					if (currentURL == null) currentURL = "";

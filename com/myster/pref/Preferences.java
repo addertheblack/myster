@@ -65,7 +65,7 @@ public class Preferences {
 	}
 	
 	static final String WINDOW_KEEPER_KEY="MysterPrefsGUI";
-	static com.myster.ui.WindowLocationKeeper windowKeeper=new com.myster.ui.WindowLocationKeeper(WINDOW_KEEPER_KEY);
+	static com.myster.ui.WindowLocationKeeper windowKeeper = new com.myster.ui.WindowLocationKeeper(WINDOW_KEEPER_KEY);
 	
 	public static void initWindowLocations() {
 		Rectangle[] rect=com.myster.ui.WindowLocationKeeper.getLastLocs(WINDOW_KEEPER_KEY);
@@ -84,10 +84,13 @@ public class Preferences {
 		
 		if (pref==null) {
 			pref=new Preferences();
-			windowKeeper.addFrame(pref.prefsWindow);
 		}
 		
 		return pref;
+	}
+	
+	public static synchronized void initGui() {
+		windowKeeper.addFrame(pref.prefsWindow);
 	}
 	
 	public synchronized void setGUI(boolean b) {
@@ -115,6 +118,15 @@ public class Preferences {
 	*/
 	public synchronized String get(String key) {
 		return (String)(data.get(key));
+	}
+	
+	/**
+	*	Gets the value for a path. returns defaultValue if path not initilized or invalid.
+	*/
+	public synchronized String get(String key, String defaultValue) {
+		String temp = (String)(data.get(key));
+		
+		return (temp == null ? defaultValue : temp);
 	}
 	
 	/**

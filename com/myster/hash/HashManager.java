@@ -8,10 +8,13 @@ import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.util.Hashtable;
 
+import com.general.util.Util;
 import com.general.util.BlockingQueue;
+import com.general.events.SyncEventDispatcher;
 
 import com.myster.util.ProgressWindow;
-import com.general.util.Util;
+import com.myster.pref.Preferences;
+
 
 /**
 *	Facilities for passively determining the hash values of files.
@@ -25,12 +28,60 @@ public class HashManager implements Runnable {
 	
 	private static HashManager hashManager;
 	
+	private static SyncEventDispatcher hashManagerDispatcher;
+	
+	private static volatile boolean hashingIsEnabled 		= true;
+	private static final String HASHING_ENABLED_PREF_KEY 	= "/Hash Manager Is Enabled";
+	
+	private static final String TRUE_AS_STRING = "TRUE";
+	private static final String FALSE_AS_STRING = "FALSE";
+	
 	/**
 	*	This should be called before any other functions are (ie, on startup)
 	*/
 	public static void init() {
+		hashManagerDispatcher = new SyncEventDispatcher();
+	
+		hashingIsEnabled = (TRUE_AS_STRING.equals(Preferences.getInstance().get(HASHING_ENABLED_PREF_KEY, TRUE_AS_STRING)));
+	
 		hashManager = new HashManager();
 		(new Thread(hashManager)).start();
+	}
+	
+	/**
+	*	Setting this to false means that no new hashes will be done.
+	* 	<p>
+	*	(Synchronized because prefs and cached value should be in 
+	*	agreement and events should exec in right order)
+	*/
+	public static synchronized void setHashingEnabled(boolean enableHashing) {
+		hashingIsEnabled = enableHashing;
+		
+		Preferences.getInstance().put(HASHING_ENABLED_PREF_KEY, (enableHashing ? TRUE_AS_STRING : FALSE_AS_STRING));
+	
+		hashManagerDispatcher.fireEvent(new HashManagerEvent(HashManagerEvent.ENABLED_STATE_CHANGED, enableHashing));
+	}
+	
+	/**
+	*	If hashing is enabling this function returns true, false otherwise.
+	*/
+	public static boolean getHashingEnabled() {
+		return hashingIsEnabled;
+	}
+	
+	
+	/**
+	*	Adds a listener for common hash manager events. This routine cannot be synchronized.
+	*/
+	public static void addHashManagerListener(HashManagerListener listener) {
+		hashManagerDispatcher.addListener(listener); 
+	}
+	
+	/**
+	*	Removes a listener from common hash manager events. This routine cannot be synchronized.
+	*/
+	public static void removeHashManagerListener(HashManagerListener listener) {
+		hashManagerDispatcher.removeListener(listener); 
 	}
 	
 	/**

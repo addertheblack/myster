@@ -855,3 +855,6 @@ Work on DEV 8:
 	  2003/03/20
 	  	-> Fixed the HashCache so that it uses a save system similar to the prefs.
 	  	-> Made it so Transaction library retries a few times if it doesn't recieve a reply initially...
+	  	-> Added an event system to the hash manage to deal with enable / disable
+	  	-> Added a GUI to turn of File Hashing. Plz don't turn it off!
+	  	-> Made a work aorund for the double click bug with awt.list in MRJ 1.3.X for banners.
