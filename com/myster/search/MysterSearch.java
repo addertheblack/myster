@@ -522,6 +522,16 @@ public class MysterSearch {
 
         public void doSection() throws IOException {
             searcher.search(socket, address, type);
+            
+            Util.invoke(new Runnable() {
+                public void run() {
+                    if (endFlag)
+                        return;
+                    ++serversSearched;
+                    msg.say("Searched " + serversSearched + " servers...");
+
+                }
+            });
         }
     }
 
@@ -535,16 +545,6 @@ public class MysterSearch {
 
         public void doSection() throws IOException {
             searcher.dealWithFileStats(socket, type, mysterSearchResults, listener);
-
-            Util.invoke(new Runnable() {
-                public void run() {
-                    if (endFlag)
-                        return;
-                    ++serversSearched;
-                    msg.say("Searched " + serversSearched + " servers...");
-
-                }
-            });
         }
     }
 
