@@ -19,6 +19,6 @@ public class StandardWindowBehavior extends WindowAdapter {
     }
 
     public void windowClosed(WindowEvent e) {
-        //e.getWindow().dispose();
+        e.getWindow().dispose();
     }
 }
