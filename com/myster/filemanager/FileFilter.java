@@ -31,7 +31,7 @@ class FileFilter {
 		TypeDescription typeDescription = TypeDescriptionList.getDefault().get(type);
 		if (typeDescription == null) return true; //no information on this type, allow everything.
 		String[] extensions = typeDescription.getExtensions(); //getExtensions is slow so we only want to exce it once.
-		if (extensions == null) return true;//no information on this type, allow everything.
+		if (extensions.length == 0) return true;//no information on this type, allow everything.
 		
 		if (hasExtension(file.getName(), extensions))//entry.extensions))
 			return true;

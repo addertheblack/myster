@@ -164,10 +164,10 @@ public class MSPartialFile {
 				
 				if (! dialog.getFile().equals(finalFileName)) {
 					final String YES_ANSWER = "Yes", NO_ANSWER = "No", CANCEL_ANSWER = "Cancel";
-					AnswerDialog fileIsNotTheSameDialog = new AnswerDialog(progress, "The file name \"" +
-							dialog.getFile() + "\" is not the same name as \"" +
-							finalFileName + ". If this is not the right file it will be end" +
-							" up being destroyed. Are you sure you want to resume this download" +
+					AnswerDialog fileIsNotTheSameDialog = new AnswerDialog(progress, "The file name \n\n\"" +
+							dialog.getFile() + "\"\n\n is not the same name as \n\n\"" +
+							finalFileName + "\n\n. If this is not the right file, it will be " +
+							"rendered unusable. Are you sure you want to resume this download" +
 							" with this file?",
 							new String[]{YES_ANSWER, NO_ANSWER, CANCEL_ANSWER});
 					
