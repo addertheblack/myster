@@ -152,6 +152,7 @@ public class MCList extends Panel {
        		previousimagey=pane.getViewportSize().height;
        	}
        	paint(im.getGraphics(), pane.getScrollPosition().x, pane.getScrollPosition().x+pane.getViewportSize().width ,pane.getScrollPosition().y, pane.getScrollPosition().y+pane.getViewportSize().height);
+       	g.setClip(pane.getScrollPosition().x, pane.getScrollPosition().y ,pane.getViewportSize().width,pane.getViewportSize().height);
        	g.drawImage(im, pane.getScrollPosition().x , pane.getScrollPosition().y+header.getHeight(), this);
     }
 
