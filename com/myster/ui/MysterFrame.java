@@ -128,7 +128,7 @@ public class MysterFrame extends Frame {
         try {
             Method method = Frame.class.getMethod("setState", new Class[] { Integer.TYPE });
 
-            method.invoke(this, new Object[] { new Integer(Frame.NORMAL) });
+            method.invoke(this, new Object[] { new Integer(0) }); // 0 == normal.. Cannot use constant becaus eit doens't exist in 1.1
         } catch (SecurityException ex) {
             ex.printStackTrace();
         } catch (NoSuchMethodException ex) {
