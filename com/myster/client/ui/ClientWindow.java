@@ -100,10 +100,12 @@ public class ClientWindow extends MysterFrame implements Sayable{
 		
 		
 		fileTypeList = new MCList(1, true, this);
+		fileTypeList.sortBy(-1);
 		fileTypeList.setColumnName(0, "Type");
 		
 		
  		fileList = new MCList(1, true, this);
+ 		fileList.sortBy(-1);
 		fileList.setColumnName(0, "Files");
 		//fileList.setColumnWidth(0, 300);
 		

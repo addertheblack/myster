@@ -16,7 +16,10 @@ import com.sun.java.util.collections.Comparator;
 public class MCListVector {
 	Vector vector; //"no dog food for Vector tonight" -- Paraphrase of Futurama.
 	int sortby=0;
-	boolean lessthan=true;
+	boolean lessthan = true;
+	
+	boolean isSorted = true;
+	
 	public static final boolean ASENDING=true;
 	public static final boolean DESCENDING=false;
 	
@@ -24,7 +27,21 @@ public class MCListVector {
 		vector=new Vector(100, 100);
 	}
 	
+	protected boolean isSorted() {
+		return isSorted;
+	}
+	
+	/**
+	*	If isSorted is true the List will try to always remain properly sorted. If it is false, the list will only sort
+	*	if explicitly told to.
+	*/
+	protected void setSorted(boolean isSorted) {
+		this.isSorted = isSorted;
+	}
+	
     protected synchronized void sort() {
+    		if (sortby==-1) return;
+    
 			com.sun.java.util.collections.Collections.sort(
 				vector, 
 				new Comparator() {
@@ -62,15 +79,10 @@ public class MCListVector {
 		return lessthan;
 	}
 	
-	protected synchronized void addElement(MCListItemInterface o) {
-		vector.addElement(o);
-		sort(); //insertion sort if faster but the speed here should never be a bottleneck.
-	}
-	
 	protected synchronized void addElement(MCListItemInterface[] o) {
 		vector.ensureCapacity(vector.size()+o.length+1);//the +1 is for kicks...
 		for (int i=0; i<o.length; i++) vector.addElement(o[i]);
-		sort();
+		if (isSorted) sort();
 	}
 	
 	protected synchronized void removeElement(int index) {

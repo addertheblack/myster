@@ -17,7 +17,6 @@ import java.awt.Cursor;
 
 public class MCListHeaderEventHandler extends MouseAdapter implements MouseMotionListener {
 	 MCListHeader header;
-	 int lastcolumnclicked=0;
 	 
 	 public MCListHeaderEventHandler(MCListHeader h) {header=h;}
 	 
@@ -33,12 +32,15 @@ public class MCListHeaderEventHandler extends MouseAdapter implements MouseMotio
 	 		resizeColumn=header.getResizeColumn(e.getX());
 	 		originalSize=header.getColumnWidth(resizeColumn);
 	 	} else {
-		 	int columnclicked=header.getColumnOfClick(e.getX(), e.getY());
+		 	int columnClicked=header.getColumnOfClick(e.getX(), e.getY());
 		 	
-		 	if (columnclicked==lastcolumnclicked) header.getMCLParent().reverseSortOrder();
-		 	else header.getMCLParent().sortBy(columnclicked);
-		 	
-		 	lastcolumnclicked=columnclicked;
+		 	if (header.getSortBy() != columnClicked) {
+		 		header.getMCLParent().sortBy(columnClicked);
+		 	} else if (columnClicked == -1) {
+		 		// do nothing.. There's not point in reversing the sort order on a non column selected
+		 	} else {
+		 		header.getMCLParent().reverseSortOrder();
+		 	}
 		 	
 		 	header.repaint();
 	 	}
@@ -55,14 +57,21 @@ public class MCListHeaderEventHandler extends MouseAdapter implements MouseMotio
 	 }
 
  	public void mouseMoved(MouseEvent e) {
- 		if (!resizeEnabled()) return;
- 	
- 		if (header.isOnBorder(e.getX())) {
+ 		if (resizeEnabled() && header.isOnBorder(e.getX())) {
  			header.setCursor(Cursor.getPredefinedCursor(Cursor.E_RESIZE_CURSOR ));
  		} else {
  			header.setCursor(Cursor.getDefaultCursor());
+ 			
+ 			//Mouse over effect
+ 			header.setMouseOver(header.getColumnOfClick(e.getX(), e.getY()));
+ 			//end mouse over effect
  		}
- 	} 
+ 	}
+ 	
+ 	public void mouseExited(MouseEvent e) {
+ 		//Mouse over effect
+ 		header.setMouseOver(-1);
+ 	}
 	 
 	 public void mouseReleased(MouseEvent e) {
 	 	if (resizeEnabled() && resizeflag) {

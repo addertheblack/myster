@@ -82,10 +82,17 @@ public class FileListerThread extends MysterThread {
 	
 				TextSpinner spinner=new TextSpinner();
 				
-				String[] files = new String[numberoffiles];
+				
+				final int LIMIT = 500;
+				String[] files = new String[numberoffiles>LIMIT?LIMIT:numberoffiles];
 				for (int i=0; i<numberoffiles; i++) {
-					files[i] = in.readUTF();
+					files[i % LIMIT] = in.readUTF();
 					if (i%10 == 0) msg.say("Downloading file list: "+type+ " " + ((i*100)/numberoffiles) + "%");
+					
+					if ((i % LIMIT) == (LIMIT - 1)) {
+						w.addItemsToFileList(files);
+						if ((numberoffiles - i) < LIMIT) files = new String[numberoffiles - i - 1];
+					}
 				}
 				
 				out.writeInt(2);

@@ -105,18 +105,15 @@ import com.myster.net.MysterAddress;
 
 		MysterServer temp=getMysterIPLevelOne(address);
 		
-		if (temp==null) {
-			boolean b_temp=(deadCache.isDeadAddress(address));
-			//System.out.println("IP is dead! "+b_temp);
-			if (b_temp) throw new IOException("IP is dead");
-			try {
-				return getMysterIPLevelTwo(new MysterIP(address.toString()));//get the "other" name for that ip.
-			} catch (Exception ex) {
-				deadCache.addDeadAddress(address);
-				throw new IOException("Bad thing happened in MysterIP Pool add");
-			}
-		} else {
-			return temp;
+		if (temp!=null) return temp;
+		
+		if (deadCache.isDeadAddress(address)) throw new IOException("IP is dead");
+		
+		try {
+			return getMysterIPLevelTwo(new MysterIP(address.toString()));//get the "other" name for that ip.
+		} catch (Exception ex) {
+			deadCache.addDeadAddress(address);
+			throw new IOException("Bad thing happened in MysterIP Pool add");
 		}
 	}
 	
@@ -146,7 +143,7 @@ import com.myster.net.MysterAddress;
 			MysterAddress address=m.getAddress();	//possible future bugs here...
 			if (existsInPool(address)) return getMysterIPLevelOne(address);;
 
-			return addANewMysterObjectToThePool(m).getInterface();
+			return addANewMysterObjectToThePool(m);
 	}
 	
 	/**
@@ -157,14 +154,14 @@ import com.myster.net.MysterAddress;
 	*	myster IP cached during the time it took to check and returns the appropriate object.
 	*/
 	
-	private synchronized MysterIP addANewMysterObjectToThePool(MysterIP ip) {
+	private synchronized MysterServer addANewMysterObjectToThePool(MysterIP ip) {
 		if (!existsInPool(ip.getAddress())) {				
 			deleteUseless();			//Cleans up the pool, deletes useless MysterIP objects!
 			hashtable.put(ip.getAddress(),ip);		//if deleteUseless went first, the garbag collector would get the ip we just added! DOH!
 			save();
-			return ip;
+			return ip.getInterface();
 		} else {
-			return getMysterIP(ip.getAddress());
+			return getMysterIP(ip.getAddress()).getInterface();
 		}
 	}
 	
@@ -186,10 +183,8 @@ import com.myster.net.MysterAddress;
 			
 			MysterIP mysterip=(MysterIP)(hashtable.get(workingKey));
 			
-			if (mysterip.getMysterCount()<=0){
-				if (!mysterip.getStatus()) {
-					keysToDelete.addElement(workingKey);
-				}
+			if ((mysterip.getMysterCount()<=0) && (!mysterip.getStatus())) {
+				keysToDelete.addElement(workingKey);
 			}
 		}
 		
@@ -205,7 +200,8 @@ import com.myster.net.MysterAddress;
 			System.gc();
 			System.out.println("Deleted "+keysToDelete.size()+" useless MysterIP objects from the Myster pool.");
 		}
-		System.out.println("IPPool cleaned up. There are now "+hashtable.size()+" objects in the pool");
+		
+		System.out.println("IPPool : Removed "+keysToDelete.size()+" object from the pool. There are now "+hashtable.size()+" objects in the pool");
 		
 		
 		//signal that the changes should be saved asap...

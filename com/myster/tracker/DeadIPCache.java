@@ -8,8 +8,6 @@ class DeadIPCache {
 	
 	public static final long EXPIRE_TIME=60*60*1000;//.. time
 	
-	public DeadIPCache() {}
-	
 	public synchronized boolean isDeadAddress(MysterAddress address) {
 		removeDead();
 		return queue.contains(new DeadItem(address, System.currentTimeMillis()));

@@ -1009,7 +1009,11 @@ Work on DEV 8:
 		-> Fixed a bug where the PORN type would list no files.
 	
 	Work on DEV 20
-		(date)
+		2004/03/20
+		-> Made the awt.List objects in the p2p windows in MCLists.
+		-> Fixed up the Search window bar a bit.
+		-> Made it so the search button no longer changes when button gets set to start/stop.
+		-> Switched over the tracker choice box to a TypeChoice object (finally)
 		
 		bdaba746d51978dbe46844c23f566332
 (Red List)

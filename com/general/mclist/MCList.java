@@ -101,21 +101,27 @@ public class MCList extends Panel {
 	
 	public synchronized void sortBy(int column) {
 		list.setSortBy(column);
-		header.sortBy(column);
+		header.sortBy(list.isSorted?column:-1);
 		repaint();
 	}
 	
 	public ScrollPane getPane() {return pane;}
 	
 	public void addItem(MCListItemInterface m) {
-		list.addElement(m);
-		listChangedSize();
+		addItem(new MCListItemInterface[]{m});
 	}
 	
 	public void addItem(MCListItemInterface[] m) { //oh for templates...
 		list.addElement(m);
 		listChangedSize();
 	}
+	
+	public void setSorted(boolean isSorted) { 
+		list.setSorted(isSorted);
+		if (!isSorted) header.sortBy(-1);
+	}
+	
+	public boolean isSorted() { return list.isSorted(); }
 	
 	//Important for canvas
 	public synchronized Dimension getPreferredSize() {

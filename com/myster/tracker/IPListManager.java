@@ -298,7 +298,7 @@ static volatile int counter=0;
 					
 					counter++;
 					//System.out.println("AddIP: ip check out. Crawler threads active: "+counter);
-					
+					System.out.println("Number of servers still queued : -> " + blockingQueue.length());
 					//System.out.println("ADDER : Got "+ip+" from the queue.");
 					MysterServer mysterserver=null;
 					try {

@@ -45,7 +45,7 @@ public class ClientGenericHandleObject implements ClientHandleObject {
 			MysterAddress hostAsAddress=result.getHostAddress();
 			String hostAsString=hostAsAddress.toString();
 			MysterServer server=IPListManagerSingleton.getIPListManager().getQuickServerStats(hostAsAddress);
-			serverString=new SortableString(server==null?hostAsString:(server.getServerIdentity().equals(hostAsString)?""+hostAsString:server.getServerIdentity()+" ("+hostAsString+")"));
+			serverString = new SortableString(server==null?"N/A":server.getServerIdentity());
 			//The Three lines above can be combined into one really long line. I hope you appreciate this :-)
 			ping=new SortablePing(result.getHostAddress());
 			sortableName=new SortableString(result.getName());

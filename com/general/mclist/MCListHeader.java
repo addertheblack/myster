@@ -17,12 +17,14 @@ public class MCListHeader extends Panel {
 	private MCList callback;
 	
 	private static final int HEIGHT=17;
+	private static final boolean USE_ROLL_OVER = true;
 	
 	//Book Keeping
 	private int numberOfColumns;
 	private String[] columnarray;
 	private int[] columnWidthArray;	// A value of -1 means value should default to width of header string.
-	private int sortby=0;
+	private int sortby = 0;
+	private int mouseOverColumn = -1;
 	
 	private static final int CLICK_LATITUDE=5;
 	private static final int MIN_COLUMN_WIDTH=15;
@@ -92,11 +94,14 @@ public class MCListHeader extends Panel {
 		
 		int hozoffset=0;
 		for (int i=0; i<columnarray.length; i++) {
-			if (i==sortby) {
-				g.setColor(new Color(200,200,255));
+		
+			//Calculates the "Selected Column" and/or "Mouser Over" colors.
+			if (i == sortby) {
+				g.setColor(mouseOverColumn == i ? new Color(210,210,255): new Color(200,200,255));
 			} else {
-				g.setColor(new Color(215,215,215));
+				g.setColor(mouseOverColumn == i ? new Color(222,222,222): new Color(215,215,215));
 			}
+			
 			g.fillRect(padding+hozoffset, padding, rowstats.getWidthOfColumn(i), HEIGHT);
 			
 			g.setColor(new Color(235,235,235));
@@ -239,6 +244,7 @@ public class MCListHeader extends Panel {
 		return s;
 	}
 	
+	//Returns the last column if column of click is not valid.
 	public int getColumnOfClick(int x, int y) {
 		//Y is useless here BTW.
 		RowStats rowstats=getRowStats();
@@ -254,6 +260,21 @@ public class MCListHeader extends Panel {
 	public void sortBy(int x) {
 		sortby=x;
 		repaint();
+	}
+	
+	//returns -1 if there's currently no column to sort by.
+	public int getSortBy() {
+		return sortby;
+	}
+	
+	public void setMouseOver(int x) {
+		if (! USE_ROLL_OVER) return;
+	
+		boolean repaintNow = (mouseOverColumn != x);
+		
+		mouseOverColumn = x;
+		
+		if (repaintNow) repaint(); // to stop millions of repaints.
 	}
 	
 	public MCList getMCLParent() {
