@@ -131,7 +131,7 @@ public class BannersManager {
 	}
 	
 	private static synchronized boolean isAnImageName(String imageName) { //code reuse
-		return (imageName.endsWith(".jpg") || imageName.endsWith(".gif"));
+		return (imageName.toLowerCase().endsWith(".jpg") || imageName.toLowerCase().endsWith(".gif"));
 	}
 		
 	private static class BannersPreferences extends PreferencesPanel {

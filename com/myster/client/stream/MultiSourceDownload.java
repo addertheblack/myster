@@ -55,7 +55,6 @@ public class MultiSourceDownload {
 	boolean stopDownload = false;
 	
 	public static final int MULTI_SOURCE_BLOCK_SIZE = 512 * 1024;
-	public static final String TEST_TYPE="MooV";
 
 	public MultiSourceDownload(MysterFileStub stub, FileHash hash, long fileLength) {
 		this.stub 			= stub;
@@ -65,6 +64,12 @@ public class MultiSourceDownload {
 	
 	private synchronized void newDownload(MysterFileStub stub) {
 		if (stopDownload) return;
+		
+		for (int i = 0; i < downloaders.length; i++) {
+			if ((downloaders[i]!=null) && (downloaders[i].getMysterFileStub().equals(stub))) {
+				return;
+			}
+		}
 		
 		for (int i = 0; i < downloaders.length; i++) {
 			if (downloaders[i] == null) {
@@ -104,6 +109,7 @@ public class MultiSourceDownload {
 		progress.addWindowListener(new WindowAdapter() {
 			public void windowClosing(WindowEvent e) {
 				flagToEnd();
+				progress.setVisible(false);
 			}
 		});
 		
@@ -152,7 +158,7 @@ public class MultiSourceDownload {
 		
 		
 		//moo.mpg -> "b23b9188a98a3d16854f4167a58e3114"
-		crawler = new CrawlerThread(new MultiSourceHashSearch(new MysterType(TEST_TYPE.getBytes()), hash, 
+		crawler = new CrawlerThread(new MultiSourceHashSearch(stub.getType(), hash, 
 										new HashSearchListener() {
 											public void startSearch(HashSearchEvent event) {
 												System.out.println("Search Lstnr-> Start search");
@@ -174,7 +180,7 @@ public class MultiSourceDownload {
 											}
 										}
 									),
-									new MysterType(TEST_TYPE.getBytes()),
+									stub.getType(),
 									ipQueue,
 									new Sayable() {
 										public void say(String string) {
@@ -183,6 +189,8 @@ public class MultiSourceDownload {
 									null);
 									
 		crawler.start();
+		
+		newDownload(stub);
 	}
 	
 	private class SegmentDownloaderHandler extends SegmentDownloaderListener {
@@ -289,6 +297,10 @@ public class MultiSourceDownload {
 		
 		public void removeListener(SegmentDownloaderListener listener) {
 			dispatcher.removeListener(listener);
+		}
+		
+		public MysterFileStub getMysterFileStub() {
+			return stub;
 		}
 	
 		public void run() {

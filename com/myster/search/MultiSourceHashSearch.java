@@ -27,7 +27,13 @@ public class MultiSourceHashSearch implements MysterSearchClientSection {
 	public void search(MysterSocket socket, MysterAddress address) throws IOException {
 		System.out.println("Hash Search -> Searching "+address);
 		try {
-			hashSearchListener.fireEvent(new HashSearchEvent(HashSearchEvent.SEARCH_RESULT, new MysterFileStub(address, type, StandardSuite.getFileFromHash(socket, type, hash))));
+			String fileName = StandardSuite.getFileFromHash(socket, type, hash);
+		
+			System.out.println("HASH SEARCH FOUND FILE -> "+fileName);
+		
+			if (!fileName.equals("")) {
+				hashSearchListener.fireEvent(new HashSearchEvent(HashSearchEvent.SEARCH_RESULT, new MysterFileStub(address, type, fileName)));
+			}
 		} catch (UnknownProtocolException ex) {
 			StandardSuite.disconnectWithoutException(socket);
 			

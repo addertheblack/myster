@@ -184,7 +184,7 @@ public class SearchWindow extends MysterFrame implements SearchResultListener, S
 	}
 	
 	public void searchOver() {
-		msg.say("Search done. "+filelist.getSize()+"...");
+		msg.say("Search done. "+filelist.length()+" file"+(filelist.length()==0?"":"s")+" found...");
 	}
 	
 	public void recolumnize() {

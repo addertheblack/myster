@@ -157,7 +157,11 @@ public class FileTypeListManager{
 		FileTypeList list=getFileTypeList(type);
 		if (list==null) return null;	//err.
 		
-		return list.getFileItemFromString(s).getFile();
+		FileItem fileItem = list.getFileItemFromString(s);
+		
+		if (fileItem == null) return null;
+		
+		return fileItem.getFile();
 	}
 	
 	/**
