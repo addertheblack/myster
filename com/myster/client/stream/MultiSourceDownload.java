@@ -536,6 +536,10 @@ class InternalSegmentDownloader extends MysterThread implements SegmentDownloade
 		try {join();} catch(InterruptedException ex) {}
 	}
 	
+	public int hashCode() {
+		return stub.getMysterAddress().hashCode();
+	}
+	
 	public boolean equals(Object o) {
 		InternalSegmentDownloader other = null;
 		try {
