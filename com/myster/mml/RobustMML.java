@@ -2,7 +2,9 @@ package com.myster.mml;
 
 /**
 *	Rubust MML differs from regular MML in that it 
-*	NEVER throws a runtime Exception.
+*	NEVER throws a runtime Exception. Usefull if you don't trust the
+*	MML object. (RobustMML still throws an exception on creation if
+*	the MML text (data) is invalid).
 */
 import java.util.Vector;
 

@@ -138,14 +138,14 @@ public class Preferences {
 		return data.containsKey(key);
 	}
 	
-	public synchronized String put(String key, String value) {
-		String s_temp=(String)(data.put(key,value));
+	public synchronized Object put(String key, String value) {
+		Object s_temp=data.put(key,value);
 		save();
 		return s_temp;
 	}
 	
-	public synchronized MML put(String key, MML value) {
-		MML mml_temp=(MML)(data.put(key,value));
+	public synchronized Object put(String key, MML value) {
+		Object mml_temp=data.put(key,value);
 		save();
 		return mml_temp;
 	}
@@ -259,7 +259,7 @@ public class Preferences {
 	/**
 	*	Same as saveFile(); only does saving asychronously.
 	*/
-	private boolean save() {
+	public boolean save() {
 		savethread.asynchronousSave();
 		return true; //wow.. retarded...
 	}

@@ -152,7 +152,7 @@ public class MML implements Serializable {
 	}
 	
 	/**
-		
+		...
 	*/
 	public synchronized boolean isADirectory(String path) {
 		try {
