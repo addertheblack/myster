@@ -397,12 +397,10 @@ public class MP3Header {
         return bitrate;
     }
 
-    /** private.. myob */
     private void error() throws IOException {
         throw new IOException("Not an MP3 file");
     }
 
-    /** returns a textual representation of this obect.. duh.. */
     public String toString() {
         return "Bitrate: " + bitrate + "bps | Sample Rate: " + samplingrate
                 + "hz | Copyright: " + copyright + " | Stereo: " + stereo

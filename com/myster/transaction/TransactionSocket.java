@@ -3,7 +3,7 @@ package com.myster.transaction;
 import com.myster.net.DataPacket;
 
 /**
- * This class is not thread safe however it doesn't need to be used by the event
+ * This class is not thread safe however it doesn't need to be used on the event
  * thread either.
  */
 public class TransactionSocket {
@@ -43,10 +43,10 @@ public class TransactionSocket {
     }
 
     /**
-     * Attempts to cancel this transaction. If cancelling was successfull return
+     * Attempts to cancel this transaction. If cancelling was successful return
      * true. A transaction must have been sent before trying to cancel().
      * 
-     * @return true if succesfully cancelled. false otherwise.
+     * @return true if successfully cancelled. false otherwise.
      */
     public boolean cancel() {
         if (!outstanding)

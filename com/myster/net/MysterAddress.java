@@ -5,24 +5,31 @@
  * 
  * This code is under GPL
  * 
- * Copyright Andrew Trumper 2002-2003
+ * Copyright Andrew Trumper 2002-2004
  */
 
 package com.myster.net;
 
-//import Myster;
-
 import java.net.InetAddress;
 import java.net.UnknownHostException;
 
+/**
+ * Represents the address of a MysterServer. The server may not be up.
+ */
 public class MysterAddress {
-    InetAddress fullAddress;
+    private InetAddress fullAddress;
 
-    int port;
+    private int port;
 
+    /**
+     * Builds a MysterAddress based on this String. The string should be of format : ip:port. If the
+     * host name is invalid or the string is badly formated an UnknownHostException is thrown.
+     * 
+     * @see java.net.UnknownHostException
+     */
     public MysterAddress(String s) throws UnknownHostException { //should throw
-                                                                 // a runtime
-                                                                 // error.
+        // a runtime
+        // error.
         String ip = s;
         int port = com.myster.Myster.DEFAULT_PORT;
 
@@ -39,12 +46,19 @@ public class MysterAddress {
         init(InetAddress.getByName(ip), port);
     }
 
+    /**
+     * Constructs a MysterAddres object by using an InetAddress. Assumes the default port is the
+     * Myster's default port (usually 6669).
+     */
     public MysterAddress(InetAddress i) {
         init(i, com.myster.Myster.DEFAULT_PORT);
     }
 
+    /**
+     * Constructs a MysterAddres object by using an InetAddress.
+     */
     public MysterAddress(InetAddress i, int port) { //should throw a runtime
-                                                    // error.
+        // error.
         init(i, port);
     }
 
@@ -53,25 +67,38 @@ public class MysterAddress {
         this.port = port; //need some checks here
 
         if (port > 0xFFFF)
-            throw new IllegalArgumentException("Port is out of range -> "
-                    + port);
+            throw new IllegalArgumentException("Port is out of range -> " + port);
     }
 
+    /**
+     * Returns the IP address associated with this object in textual presentation.
+     * 
+     * @return the raw IP address in a string format.
+     */
     public String getIP() {
         return fullAddress.getHostAddress();
     }
 
+    /**
+     * Returns the address associated with this object.
+     * 
+     * @return the address in InetAddres format
+     */
     public InetAddress getInetAddress() {//throws UnknownHostException {
         return fullAddress;
     }
 
+    /**
+     * Returns the port associated with this object.
+     * 
+     * @return the port.
+     */
     public int getPort() {
         return port;
     }
 
     public String toString() {
-        return (port != com.myster.Myster.DEFAULT_PORT ? getIP() + ":" + port
-                : getIP());
+        return (port != com.myster.Myster.DEFAULT_PORT ? getIP() + ":" + port : getIP());
     }
 
     public boolean equals(Object aa) {

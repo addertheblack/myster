@@ -104,10 +104,14 @@ public final class Transaction implements DataPacket { //Immutable (Java needs
     }
 
     /**
-     * Creates a transaction that is a !!!reply!!! to the passed transaction.
+     * Creates a transaction that is a <b>reply</b> to the passed transaction.
      * Resulting packet will be intended for the inverse recipient from itself
      * (ie: if the passed transaction is for a client then this packet will be
      * for a server.
+     * 
+     * @param transaction to use as a model to build a reply
+     * @param bytes to send in the reply
+     * @param errorByte (send 0x00 for no error).
      */
     public Transaction(Transaction transaction, byte[] bytes, byte errorByte) {
         this(transaction.getAddress(), transaction.getTransactionCode(),

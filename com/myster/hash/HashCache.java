@@ -22,10 +22,10 @@ import com.myster.Myster;
  * This class is yet another manager. In this case, this manager should only be
  * used by the file hashing sub system and not by random bits of code. It is
  * made public because it is safe for use by third party code although I can't
- * think of a reasone why it would be used.
+ * think of a reason why it would be used.
  * 
  * It's purpose is to cache all know file hashes and to save and restore these
- * hashes to disk. All save opperations are automatic although there might be a
+ * hashes to disk. All save operations are automatic although there might be a
  * delay between the time the change is made and the time the change is written
  * to disk.
  * 
@@ -52,7 +52,7 @@ public abstract class HashCache {
      * 
      * @param file
      *            The java.io.File you wish to get the Hashes for
-     * @returns The known FileHashes[] for this file
+     * @return The known FileHashes[] for this file
      */
     public abstract FileHash[] getHashesForFile(File file);
 
@@ -64,7 +64,7 @@ public abstract class HashCache {
      *            The java.io.File you wish to get the Hashes for
      * @param hashType
      *            String, the type of hash you wish to extract.
-     * @returns The known FileHash for this file
+     * @return The known FileHash for this file
      */
     public abstract FileHash getHashFromFile(File file, String hashType);
 
@@ -113,7 +113,6 @@ public abstract class HashCache {
 /**
  * The default Hash Cache implementation
  */
-
 class DefaultHashCache extends HashCache {
     private Hashtable hashtable = new Hashtable();
 
@@ -291,7 +290,6 @@ class DefaultHashCache extends HashCache {
 /**
  * Represents a cached FileHash entry.
  */
-
 class CachedFileHashEntry implements Serializable {
     //public static CachedFileHashEntry newCachedFileHashEntry(InputStream in)
     // throws IOException {

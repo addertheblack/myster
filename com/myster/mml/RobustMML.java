@@ -42,7 +42,7 @@ public class RobustMML extends MML {
 
     /**
      * Adds a value for the key path. If the path doesn't exist it is created.
-     * Always returns true or throws an execption.
+     * Always returns true or throws an exception.
      */
     public boolean put(String path, String value) { //tried to add value to
                                                     // branch, syntax error (bad
@@ -83,7 +83,7 @@ public class RobustMML extends MML {
     }
 
     /**
-     * Gets the value at key path. If path doens't exoist, returns null.
+     * Gets the value at key path. If path doens't exist, returns null.
      */
     public String get(String path) {
         try {
@@ -98,7 +98,7 @@ public class RobustMML extends MML {
     }
 
     /**
-     * Gets the value at key path. If path doens't exoist, returns "".
+     * Gets the value at key path. If path doens't exist, returns "".
      */
     public String query(String path) {
         try {
@@ -113,7 +113,7 @@ public class RobustMML extends MML {
     }
 
     /**
-     * gets a listing at path. if path is bad returns null.
+     * gets a listing at path. If path is bad returns null.
      */
     public Vector list(String path) {
         try {
@@ -128,7 +128,7 @@ public class RobustMML extends MML {
     }
 
     /**
-     * returns true if path points to a value. false otherwise.
+     * returns true if path points to a value false otherwise.
      */
     public boolean isAValue(String path) {
         try {
@@ -143,7 +143,7 @@ public class RobustMML extends MML {
     }
 
     /**
-     * returns true if path points to a value. false otherwise.
+     * returns true if path points to a value false otherwise.
      */
     public boolean isAFile(String path) {
         try {

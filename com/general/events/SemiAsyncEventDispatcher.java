@@ -15,7 +15,7 @@ public final class SemiAsyncEventDispatcher extends EventDispatcher { //untested
     Channel channel = new Channel();
 
     public SemiAsyncEventDispatcher() {
-        thread = new FireEvent(channel, getListeners());
+        thread = new FireEvent(channel, listeners);
         thread.start();
     }
 

@@ -32,12 +32,11 @@ import com.myster.util.MysterThread;
  * 
  * FileManager Paths are stored in : "File manager/paths/"
  * 
- * Myster IPs are stored in : "Myster IPs/" Specific IP: "/Myster IPs/ <IP or
- * domain name>/" Specific Myster IP info is stored somewhere in this path.
+ * Myster IPs are stored in : "Myster IPs/" Specific IP: "/Myster IPs/ <IP or domain name>/"
+ * Specific Myster IP info is stored somewhere in this path.
  * 
- * IPList information is stored in : "IPLists/ <Type>/" Specific IP NAME OF IP
- * as a DIR as in: "/IPLists/ <Type>/ <Name of IP>/" This name or IP should be
- * identical to the one stored above..
+ * IPList information is stored in : "IPLists/ <Type>/" Specific IP NAME OF IP as a DIR as in:
+ * "/IPLists/ <Type>/ <Name of IP>/" This name or IP should be identical to the one stored above..
  *  
  */
 
@@ -49,11 +48,10 @@ public class Preferences {
 
     private static Preferences pref;
 
-    private final File preferenceFile = new File(Myster.getCurrentDirectory(),
-            "mysterprefs.mml");
+    private final File preferenceFile = new File(Myster.getCurrentDirectory(), "mysterprefs.mml");
 
-    private final File preferenceBackupFile = new File(Myster
-            .getCurrentDirectory(), "mysterprefs.mml.backup");
+    private final File preferenceBackupFile = new File(Myster.getCurrentDirectory(),
+            "mysterprefs.mml.backup");
 
     public static final int DEBUG = 1;
 
@@ -74,8 +72,7 @@ public class Preferences {
             WINDOW_KEEPER_KEY);
 
     public static void initWindowLocations() {
-        Rectangle[] rect = com.myster.ui.WindowLocationKeeper
-                .getLastLocs(WINDOW_KEEPER_KEY);
+        Rectangle[] rect = com.myster.ui.WindowLocationKeeper.getLastLocs(WINDOW_KEEPER_KEY);
         if (rect.length > 0) {
             getInstance().prefsWindow.setBounds(rect[0]);
             getInstance().setGUI(true);
@@ -83,9 +80,9 @@ public class Preferences {
     }
 
     /**
-     * Needed in order to get an instance of the preference object. This is
-     * included Since their should only be one instance of the preferences
-     * object but The routines should not have to be static...
+     * Needed in order to get an instance of the preference object. This is included Since their
+     * should only be one instance of the preferences object but The routines should not have to be
+     * static...
      */
     public static synchronized Preferences getInstance() {
 
@@ -109,27 +106,33 @@ public class Preferences {
     }
 
     /**
-     * Adds a preferences panel to the preferences GUI under the type and
-     * subType. inf hierarchical prefs are not supported at this time.
+     * Adds a preferences panel to the preferences GUI under the type and subType. Hierarchical
+     * prefs are not supported at this time.
      * 
-     * Pluggin writters are asked to avoid messing with other module's pref
-     * panels.
+     * Pluggin writers are asked to avoid messing with other module's pref panels.
+     * 
+     * @param panel
      */
     public void addPanel(PreferencesPanel panel) {
         prefsWindow.addPanel(panel);
     }
 
     /**
-     * Gets the value for a path. returns null if path not initilized or
-     * invalid.
+     * Gets the value for a path. returns null if path not initilized or invalid.
+     * 
+     * @param key
+     * @return
      */
     public synchronized String get(String key) {
         return (String) (data.get(key));
     }
 
     /**
-     * Gets the value for a path. returns defaultValue if path not initilized or
-     * invalid.
+     * Gets the value for a path. returns defaultValue if path not initilized or invalid.
+     * 
+     * @param key
+     * @param defaultValue
+     * @return
      */
     public synchronized String get(String key, String defaultValue) {
         String temp = (String) (data.get(key));
@@ -138,7 +141,10 @@ public class Preferences {
     }
 
     /**
-     * Gets the value for a path. returns "" if path not initilized or invalid.
+     * Gets the value for a path. Returns "" if path not initilized or invalid.
+     * 
+     * @param key
+     * @return
      */
     public synchronized String query(String key) {
         String temp = (String) (data.get(key));
@@ -151,16 +157,17 @@ public class Preferences {
         return (MML) (data.get(key));
     }
 
-    public synchronized PreferencesMML getAsMML(String key,
-            PreferencesMML defaultMML) {
+    public synchronized PreferencesMML getAsMML(String key, PreferencesMML defaultMML) {
         PreferencesMML mml = (PreferencesMML) (data.get(key));
 
         return (mml == null ? defaultMML : mml);
     }
 
     /**
-     * 
      * Deletes that path and all sub paths.
+     * 
+     * @param key
+     * @return
      */
     public synchronized String remove(String key) {
         String s_temp = (String) (data.remove(key));
@@ -169,8 +176,11 @@ public class Preferences {
     }
 
     /**
+     * Checks if key exists.
      * 
-     * Checks if path exists.
+     * @param key
+     *            to check
+     * @return true if key exists false otherwise.
      */
     public synchronized boolean containsKey(String key) {
         return data.containsKey(key);
@@ -188,9 +198,6 @@ public class Preferences {
         return mml_temp;
     }
 
-    /**
-     * private function
-     */
     private synchronized void loadFile() {
         //try FILE try preferenceBackupFile then make a new file.
 
@@ -216,8 +223,8 @@ public class Preferences {
         }
     }
 
-    private synchronized void loadFromFile(File file) throws IOException,
-            ClassNotFoundException, ClassCastException {
+    private synchronized void loadFromFile(File file) throws IOException, ClassNotFoundException,
+            ClassCastException {
         ObjectInputStream in = null;
         try {
             if (!file.exists()) {
@@ -237,22 +244,23 @@ public class Preferences {
         }
     }
 
+    Semaphore writeToDisk = new Semaphore(1);
+
     /**
-     * Saves changes to the preferences. It should be caled if you have made a
-     * change. Ideally the prefferences should save themselves, however they
-     * don't always since Speed will suffer. Calling this routine makes sure the
-     * prefferences have been saved.
+     * Saves changes to the preferences. It should be caled if you have made a change. Ideally the
+     * prefferences should save themselves, however they don't always since Speed will suffer.
+     * Calling this routine makes sure the prefferences have been saved.
      * 
      * Returns true if the save has been successfull and false if it has not.
      * 
      * 
-     * NOTE: The creation of the string to be saved must be synchronized with
-     * the entire prefference object. The actualy writing to disk just needs to
-     * be semaphored.
+     * NOTE: The creation of the string to be saved must be synchronized with the entire prefference
+     * object. The actualy writing to disk just needs to be semaphored.
+     * 
+     * @param flag -
+     *            if set to 1 will print debug message on exceptions.
+     * @return true if was successfully saved.
      */
-
-    Semaphore writeToDisk = new Semaphore(1);
-
     private boolean saveFile(int flag) {
         String stringToSave;
 
@@ -261,10 +269,10 @@ public class Preferences {
         try {
             if (preferenceBackupFile.exists())
                 preferenceBackupFile.delete(); //on the mac the next line
-                                               // tosses an excption if file
-                                               // already exists.
-            ObjectOutputStream out = new ObjectOutputStream(
-                    new FileOutputStream(preferenceBackupFile));
+            // tosses an excption if file
+            // already exists.
+            ObjectOutputStream out = new ObjectOutputStream(new FileOutputStream(
+                    preferenceBackupFile));
             out.writeObject(HEADER_STRING);
 
             synchronized (this) {
@@ -292,14 +300,14 @@ public class Preferences {
     }
 
     /**
-     * Same as saveFile(int) however, sets the debug flag to true to return more
-     * information about an error if one occures during the save.
+     * Same as saveFile(int) however, sets the debug flag to true to return more information about
+     * an error if one occurs during the save.
      */
 
-    SaveThread savethread; //enables asychronous saving.
+    SaveThread savethread; //enables asynchronous saving.
 
-    private boolean saveFile() { //should not be synchronized, shouyld return
-                                 // imedeately.
+    private boolean saveFile() { //should not be synchronized, should return
+        // immediately.
         //Called by saver thread.
         saveFile(DEBUG);
         return true; //programs need not know if there has been an error.
@@ -317,11 +325,11 @@ public class Preferences {
     /**
      * Flushes the Preferences to disk
      * <p>
-     * When preferences are told to save, the save opperation might not happen
-     * imediately since saved are batched automatically to avoid acessive disk
-     * activity. Calling this function guarentees the information will be saved
+     * When preferences are told to save, the save operation might not happen immediately since
+     * saved are batched automatically to avoid excessive disk activity. Calling this function
+     * guarantees the information will be saved
      * <p>
-     * Warning: is blocking and accesses io so this opperation is slow.
+     * Warning: is blocking and accesses io so this operation is slow.
      */
     public void flush() {
         saveFile();
@@ -330,8 +338,9 @@ public class Preferences {
     private class SaveThread extends MysterThread {
         private Semaphore sem = new Semaphore(0);
 
-        private volatile boolean needsSave = false; //is assumed opperations
-                                                    // are synchronized.
+        private volatile boolean needsSave = false; //is assumed operations
+
+        // are synchronized.
 
         private static final long SAVETIME = 10 * 1000; //1000 == 1 sec.
 
@@ -339,11 +348,11 @@ public class Preferences {
             setPriority(Thread.MIN_PRIORITY);
             do {
                 sem.waitx();
-                if (needsSave) { //this is strictly not nessesairy! good to
-                                 // check assumptions.
+                if (needsSave) { //this is strictly not necessary! good to
+                    // check assumptions.
                     saveFile();
                     synchronized (this) { //abs(essential). is not here bad
-                                          // things happen.
+                        // things happen.
                         needsSave = false;
                     }
                     try {
@@ -351,8 +360,7 @@ public class Preferences {
                     } catch (Exception ex) {
                     }
                 } else {
-                    System.out
-                            .println("FUNDEMENTAL ASSUMPTION VIOLATED IN SAVE THREAD");
+                    System.out.println("FUNDEMENTAL ASSUMPTION VIOLATED IN SAVE THREAD");
                 }
             } while (true);
         }

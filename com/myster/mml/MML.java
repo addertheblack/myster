@@ -24,7 +24,7 @@ public class MML implements Serializable {
 
     public MML(MML mml) {
         startNode = mml.copyMML().startNode; //now both objects point to a copy
-                                             // of the same structure.
+        // of the same structure.
         // Which, unfortunately, SUCKS for thread safety you freaking idiot!
     }
 
@@ -38,53 +38,46 @@ public class MML implements Serializable {
      * 
      * calculateMemoryUsage(s); calculateMemoryUsage2(s);
      * 
-     * long starttime=System.currentTimeMillis(); for (int i=0; i <20; i++)
-     * mml=new MML(s);//startNode=createBranch(s, null);
-     * System.out.println("TIme="+(System.currentTimeMillis()-starttime));
-     * mml=new MML(s); startNode=new RootNode(); /*addLeaf(startNode, "/", new
-     * Leaf("tag", "Data")); addBranch(startNode, "/", new Branch("Photos"));
-     * addBranch(startNode, "/Photos/", new Branch("Today"));
-     * addBranch(startNode, "/Photos/", new Branch("Yesterday's"));
-     * addLeaf(startNode, "/Photos/Today/", new Leaf("My Foot", "(A picture of
-     * my foot)")); addLeaf(startNode, "/Photos/Yesterday's/", new Leaf("My
-     * Arm", "mooo")); put(startNode, "/Photos/Yesterday's/carrot/mommy/zerg",
-     * "google"); put(startNode, "/Photos/Yesterday's/carrot/mommy/poo",
-     * "google"); remove(startNode, "/Photos/Yesterday's/carrot/mommy/poo");
-     * remove(startNode, "/Photos/Yesterday's/carrot/mommy/zerg");
+     * long starttime=System.currentTimeMillis(); for (int i=0; i <20; i++) mml=new
+     * MML(s);//startNode=createBranch(s, null);
+     * System.out.println("TIme="+(System.currentTimeMillis()-starttime)); mml=new MML(s);
+     * startNode=new RootNode(); /*addLeaf(startNode, "/", new Leaf("tag", "Data"));
+     * addBranch(startNode, "/", new Branch("Photos")); addBranch(startNode, "/Photos/", new
+     * Branch("Today")); addBranch(startNode, "/Photos/", new Branch("Yesterday's"));
+     * addLeaf(startNode, "/Photos/Today/", new Leaf("My Foot", "(A picture of my foot)"));
+     * addLeaf(startNode, "/Photos/Yesterday's/", new Leaf("My Arm", "mooo")); put(startNode,
+     * "/Photos/Yesterday's/carrot/mommy/zerg", "google"); put(startNode,
+     * "/Photos/Yesterday's/carrot/mommy/poo", "google"); remove(startNode,
+     * "/Photos/Yesterday's/carrot/mommy/poo"); remove(startNode,
+     * "/Photos/Yesterday's/carrot/mommy/zerg");
      * 
-     * String path1="/rat/cat/fat/nat/sprat/zap"; String path2="/rat/zat";
-     * String path3="/rat/cow"; put(startNode, path1, "mittens"); put(startNode,
-     * path2, "mittens"); put(startNode, path3, "bob");
-     * System.out.println(get(startNode, path1));
-     * System.out.println(get(startNode, "/fuck/rat/cat/fat/nat/sprat/zap"));
-     * remove(startNode, "/fuck/rat/cat/fat/nat/sprat/fdgdsfgdsfg/");//path2);
-     * //put(startNode, "/Photos/Yesterday's", "google"); //addLeaf(startNode,
-     * "/Photos/Yesterday's/", new Leaf("My Arm", "")); //addLeaf(startNode,
-     * "/tag/futter//", new Leaf("ha", "not going to work"));
-     * //addLeaf(startNode, "/bugger/", new Leaf("ha", "not going to work"));
-     * //addLeaf(startNode, "/Photos//", new Leaf("ha", "not going to work"));
-     * //addLeaf(startNode, "/Photos/Yesterday's/My Arm/", new Leaf("My Arm",
-     * "mooo")); //assertBranch(startNode, "/Photos/Yesterday's/My
-     * Arm/wibble/nuke/dung//"); //assertBranch(startNode,
+     * String path1="/rat/cat/fat/nat/sprat/zap"; String path2="/rat/zat"; String path3="/rat/cow";
+     * put(startNode, path1, "mittens"); put(startNode, path2, "mittens"); put(startNode, path3,
+     * "bob"); System.out.println(get(startNode, path1)); System.out.println(get(startNode,
+     * "/fuck/rat/cat/fat/nat/sprat/zap")); remove(startNode,
+     * "/fuck/rat/cat/fat/nat/sprat/fdgdsfgdsfg/");//path2); //put(startNode, "/Photos/Yesterday's",
+     * "google"); //addLeaf(startNode, "/Photos/Yesterday's/", new Leaf("My Arm", ""));
+     * //addLeaf(startNode, "/tag/futter//", new Leaf("ha", "not going to work"));
+     * //addLeaf(startNode, "/bugger/", new Leaf("ha", "not going to work")); //addLeaf(startNode,
+     * "/Photos//", new Leaf("ha", "not going to work")); //addLeaf(startNode,
+     * "/Photos/Yesterday's/My Arm/", new Leaf("My Arm", "mooo")); //assertBranch(startNode,
+     * "/Photos/Yesterday's/My Arm/wibble/nuke/dung//"); //assertBranch(startNode,
      * "/Photos/Yesterday's/caca/nuke/dung/"); //deleteLeaf(startNode,
-     * "/Photos/Yesterday's/caca/wibble/nuke/"); //clearBranch(startNode,
-     * "/Photos/Yesterday's/"); Vector vector=getTagListing(startNode, "/rat/");
-     * for (int i=0; i <vector.size(); i++) {
+     * "/Photos/Yesterday's/caca/wibble/nuke/"); //clearBranch(startNode, "/Photos/Yesterday's/");
+     * Vector vector=getTagListing(startNode, "/rat/"); for (int i=0; i <vector.size(); i++) {
      * System.out.println("/rat/"+vector.elementAt(i).toString()); }
      * 
-     * System.out.print(toString()); } catch (Exception ex) {
-     * ex.printStackTrace(); }
-     *  }
+     * System.out.print(toString()); } catch (Exception ex) { ex.printStackTrace(); } }
      */
     /**
-     * Adds a value for the key path. If the path doesn't exist it is created.
-     * Always returns true or throws an execption.
+     * Adds a value for the key path. If the path doesn't exist it is created. Always returns true
+     * or throws an exception.
      */
     public synchronized boolean put(String path, String value) { //tried to add
-                                                                 // value to
-                                                                 // branch,
-                                                                 // syntax error
-                                                                 // (bad path)
+        // value to
+        // branch,
+        // syntax error
+        // (bad path)
         try {
             put(startNode, path, value);
             return true;
@@ -97,9 +90,11 @@ public class MML implements Serializable {
     }
 
     /**
-     * Removes the value at key path. All empty branch nodes along the path are
-     * deleted. Returns the value at key path. If path is invalid does not
-     * delete anything and returns null.
+     * Removes the value at key path. All empty branch nodes along the path are deleted. Returns the
+     * value at key path. If path is invalid does not delete anything and returns null.
+     * 
+     * @param path to remove
+     * @return value being removed.
      */
     public synchronized String remove(String path) {
         try {
@@ -110,7 +105,10 @@ public class MML implements Serializable {
     }
 
     /**
-     * Gets the value at key path. If path doens't exoist, returns null.
+     * Gets the value at key path. If path doens't exist, returns null.
+     * 
+     * @param path to get value from.
+     * @return value at the path
      */
     public synchronized String get(String path) {
         try {
@@ -128,7 +126,10 @@ public class MML implements Serializable {
     }
 
     /**
-     * gets a listing at path. if path is bad returns null.
+     * Gets a listing at path. If path is bad returns null.
+     * 
+     * @param path to list
+     * @return list of keys at that path.
      */
     public synchronized Vector list(String path) {
         return getTagListing(startNode, path);
@@ -136,6 +137,9 @@ public class MML implements Serializable {
 
     /**
      * returns true if path points to a value. false otherwise.
+     * 
+     * @param path is query
+     * @return true if path does indeed point to a value
      */
     public synchronized boolean isAValue(String path) {
         try {
@@ -185,64 +189,51 @@ public class MML implements Serializable {
     }
 
     /*
-     * public synchronized MML copyMML(String path) { String sectionString; try {
-     * sectionString = makeString(getBranch(startNode, path)); } catch
-     * (NonExistantPathException ex) { return null; }
+     * public synchronized MML copyMML(String path) { String sectionString; try { sectionString =
+     * makeString(getBranch(startNode, path)); } catch (NonExistantPathException ex) { return null; }
      * 
-     * try { return new MML(sectionString); } catch (Exception ex) { throw new
-     * Error("A serious programming error in copyMML(String)"); } }
+     * try { return new MML(sectionString); } catch (Exception ex) { throw new Error("A serious
+     * programming error in copyMML(String)"); } }
      */
     /*
-     * private void calculateMemoryUsage(String s) throws Exception { mml=new
-     * MML(s); //startNode=createBranch(s, null); long mem0 =
+     * private void calculateMemoryUsage(String s) throws Exception { mml=new MML(s);
+     * //startNode=createBranch(s, null); long mem0 = Runtime.getRuntime().totalMemory() -
+     * Runtime.getRuntime().freeMemory(); long mem1 = Runtime.getRuntime().totalMemory() -
+     * Runtime.getRuntime().freeMemory(); mml=null;//startNode = null; System.gc(); System.gc();
+     * System.gc(); System.gc(); System.gc(); System.gc(); System.gc(); System.gc(); System.gc();
+     * System.gc(); System.gc(); System.gc(); System.gc(); System.gc(); System.gc(); System.gc();
+     * mem0 = Runtime.getRuntime().totalMemory() - Runtime.getRuntime().freeMemory(); mml=new
+     * MML(s);//startNode=createBranch(s, null);; System.gc(); System.gc(); System.gc();
+     * System.gc(); System.gc(); System.gc(); System.gc(); System.gc(); System.gc(); System.gc();
+     * System.gc(); System.gc(); System.gc(); System.gc(); System.gc(); System.gc(); mem1 =
      * Runtime.getRuntime().totalMemory() - Runtime.getRuntime().freeMemory();
-     * long mem1 = Runtime.getRuntime().totalMemory() -
-     * Runtime.getRuntime().freeMemory(); mml=null;//startNode = null;
-     * System.gc(); System.gc(); System.gc(); System.gc(); System.gc();
-     * System.gc(); System.gc(); System.gc(); System.gc(); System.gc();
-     * System.gc(); System.gc(); System.gc(); System.gc(); System.gc();
-     * System.gc(); mem0 = Runtime.getRuntime().totalMemory() -
-     * Runtime.getRuntime().freeMemory(); mml=new
-     * MML(s);//startNode=createBranch(s, null);; System.gc(); System.gc();
-     * System.gc(); System.gc(); System.gc(); System.gc(); System.gc();
-     * System.gc(); System.gc(); System.gc(); System.gc(); System.gc();
-     * System.gc(); System.gc(); System.gc(); System.gc(); mem1 =
-     * Runtime.getRuntime().totalMemory() - Runtime.getRuntime().freeMemory();
-     * System.out.println("Memeory used for the fat version is: "+( mem1 -
-     * mem0)+"bytes"); }
+     * System.out.println("Memeory used for the fat version is: "+( mem1 - mem0)+"bytes"); }
      * 
-     * private void calculateMemoryUsage2(String s) throws Exception {
-     * startNode=createBranch(s, null); long mem0 =
-     * Runtime.getRuntime().totalMemory() - Runtime.getRuntime().freeMemory();
-     * long mem1 = Runtime.getRuntime().totalMemory() -
-     * Runtime.getRuntime().freeMemory(); startNode = null; System.gc();
-     * System.gc(); System.gc(); System.gc(); System.gc(); System.gc();
-     * System.gc(); System.gc(); System.gc(); System.gc(); System.gc();
-     * System.gc(); System.gc(); System.gc(); System.gc(); System.gc(); mem0 =
-     * Runtime.getRuntime().totalMemory() - Runtime.getRuntime().freeMemory();
-     * startNode=createBranch(s, null); System.gc(); System.gc(); System.gc();
-     * System.gc(); System.gc(); System.gc(); System.gc(); System.gc();
-     * System.gc(); System.gc(); System.gc(); System.gc(); System.gc();
-     * System.gc(); System.gc(); System.gc(); mem1 =
-     * Runtime.getRuntime().totalMemory() - Runtime.getRuntime().freeMemory();
-     * System.out.println("Memeory used for the slim version is: "+( mem1 -
-     * mem0)+"bytes"); }
+     * private void calculateMemoryUsage2(String s) throws Exception { startNode=createBranch(s,
+     * null); long mem0 = Runtime.getRuntime().totalMemory() - Runtime.getRuntime().freeMemory();
+     * long mem1 = Runtime.getRuntime().totalMemory() - Runtime.getRuntime().freeMemory(); startNode =
+     * null; System.gc(); System.gc(); System.gc(); System.gc(); System.gc(); System.gc();
+     * System.gc(); System.gc(); System.gc(); System.gc(); System.gc(); System.gc(); System.gc();
+     * System.gc(); System.gc(); System.gc(); mem0 = Runtime.getRuntime().totalMemory() -
+     * Runtime.getRuntime().freeMemory(); startNode=createBranch(s, null); System.gc(); System.gc();
+     * System.gc(); System.gc(); System.gc(); System.gc(); System.gc(); System.gc(); System.gc();
+     * System.gc(); System.gc(); System.gc(); System.gc(); System.gc(); System.gc(); System.gc();
+     * mem1 = Runtime.getRuntime().totalMemory() - Runtime.getRuntime().freeMemory();
+     * System.out.println("Memeory used for the slim version is: "+( mem1 - mem0)+"bytes"); }
      */
 
     /*
-     * private synchronized String loadAsBytes(File f) throws Exception {
-     * DataInputStream in=new DataInputStream(new FileInputStream(f));
+     * private synchronized String loadAsBytes(File f) throws Exception { DataInputStream in=new
+     * DataInputStream(new FileInputStream(f));
      * 
-     * String working=in.readUTF(); if (working.equals("This file is in bytes
-     * not a UTF")) { int size=in.readInt(); byte[] temp=new byte[size];
-     * in.readFully(temp); return new String(temp); } else {
-     * System.out.println("Reading in older Myster DEV 9.5 and earlyer style
+     * String working=in.readUTF(); if (working.equals("This file is in bytes not a UTF")) { int
+     * size=in.readInt(); byte[] temp=new byte[size]; in.readFully(temp); return new String(temp); }
+     * else { System.out.println("Reading in older Myster DEV 9.5 and earlyer style
      * preferences..."); return working; } }
      */
 
     /**
-     * paths with "//" in them are errors. Paths that start with a char other
-     * than "/" are errors.
+     * paths with "//" in them are errors. Paths that start with a char other than "/" are errors.
      */
     protected static Node getNode(Node node, PathVector pathVector, int index)
             throws NonExistantPathException {
@@ -276,29 +267,26 @@ public class MML implements Serializable {
         }
     }
 
-    protected static Node getNode(Node node, String path)
-            throws NonExistantPathException {
+    protected static Node getNode(Node node, String path) throws NonExistantPathException {
         try {
             return getNode(node, parsePath(path), 0);
         } catch (LeafAsABranchException ex) { //slow, recursive exception
-                                              // handling.
+            // handling.
             throw new LeafAsABranchException(path);
         } catch (BranchAsALeafException ex) { //slow, recursive exception
-                                              // handling.
+            // handling.
             throw new BranchAsALeafException(path);
         } catch (NonExistantPathException ex) { //slow, recursive exception
-                                                // handling.
+            // handling.
             throw new NonExistantPathException(path);
         }
     }
 
-    protected static Branch getBranch(Branch b, String path)
-            throws NonExistantPathException {
+    protected static Branch getBranch(Branch b, String path) throws NonExistantPathException {
         return (Branch) getNode(b, path);
     }
 
-    protected static Leaf getLeaf(Branch b, String path)
-            throws NonExistantPathException {
+    protected static Leaf getLeaf(Branch b, String path) throws NonExistantPathException {
         return (Leaf) getNode(b, path);
     }
 
@@ -308,7 +296,7 @@ public class MML implements Serializable {
         Branch branchToList;
         try {
             branchToList = getBranch(b, path); //will toss a improper cast
-                                               // thing if it goes wrong.
+            // thing if it goes wrong.
         } catch (NonExistantPathException ex) {
             return null;
         }
@@ -342,8 +330,7 @@ public class MML implements Serializable {
                 try {
                     addLeaf(root, newPath, newLeaf);
                 } catch (NodeAlreadyExistsException exp) {
-                    throw new RuntimeException(
-                            "Invalid *assumption* in put. Node already exists");
+                    throw new RuntimeException("Invalid *assumption* in put. Node already exists");
                 }
             }
         } else {
@@ -351,16 +338,14 @@ public class MML implements Serializable {
         }
     }
 
-    protected static String get(Branch root, String path)
-            throws NonExistantPathException {
+    protected static String get(Branch root, String path) throws NonExistantPathException {
         Leaf n_temp = getLeaf(root, path);
         if (n_temp == null)
             return null;
         return n_temp.value;
     }
 
-    protected static String remove(Branch root, String path)
-            throws NonExistantPathException {
+    protected static String remove(Branch root, String path) throws NonExistantPathException {
         String value;
         try {
             Leaf leaf = null;
@@ -392,20 +377,18 @@ public class MML implements Serializable {
     }
 
     protected static void addBranch(Branch root, String path, Branch toAdd)
-            throws MMLPathException, NoStartingSlashException,
-            NonExistantPathException, NodeAlreadyExistsException {
+            throws MMLPathException, NoStartingSlashException, NonExistantPathException,
+            NodeAlreadyExistsException {
         addNode(root, path, toAdd);
     }
 
-    protected static void addLeaf(Branch root, String path, Leaf toAdd)
-            throws MMLPathException, NoStartingSlashException,
-            NonExistantPathException, NodeAlreadyExistsException {
+    protected static void addLeaf(Branch root, String path, Leaf toAdd) throws MMLPathException,
+            NoStartingSlashException, NonExistantPathException, NodeAlreadyExistsException {
         addNode(root, path, toAdd);
     }
 
-    private static void addNode(Branch root, String path, Node toAdd)
-            throws MMLPathException, NoStartingSlashException,
-            NonExistantPathException, NodeAlreadyExistsException {
+    private static void addNode(Branch root, String path, Node toAdd) throws MMLPathException,
+            NoStartingSlashException, NonExistantPathException, NodeAlreadyExistsException {
         Branch branch = getBranch(root, path);
 
         if (Link.getNode(branch.head, toAdd.tag) != null)
@@ -423,8 +406,7 @@ public class MML implements Serializable {
         }
     }
 
-    protected static void deleteLeaf(Branch root, String path)
-            throws NonExistantPathException {
+    protected static void deleteLeaf(Branch root, String path) throws NonExistantPathException {
         try {
             deleteNode(root, path);
         } catch (NonExistantPathException ex) {
@@ -432,14 +414,12 @@ public class MML implements Serializable {
         }
     }
 
-    protected static void deleteNode(Branch root, String path)
-            throws NonExistantPathException {
+    protected static void deleteNode(Branch root, String path) throws NonExistantPathException {
         Node node = getNode(root, path);
 
         PathVector pathVector = parsePath(path);
         String newPath = "/";
-        int size = (pathVector.isBranchPath() ? pathVector.size() - 2
-                : pathVector.size() - 1);
+        int size = (pathVector.isBranchPath() ? pathVector.size() - 2 : pathVector.size() - 1);
         if (size < 0)
             throw new MMLPathException("Cannot delete root path.");
         for (int i = 0; i < size; i++) {
@@ -448,15 +428,15 @@ public class MML implements Serializable {
         String tag = pathVector.getToken(size);
         //System.out.println("Tag:"+newPath);
         Link.removeLink(((Branch) (getNode(root, newPath))).head, tag); //note,
-                                                                        // no
-                                                                        // cast
-                                                                        // stuff
-                                                                        // required
-                                                                        // here..
-                                                                        // MUST
-                                                                        // be a
-                                                                        // branch
-                                                                        // class.
+        // no
+        // cast
+        // stuff
+        // required
+        // here..
+        // MUST
+        // be a
+        // branch
+        // class.
     }
 
     protected static void clearBranch(Branch root, String path) {
@@ -473,23 +453,20 @@ public class MML implements Serializable {
     protected static void assertBranch(Branch root, String path) {
         PathVector vector = parsePath(path);
         if (!(vector.size() >= 1 && vector.isBranchPath()))
-            throw new MMLPathException(
-                    "Cannot Assert a leaf (path doesn't end with a '/') :"
-                            + path);
+            throw new MMLPathException("Cannot Assert a leaf (path doesn't end with a '/') :"
+                    + path);
         int i;
         Branch working = root;
         for (i = 0; i < vector.size() - 1; i++) {
             String temp = vector.getToken(i);
             if (temp.equals(""))
-                throw new RuntimeException(
-                        "Invalid Assumption in assert branch. '' detected!");
+                throw new RuntimeException("Invalid Assumption in assert branch. '' detected!");
 
             Branch tempBranch;
             try {
                 tempBranch = (Branch) (Link.getNode(working.head, temp));
             } catch (ClassCastException ex) {
-                throw new LeafAsABranchException("Came accross a leaf \""
-                        + temp + "\" in " + path);
+                throw new LeafAsABranchException("Came accross a leaf \"" + temp + "\" in " + path);
             }
 
             if (tempBranch == null) {
@@ -500,9 +477,8 @@ public class MML implements Serializable {
                     throw new RuntimeException(
                             "Invalid Assumption in assert Branch. Node Already Exists");
                 } catch (NonExistantPathException ex) {
-                    throw new RuntimeException(
-                            "Invalid Assumption in assert Branch: "
-                                    + ex.toString());
+                    throw new RuntimeException("Invalid Assumption in assert Branch: "
+                            + ex.toString());
                 }
             }
             working = tempBranch;
@@ -532,8 +508,7 @@ public class MML implements Serializable {
         return (node instanceof Leaf);
     }
 
-    protected static String getNextName(String workingString)
-            throws MMLPathException { //
+    protected static String getNextName(String workingString) throws MMLPathException { //
         if (workingString.length() == 0)
             throw new MMLPathException("Bad path Exception 1");
         if (workingString.length() == 1) {
@@ -552,8 +527,12 @@ public class MML implements Serializable {
         return workingString.substring(0, index);
     }
 
-    protected static String getNextTrimmedPath(String workingString)
-            throws MMLPathException { //returns null if no more items
+    protected static String getNextTrimmedPath(String workingString) throws MMLPathException { //returns
+                                                                                               // null
+                                                                                               // if
+                                                                                               // no
+                                                                                               // more
+                                                                                               // items
         if (workingString.length() == 0)
             return null;
         if (workingString.length() == 1) {
@@ -621,8 +600,7 @@ public class MML implements Serializable {
     }
 
     //Takes an MML string
-    protected static Branch createBranch(String s, String mytag)
-            throws MMLException {
+    protected static Branch createBranch(String s, String mytag) throws MMLException {
         if (s == null)
             return null;//
 
@@ -634,13 +612,11 @@ public class MML implements Serializable {
             int last2 = lastBalenced(s, i);//=s.indexOf("</"+tag+">", i);
             int last = s.indexOf("</" + tag + ">", last2);
             if (last != last2)
-                System.out.println("MML Error: " + last + " != " + last2
-                        + " in " + s);
+                System.out.println("MML Error: " + last + " != " + last2 + " in " + s);
 
             Link mylink = new Link();
             //System.out.println(s.substring(s.indexOf(">",i)+1, last));
-            mylink.value = createNode(s.substring(s.indexOf(">", i) + 1, last),
-                    tag);
+            mylink.value = createNode(s.substring(s.indexOf(">", i) + 1, last), tag);
             Link.addLink(branch.head, mylink);
 
             i = last + 1;
@@ -758,8 +734,7 @@ public class MML implements Serializable {
 
         public final String value;
 
-        public Leaf(String tag, String value) throws InvalidTokenException,
-                NullValueException {
+        public Leaf(String tag, String value) throws InvalidTokenException, NullValueException {
             super(tag);
             if (value == null || value.equals(""))
                 throw new NullValueException();
@@ -813,17 +788,17 @@ public class MML implements Serializable {
         }
 
         public static void list(Link head, Vector collection) { //ha ha ha ha
-                                                                // ho ho ho..
-                                                                // collection
-                                                                // eh?
+            // ho ho ho..
+            // collection
+            // eh?
             for (Link iterator = head; iterator.next != null; iterator = iterator.next)
                 collection.addElement(iterator.next.value.tag);
         }
     }
 
     /*
-     * Puts an extra T after each occurence of LT Then takes all " <" and
-     * replaces them with LTS LTS == less Than String
+     * Puts an extra T after each occurence of LT Then takes all " <" and replaces them with LTS LTS ==
+     * less Than String
      */
     static final String BITSTUFF = "LT";
 
@@ -851,9 +826,7 @@ public class MML implements Serializable {
                     outstring = outstring + s.substring(startindex, s.length());
                     break;
                 }
-                outstring = outstring
-                        + s.substring(startindex, endindex + BITSTUFF.length())
-                        + "";
+                outstring = outstring + s.substring(startindex, endindex + BITSTUFF.length()) + "";
                 startindex = endindex + BITSTUFF.length() + 1;
             }
             return outstring;
@@ -893,8 +866,7 @@ public class MML implements Serializable {
                     outstring = outstring + s.substring(startindex, s.length());
                     break;
                 }
-                outstring = outstring + s.substring(startindex, endindex)
-                        + KILLERSTRING;
+                outstring = outstring + s.substring(startindex, endindex) + KILLERSTRING;
                 startindex = endindex + 1;
             }
             return outstring;
@@ -914,8 +886,7 @@ public class MML implements Serializable {
                     outstring = outstring + s.substring(startindex, s.length());
                     break;
                 }
-                outstring = outstring + s.substring(startindex, endindex)
-                        + BITSTUFF + STUFF;
+                outstring = outstring + s.substring(startindex, endindex) + BITSTUFF + STUFF;
                 startindex = endindex + BITSTUFF.length();
             }
             return outstring;

@@ -17,9 +17,8 @@ import com.myster.type.MysterType;
 import com.myster.util.FileProgressWindow;
 
 /**
- * Contains many of the more common (simple!) stream based connection sections.
+ * Contains many of the more common (simple) stream based connection sections.
  */
-
 public class StandardSuite {
 
     public static Vector getSearch(MysterAddress ip, MysterType searchType, String searchString)

@@ -28,37 +28,52 @@ import com.myster.net.MysterSocketPool;
 import com.myster.tracker.IPListManagerSingleton;
 import com.myster.tracker.MysterServer;
 import com.myster.type.MysterType;
-import com.myster.util.MysterThread;
 import com.myster.util.Sayable;
-import com.sun.java.util.collections.Collections;
 import com.sun.java.util.collections.HashSet;
 import com.sun.java.util.collections.Iterator;
 import com.sun.java.util.collections.Set;
 
-public class MysterSearch extends MysterThread {
-    private static final int MAX_CRAWLERS = 5;
-
+/**
+ * Implements the Myster search algorithm using the protocol stack in StandardSuite and
+ * StandardDatagramSuite.
+ * <p>
+ * This object is setup to synchronize all its activities using the event thread. All callback from
+ * asynchrnous functions arrive on the event thread. All interractions with the outside world with
+ * interrnal data structures re also done on the event thread.
+ */
+public class MysterSearch {
+    /** Contains the object to pass status messages to. */
     private Sayable msg;
 
-    //private MysterThread t[];
-
+    /** Contains the type to search on. */
     private MysterType type;
 
+    /** Contains the stream based searcher algorithm code. */
     private StandardMysterSearch searcher;
 
+    /**
+     * Is set to true if some one has requested that this search be stopped.
+     * <p>
+     * <b>NOTE: The is a delay between when the search is requested to be stopped and when the
+     * search actually stops. That is the "endFlag" and the isDone flag are not set at the same
+     * time. <b>
+     */
     private boolean endFlag = false;
 
-    private boolean done = false; //we're done... start shutting down.
+    /** Is set to true when there are no more searches left outstanding (when the search is over). */
+    private boolean isDone = false; //we're done... start shutting down.
 
+    /** Contains the search string being used to search. */
     private String searchString;
 
+    /** Contains the search result event listener for this search. */
     private SearchResultListener listener;
 
-    // private volatile int outstandingServices = 0;
-
+    /** Contains the number of servers that have been SUCCESSFULLY searched. */
     private volatile int serversSearched = 0;
 
-    private volatile Set outStandingFutures;
+    /** Contains Future objects for each asynchronous call still outstanding. */
+    private Set outStandingFutures;
 
     public MysterSearch(SearchResultListener listener, Sayable msg, MysterType type,
             String searchString) {
@@ -71,6 +86,11 @@ public class MysterSearch extends MysterThread {
         outStandingFutures = new HashSet();
     }
 
+    /**
+     * Call this routine to start the search off. The search is completely asynchronous so this
+     * routine returns immediately. The search notifies listeners of important events during the
+     * search.
+     */
     public void run() {
         msg.say("SEARCH: Starting Search..");
         searcher.start();
@@ -92,11 +112,94 @@ public class MysterSearch extends MysterThread {
     }
 
     /**
-     * This function must be called on the event thread.
+     * Call this routine to request the file search to end. While there is a lag between when this
+     * command is issued and when the searching actually stops (due to some technical issues) this
+     * object guarantees that the listener will not receiving any new search results or search
+     * result stats updates after this function returns.
+     */
+    public void flagToEnd() {
+        synchronized (this) {
+            endFlag = true;
+        }
+
+        searcher.flagToEnd();
+
+        Util.invoke(new Runnable() {
+            public void run() {
+                for (Iterator iter = outStandingFutures.iterator(); iter.hasNext();) {
+                    Future future = (Future) iter.next();
+                    future.cancel();
+                }
+            }
+        });
+    }
+
+    /**
+     * This routine cancels the search and blocks until the search is completely over (until
+     * isDone() returns true). This blocking could theoretically last up to 90 seconds (because we
+     * must wait for connection attempts to time out)!
+     */
+    public void end() {
+        msg.say("Stopping previous search threads (if any)..");
+        //Stops all previous threads
+        flagToEnd();
+
+        waitForEnd();
+    }
+
+    /**
+     * This routine will block the caller thread until this search really ends (until isDone()
+     * returns true).
+     */
+    public synchronized void waitForEnd() {
+        if (isDone)
+            return;
+
+        try {
+            while (!isDone) {
+                wait();
+            }
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
+    }
+
+    /**
+     * Returns whether or not this search has been cancelled using flagToEnd().
+     * 
+     * @return true if search has been cancelled.
+     */
+    public boolean isCancelled() {
+        return endFlag;
+    }
+
+    /**
+     * Returns whether or not this search has heard back from all its outstanding asynchronous
+     * function calls. This can happen if the search has exhausted all servers on the network or the
+     * search was cancelled and all all asynchronous function calls have returned (been accounted
+     * for).
+     * <p>
+     * Usually one does not need to know when a search is "done()" if a search has been cancelled
+     * but the behavior is done this way to allow for easy testing of this object and the
+     * asynchronous function call API to make sure that the API isn't leaking function calls (that
+     * is to make sure all asynchronous function calls return).
+     * 
+     * @return true is search is done.
+     */
+    public boolean isDone() {
+        return isDone;
+    }
+
+    /**
+     * This version starts the process for searching for an address. This function must be called on
+     * the event thread.
      * 
      * @param address
+     *            to search
      * @param ipQueue
+     *            being used by this object
      * @throws IOException
+     *             if UDP sub system could not be started.
      */
     private void searchThisIp(final MysterAddress address, final IPQueue ipQueue)
             throws IOException {
@@ -120,14 +223,24 @@ public class MysterSearch extends MysterThread {
     }
 
     /**
+     * Starts off the process for dealing with file stats information for a list of files. Currently
+     * this is done using a streamed connection, however in future the datagram version could be
+     * used.
+     * 
      * @param address
      * @param mysterSearchResults
      */
     private void dealWithFileStats(MysterAddress address, MysterSearchResult[] mysterSearchResults) {
-        queueTcpSection(new TCPFileStats(address, mysterSearchResults));
+        queueStreamSection(new StreamFileStats(address, mysterSearchResults));
     }
 
-    private void queueTcpSection(final TCPSection section) {
+    /**
+     * Queues up a stream section to asynchronously execute.
+     * 
+     * @param section
+     *            to execute.
+     */
+    private void queueStreamSection(final StreamSection section) {
         Util.invoke(new Runnable() {
             public void run() {
                 if (endFlag)
@@ -140,10 +253,26 @@ public class MysterSearch extends MysterThread {
         });
     }
 
-    private void queueTcpSearch(final MysterAddress address, final MysterType type) {
-        queueTcpSection(new TCPSearch(address, type));
+    /**
+     * Queues up a stream search to execute asynchronously.
+     * 
+     * @param address
+     *            to search
+     * @param type
+     *            to search on
+     */
+    private void queueStreamSearch(final MysterAddress address, final MysterType type) {
+        queueStreamSection(new StreamSearch(address, type));
     }
 
+    /**
+     * Deals with the code required to keep the IPQueue full on untried server addresses.
+     * 
+     * processNewAddresses() starts a "search" on each new, untried server it finds in the IPQueue.
+     * 
+     * @param ipQueue
+     *            to explore
+     */
     private void processNewAddresses(final IPQueue ipQueue) {
         if (endFlag)
             return;
@@ -164,6 +293,12 @@ public class MysterSearch extends MysterThread {
         }
     }
 
+    /**
+     * Creates an IPQueue primed with server addresses from the Tracker an array of last resort (if
+     * necessairy)
+     * 
+     * @return a primed IPQueue
+     */
     private IPQueue createPrimedIpQueue() {
         MysterServer[] iparray = IPListManagerSingleton.getIPListManager().getTop(type, 50);
 
@@ -191,7 +326,7 @@ public class MysterSearch extends MysterThread {
     }
 
     /**
-     * Must be called from event thread.
+     * Removes a Future from the list of oustanding Futures. Must be called from event thread.
      * 
      * @param future
      */
@@ -204,59 +339,35 @@ public class MysterSearch extends MysterThread {
         checkForDone();
     }
 
+    /**
+     * Checks to see if the search is done by checking for the numebr of outstanding futures.
+     * <p>
+     * Sets isDone to true if search is over. Also notifies other threads waiting on this search
+     * using waitForEnd();
+     *  
+     */
     private void checkForDone() {
         if (outStandingFutures.size() == 0) {
             synchronized (this) {
-                done = true;
+                isDone = true;
                 notifyAll();
                 System.out.println("DONE search!");
             }
         }
     }
 
+    /**
+     * Adds search results to the search listener. This routine must be synchronized to make sure
+     * that flagToEnd() hasen't been called (and returned) while still adding search results to the
+     * listener. (The search cancelling routines of this object are thread safe)
+     * 
+     * @param mysterSearchResults
+     */
     private synchronized void addResults(final MysterSearchResult[] mysterSearchResults) {
         if (endFlag)
             return;
 
         listener.addSearchResults(mysterSearchResults);
-    }
-
-    public void flagToEnd() {
-        synchronized (this) {
-            endFlag = true;
-        }
-
-        searcher.flagToEnd();
-
-        Util.invoke(new Runnable() {
-            public void run() {
-                for (Iterator iter = outStandingFutures.iterator(); iter.hasNext();) {
-                    Future future = (Future) iter.next();
-                    future.cancel();
-                }
-            }
-        });
-    }
-
-    public void end() {
-        msg.say("Stopping previous search threads (if any)..");
-        //Stops all previous threads
-        flagToEnd();
-
-        waitForEnd();
-    }
-
-    public synchronized void waitForEnd() {
-        if (done)
-            return;
-
-        try {
-            while (!done) {
-                wait();
-            }
-        } catch (InterruptedException e) {
-            e.printStackTrace();
-        }
     }
 
     private final class UdpSearch extends CancellableCallableRemover {
@@ -294,7 +405,7 @@ public class MysterSearch extends MysterThread {
         }
 
         public void handleException(Exception ex) {
-            queueTcpSearch(address, type);
+            queueStreamSearch(address, type);
         }
 
     }
@@ -323,15 +434,19 @@ public class MysterSearch extends MysterThread {
         }
     }
 
-    public abstract class TCPSection implements CancellableCallable {
+    public abstract class StreamSection implements CancellableCallable {
         protected MysterAddress address;
 
         protected MysterSocket socket = null;
 
-        private TCPSection(MysterAddress address) {
+        private StreamSection(MysterAddress address) {
             this.address = address;
         }
 
+        /**
+         * Instead of over-riding call, implementors of this class should over-ride doSection() as
+         * we need to make sure the socket object is opened and closed correctly.
+         */
         public final Object call() throws IOException {
             try {
                 socket = MysterSocketFactory.makeStreamConnection(address);
@@ -349,8 +464,18 @@ public class MysterSearch extends MysterThread {
             return null;
         }
 
+        /**
+         * An over-ridden version of call() that doens't need to return anything (since stream
+         * section return results via the listener in StandardMysterSearch.
+         * 
+         * @throws IOException
+         */
         protected abstract void doSection() throws IOException;
 
+        /**
+         * Closes the socket. Subclasses should call this method using super if they over-ride this
+         * method.
+         */
         public void cancel() {
             if (socket == null)
                 return;
@@ -362,10 +487,10 @@ public class MysterSearch extends MysterThread {
         }
     }
 
-    private class TCPSearch extends TCPSection {
+    private class StreamSearch extends StreamSection {
         private MysterType type;
 
-        private TCPSearch(MysterAddress address, MysterType type) {
+        private StreamSearch(MysterAddress address, MysterType type) {
             super(address);
             this.type = type;
         }
@@ -375,10 +500,10 @@ public class MysterSearch extends MysterThread {
         }
     }
 
-    private class TCPFileStats extends TCPSection {
+    private class StreamFileStats extends StreamSection {
         private MysterSearchResult[] mysterSearchResults;
 
-        public TCPFileStats(MysterAddress address, MysterSearchResult[] mysterSearchResults) {
+        public StreamFileStats(MysterAddress address, MysterSearchResult[] mysterSearchResults) {
             super(address);
             this.mysterSearchResults = mysterSearchResults;
         }
@@ -395,10 +520,13 @@ public class MysterSearch extends MysterThread {
 
                 }
             });
-
         }
     }
 
+    /**
+     * Simple listener that makes sure that the Future is removed from the list of futures
+     * maintained by this MysterSearch object.
+     */
     private class CancellableCallableRemover implements CallListener {
         private Future future;
 
@@ -411,10 +539,18 @@ public class MysterSearch extends MysterThread {
         public void handleException(Exception ex) {
         }
 
+        /**
+         * Removed the Future form the lis tof futures.
+         */
         public void handleFinally() {
             removeFuture(future);
         }
 
+        /**
+         * This methd should be called to assign a Future object to this object.
+         * 
+         * @param future
+         */
         public void setFuture(Future future) {
             this.future = future;
         }

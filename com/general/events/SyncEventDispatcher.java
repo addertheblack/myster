@@ -4,15 +4,17 @@ import java.util.Vector;
 
 import com.general.util.LinkedList;
 
+/**
+ * Dispatches event synchronously on the same thread that fired them.
+ */
 public class SyncEventDispatcher extends EventDispatcher {
     private LinkedList queue = new LinkedList();
 
     private boolean isDispatching = false;
 
     /**
-     * THis command cannot be called inside a monitor used to forward the
-     * addListener/removeListener commands because there is a serious risk of
-     * deadlock with the current implementation.
+     * This command cannot be called inside a monitor used to forward the addListener/removeListener
+     * commands because there is a serious risk of deadlock with the current implementation.
      */
     public void fireEvent(GenericEvent e) {
         doCommandBacklog();
@@ -21,7 +23,7 @@ public class SyncEventDispatcher extends EventDispatcher {
             isDispatching = true;
         }
 
-        Vector listeners = getListeners();
+        Vector listeners = this.listeners;
         //synchronized (listeners) { //should not be nessesairy since no one
         // should be adding while dispatching.
         for (int i = 0; i < listeners.size(); i++) {
@@ -47,26 +49,30 @@ public class SyncEventDispatcher extends EventDispatcher {
         }
     }
 
-    public synchronized void addListener(EventListener l) {
+    public synchronized void addListener(EventListener listener) {
         if (isDispatching) {
-            queue.addToTail(new ModifyListCommand(l, true));
+            queue.addToTail(new ModifyListCommand(listener, true));
             return;
         }
 
-        listeners.addElement(l);
+        listeners.addElement(listener);
     }
 
-    public synchronized void removeListener(EventListener l) {
+    /*
+     *  (non-Javadoc)
+     * @see com.general.events.EventDispatcher#removeListener(com.general.events.EventListener)
+     */
+    public synchronized void removeListener(EventListener listener) {
         if (isDispatching) {
-            queue.addToTail(new ModifyListCommand(l, false));
+            queue.addToTail(new ModifyListCommand(listener, false));
             return;
         }
 
-        listeners.removeElement(l);
+        listeners.removeElement(listener);
     }
-    
+
     public synchronized int getListenerCount() {
-    	return listeners.size();
+        return listeners.size();
     }
 
     private class ModifyListCommand {

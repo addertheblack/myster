@@ -4,7 +4,7 @@
  * 
  * This code is under GPL
  * 
- * Copyright Andrew Trumper 2000-2001
+ * Copyright Andrew Trumper 2000-2004
  * 
  * 
  *  
@@ -17,6 +17,11 @@ import com.general.util.Util;
 import com.myster.search.ui.SearchWindow;
 import com.myster.util.MysterThread;
 
+
+/**
+ * This class is responsible for starting/stopping all searches. Currently it only supports
+ * Myster searches but could be modified to search using multiple different protocols.
+ */
 public class SearchEngine extends MysterThread {
     SearchWindow window;
 
@@ -39,7 +44,7 @@ public class SearchEngine extends MysterThread {
             throw new UnexpectedException(ex);
         }
 
-        msearch.start();
+        msearch.run();
 
         try {
             msearch.waitForEnd();

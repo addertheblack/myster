@@ -92,8 +92,6 @@ public class FileTypeListManager {
      * 
      * @param type a Myster file type as a String. @return The FileTypeList for
      * that type if it exists; null otherwise.
-     * 
-     * @since JDK1.0
      */
     private FileTypeList getFileTypeList(MysterType type) {
         for (int i = 0; i < filelist.length; i++) {
@@ -175,10 +173,11 @@ public class FileTypeListManager {
     /**
      * Gets a java.io.File object from a Myster type and Unique file identifyer
      * string (a file name).
-     * 
+     * <p>
+     * <b>
      * NOTE: In the Myster protocol, when files are listed, these file names are
      * not so much file names as a way of identifying a unique file given a
-     * type.
+     * type.</b>
      * 
      * @param type
      *            a Myster file type
@@ -201,16 +200,17 @@ public class FileTypeListManager {
 
     /**
      * Gets a com.myster.filemanager.FileItem object from a Myster type and
-     * Unique file identifyer string (a file name).
+     * Unique file identifier string (a file name).
      * <p>
+     * <b>
      * NOTE: In the Myster protocol, when files are listed, these file names are
      * not so much file names as a way of identifying a unique file given a
-     * type.
+     * type.</b>
      * 
      * @param type
      *            of the file you want to get
      * @param fileNameReference
-     *            Unique file identifyer string
+     *            Unique file identifier string
      * @return a java.io.File object that points to the File in question.
      */
     public FileItem getFileItem(MysterType type, String fileNameReference) {

@@ -13,12 +13,13 @@ package com.myster.util;
 import com.general.util.SafeThread;
 
 /**
- * This class
+ * This class is the subclass of all threads created by Myster. The class is basically identical to
+ * a safe thread exception that the end() routine has a default implementation of calling stop()
+ * (bad) and it sets itself to minimum priority.
+ * 
  * 
  * @author Andrew Trumper
- *
  */
-
 public abstract class MysterThread extends SafeThread {
 
     public MysterThread() {
