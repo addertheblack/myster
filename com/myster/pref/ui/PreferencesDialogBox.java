@@ -72,6 +72,7 @@ public class PreferencesDialogBox extends MysterFrame {	//protected...!
 
 			public void componentShown(ComponentEvent e) {
 				mypanel.restore();
+				assertSize();
 			}
 
 			public void componentHidden(ComponentEvent e) {
@@ -218,7 +219,6 @@ public class PreferencesDialogBox extends MysterFrame {	//protected...!
 			g.setColor(new Color(150,150,150));
 			g.drawLine(10, YDEFAULT-45, XDEFAULT-20, YDEFAULT-45);
 			header.setFont(new Font(getFont().getName(), Font.BOLD, 24));
-			assertSize(); //hack for java bug in most VMs. (pack before show() causes crash.)
 		}
 		
 		//Tells *panels* to save changes
