@@ -83,7 +83,7 @@ public class Myster{
 		//if (true==true) return;
 
 
-		MessageManager.init();
+		
 		
 		
 		com.myster.menubar.MysterMenuBar.addMenuItem(new com.myster.menubar.MysterMenuItemFactory("Instant Message...", new java.awt.event.ActionListener() {
@@ -134,6 +134,7 @@ public class Myster{
 				ServerStatsWindow.getInstance().setLocation(-1111,-1111);
 				ServerStatsWindow.getInstance().setVisible(true);
 				progress.say(Myster.tr("Loading Server Stats Window....")+macHack);
+				progress.update(18);
 				try {Thread.currentThread().sleep(1000);} catch (Exception ex) {}
 				ServerStatsWindow.getInstance().setVisible(false);
 				ServerStatsWindow.getInstance().setLocation(p);
@@ -141,11 +142,6 @@ public class Myster{
 				progress.say(Myster.tr("Loading Server Fascade...")+macHack);
 				progress.update(25);
 				ServerFacade.assertServer();
-
-				progress.say(Myster.tr("Loading a search window...")+macHack);
-				progress.update(27);
-				//progress.setVisible(false);
-				progress.setVisible(true);
 				
 				progress.say(Myster.tr("Loading tracker...")+macHack);
 				progress.update(50);
@@ -154,6 +150,10 @@ public class Myster{
 				progress.say(Myster.tr("Loading FileManager...")+macHack);
 				progress.update(70);
 				FileTypeListManager.getInstance();
+				
+				progress.say(Myster.tr("Loading Instant Messaging...")+macHack);
+				progress.update(72);
+				MessageManager.init();
 				
 				progress.say(Myster.tr(Myster.tr("Loading WindowManager..."))+macHack);
 				progress.update(78);

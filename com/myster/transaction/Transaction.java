@@ -65,6 +65,10 @@ public final class Transaction implements DataPacket { 		//Immutable (Java needs
 			if (int_temp!=TRANSACTION_PROTOCOL_NUMBER) throw new NotATransactionException("Tried to make a transaction from a packet of type "+int_temp+" instead of type "+TRANSACTION_PROTOCOL_NUMBER+".");
 			transactionCode=in.readInt();
 			fullyQualifiedConnectionNumber=in.readInt();
+			
+			connectionNumber=getConnectionNumber(fullyQualifiedConnectionNumber);
+			isForClient=getPacketDirection(fullyQualifiedConnectionNumber);
+			
 			if (isForClient()) { //reply packets have a 1 byte longer header. THis byte is the error byte. !=0 is err
 				int errorTemp=in.read(); 
 				if (errorTemp==-1) throw new NotATransactionException("Transaction shorter than header.");
@@ -75,10 +79,7 @@ public final class Transaction implements DataPacket { 		//Immutable (Java needs
 		} catch (IOException ex) {
 			throw new NotATransactionException("Formating error occured: "+ex);
 		}
-		//isForClient flag is the least significant bit in the connection number field (so all odd are for client)
-		connectionNumber=getConnectionNumber(fullyQualifiedConnectionNumber);
-		isForClient=getPacketDirection(fullyQualifiedConnectionNumber);
-		
+
 		
 		data=new byte[bytes.length-getHeaderSize()];
 		System.arraycopy(bytes, getHeaderSize(), data, 0, data.length);

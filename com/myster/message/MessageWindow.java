@@ -141,6 +141,9 @@ public class MessageWindow extends MysterFrame {
 			if (type==NEW_MESSAGE) {
 				accept.addActionListener(new ActionListener() {
 					public void actionPerformed(ActionEvent e) {
+						String msg = getMessage();
+						if ((msg==null) || (msg.equals(""))) return; //err
+						
 						try {
 							MessageManager.sendInstantMessage(new InstantMessage(header.getAddress(), getMessage(),getQuote()));
 							closeThisWindow();
@@ -154,6 +157,7 @@ public class MessageWindow extends MysterFrame {
 					public void actionPerformed(ActionEvent e) {
 						try {
 							MessageWindow messageWindow = new MessageWindow(header.getAddress(), getMessage());
+							messageWindow.setBounds(MessageWindow.this.getBounds());
 							messageWindow.setVisible(true);
 							closeThisWindow();
 						} catch (UnknownHostException ex) {
@@ -169,7 +173,7 @@ public class MessageWindow extends MysterFrame {
 			cancel.setSize(X_BUTTON_SIZE,Y_BUTTON_SIZE);
 			cancel.addActionListener(new ActionListener() {
 				public void actionPerformed(ActionEvent e) {
-					MessageWindow.this.closeThisWindow();
+					closeThisWindow();
 				}
 			});
 			add(cancel);
@@ -206,7 +210,7 @@ class HeaderPanel extends Panel {
 			gbconstrains.fill=GridBagConstraints.BOTH;
 			gbconstrains.ipadx=1;
 			gbconstrains.ipady=1;
-			gbconstrains.insets = new Insets(5,5,5,5);
+			//gbconstrains.insets = new Insets(5,5,5,5);
 			setLayout(gblayout);
 			
 			this.address=address;

@@ -9,6 +9,8 @@ import com.myster.mml.RobustMML;
 import com.myster.mml.MMLException;
 import com.general.util.AnswerDialog;
 import com.general.util.LinkedList;
+import com.myster.pref.ui.PreferencesPanel;
+import com.myster.pref.Preferences;
 
 
 public class MessageManager {
@@ -17,6 +19,7 @@ public class MessageManager {
 	
 	public static void init() {
 		TransactionManager.addTransactionProtocol(new InstantMessageTransport());
+		Preferences.getInstance().addPanel(new MessagePreferencesPanel());
 	}
 	
 	public static void sendInstantMessage(MysterAddress address, String msg) {
@@ -47,9 +50,9 @@ public class MessageManager {
 							MessagePacket msgPacket=new MessagePacket(transaction);
 							if (msgPacket.getErrorCode()!=0) {
 								if (msgPacket.getErrorCode()==1) {
-									simpleAlert("Client is refusing messages.");
+									simpleAlert("Client is refusing messages."+"\n\nClient says -> "+msgPacket.getErrorString());
 								} else {
-									simpleAlert("Client got the message, with error code "+msgPacket.getErrorCode());
+									simpleAlert("Client got the message, with error code "+msgPacket.getErrorCode()+"\n\n"+msgPacket.getErrorString());
 								}
 							} else {
 								simpleAlert("Message was sent successfully...");	
@@ -171,7 +174,20 @@ class InstantMessageTransport extends TransactionProtocol {
 	}
 }
 
-
+class MessagePreferencesPanel extends PreferencesPanel {	
+	public MessagePreferencesPanel() {
+		setLayout(null);
+		
+		Label DenyMessageLabel = new Label("Deny Message:"0;
+		
+		
+		TextField DenyMessageText = new TextField("Not accepting messages at this time.");
+	}
+	
+	public void save() {}	//save changes
+	public void reset() {}	//discard changes and reset values to their defaults.
+	public String getKey() {return "Messages";}//gets the key structure for the place in the pref panel
+}
 
 
 class MessagePacket implements DataPacket { //Is Immutable
@@ -339,7 +355,7 @@ class MessagePacket implements DataPacket { //Is Immutable
 		RobustMML mml=new RobustMML();
 		
 		//msg
-		if (msg!=null) mml.put(REPLY, reply);
+		if (reply!=null) mml.put(REPLY, reply);
 		if (msg!=null) mml.put(MSG, msg);
 		if (from!=null) mml.put(FROM, from);
 		mml.put(ID_KEY, ""+id);
