@@ -898,8 +898,7 @@ Work on DEV 8:
 	  	-> Hooked up hash cache pref panel
 	  	-> Decided to remove the whole panel anyway.
 	  	-> Made it so the p2p window can also launch a multi source download
-		-> 
-				TO DO : Fix it so that when d/l is complete the bars say something sensible.
-					k/s counter keeps going down.
-					change last ping time to ping
-					true/false to on/off
+		-> Fixed it so that when d/l is complete the bars say something sensible.
+		-> k/s counter keeps going down, now fixed
+		-> change "Last Ping Time" to "Ping" in the tracker
+		-> For types in the type preferences true/false to on/off

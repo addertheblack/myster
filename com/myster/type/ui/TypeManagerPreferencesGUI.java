@@ -115,7 +115,7 @@ public class TypeManagerPreferencesGUI extends PreferencesPanel {
 		public Sortable getValueOfColumn(int i) {
 			switch (i) {
 				case 0  : return description; //slightly fast if there's no "new".
-				case 1  : return new SortableBoolean(enabled);
+				case 1  : return new SortableOnOff(enabled);
 				default : return new SortableString("");
 			}
 		}
@@ -125,6 +125,17 @@ public class TypeManagerPreferencesGUI extends PreferencesPanel {
 		}
 		
 		public boolean getEnabled() { return enabled; }
+	}
+	
+	private static class SortableOnOff extends SortableBoolean {
+		
+		public SortableOnOff(boolean value) {
+			super(value);
+		}
+		
+		public String toString() {
+			return (bool?"On":"Off");
+		}
 	}
 	
 	

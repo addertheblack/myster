@@ -284,6 +284,7 @@ public class MultiSourceDownload {
 											
 											public void endSearch(HashSearchEvent event) {
 												System.out.println("Search Lstnr-> End search");
+												
 												startCrawler();
 											}
 										}
@@ -331,7 +332,7 @@ public class MultiSourceDownload {
 		
 		public void endConnection(SegmentDownloaderEvent e) {
 			progress.setValue(0, bar);
-			progress.setText("Searching for new source...", bar);
+			if (!stopDownload) progress.setText("Searching for new source...", bar);
 		}
 	}
 
@@ -389,7 +390,13 @@ public class MultiSourceDownload {
 			return;
 		}
 		
+		for (int i = 1; i < progress.getProgressBarNumber(); i++) {
+			progress.setText("", i);
+		}
+		
 		progress.setText("File downloaded");
+
+		
 	}
 	
 	//call when download is over but not done.
@@ -397,6 +404,10 @@ public class MultiSourceDownload {
 		try {randomAccessFile.close();} catch (IOException ex) {}
 		
 		if (crawler!=null) crawler.flagToEnd();
+		
+		if (progress!=null) {
+			progress.done();
+		}
 	}
 	
 	public synchronized void receiveExtraSegments(WorkSegment[] workSegments) {
