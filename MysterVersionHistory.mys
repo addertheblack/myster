@@ -808,7 +808,7 @@ Work on DEV 8:
      	-> Worked some more on cleaning up Chat's code... Code should be much smaller when I am finished
      			with it. This might take a while. Wondering if I should release chat as is and fix it later. :-)
      	-> Finished instant messaging. Is good enough for a release.
-     	-> Added a button to the Server Stats so people who are downloading form you cna be messaged.
+     	-> Added a button to the Server Stats so people who are downloading from you can be messaged.
 
     Work on DEV 18
       2003/03/23
@@ -819,3 +819,6 @@ Work on DEV 8:
       	-> Ported Space Smillies to Myster 'cause I felt like it.
       	-> Move the instant message menu item to its permanent location
       	-> Added an instant message button to the p2p window.
+
+	Work on DEV 18.1
+	  ??

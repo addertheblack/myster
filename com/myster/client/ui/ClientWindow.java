@@ -127,8 +127,8 @@ public class ClientWindow extends MysterFrame implements Sayable{
 		addComponent(instant,0,3,1,1,0,0);
 		addComponent(filetypelist,1,0,1,1,1,99);
 		addComponent(filelist,1,1,2,1,6,99);
-		addComponent(pane,1,2,1,1,5,99);
-		addComponent(msg,2,0,3,1,99,0);
+		addComponent(pane,1,3,1,1,5,99);
+		addComponent(msg,2,0,4,1,99,0);
 		
 		show(true);
 		setResizable(true);
