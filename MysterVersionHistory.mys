@@ -1047,6 +1047,12 @@ Work on DEV 8:
 				resume. (Thanx "DIALTONE")
 		-> Fixed a bug where no feedback was given after downloading a file because the server was down.
 				A progress dialog now is shown befre connecting to the first server.
+				
+	Work on DEV 21.2
+		2004/09/14	all this time just to find time to START work wow..
+		-> Fixed the box border-not-appearing-on-macOS 9 bug.
+		-> Hopefully fixed the pulsating progress not always shown bug.
+		-> Fixed a bug where clicking cancel on a dialog for multisource download would cause regular download to start.
 		
 		
 		

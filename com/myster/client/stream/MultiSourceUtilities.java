@@ -16,7 +16,7 @@ public class MultiSourceUtilities {
     private static final String EXTENSION = ".i";
 
     public static File getFileToDownloadTo(MysterFileStub stub,
-            Frame parentFrame) throws IOException {
+            Frame parentFrame) {
         /*
          * 
          * File incomingDirectory = getIncomingDirectory();
@@ -34,7 +34,7 @@ public class MultiSourceUtilities {
             file = askUserForANewFile(stub.getName());
 
             if (file == null)
-                throw new IOException("User Cancelled");
+                return null;//throw new IOException("User Cancelled");
         }
 
         while (file.exists()) {
@@ -45,18 +45,18 @@ public class MultiSourceUtilities {
                             + " already exists. What do you want to do.",
                     new String[] { CANCEL_BUTTON, WRITE_OVER })).answer();
             if (answer.equals(CANCEL_BUTTON)) {
-                throw new IOException("User Canceled.");
+                return null;//throw new IOException("User Canceled.");
             } else if (answer.equals(WRITE_OVER)) {
                 if (!file.delete()) {
                     AnswerDialog.simpleAlert(parentFrame,
                             "Could not delete the file.");
-                    throw new IOException("Could not delete file");
+                    return null;///throw new IOException("Could not delete file");
                 }
             } else if (answer.equals(RENAME)) {
                 file = askUserForANewFile(stub.getName());
 
                 if (file == null)
-                    throw new IOException("User Cancelled");
+                    return null;//throw new IOException("User Cancelled");
             }
         }
 
@@ -153,7 +153,7 @@ public class MultiSourceUtilities {
         }
     }
 
-    private static File askUserForANewFile(String name) throws IOException {
+    private static File askUserForANewFile(String name) {
         java.awt.FileDialog dialog = new java.awt.FileDialog(
                 com.general.util.AnswerDialog.getCenteredFrame(),
                 "What do you want to save the file as?",

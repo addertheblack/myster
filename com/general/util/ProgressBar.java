@@ -13,19 +13,25 @@ public class ProgressBar extends Panel {
 
     public final static int DEFAULT_X_SIZE = 440;
 
-    volatile long min; //valatile for threading
+    private volatile long min; //valatile for threading
 
-    volatile long max;
+    private volatile long max;
 
-    volatile long value;
+    private volatile long value;
 
-    volatile boolean hasBorder = true;
+    private volatile boolean hasBorder = true;
 
-    Dimension doubleBufferSize;
+    private Dimension doubleBufferSize;
 
-    Image im;
+    private Image im;
 
-    volatile Timer updaterTimer;
+    private volatile Timer updaterTimer;
+    
+    private final Runnable timerCode =  new Runnable() {
+                public void run() {
+                    timerCode();
+                }
+            };
 
     public ProgressBar() {
         this(0, 100);
@@ -41,6 +47,7 @@ public class ProgressBar extends Panel {
     }
 
     private void init() {
+    	setBackground(Color.white);
         doubleBufferSize = getSize(); //! important
 
         addComponentListener(new ComponentAdapter() {
@@ -73,29 +80,35 @@ public class ProgressBar extends Panel {
         return (value < min || value > max);
     }
 
-    private synchronized void timerCode(Runnable r) {
-        syncRepaint();
-
-        if ((!isShowing()) || (!isValueOutOfBounds())) {
-            System.out
-                    .println("Stopping the Progress Window auto update timer.");
-            updaterTimer = null;
+    private synchronized void timerCode() {
+    	updaterTimer = null;
+    	repaint();
+		runTimerIfAppropriate();
+    }
+    
+    private synchronized void stopTimer() {
+    	updaterTimer = null;
+    	repaint();
+    }
+    
+    private synchronized void assertTimer() {
+    	if (updaterTimer==null)
+    		updaterTimer = new Timer(timerCode, 50);
+    }
+    
+    private synchronized void runTimerIfAppropriate() {
+        if (isShowing() && isValueOutOfBounds()) {
+            assertTimer();
         } else {
-            updaterTimer = new Timer(r, 50);
+        	stopTimer();
         }
     }
 
     public void paint(Graphics g) {
-        if (updaterTimer == null && isShowing() && isValueOutOfBounds()) {
-            updaterTimer = new Timer(new Runnable() {
-                public void run() {
-                    timerCode(this);
-                }
-            }, 50);
-        }
-
-        Dimension size = doubleBufferSize;
-        if (max <= min) {
+		runTimerIfAppropriate();
+        
+		Dimension size = getSize();
+        if (false && max <= min) {
             g.setColor(getBackground());
             g.fillRect(0, 0, size.width, size.height);
         } else if (isValueOutOfBounds()) {
@@ -118,10 +131,6 @@ public class ProgressBar extends Panel {
             g.setColor(Color.black);
             g.drawRect(0, 0, size.width - 1, size.height - 1);
         }
-    }
-
-    private synchronized void syncRepaint() {
-        repaint();
     }
 
     private int getXSize(int maxWidth) {
@@ -182,6 +191,7 @@ public class ProgressBar extends Panel {
             lastValue = temp_xsize;
         }
 
+		runTimerIfAppropriate();
         repaint();
     }
 }

@@ -222,7 +222,7 @@ public class StandardSuite {
 
             try {
                 progress.setText("Getting File Statistics...");
-
+				
                 if (endFlag)
                     return;
                 RobustMML mml = getFileStats(socket, stub);
@@ -237,8 +237,13 @@ public class StandardSuite {
                     return;
 
                 FileHash hash = MultiSourceUtilities.getHashFromStats(mml);
-
+				
                 final File theFile = MultiSourceUtilities.getFileToDownloadTo(stub, progress);
+
+				if (theFile == null) {
+					progress.setText("User canceled...");
+					return;
+				}
 
                 synchronized (StandardSuite.DownloadThread.this) {
                     if (endFlag)

@@ -183,10 +183,11 @@ class SegmentDownloaderHandler extends SegmentDownloaderListener {
 
     public void connected(SegmentDownloaderEvent e) {
         progress.setText("Negotiating...", bar);
-        progress.setValue(0, bar);
+        progress.setValue(-1, bar);
     }
 
     public void queued(SegmentDownloaderEvent e) {
+    	progress.setValue(-1, bar);
         progress.setText("You are in queue position " + e.getQueuePosition(),
                 bar);
     }
