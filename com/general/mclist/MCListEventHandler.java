@@ -173,18 +173,18 @@ public class MCListEventHandler implements MouseListener, MouseMotionListener{
 	    			
 	    			int difference=(currentLoc.x-xloc)/4+1; //Amount to scroll is proportional to away from edge.
 	    			if (currentLoc.x>=difference) {
-	    				//pane.setScrollPosition(currentLoc.x-difference, currentLoc.y);
+	    				pane.setScrollPosition(currentLoc.x-difference, currentLoc.y);
 	    			} else {
-	    				//pane.setScrollPosition(0, currentLoc.y);
+	    				pane.setScrollPosition(0, currentLoc.y);
 	    			}
 	    		} else if (xloc>currentLoc.x+currentSize.width) {
 	    			//scrolling is possible
 	    			
 	    			int difference=(xloc-(currentLoc.x+currentSize.width))/4+1;
 	    			if ((currentLoc.x+currentSize.width)<=(mcListSize.width-difference)) {
-	    				//pane.setScrollPosition(currentLoc.x+difference, currentLoc.y);
+	    				pane.setScrollPosition(currentLoc.x+difference, currentLoc.y);
 	    			} else {
-	    				//pane.setScrollPosition(mcListSize.width-currentSize.width, currentLoc.y);
+	    				pane.setScrollPosition(mcListSize.width-currentSize.width, currentLoc.y);
 	    			}
 	    		}
     		}
@@ -201,18 +201,18 @@ public class MCListEventHandler implements MouseListener, MouseMotionListener{
 	    			
 	    			int difference=(currentLoc.y-yloc)/4+1;
 	    			if (currentLoc.y>=difference) {
-	    				//pane.setScrollPosition(currentLoc.x, currentLoc.y-difference);
+	    				pane.setScrollPosition(currentLoc.x, currentLoc.y-difference);
 	    			} else {
-	    				//pane.setScrollPosition(currentLoc.x, 0);
+	    				pane.setScrollPosition(currentLoc.x, 0);
 	    			}
 	    		} else if (yloc>currentLoc.y+currentSize.height) {
 	    			//scrolling is possible
 	    			
 	    			int difference=(yloc-(currentLoc.y+currentSize.height))/4+1;
 	    			if ((currentLoc.y+currentSize.height)<=(mcListSize.height-difference)) {
-	    				//pane.setScrollPosition(currentLoc.x, currentLoc.y+difference);
+	    				pane.setScrollPosition(currentLoc.x, currentLoc.y+difference);
 	    			} else {
-	    				//pane.setScrollPosition(currentLoc.x, mcListSize.height-currentSize.height);
+	    				pane.setScrollPosition(currentLoc.x, mcListSize.height-currentSize.height);
 	    			}
 	    		}
     		}
