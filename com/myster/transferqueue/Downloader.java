@@ -2,6 +2,8 @@ package com.myster.transferqueue;
 
 import java.io.IOException;
 
+import com.myster.net.MysterAddress;
+
 /**
 *	Objects repsonsible for handling errors or download request should
 *	implement this
@@ -31,4 +33,11 @@ public interface Downloader {
 	*	the TransferQueue has elapsed.
 	*/		
 	public void queued(QueuedStats stats) throws IOException ;	//is called when ready to download
+	
+	/**
+	*	Implementors should return the IP that this downloader is connected to.
+	*	This information is used to make sure two downloads form the same source don't happen 
+	*	at the same time.
+	*/
+	public MysterAddress getAddress();
 }

@@ -993,8 +993,9 @@ Work on DEV 8:
 		-> Corrected oddities found by FindBugs.
 		-> Changed the tabs in the server stats so they actually look like tabs (thanx rev)
 		-> Made " - Myster" appear after every window name in Linux (Exception Progress windows)
+		-> Made it so that 1 person cannot hog all the download spots.
 		
-		
+		bdaba746d51978dbe46844c23f566332
 (Red List)
 to do:
 	Need to fix bug with caching MP3 ID3 info

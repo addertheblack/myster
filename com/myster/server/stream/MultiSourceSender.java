@@ -154,6 +154,10 @@ public class MultiSourceSender extends ServerThread {
 						public void queued(QueuedStats stats) throws IOException {
 							sendQueuePosition(socket.out, stats.getQueuePosition(), "You are in a queue to download..");
 						}
+						
+						public MysterAddress getAddress() {
+							return remoteIP;
+						}
 					});
 				} catch (MaxQueueLimitException ex) {
 					throw new IOException ("Over the queue limit, disconnecting..");

@@ -598,6 +598,10 @@ public class FileSenderThread extends ServerThread {
 			public void download() {
 				FileSenderThread.ServerTransfer.this.startDownload();
 			}
+			
+			public MysterAddress getAddress() {
+				return FileSenderThread.ServerTransfer.this.remoteIP;
+			}
 		}
 	}
 }

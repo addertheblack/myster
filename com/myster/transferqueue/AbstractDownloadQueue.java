@@ -5,6 +5,8 @@ import java.util.Vector;
 
 import com.general.util.LinkedList;
 
+import com.myster.net.MysterAddress;
+
 /**
 *	Provides a generic queue implementation. Most TransferQueue
 *	implementator will want to subclass this.
@@ -112,18 +114,43 @@ public abstract class AbstractDownloadQueue extends TransferQueue {
 	// moves tickets from queue to download slow and sets their "go" flag.
 	// Also notifys the other thread in the queue if a change has occured..
 	private synchronized void updateQueue() {
-		while (isExistFreeSpot()) {
-			DownloadTicket ticket = (DownloadTicket)downloadQueue.removeFromHead();
+		while (isExistFreeSpot() & (downloadQueue.getSize() != 0)) {
+			DownloadTicket ticket = getNextToDownload();
+		
+			if (ticket == null) break; //nothing waiting to download.
 			
-			if (ticket!=null) {
-				downloads.addElement(ticket);
-				ticket.setReadyToDownload();
-				
-				notifyAll();
-			} else {
-				break;
+			downloads.addElement(ticket);
+			ticket.setReadyToDownload();
+			
+			notifyAll();
+		}
+	}
+	
+	private synchronized DownloadTicket getNextToDownload() {
+		for (int i = 0; i < downloadQueue.getSize(); i++) {
+			DownloadTicket ticket = (DownloadTicket)downloadQueue.getElementAt(i);
+
+			if (! isAlreadyDownloading(ticket.getDownloader().getAddress())) {
+				downloadQueue.remove(ticket); //should return true else we're screwed..
+						
+				return ticket;
+			}
+
+		}
+		
+		return null; //no next item found.
+	}
+	
+	private synchronized boolean isAlreadyDownloading(MysterAddress address) {
+		for (int i = 0; i < downloads.size(); i++) {
+			DownloadTicket otherTicket = (DownloadTicket)downloads.elementAt(i);
+			
+			if (otherTicket.getDownloader().getAddress().equals(address)) {
+				return true;
 			}
 		}
+		
+		return false;
 	}
 	
 	private synchronized boolean isExistFreeSpot() {
