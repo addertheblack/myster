@@ -975,3 +975,21 @@ Work on DEV 8:
 		-> added number of connections to server stats.
 		-> Added uptime to server stats
 		-> Fixed bug where files downloaded to an unexpected location would not rename properly>>>>>>> 1.67
+		-> Made it so that server stats actually report how far through the FILE they are as opposed to simply
+				how far through the current block.
+
+todo:
+
+find this
+
+> Find the bug:
+> 
+> 	public SearchByHash(String searchString, MysterType type, SearchResultListener listener) {
+> 		this.type = type;
+> 		this.hash = hash;
+> 		this.listener = listener;
+> 	}
+> 
+> What were you trying to do?
+
+and fix..
