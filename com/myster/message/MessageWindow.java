@@ -64,7 +64,7 @@ public class MessageWindow extends MysterFrame {
 		bar = new MessageWindowButtonBar(type);
 		
 		if (quote!=null) {
-			quoteArea = new MessageTextArea(false, quote, "Quotaton: ");
+			quoteArea = new MessageTextArea(false, quote, "Quotation: ");
 			addComponent(quoteArea, 2,1,1,1,10,1);
 			
 			SeperatorLine line1=new SeperatorLine();

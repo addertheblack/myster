@@ -208,7 +208,7 @@ public class FileSenderThread extends ServerThread {
 			out.writeLong(sizeOfImage);
 			out.write(queuedImage, 0, sizeOfImage);
 			
-			sendURL(out, "http://mysternetworks.com/information/faq.html#anchor9353424");
+			sendURL(out, "http://www.mysternetworks.com/information/dl_error_faq.html");
 		}
 		
 		

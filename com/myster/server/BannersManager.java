@@ -26,7 +26,7 @@ public class BannersManager {
 	private static final String PATH_TO_URLS = "/URLs/";
 		
 	private static final String PARTIAL_PATH_TO_IMAGES 	= "i";
-	private static final String PARTIAL_PATH_TO_URLS		= "u";
+	private static final String PARTIAL_PATH_TO_URLS	= "u";
 
 	private static final String IMAGE_DIRECTORY = "Images";
 

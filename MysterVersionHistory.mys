@@ -906,3 +906,6 @@ Work on DEV 8:
 		-> Created a MacOS 9 plugin so that browsers will auto-launch on banner clicks & menubar won't disapear
 		-> Changed the queue Int to an MML structure with queue postition and message tags in MS protocol
 				This new DEV will not work with previous DEVs.
+	2003/09/11 <- DEV 19.2
+		-> Fixed a typo.
+		-> Moved multi-source download to its new home on conneciton section 90.

@@ -33,7 +33,7 @@ public class MultiSourceSender extends ServerThread {
 	public static final String QUEUED_PATH = "/queued";
 	public static final String MESSAGE_PATH = "/message";
 
-	public static final int SECTION_NUMBER=88890; //testing port
+	public static final int SECTION_NUMBER=90;
 
 	public int getSectionNumber() {
 		return SECTION_NUMBER;
