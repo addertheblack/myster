@@ -199,7 +199,7 @@ class FileTypeList extends MysterThread{
 		for(int iFile = 0; iFile < filelist.size(); iFile++)
 		{	
 			File file = (File)filelist.elementAt(iFile);
-			String filename = file.getName();
+			String filename = mergePunctuation(file.getName());
 			
 			// Filter out sequential whitespace
 			String simplified=simplify(filename);
@@ -343,7 +343,7 @@ class FileTypeList extends MysterThread{
 			if (temp.isDirectory()) {
 				indexDir(temp,filelist,telomere);
 			} else {
-				if (!filelist.contains(temp.getName())) {
+				if (!filelist.contains(mergePunctuation(temp.getName()))) {
 					if (FileFilter.isCorrectType(type, temp)) {
 						filelist.addElement(temp);
 					}
@@ -444,6 +444,9 @@ class FileTypeList extends MysterThread{
 	
 	/**
 	 *	This function Merges Japaneese punctuation into a form that displays and matches in JAVA
+	 *	THhis function should be called whenever the name or path of a file is read.
+	 *
+	 *	(code submited by heavy_baby@yahoo.co.jp)
 	 *
 	 *	@param	String of a filename or path that needs merging.
 	 *	@return	String with punctuation merged
