@@ -86,6 +86,10 @@ public abstract class HashCache {
 	public abstract void clearHash(File file, String hashType);
 }
 
+
+/**
+*	The default Hash Cache implementation
+*/
 class DefaultHashCache extends HashCache {
 	private Hashtable hashtable = new Hashtable();
 	
@@ -102,7 +106,9 @@ class DefaultHashCache extends HashCache {
 			for (;;) {
 				CachedFileHashEntry entry = (CachedFileHashEntry)(in.readObject());
 				
-				hashtable.put(entry.getFile(), entry);
+				if (entry.file.exists() && entry.isForThisFile(entry.file)) {
+					hashtable.put(entry.getFile(), entry);
+				}
 			}
 		} catch (IOException ex) {
 			ex.printStackTrace();
@@ -116,7 +122,7 @@ class DefaultHashCache extends HashCache {
 	public synchronized FileHash[] getHashesForFile(File file) {
 		CachedFileHashEntry temp = ((CachedFileHashEntry)(hashtable.get(file)));
 		
-		if (temp == null) return null;
+		if (temp == null || !temp.isForThisFile(file)) return null;
 		
 		return temp.getHashes();
 	}
@@ -124,7 +130,7 @@ class DefaultHashCache extends HashCache {
 	public synchronized FileHash getHashFromFile(File file, String hashType) {	
 		CachedFileHashEntry temp = ((CachedFileHashEntry)(hashtable.get(file)));
 		
-		if (temp == null) return null;
+		if (temp == null || !temp.isForThisFile(file)) return null;
 		
 		return temp.getHash(hashType);
 	}
@@ -193,12 +199,20 @@ class CachedFileHashEntry implements Serializable {
 	//	
 	//}
 	
-	File file;
+	File file; //here only for it's path
+	long lastModifiedDate;
+	long fileLength;
 	FileHash[] hashes;
 	
 	public CachedFileHashEntry(File file, FileHash[] hashes) {
+		this(file, hashes, file.lastModified(), file.length());
+	}
+	
+	public CachedFileHashEntry(File file, FileHash[] hashes, long lastModifiedDate, long fileLength) {
 		this.file = file;
 		this.hashes = hashes;
+		this.lastModifiedDate = lastModifiedDate;
+		this.fileLength = fileLength;
 	}
 	
 	/** Returns all known File Hashes for this file*/
@@ -289,4 +303,9 @@ class CachedFileHashEntry implements Serializable {
 	public void save(ObjectOutputStream out) throws IOException {
 		out.writeObject(this);
 	}
+	
+	public boolean isForThisFile(File file) {
+		return (file.equals(file) && (file.lastModified() == lastModifiedDate) && (file.length() == fileLength));
+	}
+	
 }
