@@ -1,10 +1,14 @@
 package com.myster.menubar.event;
 
+import java.awt.Frame;
 import java.awt.MenuBar;
 
 import com.general.events.GenericEvent;
 import com.myster.menubar.MysterMenuBarFactory;
 
+/**
+ * Contains the events context for MysterMenuBar events.
+ */
 public class MenuBarEvent extends GenericEvent {
     public static final int BAR_CHANGED = 1;
 
@@ -15,9 +19,17 @@ public class MenuBarEvent extends GenericEvent {
         this.factory = factory;
     }
 
-    //is slow.
-    public MenuBar makeNewMenuBar() {
-        return factory.makeMenuBar();
+    /**
+     * Asks the contained factory to build a new copy of the menu bar
+     * specifically for his Frame. This routine does not add the menubar to the
+     * frame.
+     * 
+     * @param frame
+     *            to tailor the event for.
+     * @return the menubar.
+     */
+    public MenuBar makeNewMenuBar(Frame frame) {
+        return factory.makeMenuBar(frame);
     }
 
 }

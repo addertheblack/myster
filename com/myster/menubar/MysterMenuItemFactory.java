@@ -1,5 +1,6 @@
 package com.myster.menubar;
 
+import java.awt.Frame;
 import java.awt.MenuItem;
 import java.awt.MenuShortcut;
 import java.awt.event.ActionListener;
@@ -39,7 +40,7 @@ public class MysterMenuItemFactory {
         this.useShift = useShift;
     }
 
-    public MenuItem makeMenuItem() {
+    public MenuItem makeMenuItem(Frame frame) {
         MenuItem menuItem;
 
         if (shortcut != -1) {

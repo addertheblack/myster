@@ -40,25 +40,23 @@ import com.myster.util.TypeChoice;
 
 public class SearchWindow extends MysterFrame implements SearchResultListener,
         Sayable {
-    GridBagLayout gblayout;
+    private GridBagLayout gblayout;
 
-    GridBagConstraints gbconstrains;
+    private GridBagConstraints gbconstrains;
 
-    Button searchbutton;
+    private Button searchbutton;
 
-    MCList filelist;
+    private MCList filelist;
 
-    TextField textentry;
+    private TextField textentry;
 
-    Label label;
+    private Label label;
 
-    TypeChoice choice;
+    private TypeChoice choice;
 
-    MessageField msg;
+    private MessageField msg;
 
-    TextSpinner spinner = new TextSpinner();
-
-    ClientHandleObject metaDateHandler;
+    private ClientHandleObject metaDateHandler;
 
     private final int XDEFAULT = 640;
 

@@ -2,6 +2,10 @@ package com.general.events;
 
 import java.util.Vector;
 
+
+/**
+ * Basic Event dispatcher with abstract event firing mechanism.
+ */
 public abstract class EventDispatcher {
     Vector listeners = new Vector(10, 10);
 

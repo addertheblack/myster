@@ -1,5 +1,6 @@
 package com.myster.menubar;
 
+import java.awt.Frame;
 import java.awt.MenuBar;
 import java.util.Vector;
 
@@ -10,13 +11,13 @@ public class MysterMenuBarFactory {
         this.mysterMenuFactories = mysterMenuFactories;
     }
 
-    public MenuBar makeMenuBar() {
+    public MenuBar makeMenuBar(Frame frame) {
         MenuBar menuBar = new MenuBar();
 
         for (int i = 0; i < mysterMenuFactories.size(); i++) {
             menuBar
                     .add(((MysterMenuFactory) (mysterMenuFactories.elementAt(i)))
-                            .makeMenu());
+                            .makeMenu(frame));
         }
 
         return menuBar;

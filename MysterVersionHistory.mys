@@ -1056,6 +1056,9 @@ Work on DEV 8:
 		-> Fixed a bug where Myster jsut plain froze.
 		-> Added two routines that allow for code to be execute on the event thread. is 1.1 compatible! yeah!
 		-> Made as much of Myster as possible run on the event thread.
+		-> Made the "windows" menu special, in that it is built for every subscribed window each time one of the windows is
+				shown/hidden or changes name. This should make Myster faster at opening windows and reduce menu blinking.
+	  	-> Made it so that search and p2p windows are renamed to something more appropriate on the fly.
 		
 		
 (Red List)

@@ -1,12 +1,12 @@
 /* 
 
  Title:			Myster Open Source
- Author:			Andrew Trumper
+ Author:		Andrew Trumper
  Description:	Generic Myster Code
  
  This code is under GPL
 
- Copyright Andrew Trumper 2000-2001
+ Copyright Andrew Trumper 2000-2004
  */
 
 package com.myster.menubar;
@@ -34,7 +34,8 @@ import com.myster.menubar.event.TrackerWindowAction;
  * global menu bar. The menu bar object has a groovy constructor that works with
  * the MysterMenuObject in order to make the taks of adding new menu items easy.
  * 
- * Warning this code is not even close to being thread safe.
+ * Warning this code is not even close to being thread safe. Only call it on the
+ * event thread.
  */
 
 public class MysterMenuBar extends MenuBar {
@@ -49,14 +50,22 @@ public class MysterMenuBar extends MenuBar {
 
     private static MysterMenuFactory pluginMenuFactory;
 
-    private static synchronized MysterMenuBarFactory getFactory() {
+    /**
+     * Creates a factory which can be used to build identical menubars for
+     * different frames..
+     * 
+     * NOTE: THIS METHOD MUST BE CALLED FROM THE EVENT THREAD.
+     * 
+     * @return the Menubar factory.
+     */
+    public static MysterMenuBarFactory getFactory() {
         if (impl == null) {
             file = new Vector();
             edit = new Vector();
             special = new Vector();
 
             //File menu items
-            
+
             file.addElement(new MysterMenuItemFactory("New Search", new NewSearchWindowAction(),
                     java.awt.event.KeyEvent.VK_N));
             file.addElement(new MysterMenuItemFactory("New Peer-to-Peer Connection",
@@ -71,10 +80,9 @@ public class MysterMenuBar extends MenuBar {
             file.addElement(new MysterMenuItemFactory("Close Window", new CloseWindowAction(),
                     java.awt.event.KeyEvent.VK_W));
             file.addElement(new MysterMenuItemFactory("-", NULL));
-            
+
             file.addElement(new MysterMenuItemFactory("Quit", new QuitMenuAction(),
                     java.awt.event.KeyEvent.VK_Q));
-
 
             //Edit menu items
             edit.addElement(new MysterMenuItemFactory("Undo", NULL));
@@ -118,30 +126,57 @@ public class MysterMenuBar extends MenuBar {
         return impl;
     }
 
+    /**
+     * Adds a MenuBarListener.
+     * 
+     * This method is thread safe.
+     * 
+     * @param listener to add.
+     */
     public static void addMenuListener(MenuBarListener listener) { //Not
-        // sycnhronized
         dispatcher.addListener(listener);
-        listener.fireEvent(new MenuBarEvent(MenuBarEvent.BAR_CHANGED, getFactory()));
     }
 
+    
+    /**
+     * Removes a MenuBarListener.
+     * 
+     * This method is thread safe.
+     * 
+     * @param listener to remove.
+     */
     public static void removeMenuListener(MenuBarListener listener) { //Not
-        // synchronized
         dispatcher.removeListener(listener);
-        //System.gc();
     }
 
+    /**
+     * Removes a built in menu by name.
+     * 
+     * @param menuName
+     *            of the built in menu to remove.
+     * @return returns true if menu was found and removed, false otherwise.
+     */
     public static boolean removeBuiltInMenu(String menuName) {
         getFactory(); //assert menu bar stuff is loaded.
         for (int i = 0; i < menuBar.size(); i++) {
             if (((MysterMenuFactory) (menuBar.elementAt(i))).getName().equalsIgnoreCase(menuName)) {
                 menuBar.removeElementAt(i);
-                dispatcher.fireEvent(new MenuBarEvent(MenuBarEvent.BAR_CHANGED, getFactory()));
+                updateMenuBars();
                 return true;
             }
         }
         return false;
     }
 
+    /**
+     * Removes a built in menu by menu item name and menu name.
+     * 
+     * @param menuName
+     *            of the menu to remove
+     * @param menuItem
+     *            the name of the menu containing the menuitem to remove.
+     * @return true if the menu item was found and removed, false otherwise.
+     */
     public static boolean removeBuiltInMenuItem(String menuName, String menuItem) {
         if (menuItem.equals("-"))
             return false;
@@ -179,14 +214,26 @@ public class MysterMenuBar extends MenuBar {
         return false;
     }
 
+    /**
+     * Update menubars signals that a change in the menus has taken place and
+     * that all MenuBarListeners should update their menus to reflect the change
+     * 
+     * This routine is not blocking.
+     */
     public static void updateMenuBars() {
-        //Util.invoke(new Runnable() {
-            //public void run() {
+        Util.invoke(new Runnable() {
+            public void run() {
                 dispatcher.fireEvent(new MenuBarEvent(MenuBarEvent.BAR_CHANGED, getFactory()));
-           // }
-        //});
+            }
+        });
     }
 
+    /**
+     * Adds a menu to the end of the menubar.
+     * 
+     * @param factory
+     *            that will create the menu.
+     */
     public static void addMenu(MysterMenuFactory factory) {
         getFactory(); //assert menu bar stuff is loaded.
 
@@ -194,6 +241,12 @@ public class MysterMenuBar extends MenuBar {
         updateMenuBars();
     }
 
+    /**
+     * Removes a menu from menubar.
+     * 
+     * @param factory
+     *            that will create the menu.
+     */
     public static boolean removeMenu(MysterMenuFactory factory) {
         getFactory(); //assert menu bar stuff is loaded.
 
@@ -202,6 +255,13 @@ public class MysterMenuBar extends MenuBar {
         return sucess;
     }
 
+    /**
+     * Adds a new menu item to the end of the plugins menu. Creates the plugins
+     * menu if needed.
+     * 
+     * @param factory
+     *            that will create the menu item.
+     */
     public static void addMenuItem(MysterMenuItemFactory menuItemfactory) {
         getFactory(); //assert menu bar stuff is loaded.
 
@@ -212,6 +272,13 @@ public class MysterMenuBar extends MenuBar {
         updateMenuBars();
     }
 
+    /**
+     * Removes the menu item from the plugins menu. Removes the plugins menu if
+     * it contains no more items.
+     * 
+     * @param factory
+     *            that will create the menu item.
+     */
     public static boolean removeMenuItem(MysterMenuItemFactory menuItemfactory) {
         getFactory(); //assert menu bar stuff is loaded.
 

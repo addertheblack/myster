@@ -26,7 +26,7 @@ public class MultiSourceUtilities {
          */
 
         File directory = new File(com.myster.filemanager.FileTypeListManager
-                .getInstance().getPathFromType(stub.getType()));
+                .getInstance().getPathFromType(stub.getType())); //throws a null pointer exception on invalid type.
         File file = new File(directory.getPath() + File.separator
                 + stub.getName() + EXTENSION);
 

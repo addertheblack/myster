@@ -1,13 +1,18 @@
 package com.myster.ui;
 
+import java.awt.Frame;
+import java.awt.Menu;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.KeyEvent;
+import java.util.Enumeration;
+import java.util.Hashtable;
 import java.util.Vector;
 
 import com.myster.menubar.MysterMenuBar;
 import com.myster.menubar.MysterMenuFactory;
 import com.myster.menubar.MysterMenuItemFactory;
+import com.myster.menubar.event.NullAction;
 
 public class WindowManager {
     static Vector windows = new Vector();
@@ -28,6 +33,8 @@ public class WindowManager {
         synchronized (windows) {
             if (!windows.contains(frame)) {
                 windows.addElement(frame);
+                windowMenuHash.put(frame, (new MysterMenuFactory("Windows", finalMenu))
+                        .makeMenu(frame));
                 //Timer t=new Timer(doUpdateClass, 1);//might cause deadlocks.
                 updateMenu();
             }
@@ -37,18 +44,18 @@ public class WindowManager {
 
     protected static void removeWindow(MysterFrame frame) {
         boolean yep = windows.removeElement(frame);
+        windowMenuHash.remove(frame);
         if (yep) {
             //Timer t=new Timer(doUpdateClass, 1); //might cause deadlocks.
             updateMenu();
         }
     }
 
-    protected static void updateMenu() {
+    public static void updateMenu() {
         synchronized (windows) {
             init();
 
-            finalMenu.removeAllElements();
-			finalMenu.ensureCapacity(windows.size() + menuItems.size());
+            finalMenu = new Vector(windows.size() + menuItems.size());
 
             for (int i = 0; i < menuItems.size(); i++) {
                 finalMenu.addElement(menuItems.elementAt(i));
@@ -61,9 +68,37 @@ public class WindowManager {
                 finalMenu.addElement(new MysterMenuItemFactory(frame.getTitle(),
                         new OtherWindowHandler(frame)));
             }
-
-            MysterMenuBar.updateMenuBars();
+            
+            Enumeration enum = windowMenuHash.elements();
+            while (enum.hasMoreElements()) {
+                fixMenu((Menu)enum.nextElement());
+            }
         }
+    }
+
+    private static void fixMenu(Menu menu) {
+        for (int i = menu.getItemCount(); i > 3; i--) {
+            menu.remove(i - 1);
+        }
+
+        for (int i = 0; i < windows.size(); i++) {
+            MysterFrame frame = ((MysterFrame) (windows.elementAt(i)));
+            menu.add((new MysterMenuItemFactory(frame.getTitle(), new OtherWindowHandler(frame)))
+                    .makeMenuItem(frame));
+        }
+    }
+
+    static Hashtable windowMenuHash = new Hashtable();
+
+    static Menu getCorrectWindowsMenu(Frame frame) {
+        Menu menu = (Menu) windowMenuHash.get(frame);
+        if (menu == null) {
+            throw new IllegalStateException("This frame has no windows menu! "+frame.getTitle());
+            //menu = (new MysterMenuFactory("Windows",
+            // finalMenu)).makeMenu(frame);
+            //windowMenuHash.put(frame, menu);
+        }
+        return menu;
     }
 
     protected static void setFrontWindow(MysterFrame frame) {
@@ -87,10 +122,15 @@ public class WindowManager {
         menuItems.addElement(new MysterMenuItemFactory("Cycle Windows", new CycleWindowsHandler(),
                 KeyEvent.VK_1));
         menuItems.addElement(new MysterMenuItemFactory("Stack Windows", new StackWindowsHandler()));
+        menuItems.addElement(new MysterMenuItemFactory("-", new NullAction()));
 
         finalMenu = new Vector();
 
-        MysterMenuBar.addMenu(new MysterMenuFactory("Windows", finalMenu));
+        MysterMenuBar.addMenu(new MysterMenuFactory("Windows", finalMenu) {
+            public Menu makeMenu(Frame frame) {
+                return getCorrectWindowsMenu(frame);
+            }
+        });
         updateMenu();
     }
 

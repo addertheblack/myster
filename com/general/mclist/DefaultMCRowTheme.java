@@ -44,6 +44,7 @@ public class DefaultMCRowTheme implements MCRowThemeInterface {
 
         filterNonEnglish = Locale.getDefault().getDisplayLanguage().equals(
                 Locale.ENGLISH.getDisplayLanguage());
+        filterNonEnglish = false;
     }
 
     public int getHeight() {

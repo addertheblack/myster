@@ -76,7 +76,7 @@ public class SearchButtonEvent implements ActionListener {
 
             sengine = new SearchEngine(a);
             sengine.start();
-            //a.setTitle("Search For "+a.getSearchString());
+            a.setTitle("Search For \""+a.getSearchString()+"\"");
             bl = new ButtonLabelThread();
             button.setLabel("Stop");
             flag = true;

@@ -1,16 +1,21 @@
 package com.myster.ui;
 
-import java.awt.*;
-import java.awt.event.*;
+import java.awt.Frame;
+import java.awt.MenuBar;
+import java.awt.Point;
+import java.awt.event.ComponentEvent;
+import java.awt.event.ComponentListener;
+import java.awt.event.WindowEvent;
+import java.awt.event.WindowListener;
 
-import com.myster.menubar.event.MenuBarListener;
 import com.myster.menubar.MysterMenuBar;
+import com.myster.menubar.event.MenuBarListener;
 
 public class MysterFrame extends Frame {
     static int xStart = 5;
 
     static int yStart = 5;
-    
+
     MenuBarListener menuListener;
 
     public MysterFrame() {
@@ -28,8 +33,8 @@ public class MysterFrame extends Frame {
     }
 
     public void setTitle(String windowName) {
-        super.setTitle(com.myster.Myster.ON_LINUX ? windowName + " - Myster"
-                : windowName);
+        super.setTitle(com.myster.Myster.ON_LINUX ? windowName + " - Myster" : windowName);
+        WindowManager.updateMenu();
     }
 
     private static synchronized Point getWindowStartingLocation() {
@@ -92,44 +97,46 @@ public class MysterFrame extends Frame {
 
             public void componentShown(ComponentEvent e) {
                 WindowManager.addWindow(MysterFrame.this);
+                MysterMenuBar.addMenuListener(menuListener);
+                setNewMenuBar(MysterMenuBar.getFactory().makeMenuBar(MysterFrame.this));
             }
 
             public void componentHidden(ComponentEvent e) {
                 WindowManager.removeWindow(MysterFrame.this);
+                MysterMenuBar.removeMenuListener(menuListener);
             }
-
         });
 
+        menuListener = new MenuBarListener() {
+            public void stateChanged(com.myster.menubar.event.MenuBarEvent e) {
+                setNewMenuBar(e.makeNewMenuBar(MysterFrame.this));
+            }
+        };
 
-		menuListener = new MenuBarListener() {
-                    public void stateChanged(
-                            com.myster.menubar.event.MenuBarEvent e) {
-                        MenuBar oldMenuBar = getMenuBar();
+    }
 
-                        if (oldMenuBar == null) {
-                            setMenuBar(e.makeNewMenuBar());
-                        } else {
-                        
-                            MenuBar newMenuBar = e.makeNewMenuBar();
-                            int maxOldMenus = oldMenuBar.getMenuCount();
-                            int maxNewMenus = newMenuBar.getMenuCount();
+    private void setNewMenuBar(MenuBar newMenuBar) {
+        MenuBar oldMenuBar = getMenuBar();
 
-                            if (maxNewMenus > 0)
-                                oldMenuBar.add(newMenuBar.getMenu(0));
+        if (oldMenuBar == null) {
+            setMenuBar(newMenuBar);
+        } else {
+            System.out.println("Swapped menus");
+            int maxOldMenus = oldMenuBar.getMenuCount();
+            int maxNewMenus = newMenuBar.getMenuCount();
 
-                            for (int i = maxOldMenus - 1; i >= 0; i--) {
-                                oldMenuBar.remove(i);
-                            }
+            if (maxNewMenus > 0)
+                oldMenuBar.add(newMenuBar.getMenu(0));
 
-                            for (int i = 1; i < maxNewMenus; i++) {
-                                oldMenuBar.add(newMenuBar.getMenu(0));
-                            }
-                            
-                        }
-                    }
-                };
+            for (int i = maxOldMenus - 1; i >= 0; i--) {
+                oldMenuBar.remove(i);
+            }
 
-        MysterMenuBar.addMenuListener(menuListener);
+            for (int i = 1; i < maxNewMenus; i++) {
+                oldMenuBar.add(newMenuBar.getMenu(0));
+            }
+
+        }
     }
 
     public void closeWindowEvent() {
@@ -140,9 +147,8 @@ public class MysterFrame extends Frame {
         closeWindowEvent();
         setVisible(false);
     }
-    
+
     public void dispose() {
-    	MysterMenuBar.removeMenuListener(menuListener);
-    	super.dispose();
+        super.dispose();
     }
 }
