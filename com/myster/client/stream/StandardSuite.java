@@ -176,6 +176,9 @@ public class StandardSuite {
 		
 			progress.setText("Trying to use multi-source download...");
 			
+			final boolean DONT_USE_MULTISOURCE = false;
+			if (DONT_USE_MULTISOURCE) throw new IOException ("Toss and catch: Multisource download diabled");
+			
 			File theFile = MultiSourceUtilities.getFileToDownloadTo(stub, progress);
 			MultiSourceDownload download = new MultiSourceDownload(stub, MultiSourceUtilities.getHashFromStats(mml), MultiSourceUtilities.getLengthFromStats(mml), new MSDownloadHandler(progress, theFile), new RandomAccessFile(theFile, "rw"));
 			

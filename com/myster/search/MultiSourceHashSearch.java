@@ -159,6 +159,8 @@ public class MultiSourceHashSearch implements MysterSearchClientSection {
 			for (int i = 0; i < searchEntries.length; i++) {
 				SearchEntry searchEntry = searchEntries[i];
 			
+				MultiSourceUtilities.debug("HashSearch -> Searching has "+searchEntry.hash);
+			
 				String fileName = StandardSuite.getFileFromHash(socket, type, searchEntry.hash);
 
 				if (!fileName.equals("")) {

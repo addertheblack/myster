@@ -183,31 +183,6 @@ public class MultiSourceDownload implements Runnable, Controller {
 	//call when downlaod has completed sucessfully.
 	private synchronized void done() {
 		dispatcher.fireEvent(new MultiSourceEvent(MultiSourceEvent.DONE_DOWNLOAD, this));
-		
-		
-		/*
-
-		progress.setText("File transfer complete.");
-
-		for (int i = 1; i < progress.getProgressBarNumber(); i++) {
-			progress.setText(" ", i);
-		}
-		
-		progress.setText("File downloaded");
-
-		String path = theFile.getAbsolutePath();
-		File someFile = someFile = new File(path.substring(0, path.length()-2)); //-2 is for .i
-		
-		if (someFile.exists()) {
-			AnswerDialog.simpleAlert(progress, "Could not rename file from \""+theFile.getName()+"\" to \""+someFile.getName()+"\" because a file by that name already exists.");
-			return;
-		}
-		
-		if (!theFile.renameTo(someFile)) {
-			AnswerDialog.simpleAlert(progress, "Could not rename file from \""+theFile.getName()+"\" to \""+someFile.getName()+"\" because an unspecified error occured.");
-			return;
-		}
-		*/
 	}
 	
 	//if is synchronized will cause deadlocks
@@ -448,7 +423,7 @@ class InternalSegmentDownloader extends MysterThread implements SegmentDownloade
 		fireEvent(SegmentDownloaderEvent.START_SEGMENT, workingSegment.workSegment.startOffset, 0, 0, workingSegment.workSegment.length);//this isn't in the right place
 
 		while (workingSegment.progress < workingSegment.workSegment.length) {
-			System.out.println("Work Thread "+getName()+" -> Reading in Type");
+			debug("Work Thread "+getName()+" -> Reading in Type");
 			
 			if (socket.in.readInt()!=6669) throw new IOException("Client/Server lost sync");
 			
@@ -543,7 +518,7 @@ class InternalSegmentDownloader extends MysterThread implements SegmentDownloade
 	}
 	
 	private static void debug(String string) {
-		System.out.println(string);
+		//System.out.println(string);
 	}
 	
 	
