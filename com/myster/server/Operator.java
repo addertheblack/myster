@@ -21,6 +21,7 @@ import com.myster.tracker.IPListManagerSingleton;
 import com.myster.server.event.*;
 import Myster;
 import java.util.Hashtable;
+import com.myster.transferqueue.TransferQueue;
 
 /**
 *	This class is reponsible for "picking up the phone" or making a TCP connection with clients.
@@ -35,19 +36,19 @@ public class Operator extends MysterThread{
 	private ServerEventManager eventSender=new ServerEventManager();
 	private ConnectionManager[] connectionManagers;
 	private DoubleBlockingQueue socketQueue; //Communcation CHANNEL.
-	private DownloadQueue downloadQueue;
+	private TransferQueue transferQueue;
 	private Hashtable connectionSections=new Hashtable();
 	
-	protected Operator(DownloadQueue d, int threads) {
+	protected Operator(TransferQueue d, int threads) {
 		super("Server Operator");
 	
-		downloadQueue=d;
+		transferQueue=d;
 		
 		socketQueue=new DoubleBlockingQueue(0); //comunications channel between operator and section threads.
 		
 		connectionManagers=new ConnectionManager[threads];
 		for (int i=0; i<connectionManagers.length; i++) {
-			connectionManagers[i]=new ConnectionManager(socketQueue, eventSender, downloadQueue, connectionSections);
+			connectionManagers[i]=new ConnectionManager(socketQueue, eventSender, transferQueue, connectionSections);
 		}
 	}
 

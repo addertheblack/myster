@@ -36,7 +36,6 @@ public class SimpleFileHash extends FileHash implements Serializable {
 		
 		for (int i = 0; i<hash.length; i++) {
 			if (otherHash.hash[i] != hash[i]) {
-				System.out.println("Hash length compare "+hash[i]+" "+otherHash.hash[i]+" "+i);
 				return false;
 			}
 		}

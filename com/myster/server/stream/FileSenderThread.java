@@ -22,8 +22,8 @@ import Myster;
 import com.myster.server.event.*;
 import com.myster.server.DownloadInfo;
 import com.general.events.EventDispatcher;
-import com.myster.server.DownloadQueue;
-import com.myster.server.QueuedTransfer;
+//import com.myster.server.DownloadQueue;
+//import com.myster.server.QueuedTransfer;
 import com.myster.server.ConnectionContext;
 import com.myster.net.MysterAddress;
 import com.myster.pref.Preferences;
@@ -33,13 +33,11 @@ import com.myster.net.MysterSocket;
 import com.myster.type.MysterType;
 import com.myster.server.BannersManager;
 
+import com.myster.transferqueue.*;
+
 public class FileSenderThread extends ServerThread {
 	//public constants
 	public static final int NUMBER=80;
-	
-	public FileSenderThread() {
-	
-	}
 	
 	public int getSectionNumber() {
 		return NUMBER;
@@ -68,15 +66,24 @@ public class FileSenderThread extends ServerThread {
 				}
 			}
 			
-			if (context.downloadQueue.addDownloadToQueue(transfer.getQueuedTransfer())) {		
-				try {
-					transfer.waitUntilDone();
-				} catch (InterruptedException ex) {
-					throw new IOException("Interrupted IO.");
-				}
-			} else {
-				throw new IOException("Server downloads are overloaded."); //bye bye.. Server is over loaded.
+			try {
+				context.transferQueue.doDownload(transfer.getDownloader()); //wow
+			} catch (MaxQueueLimitException ex) {
+				throw new IOException("Cannot queue this download because queue is full");
 			}
+			
+			/*
+			if (false == false) {
+				if (context.downloadQueue.addDownloadToQueue(transfer.getQueuedTransfer())) {		
+					try {
+						transfer.waitUntilDone();
+					} catch (InterruptedException ex) {
+						throw new IOException("Interrupted IO.");
+					}
+				} else {
+					throw new IOException("Server downloads are overloaded."); //bye bye.. Server is over loaded.
+				}
+			}*/
 		} catch (IOException ex) {
 			transfer.cleanUp(); //does usefull things like fires an event to say download is dead.
 			throw ex;
@@ -181,8 +188,12 @@ public class FileSenderThread extends ServerThread {
 			return dispatcher;//hurray!
 		}
 		
-		public QueuedTransfer getQueuedTransfer() {
-			return new DQueuePrivateClass();
+		//public QueuedTransfer getQueuedTransfer() {
+		//	return new DQueuePrivateClass();
+		//}
+		
+		public Downloader getDownloader() {
+			return new DownloaderPrivateClass();
 		}
 		
 		public static void freeloaderComplain(DataOutputStream out) throws IOException {
@@ -565,7 +576,7 @@ public class FileSenderThread extends ServerThread {
 			}
 		}
 		
-			
+			/*
 		private class DQueuePrivateClass implements QueuedTransfer {
 		
 			public void refresh(int i) throws IOException {
@@ -582,6 +593,17 @@ public class FileSenderThread extends ServerThread {
 			
 			public boolean isDone() {
 				return FileSenderThread.ServerTransfer.this.endflag;
+			}
+		}*/
+		
+		private class DownloaderPrivateClass implements Downloader {
+		
+			public void queued(QueuedStats queuedStats) throws IOException {
+				FileSenderThread.ServerTransfer.this.refresh(queuedStats.getQueuePosition());
+			}
+			
+			public void download() {
+				FileSenderThread.ServerTransfer.this.startDownload();
 			}
 		}
 	}

@@ -23,6 +23,7 @@ import com.myster.search.MysterFileStub;
 import com.myster.search.CrawlerThread;
 import com.myster.search.IPQueue;
 import com.myster.util.FileProgressWindow;
+import com.myster.util.MysterThread;
 import com.myster.util.Sayable;
 import com.myster.hash.FileHash;
 import com.myster.type.MysterType;
@@ -125,11 +126,11 @@ public class MultiSourceDownload {
 		}
 		
 		for (int i = 0; i < downloadersCopy.length; i++) {
-			try {
+			//try {
 				if (downloaders[i]!=null) downloaders[i].end();
-			} catch (InterruptedException ex) {
+			//} catch (InterruptedException ex) {
 				return;
-			}
+			//}
 		}
 	}
 	
@@ -236,7 +237,7 @@ public class MultiSourceDownload {
 		progress.addWindowListener(new WindowAdapter() {
 			public void windowClosing(WindowEvent e) {
 				flagToEnd();
-				end();
+				//end();
 				progress.setVisible(false);
 			}
 		});
@@ -335,6 +336,7 @@ public class MultiSourceDownload {
 		public void endConnection(SegmentDownloaderEvent e) {
 			progress.setValue(0, bar);
 			if (!stopDownload) progress.setText("Searching for new source...", bar);
+			removeDownload(bar);
 		}
 	}
 
@@ -419,7 +421,7 @@ public class MultiSourceDownload {
 		dispatcher.removeListener(listener);
 	}
 	
-	private class InternalSegmentDownloader extends Thread implements SegmentDownloader{
+	private class InternalSegmentDownloader extends MysterThread implements SegmentDownloader{
 		MysterFileStub 	stub;
 		MysterSocket	socket;
 		
@@ -646,10 +648,10 @@ public class MultiSourceDownload {
 			endFlag = true;
 		}
 		
-		public void end() throws InterruptedException {
+		public void end()  {
 			endWhenPossible();
 			
-			join();
+			try {join();} catch(InterruptedException ex) {}
 		}
 	}
 	

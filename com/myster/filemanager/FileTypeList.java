@@ -163,9 +163,6 @@ class FileTypeList extends MysterThread{
 			
 		if (myHash == null) return false;
 		
-		System.out.println(""+myHash+" vs "+hash+" "+(hash.equals(myHash)));
-	
-		
 		return hash.equals(myHash);
 	}
 	

@@ -22,6 +22,7 @@ import com.myster.server.event.*;
 import java.util.Hashtable;
 import com.myster.net.MysterAddress;
 import com.myster.util.MysterThread;
+import com.myster.transferqueue.TransferQueue;
 
 /**
 *	This class is responsible fore dealing with a conneciton with a client.
@@ -35,7 +36,7 @@ public class ConnectionManager extends MysterThread {
 	ServerEventManager eventSender;
 	BlockingQueue socketQueue;
 	
-	private DownloadQueue downloadQueue;
+	private TransferQueue transferQueue;
 	
 	private Hashtable connectionSections=new Hashtable();
 	
@@ -44,11 +45,11 @@ public class ConnectionManager extends MysterThread {
 	private static volatile int threadCounter=0;
 	private static volatile int waitingThreads = 0;
 	
-	public ConnectionManager(BlockingQueue q, ServerEventManager eventSender, DownloadQueue downloadQueue, Hashtable connectionSections) {
+	public ConnectionManager(BlockingQueue q, ServerEventManager eventSender, TransferQueue transferQueue, Hashtable connectionSections) {
 		super("Server Thread "+(++threadCounter));
 		
 		socketQueue=q;
-		this.downloadQueue=downloadQueue;
+		this.transferQueue=transferQueue;
 		this.eventSender=eventSender;
 		this.connectionSections=connectionSections;
 	}
@@ -82,7 +83,7 @@ public class ConnectionManager extends MysterThread {
 		
 			context=new ConnectionContext();
 			context.socket=new com.myster.client.stream.TCPSocket(socket);
-			context.downloadQueue=downloadQueue;
+			context.transferQueue=transferQueue;
 			context.serverAddress=new MysterAddress(socket.getInetAddress());
 			
 			DataInputStream i=new DataInputStream(socket.getInputStream());	//opens the connection

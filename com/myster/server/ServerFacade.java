@@ -4,16 +4,18 @@
 
 package com.myster.server;
 
+import java.util.StringTokenizer;
+import java.awt.*;
+
 import com.myster.server.event.ServerEventManager;
 import com.myster.pref.Preferences;
 import com.myster.pref.ui.PreferencesPanel;
-import java.util.StringTokenizer;
-import java.awt.*;
+import com.myster.transferqueue.TransferQueue;
 
 public class ServerFacade {
 	static Operator opp;
 	static boolean b=true;
-	static DownloadQueue queue;
+	static TransferQueue downloadQueue;
 	
 	/**
 		call this if you code assumes the server is actively running or you wish to start the server.
@@ -23,7 +25,6 @@ public class ServerFacade {
 		if (b) {
 			opp.start();
 			b=false;
-			//Preferences.getInstance().registerPrefsPanel("Type", queue.getPrefsPanel());
 		}
 	}
 	
@@ -31,8 +32,8 @@ public class ServerFacade {
 		if (opp==null) {
 			BannersManager.init(); //init banners stuff..
 		
-			queue=new DownloadQueue();
-			opp=new Operator(queue, getServerThreads());
+			downloadQueue = new ServerQueue();
+			opp=new Operator(downloadQueue, getServerThreads());
 			Preferences.getInstance().addPanel(new PrefPanel());
 			addStandardConnectionSections();
 		}
@@ -88,6 +89,14 @@ public class ServerFacade {
 		opp.addConnectionSection(new com.myster.server.stream.MultiSourceSender());
 	}
 	
+	private static void setDownloadSpots(int spots) {
+		downloadQueue.setDownloadSpots(spots);
+	}
+	
+	private static int getDownloadSpots() {
+		return downloadQueue.getDownloadSpots();
+	}
+	
 	private static class PrefPanel extends PreferencesPanel {
 		private final TextField serverIdentityField;
 		private final Label serverIdentityLabel;
@@ -112,7 +121,7 @@ public class ServerFacade {
 			add(openSlotLabel);
 			
 			openSlotChoice=new Choice();
-			for (int i=DownloadQueue.MIN_SPOTS; i<=DownloadQueue.MAX_SPOTS; i++){
+			for (int i = 2; i<=10; i++){
 				openSlotChoice.add(""+i);
 			}
 			add(openSlotChoice);
@@ -156,14 +165,14 @@ public class ServerFacade {
 		
 		public void save() {
 			ServerFacade.setIdentity(serverIdentityField.getText());
-			DownloadQueue.setQueueLength(Integer.parseInt(openSlotChoice.getSelectedItem()));
+			ServerFacade.setDownloadSpots(Integer.parseInt(openSlotChoice.getSelectedItem()));
 			setServerThreads(Integer.parseInt((new StringTokenizer(serverThreadsChoice.getSelectedItem()," ")).nextToken()));
 			leech.save();
 		}
 		
 		public void reset() {
 			serverIdentityField.setText(ServerFacade.getIdentity());
-			openSlotChoice.select(""+DownloadQueue.getQueueLength());
+			openSlotChoice.select(""+ServerFacade.getDownloadSpots());
 			serverThreadsChoice.select(""+getServerThreads());
 			leech.reset();
 		}

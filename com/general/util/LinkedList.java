@@ -1,6 +1,9 @@
 package com.general.util;
 
 
+/**
+* Is a generic Linked List implementation. Suitable for O(1) queues.
+*/
 //Fast queues should use addToTail and removeFromHead
 public class LinkedList {
 	final Element head;
@@ -22,7 +25,7 @@ public class LinkedList {
 		assertTail(); //assertTail needs to be case in case head = tail
 	}
 	
-	//gets an element at... slow
+	/** gets an element at the index starting from the head. */
 	public synchronized Object getElementAt(int index) {
 		if (index<0||index>=numOfItems) return null;
 		
@@ -82,13 +85,25 @@ public class LinkedList {
 		return numOfItems;
 	}
 	
-	public synchronized boolean contains(Object o) {
-		Element temp=head;		
+	//slow
+	//deprecated use getPositionOf
+	public boolean contains(Object object) {
+		return (getPositionOf(object) != -1);
+	}
+	
+	/**
+	*	returns the index of the Object starting from the head.
+	*/
+	public synchronized int getPositionOf(Object o) {
+		Element temp=head;
+		int counter = 0;
+		
 		while (temp.next!=null) {
-			if (temp.next.value.equals(o)) return true;
+			if (temp.next.value.equals(o)) return counter;
 			temp=temp.next;
+			counter++;
 		}
-		return false;
+		return -1;
 	}
 	
 	//slow

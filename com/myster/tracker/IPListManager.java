@@ -243,7 +243,7 @@ public class IPListManager { //aka tracker
 					try {
 						ipqueue.addIP(new MysterAddress(onramps[i]));
 					} catch (UnknownHostException ex) {
-						System.out.println("One of the arra of last resort is spelled wrong: "+onramps[i]);
+						System.out.println("One of the array of threw an error : "+onramps[i]);
 					}
 					max++;
 				}

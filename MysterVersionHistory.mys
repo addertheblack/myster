@@ -909,3 +909,16 @@ Work on DEV 8:
 	2003/09/11 <- DEV 19.2
 		-> Fixed a typo.
 		-> Moved multi-source download to its new home on conneciton section 90.
+		-> Changed the 6669 firewall image
+	
+	2003/09/18
+		-> Started work on new download queue program
+		
+			Need to fix bug with caching MP3 ID3 info
+			Need to fix freeze on cancel
+			Need to fix stupid none batching behavior
+			Make it so multi source resumables are named different (idiot)
+			Make sensible behavior for queued multi source downloads.
+			
+			
+		Tim's number? 442-0097
