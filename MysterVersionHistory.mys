@@ -902,3 +902,4 @@ Work on DEV 8:
 		-> k/s counter keeps going down, now fixed
 		-> change "Last Ping Time" to "Ping" in the tracker
 		-> For types in the type preferences true/false to on/off
+		-> TO DO : Which file is it attached to?

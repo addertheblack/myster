@@ -378,8 +378,7 @@ public class MultiSourceDownload {
 		//try {
 		
 			String path = theFile.getAbsolutePath();
-			someFile = new File(path.substring(0, path.length()-1));
-			System.out.println(path.substring(0, path.length()-1));
+			someFile = new File(path.substring(0, path.length()-2)); //-2 is for .i
 
 		
 		if (someFile.exists()) {
