@@ -569,6 +569,9 @@ public class MultiSourceDownload {
 
 			while (bytesDownloaded < workSegment.length) {
 				System.out.println("Work Thread "+getName()+" -> Reading in Type");
+				
+				if (socket.in.readInt()!=6669) throw new IOException("Client/Server lost sync");
+				
 				byte type = (byte)socket.in.read();
 				
 				

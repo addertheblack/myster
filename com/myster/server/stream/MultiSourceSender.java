@@ -31,8 +31,9 @@ public class MultiSourceSender extends ServerThread {
 	public boolean endFlag = false;
 	
 	public static final String QUEUED_PATH = "/queued";
+	public static final String MESSAGE_PATH = "/message";
 
-	public static final int SECTION_NUMBER=88889; //testing port
+	public static final int SECTION_NUMBER=88890; //testing port
 
 	public int getSectionNumber() {
 		return SECTION_NUMBER;
@@ -114,19 +115,11 @@ public class MultiSourceSender extends ServerThread {
 					
 					if (myCounter > file.length()) throw new IOException("User has request more bytes than there are in the file!");
 					
-					RobustMML mml = new RobustMML();
-					
-					
-					for (int i = 0 ; i>=0; i--) {
-						mml.put(QUEUED_PATH,""+i);
-						out.writeUTF(""+mml); //this would loop until 1
-						//try {	Thread.sleep(4000); } catch (InterruptedException ex) {}
-					}
-					
-					
-					fireEvent(ServerDownloadEvent.QUEUED, 0);
-					
-					sendImage(socket.out);
+					checkForLeachers(socket); //throws an IO Exception if there's a leech.
+
+					sendQueuePosition(out, 0, "Download is starting now..");
+
+					FileSenderThread.ServerTransfer.sendImage(socket.out);
 					
 					sendFileSection(socket, file, offset, fileLength);
 					
@@ -143,6 +136,38 @@ public class MultiSourceSender extends ServerThread {
 			}
 		}
 		
+		//Encapsulates the stuff required to send a queue position
+		private void sendQueuePosition(DataOutputStream out, int queued, String message) throws IOException {
+				RobustMML mml = new RobustMML();
+				
+				mml.put(QUEUED_PATH,""+queued); //no queing
+				if (! message.equals("")) mml.put(MESSAGE_PATH, message);
+				
+				out.writeUTF(""+mml); //this would loop until 1
+				
+				fireEvent(ServerDownloadEvent.QUEUED, queued);
+		}
+		
+		//Encapsulates the stuff required to send a queue position without a message
+		private void sendQueuePosition(DataOutputStream out, int queued) throws IOException {
+				sendQueuePosition(out, queued, "");
+		}
+		
+		//Throws an IOException if there's a leech.
+		private void checkForLeachers(MysterSocket socket) throws IOException {
+			if (FileSenderThread.kickFreeloaders()) {
+				try {
+					com.myster.client.stream.StandardSuite.disconnectWithoutException(com.myster.net.MysterSocketFactory.makeStreamConnection(new com.myster.net.MysterAddress(socket.getInetAddress())));
+				} catch (Exception ex) { //if host is not reachable it will end up here.
+					sendQueuePosition(socket.out, 0, "You are not reachable from the outside");
+					
+					FileSenderThread.ServerTransfer.freeloaderComplain(socket.out); //send an image + URL about firewalls.
+					
+					throw new IOException("Downloader is a leech");
+				}
+			}
+		}
+		
 		private void endBlock() {
 			fireEvent(ServerDownloadEvent.SECTION_FINISHED, -1);
 		}
@@ -156,6 +181,7 @@ public class MultiSourceSender extends ServerThread {
 				
 				byte[] buffer = new byte[(int)CHUNK_SIZE];
 				
+				socket.out.writeInt(6669);
 				socket.out.write('d');
 				socket.out.writeLong(length);
 				
@@ -226,70 +252,6 @@ public class MultiSourceSender extends ServerThread {
 				endFlag = true;
 			}
 		}
-	}
-	
-	//code 'i'
-	private void sendImage(DataOutputStream out) {
-		DataInputStream in;
-		File file;
-		
-		
-		String imageName = com.myster.server.BannersManager.getNextImageName();
-		
-		if (imageName == null) return;
-		
-		file = com.myster.server.BannersManager.getFileFromImageName(imageName);
-	
-		if (file==null) { //is needed (Threading issue)
-			return;
-		}
-		
-		try {
-			in=new DataInputStream(new java.io.FileInputStream(file));
-		} catch (Exception ex) {
-			ex.printStackTrace();
-			return;
-		}
-		
-		byte[] bytearray=new byte[(int)file.length()];
-		
-		//serveroutput.say("File length is "+file.length());
-		
-		try {
-			in.read(bytearray, 0, (int)file.length());
-		} catch (IOException ex) {}
-		
-		
-		
-		//OUTPUT::::::::
-		try {
-			out.write('i');
-			out.writeLong(bytearray.length);
-			out.write(bytearray);
-			
-			sendURLFromImageName(out, imageName);
-
-		} catch (IOException ex) {}
-		
-		try {
-			in.close();
-		} catch (IOException ex) {}
-		
-	}
-	
-	private void sendURLFromImageName(DataOutputStream out, String imageName) throws IOException {
-		String url = com.myster.server.BannersManager.getURLFromImageName(imageName);
-		
-		if (url == null) return;
-		
-		sendURL(out, url);
-	}
-
-	private void sendURL(DataOutputStream out, String url) throws IOException {
-		out.write('u');
-		out.writeInt(0);  //padding 'cause writeUTF preceed the UTF with a short.
-		out.writeShort(0);
-		out.writeUTF(url);
 	}
 	
 	private class DisconnectCommandException extends RuntimeException  {

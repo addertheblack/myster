@@ -62,7 +62,7 @@ public class FileSenderThread extends ServerThread {
 						StandardSuite.disconnectWithoutException(MysterSocketFactory.makeStreamConnection(context.serverAddress));
 					//}
 				} catch (Exception ex) { //if host is not reachable it will end up here.
-					transfer.freeloaderComplain();
+					ServerTransfer.freeloaderComplain(context.socket.out);
 					throw new IOException("Client is a leech."); //bye bye..
 				}
 			}
@@ -91,7 +91,7 @@ public class FileSenderThread extends ServerThread {
 	} 
 	
 	private static String freeloadKey="ServerFreeloaderKey/";
-	private static boolean kickFreeloaders() {
+	public static boolean kickFreeloaders() {
 		boolean b_temp=false;
 		
 		try {
@@ -166,7 +166,7 @@ public class FileSenderThread extends ServerThread {
 		private static final int BUFFERSIZE=8192;
 		private static final int BURSTSIZE=512*1024;	
 			
-		public ServerTransfer (FileTypeListManager typelist, ServerDownloadDispatcher dispatcher) {
+		protected ServerTransfer (FileTypeListManager typelist, ServerDownloadDispatcher dispatcher) {
 			this.typelist	= typelist;
 			this.dispatcher	= dispatcher;
 			this.downloadInfo = new Stats();
@@ -184,12 +184,15 @@ public class FileSenderThread extends ServerThread {
 			return new DQueuePrivateClass();
 		}
 		
-		public void freeloaderComplain() throws IOException {
+		public static void freeloaderComplain(DataOutputStream out) throws IOException {
 			byte[] queuedImage=new byte[4096];
+			int sizeOfImage = 0;
 			int tempint;
-			InputStream qin=this.getClass().getResourceAsStream("firewall.gif");
+			
+			InputStream qin=ServerTransfer.class.getResourceAsStream("firewall.gif");
 			
 			//loading image...
+			
 			do {
 				tempint=qin.read(queuedImage, sizeOfImage,4096-sizeOfImage);
 				if (tempint>0) sizeOfImage+=tempint;
@@ -204,18 +207,20 @@ public class FileSenderThread extends ServerThread {
 			out.writeLong(sizeOfImage);
 			out.write(queuedImage, 0, sizeOfImage);
 			
-			sendURL("http://mysternetworks.com/information/faq.html#anchor9353424");
+			sendURL(out, "http://mysternetworks.com/information/faq.html#anchor9353424");
 		}
 		
 		
 		byte[] queuedImage;
 		int sizeOfImage=0;
 		private void refresh(int position) throws IOException {
+			
+			
 			if (endflag) throw new IOException("Thread is dead.");
 			fireEvent(ServerDownloadEvent.QUEUED, position);
 			try {
 				if (queuedImage==null) { //if not loaded then load.
-					queuedImage=new byte[4096];
+					queuedImage = new byte[4096];
 					int tempint;
 					InputStream qin=this.getClass().getResourceAsStream("queued.gif");
 					
@@ -359,7 +364,7 @@ public class FileSenderThread extends ServerThread {
 	
 				starttime=System.currentTimeMillis();
 				do {
-					sendImage(); //sends URL too.
+					sendImage(out); //sends URL too.
 				} while (sendDataPacket()==BURSTSIZE);
 			} finally {
 				try {fin.close(); } catch (Exception ex) {}
@@ -389,7 +394,7 @@ public class FileSenderThread extends ServerThread {
 			return (int)bytesremaining;
 		}
 	
-		//code 'm'
+		//code 'm' (not used?)
 		private void sendMessage(String m) throws IOException {
 			byte[] bytes=m.getBytes();
 			long length=bytes.length;
@@ -407,16 +412,17 @@ public class FileSenderThread extends ServerThread {
 			out.writeInt(i);
 		}
 	
-		//code 'u'
-		private void sendURLFromImageName(String imageName) throws IOException {
+		//A utility method that allows one to send a banner URL from an Image name
+		public static void sendURLFromImageName(DataOutputStream out, String imageName) throws IOException {
 			String url = BannersManager.getURLFromImageName(imageName);
 			
 			if (url == null) return;
 			
-			sendURL(url);
+			sendURL(out, url);
 		}
 		
-		private void sendURL(String url) throws IOException {
+		//code 'u'
+		public static void sendURL(DataOutputStream out, String url) throws IOException {
 			out.writeInt(6669);
 			out.write('u');
 			out.writeInt(0);  //padding 'cause writeUTF preceed the UTF with a short.
@@ -425,7 +431,7 @@ public class FileSenderThread extends ServerThread {
 		}
 	
 		//code 'i'
-		private void sendImage() {
+		public static void sendImage(DataOutputStream out) throws IOException {
 			DataInputStream in;
 			File file;
 			
@@ -440,33 +446,33 @@ public class FileSenderThread extends ServerThread {
 				return;
 			}
 			
-			try {
+			//try {
 				in=new DataInputStream(new FileInputStream(file));
-			} catch (Exception ex) {
-				ex.printStackTrace();
-				return;
-			}
+			//} catch (Exception ex) {
+			//	ex.printStackTrace();
+			//	return;
+			//}
 			
 			byte[] bytearray=new byte[(int)file.length()];
 			
 			//serveroutput.say("File length is "+file.length());
 			
-			try {
+			//try {
 				in.read(bytearray, 0, (int)file.length());
-			} catch (IOException ex) {}
+			//} catch (IOException ex) {}
 			
 			
 			
 			//OUTPUT::::::::
-			try {
+			//try {
 				out.writeInt(6669);
 				out.write('i');
 				out.writeLong(bytearray.length);
 				out.write(bytearray);
 				
-				sendURLFromImageName(imageName);
+				sendURLFromImageName(out, imageName);
 	
-			} catch (IOException ex) {}
+			//} catch (IOException ex) {}
 			
 			try {
 				in.close();
@@ -588,6 +594,4 @@ public class FileSenderThread extends ServerThread {
 			}
 		}
 	}
-
-
 }
