@@ -43,7 +43,7 @@ public class AsyncDatagramSocket {
 	
 	private void open(int port) throws IOException {
 		dsocket=new DatagramSocket(port);
-		dsocket.setSoTimeout(100);
+		dsocket.setSoTimeout(50);
 	}
 		
 	public void close() {
@@ -55,21 +55,29 @@ public class AsyncDatagramSocket {
 	private void doGetNewPackets() throws IOException {
 		DatagramPacket p=new DatagramPacket(new byte[65536], 65536);
 		
-		
-		try {
-			dsocket.receive(p);
-			if (portListener!=null) portListener.packetReceived(new ImmutableDatagramPacket(p));
-		} catch (InterruptedIOException ex) {
-		
+		int counter=0;
+		long startTime=System.currentTimeMillis();
+		while(System.currentTimeMillis()-startTime<50) {
+			try {
+				dsocket.receive(p);
+				if (portListener!=null) portListener.packetReceived(new ImmutableDatagramPacket(p));
+			} catch (InterruptedIOException ex) {
+			
+			}
+			counter++;
+			
 		}
+		//if (counter>1) System.out.println("Looped "+counter+" times already."); 
 	}
 	
 	private void doSendNewPackets() throws IOException { 
-		while (queue.getSize()>0) {
+		int counter=0;
+		while (queue.getSize()>0 && counter<200) {	//fix to make more balenced.
 			ImmutableDatagramPacket p=(ImmutableDatagramPacket)(queue.removeFromHead());
 			
 			if (p!=null) {
 				dsocket.send(p.getDatagramPacket());
+				counter++;
 			} //grrr..
 		}
 	}

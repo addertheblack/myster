@@ -184,7 +184,7 @@ class FileTypeList extends MysterThread{
                 if (t.length() > 1 && !aggregate) {
                     keywords.addElement(t.toString());
                     t = new StringBuffer(" ");
-                } else if (t.charAt(t.length()-1) != ' ') t.append(' '); //I have been getting t with a length of 0 here!!!
+                } else if (t.charAt(t.length()-1) != ' ') t.append(' ');
             }
         }
         if (t.length() > 1)

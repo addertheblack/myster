@@ -18,50 +18,32 @@ package com.general.util;
 
 
 
-public class Timer implements Comparable {
-	
-	Runnable runnable;
-	
-	long time;
-	
-	boolean runAsThread;
-	
-	
+public class Timer implements Comparable { //almost but not quite immutable.
+	final Runnable runnable;
+	final long time;
+	final boolean runAsThread;
+	volatile boolean isCancelled=false; //is accessed asynchronously
 	
 	public Timer(Runnable thingToRun, long timeToWait) {
-		
 		this(thingToRun, timeToWait, false);
-		
 	}
 	
 	
 	
-	/**
-		 
+	/** 
 	*	Run as thread means that the timer should launch the runnable item in its own thread.
-	
 	*	Items are not run as threa dby default. Items not run as thread should return ASAP.
-	
 	*
-	
 	*		Time to wait is relative to the current time ad is in millis.
-	
 	*/
 	
 	public Timer(Runnable thingToRun, long timeToWait, boolean runAsThread) {
-		
 		runnable=thingToRun;
-		
 		timeToWait=(timeToWait<=0?1:timeToWait); //assert positive.
-		
 		time=System.currentTimeMillis()+timeToWait;
-		
 		this.runAsThread=runAsThread;
 		
-		
-		
 		addEvent(this);
-		
 	}
 	
 	
@@ -70,18 +52,17 @@ public class Timer implements Comparable {
 	
 	public boolean isReady() { return time - System.currentTimeMillis() - 1 <= 0; }
 	
+	public boolean isCancelled() { return isCancelled; }
+	
+	public void cancelTimer() { isCancelled=true; }
+	
 	
 	
 	public int compareTo(Object other) {
-		
 		Timer otherTimer = (Timer)other;
-		
 		if (time < otherTimer.time) return -1;
-		
 		else if (time == otherTimer.time) return 0;
-		
 		else return 1;
-		
 	}
 	
 	
@@ -129,73 +110,6 @@ public class Timer implements Comparable {
 		}
 	}
 
-	
-
-	
-
-	/*
-
-	    static private void timerLoop() {
-
-        for(;;) 
-
-        {
-
-            boolean isEmpty = false;
-
-            long timeLeft = 0;
-
-            synchronized(timers)
-
-            {
-
-                if (timers.isEmpty()) isEmpty = true;
-
-                else timeLeft = ((Timer)timers.top()).timeLeft();
-
-            }
-
-
-
-            try             {
-
-                if (isEmpty) semaphore.getLock();
-
-                else if (timeLeft > 0) semaphore.getLock((int)timeLeft);
-
-            }
-
-            catch(InterruptedException e) 
-
-            {
-
-                throw new UnexpectedInterrupt(e.getMessage()); 
-
-            }
-
-
-
-            Timer timer = null;
-
-            synchronized(timers)
-
-            {
-
-                if (!timers.isEmpty() && ((Timer)timers.top()).isReady())
-
-                    timer = (Timer)timers.extractTop();
-
-            }
-
-            if (timer != null)
-
-                timer.doEvent();
-
-        }
-
-    }
-
-	*/
 
 	
 
@@ -204,52 +118,34 @@ public class Timer implements Comparable {
 	static private void timerLoop() {
 		
 		for(;;) {
-			
 			Timer timer = null;
-			
 			synchronized (timers) {
-				
 				boolean isEmpty = false;
-				
 				long timeLeft = 0;
 				
 				
-				
 				if (timers.isEmpty()) isEmpty = true;
-				
 				else timeLeft = ((Timer)timers.top()).timeLeft();
-				
-				
+
 				
 				try {
-					
 					if (isEmpty) timers.wait();
-					
 					else if (timeLeft > 0) timers.wait(timeLeft);
-					
 				} catch(InterruptedException e) {
-					
-					throw new UnexpectedInterrupt(e.getMessage()); 
-					
+					throw new UnexpectedInterrupt(e.getMessage());
 				}
 				
 				
-				
 				if (!timers.isEmpty() && ((Timer)timers.top()).isReady())
-					
-					timer = (Timer)timers.extractTop();
-				
+						timer = (Timer)timers.extractTop();
 			}
 			
 			
 			
-			if (timer != null) //should never happen that timer==null;
-				
-				timer.doEvent();
-			
+			if (timer != null) {//should never happen that timer==null;
+				if (timer.isCancelled()==false) timer.doEvent();
+			}
 		}
-		
 	}
-
 }
 
