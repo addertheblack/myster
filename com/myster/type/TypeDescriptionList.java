@@ -27,23 +27,36 @@ public abstract class TypeDescriptionList {
 	public abstract TypeDescription[] getAllTypes() ;
 	public abstract TypeDescription[] getEnabledTypes() ;
 	public abstract boolean isTypeEnabled(MysterType type);
+	public abstract boolean isTypeEnabledInPrefs(MysterType type);
 	public abstract void addTypeListener(TypeListener l) ;
 	public abstract void removeTypeListener(TypeListener l) ;
 	public abstract void setEnabledType(MysterType type, boolean enable) ;
 }
 
 
-
-
 class DefaultTypeDescriptionList extends TypeDescriptionList {
+
+	//Ok, so here's the situation
+	//I designed this so that I could change types while the program is running
+	//and have all modules auto update.. but it's too freaking long to program
+	//so rather than nuke the code I've modified it to return the value that was
+	//last saved. The system will still fire events but the list won't send the
+	//values stored in the prefs..
+	//See code for how to get back the intended behavior... (comments actually)
 	TypeDescriptionElement[] types;
+	TypeDescriptionElement[] oldTypes;
+	TypeDescriptionElement[] workingTypes;
+	
+	
+	
 	SyncEventDispatcher dispatcher;
 
 	public DefaultTypeDescriptionList() {
-		TypeDescription[] list = loadDefaultTypeAndDescriptionList();
+		TypeDescription[] list = loadDefaultTypeAndDescriptionList();;
 		
 
 		types = new TypeDescriptionElement[list.length];
+		oldTypes = new TypeDescriptionElement[list.length];
 		
 		Hashtable hash = getEnabledFromPrefs();
 		
@@ -59,7 +72,10 @@ class DefaultTypeDescriptionList extends TypeDescriptionList {
 			}
 			
 			types[i] = new TypeDescriptionElement(list[i], (string_bool.equals("TRUE") ? true : false));
+			oldTypes[i] = new TypeDescriptionElement(list[i], (string_bool.equals("TRUE") ? true : false));
 		}
+		
+		workingTypes = oldTypes; //set working types to "types" variable. 
 		
 		dispatcher = new SyncEventDispatcher();
 	}
@@ -103,10 +119,10 @@ class DefaultTypeDescriptionList extends TypeDescriptionList {
 
 	//TypeDescription Methods
 	public TypeDescription[] getAllTypes() {
-		TypeDescription[] typeArray_temp = new TypeDescription[types.length];
+		TypeDescription[] typeArray_temp = new TypeDescription[workingTypes.length];
 		
 		for (int i = 0; i < types.length; i++) {
-			typeArray_temp[i] = types[i].getTypeDescription();
+			typeArray_temp[i] = workingTypes[i].getTypeDescription();
 		}
 		
 		return typeArray_temp;
@@ -114,20 +130,26 @@ class DefaultTypeDescriptionList extends TypeDescriptionList {
 	
 	public TypeDescription[] getEnabledTypes() {
 		int counter = 0;
-		for (int i = 0; i < types.length; i++) {
-			if (types[i].getEnabled()) counter++;
+		for (int i = 0; i < workingTypes.length; i++) {
+			if (workingTypes[i].getEnabled()) counter++;
 		}
 		
 		TypeDescription[] typeArray_temp = new TypeDescription[counter];
 		counter = 0;
 		for (int i = 0; i < types.length; i++) {
-			if (types[i].getEnabled()) typeArray_temp[counter++] = types[i].getTypeDescription();
+			if (workingTypes[i].getEnabled()) typeArray_temp[counter++] = types[i].getTypeDescription();
 		}
 		
 		return typeArray_temp;
 	}
 	
 	public boolean isTypeEnabled(MysterType type) {
+		int index = getIndexFromType(type);
+		
+		return (index != -1 ? workingTypes[index].getEnabled() : false);
+	}
+	
+	public boolean isTypeEnabledInPrefs(MysterType type) {
 		int index = getIndexFromType(type);
 		
 		return (index != -1 ? types[index].getEnabled() : false);
@@ -193,6 +215,9 @@ class DefaultTypeDescriptionList extends TypeDescriptionList {
 			for (int i=0; i<count; i++) {
 				list[i]=(TypeDescription)vector.elementAt(i);
 			}
+			
+			if (list.length == 0) return new TypeDescription[]{new TypeDescription(new MysterType((new String("MPG3")).getBytes()), "Default type since all types are disabled")};
+			
 			return list;
 		} catch (Exception ex) { return null;}
 	}
