@@ -164,9 +164,7 @@ public class StandardSuite {
 					}
 				} catch (IOException ex) {
 					//nothing
-					progress.setText("An error has occured ->" + ex.getMessage());
-				} finally {
-					try { socket.close(); } catch (Exception ex) {}
+					//progress.setText("An error has occured ->" + ex.getMessage());
 				}
 			}
 		}).start();
@@ -187,7 +185,7 @@ public class StandardSuite {
 		
 		checkProtocol(socket.in);
 					
-		socket.out.writeBytes(stub.getType().toString()); //this protocol sucks
+		socket.out.writeInt(stub.getType().getAsInt()); //this protocol sucks
 		socket.out.writeUTF(stub.getName());
 
 		try {

@@ -886,3 +886,13 @@ Work on DEV 8:
 	  			Downloaded files now rename themselve to what they are supposed ot be.
 	  	-> fixed the length bytes problem in P2P window. (size showed up as "1827681" instead of XXXMB or XXXKB)
 	  			(Thanx to a user on the net)
+	  2003/08/30 <- DEV 19.1
+	  	-> Made it so the progress window resizes after a new host is found.
+	  	-> Fixed a stupid bug in the rename of somefile.mpg.i to somefile.mpg
+	  	-> Hooked up banners and URLs in multi source download window.
+	  	-> Made it so the crawler does more than one pass.
+	  	-> Moved hash manager to proper menu
+	  	-> Hooked up hash cache pref panel
+	  	-> Decided to remove the whole panel anyway.
+	  	-> Made it so the p2p window can also launch a multi source download
+	  	

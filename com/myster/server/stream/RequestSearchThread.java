@@ -56,12 +56,13 @@ public class RequestSearchThread extends ServerThread {
 		
 		dispatcher.fireEvent(new ServerSearchEvent(ServerSearchEvent.REQUESTED, c.socket.getInetAddress().getHostAddress(), NUMBER, searchstring, new String(type), null));
 
-		
-		for (int j=0; j<stringarray.length; j++) {
-			out.writeUTF(stringarray[j]);
+		if (stringarray!=null) {
+			for (int j=0; j<stringarray.length; j++) {
+				out.writeUTF(stringarray[j]);
 
-			dispatcher.fireEvent(new ServerSearchEvent(ServerSearchEvent.RESULT, c.socket.getInetAddress().getHostAddress(), NUMBER, searchstring,new String(type),  stringarray[j]));
+				dispatcher.fireEvent(new ServerSearchEvent(ServerSearchEvent.RESULT, c.socket.getInetAddress().getHostAddress(), NUMBER, searchstring,new String(type),  stringarray[j]));
 
+			}
 		}
 		
 		out.writeUTF("");

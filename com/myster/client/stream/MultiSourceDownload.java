@@ -61,7 +61,7 @@ public class MultiSourceDownload {
 		this.progress 		= progress;
 	}
 	
-	private synchronized void newDownload(MysterFileStub stub) {
+	private synchronized void newDownload(MysterFileStub stub, MysterSocket socket) {
 		if (stopDownload) return;
 		
 		for (int i = 0; i < downloaders.length; i++) {
@@ -79,6 +79,8 @@ public class MultiSourceDownload {
 				
 				downloaders[i] = new InternalSegmentDownloader(stub, i);
 				
+				if (socket!=null) downloaders[i].setSocket(socket); //YUCK!
+				
 				downloaders[i].addListener(new SegmentDownloaderHandler(i+1));
 				
 				downloaders[i].start();
@@ -86,6 +88,10 @@ public class MultiSourceDownload {
 				return;
 			}
 		}
+	}
+	
+	private synchronized void newDownload(MysterFileStub stub) {
+		newDownload(stub, null);
 	}
 	
 	//remoes a download but doesn't stop a download.
@@ -181,26 +187,30 @@ public class MultiSourceDownload {
 	}
 	
 	private boolean assertLengthAndHash() throws IOException {
-		com.myster.mml.RobustMML mml = StandardSuite.getFileStats(socket, stub);
-		
-		String hashString = mml.get(com.myster.filemanager.FileItem.HASH_PATH+com.myster.hash.HashManager.MD5);
-		String fileLengthString = mml.get("/size");
-		
-		if (hashString == null || fileLengthString == null) return false;
-		
 		try {
-			hash = com.myster.hash.SimpleFileHash.buildFromHexString(com.myster.hash.HashManager.MD5, hashString);
-		} catch (NumberFormatException ex) {
+			com.myster.mml.RobustMML mml = StandardSuite.getFileStats(socket, stub);
+			
+			String hashString = mml.get(com.myster.filemanager.FileItem.HASH_PATH+com.myster.hash.HashManager.MD5);
+			String fileLengthString = mml.get("/size");
+			
+			if (hashString == null || fileLengthString == null) return false;
+			
+			try {
+				hash = com.myster.hash.SimpleFileHash.buildFromHexString(com.myster.hash.HashManager.MD5, hashString);
+			} catch (NumberFormatException ex) {
+				return false;
+			}
+			
+			try {
+				fileLength = Long.parseLong(fileLengthString);
+			} catch (NumberFormatException ex) {
+				return false;
+			}
+			
+			return true;
+		} catch (UnknownProtocolException ex) {
 			return false;
 		}
-		
-		try {
-			fileLength = Long.parseLong(fileLengthString);
-		} catch (NumberFormatException ex) {
-			return false;
-		}
-		
-		return true;
 	}
 
 	public synchronized boolean start() throws IOException {
@@ -238,7 +248,7 @@ public class MultiSourceDownload {
 		
 		startCrawler();
 		
-		newDownload(stub);
+		newDownload(stub, socket);
 		
 		return true;
 	}
@@ -405,6 +415,7 @@ public class MultiSourceDownload {
 	
 	private class InternalSegmentDownloader extends Thread implements SegmentDownloader{
 		MysterFileStub 	stub;
+		MysterSocket	socket;
 		
 		boolean deadFlag = false;
 		
@@ -432,6 +443,10 @@ public class MultiSourceDownload {
 			dispatcher.removeListener(listener);
 		}
 		
+		public void setSocket(MysterSocket socket) {
+			if (this.socket==null) this.socket = socket;
+		}
+		
 		public MysterFileStub getMysterFileStub() {
 			return stub;
 		}
@@ -439,7 +454,8 @@ public class MultiSourceDownload {
 		public void run() {
 			MysterSocket socket = null;
 			try {
-				socket = MysterSocketFactory.makeStreamConnection(stub.getMysterAddress());
+				if (this.socket==null) socket = MysterSocketFactory.makeStreamConnection(stub.getMysterAddress());
+				else socket = this.socket; //yuck.
 				
 				fireEvent(SegmentDownloaderEvent.CONNECTED, 0, 0, 0, 0);
 				

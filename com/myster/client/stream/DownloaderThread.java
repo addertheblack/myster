@@ -172,13 +172,10 @@ public class DownloaderThread extends SafeThread {
 			return;
 		}*/
 	
-		try {
-			in=new DataInputStream(socket.getInputStream());
-			out=new DataOutputStream(socket.getOutputStream());
-		} catch (Exception ex) {
-			progress.setText("Error oppening connection", FileProgressWindow.BAR_1);
-			return;
-		}
+
+		in=socket.in;
+		out=socket.out;
+
 		CONNECTION: {
 			progress.setText("Negotiating file transfer..",FileProgressWindow.BAR_1);
 			
