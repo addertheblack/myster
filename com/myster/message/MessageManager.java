@@ -92,6 +92,8 @@ public class MessageManager {
 	
 		(new MessageWindow(new InstantMessage(msg.getAddress(), msg.getMessage(), msg.getReply()))).show();
 		
+		java.awt.Toolkit.getDefaultToolkit().beep(); 
+		
 		return true;
 	}
 	

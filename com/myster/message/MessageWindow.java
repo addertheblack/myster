@@ -95,7 +95,7 @@ public class MessageWindow extends MysterFrame {
 			}
 			
 			public void windowClosed(WindowEvent e) {
-				dispose();
+				//dispose();
 			}
 		});
 	}
@@ -110,7 +110,7 @@ public class MessageWindow extends MysterFrame {
 	
 	private void closeThisWindow() {
 		close();
-		dispose();
+		//dispose();
 	}
 	
 	//This works on mainPanel and not the window itself!
@@ -263,13 +263,7 @@ class HeaderPanel extends Panel {
 			addComponent(addressField,1,2,1,1,1,1);
 		}
 
-		public void paint(Graphics g) {
-			//..
-		}
 
-		//public Dimension getPreferredSize() {
-		//	return addressField.getPreferredSize();
-		//}
 		
 		public MysterAddress getAddress() throws UnknownHostException {
 			return (addressField.isEditable()?new MysterAddress(addressField.getText()):address);
@@ -339,6 +333,8 @@ class SeperatorLine extends Panel {
 	}
 	
 	public void  paint(Graphics g) {
-		g.drawLine(0, 1, getSize().width, 1);
+		int x = getSize().width;
+		
+		if (x > 1) g.drawLine(0, 1, getSize().width, 1);
 	}
 }
