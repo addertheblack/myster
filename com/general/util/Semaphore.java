@@ -25,12 +25,13 @@ public class Semaphore {
 	
 	//semaphore wait. "wait" is already used by the API.
 	public synchronized void getLock() throws InterruptedException {
-    	getLock(0);
+		counter-- ;
+  	 	if (counter < 0) wait(0);
 	}
 	
-	//semaphore wait. "wait" is already used by the API.
-	public synchronized void getLock(int millis) throws InterruptedException {
-    	counter-- ;
-    	if (counter < 0) wait(millis);
-	}
+	//semaphore wait. "wait" is already used by the API. (is broken)
+	//public synchronized void getLock(int millis) throws InterruptedException {
+   // 	counter-- ;
+   // 	if (counter < 0) wait(millis);
+	//}
 }
