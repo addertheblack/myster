@@ -25,24 +25,22 @@ class FileFilter {
                         ".wm",".vob",".ifo"
                 },
 		new String[]{
-						".txt",".doc",".abw",".rtf",".pdf",".ps",".htm",
-						".html",".xml",".wp4"
+                        ".txt",".doc",".abw",".rtf",".pdf",".ps",".htm",".html",".xml",".wp4"
 		},
 		new String[]{
                         ".jpg",".jpeg",".png",".gif",".jpe",".tif",".tiff",".bmp",
                         ".jp2",".ps",".psp",".eps",".xpm",".tga",".xcf",".pict"
 		},
 		new String[]{
-						".bin",".hqx",".sit",".cpt",".dmg",".sea",".nfs",".sitx",
-                        ".zip",".gz",".tar",".tgz",".image",".img",".pkg",".smi",
+                        ".bin",".hqx",".sit",".cpt",".dmg",".sea",".nfs",".sitx",".image",
+                        ".img",".pkg",".smi"
 		},
 		new String[]{
-                        ".exe",".zip",".gz",".tar",".tgz",".z",".rmj",".lqt",".iso",
-                        ".cue",".iso",".ccd",".rar",".ace",
-                        ".cdr",".gzip",".lzh",".lha"
+                        ".exe",".zip",".gz",".tar",".z",".rmj",".lqt",".iso",".cue",
+                        ".iso",".ccd",".rar",".ace",".cdr",".gzip",".lzh",".lha"
 		},
 		new String[]{
-                        ".zip","rom","smc","n64","v64","gba","gb","mod","img"
+                        ".rom",".smc",".n64",".v64",".gba",".gb",".mod",".nes",".dsk"
 		}
 	};
 	
