@@ -396,6 +396,12 @@ public class Myster {
 	
 	
 	public static File getCurrentDirectory() {
-		return WORKING_DIRECTORY; //not yet implemented
+		if (System.getProperty("os.name").equals("Linux"))
+		{
+			File result = new File(new File(System.getProperty("user.home")), ".myster");
+			if (!result.exists()) result.mkdir();
+			return result;
+		}
+		else return WORKING_DIRECTORY; //not yet implemented
 	}
 }

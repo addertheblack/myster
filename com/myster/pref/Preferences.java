@@ -20,7 +20,7 @@ import java.util.Vector;
 import com.myster.mml.MML;
 import com.myster.pref.ui.PreferencesDialogBox; //bad, get rid of. no GUI stuff should be references directly here.
 import com.myster.pref.ui.PreferencesPanel; //bad, get rid of. no GUI stuff should be references directly here.
-
+import com.myster.Myster;
 
 /**
 *	System globals are stored in;
@@ -49,8 +49,8 @@ public class Preferences {
 	
 	private static Preferences pref;
 	
-	private final String PATH="mysterprefs.mml";
-	private final String BACKUP="mysterprefs.mml.backup";
+	private final File preferenceFile=new File(Myster.getCurrentDirectory(), "mysterprefs.mml");
+	private final File preferenceBackupFile=new File(Myster.getCurrentDirectory(), "mysterprefs.mml.backup");
 	
 	public static final int DEBUG=1;
 	public static final int NORMAL=0;
@@ -181,14 +181,14 @@ public class Preferences {
 	/** private function
 	*/
 	private synchronized void loadFile() {
-		//try FILE try BACKUP then make a new file.
+		//try FILE try preferenceBackupFile then make a new file.
 		
 		try {
 			try {
-				loadFromFile(PATH);
+				loadFromFile(preferenceFile);
 			} catch (Exception ex) {
 			ex.printStackTrace();
-				loadFromFile(BACKUP);
+				loadFromFile(preferenceBackupFile);
 			}
 		} catch (IOException ex) {
 			System.out.println("No prefs file or prefs file is corrupt or prefs file is old. Making a new one.");
@@ -203,15 +203,14 @@ public class Preferences {
 		}
 	}
 	
-	private synchronized void loadFromFile(String path) throws IOException,ClassNotFoundException,ClassCastException {
+	private synchronized void loadFromFile(File file) throws IOException,ClassNotFoundException,ClassCastException {
 		ObjectInputStream in=null;
 		try {
-			File f=new File(path);
-			if (!f.exists()) {
+			if (!file.exists()) {
 				throw new IOException("Toss and catch!");
 			}
 			
-			in=new ObjectInputStream(new FileInputStream(f));
+			in=new ObjectInputStream(new FileInputStream(file));
 			String s_temp=(String)(in.readObject());
 			if (s_temp.equals(HEADER_STRING)) {
 				data=(Hashtable)(in.readObject());
@@ -243,10 +242,8 @@ public class Preferences {
 
 
 		try {
-			File finalfile	=new File(PATH);
-			File backupfile	=new File(BACKUP);
-			if(backupfile.exists()) backupfile.delete();	//on the mac the next line tosses an excption if file already exists.
-			ObjectOutputStream out=new ObjectOutputStream(new FileOutputStream(backupfile));
+			if(preferenceBackupFile.exists()) preferenceBackupFile.delete();	//on the mac the next line tosses an excption if file already exists.
+			ObjectOutputStream out=new ObjectOutputStream(new FileOutputStream(preferenceBackupFile));
 			out.writeObject(HEADER_STRING);
 
 			synchronized (this) {
@@ -255,8 +252,8 @@ public class Preferences {
 			
 			out.flush();
 			out.close();
-			if (!finalfile.delete()&&finalfile.exists()) throw new Exception("Delete not sucessfull! is file in use??");
-			if (!backupfile.renameTo(finalfile)) throw new Exception("Rename not sucessfull! is file in use??");
+			if (!preferenceFile.delete()&&preferenceFile.exists()) throw new Exception("Delete not sucessfull! is file in use??");
+			if (!preferenceBackupFile.renameTo(preferenceFile)) throw new Exception("Rename not sucessfull! is file in use??");
 		} catch (Exception ex) {
 			if (flag==DEBUG) {
 				ex.printStackTrace();

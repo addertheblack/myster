@@ -15,6 +15,7 @@ import java.io.ObjectOutputStream;
 import java.util.Vector;
 import java.util.Hashtable;
 import java.util.Enumeration;
+import com.myster.Myster;
 
 /**
 *	This class is yet another manager. In this case, this manager should only be used
@@ -98,27 +99,27 @@ public abstract class HashCache {
 class DefaultHashCache extends HashCache {
 	private Hashtable hashtable = new Hashtable();
 	
-	private static final String PATH	= "HashCache";
-	private static final String BACKUP	= "HashCache.backup";
+	private static final File hashFile	= new File(Myster.getCurrentDirectory(), "HashCache");
+	private static final File hashBackupFile	= new File(Myster.getCurrentDirectory(), "HashCache.backup");
 	private static final String VERSION	= "1";
 	
 	
 	public DefaultHashCache() {
 		try {
-			loadFromFile(PATH);
+			loadFromFile(hashFile);
 		} catch (Exception ex) {
 			try {
 				ex.printStackTrace();
 				System.out.println("HashCache, attempting to load from backup.");
-				loadFromFile(BACKUP);
+				loadFromFile(hashBackupFile);
 			} catch (Exception exc) {
 				exc.printStackTrace();
 			}
 		}
 	}
 	
-	private synchronized void loadFromFile(String fileName) throws Exception {
-		InputStream in 		= new FileInputStream(new File(fileName));
+	private synchronized void loadFromFile(File file) throws Exception {
+		InputStream in 		= new FileInputStream(file);
 		DataInputStream din = new DataInputStream(in);
 		try {
 		int version = Integer.parseInt(din.readUTF());
@@ -210,11 +211,9 @@ class DefaultHashCache extends HashCache {
 		ObjectOutputStream out = null;
 		
 		try {
-			File finalfile	=new File(PATH);
-			File backupfile	=new File(BACKUP);
-			if(backupfile.exists()) backupfile.delete();	//on the mac the next line tosses an excption if file already exists.
+			if(hashBackupFile.exists()) hashBackupFile.delete();	//on the mac the next line tosses an excption if file already exists.
 			
-			OutputStream basic_out = new FileOutputStream(backupfile);
+			OutputStream basic_out = new FileOutputStream(hashBackupFile);
 			
 			DataOutputStream dout = new DataOutputStream(basic_out); //this line actually ADDS BYTES TO THE STREAM!!!
 			
@@ -233,8 +232,8 @@ class DefaultHashCache extends HashCache {
 			out.flush();
 			out.close();
 			
-			if (!finalfile.delete()&&finalfile.exists()) throw new Exception("Delete not sucessfull! is file in use??");
-			if (!backupfile.renameTo(finalfile)) throw new Exception("Rename not sucessfull! is file in use??");
+			if (!hashFile.delete()&&hashFile.exists()) throw new Exception("Delete not sucessfull! is file in use??");
+			if (!hashBackupFile.renameTo(hashFile)) throw new Exception("Rename not sucessfull! is file in use??");
 		} catch (IOException ex) {
 			ex.printStackTrace();
 		} catch (Exception ex) {

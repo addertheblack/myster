@@ -25,6 +25,7 @@ import com.myster.pref.Preferences;
 import com.myster.mml.MML;
 import com.myster.mml.MMLException;
 import com.myster.type.MysterType;
+import com.myster.Myster;
 
 import com.myster.hash.*;
 
@@ -436,7 +437,7 @@ class FileTypeList extends MysterThread{
 	*	Suggests a default root directory in the fileing system. Should only be used by getDefaultDirectoryPath();
 	*/
 	private File getDefaultDirectory() {
-		File empty=new File(type+" Downloads");
+		File empty=new File(Myster.getCurrentDirectory(), type+" Downloads");
 		int counter=1;
 		do {
 			if (empty.exists()) {

@@ -17,7 +17,7 @@ EXTRAFILES = ./com/myster/server/stream/firewall.gif \
 	./com/general/tab/outbound.gif \
 	./com/general/tab/right.gif \
 	./com/general/tab/serverstats.gif \
-	./typedescriptionlist.txt \
+	./com/myster/typedescriptionlist.txt \
 	./mysterprefs.mml \
 	./com/properties/Myster.properties \
 	./com/properties/Myster_ja.properties
@@ -45,7 +45,7 @@ allSrc :
 	export CLASSPATH=${DESTINATION}:${LIBRARYPATHS}:${CLASSPATH}; $(JAVAC) -d $(DESTINATION) ${SRCFILES}
 
 test: all
-	(cd ${DESTINATION}; export CLASSPATH=${LIBRARYPATHS}:.; java Myster);
+	(cd ${DESTINATION}; export CLASSPATH=${LIBRARYPATHS}:.; java com.myster.Myster);
 
 
 ${DESTINATION}:
