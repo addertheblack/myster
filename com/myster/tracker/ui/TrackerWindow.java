@@ -52,7 +52,7 @@ public class TrackerWindow extends MysterFrame {
 		choice=new Choice();
 		{
 			//init choice
-			TypeDescription[] t = TypeDescriptionList.getDefaultList().getAllTypes();
+			TypeDescription[] t = TypeDescriptionList.getDefault().getEnabledTypes();
 			
 			for (int i=0; i<t.length; i++) {
 				choice.add(""+t[i].getDescription()+" ("+t[i].getType()+")");
@@ -155,7 +155,7 @@ public class TrackerWindow extends MysterFrame {
 	public synchronized MysterType getType() { 
 		int index=choice.getSelectedIndex();
 		
-		TypeDescription[] t = TypeDescriptionList.getDefaultList().getAllTypes();
+		TypeDescription[] t = TypeDescriptionList.getDefault().getEnabledTypes();
 		return t[index].getType(); //BAD idea!
 	}
 	

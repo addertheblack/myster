@@ -47,7 +47,7 @@ public class IPListManager { //aka tracker
 	protected IPListManager() {
 		blockingQueue.setRejectDuplicates(true);
 	
-		tdlist = TypeDescriptionList.getDefaultList().getAllTypes();
+		tdlist = TypeDescriptionList.getDefault().getEnabledTypes();
 		
 		list=new IPList[tdlist.length];
 		for (int i=0; i<list.length; i++) {

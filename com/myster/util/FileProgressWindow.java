@@ -141,7 +141,7 @@ public class FileProgressWindow extends ProgressWindow {
 	
 		public void mouseReleased(MouseEvent e) {		
 			if ((e.getX() > 0 && e.getX() < X_SIZE) && (e.getY() >0 && e.getY() < AD_HEIGHT)) {
-				if (System.currentTimeMillis() - lastMouseReleaseTime > 500) {
+				if ((System.currentTimeMillis() - lastMouseReleaseTime > 500) && url != null && (! url.equals("")))  {
 					try {
 						WebLinkManager.openURL(new URL(url));
 					} catch (MalformedURLException ex) {

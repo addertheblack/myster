@@ -63,7 +63,7 @@ public class FileTypeListManager{
 	*	This routine is only called by FileTypeListManager().
 	*/
 	private void initFileTypeListManager() {
-		TypeDescription[] list = TypeDescriptionList.getDefaultList().getAllTypes();
+		TypeDescription[] list = TypeDescriptionList.getDefault().getEnabledTypes();
 		filelist=new FileTypeList[list.length];
 		for (int i=0;i<list.length;i++) {
 			filelist[i]=new FileTypeList(list[i].getType(), PATH);	//This code is redundent with... This code.

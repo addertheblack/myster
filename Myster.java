@@ -155,6 +155,8 @@ public class Myster{
 				
 				com.myster.hash.ui.HashPreferences.init(); //meep
 				
+				com.myster.type.ui.TypeManagerPreferencesGUI.init();
+				
 				com.myster.hash.HashManager.start();
 				
 				//progress.done();

@@ -2,12 +2,12 @@ package com.myster.type;
 
 import java.io.*;
 import java.util.Vector;
+import java.util.Hashtable;
 import java.util.StringTokenizer;
 
+import com.myster.pref.PreferencesMML;
 import com.general.events.SyncEventDispatcher;
 import Myster;
-
-//IMUTABLE
 
 /**
 * 
@@ -19,7 +19,7 @@ public abstract class TypeDescriptionList {
 		if (defaultList == null) defaultList = new DefaultTypeDescriptionList();
 	}
 	
-	public static synchronized TypeDescriptionList getDefaultList() {
+	public static synchronized TypeDescriptionList getDefault() {
 		init(); //possible pre-mature init here
 		return defaultList;
 	}
@@ -29,8 +29,7 @@ public abstract class TypeDescriptionList {
 	public abstract boolean isTypeEnabled(MysterType type);
 	public abstract void addTypeListener(TypeListener l) ;
 	public abstract void removeTypeListener(TypeListener l) ;
-	public abstract void enableType(MysterType type) ;
-	public abstract void disableType(MysterType type) ;
+	public abstract void setEnabledType(MysterType type, boolean enable) ;
 }
 
 
@@ -38,20 +37,69 @@ public abstract class TypeDescriptionList {
 
 class DefaultTypeDescriptionList extends TypeDescriptionList {
 	TypeDescriptionElement[] types;
-	SyncEventDispatcher dispatcher; 
+	SyncEventDispatcher dispatcher;
 
 	public DefaultTypeDescriptionList() {
 		TypeDescription[] list = loadDefaultTypeAndDescriptionList();
 		
+
 		types = new TypeDescriptionElement[list.length];
 		
+		Hashtable hash = getEnabledFromPrefs();
+		
 		for (int i = 0; i < list.length; i++) {
-			types[i] = new TypeDescriptionElement(list[i], true);
+			String string_bool = (String)(hash.get(list[i].getType().toString()));
+			
+			if (string_bool == null) {
+				if (list[i].getType().toString().equals("PORN")) {
+					string_bool = "FALSE";
+				} else {
+					string_bool = "TRUE";
+				}
+			}
+			
+			types[i] = new TypeDescriptionElement(list[i], (string_bool.equals("TRUE") ? true : false));
 		}
 		
 		dispatcher = new SyncEventDispatcher();
 	}
+	
+	private static final String DEFAULT_LIST_KEY	= "DefaultTypeDescriptionList saved defaults";
+	
+	private static final String TYPE_KEY 			= "/type";
+	private static final String TYPE_ENABLED 		= "/enabled";
 
+	private Hashtable getEnabledFromPrefs() {
+		com.myster.pref.Preferences pref = com.myster.pref.Preferences.getInstance();
+		
+		PreferencesMML mml = pref.getAsMML(DEFAULT_LIST_KEY, new PreferencesMML());
+		
+				mml.setTrace(true);
+		
+		Hashtable hash = new Hashtable();
+		
+		Vector list = mml.list("/");
+		
+		for (int i = 0; i < list.size(); i++) {
+			hash.put(mml.get("/"+list.elementAt(i).toString()+TYPE_KEY), mml.get("/"+list.elementAt(i).toString()+TYPE_ENABLED));
+		}
+		
+		return hash;
+	}
+	
+	private void saveEverythingToDisk() {
+	
+		PreferencesMML mml = new PreferencesMML();
+		
+		for (int i = 0; i < types.length; i++) {
+			String temp = "/"+i;
+			
+			mml.put(temp + TYPE_KEY		, types[i].getType().toString());
+			mml.put(temp + TYPE_ENABLED	, (types[i].getEnabled() ? "TRUE" : "FALSE" ));
+		}
+		
+		com.myster.pref.Preferences.getInstance().put(DEFAULT_LIST_KEY, mml);
+	}
 
 	//TypeDescription Methods
 	public TypeDescription[] getAllTypes() {
@@ -71,8 +119,9 @@ class DefaultTypeDescriptionList extends TypeDescriptionList {
 		}
 		
 		TypeDescription[] typeArray_temp = new TypeDescription[counter];
-		for (int i = 0; i < counter; i++) {
-			if (types[i].getEnabled()) typeArray_temp[i] = types[i].getTypeDescription();
+		counter = 0;
+		for (int i = 0; i < types.length; i++) {
+			if (types[i].getEnabled()) typeArray_temp[counter++] = types[i].getTypeDescription();
 		}
 		
 		return typeArray_temp;
@@ -92,31 +141,21 @@ class DefaultTypeDescriptionList extends TypeDescriptionList {
 		dispatcher.removeListener(listener);
 	}
 	
-	public void enableType(MysterType type) {
+	public void setEnabledType(MysterType type, boolean enable) {
 		int index = getIndexFromType(type);
 		
 		//errs
 		if (index == -1) return; //no such type
-		if (types[index].getEnabled()) return; //it's already enabled you dope.
+		if (types[index].getEnabled() == enable) return;
 		
-		types[index].setEnabled(true);
+		types[index].setEnabled(enable);
 		
-		dispatcher.fireEvent(new TypeDescriptionEvent(TypeDescriptionEvent.ENABLE , this, type));
-	}
-	
-	public void disableType(MysterType type) {
-		int index = getIndexFromType(type);
+		saveEverythingToDisk();
 		
-		//errs
-		if (index == -1) return; //no such type
-		if (types[index].getEnabled() ==  false) //it's already disabled you dope.
-		
-		types[index].setEnabled(false);
-		
-		dispatcher.fireEvent(new TypeDescriptionEvent(TypeDescriptionEvent.DISABLE, this, type));
+		dispatcher.fireEvent(new TypeDescriptionEvent((enable ? TypeDescriptionEvent.ENABLE : TypeDescriptionEvent.DISABLE) , this, type));
 	}
 
-	private int getIndexFromType(MysterType type) {
+	private synchronized int getIndexFromType(MysterType type) {
 		for (int i = 0; i < types.length; i++) {
 			if (types[i].getType().equals(type)) return i;
 		}
