@@ -9,47 +9,184 @@ import com.myster.net.MysterAddress;
 import com.myster.client.stream.StandardSuite;
 import com.myster.client.stream.UnknownProtocolException;
 
+import java.util.Hashtable;
+import java.util.Vector;
+
+import com.myster.client.stream.MultiSourceUtilities;
+
 public class MultiSourceHashSearch implements MysterSearchClientSection {
-	FileHash hash;
-	MysterType type;
-	HashSearchListener hashSearchListener;
+	//STATIC SUB SYSTEM
 	
-	public MultiSourceHashSearch(MysterType type, FileHash hash, HashSearchListener listener) {
-		this.type = type;
-		this.hash = hash;
-		this.hashSearchListener = listener;
+	private static final Hashtable typeHashtable = new Hashtable();
+	
+	private synchronized static Vector getEntriesForType(MysterType type) {
+		 return getBatchForType(type).entries;
 	}
+	
+	private synchronized static BatchedType getBatchForType(MysterType type) {
+		 BatchedType batch = (BatchedType)typeHashtable.get(type);
+		 
+		 if (batch == null) {
+		 	batch = new BatchedType();
+		 
+		 	typeHashtable.put(type, batch);
+		 }
+		 
+		 return batch;
+	}
+	
+	public synchronized static void addHash(MysterType type, FileHash hash, HashSearchListener listener) {
+		Vector entriesVector = getEntriesForType(type);
+		
+		entriesVector.addElement(new SearchEntry(hash, listener));
+		
+		if (entriesVector.size() == 1) {
+			startCrawler(type);
+		}
+	}
+	
+	public synchronized static void removeHash(MysterType type, FileHash hash, HashSearchListener listener) {
+		Vector entriesVector = getEntriesForType(type);
+
+		entriesVector.removeElement(new SearchEntry(hash, listener));
+		
+		if (entriesVector.size() == 0) {
+			stopCrawler(type);
+		}
+	}
+	
+	private synchronized static SearchEntry[] getSearchEntries(MysterType type) {
+		Vector entriesVector = getEntriesForType(type);
+	
+		SearchEntry[] entries = new SearchEntry[entriesVector.size()];
+		
+		for (int i = 0; i < entries.length; i++) {
+			entries[i] = (SearchEntry)entriesVector.elementAt(i);
+		}
+
+		return entries;
+	}
+	
+	private synchronized static void stopCrawler(MysterType type) {
+		BatchedType batchedType = getBatchForType(type);
+		
+		batchedType.crawler.flagToEnd();
+		
+		batchedType.crawler = null;
+	}
+	
+	
+	
+	private synchronized static void startCrawler(MysterType type) {
+		IPQueue ipQueue = new IPQueue();
+		
+		String[] startingIps = com.myster.tracker.IPListManagerSingleton.getIPListManager().getOnRamps();
+		
+		for (int i = 0; i < startingIps.length; i++) {
+			try { ipQueue.addIP(new MysterAddress(startingIps[i])); } catch (IOException ex) {ex.printStackTrace();}
+		}
+	
+			
+		BatchedType batchedType = getBatchForType(type);
+		
+		batchedType.crawler = new CrawlerThread(new MultiSourceHashSearch(), //note.. will not restart when crawl is done 
+									type,
+									ipQueue,
+									new com.myster.util.Sayable() {
+										public void say(String string) {
+											MultiSourceUtilities.debug("Hash Search -> "+string);
+										}},
+									null);
+									
+		batchedType.crawler.start();
+	}
+	
+	
+	private static class SearchEntry {
+		public final FileHash hash;
+		public final HashSearchListener listener;
+		
+		public SearchEntry(FileHash hash, HashSearchListener listener) {
+			this.hash = hash;
+			this.listener = listener;
+		}
+		
+		public boolean equals(Object o) {
+			SearchEntry other;
+			
+			try {
+				other = (SearchEntry)o;
+			} catch(ClassCastException ex) {
+				return false;
+			}
+			
+			return (other.listener.equals(listener) && other.hash.equals(hash));
+		}
+	}
+	
+	private static class BatchedType {
+		public final Vector entries = new Vector(10,10);
+		public CrawlerThread crawler;
+	}
+	
+	
+	
+	
+	
+	
+	
+	
+	//OBJECT SYSTEM
+	
 	
 	public void start() {
-		hashSearchListener.fireEvent(new HashSearchEvent(HashSearchEvent.START_SEARCH, null));
+		// lalalala...
 	}
 	
-	public void search(MysterSocket socket, MysterAddress address) throws IOException {
-		System.out.println("Hash Search -> Searching "+address);
+	public void search(MysterSocket socket, MysterAddress address, MysterType type) throws IOException {
+		MultiSourceUtilities.debug("Hash Search -> Searching "+address);
+		
+		SearchEntry[] searchEntries = getSearchEntries(type);
+		
+		for (int i = 0; i < searchEntries.length; i++) {
+			searchEntries[i].listener.fireEvent(new HashSearchEvent(HashSearchEvent.START_SEARCH, null));
+		}
+		
 		try {
-			String fileName = StandardSuite.getFileFromHash(socket, type, hash);
 		
-			System.out.println("HASH SEARCH FOUND FILE -> "+fileName);
-		
-			if (!fileName.equals("")) {
-				hashSearchListener.fireEvent(new HashSearchEvent(HashSearchEvent.SEARCH_RESULT, new MysterFileStub(address, type, fileName)));
+			//This loops goes through each entry one at a time. it oculd be optimised by sending them
+			//in a batch in the same way as file stats are done when downloaded off the server after a search
+			for (int i = 0; i < searchEntries.length; i++) {
+				SearchEntry searchEntry = searchEntries[i];
+			
+				String fileName = StandardSuite.getFileFromHash(socket, type, searchEntry.hash);
+
+				if (!fileName.equals("")) {
+					MultiSourceUtilities.debug("HASH SEARCH FOUND FILE -> "+fileName);
+					searchEntry.listener.fireEvent(new HashSearchEvent(HashSearchEvent.SEARCH_RESULT,
+																		 new MysterFileStub(address, type, fileName)));
+				}
 			}
 		} catch (UnknownProtocolException ex) {
 			StandardSuite.disconnectWithoutException(socket);
 			
-			System.out.println("Hash Search -> Server "+address+" doesn't understand search by hash connection section.");
+			MultiSourceUtilities.debug("Hash Search -> Server "+address+" doesn't understand search by hash connection section.");
+		}
+		
+		for (int i = 0; i < searchEntries.length; i++) {
+			searchEntries[i].listener.fireEvent(new HashSearchEvent(HashSearchEvent.END_SEARCH, null));
 		}
 	}
 	
 	private void endSearch() {
-		hashSearchListener.fireEvent(new HashSearchEvent(HashSearchEvent.END_SEARCH, null));
+		// lalalalal... not hoocked up to anything...!
 	}
 	
 	public void flagToEnd() {
-		//...
+		//..
 	}
 	
 	public void end() {
-		//...
+		//..
 	}
 }

@@ -23,7 +23,7 @@ public class SearchByHash implements MysterSearchClientSection {
 	
 	}
 
-	public void search(MysterSocket socket, MysterAddress address) throws IOException  {
+	public void search(MysterSocket socket, MysterAddress address,MysterType type) throws IOException  {
 		String searchResult=com.myster.client.stream.StandardSuite.getFileFromHash(socket,type,hash);
 		
 		//if (endFlag) return;

@@ -8,7 +8,6 @@ import com.myster.net.MysterAddress;
 import com.myster.net.MysterSocket;
 
 public class StandardMysterSearch implements MysterSearchClientSection {
-	final MysterType type;
 	final String searchString;
 	final SearchResultListener listener;
 	
@@ -16,8 +15,7 @@ public class StandardMysterSearch implements MysterSearchClientSection {
 	
 	volatile boolean endFlag = false;
 	
-	public StandardMysterSearch(String searchString, MysterType type, SearchResultListener listener) {
-		this.type = type;
+	public StandardMysterSearch(String searchString, SearchResultListener listener) {
 		this.searchString = searchString;
 		this.listener = listener;
 		
@@ -28,7 +26,9 @@ public class StandardMysterSearch implements MysterSearchClientSection {
 		listener.startSearch();
 	}
 
-	public void search(MysterSocket socket, MysterAddress address) throws IOException {
+	public void search(MysterSocket socket, MysterAddress address, MysterType type) throws IOException {
+		System.out.println("Standard search for: "+searchString);
+		
 		if (endFlag) return;
 		
 		Vector searchResults=com.myster.client.stream.StandardSuite.getSearch(socket, type, searchString);

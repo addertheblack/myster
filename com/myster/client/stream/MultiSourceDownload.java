@@ -5,6 +5,8 @@ import java.io.RandomAccessFile;
 import java.io.IOException;
 import java.io.File;
 import java.util.Stack;
+import java.util.Hashtable;
+import java.util.Enumeration;
 import java.awt.Color;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
@@ -33,313 +35,90 @@ import com.myster.net.MysterSocket;
 import com.myster.mml.MMLException;
 import com.myster.mml.RobustMML;
 
-public class MultiSourceDownload {
-	final FileProgressWindow progress;
-	final MysterSocket socket;
-	final MysterFileStub stub;
-	FileHash hash;								//should be final but can't be...
-	long fileLength; 							//should be final but can't be...
-		
-	File theFile;								//file downloading to
-	RandomAccessFile randomAccessFile;			//file downloading to
-
-	InternalSegmentDownloader[] downloaders;
+public class MultiSourceDownload implements Runnable, Controller {
+	final MysterFileStub stub;					//starter stub (contains first address and filename and type)
+	final FileHash hash;								//should be final but can't be...
+	final long fileLength; 							//should be final but can't be...
 	
+	final HashSearchListener listener;
+	final Hashtable downloaders;
+	
+	//File theFile;								//file downloading to!
+	RandomAccessFile randomAccessFile;			//file downloading to!
+
 	long fileProgress= 0;
 	long bytesWrittenOut = 0;
 	Stack unfinishedSegments = new Stack(); 	//it's a stack 'cause it doens't
 												//matter what data structure so long
 												//as add and remove are O(C).
 
-	CrawlerThread crawler;
 	EventDispatcher dispatcher = new SyncEventDispatcher();
 	
-	boolean stopDownload = false;
+	boolean endFlag 	= false;	//this is set to true to tell MSSource to stop.
+	boolean isDead 		= false;	//is set to true if cleanUp() has been called
 	
 	public static final int MULTI_SOURCE_BLOCK_SIZE = 512 * 1024;
 
-	public MultiSourceDownload(MysterSocket socket, MysterFileStub stub, FileProgressWindow progress) {
-		this.socket 		= socket;
-		this.stub 			= stub;
-		this.progress 		= progress;
+	public MultiSourceDownload(MysterFileStub stub, FileHash hash, long fileLength, MSDownloadListener listener, RandomAccessFile randomAccessFile) {
+		this.randomAccessFile	= randomAccessFile;
+		this.stub 				= stub;
+		this.hash				= hash;
+		this.fileLength			= fileLength;
+		
+		this.downloaders				= new Hashtable();
+		this.listener				= new MSHashSearchListener();
+		
+		addListener(listener);
 	}
 	
-	private synchronized void newDownload(MysterFileStub stub, MysterSocket socket) {
-		if (stopDownload) return;
+	//Can be done as a thread or not.
+	public void run() {
+		dispatcher.fireEvent(new MultiSourceEvent(MultiSourceEvent.START_DOWNLOAD, this));
+	
+		newDownload(stub);
 		
-		for (int i = 0; i < downloaders.length; i++) {
-			if ((downloaders[i]!=null) && (downloaders[i].getMysterFileStub().equals(stub))) {
-				return;
-			}
-		}
-		
-		for (int i = 0; i < downloaders.length; i++) {
-			if (downloaders[i] == null) {
-				if (i+2 > progress.getProgressBarNumber()) {
-					progress.setProgressBarNumber(i+2);
-					progress.setBarColor(new Color(0,(downloaders.length-i)*(255/downloaders.length),150), i+1);
-				}
-				
-				downloaders[i] = new InternalSegmentDownloader(stub, i);
-				
-				if (socket!=null) downloaders[i].setSocket(socket); //YUCK!
-				
-				downloaders[i].addListener(new SegmentDownloaderHandler(i+1));
-				
-				downloaders[i].start();
-				
-				return;
-			}
-		}
+		MultiSourceHashSearch.addHash(stub.getType(), hash, listener);
 	}
 	
 	private synchronized void newDownload(MysterFileStub stub) {
-		newDownload(stub, null);
+		if (endFlag) return;
+		
+		InternalSegmentDownloader downloader = new InternalSegmentDownloader(this, stub);
+	
+		if (downloaders.get(downloader)!=null) return; //already have a downloader doing this file.
+	
+		downloaders.put(downloader, downloader);
+		
+		dispatcher.fireEvent(new MSSegmentEvent(MSSegmentEvent.START_SEGMENT, downloader));
+			
+		downloader.start();
 	}
 	
-	//remoes a download but doesn't stop a download.
-	private synchronized void removeDownload(int barNumber) {
-		downloaders[barNumber] = null;
+	//removes a download but doesn't stop a download. (so this should be called by downloads that have ended completely.
+	public synchronized boolean removeDownload(SegmentDownloader downloader) {
+		boolean result = (downloaders.remove(downloader)!=null);
+		
+		dispatcher.fireEvent(new MSSegmentEvent(MSSegmentEvent.END_SEGMENT, downloader));
+		
+		endCheckAndCleanup(); //check to see if cleanupNeeds to be called.
+		
+		return result;
 	}
 	
-	private synchronized void flagToEnd() {
-		stopDownload = true;
-		
-		if (crawler!=null) crawler.flagToEnd();
-		
-		for (int i=0; i<downloaders.length; i++) {
-			if (downloaders[i]!=null) downloaders[i].endWhenPossible();
-		}
-
-		cleanUp();
-	}
-	
-	public void end() {
-		InternalSegmentDownloader[] downloadersCopy = new InternalSegmentDownloader[downloaders.length];
-		
-		flagToEnd();
-		
-		synchronized (this) {
-			for (int i = 0; i < downloaders.length; i++) {
-				downloadersCopy[i] = downloaders[i]; //have to do this else threading sync problems...
-			}
-		}
-		
-		for (int i = 0; i < downloadersCopy.length; i++) {
-			//try {
-				if (downloaders[i]!=null) downloaders[i].end();
-			//} catch (InterruptedException ex) {
-				return;
-			//}
-		}
-	}
-	
-	private static final String EXTENSION = ".i";
-	private void getFileThingy() throws IOException {
-		File directory = new File(com.myster.filemanager.FileTypeListManager.getInstance().getPathFromType(stub.getType()));
-		File file = new File(directory.getPath()+File.separator+stub.getName()+EXTENSION);
-		
-		if (!directory.isDirectory()) {
-			file = askUserForANewFile(file.getName());
-			
-			if (file == null) throw new IOException("User Cancelled");
-		}
-		
-		while (file.exists())  {
-			final String
-					CANCEL_BUTTON 	= "Cancel",
-					WRITE_OVER		= "Write-Over",
-					RENAME			= "Rename";
-			
-			String answer = (new AnswerDialog(	progress,
-												"A file by the name of "+file.getName()+" already exists. What do you want to do.",
-												new String[]{CANCEL_BUTTON, WRITE_OVER})
-											  ).answer();
-			if (answer.equals(CANCEL_BUTTON)) {
-				throw new IOException("User Canceled.");
-			} else if (answer.equals(WRITE_OVER)) {
-				if (!file.delete()) {
-					AnswerDialog.simpleAlert(progress, "Could not delete the file.");
-					throw new IOException("Could not delete file");
-				}
-			} else if (answer.equals(RENAME)) {
-				file = askUserForANewFile(file.getName());
-				
-				if (file == null) throw new IOException ("User Cancelled");
-			}
-		}
-
-		randomAccessFile = new RandomAccessFile(file, "rw");
-		theFile = file;
-	}
-	
-	private File askUserForANewFile(String name) throws IOException {
-		java.awt.FileDialog dialog = new java.awt.FileDialog(com.general.util.AnswerDialog.getCenteredFrame(),
-															 "What do you want to save the file as?",
-															 java.awt.FileDialog.SAVE);
-		dialog.setFile(name);
-		dialog.setDirectory(name);
-		
-		dialog.show();
-		
-		File directory = new File(dialog.getDirectory());
-		
-		if (dialog.getFile() == null) return null; //canceled.
-		
-		return new File(dialog.getDirectory()+File.separator+dialog.getFile()+EXTENSION);
-	}
-	
-	private boolean assertLengthAndHash() throws IOException {
-		try {
-			com.myster.mml.RobustMML mml = StandardSuite.getFileStats(socket, stub);
-			
-			String hashString = mml.get(com.myster.filemanager.FileItem.HASH_PATH+com.myster.hash.HashManager.MD5);
-			String fileLengthString = mml.get("/size");
-			
-			if (hashString == null || fileLengthString == null) return false;
-			
-			try {
-				hash = com.myster.hash.SimpleFileHash.buildFromHexString(com.myster.hash.HashManager.MD5, hashString);
-			} catch (NumberFormatException ex) {
-				return false;
-			}
-			
-			try {
-				fileLength = Long.parseLong(fileLengthString);
-			} catch (NumberFormatException ex) {
-				return false;
-			}
+	/**
+	*	call this everytime you think you might have done something that has stopped the download (ie: everytime a download has been removed
+	*	or the download has been canceled.) The routines checks to see if the download and all helper thread have stopped and if it has it
+	*	calls the final cleanup routine
+	*/
+	private synchronized boolean endCheckAndCleanup() {
+		if ((endFlag) & (downloaders.size()==0)) {
+			cleanUp();
 			
 			return true;
-		} catch (UnknownProtocolException ex) {
-			return false;
 		}
+		
+		return false;
 	}
-
-	public synchronized boolean start() throws IOException {
-		downloaders = new InternalSegmentDownloader[5];
-	
-		if (!assertLengthAndHash()) return false;
-	
-		progress.setTitle("MS Download: "+stub.getName());
-		progress.setProgressBarNumber(1);
-		
-		try {
-			getFileThingy();
-		} catch (IOException ex) {
-			progress.hide();
-			throw ex;
-		}
-		
-		
-		progress.setBarColor(Color.blue, 0);
-		progress.startBlock(FileProgressWindow.BAR_1, 0, fileLength);
-		progress.addWindowListener(new WindowAdapter() {
-			public void windowClosing(WindowEvent e) {
-				flagToEnd();
-				//end();
-				progress.setVisible(false);
-			}
-		});
-		
-		progress.setText("Downloading file "+stub.getName());
-		
-		//for (int i=0; i < downloaders.length; i++) {
-		//	progress.setBarColor(new Color(0,(downloaders.length-i)*(255/downloaders.length),150), i+1);
-		//}
-		
-		
-		startCrawler();
-		
-		newDownload(stub, socket);
-		
-		return true;
-	}
-	
-	private void startCrawler() {
-		IPQueue ipQueue = new IPQueue();
-		
-		String[] startingIps = com.myster.tracker.IPListManagerSingleton.getIPListManager().getOnRamps();
-		
-		ipQueue.addIP(stub.getMysterAddress());
-		ipQueue.getNextIP(); //this is so we don't start downloading from the first one again.
-		
-		for (int i = 0; i < startingIps.length; i++) {
-			try { ipQueue.addIP(new MysterAddress(startingIps[i])); } catch (IOException ex) {ex.printStackTrace();}
-		}
-	
-		crawler = new CrawlerThread(new MultiSourceHashSearch(stub.getType(), hash, 
-										new HashSearchListener() {
-											public void startSearch(HashSearchEvent event) {
-												System.out.println("Search Lstnr-> Start search");
-											}
-											
-											public void searchResult(HashSearchEvent event) {
-												MysterFileStub stub = event.getFileStub();
-												
-												System.out.println(stub==null?"Search Lstnr-> No file with that hash here.":"Search Lstnr-> Got result "+stub);
-											
-												if (stub!=null) {
-													newDownload(stub);
-													System.out.println("Search Lstnr-> Starting another segment downloader (another source)");
-												}
-											}
-											
-											public void endSearch(HashSearchEvent event) {
-												System.out.println("Search Lstnr-> End search");
-												
-												startCrawler();
-											}
-										}
-									),
-									stub.getType(),
-									ipQueue,
-									new Sayable() {
-										public void say(String string) {
-											System.out.println(string);
-										}},
-									null);
-									
-		crawler.start();
-	}
-	
-	private class SegmentDownloaderHandler extends SegmentDownloaderListener {
-		final int bar;
-		
-		public SegmentDownloaderHandler(int bar) {
-			this.bar = bar;
-		}
-		
-		public void connected(SegmentDownloaderEvent e) {
-			progress.setValue(0, bar);
-		}
-		
-		public void queued(SegmentDownloaderEvent e) {
-			progress.setText("You are in queue position "+e.getQueuePosition(), bar);
-		}
-		
-		public void startSegment(SegmentDownloaderEvent e) {
-			progress.startBlock(bar, e.getOffset(), e.getOffset()+e.getLength());
-			progress.setPreviouslyDownloaded(e.getOffset(), bar);
-			progress.setValue(e.getOffset(), bar);
-			progress.setText("Downloading from "+e.getMysterFileStub().getMysterAddress(), bar);
-		}
-		
-		public void downloadedBlock(SegmentDownloaderEvent e) {
-			progress.setValue(e.getProgress()+e.getOffset(), bar);
-		}
-		
-		public void endSegment(SegmentDownloaderEvent e) {
-			progress.setValue(progress.getMax(bar), bar);
-		}
-		
-		public void endConnection(SegmentDownloaderEvent e) {
-			progress.setValue(0, bar);
-			//if (!stopDownload) progress.setText("Searching for new source...", bar);
-			removeDownload(bar);
-		}
-	}
-
 	
 	public synchronized  WorkSegment getNextWorkSegment() {
 		if (unfinishedSegments.size() > 0) return (WorkSegment)(unfinishedSegments.pop());
@@ -354,6 +133,12 @@ public class MultiSourceDownload {
 		return workSegment;
 	}
 	
+	public synchronized void receiveExtraSegments(WorkSegment[] workSegments) {
+		for (int i=0; i < workSegments.length; i++) {
+			unfinishedSegments.push(workSegments[i]);
+		}
+	}
+	
 	public synchronized void receiveDataBlock(DataBlock dataBlock) {
 		try {
 			randomAccessFile.seek(dataBlock.offset);
@@ -361,19 +146,43 @@ public class MultiSourceDownload {
 			randomAccessFile.write(dataBlock.bytes);
 			
 			bytesWrittenOut+=dataBlock.bytes.length;
-			progress.setValue(bytesWrittenOut);
 			
-			if (bytesWrittenOut == fileLength) {
-				done();
+			dispatcher.fireEvent(new MultiSourceEvent(MultiSourceEvent.PROGRESS, this));
+			
+			if (isDone()) {
+				flagToEnd(); //we're done.
 			}
 		} catch (IOException ex) {
 			ex.printStackTrace(); //fix
 		}
 	}
 	
+	public synchronized long getProgress() {
+		return bytesWrittenOut;
+	}
+	
+	public synchronized long getLength() {
+		return fileLength;
+	}
+	
+	public synchronized boolean isDead() {
+		return isDead;
+	}
+	
+	/**
+	*	returns true if all of the file has been downloaded
+	*/
+	public synchronized boolean isDone() {
+		return (bytesWrittenOut == fileLength);
+	}
+	
 	//call when downlaod has completed sucessfully.
 	private synchronized void done() {
-		cleanUp();
+		dispatcher.fireEvent(new MultiSourceEvent(MultiSourceEvent.DONE_DOWNLOAD, this));
+		
+		
+		/*
+
 		progress.setText("File transfer complete.");
 
 		for (int i = 1; i < progress.getProgressBarNumber(); i++) {
@@ -394,396 +203,402 @@ public class MultiSourceDownload {
 			AnswerDialog.simpleAlert(progress, "Could not rename file from \""+theFile.getName()+"\" to \""+someFile.getName()+"\" because an unspecified error occured.");
 			return;
 		}
+		*/
 	}
 	
-	//call when download is over but not done.
-	private synchronized void cleanUp() {
-		try {randomAccessFile.close();} catch (IOException ex) {}
-		
-		if (crawler!=null) crawler.flagToEnd();
-		
-		if (progress!=null) {
-			progress.done();
-		}
-	}
-	
-	public synchronized void receiveExtraSegments(WorkSegment[] workSegments) {
-		for (int i=0; i < workSegments.length; i++) {
-			unfinishedSegments.push(workSegments[i]);
-		}
-	}
-	
+	//if is synchronized will cause deadlocks
 	public void addListener(MSDownloadListener listener) {
 		dispatcher.addListener(listener);
 	}
 	
+	//if is synchronized will cause deadlocks
 	public void removeListener(MSDownloadListener listener) {
 		dispatcher.removeListener(listener);
 	}
 	
-	private class InternalSegmentDownloader extends MysterThread implements SegmentDownloader{
-		MysterFileStub 	stub;
-		MysterSocket	socket;
+	public synchronized void flagToEnd() {
+		endFlag = true;
+	
+		Enumeration enumeration = downloaders.elements();
 		
-		boolean deadFlag = false;
-		
-		boolean endFlag = false;
-		
-		private static final int CHUNK_SIZE = 2*1024;
-		
-		private int downloadNumber;
+		while (enumeration.hasMoreElements()) {
+			InternalSegmentDownloader downloader = (InternalSegmentDownloader)enumeration.nextElement();
 			
-		EventDispatcher dispatcher = new SyncEventDispatcher();
-
+			downloader.flagToEnd();
+		}
+		
+		endCheckAndCleanup(); //just in case there was no downloader threads.
+	}
 	
-		public InternalSegmentDownloader(MysterFileStub stub, int downloadNumber) {
-			super("SegmentDownloader "+downloadNumber+" for "+stub.getName());
+	public void end() {
+		flagToEnd();
 		
-			this.stub 			= stub;
-			this.downloadNumber = downloadNumber;
-		}
-		
-		public void addListener(SegmentDownloaderListener listener) {
-			dispatcher.addListener(listener);
-		}
-		
-		public void removeListener(SegmentDownloaderListener listener) {
-			dispatcher.removeListener(listener);
-		}
-		
-		public void setSocket(MysterSocket socket) {
-			if (this.socket==null) this.socket = socket;
-		}
-		
-		public MysterFileStub getMysterFileStub() {
-			return stub;
-		}
-	
-		public void run() {
-			MysterSocket socket = null;
+		while(! isDead) { //wow, is crap
 			try {
-				if (this.socket==null) socket = MysterSocketFactory.makeStreamConnection(stub.getMysterAddress());
-				else socket = this.socket; //yuck.
-				
-				fireEvent(SegmentDownloaderEvent.CONNECTED, 0, 0, 0, 0);
-				
-				System.out.println("Work Thread "+getName()+" -> Sending Section Type");
-				socket.out.writeInt(com.myster.server.stream.MultiSourceSender.SECTION_NUMBER);
-				
-				System.out.println("Work Thread "+getName()+" -> Checking Protocol");
-				com.myster.client.stream.StandardSuite.checkProtocol(socket.in);
-				
-				System.out.println("Work Thread "+getName()+" -> Doing Header");
-				doHeader(socket);
-				
-				for (;;) {
-					WorkSegment workSegment = getNextWorkSegment(); //(WorkSegment)workQueue.removeFromHead();
+				Thread.sleep(100);
+			} catch (InterruptedException ex) {
+				return;
+			}
+		}
+	}
+	
+	// Instead of putting a finally in the run() method, wen can put stuff in here.
+	// This method will only be called once right at the end of the download
+	private synchronized void cleanUp() {
+		MultiSourceHashSearch.removeHash(stub.getType(), hash, listener);
+		
+		try {randomAccessFile.close();} catch (Exception ex) {} // assert file is closed
+		
+		isDead = true;
+		
+		dispatcher.fireEvent(new MultiSourceEvent(MultiSourceEvent.END_DOWNLOAD, this));
+		
+		if (isDone()) {
+			done();
+		}
+	}
+	
+	private class MSHashSearchListener extends HashSearchListener {
+		public void startSearch(HashSearchEvent event) {}
+		
+		public void searchResult(HashSearchEvent event) {
+			MysterFileStub stub = event.getFileStub();
+			
+			MultiSourceUtilities.debug(stub==null?"Search Lstnr-> No file with that hash here.":"Search Lstnr-> Got result "+stub);
+		
+			if (stub!=null) {
+				newDownload(stub);
+				MultiSourceUtilities.debug("Search Lstnr-> Starting another segment downloader (another source)");
+			}
+		}
+		
+		public void endSearch(HashSearchEvent event) {}
+	}
 
-					if (doWorkBlock(socket, workSegment)==false) return; //this is for kill signals.. there are also exceptions
-					
-					
-				}
-			} catch (IOException ex) {
-				ex.printStackTrace();
-			} finally {
-				try {
-					socket.close();
-				} catch (Exception ex) {}
-				finishUp();
-			}
-		}
-		
-		private void fireEvent(int id, long offset, long progress, int queuePosition, long length) {
-			dispatcher.fireEvent(new SegmentDownloaderEvent(id, offset, progress, queuePosition, length, downloadNumber, stub));
-		}
-		
-		private synchronized void finishUp() {
-			deadFlag = true;
+}
+
+
+
+
+
+class InternalSegmentDownloader extends MysterThread implements SegmentDownloader{
+	// Properties
+	MysterFileStub 	stub;
+	MysterSocket socket;
+	Controller controller;
+	
+	//working variables
+	WorkingSegment workingSegment;
+
+	//Utility variables
+	EventDispatcher dispatcher = new SyncEventDispatcher();
+	
+	//Utility working variables
+	boolean endFlag 	= false;
+	boolean deadFlag 	= false;
+	
+	//Static variables
+	private static int instanceCounter = 0;
+	
+	//Constants
+	private static final int CHUNK_SIZE = 2*1024;
+
+	public InternalSegmentDownloader(Controller controller, MysterFileStub stub) {
+		super("SegmentDownloader "+(instanceCounter++)+" for "+stub.getName());
+	
+		this.stub 			= stub;
+		this.controller		= controller;
+	}
+	
+	public void addListener(SegmentDownloaderListener listener) {
+		dispatcher.addListener(listener);
+	}
+	
+	public void removeListener(SegmentDownloaderListener listener) {
+		dispatcher.removeListener(listener);
+	}
+
+	public void run() {
+		try {
+			socket = MysterSocketFactory.makeStreamConnection(stub.getMysterAddress());
+			//else socket = this.socket; //yuck.
 			
-			receiveExtraSegments(new WorkSegment[]{});
+			fireEvent(SegmentDownloaderEvent.CONNECTED, 0, 0, 0, 0);
 			
-			fireEvent(SegmentDownloaderEvent.END_CONNECTION, 0,0,0,0);
+			debug("Work Thread "+getName()+" -> Sending Section Type");
+			socket.out.writeInt(com.myster.server.stream.MultiSourceSender.SECTION_NUMBER);
 			
-			System.out.println("Thread "+getName()+" -> Finished.");
-		}
-		
-		private void doHeader(MysterSocket socket) throws IOException {
-			socket.out.writeInt(stub.getType().getAsInt());
-			socket.out.writeUTF(stub.getName());
+			debug("Work Thread "+getName()+" -> Checking Protocol");
+			com.myster.client.stream.StandardSuite.checkProtocol(socket.in); //throws Exception if bad
 			
-			if (socket.in.read()!=1) {
-				com.myster.client.stream.StandardSuite.disconnect(socket);
-				
-				throw new IOException("Could not find file");
-			}
-		}
-		
-		public boolean isDead() {
-			return deadFlag;
-		}
-		
-		
-		private boolean doWorkBlock(MysterSocket socket, WorkSegment workSegment) throws IOException {
-			long bytesDownloaded = 0;
+			debug("Work Thread "+getName()+" -> Doing Header");
+			doHeader(socket);
 			
-			System.out.println("Work Thread "+getName()+" -> Reading data "+workSegment.startOffset+" "+workSegment.length);
-			
-			socket.out.writeLong(workSegment.startOffset);
-			socket.out.writeLong(workSegment.length);
-			
-			if (workSegment.isEndSignal()) {
-				com.myster.client.stream.StandardSuite.disconnect(socket);
-				return false;
-			}
-			
-			System.out.println("Work Thread "+getName()+" -> Reading in QueuePostion");
 			for (;;) {
-				RobustMML mml = null;
-				
-				try {
-					mml = new RobustMML(socket.in.readUTF());
-				} catch (MMLException ex) {
-					throw new IOException("MML String was corrupt.");
-				}
-				
-				try {
-					int queuePosition = Integer.parseInt(mml.get(com.myster.server.stream.MultiSourceSender.QUEUED_PATH));
-					
-					String message = mml.get(com.myster.server.stream.MultiSourceSender.MESSAGE_PATH);
-					
-					if (message!=null) progress.setText(message);
-					
-					System.out.println("Queued pos ----> "+queuePosition+" "+ message);
-					
-					if (queuePosition == 0) break; //yippy! on to download!
-					
-					fireEvent(SegmentDownloaderEvent.QUEUED, 0, 0, queuePosition, 0);
-				} catch (NumberFormatException ex) {
-					throw new IOException("Server sent garble as queue position -> "+mml);
-				}
+				if (endFlag) return;
+			
+				WorkSegment workSegment = controller.getNextWorkSegment(); //(WorkSegment)workQueue.removeFromHead();
 
-				if (endFlag) throw new IOException("Was told to end.");
+				if (workSegment == null) return;
+				
+				workingSegment = new WorkingSegment(workSegment);
+
+				if (doWorkBlock(socket, workingSegment)==false) return; //this is for kill signals.. there are also exceptions
+				
+				workingSegment = null;
 			}
+		} catch (UnknownProtocolException ex) {
+			com.myster.client.stream.StandardSuite.disconnectWithoutException(socket);
 			
+			debug("Server doesn't understand multi-source download."); //some sort of exception should be thrown here so that callers can catch this.
+		} catch (IOException ex) {
+			ex.printStackTrace(); //this code can handle exceptions so this is really here to see if anything unexpected has occured
+		} finally {
+			try {
+				socket.close();
+			} catch (Exception ex) {}
 			
-
-			while (bytesDownloaded < workSegment.length) {
-				System.out.println("Work Thread "+getName()+" -> Reading in Type");
-				
-				if (socket.in.readInt()!=6669) throw new IOException("Client/Server lost sync");
-				
-				byte type = (byte)socket.in.read();
-				
-				
-				
-				switch (type) {
-					case 'd':
-					progress.setText("Starting transfer...");
-						long blockLength = socket.in.readLong();
-						
-						fireEvent(SegmentDownloaderEvent.START_SEGMENT, workSegment.startOffset, 0, 0, blockLength);
-						
-						System.out.println("Work Thread "+getName()+" -> Downloading start");
-						downloadDataBlock(socket, workSegment.startOffset, blockLength, workSegment.length);
-						System.out.println("Work Thread "+getName()+" -> Downloading finished");
-						bytesDownloaded+=blockLength;
-						break;
-					case 'i':
-						progress.setURL("");
-						progress.makeImage(getDataBlock(socket));
-						break;
-					case 'u':
-						socket.in.readInt(); //if this is not 0 is error.
-						socket.in.readShort(); //if this is not 0 is error.
-						String url = socket.in.readUTF(); //UTFs are preceeded by 16-bit short
-						System.out.println("url received :"+url);
-						progress.setURL(url);
-						break;
-					default:
-						System.out.println("Work Thread "+getName()+" -> Unknown type"+type);
-						socket.in.skip(socket.in.readLong());
-						break;
-				}
-			}
-			
-			fireEvent(SegmentDownloaderEvent.END_SEGMENT, workSegment.startOffset,workSegment.startOffset+workSegment.length, 0, workSegment.length);
-			
-			return true;
-
+			finishUp();
+		}
+	}
+	
+	//Offset is offset within the file
+	//lenght is the length of the current segment
+	//progress is the progress through the segment (exclusing offset)
+	private void fireEvent(int id, long offset, long progress, int queuePosition, long length) {
+		dispatcher.fireEvent(new SegmentDownloaderEvent(id, this, offset, progress, queuePosition, length, stub));
+	}
+	
+	private synchronized void finishUp() {
+		deadFlag = true;
+		
+		if ((workingSegment == null) || (workingSegment.isDone())) {
+			controller.receiveExtraSegments(new WorkSegment[]{});
+		} else {
+			controller.receiveExtraSegments(new WorkSegment[]{workingSegment.getRemainingWorkSegment()});
 		}
 		
-		private byte[] getDataBlock(MysterSocket socket) throws IOException {
-			byte[] buffer = new byte[(int)socket.in.readLong()];
+		fireEvent(SegmentDownloaderEvent.END_CONNECTION, 0,0,0,0);
+		
+		debug("Thread "+getName()+" -> Finished.");
+		
+		controller.removeDownload(this);
+	}
+	
+	private void doHeader(MysterSocket socket) throws IOException {
+		socket.out.writeInt(stub.getType().getAsInt());
+		socket.out.writeUTF(stub.getName());
+		
+		if (socket.in.read()!=1) {
+			com.myster.client.stream.StandardSuite.disconnect(socket);
+			
+			throw new IOException("Could not find file");
+		}
+	}
+	
+	public boolean isDead() {
+		return deadFlag;
+	}
+	
+	
+	private boolean doWorkBlock(MysterSocket socket, WorkingSegment workingSegment) throws IOException {
+		debug("Work Thread "+getName()+" -> Reading data "+workingSegment.workSegment.startOffset+" "+workingSegment.workSegment.length);
+		
+		socket.out.writeLong(workingSegment.workSegment.startOffset);
+		socket.out.writeLong(workingSegment.workSegment.length);
+		
+		if (workingSegment.workSegment.isEndSignal()) {
+			com.myster.client.stream.StandardSuite.disconnect(socket);
+			return false;
+		}
+		
+		debug("Work Thread "+getName()+" -> Reading in QueuePostion");
+		for (;;) {
+			RobustMML mml = null;
+			
+			try {
+				mml = new RobustMML(socket.in.readUTF());
+			} catch (MMLException ex) {
+				throw new IOException("MML String was corrupt.");
+			}
+			
+			try {
+				int queuePosition = Integer.parseInt(mml.get(com.myster.server.stream.MultiSourceSender.QUEUED_PATH));
+				
+				String message = mml.get(com.myster.server.stream.MultiSourceSender.MESSAGE_PATH);
+				
+				//if (message!=null) progress.setText(message); ///! Stuff for event here
+				
+				debug("Queued pos ----> "+queuePosition+" "+ message);
+				
+				if (queuePosition == 0) break; //yippy! on to download!
+				
+				fireEvent(SegmentDownloaderEvent.QUEUED, 0, 0, queuePosition, 0);
+			} catch (NumberFormatException ex) {
+				throw new IOException("Server sent garble as queue position -> "+mml);
+			}
+
+			if (endFlag) throw new IOException("Was told to end.");
+		}
+		
+		fireEvent(SegmentDownloaderEvent.START_SEGMENT, workingSegment.workSegment.startOffset, 0, 0, workingSegment.workSegment.length);//this isn't in the right place
+
+		while (workingSegment.progress < workingSegment.workSegment.length) {
+			System.out.println("Work Thread "+getName()+" -> Reading in Type");
+			
+			if (socket.in.readInt()!=6669) throw new IOException("Client/Server lost sync");
+			
+			byte type = (byte)socket.in.read();
+			
+			
+			
+			switch (type) {
+				case 'd':
+					//progress.setText("Starting transfer...");
+					long blockLength = socket.in.readLong();
+					
+					debug("Work Thread "+getName()+" -> Downloading start");
+					downloadDataBlock(socket, workingSegment, blockLength);
+					debug("Work Thread "+getName()+" -> Downloading finished");
+
+					break;
+				case 'i':
+					//progress.setURL(""); //!!
+					getDataBlock(socket);
+					//progress.makeImage(getDataBlock(socket)); //!!
+					break;
+				case 'u':
+					socket.in.readInt(); //if this is not 0 is error.
+					socket.in.readShort(); //if this is not 0 is error.
+					String url = socket.in.readUTF(); //UTFs are preceeded by 16-bit short
+					System.out.println("url received :"+url);
+					//progress.setURL(url); //!!
+					break;
+				default:
+					System.out.println("Work Thread "+getName()+" -> Unknown type"+type);
+					socket.in.skip(socket.in.readLong());
+					break;
+			}
+		}
+		
+		fireEvent(SegmentDownloaderEvent.END_SEGMENT, workingSegment.workSegment.startOffset,workingSegment.workSegment.startOffset+workingSegment.workSegment.length, 0, workingSegment.workSegment.length);
+		
+		return true;
+	}
+	
+	private byte[] getDataBlock(MysterSocket socket) throws IOException {
+		byte[] buffer = new byte[(int)socket.in.readLong()];
+		
+		socket.in.readFully(buffer);
+		
+		return buffer;
+	}
+	
+	private void downloadDataBlock(MysterSocket socket, WorkingSegment workingSegment, long length) throws IOException {
+		long bytesDownloaded = 0;
+
+		for (bytesDownloaded = 0 ; bytesDownloaded < length; ) {
+			long calcBlockSize = (length - bytesDownloaded < CHUNK_SIZE?length-bytesDownloaded:CHUNK_SIZE);
+			
+			byte[] buffer = new byte[(int)calcBlockSize]; //could be made more efficient by using a pool.
+			
+			if (endFlag) throw new IOException("was asked to end");
 			
 			socket.in.readFully(buffer);
 			
-			return buffer;
-		}
-		
-		private void downloadDataBlock(MysterSocket socket, long offset, long length, long segmentLength) throws IOException {
-			long bytesDownloaded = 0;
-			try {
-				for (bytesDownloaded = 0 ; bytesDownloaded < length; ) {
-					long calcBlockSize = (length - bytesDownloaded < CHUNK_SIZE?length-bytesDownloaded:CHUNK_SIZE);
-					
-					byte[] buffer = new byte[(int)calcBlockSize]; //could be made more efficient by using a pool.
-					
-					if (endFlag) throw new IOException("was asked to end");
-					
-					socket.in.readFully(buffer);
-					
-					receiveDataBlock(new DataBlock(bytesDownloaded + offset, buffer));
-					
-					bytesDownloaded += calcBlockSize; //this line doesn't throw an IO exception
-					
-					fireEvent(SegmentDownloaderEvent.DOWNLOADED_BLOCK, offset, bytesDownloaded, 0, segmentLength); //nor this.
-				}
-			} catch (IOException ex) {
-				receiveExtraSegments(new WorkSegment[]{new WorkSegment(offset+bytesDownloaded, segmentLength+bytesDownloaded)});
-				throw ex;
-			}
-		}
-		
-		public void endWhenPossible() {
-			endFlag = true;
-		}
-		
-		public void end()  {
-			endWhenPossible();
+			controller.receiveDataBlock(new DataBlock(workingSegment.getCurrentOffset(), buffer));
 			
-			try {join();} catch(InterruptedException ex) {}
+			bytesDownloaded += calcBlockSize; //this line doesn't throw an IO exception
+			workingSegment.progress += calcBlockSize;
+			
+			fireEvent(SegmentDownloaderEvent.DOWNLOADED_BLOCK, workingSegment.workSegment.startOffset, workingSegment.getProgress(), 0, workingSegment.workSegment.length); //nor this.
 		}
 	}
 	
-	//Unsafe object due to lack of immutable arrays.
-	private static class DataBlock {
-		public final byte[] bytes;
-		public final long offset;
+	public void flagToEnd() {
+		endFlag = true;
 		
-		public DataBlock(long offset, byte[] bytes) {
-			this.offset	= offset;
-			this.bytes	= bytes ;
-		}
+		try { socket.close(); } catch (Exception ex) {}
 	}
 	
-	private static class WorkSegment {
-		public final long startOffset, length;
+	public void end()  {
+		flagToEnd();
 		
-		public WorkSegment(long startOffset, long length) {
-			this.startOffset=startOffset;
-			this.length=length;
-		}
-		
-		public boolean isEndSignal() {
-			return (startOffset==0) && (length==0);
-		}
+		try {join();} catch(InterruptedException ex) {}
 	}
-
-}
-
-class SegmentDownloaderListener extends EventListener {
-	/*
-		Using the interface below this is the transition table.
-		1 -> 2 | 3 | 6
-		2 -> 3 | 6
-		3 -> 4 | 6
-		4 -> 4 | 5 | 6
-		5 -> 2 | 3 | 6
-		6 -> end
+	
+	public boolean equals(Object o) {
+		InternalSegmentDownloader other = null;
+		try {
+			other = (InternalSegmentDownloader)o;
+		} catch (ClassCastException ex) {
+			return false;
+		}
+		
+		return (stub.equals(other.stub));
+	}
+	
+	private static void debug(String string) {
+		System.out.println(string);
+	}
+	
+	
+	/**
+	*	A workign segment is a work segment with the amount progress throught it.
 	*/
-	
-	public void fireEvent(GenericEvent e) {
-		SegmentDownloaderEvent event = (SegmentDownloaderEvent)e;
+	private static class WorkingSegment {
+		public final WorkSegment workSegment;
+		private long progress = 0;
 		
-		switch (event.getID()) {
-			case SegmentDownloaderEvent.CONNECTED:
-				connected(event);
-				break;
-			case SegmentDownloaderEvent.QUEUED:
-				queued(event);
-				break;
-			case SegmentDownloaderEvent.START_SEGMENT:
-				startSegment(event);
-				break;
-			case SegmentDownloaderEvent.DOWNLOADED_BLOCK:
-				downloadedBlock(event);
-				break;
-			case SegmentDownloaderEvent.END_SEGMENT:
-				endSegment(event);
-				break;
-			case SegmentDownloaderEvent.END_CONNECTION:
-				endConnection(event);
-				break;
-			default:
-				err();
-				break;
+		public WorkingSegment(WorkSegment workSegment) {
+			this.workSegment = workSegment;
 		}
-	}
-	
-	public void connected(SegmentDownloaderEvent e) {}			//1
-	public void queued(SegmentDownloaderEvent e) {}				//2
-	public void startSegment(SegmentDownloaderEvent e) {}		//3
-	public void downloadedBlock(SegmentDownloaderEvent e) {}	//4
-	public void endSegment(SegmentDownloaderEvent e) {}			//5
-	public void endConnection(SegmentDownloaderEvent e) {}		//6
-}
-
-
-//For progress window stats.
-//immutable
-class SegmentDownloaderEvent extends GenericEvent {
-	public static final int CONNECTED 			= 1;
-	public static final int QUEUED 				= 2;
-	public static final int START_SEGMENT 		= 3;
-	public static final int DOWNLOADED_BLOCK	= 4;
-	public static final int END_SEGMENT			= 5;
-	public static final int END_CONNECTION 	= 6;
-
-	final long 				offset;
-	final long 				progress;
-	final int 				queuePosition;
-	final long				length;
-	final int				refNumber;
-	final MysterFileStub	stub;
-	
-	public SegmentDownloaderEvent(int id, long offset, long progress, int queuePosition, long length, int refNumber, MysterFileStub stub) {
-		super(id);
 		
-		this.offset			= offset;
-		this.progress		= progress;
-		this.queuePosition	= queuePosition;
-		this.length			= length;
-		this.refNumber		= refNumber;
-		this.stub		= stub;
-	}
-	
-	public int getQueuePosition() {
-		return queuePosition;
-	}
-	
-	public long getOffset() {
-		return offset;
-	}
-	
-	public long getProgress() {
-		return progress;
-	}
-	
-	public long getLength() {
-		return length;
-	}
-	
-	public int getReferenceNumber() {
-		return refNumber;
-	}
-	
-	public MysterFileStub getMysterFileStub() {
-		return stub;
+		public long getProgress() { return progress; }
+		public long setProgress(long progress) { return (this.progress = progress); } //using chaining to make chaining easy
+		
+		/**
+		*	Returns the remaining part of this work segment as a WorkSegment;
+		*
+		*	This call returns a stupid no-op work segment if it's done. Call "isDone" to make sure the segment hasen't been finished 
+		*	before using this method.
+		*/
+		public WorkSegment getRemainingWorkSegment() { return new WorkSegment(workSegment.startOffset+progress, workSegment.length-progress); }
+		
+		public boolean isDone() { return (progress == workSegment.length) ; }
+		
+		public long getCurrentOffset() { return (workSegment.startOffset + progress); }
 	}
 }
 
-interface SegmentDownloader {
-	public void addListener(SegmentDownloaderListener listener);
-	public void removeListener(SegmentDownloaderListener listener);
-	public boolean isDead();
+//Unsafe object due to lack of immutable arrays.
+class DataBlock {
+	public final byte[] bytes;
+	public final long offset;
+	
+	public DataBlock(long offset, byte[] bytes) {
+		this.offset	= offset;
+		this.bytes	= bytes ;
+	}
+}
+
+class WorkSegment {
+	public final long startOffset, length;
+	
+	public WorkSegment(long startOffset, long length) {
+		this.startOffset=startOffset;
+		this.length=length;
+	}
+	
+	public boolean isEndSignal() {
+		return (startOffset==0) && (length==0);
+	}
+}
+
+
+interface Controller {
+	public WorkSegment getNextWorkSegment();
+	public void receiveExtraSegments(WorkSegment[] workSegments);
+	public void receiveDataBlock(DataBlock dataBlock);
+	public boolean removeDownload(SegmentDownloader downloader);
 }

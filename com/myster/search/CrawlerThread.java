@@ -54,12 +54,16 @@ public class CrawlerThread extends MysterThread {
 	
 	public void run() {
 		int counter=0;
-
+		
+		//System.out.println("!CRAWLER THREAD Starting the crawl");
+		
 		for (MysterAddress currentIp=ipQueue.getNextIP(); currentIp!=null||counter==0; currentIp=ipQueue.getNextIP()) {
 			try {
+			
+				
 				counter++;
 				if (currentIp==null) {
-					try {System.out.println("!CRAWLER THREAD FIRST LINE WOOOOO");
+					try {
 						sleep(10*1000); //wait 10 seconds for more ips to come in.
 						continue;
 					} catch (InterruptedException ex) {
@@ -71,7 +75,7 @@ public class CrawlerThread extends MysterThread {
 					cleanUp();
 					return;
 				}
-				
+				System.out.println("Connecting to "+currentIp);
 				socket=MysterSocketFactory.makeStreamConnection(currentIp);
 				
 				if (endFlag) {
@@ -80,9 +84,9 @@ public class CrawlerThread extends MysterThread {
 				}
 				
 				if (counter<DEPTH) {
-			
+			System.out.println("Getting top servers");
 					Vector ipList=StandardSuite.getTopServers(socket, searchType);
-					
+					System.out.println("GOTTEN top servers");
 						if (endFlag) {
 							cleanUp();
 							return;
@@ -104,7 +108,7 @@ public class CrawlerThread extends MysterThread {
 					return;
 				}
 				
-				searcher.search(socket, currentIp);
+				searcher.search(socket, currentIp, searchType);
 				
 				msg.say("Searched "+ipQueue.getIndexNumber()+" Myster servers.");
 				//don't close the connection... It's being used by the getting thread...

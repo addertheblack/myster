@@ -31,10 +31,16 @@ public class MysterType {
 	}
 	
 	public boolean equals(Object o) {
-		MysterType other = (MysterType)o;
+		MysterType mysterType;
 		
-		for (int i = 0; i < TYPE_LENGTH; i++) {
-			if (other.type[i] != type[i]) return false;
+		try {
+			mysterType = (MysterType)o;
+		} catch (ClassCastException ex) {
+			return false;
+		}
+		
+		for (int i=0; i<type.length; i++) {
+			if (type[i]!=mysterType.type[i]) return false;
 		}
 		
 		return true;

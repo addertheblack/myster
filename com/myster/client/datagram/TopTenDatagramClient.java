@@ -23,6 +23,8 @@ public class TopTenDatagramClient {
 		//transaction listener (to return the data pre-formated, like we want)
 		tsocket.sendTransaction(new TopTenClientPacket(address, type), new TransactionListener() {
 			public void transactionReply(TransactionEvent e) {
+				if (DatagramUtilities.dealWithError(e.getTransaction(), listener)) return;
+			
 				try {
 					listener.response(new StandardDatagramEvent(e.getAddress(), TOP_TEN_TRANSACTION_CODE, getMysterAddressFromServerPacket(e.getTransaction())));
 				} catch (IOException ex) {

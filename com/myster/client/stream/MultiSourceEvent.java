@@ -2,24 +2,23 @@ package com.myster.client.stream;
 
 import com.general.events.GenericEvent;
 
-//import com.myster.client.stream.SegmentDownloader;
 
 public class MultiSourceEvent extends GenericEvent {
 	public static final int START_DOWNLOAD	= 1;
-	public static final int START_SEGMENT	= 2;
-	public static final int END_SEGMENT		= 3;
+	public static final int PROGRESS		= 4; //is called when some data has come in
+	public static final int END_DOWNLOAD	= 2;
+	public static final int DONE_DOWNLOAD	= 3; //is called when download has ended AND file has finished
 
-	//SegmentDownloader segmentDownloader;
-	int refNumber;
+	MultiSourceDownload msDownload;
 
-	public MultiSourceEvent(int id, int refNumber) {//, SegmentDownloader segmentDownloader) {
+	public MultiSourceEvent(int id, MultiSourceDownload msDownload) {
 		super(id);
 		
-		this.refNumber=refNumber;
-		//this.segmentDownloader=segmentDownloader;
+		this.msDownload = msDownload;
 	}
 	
-	public int getReferenceNumber() {return refNumber;}
-	
-	//public SegmentDownloader getSegmentDownloadEventer() { return segmentDownloader; }
+	public MultiSourceDownload getMultiSourceDownload() {
+		return msDownload;
+	}
 }
+

@@ -42,7 +42,7 @@ public class MysterSearch extends MysterThread {
 
 	public MysterSearch(SearchResultListener listener, Sayable msg, MysterType type, String searchString) {
 		this.msg=msg;
-		this.searcher = new StandardMysterSearch(searchString, type, listener);
+		this.searcher = new StandardMysterSearch(searchString, listener);
 		this.type = type;
 		
 		t=new CrawlerThread[15];

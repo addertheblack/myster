@@ -6,6 +6,8 @@ import java.util.Vector;
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.io.IOException;
+import java.io.RandomAccessFile;
+
 import com.myster.net.MysterSocket;
 import com.myster.net.MysterSocketFactory;
 import com.myster.net.MysterAddress;
@@ -15,7 +17,7 @@ import com.myster.search.MysterFileStub;
 import com.myster.type.MysterType;
 import com.myster.hash.FileHash;
 
-
+import com.myster.util.FileProgressWindow;
 /**
 	Contains many of the more common (simple!) stream based connection sections.
 */
@@ -145,27 +147,37 @@ public class StandardSuite {
 		(new Thread() { //routine is completely asynchronous
 			public void run() {
 				com.myster.util.FileProgressWindow progress = new com.myster.util.FileProgressWindow("Connecting..");
-					
+				
+				progress.setTitle("Downloading " + stub.getName());
+				progress.setText("Starting...");
+				
 				progress.show();
 				
 				progress.addWindowListener(new java.awt.event.WindowAdapter() {
 					public void windowClosing(java.awt.event.WindowEvent e) {
-						((java.awt.Frame)e.getWindow()).setVisible(false);
+						//((java.awt.Frame)e.getWindow()).setVisible(false);
 					}
 				});
 				
-				//try {
-
-				//	MultiSourceDownload download = new MultiSourceDownload(socket, stub, progress);
+				try {
+					progress.setText("Getting File Statistics...");
+					RobustMML mml = getFileStats(socket, stub);
+				
+					progress.setText("Trying to use multi-source download...");
+					MultiSourceDownload download = new MultiSourceDownload(stub, MultiSourceUtilities.getHashFromStats(mml), MultiSourceUtilities.getLengthFromStats(mml), new MSDownloadHandler(progress), new RandomAccessFile(MultiSourceUtilities.getFileToDownloadTo(stub, progress), "rw"));
 					
-				//	if (!download.start()) { //start leave MysterSocket valid
-						DownloaderThread secondDownload = new DownloaderThread(socket, stub, progress);
+					download.run();
+				} catch (IOException ex) {
+					ex.printStackTrace();
+				
+					try {
+						progress.setText("Trying to use normal download...");
+						DownloaderThread secondDownload = new DownloaderThread(MysterSocketFactory.makeStreamConnection(stub.getMysterAddress()), stub, progress);
 						secondDownload.start();
-				//	}
-				//} catch (IOException ex) {
-					//nothing
-					//progress.setText("An error has occured ->" + ex.getMessage());
-				//}
+					} catch (IOException exp) {
+						progress.setText("Could not download file by either method...");
+					}
+				}
 			}
 		}).start();
 	}
@@ -214,6 +226,7 @@ public class StandardSuite {
 		return getFileFromHash(socket, type, new FileHash[]{hash});
 	}
 	
+	//Returns "" if file is not found or name of file if file is found.
 	public static String getFileFromHash(MysterSocket socket, MysterType type, FileHash[] hashes) throws IOException  {
 		socket.out.writeInt(150);
 		
@@ -237,7 +250,7 @@ public class StandardSuite {
 
 	}
 
-	public static void checkProtocol(DataInputStream in) throws IOException {
+	public static void checkProtocol(DataInputStream in) throws IOException, UnknownProtocolException { //this should have its own exception type
 		int err=in.read();
 		
 		if (err==-1) throw new IOException("Server disconnected");
