@@ -1,0 +1,95 @@
+<project name="Myster" default="all" basedir=".">
+  <!-- This ant build file requires ant version 1.5 or greater -->
+
+  <!-- set global properties for this basedir -->
+  <property name="basedir" value="."/>
+  <property name="tmpdir" value="tmp"/>
+  <property name="output.name" value="MysterBuild.jar"/>
+  <property name="lib" value="lib"/>
+  <property name="debug" value="off"/>
+  <!-- Set this to "jikes" if you have it installed -->
+  <property name="build.compiler" value="modern"/>
+
+  <!-- constants -->
+
+  <!-- Initialization stuff -->
+  <target name="init">
+    <!-- we dont do much here right now, but may do later -->
+    <mkdir dir="${tmpdir}"/>
+    <tstamp/>
+  </target>
+
+  <!-- Define classpath for compiler -->
+  <path id="project.classpath">
+    <fileset dir="${lib}" includes="**/*.jar"/>
+  </path>
+
+  <!-- Include file pattern -->
+  <patternset id="project.includes">
+    <include name="Myster.java"/>
+    <include name="typedescriptionlist.txt"/>
+  </patternset>
+
+  <!-- Exclude file pattern -->
+  <patternset id="project.excludes">
+    <exclude name="Myster.mcp"/>
+    <exclude name="Myster.mcp.xml"/>
+    <exclude name="MysterVersionHistory.mys"/>
+  </patternset>
+
+  <!-- everything -->
+  <target name="all" depends="init">
+    <javac srcdir="${basedir}" destdir="${tmpdir}" debug="${debug}">
+      <classpath refid="project.classpath"/>
+      <patternset refid="project.includes"/>
+      <patternset refid="project.excludes"/>
+    </javac>
+  </target>
+
+  <!-- Targets for creating the final jar output -->
+  <!-- Comment these out if you don't have ant version 1.5 or greater -->
+  <target name="unjar-deps" depends="init">
+    <unjar dest="${tmpdir}">
+      <patternset>
+        <include name="**/*.class"/>
+        <include name="**/*.properties"/>
+        <include name="**/*.gif"/>
+        <include name="**/*.jpg"/>
+        <exclude name="META-INF/**"/>
+      </patternset>
+      <fileset dir="${lib}" includes="**/*.jar"/>
+    </unjar>
+  </target>
+
+  <target name="jar" depends="init,all,unjar-deps">
+    <jar destfile="${tmpdir}/${output.name}" manifest="MANIFEST.MF">
+      <!-- various licenses and text files -->
+      <fileset dir="${basedir}">
+        <include name="typedescriptionlist.txt"/>
+      </fileset>
+      <!-- all Myster properties and images -->
+      <fileset dir="${basedir}">
+        <!-- Yuk!  Why is this file in the root? -->
+        <include name="**/*.properties"/>
+        <include name="**/*.gif"/>
+        <include name="**/*.jpg"/>
+      </fileset>
+      <!-- all classes and properties -->
+      <fileset dir="${tmpdir}">
+        <include name="**/*.class"/>
+        <include name="**/*.properties"/>
+        <include name="**/*.gif"/>
+        <include name="**/*.jpg"/>
+      </fileset>
+    </jar>
+  </target>
+
+  <!-- CLEAN -->
+  <target name="clean">
+    <delete>
+      <fileset dir="${basedir}" includes="**/*.class"/>
+      <fileset dir="${tmpdir}"/>
+    </delete>
+  </target>
+
+</project>
