@@ -114,11 +114,11 @@ public class MCList extends Panel {
         return pane;
     }
 
-    public synchronized void addItem(MCListItemInterface m) {
+    public void addItem(MCListItemInterface m) {
         addItem(new MCListItemInterface[] { m });
     }
 
-    public synchronized void addItem(MCListItemInterface[] m) { //oh for templates...
+    public void addItem(MCListItemInterface[] m) { //oh for templates...
         list.addElement(m);
         listChangedSize();
     }
