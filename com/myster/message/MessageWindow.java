@@ -53,7 +53,6 @@ public class MessageWindow extends MysterFrame {
 		mainPanel.setLayout(gblayout);
 		
 		header = new HeaderPanel(address, type);
-		header.setBackground(new Color(235,235,235));
 		addComponent(header, 1,1,1,1,10, 0);
 		
 
@@ -77,6 +76,8 @@ public class MessageWindow extends MysterFrame {
 		addComponent(bar, 5,1,1,1,10,0);
 		
 		add(mainPanel);
+		
+		setTitle(address==null?"Instant Message":""+address);
 	}
 	
 	public boolean hasReply() {
@@ -127,14 +128,7 @@ public class MessageWindow extends MysterFrame {
 		private static final int PADDING = 5;
 		
 		public MessageWindowButtonBar(final boolean type) {
-			setLayout(null);
-			
-			addComponentListener(new ComponentAdapter() {
-				public void componentResized(ComponentEvent e) {
-					accept.setLocation(getSize().width-X_BUTTON_SIZE-PADDING, PADDING);
-					cancel.setLocation(getSize().width-2*X_BUTTON_SIZE-2*PADDING, PADDING);
-				}
-			});
+			setLayout(new MyLayoutManager());
 			
 			accept = new Button(type==MessageWindow.NEW_MESSAGE?"Send Message":"Reply");
 			accept.setSize(X_BUTTON_SIZE,Y_BUTTON_SIZE);
@@ -187,8 +181,18 @@ public class MessageWindow extends MysterFrame {
 			return new Dimension(3*PADDING+2*X_BUTTON_SIZE,Y_BUTTON_SIZE+2*PADDING);
 		}
 		
-		public void addButtonListener(ActionListener listener) {
-			setBackground(new Color(235,235,235));
+		//MyLayoutManager Basically dsoes nothing
+		private class MyLayoutManager implements LayoutManager { 
+			public void addLayoutComponent(String s, Component c) {}
+			
+			public void layoutContainer(Container c) {
+				accept.setLocation(getSize().width-X_BUTTON_SIZE-PADDING, PADDING);
+				cancel.setLocation(getSize().width-2*X_BUTTON_SIZE-2*PADDING, PADDING);
+			}
+			
+			public Dimension minimumLayoutSize(Container c) { return new Dimension(1,1); }
+			public Dimension preferredLayoutSize(Container c) { return new Dimension(1,1); }
+			public void removeLayoutComponent(Component c) {}
 		}
 	}
 	
@@ -210,7 +214,6 @@ class HeaderPanel extends Panel {
 			gbconstrains.fill=GridBagConstraints.BOTH;
 			gbconstrains.ipadx=1;
 			gbconstrains.ipady=1;
-			//gbconstrains.insets = new Insets(5,5,5,5);
 			setLayout(gblayout);
 			
 			this.address=address;

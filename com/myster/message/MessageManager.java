@@ -15,15 +15,19 @@ import com.myster.pref.Preferences;
 //for prefs panel
 import java.awt.*;
 import java.awt.event.*;
+import com.myster.pref.PreferencesMML;
 
 
 public class MessageManager {
 	//public final static int TRANSACTION_CODE;
 	
+	private static MessagePreferencesPanel prefPanel;
 	
 	public static void init() {
+		prefPanel = new MessagePreferencesPanel();
+		Preferences.getInstance().addPanel(prefPanel);
 		TransactionManager.addTransactionProtocol(new InstantMessageTransport());
-		Preferences.getInstance().addPanel(new MessagePreferencesPanel());
+		
 	}
 	
 	public static void sendInstantMessage(MysterAddress address, String msg) {
@@ -59,7 +63,7 @@ public class MessageManager {
 									simpleAlert("Client got the message, with error code "+msgPacket.getErrorCode()+"\n\n"+msgPacket.getErrorString());
 								}
 							} else {
-								simpleAlert("Message was sent successfully...");	
+								//simpleAlert("Message was sent successfully...");	
 							}
 						} catch (BadPacketException ex) {
 							simpleAlert("Remote host returned a bad packet.");
@@ -82,6 +86,8 @@ public class MessageManager {
 	//}
 	
 	protected static boolean messageReceived(MessagePacket msg) {
+		if (isRefusingMessages()) return false;
+		
 		final String message=msg.getAddress().toString()+" sent: \n\n"+msg.getMessage();
 	
 		(new MessageWindow(new InstantMessage(msg.getAddress(), msg.getMessage(), msg.getReply()))).show();
@@ -100,6 +106,104 @@ public class MessageManager {
 	public static int counter=1;
 	private static synchronized int generateID() {
 		return counter++;
+	}
+	
+	
+	////////////// PREFs \\\\\\\\\\
+	protected static boolean isRefusingMessages() {
+		return prefPanel.isRefusingMessages();
+	}
+	
+	protected static String getRefusingMessage() {
+		return prefPanel.getRefusingMessage();
+	}
+	
+	private static class MessagePreferencesPanel extends PreferencesPanel {
+		Checkbox refuseMessages;
+		Label denyMessageLabel;
+		TextField denyMessageText;
+		
+		private static final String PREFS_MESSAGING_KEY	= "Myster Instant Messaging";
+		
+		private static final String MML_REFUSE_FLAG		= "/Refusing";
+		private static final String MML_REFUSE_MESSAGE	= "/Refusing Messages";
+		
+		private static final String REFUSAL_MESSAGE_DEFAULT = "Not accepting messages at this time.";
+		
+		private static final String TRUE_AS_STRING		= "TRUE";
+		private static final String FALSE_AS_STRING		= "FALSE";
+
+		public MessagePreferencesPanel() {
+			setLayout(null);
+			
+			refuseMessages = new Checkbox("Refuse Messages");
+			refuseMessages.setSize(150,25);
+			refuseMessages.setLocation(10,25);
+			refuseMessages.addItemListener(new ItemListener() {
+				public void itemStateChanged(ItemEvent e) {
+					updateEnabled();
+				}
+			});
+			add(refuseMessages);
+			
+			denyMessageLabel = new Label("Refusal Message:");
+			denyMessageLabel.setSize(150,25);
+			denyMessageLabel.setLocation(20,50);
+			add(denyMessageLabel);
+			
+			denyMessageText = new TextField(REFUSAL_MESSAGE_DEFAULT);
+			denyMessageText.setSize(400,25);
+			denyMessageText.setLocation(25,75);
+			add(denyMessageText);
+
+			setSize(STD_XSIZE,STD_YSIZE);
+		}
+		
+		public void save() {
+			PreferencesMML mml = new PreferencesMML();
+		
+			String text = denyMessageText.getText();
+			if (text.equals("") || text.length()>255) text = REFUSAL_MESSAGE_DEFAULT; //MML can't take "", 255 is arbitrairy limit, real limit is about 60k
+			denyMessageText.setText(text);
+			mml.put(MML_REFUSE_MESSAGE, text);
+			
+			mml.put(MML_REFUSE_FLAG, (refuseMessages.getState()?TRUE_AS_STRING:FALSE_AS_STRING));
+			
+			Preferences.getInstance().put(PREFS_MESSAGING_KEY, mml);
+		}
+		
+		//discard changes and reset values to their defaults.
+		public void reset() {
+			denyMessageText.setText(getRefusingMessage());
+			
+			refuseMessages.setState(isRefusingMessages());
+			
+			updateEnabled(); //cheese
+		}
+		
+		private void updateEnabled() {
+			if (refuseMessages.getState()) {
+				denyMessageLabel.setEnabled(true);
+				denyMessageText.setEnabled(true);
+			} else {
+				denyMessageLabel.setEnabled(false);
+				denyMessageText.setEnabled(false);
+			}
+		}
+		
+		public String getKey() {return "Messages";}//gets the key structure for the place in the pref panel
+		
+		public boolean isRefusingMessages() {
+			return getPreferencesMML().get(MML_REFUSE_FLAG, FALSE_AS_STRING).equals(TRUE_AS_STRING);
+		}
+		
+		public String getRefusingMessage() {
+			return getPreferencesMML().get(MML_REFUSE_MESSAGE, REFUSAL_MESSAGE_DEFAULT);
+		}
+		
+		private PreferencesMML getPreferencesMML() {
+			return new PreferencesMML(Preferences.getInstance().getAsMML(PREFS_MESSAGING_KEY, new PreferencesMML()));
+		}
 	}
 }
 
@@ -127,7 +231,7 @@ class InstantMessageTransport extends TransactionProtocol {
 		if (MessageManager.messageReceived(msg)) {
 			sendTransaction(new Transaction(transaction, (new MessagePacket(transaction.getAddress(), 0,"")).getData(), Transaction.NO_ERROR));
 		} else {
-			sendTransaction(new Transaction(transaction, (new MessagePacket(transaction.getAddress(), 1,"Messages are being refused.")).getData(), Transaction.NO_ERROR));
+			sendTransaction(new Transaction(transaction, (new MessagePacket(transaction.getAddress(), 1,MessageManager.getRefusingMessage())).getData(), Transaction.NO_ERROR));
 		}
 		
 		//reply with err or not
@@ -176,48 +280,6 @@ class InstantMessageTransport extends TransactionProtocol {
 			return timeStamp;
 		}
 	}
-}
-
-class MessagePreferencesPanel extends PreferencesPanel {
-	Checkbox acceptMessages;
-	Label denyMessageLabel;
-	TextField denyMessageText;
-
-	public MessagePreferencesPanel() {
-		setLayout(null);
-		
-		acceptMessages = new Checkbox("Refuse Messages");
-		acceptMessages.setSize(150,25);
-		acceptMessages.setLocation(10,25);
-		acceptMessages.addItemListener(new ItemListener() {
-			public void itemStateChanged(ItemEvent e) {
-				if (e.getStateChange()==ItemEvent.SELECTED) {
-					denyMessageLabel.setEnabled(true);
-					denyMessageText.setEnabled(true);
-				} else {
-					denyMessageLabel.setEnabled(false);
-					denyMessageText.setEnabled(false);
-				}
-			}
-		});
-		add(acceptMessages);
-		
-		denyMessageLabel = new Label("Refusal Message:");
-		denyMessageLabel.setSize(150,25);
-		denyMessageLabel.setLocation(20,50);
-		add(denyMessageLabel);
-		
-		denyMessageText = new TextField("Not accepting messages at this time.");
-		denyMessageText.setSize(300,25);
-		denyMessageText.setLocation(25,75);
-		add(denyMessageText);
-
-		setSize(STD_XSIZE,STD_YSIZE);
-	}
-	
-	public void save() {}	//save changes
-	public void reset() {}	//discard changes and reset values to their defaults.
-	public String getKey() {return "Messages";}//gets the key structure for the place in the pref panel
 }
 
 
