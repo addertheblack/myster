@@ -131,7 +131,7 @@ public class HashManager implements Runnable {
 		
 		long currentByte = 0;
 		
-		byte[] buffer = new byte[512*1024]; //64k buffer
+		byte[] buffer = new byte[64*1024]; //64k buffer
 		
 		progress.setMin(0);
 		progress.setMax(file.length());
