@@ -28,11 +28,10 @@ public class SearchDatagramServer extends TransactionProtocol {
         return SEARCH_TRANSACTION_CODE;
     }
 
-    public void transactionReceived(Transaction transaction)
-            throws BadPacketException {
+    public void transactionReceived(Transaction transaction) throws BadPacketException {
         try {
-            DataInputStream in = new DataInputStream(new ByteArrayInputStream(
-                    transaction.getData()));
+            DataInputStream in = new DataInputStream(
+                    new ByteArrayInputStream(transaction.getData()));
 
             ByteArrayOutputStream byteOutputStream = new ByteArrayOutputStream();
             DataOutputStream out = new DataOutputStream(byteOutputStream);
@@ -45,21 +44,23 @@ public class SearchDatagramServer extends TransactionProtocol {
 
             String[] stringarray;
 
-            stringarray = com.myster.filemanager.FileTypeListManager
-                    .getInstance().getDirList(type, searchstring); //does the
-                                                                   // search
-                                                                   // matching
+            stringarray = com.myster.filemanager.FileTypeListManager.getInstance().getDirList(type,
+                    searchstring); //does the
+            // search
+            // matching
 
             if (stringarray != null) {
                 for (int j = 0; j < stringarray.length; j++) {
                     out.writeUTF(stringarray[j]);
+                    if (byteOutputStream.size() > 3500) // 4000 is about max size of a packet..
+                        break; // ok stop now.
                 }
             }
 
             out.writeUTF("");
 
-            sendTransaction(new Transaction(transaction, byteOutputStream
-                    .toByteArray(), Transaction.NO_ERROR));
+            sendTransaction(new Transaction(transaction, byteOutputStream.toByteArray(),
+                    Transaction.NO_ERROR));
         } catch (IOException ex) {
             throw new BadPacketException("Bad packet " + ex);
         }

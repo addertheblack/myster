@@ -109,6 +109,7 @@ public final class AsyncDatagramSocket {
                     doGetNewPackets();
                 } catch (IOException ex) {
                     //close();
+                    ex.printStackTrace();
                 } catch (Exception ex) {
                     ex.printStackTrace();
                 }
