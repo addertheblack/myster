@@ -23,11 +23,7 @@ public class MysterSearchResult implements SearchResult {
 	
 	//is called when the user decides to download the item
 	public void download() {
-		try {
-			com.myster.client.stream.StandardSuite.downloadFile(stub.getMysterAddress(), stub);
-		} catch (java.io.IOException ex) {
-			com.general.util.AnswerDialog.simpleAlert("Could not connect to server.");
-		}
+		com.myster.client.stream.StandardSuite.downloadFile(stub.getMysterAddress(), stub);
 	}
 	
 	//returns the network the search result is on.

@@ -132,57 +132,66 @@ public class StandardSuite {
 	*	<p>
 	*	THIS ROUTINE IS ASYNCHRONOUS!
 	*/
-	public static void downloadFile(MysterAddress ip, MysterFileStub stub) throws IOException {
-		MysterSocket socket=null;
-		try {
-			socket=MysterSocketFactory.makeStreamConnection(ip);
-			downloadFile(socket, stub);
-		} finally {
-			//disconnectWithoutException(socket);
-		}
+	public static void downloadFile(final MysterAddress ip, final MysterFileStub stub) {
+		(new Thread() { //routine is completely asynchronous
+			public void run() {
+				MysterSocket socket=null;
+				try {
+					socket=MysterSocketFactory.makeStreamConnection(ip);
+				} catch (Exception ex) {
+				 	com.general.util.AnswerDialog.simpleAlert("Could not connect to server.");
+				 	return;
+				}
+				
+				try {
+					downloadFile(socket, stub);
+				} catch (IOException ex) {
+					//..
+				} finally {
+					disconnectWithoutException(socket);
+				}
+			}
+		}).start();
 	}
 	
 	
 	// should not be public
-	private static void downloadFile(final MysterSocket socket, final MysterFileStub stub ) {
-		(new Thread() { //routine is completely asynchronous
-			public void run() {
-				com.myster.util.FileProgressWindow progress = new com.myster.util.FileProgressWindow("Connecting..");
-				
-				progress.setTitle("Downloading " + stub.getName());
-				progress.setText("Starting...");
-				
-				progress.show();
-				
-				progress.addWindowListener(new java.awt.event.WindowAdapter() {
-					public void windowClosing(java.awt.event.WindowEvent e) {
-						//((java.awt.Frame)e.getWindow()).setVisible(false);
-					}
-				});
-				
-				try {
-					progress.setText("Getting File Statistics...");
-					RobustMML mml = getFileStats(socket, stub);
-				
-					progress.setText("Trying to use multi-source download...");
-					
-					File theFile = MultiSourceUtilities.getFileToDownloadTo(stub, progress);
-					MultiSourceDownload download = new MultiSourceDownload(stub, MultiSourceUtilities.getHashFromStats(mml), MultiSourceUtilities.getLengthFromStats(mml), new MSDownloadHandler(progress, theFile), new RandomAccessFile(theFile, "rw"));
-					
-					download.run();
-				} catch (IOException ex) {
-					ex.printStackTrace();
-				
-					try {
-						progress.setText("Trying to use normal download...");
-						DownloaderThread secondDownload = new DownloaderThread(MysterSocketFactory.makeStreamConnection(stub.getMysterAddress()), stub, progress);
-						secondDownload.start();
-					} catch (IOException exp) {
-						progress.setText("Could not download file by either method...");
-					}
-				}
+	private static void downloadFile(final MysterSocket socket, final MysterFileStub stub ) throws IOException {
+		com.myster.util.FileProgressWindow progress = new com.myster.util.FileProgressWindow("Connecting..");
+		
+		progress.setTitle("Downloading " + stub.getName());
+		progress.setText("Starting...");
+		
+		progress.show();
+		
+		progress.addWindowListener(new java.awt.event.WindowAdapter() {
+			public void windowClosing(java.awt.event.WindowEvent e) {
+				//((java.awt.Frame)e.getWindow()).setVisible(false);
 			}
-		}).start();
+		});
+		
+		try {
+			progress.setText("Getting File Statistics...");
+			RobustMML mml = getFileStats(socket, stub);
+		
+			progress.setText("Trying to use multi-source download...");
+			
+			File theFile = MultiSourceUtilities.getFileToDownloadTo(stub, progress);
+			MultiSourceDownload download = new MultiSourceDownload(stub, MultiSourceUtilities.getHashFromStats(mml), MultiSourceUtilities.getLengthFromStats(mml), new MSDownloadHandler(progress, theFile), new RandomAccessFile(theFile, "rw"));
+			
+			download.run();
+		} catch (IOException ex) {
+			ex.printStackTrace();
+		
+			try {
+				progress.setText("Trying to use normal download...");
+				DownloaderThread secondDownload = new DownloaderThread(MysterSocketFactory.makeStreamConnection(stub.getMysterAddress()), stub, progress);
+				secondDownload.start();
+			} catch (IOException exp) {
+				progress.setText("Could not download file by either method...");
+			}
+		}
+
 	}
 	
 	public static RobustMML getFileStats(MysterAddress ip, MysterFileStub stub) throws IOException  {
