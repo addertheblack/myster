@@ -1053,7 +1053,8 @@ Work on DEV 8:
 		-> Fixed the box border-not-appearing-on-macOS 9 bug.
 		-> Hopefully fixed the pulsating progress not always shown bug.
 		-> Fixed a bug where clicking cancel on a dialog for multisource download would cause regular download to start.
-		
+		-> Fixed a bug where Myster jsut plain froze.
+		-> Added two routines that allow for code to be execute on the event thread. is 1.1 compatible! yeah!
 		
 		
 (Red List)
