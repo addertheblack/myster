@@ -134,13 +134,31 @@ public class FileTypeListManager{
 	*	a way of identifying a unique file given a type.
 	*
 	*	@param	a[] a Myster file type as a byte[4]; a 
+	*	@param	Unique file identifyer string
 	*	@return	a java.io.File object that points to the File in question.
 	*/
 	public File getFile(MysterType type, String s) {
 		FileTypeList list=getFileTypeList(type);
 		if (list==null) return null;	//err.
 		
-		return list.getFileFromString(s);
+		return list.getFileItemFromString(s).getFile();
+	}
+	
+	/**
+	*	Gets a com.myster.filemanager.FileItem object from a Myster type and Unique file identifyer string (a file name).
+	*
+	*	NOTE: In the Myster protocol, when files are listed, these file names are not so much file names as
+	*	a way of identifying a unique file given a type.
+	*
+	*	@param	MysterType of the file you want to get
+	*	@param	Unique file identifyer string
+	*	@return	a java.io.File object that points to the File in question.
+	*/
+	public FileItem getFileItem(MysterType type, String s) {
+		FileTypeList list=getFileTypeList(type);
+		if (list==null) return null;	//err.
+		
+		return list.getFileItemFromString(s);
 	}
 	
 	/**

@@ -54,7 +54,7 @@ public class Myster{
 	public static File file;
 	public static final String fileLockName=".lockFile";
 
-	private static ResourceBundle resources;
+	private static long programLaunchTime = 0;
 
 	public static void main(String args[]) {
 		final boolean isServer=(args.length>0&&args[0].equals("-s"));
@@ -68,6 +68,7 @@ public class Myster{
 		System.out.println("java.vm.vendor               :"+System.getProperty("java.vm.vendor"));
 		System.out.println("java.vm.name                 :"+System.getProperty("java.vm.name"));
 		
+		programLaunchTime = System.currentTimeMillis();
 		
 		
 		I18n.init();
@@ -301,5 +302,12 @@ public class Myster{
 		}
 		System.out.println("Byeeeee.");
 		System.exit(0);
+	}
+	
+	/**
+	*	Returns the time that was returned by System.currentTimeMillis when the program was first launched.
+	*/
+	public static long getLaunchedTime() {
+		return programLaunchTime;
 	}
 }

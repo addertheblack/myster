@@ -59,7 +59,7 @@ public class TrackerWindow extends MysterFrame {
 			}
 		}
 		
-		list=new MCList(6,true,this);
+		list=new MCList(7,true,this);
 	
 		//add Objects
 		addComponent(choice, 		0,	0,	1,	1,	99,	0);
@@ -76,6 +76,7 @@ public class TrackerWindow extends MysterFrame {
 		list.setColumnName(3,"IP Address:");
 		list.setColumnName(4,"Last Ping Time:");
 		list.setColumnName(5,"Rank:");
+		list.setColumnName(6,"Uptime:");
 		
 		list.setColumnWidth(0,150);
 		list.setColumnWidth(1,70);
@@ -83,6 +84,7 @@ public class TrackerWindow extends MysterFrame {
 		list.setColumnWidth(3,150);
 		list.setColumnWidth(4,70);
 		list.setColumnWidth(5,70);
+		list.setColumnWidth(6,70);
 		//loadList();
 		
 		addWindowListener(new MyWindowHandler());
@@ -245,7 +247,7 @@ public class TrackerWindow extends MysterFrame {
 	
 	private static class TrackerMCListItem extends MCListItemInterface {
 		MysterServer server;
-		Sortable sortables[]=new Sortable[6];
+		Sortable sortables[]=new Sortable[7];
 		IPListManager manager=IPListManagerSingleton.getIPListManager();
 		MysterType type;
 		
@@ -270,6 +272,7 @@ public class TrackerWindow extends MysterFrame {
 				sortables[3]=new SortableString(""+server.getAddress());
 				sortables[4]=new SortablePing(-1);
 				sortables[5]=new SortableRank(-1);
+				sortables[6]=new SortableUptime(-1);
 			} else {
 				sortables[0]=new SortableString(server.getServerIdentity());
 				sortables[1]=new SortableLong(server.getNumberOfFiles(type));
@@ -277,6 +280,7 @@ public class TrackerWindow extends MysterFrame {
 				sortables[3]=new SortableString(""+server.getAddress());
 				sortables[4]=new SortablePing(server.getPingTime());
 				sortables[5]=new SortableRank(((long)(100*server.getRank(type))));
+				sortables[6]=new SortableUptime((server.getStatus()?server.getUptime():-2));
 			}
 		}
 		
@@ -379,6 +383,43 @@ public class TrackerWindow extends MysterFrame {
 			
 			public String toString() {
 				return (isUntried?"-":(status?"up":"down"));
+			}
+		}
+		
+		//Immutable
+		private static class SortableUptime extends SortableLong {
+			public SortableUptime(long time) {
+				super(time);
+			}
+			
+			private static final int MINUTE = 1000 * 60;
+			private static final int HOUR	= MINUTE * 60;
+			private static final int DAY 	= HOUR * 24;
+			private static final int WEEK	= DAY * 7;
+			
+			public String toString() {
+				if (number == -1) return "-";
+				if (number == -2) return "N/A";
+			
+				long numberTemp = number; //number comes from super.
+				
+				long weeks = numberTemp / WEEK;
+				numberTemp %= WEEK;
+				
+				long days = numberTemp / DAY;
+				numberTemp %= DAY;
+				
+				long hours = numberTemp / HOUR;
+				numberTemp %= HOUR;
+				
+				long minutes = numberTemp / MINUTE;
+				numberTemp %= MINUTE;
+				
+				//return h:MM
+				//Ddays, h:MM
+				//Wweeks
+				//Wweeks Ddays
+				return (weeks != 0 ? weeks + "weeks " : "") + (days != 0 ? days + "days " : "") + (weeks == 0 ? hours + ":" : "") + (weeks == 0 ? (minutes<10 ? "0"+minutes : minutes + "") : "");
 			}
 		}
 	}

@@ -46,16 +46,20 @@ public class FileInfoLister extends ServerThread {
 
 		in.readFully(b);
 		String filename=in.readUTF();
-		File file=FileTypeListManager.getInstance().getFile(new MysterType(b),filename);
 		
-		MML mml=new MML();
+		FileItem fileItem = FileTypeListManager.getInstance().getFileItem(new MysterType(b),filename);
+		MML mml;
 		
-		if (file!=null) {
-			mml.put("/size", ""+file.length());				
-			patchFunction(mml,file,b);
+		if (fileItem == null) { //file not found
+			mml = new MML();
+		} else {
+			mml = fileItem.getMMLRepresentation();
 		}
 		
-		out.writeUTF(""+mml);
+		patchFunction2(mml, FileTypeListManager.getInstance().getFile(new MysterType(b),filename), b);
+		
+		out.writeUTF(mml.toString());
+		System.out.println(mml.toString());
 	}
 	
 

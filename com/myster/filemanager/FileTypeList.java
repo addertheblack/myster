@@ -259,19 +259,18 @@ class FileTypeList extends MysterThread{
 		return new String(simplified);
     }
 
-
-
+	
 	/**
 	*	rarray a java.io.FileItem object from a file name. NOTE: There is a direct mapping between file names and java.io.FileItem objects.
 	*
 	*	@param	query the name of a file to get the File for.
 	*	@return	the java.io.FileItem object corresponding the the query.
 	*/
-	public synchronized File getFileFromString(String query) {
+	public synchronized FileItem getFileItemFromString(String query) {
 		assertFileList();	//This must be called before working with filelist or rootdir internal variables.
 		
 		for (int i=0; i<filelist.size(); i++) {
-			if ((mergePunctuation(((FileItem)(filelist.elementAt(i))).getFile().getName())).equals(query)) return ((FileItem)(filelist.elementAt(i))).getFile();
+			if ((mergePunctuation(((FileItem)(filelist.elementAt(i))).getFile().getName())).equals(query)) return (FileItem)(filelist.elementAt(i));
 		}
 		return null;	//err, file not found.
 	}
@@ -348,12 +347,6 @@ class FileTypeList extends MysterThread{
 				if (!filelist.contains(mergePunctuation(temp.getName()))) {
 					if (FileFilter.isCorrectType(type, temp)) {
 						filelist.addElement(createFileItem(temp));
-						
-						HashManager.findHashNoneBlocking(temp, new FileHashListener() {
-							public void foundHash(FileHashEvent e) {
-								//System.out.println("Got hash for some file.");
-							}
-						});
 					}
 				} //Don't add a file to the list if it's already there of if a file of the same name is there.. (eg: icon)
 			}

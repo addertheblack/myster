@@ -36,6 +36,7 @@ public class HandshakeThread extends ServerThread {
 		
 		DataOutputStream out=new DataOutputStream(context.socket.getOutputStream());
 		out.writeUTF(temp);
+		System.out.println(temp);
 	}
 
 	private MML getMMLToSend(byte[] b) {
@@ -66,6 +67,8 @@ public class HandshakeThread extends ServerThread {
 					mml.put("/ServerIdentity", ident);	
 				}
 			}
+			
+			mml.put("/uptime", ""+(System.currentTimeMillis() - Myster.getLaunchedTime()));
 			
 			return mml;
 		} catch (Exception ex) {

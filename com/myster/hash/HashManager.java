@@ -85,15 +85,15 @@ public class HashManager implements Runnable {
 			if (file.exists()) {
 				workQueue.add(new WorkingQueueItem(file, listener));
 			} else {
-				dispatchHashFoundEvent(listener, new FileHash[]{}); // file doens't EXIST!
+				dispatchHashFoundEvent(listener, new FileHash[]{}, file); // file doens't EXIST!
 			}
 		} else {
-			dispatchHashFoundEvent(listener, hashes);
+			dispatchHashFoundEvent(listener, hashes, file);
 		}
 	}
 	
-	private void dispatchHashFoundEvent(FileHashListener listener, FileHash[] hashes) {
-		listener.fireEvent(new FileHashEvent(FileHashEvent.FOUND_HASH, hashes));
+	private void dispatchHashFoundEvent(FileHashListener listener, FileHash[] hashes, File file) {
+		listener.fireEvent(new FileHashEvent(FileHashEvent.FOUND_HASH, hashes, file));
 	}
 	
 	public void run() {
@@ -118,7 +118,7 @@ public class HashManager implements Runnable {
 				
 				oldHashes.putHashes(item.file, hashes);
 				
-				dispatchHashFoundEvent(item.listener, hashes);		
+				dispatchHashFoundEvent(item.listener, hashes, item.file);		
 			} catch (NoSuchAlgorithmException ex) {
 				ex.printStackTrace();
 				// Should never happen

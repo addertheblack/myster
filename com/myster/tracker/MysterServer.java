@@ -16,4 +16,5 @@ public interface MysterServer {
 	public String getServerIdentity();
 	public int getPingTime();
 	public boolean isUntried();
+	public long getUptime();
 }

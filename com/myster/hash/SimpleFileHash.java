@@ -24,4 +24,22 @@ public class SimpleFileHash extends FileHash implements Serializable {
 	public String getHashName() {
 		return hashName;
 	}
+	
+	public String toString() {
+		return asHex(hash);
+	}
+	
+	public static String asHex (byte hash[]) {
+	    StringBuffer buf = new StringBuffer(hash.length * 2);
+	    int i;
+
+	    for (i = 0; i < hash.length; i++) {
+	      if (((int) hash[i] & 0xff) < 0x10) 
+		buf.append("0");
+
+	      buf.append(Long.toString((int) hash[i] & 0xff, 16));
+	    }
+
+	    return buf.toString();
+  	}
 }

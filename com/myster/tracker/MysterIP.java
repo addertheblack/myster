@@ -45,6 +45,7 @@ class MysterIP {
 	int 			numberofhits;
 	boolean			upordown=true;
 	String			serverIdentity;
+	long 			uptime;
 	
 	int 			lastPingTime=-1; //in millis. (not saved)
 	
@@ -65,6 +66,7 @@ class MysterIP {
 	public static final String NUMBEROFHITS				=	"/numberOfHits";
 	public static final String NUMBEROFFILES			=	"/numberOfFiles";
 	public static final String SERVERIDENTITY			=	"/serverIdentity";
+	public static final String UPTIME					=	"/uptime";
 	
 	//These are weights.
 	private final double SPEEDCONSTANT=0.5;
@@ -82,7 +84,7 @@ class MysterIP {
 	protected MysterIP(String ip) throws Exception{
 		if (ip.equals("127.0.0.1")) throw new Exception("IP is local host.");
 		MysterAddress t=new MysterAddress(ip); //to see if address is valid.
-		createNewMysterIP(ip, 1, 50, 50, 1, 1, "", null);
+		createNewMysterIP(ip, 1, 50, 50, 1, 1, "", null, (long)-1);
 		if (MysterIP.internalRefreshAll(this)==false) throw new Exception("Failed to created new Myster IP");
 		//System.out.println("A New MysterIP Object = "+getAddress());
 	}
@@ -91,10 +93,11 @@ class MysterIP {
 		createNewMysterIP(mml.get(IP),  Double.valueOf(mml.get(SPEED)).doubleValue(),
 					Integer.valueOf(mml.get(TIMEUP)).intValue(),
 					Integer.valueOf(mml.get(TIMEDOWN)).intValue(), Integer.valueOf(mml.get(NUMBEROFHITS)).intValue(),
-					Long.valueOf(mml.get(TIMESINCEUPDATE)).longValue(), mml.get(NUMBEROFFILES), mml.get(SERVERIDENTITY));
+					Long.valueOf(mml.get(TIMESINCEUPDATE)).longValue(), mml.get(NUMBEROFFILES), mml.get(SERVERIDENTITY), 
+					(mml.get(UPTIME) == null ? -1 : Long.valueOf(mml.get(UPTIME)).longValue()));
 	}
 	
-	private void createNewMysterIP(String i, double s,  int tu, int td, int h, long t, String nof, String si) {
+	private void createNewMysterIP(String i, double s,  int tu, int td, int h, long t, String nof, String si, long u) {
 		try {
 			ip				= new MysterAddress(i); //!
 		} catch (UnknownHostException ex) {
@@ -106,6 +109,7 @@ class MysterIP {
 		timedown		= td	;
 		numberofhits	= h		;
 		timeoflastupdate= t		;
+		uptime 		= u		;
 		
 		try {
 			numberOfFiles	= new NumOfFiles(nof)	;//!
@@ -203,6 +207,10 @@ class MysterIP {
 		public boolean isUntried() {
 			return (lastPingTime==-1);
 		}
+		
+		public long getUptime() {
+			return uptime;
+		}
 
 	}
 		
@@ -255,6 +263,7 @@ class MysterIP {
 			workingmml.put(TIMEUP, 			""+timeup);
 			workingmml.put(TIMEDOWN,		""+timedown);
 			workingmml.put(NUMBEROFHITS,	""+numberofhits);
+			workingmml.put(UPTIME,			""+uptime);
 			if (serverIdentity!=null&&!serverIdentity.equals("")) workingmml.put(SERVERIDENTITY,	""+serverIdentity);
 			
 			String s_temp=numberOfFiles.toString();
@@ -357,6 +366,18 @@ class MysterIP {
 				mysterip.serverIdentity=mml.get("/ServerIdentity");
 			} else {
 				mysterip.serverIdentity=null;
+			}
+			
+			try {
+				String uptimeString = mml.get(UPTIME);
+				if (uptimeString == null) {
+					mysterip.uptime = (long)-1;
+					//mysterip.uptime = 1334567890; //(For testing)
+				} else {
+					mysterip.uptime = Long.valueOf(uptimeString).longValue();
+				}
+			} catch (NumberFormatException ex) {
+				// Number was badly formated
 			}
 			
 			synchronized (mysterip) {
