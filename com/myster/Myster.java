@@ -151,7 +151,7 @@ public class Myster {
 				
 				//UDP Server INIT
 				com.myster.server.datagram.TopTenDatagramServer.init();
-				//com.myster.server.datagram.TypeDatagramServer.init();
+				com.myster.server.datagram.TypeDatagramServer.init();
 				com.myster.server.datagram.SearchDatagramServer.init();
 				com.myster.server.datagram.ServerStatsDatagramServer.init();
 				com.myster.server.datagram.FileStatsDatagramServer.init();
@@ -260,6 +260,11 @@ public class Myster {
 							com.myster.client.datagram.StandardDatagramSuite.getFileStats(
 							new MysterFileStub(new MysterAddress("127.0.0.1"),
 								types[0], ""+searchResults.elementAt(0))));
+								
+					System.out.println(""+
+							com.myster.client.datagram.StandardDatagramSuite.getFileFromHash(
+							new MysterAddress("127.0.0.1"),
+								types[0], com.myster.hash.SimpleFileHash.buildFromHexString("md5", "4a9c5f92d147400426fc49c153faf21e")));
 					
 					
 				} catch (Exception ex) {

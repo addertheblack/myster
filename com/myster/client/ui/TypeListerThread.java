@@ -37,30 +37,43 @@ public class TypeListerThread extends MysterThread {
 	
 	public void run() {
 		try {
-			msg.say("Connecting to server...");
-			socket=MysterSocketFactory.makeStreamConnection(new MysterAddress(ip));
-		} catch (IOException ex) {
-			msg.say("Could not connect, server is unreachable...");
-			return;
-		}
-		
-		try {
-			msg.say("Requesting File Type List...");
+			msg.say("Requested Type List (UDP)...");
 			
-			Vector typeList=StandardSuite.getTypes(socket);
+			com.myster.type.MysterType[] types = com.myster.client.datagram.StandardDatagramSuite.getTypes(
+					new MysterAddress(ip));
 			
-			msg.say("Adding Items...");
-			for (int i=0; i<typeList.size(); i++){
-				container.addItemToTypeList(typeList.elementAt(i).toString());
+			for (int i = 0; i<types.length; i++) {
+				container.addItemToTypeList(""+types[i]);
 			}
 			
 			msg.say("Idle...");
-		} catch (IOException ex) {
-			msg.say("Could not get File Type List from specified server.");
-		} finally {
+		} catch (IOException exp) {
 			try {
-				socket.close();
-			} catch (Exception ex) {}
+				msg.say("Connecting to server...");
+				socket=MysterSocketFactory.makeStreamConnection(new MysterAddress(ip));
+			} catch (IOException ex) {
+				msg.say("Could not connect, server is unreachable...");
+				return;
+			}
+			
+			try {
+				msg.say("Requesting File Type List...");
+				
+				Vector typeList=StandardSuite.getTypes(socket);
+				
+				msg.say("Adding Items...");
+				for (int i=0; i<typeList.size(); i++){
+					container.addItemToTypeList(typeList.elementAt(i).toString());
+				}
+				
+				msg.say("Idle...");
+			} catch (IOException ex) {
+				msg.say("Could not get File Type List from specified server.");
+			} finally {
+				try {
+					socket.close();
+				} catch (Exception ex) {}
+			}
 		}
 	}
 }
