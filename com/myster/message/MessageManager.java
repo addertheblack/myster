@@ -12,6 +12,10 @@ import com.general.util.LinkedList;
 import com.myster.pref.ui.PreferencesPanel;
 import com.myster.pref.Preferences;
 
+//for prefs panel
+import java.awt.*;
+import java.awt.event.*;
+
 
 public class MessageManager {
 	//public final static int TRANSACTION_CODE;
@@ -178,10 +182,22 @@ class MessagePreferencesPanel extends PreferencesPanel {
 	public MessagePreferencesPanel() {
 		setLayout(null);
 		
-		Label DenyMessageLabel = new Label("Deny Message:"0;
+		Checkbox acceptMessages = new Checkbox("Accept Messages");
+		acceptMessages.setSize(100,25);
+		acceptMessages.setLocation(25,25);
+		add(acceptMessages);
 		
+		Label denyMessageLabel = new Label("Deny Message:");
+		denyMessageLabel.setSize(100,25);
+		denyMessageLabel.setLocation(25,50);
+		add(denyMessageLabel);
 		
-		TextField DenyMessageText = new TextField("Not accepting messages at this time.");
+		TextField denyMessageText = new TextField("Not accepting messages at this time.");
+		denyMessageText.setSize(200,25);
+		denyMessageText.setLocation(150,50);
+		add(denyMessageText);
+
+		setSize(STD_XSIZE,STD_YSIZE);
 	}
 	
 	public void save() {}	//save changes
