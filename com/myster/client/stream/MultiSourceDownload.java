@@ -185,7 +185,7 @@ public class MultiSourceDownload implements Runnable, Controller {
 	*	calls the final cleanup routine
 	*/
 	private synchronized boolean endCheckAndCleanup() {
-		if ((endFlag) & (downloaders.size()==0)) {
+		if ((endFlag | isDone()) & (downloaders.size()==0)) {
 			cleanUp();
 			
 			return true;
@@ -225,9 +225,9 @@ public class MultiSourceDownload implements Runnable, Controller {
 			
 			partialFile.setBit(dataBlock.offset / chunkSize);
 			
-			if (isDone()) {
-				flagToEnd(); //we're done.
-			}
+			//if (isDone()) {
+			//	flagToEnd(); //we're done.
+			//}
 		} catch (IOException ex) {
 			ex.printStackTrace();
 			flagToEnd();
@@ -277,7 +277,7 @@ public class MultiSourceDownload implements Runnable, Controller {
 	}
 	
 	public synchronized void flagToEnd() {
-		if (endFlag) return; //shouldn't be called twice..
+		if (endFlag | isDead) return; //shouldn't be called twice..
 	
 		endFlag = true;
 	
@@ -293,6 +293,8 @@ public class MultiSourceDownload implements Runnable, Controller {
 	}
 	
 	public void cancel() {
+		if (isDead) return;
+	
 		isCancelled = true;
 		flagToEnd();
 	}

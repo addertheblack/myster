@@ -103,6 +103,8 @@ public class MultiSourceSender extends ServerThread {
 					out.write(1);
 				}
 				
+				
+				
 				checkForLeechers(socket); //throws an IO Exception if there's a leech.
 
 				final UploadBlock currentBlock = startNewBlock(socket, file);
@@ -111,6 +113,8 @@ public class MultiSourceSender extends ServerThread {
 					
 					return;
 				}
+				
+				fileLength = file.length();
 
 				try { //the first loop is special because it can be queued. Other loops do not get queued...
 					transferQueue.doDownload(new Downloader() {
@@ -155,7 +159,7 @@ public class MultiSourceSender extends ServerThread {
 			startTime = System.currentTimeMillis();
 		
 			UploadBlock uploadBlock = getNextBlockToSend(socket, file);
-			fileLength = file.length();
+			
 			return uploadBlock;
 		}
 		
@@ -167,6 +171,7 @@ public class MultiSourceSender extends ServerThread {
 				
 				if (currentBlock.isEndSignal()) {
 					this.offset = this.fileLength;
+					amountDownloaded=0;
 					System.out.println("GOT END SIGNAL: "+this.offset+" : "+this.fileLength);
 					break;
 				}
