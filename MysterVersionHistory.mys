@@ -781,14 +781,10 @@ Work on DEV 8:
    Work on DEV 16.2
      2002/12/19
      	-> Removed an extra thread for server stats.. Replaced with a timer..
-     	
-     	443-6051
-     	
-     	go under the ten
-     	
-     	left ave mario end quickly
-     	left on malo
-     	malo bends right after bend first left marin (goes to bend left)
-     	
+     	-> Made a bandwidth throttling system that worked
+     	-> made bandwidth throttling system work with prefs
+     	-> made bandwidth prefs pane UI
+     	-> baby_p added more .extensions to the file list filter
+     	-> 
      	
      	
