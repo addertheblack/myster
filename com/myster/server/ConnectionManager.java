@@ -71,12 +71,15 @@ public class ConnectionManager extends MysterThread {
 			return;//exit quickly in case it's being called by System.exit();
 		}
 		
-		context=new ConnectionContext();
-		context.socket=socket;
-		context.downloadQueue=downloadQueue;
-		context.serverAddress=new MysterAddress(socket.getInetAddress());
+
 		int sectioncounter=0;
 		try {
+		
+			context=new ConnectionContext();
+			context.socket=new com.myster.client.stream.TCPSocket(socket);
+			context.downloadQueue=downloadQueue;
+			context.serverAddress=new MysterAddress(socket.getInetAddress());
+			
 			DataInputStream i=new DataInputStream(socket.getInputStream());	//opens the connection
 
 			int protocalcode;

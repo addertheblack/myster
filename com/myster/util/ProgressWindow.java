@@ -374,7 +374,7 @@ public class ProgressWindow extends Frame {
     	} catch (Exception ex) {
     	
     	}
-    
+    	//com.general.util.AnswerDialog.simpleAlert("Progress has been GCed");
     }
 
     // create special thread class for progress bar window

@@ -29,6 +29,7 @@ import com.myster.net.MysterAddress;
 import com.myster.pref.Preferences;
 import com.myster.client.stream.StandardSuite;
 import com.myster.net.MysterSocketFactory;
+import com.myster.net.MysterSocket;
 
 public class FileSenderThread extends ServerThread {
 	//public constants
@@ -148,7 +149,7 @@ public class FileSenderThread extends ServerThread {
 		
 		//io
 		private File file;
-		private Socket socket;
+		private MysterSocket socket;
 		private DataInputStream in, fin;
 		private DataOutputStream out, fout;
 		
@@ -238,7 +239,7 @@ public class FileSenderThread extends ServerThread {
 	
 		
 		
-		private void init(Socket socket) throws IOException {
+		private void init(MysterSocket socket) throws IOException {
 			this.socket=socket; //io
 			in=new DataInputStream(socket.getInputStream());
 			out=new DataOutputStream(socket.getOutputStream());

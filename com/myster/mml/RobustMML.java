@@ -46,6 +46,8 @@ public class RobustMML extends MML {
 			return super.put(path,value);
 		} catch (MMLPathException ex) {
 			if (trace) ex.printStackTrace();
+		} catch (NullValueException ex) {
+			if (trace) ex.printStackTrace();
 		} catch (Exception ex) {
 			ex.printStackTrace();
 		}
@@ -61,8 +63,11 @@ public class RobustMML extends MML {
 			return super.remove(path);
 		} catch (MMLPathException ex) {
 			if (trace) ex.printStackTrace();
+		} catch (NullValueException ex) {
+			if (trace) ex.printStackTrace();
 		} catch (Exception ex) {
 			ex.printStackTrace();
+			com.general.util.AnswerDialog.simpleAlert(""+ex);
 		}
 		return null;
 	}

@@ -55,9 +55,30 @@ public class PreferencesDialogBox extends MysterFrame {	//protected...!
 		addWindowListener(new WindowAdapter() {
 			public void windowClosing(WindowEvent e) {
 				e.getWindow().setVisible(false);
-				mypanel.restore();
+				//mypanel.restore();
 			}
 		});
+		
+		addComponentListener(new ComponentListener() {
+		
+			public void componentResized(ComponentEvent e) {
+				//nothing
+			}
+
+			public void componentMoved(ComponentEvent e) {
+				//nothing
+			}
+
+			public void componentShown(ComponentEvent e) {
+				mypanel.restore();
+			}
+
+			public void componentHidden(ComponentEvent e) {
+				//nothing
+			}
+		
+		});
+		
 		assertSize();
 	}
 
