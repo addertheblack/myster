@@ -148,7 +148,7 @@ public class MysterMenuBar extends MenuBar {
 			edit.addElement(new MysterMenuItemFactory("Preferences", 						new PreferencesAction(),			java.awt.event.KeyEvent.VK_SEMICOLON));
 			
 			//Disable all Edit menu commands
-			for (int i=0; i<edit.size(); i++) {
+			for (int i=0; i<edit.size()-1; i++) {
 				((MysterMenuItemFactory)(edit.elementAt(i))).setEnabled(false);
 			}
 			
