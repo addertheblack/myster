@@ -60,6 +60,7 @@ public class MCList extends Panel {
 	}	
 	
 	public MCList(int numberofcolumns, boolean singleselect, MCRowThemeInterface theme) {
+		
 		this.rowtheme=theme;
 		eventhandler=new MCListEventHandler(this);
 

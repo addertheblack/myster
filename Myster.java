@@ -38,7 +38,7 @@ import com.myster.client.datagram.*;
 import com.general.util.*;
 
 
-
+import java.util.Locale;
 
 public class Myster{
 
@@ -47,6 +47,8 @@ public class Myster{
 
 	public static void main(String args[]) {
 		final boolean isServer=(args.length>0&&args[0].equals("-s"));
+		
+		//Locale.setDefault(new Locale(Locale.JAPANESE.getLanguage(),Locale.JAPAN.getCountry()));
 		
 		System.out.println("java.vm.specification.version:"+System.getProperty("java.vm.specification.version"));
 		System.out.println("java.vm.specification.vendor :"+System.getProperty("java.vm.specification.vendor"));
