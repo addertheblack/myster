@@ -16,7 +16,6 @@ import java.io.IOException;
 import java.util.Vector;
 
 import com.general.util.KeyValue;
-import com.general.util.MessageField;
 import com.myster.client.stream.StandardSuite;
 import com.myster.mml.RobustMML;
 import com.myster.net.MysterAddress;
@@ -28,6 +27,8 @@ import com.myster.util.MysterThread;
 public class FileInfoListerThread extends MysterThread {
     ClientWindow w;
 
+    MysterSocket socket = null;
+    
     public FileInfoListerThread(ClientWindow w) {
         this.w = w;
     }
@@ -38,17 +39,20 @@ public class FileInfoListerThread extends MysterThread {
         } catch (InterruptedException ex) {
         }
 
-        MysterSocket socket = null;
         DataOutputStream out;
         DataInputStream in;
-        MessageField msg = w.getMessageField();
+        FileInfoListerThread msg = this;
 
         try {
             msg.say("Connecting to server...");
+            if (endFlag)
+                return;
             socket = MysterSocketFactory
                     .makeStreamConnection(new MysterAddress(w.getCurrentIP()));
             msg.say("Getting file information...");
 
+            if (endFlag)
+                return;
             RobustMML mml = new RobustMML(StandardSuite.getFileStats(socket,
                     new MysterFileStub(new MysterAddress(w.getCurrentIP()), w
                             .getCurrentType(), w.getCurrentFile())));
@@ -57,7 +61,6 @@ public class FileInfoListerThread extends MysterThread {
 
             KeyValue keyvalue = new KeyValue();
             keyvalue.addValue("File Name", w.getCurrentFile());
-            //keyvalue.addValue("Of Type","moo");
 
             listDir(mml, keyvalue, "/", "");
 
@@ -98,5 +101,32 @@ public class FileInfoListerThread extends MysterThread {
                         .get(newPath));
             }
         }
+    }
+    
+    private synchronized void showFileStats(final RobustMML mml) {
+        if (endFlag)
+            return;
+        showFileStats(mml);
+    }
+    
+    private synchronized void say(final String message) {
+        if (endFlag)
+            return;
+        w.say(message);
+    }
+    
+    public synchronized void flagToEnd() {
+        endFlag = true;
+        try {
+           socket.close();
+        } catch (Exception ex){}
+        interrupt();
+    }
+  
+    public synchronized void end() {
+        flagToEnd();
+        try {
+            join();
+        } catch (InterruptedException ex) {}
     }
 }

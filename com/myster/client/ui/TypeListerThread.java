@@ -37,45 +37,78 @@ public class TypeListerThread extends MysterThread {
 
     public void run() {
         try {
-            msg.say("Requested Type List (UDP)...");
+            say("Requested Type List (UDP)...");
 
+            if (endFlag)
+                return;
             com.myster.type.MysterType[] types = com.myster.client.datagram.StandardDatagramSuite
                     .getTypes(new MysterAddress(ip));
+            if (endFlag)
+                return;
 
             for (int i = 0; i < types.length; i++) {
                 container.addItemToTypeList("" + types[i]);
             }
 
-            msg.say("Idle...");
+            say("Idle...");
         } catch (IOException exp) {
             try {
-                msg.say("Connecting to server...");
+                say("Connecting to server...");
                 socket = MysterSocketFactory
                         .makeStreamConnection(new MysterAddress(ip));
+                if (endFlag)
+                    return;
             } catch (IOException ex) {
-                msg.say("Could not connect, server is unreachable...");
+                say("Could not connect, server is unreachable...");
                 return;
             }
 
             try {
-                msg.say("Requesting File Type List...");
+                say("Requesting File Type List...");
 
                 MysterType[] typeList = StandardSuite.getTypes(socket);
 
-                msg.say("Adding Items...");
+                say("Adding Items...");
                 for (int i = 0; i < typeList.length; i++) {
                     container.addItemToTypeList(typeList[i].toString());
                 }
 
-                msg.say("Idle...");
+                say("Idle...");
             } catch (IOException ex) {
-                msg.say("Could not get File Type List from specified server.");
+                say("Could not get File Type List from specified server.");
             } finally {
                 try {
                     socket.close();
                 } catch (Exception ex) {
                 }
             }
+        }
+    }
+    
+    private synchronized void addItemToTypeList(final MysterType type) {
+        if (endFlag)
+            return;
+        container.addItemToTypeList(type.toString());
+    }
+    
+    private synchronized void say(final String message) {
+        if (endFlag)
+            return;
+        msg.say(message);
+    }
+    
+    public void flagToEnd() {
+        endFlag = true;
+        try { socket.close(); } catch (Exception ex) {}
+        interrupt();
+    }
+    
+    public void end() {
+        flagToEnd();
+        try {
+            join();
+        } catch (InterruptedException ex) {
+            //nothing..
         }
     }
 }

@@ -20,10 +20,14 @@ import java.awt.Rectangle;
 import java.awt.TextField;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.awt.event.WindowAdapter;
+import java.awt.event.WindowEvent;
 import java.net.UnknownHostException;
 
 import com.general.mclist.GenericMCListItem;
 import com.general.mclist.MCList;
+import com.general.mclist.MCListEvent;
+import com.general.mclist.MCListEventAdapter;
 import com.general.mclist.Sortable;
 import com.general.mclist.SortableString;
 import com.general.util.AnswerDialog;
@@ -72,6 +76,12 @@ public class ClientWindow extends MysterFrame implements Sayable {
 
     private static final String CLIENT_WINDOW_TITLE_PREFIX = "Direct Connection ";
 
+    private TypeListerThread connectToThread;
+
+    private FileListerThread fileListThread;
+
+    private FileInfoListerThread fileInfoListerThread;
+
     public static void initWindowLocations() {
         Rectangle[] rectangles = com.myster.ui.WindowLocationKeeper.getLastLocs(WINDOW_KEEPER_KEY);
 
@@ -84,14 +94,14 @@ public class ClientWindow extends MysterFrame implements Sayable {
     public ClientWindow() {
         super("Direct Connection " + (++counter));
 
-        makeClientWindow();
+        init();
 
         //windowKeeper.addFrame(this);
     }
 
     public ClientWindow(String ip) {
         super("Direct Connection " + (++counter));
-        makeClientWindow();
+        init();
         IP.setText(ip);
         //connect.dispatchEvent(new KeyEvent(connect, KeyEvent.KEY_PRESSED,
         // System.currentTimeMillis(), 0, KeyEvent.VK_ENTER,
@@ -103,7 +113,7 @@ public class ClientWindow extends MysterFrame implements Sayable {
                 "Connect Button"));
     }
 
-    private void makeClientWindow() {
+    private void init() {
         setBackground(new Color(240, 240, 240));
 
         //Do interface setup:
@@ -168,16 +178,40 @@ public class ClientWindow extends MysterFrame implements Sayable {
         show(true);
 
         //filelisting.addActionListener(???);
-        ConnectButtonEvent connectButtonEvent = new ConnectButtonEvent(this);
+        final ActionListener connectButtonEvent = new ActionListener(){
+            public void actionPerformed(ActionEvent e) {
+                startConnect();
+            }
+        };
         connect.addActionListener(connectButtonEvent);
         IP.addActionListener(connectButtonEvent);
 
-        fileTypeList.addMCListEventListener(new FileTypeSelectListener(this));
+        fileTypeList.addMCListEventListener(new MCListEventAdapter(){
+            public void selectItem(MCListEvent e) {
+                startFileList();
+            }
+
+            public void unselectItem(MCListEvent e) {
+                stopFileListing();
+            }
+        });
         fileList.addMCListEventListener(new FileListAction(this));
-        fileList.addMCListEventListener(new FileStatsAction(this));
+        fileList.addMCListEventListener(new MCListEventAdapter(){
+            public void selectItem(MCListEvent e) {
+                startStats();
+            }
+
+            public void unselectItem(MCListEvent e) {
+                stopStats();
+            }
+        });
 
         addWindowListener(new StandardWindowBehavior());
-
+        addWindowListener(new WindowAdapter(){
+            public void windowClosing(WindowEvent e) {
+                stopConnect();//will stop and clear all
+            }
+        });
     }
 
     private void addComponent(Component c, int row, int column, int width, int height, int weightx,
@@ -211,24 +245,17 @@ public class ClientWindow extends MysterFrame implements Sayable {
         fileList.addItem(items);
     }
 
-    public void clearFileList() {
-        fileList.clearAll();
-        pane.clear();
-    }
-
-    public void clearFileStats() {
-        pane.clear();
-    }
-
     public void refreshIP() {
         currentip = IP.getText();
         MysterServer server = null;
         try {
             server = IPListManagerSingleton.getIPListManager().getQuickServerStats(
                     new MysterAddress(currentip));
-        } catch (UnknownHostException e) {}
+        } catch (UnknownHostException e) {
+        }
 
-        setTitle(CLIENT_WINDOW_TITLE_PREFIX + "to \"" + (server == null ? currentip : server.getServerIdentity()) +"\"");
+        setTitle(CLIENT_WINDOW_TITLE_PREFIX + "to \""
+                + (server == null ? currentip : server.getServerIdentity()) + "\"");
     }
 
     //To be in an interface??
@@ -254,12 +281,6 @@ public class ClientWindow extends MysterFrame implements Sayable {
         return (String) fileList.getItem(selectedIndex);
     }
 
-    public void clearAll() {
-        fileTypeList.clearAll();
-        fileList.clearAll();
-        pane.clear();
-    }
-
     public void say(String s) {
         msg.say(s);
     }
@@ -268,9 +289,49 @@ public class ClientWindow extends MysterFrame implements Sayable {
         return msg;
     }
 
-    //end ?
-
     public void showFileStats(KeyValue k) {
         pane.display(k);
+    }
+
+    private void stopConnect() {
+        if (connectToThread != null) {
+            connectToThread.flagToEnd();
+        }
+        fileTypeList.clearAll();
+        stopFileListing();
+    }
+
+    private void stopFileListing() {
+        if (fileListThread != null) {
+            fileListThread.flagToEnd();
+        }
+        fileList.clearAll();
+        stopStats();
+    }
+
+    private void stopStats() {
+        if (fileInfoListerThread != null) {
+            fileInfoListerThread.flagToEnd();
+        }
+        pane.clear();
+    }
+
+    public void startConnect() {
+        stopConnect();
+        refreshIP();
+        connectToThread = new TypeListerThread(this);
+        connectToThread.start();
+    }
+
+    public void startFileList() {
+        stopFileListing();
+        fileListThread = new FileListerThread(this);
+        fileListThread.start();
+    }
+
+    public void startStats() {
+        stopStats();
+        fileInfoListerThread = new FileInfoListerThread(this);
+        fileInfoListerThread.start();
     }
 }

@@ -43,23 +43,29 @@ public class FileListerThread extends MysterThread {
         DataOutputStream out;
         DataInputStream in;
 
+        if (endFlag)
+            return;
+        
         if (socket == null) {
             try {
-                msg.say("Connecting to server...");
+                say("Connecting to server...");
                 socket = MysterSocketFactory
                         .makeStreamConnection(new MysterAddress(ip));
             } catch (Exception ex) {
-                msg.say("Server at that IP/Domain name is not responding.");
+                say("Server at that IP/Domain name is not responding.");
                 return;
             }
         }
 
+        if (endFlag)
+            return;
+        
         main: {
             try {
                 out = new DataOutputStream(socket.getOutputStream());
                 in = new DataInputStream(socket.getInputStream());
 
-                msg.say("Requesting File List...");
+                say("Requesting File List...");
 
                 out.writeInt(78);
 
@@ -70,17 +76,17 @@ public class FileListerThread extends MysterThread {
                 }
 
                 if (type == null) {
-                    msg.say("No type is selected.");
+                    say("No type is selected.");
                     break main;
                 }
 
-                msg.say("Requesting File List: " + type);
+                say("Requesting File List: " + type);
 
                 out.write(type.getBytes());
                 int numberoffiles = in.readInt();
                 ;
 
-                msg.say("Receiving List of Size: " + numberoffiles);
+                say("Receiving List of Size: " + numberoffiles);
                 System.out.println("Receiving List of Size: " + numberoffiles);
 
                 TextSpinner spinner = new TextSpinner();
@@ -91,11 +97,11 @@ public class FileListerThread extends MysterThread {
                 for (int i = 0; i < numberoffiles; i++) {
                     files[i % LIMIT] = in.readUTF();
                     if (i % 10 == 0)
-                        msg.say("Downloading file list: " + type + " "
+                        say("Downloading file list: " + type + " "
                                 + ((i * 100) / numberoffiles) + "%");
 
                     if ((i % LIMIT) == (LIMIT - 1)) {
-                        w.addItemsToFileList(files);
+                        addItemsToFileList(files);
                         if ((numberoffiles - i) < LIMIT)
                             files = new String[numberoffiles - i - 1];
                     }
@@ -103,25 +109,47 @@ public class FileListerThread extends MysterThread {
 
                 out.writeInt(2);
 
-                w.addItemsToFileList(files);
+                addItemsToFileList(files);
 
                 in.read();
 
-                msg.say("Requesting File List: " + type + " "
+                say("Requesting File List: " + type + " "
                         + spinner.getSpin() + " Complete.");
-                msg.say("Idle...");
+                say("Idle...");
             } catch (Exception ex) {
-                msg
-                        .say("An unexpected error occured during the transfer of the file list.");
+                say("An unexpected error occured during the transfer of the file list.");
                 ex.printStackTrace();
             } finally {
                 try {
                     socket.close();
                 } catch (Exception ex) {
-                    msg.say("There was a problem closing the socket..");
+                    say("There was a problem closing the socket..");
                     return;
                 }
             }
         }
+    }
+    
+    public synchronized void say(final String message) {
+        if (endFlag)
+            return;
+        msg.say(message);
+    }
+    
+    public synchronized void addItemsToFileList(String[] files) {
+        if (endFlag)
+            return;
+        w.addItemsToFileList(files);
+    }
+    
+    public void flagToEnd() {
+        endFlag = true;
+        try { socket.close(); } catch (Exception ex) {}
+        interrupt();
+    }
+    
+    public void end() {
+        endFlag = true;
+        try { join();} catch (InterruptedException ex) {}
     }
 }

@@ -156,8 +156,6 @@ public class SearchWindow extends MysterFrame implements SearchResultListener, S
             }
         });
 
-        //bucket=new SearchResultBucket(BUCKETSIZE);
-
         fileList.setColumnName(0, "Search Results appear here");
         fileList.setColumnWidth(0, 400);
 
