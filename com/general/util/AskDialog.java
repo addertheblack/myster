@@ -67,7 +67,7 @@ public class AskDialog extends Dialog {
 		messagebox.setLocation(XPAD+insets.left, message.size()*height+YPAD+insets.top+10);
 		add(messagebox);
 		
-		buttons=new Button[]{new Button("Cancle"), new Button("Ok")};
+		buttons=new Button[]{new Button("Cancel"), new Button("Ok")};
 		
 		for (int i=0; i<buttons.length; i++) {
 			buttons[i].addActionListener(new ActionHandler());

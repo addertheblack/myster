@@ -1,6 +1,7 @@
 package com.myster.util;
 
 import java.awt.event.*;
+import java.awt.Cursor;
 import java.net.MalformedURLException;
 import java.net.URL;
 
@@ -85,6 +86,12 @@ public class FileProgressWindow extends ProgressWindow {
 	
 	public void setURL(String urlString) {
 		url = (urlString.equals("")?null:urlString);
+		
+		if (url != null) {
+			adPanel.setCursor(new Cursor(Cursor.HAND_CURSOR));
+		} else {
+			adPanel.setCursor(new Cursor(Cursor.DEFAULT_CURSOR));
+		}
 	}
 	
 	private String formatRate(long startTime, long value) {

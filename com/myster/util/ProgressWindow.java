@@ -15,7 +15,7 @@ public class ProgressWindow extends Frame {
     public static final int Y_TEXT_OFFSET 	= 5;     // y offset of text
 	
 	Vector progressPanels;
-	AdPanel adPanel;
+	protected AdPanel adPanel;
 
 	public ProgressWindow() { commonInit(); }
 	
