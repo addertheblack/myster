@@ -872,8 +872,11 @@ Work on DEV 8:
 	  	-> created Multi source client project am testing it with server.
 	  	-> fixed a slew of bugs and oddities
 	  	-> enhanced the file server event model.
+	  	-> Myster is no 25 000 lines of code.
 	  	-> Merged multi-source download client project with main Myster source
 	  	-> hooked up 6669 error message to FAQ on the myster web page.
+	  	-> Replace Operator reseter thread with a timer.
+	  	-> MSTestfile.mp3 has a md5 hash of 631b2c76267e568ccb221193ab23e134=======
 	  	-> Replace Operator reseter thread with a timer.
 	  2003/08/20 <- DEV 19
 	  	-> Fixed bug in getStringFromBytes that would show terabytes as gigabytes. (Thanx Rev)
@@ -895,4 +898,8 @@ Work on DEV 8:
 	  	-> Hooked up hash cache pref panel
 	  	-> Decided to remove the whole panel anyway.
 	  	-> Made it so the p2p window can also launch a multi source download
-	  	
+		-> 
+				TO DO : Fix it so that when d/l is complete the bars say something sensible.
+					k/s counter keeps going down.
+					change last ping time to ping
+					true/false to on/off

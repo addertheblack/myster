@@ -99,7 +99,7 @@ public class TypeManagerPreferencesGUI extends PreferencesPanel {
 		mcList.addItem(items);
 	}
 	
-	public String getKey() { return "Types enabled/disable"; }
+	public String getKey() { return "Types enable/disable"; }
 	
 	private static class MyMCListItem extends GenericMCListItem {
 		SortableString description;

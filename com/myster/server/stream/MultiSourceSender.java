@@ -136,7 +136,7 @@ public class MultiSourceSender extends ServerThread {
 			fireEvent(ServerDownloadEvent.SECTION_FINISHED, -1);
 		}
 		
-		long CHUNK_SIZE = 4024;
+		long CHUNK_SIZE = 8000;
 		private void sendFileSection(MysterSocket socket, File file_arg, long offset, long length) throws IOException {
 			RandomAccessFile file =  null;
 			try {

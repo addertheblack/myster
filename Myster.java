@@ -274,7 +274,7 @@ public class Myster{
 						}
 					} catch (Exception ex) {
 						ex.printStackTrace();
-						AnswerDialog.simpleAlert("Could not connect on Local socket..\n"+"Make sur eyou are connected to the internet, close all open Myster versions and/or restart.");
+						AnswerDialog.simpleAlert("Could not connect on Local socket..\n"+"Make sure you are connected to the internet, close all open Myster versions and/or restart.");
 						System.out.println("Could not connect on Local socket..");
 						System.out.println("Close all open Myster versions or just restart.. that should work");
 						System.exit(1);

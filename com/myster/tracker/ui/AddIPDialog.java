@@ -56,7 +56,8 @@ public class AddIPDialog extends Dialog {
 		
 		textentry=new TextField("Enter an IP here");
 		
-		explanation=new Label("The IP will be added to your IP list if it's a suitably good Myster Server. This option is best used when using Myster for the first few times. It Can be used to add a entry point to the Myster network to your IP list. It can also be used on an intranet to add a server to be searched in a peer-to-peer fashion.");
+		//explanation=new Label("The IP will be added to your IP list if it's a suitably good Myster Server. This option is best used when using Myster for the first few times. It Can be used to add a entry point to the Myster network to your IP list. It can also be used on an intranet to add a server to be searched in a peer-to-peer fashion.");
+		explanation=new Label("The IP will be added to your IP list");
 		
 		ok=new Button("OK");
 

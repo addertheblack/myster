@@ -421,7 +421,7 @@ public class MultiSourceDownload {
 		
 		boolean endFlag = false;
 		
-		private static final int CHUNK_SIZE = 1*1024;
+		private static final int CHUNK_SIZE = 2*1024;
 		
 		private int downloadNumber;
 			
