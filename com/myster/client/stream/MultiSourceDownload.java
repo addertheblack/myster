@@ -55,6 +55,8 @@ import com.myster.mml.RobustMML;
 */
 
 public class MultiSourceDownload implements Runnable, Controller {
+	final MSPartialFile partialFile;
+
 	final MysterFileStub stub;					//starter stub (contains first address and filename and type)
 	final FileHash hash;								//should be final but can't be...
 	final long fileLength; 							//should be final but can't be...
@@ -65,20 +67,25 @@ public class MultiSourceDownload implements Runnable, Controller {
 	//File theFile;								//file downloading to!
 	RandomAccessFile randomAccessFile;			//file downloading to!
 
-	long fileProgress= 0;
-	long bytesWrittenOut = 0;
+	final int chunkSize;
+	final long initialOffset;					//how much was downloaded in a previous session
+	long fileProgress= 0;						//for work segments
+	long bytesWrittenOut = 0;					//to know how much of the file has been downloaded.
 	Stack unfinishedSegments = new Stack(); 	//it's a stack 'cause it doens't
 												//matter what data structure so long
 												//as add and remove are O(C).
 
 	EventDispatcher dispatcher = new SyncEventDispatcher();
 	
+	boolean isCancelled = false;
 	boolean endFlag 	= false;	//this is set to true to tell MSSource to stop.
 	boolean isDead 		= false;	//is set to true if cleanUp() has been called
 	
+	//Constants
 	public static final int MULTI_SOURCE_BLOCK_SIZE = 512 * 1024;
+	public static final int DEFAULT_CHUNK_SIZE = 2*1024;
 
-	public MultiSourceDownload(MysterFileStub stub, FileHash hash, long fileLength, MSDownloadListener listener, RandomAccessFile randomAccessFile) {
+	public MultiSourceDownload(MysterFileStub stub, FileHash hash, long fileLength, MSDownloadListener listener, RandomAccessFile randomAccessFile, MSPartialFile partialFile) throws IOException {
 		this.randomAccessFile	= randomAccessFile;
 		this.stub 				= stub;
 		this.hash				= hash;
@@ -87,8 +94,40 @@ public class MultiSourceDownload implements Runnable, Controller {
 		this.downloaders			= new Hashtable();
 		this.listener				= new MSHashSearchListener();
 		
+		this.partialFile 		= partialFile; //MSPartialFile.create(stub.getName(), new Filehash[]{hash}, SegmentDownloader.CHUNK_SIZE);
+		
+		this.fileProgress		= partialFile.getFirstUndownloadedBlock() * partialFile.getBlockSize();
+		this.bytesWrittenOut	= fileProgress;
+		this.initialOffset		= fileProgress;
+		
+		this.chunkSize			= (int)partialFile.getBlockSize();
+		
 		addListener(listener);
 	}
+	
+	public MultiSourceDownload(RandomAccessFile randomAccessFile, MSDownloadListener listener, MSPartialFile partialFile) throws IOException {
+		this.randomAccessFile	= randomAccessFile;
+		this.stub				= new MysterFileStub(new MysterAddress(""),partialFile.getType(), partialFile.getFilename());
+		this.hash				= partialFile.getHash(com.myster.hash.HashManager.MD5);
+		this.fileLength			= partialFile.getFileLength();
+		this.chunkSize			= (int)partialFile.getBlockSize();
+		this.partialFile 		= partialFile;
+		
+		
+		System.out.println("Block Size : "+ partialFile.getBlockSize()+ " First un-downloaded block "+ partialFile.getFirstUndownloadedBlock());
+		this.fileProgress		= partialFile.getFirstUndownloadedBlock() * partialFile.getBlockSize();
+		this.bytesWrittenOut	= fileProgress;
+		this.initialOffset		= fileProgress;
+		
+		this.downloaders			= new Hashtable();
+		this.listener				= new MSHashSearchListener();
+		
+		addListener(listener);
+	}
+	
+	//public void suggestAServer(MysterAddress address) {
+	//	newDownload(new MysterFileStub(stub.getName(), stub.getType(), address));
+	//}
 	
 	//Can be done as a thread or not.
 	public void run() {
@@ -102,7 +141,7 @@ public class MultiSourceDownload implements Runnable, Controller {
 	private synchronized void newDownload(MysterFileStub stub) {
 		if (endFlag) return;
 		
-		InternalSegmentDownloader downloader = new InternalSegmentDownloader(this, stub);
+		InternalSegmentDownloader downloader = new InternalSegmentDownloader(this, stub, chunkSize);
 	
 		if (downloaders.get(downloader)!=null) return; //already have a downloader doing this file.
 	
@@ -113,6 +152,10 @@ public class MultiSourceDownload implements Runnable, Controller {
 		downloader.start();
 	}
 	
+	/**
+	*	If a segment download has received word that it is now queued it double checks back with this routine to see if it should bother
+	*	continuing the download.
+	*/
 	public synchronized boolean isOkToQueue() {
 		Enumeration enum = downloaders.elements();
 		
@@ -180,11 +223,14 @@ public class MultiSourceDownload implements Runnable, Controller {
 			
 			dispatcher.fireEvent(new MultiSourceEvent(MultiSourceEvent.PROGRESS, this));
 			
+			partialFile.setBit(dataBlock.offset / chunkSize);
+			
 			if (isDone()) {
 				flagToEnd(); //we're done.
 			}
 		} catch (IOException ex) {
-			ex.printStackTrace(); //fix
+			ex.printStackTrace();
+			flagToEnd();
 		}
 	}
 	
@@ -198,6 +244,10 @@ public class MultiSourceDownload implements Runnable, Controller {
 	
 	public MysterFileStub getStub() {
 		return stub;
+	}
+	
+	public long getInitialOffset() {
+		return initialOffset;
 	}
 	
 	public synchronized boolean isDead() {
@@ -242,6 +292,15 @@ public class MultiSourceDownload implements Runnable, Controller {
 		endCheckAndCleanup(); //just in case there was no downloader threads.
 	}
 	
+	public void cancel() {
+		isCancelled = true;
+		flagToEnd();
+	}
+	
+	public boolean isCancelled() {
+		return isCancelled;
+	}
+	
 	public void end() {
 		flagToEnd();
 		
@@ -252,6 +311,7 @@ public class MultiSourceDownload implements Runnable, Controller {
 				return;
 			}
 		}
+		
 	}
 	
 	// Instead of putting a finally in the run() method, wen can put stuff in here.
@@ -310,17 +370,20 @@ class InternalSegmentDownloader extends MysterThread implements SegmentDownloade
 	boolean deadFlag 	= false;
 	boolean isActive	= false;	//is active says if the SegmentDownloader is actively downloading a file or if the download is queued
 	
+	//Params
+	final int chunkSize;
+	
 	//Static variables
 	private static int instanceCounter = 0;
 	
-	//Constants
-	private static final int CHUNK_SIZE = 2*1024;
 
-	public InternalSegmentDownloader(Controller controller, MysterFileStub stub) {
+
+	public InternalSegmentDownloader(Controller controller, MysterFileStub stub, int chunkSize) {
 		super("SegmentDownloader "+(instanceCounter++)+" for "+stub.getName());
 	
 		this.stub 			= stub;
 		this.controller		= controller;
+		this.chunkSize		= chunkSize;
 	}
 	
 	public void addListener(SegmentDownloaderListener listener) {
@@ -513,7 +576,7 @@ class InternalSegmentDownloader extends MysterThread implements SegmentDownloade
 		long bytesDownloaded = 0;
 
 		for (bytesDownloaded = 0 ; bytesDownloaded < length; ) {
-			long calcBlockSize = (length - bytesDownloaded < CHUNK_SIZE?length-bytesDownloaded:CHUNK_SIZE);
+			long calcBlockSize = (length - bytesDownloaded < chunkSize?length-bytesDownloaded:chunkSize);
 			
 			byte[] buffer = new byte[(int)calcBlockSize]; //could be made more efficient by using a pool.
 			

@@ -940,8 +940,7 @@ Work on DEV 8:
 			Need to fix freeze on cancel
 			Need to fix stupid none batching behavior (MSDownload is slower than it should be)
 			Make it so multi source resumables are named different (idiot)
-			Make sensible behavior for queued multi source downloads.
-			
+		
 	//?
 	Re-qrote most of the multi source download client code. It now is much nocer to work with
 	- Myste ris now 27 000 line of yummy java goodness
@@ -954,6 +953,7 @@ Work on DEV 8:
 		-> Fixed a bug where two crawler threads could be running at the same time
 		-> hooked up events in the crawler code to what they should be. 
 			I've noticed the design of my crawler is somewhat crap. I intend to fix this.
+	- PR 7 released
 		-> Fixed a bug where the search list was cleared TWICE.
 		-> Refactored Opperator event model.
 			Removed another thread!!
@@ -962,3 +962,4 @@ Work on DEV 8:
 		-> Added number of pings to server stats.
 		-> added number of connections to server stats.
 		-> Added uptime to server stats
+		-> Fixed bug where files downloaded to an unexpected location would not rename properly

@@ -17,12 +17,14 @@ public class MultiSourceUtilities {
 	
 	private static final String EXTENSION = ".i";
 	public static File getFileToDownloadTo(MysterFileStub stub, Frame parentFrame) throws IOException {
+		/*
+		
 		File incomingDirectory = getIncomingDirectory();
 		
 		return new File(incomingDirectory.getPath()+File.separator+stub.getName()+EXTENSION);
+		*/
 		
-		
-		/*
+	
 		File directory = new File(com.myster.filemanager.FileTypeListManager.getInstance().getPathFromType(stub.getType()));
 		File file = new File(directory.getPath()+File.separator+stub.getName()+EXTENSION);
 		
@@ -57,10 +59,34 @@ public class MultiSourceUtilities {
 		}
 
 		return file;
-		*/
 	}
 	
-	public static boolean moveFileToFinalDestination(final MysterFileStub stub, final File sourceFile, Frame parentFrame) throws IOException {
+	public static boolean moveFileToFinalDestination(final File sourceFile, Frame parentFrame) throws IOException {
+		
+		final String FILE_ENDING = ".i";
+	
+		File theFile = sourceFile; //!
+	
+		if (! theFile.getName().endsWith(FILE_ENDING)) {
+			AnswerDialog.simpleAlert(parentFrame, "Could not rename file \""+theFile.getName()+"\" because it does not end with "+FILE_ENDING+".");
+			return true; //don't display an error, I've already done it
+		}
+	
+		String path = theFile.getAbsolutePath();
+		File someFile = someFile = new File(path.substring(0, path.length()-(FILE_ENDING.length()))); //-2 is for .i
+		
+		if (someFile.exists()) {
+			AnswerDialog.simpleAlert(parentFrame, "Could not rename file from \""+theFile.getName()+"\" to \""+someFile.getName()+"\" because a file by that name already exists.");
+			return true;
+		}
+		
+		if (!theFile.renameTo(someFile)) {
+			AnswerDialog.simpleAlert(parentFrame, "Could not rename file from \""+theFile.getName()+"\" to \""+someFile.getName()+"\" because an unspecified error occured.");
+			return true;
+		}
+		return true;
+		
+		/*
 		File directory = new File(com.myster.filemanager.FileTypeListManager.getInstance().getPathFromType(stub.getType()));
 		File file = new File(directory.getPath()+File.separator+stub.getName());
 		
@@ -94,7 +120,10 @@ public class MultiSourceUtilities {
 			}
 		}
 
+		System.out.println(""+file);
+
 		return sourceFile.renameTo(file);
+		*/
 	}
 	
 	/**

@@ -157,7 +157,7 @@ public class StatsInfoPanel extends Panel{
 		numofld.setLocation(200, 200);
 		add(numofld);
 		
-		numofTTLabel=new Label("Number Of Top Ten Requests:");
+		numofTTLabel=new Label("Top Ten Requests:");
 		numofTTLabel.setSize(175, 25);
 		numofTTLabel.setLocation(20, 230);
 		add(numofTTLabel);
@@ -218,7 +218,7 @@ public class StatsInfoPanel extends Panel{
 		numberOfConnections.setLocation(500, 230);
 		add(numberOfConnections);
 		
-		currentConnectionsLabel=new Label("Number Of Current Connections:");
+		currentConnectionsLabel=new Label("Current Connections:");
 		currentConnectionsLabel.setSize(175, 25);
 		currentConnectionsLabel.setLocation(300, 260);
 		add(currentConnectionsLabel);
@@ -243,8 +243,8 @@ public class StatsInfoPanel extends Panel{
 		uptimeLabel.setLocation(300, 320);
 		add(uptimeLabel);
 		
-		uptime=new CountLabel("0");
-		uptime.setSize(50, 25);
+		uptime=new Label("0");
+		uptime.setSize(100, 25);
 		uptime.setLocation(500, 320);
 		add(uptime);
 	}

@@ -77,6 +77,7 @@ public class MSDownloadHandler extends MSDownloadListener {
 		progress.setText("Download Finished");
 		progress.done();
 		
+		/*
 		final String FILE_ENDING = ".i";
 	
 		File theFile = fileBeingDownloadedTo; //!
@@ -98,7 +99,7 @@ public class MSDownloadHandler extends MSDownloadListener {
 			AnswerDialog.simpleAlert(progress, "Could not rename file from \""+theFile.getName()+"\" to \""+someFile.getName()+"\" because an unspecified error occured.");
 			return;
 		}
-	
+		*/
 	}
 	
 	/**

@@ -196,15 +196,33 @@ public class StandardSuite {
 				
 				FileHash hash = MultiSourceUtilities.getHashFromStats(mml);
 				
-				File theFile = MultiSourceUtilities.getFileToDownloadTo(stub, progress);
+				final File theFile = MultiSourceUtilities.getFileToDownloadTo(stub, progress);
 				
 				synchronized (StandardSuite.DownloadThread.this) {
 					if (endFlag) return;
-				
-					msDowload = new MultiSourceDownload(stub, hash, MultiSourceUtilities.getLengthFromStats(mml), new MSDownloadHandler(progress, theFile), new RandomAccessFile(theFile, "rw"));
+					
+					final MSPartialFile partialFile = MSPartialFile.create(stub.getName(), stub.getType(), MultiSourceDownload.DEFAULT_CHUNK_SIZE,new FileHash[]{hash}, MultiSourceUtilities.getLengthFromStats(mml));
+					
+					msDownload = new MultiSourceDownload(stub, hash, MultiSourceUtilities.getLengthFromStats(mml), new MSDownloadHandler(progress, theFile), new RandomAccessFile(theFile, "rw"), partialFile);
+					msDownload.addListener(new MSDownloadListener() { //warning cut and paste code from MSPArtialFile 
+						public void endDownload(MultiSourceEvent event) {
+							if (event.getMultiSourceDownload().isCancelled()) {
+								partialFile.done();
+							}
+						}
+					
+						public void doneDownload(MultiSourceEvent event) {
+						
+							try {
+								if (! MultiSourceUtilities.moveFileToFinalDestination(theFile, progress)) throw new IOException("");
+							} catch (IOException ex) {
+								com.general.util.AnswerDialog.simpleAlert(progress, "Error: Couldn't move and rename file. "+ex); //yuck
+							}
+						}
+					});
 				}
 				
-				msDowload.run();
+				msDownload.run();
 			} catch (IOException ex) {
 				ex.printStackTrace();
 			
@@ -223,14 +241,14 @@ public class StandardSuite {
 			}
 		}
 	
-		MultiSourceDownload msDowload;
+		MultiSourceDownload msDownload;
 		DownloaderThread secondDownload;
 		boolean endFlag;
 		
 		public synchronized void flagToEnd() {
 			endFlag = true;
 			
-			if (msDowload!=null) msDowload.flagToEnd();
+			if (msDownload!=null) msDownload.cancel();
 			
 			if (secondDownload!=null) secondDownload.end();
 		}
