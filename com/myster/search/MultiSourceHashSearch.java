@@ -17,7 +17,8 @@ import com.myster.client.stream.MultiSourceUtilities;
 public class MultiSourceHashSearch implements MysterSearchClientSection {
 	//STATIC SUB SYSTEM
 	
-	private static final Hashtable typeHashtable = new Hashtable();
+	private static final int 		TIME_BETWEEN_CRAWLS = 10 * 60 * 1000;
+	private static final Hashtable 	typeHashtable = new Hashtable();
 	
 	private synchronized static Vector getEntriesForType(MysterType type) {
 		 return getBatchForType(type).entries;
@@ -86,7 +87,7 @@ public class MultiSourceHashSearch implements MysterSearchClientSection {
 		}
 	}
 	
-	// asserts that the crawler is running
+	// asserts that the crawler is running (ie: only "starts" the crawler if one is not already running)
 	private synchronized static void startCrawler(MysterType type) {
 		BatchedType batchedType = getBatchForType(type);
 	
@@ -94,10 +95,20 @@ public class MultiSourceHashSearch implements MysterSearchClientSection {
 	
 		IPQueue ipQueue = new IPQueue();
 		
+		com.myster.tracker.MysterServer[] iparray=com.myster.tracker.IPListManagerSingleton.getIPListManager().getTop(type,50);
+		
 		String[] startingIps = com.myster.tracker.IPListManagerSingleton.getIPListManager().getOnRamps();
 		
-		for (int i = 0; i < startingIps.length; i++) {
-			try { ipQueue.addIP(new MysterAddress(startingIps[i])); } catch (IOException ex) {ex.printStackTrace();}
+		int counter = 0;
+		for (int i = 0; (i < iparray.length) && (iparray[i]!=null); i++) {
+			ipQueue.addIP(iparray[i].getAddress());
+			counter++;
+		}
+		
+		if (counter < 3) {
+			for (int i = 0; i < startingIps.length; i++) {
+				try { ipQueue.addIP(new MysterAddress(startingIps[i])); } catch (IOException ex) {ex.printStackTrace();}
+			}
 		}
 		
 		batchedType.crawler = new CrawlerThread(new MultiSourceHashSearch(), //note.. will not restart when crawl is done 
@@ -192,20 +203,30 @@ public class MultiSourceHashSearch implements MysterSearchClientSection {
 	}
 	
 	public void endSearch(final MysterType type) {
-		MultiSourceUtilities.debug("Hash Search -> Crawler has crawled the whole network!");
-		com.general.util.Timer timer = new com.general.util.Timer(new Runnable() {
-				public void run() {
-					restartCrawler(type);
-				}
-		}, 1);
+		MultiSourceUtilities.debug("HashSearch -> Search thread has died");
 	}
 	
-	
+	boolean endFlag = false;
 	public void flagToEnd() {
-		// crawler thread passes this along to make quitting faster..
+		endFlag = true;
+		MultiSourceUtilities.debug("HashSearch -> Search was told to end");
+		
 	}
 	
 	public void end() {
-		//..
+		//why is this here.. ?
+	}
+	
+	public void searchedAll(final MysterType type) {
+		MultiSourceUtilities.debug("Hash Search -> Crawler has crawled the whole network!");
+		com.general.util.Timer timer = new com.general.util.Timer(new Runnable() {
+				public void run() {
+					synchronized (MultiSourceHashSearch.class) { //sigh.. this is to fix a dumb race condition that can happen
+						if (!endFlag) {
+							restartCrawler(type);
+						}
+					}
+				}
+		}, TIME_BETWEEN_CRAWLS);
 	}
 }

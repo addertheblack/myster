@@ -49,7 +49,7 @@ import com.myster.mml.RobustMML;
 	
 	hook up resumable download for multi source
 	
-	try to make it so that pr 7.X banner work without an image / URL being put.
+	try to make it so that PR banner work without an image / URL being put.
 	
 	try to make server side hash search work (UDP)
 */

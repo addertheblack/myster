@@ -945,3 +945,9 @@ Work on DEV 8:
 	//?
 	Re-qrote most of the multi source download client code. It now is much nocer to work with
 	- Myste ris now 27 000 line of yummy java goodness
+	
+	Work on DEV 19.5
+      2004/01/06
+		-> Fixed a bug where the hash search crawler only used ips from the array of 
+			last resort and not the tracker
+		-> Fixed a bug where Myster would ask the user if they wanted to over-write TWICE!

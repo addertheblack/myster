@@ -35,8 +35,11 @@ public class MSDownloadHandler extends MSDownloadListener {
 		progress.startBlock(0, 0, event.getMultiSourceDownload().getLength());
 	}
 	
+	int counter = 0;
 	public void progress(MultiSourceEvent event) {
 		progress.setValue(event.getMultiSourceDownload().getProgress());
+		
+		if (--counter%10 == 0) progress.setText("Transfered: "+com.general.util.Util.getStringFromBytes(event.getMultiSourceDownload().getProgress()));
 	}
 	
 	public void startSegmentDownloader(MSSegmentEvent event) {

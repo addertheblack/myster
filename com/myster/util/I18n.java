@@ -38,7 +38,6 @@ public class I18n {
 
 		//resources = ResourceBundle.getBundle("com.properties.Myster");
 		//We don't want to do a release with the resource bundle on because a full transalation has not yet been done.
-		//(A half saved cat is uglier than a cat without hair)
 	}
 
 	/**

@@ -127,6 +127,8 @@ public class CrawlerThread extends MysterThread {
 			
 			if (group.subtractOne()<=0) msg.say("Done search");
 			else msg.say("Still Searching: "+group.getValue()+" outstanding searches");
+			
+			searcher.searchedAll(searchType);
 		} finally {
 			searcher.endSearch(searchType);
 		}
@@ -145,6 +147,8 @@ public class CrawlerThread extends MysterThread {
 	public void end() {
 		flagToEnd();
 		
+		searcher.end();
+		
 		try {
 			join();
 		} catch (InterruptedException ex) {}
@@ -153,6 +157,7 @@ public class CrawlerThread extends MysterThread {
 	public void flagToEnd() {
 		endFlag=true;
 
+		searcher.flagToEnd();
 		
 		try {
 			socket.close();

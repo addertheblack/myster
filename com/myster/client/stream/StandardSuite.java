@@ -194,12 +194,14 @@ public class StandardSuite {
 				
 				if (endFlag) return;
 				
+				FileHash hash = MultiSourceUtilities.getHashFromStats(mml);
+				
 				File theFile = MultiSourceUtilities.getFileToDownloadTo(stub, progress);
 				
 				synchronized (StandardSuite.DownloadThread.this) {
 					if (endFlag) return;
 				
-					msDowload = new MultiSourceDownload(stub, MultiSourceUtilities.getHashFromStats(mml), MultiSourceUtilities.getLengthFromStats(mml), new MSDownloadHandler(progress, theFile), new RandomAccessFile(theFile, "rw"));
+					msDowload = new MultiSourceDownload(stub, hash, MultiSourceUtilities.getLengthFromStats(mml), new MSDownloadHandler(progress, theFile), new RandomAccessFile(theFile, "rw"));
 				}
 				
 				msDowload.run();

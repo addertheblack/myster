@@ -35,6 +35,7 @@ public class SearchByHash implements MysterSearchClientSection {
 	}
 	
 	public void endSearch(MysterType type) {}
+	public void searchedAll(MysterType type) {}
 	
 	public void done() {}
 	
