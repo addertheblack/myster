@@ -2,7 +2,12 @@ package com.myster.hash;
 
 import java.io.File;
 import java.io.IOException;
+import java.io.EOFException;
 import java.io.Serializable;
+import java.io.InputStream;
+import java.io.OutputStream;
+import java.io.DataInputStream;
+import java.io.DataOutputStream;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.ObjectInputStream;
@@ -93,15 +98,49 @@ public abstract class HashCache {
 class DefaultHashCache extends HashCache {
 	private Hashtable hashtable = new Hashtable();
 	
-	private static final String FILE_NAME = "hashCache";
+	private static final String PATH	= "HashCache";
+	private static final String BACKUP	= "HashCache.backup";
+	private static final String VERSION	= "1";
+	
 	
 	public DefaultHashCache() {
+		try {
+			loadFromFile(PATH);
+		} catch (Exception ex) {
+			try {
+				ex.printStackTrace();
+				System.out.println("HashCache, attempting to load from backup.");
+				loadFromFile(BACKUP);
+			} catch (Exception exc) {
+				exc.printStackTrace();
+			}
+		}
+	}
+	
+	private synchronized void loadFromFile(String fileName) throws Exception {
+		InputStream in 		= new FileInputStream(new File(fileName));
+		DataInputStream din = new DataInputStream(in);
+		try {
+		int version = Integer.parseInt(din.readUTF());
+		
+		switch (version) {
+			case 1:
+				initVersion1(in);
+				break;
+			default:
+				System.out.println("File format is not known.");
+				break;
+		}
+		} finally {
+			try {din.close();} catch (Exception ex){}
+		}
+	}
+	
+	private synchronized void initVersion1(InputStream simpleIn) {
 		ObjectInputStream in = null;
 		
 		try {
-			File file = new File("HashCache");
-			
-			in = new ObjectInputStream(new FileInputStream(file));
+			in = new ObjectInputStream(simpleIn);
 			
 			for (;;) {
 				CachedFileHashEntry entry = (CachedFileHashEntry)(in.readObject());
@@ -110,6 +149,8 @@ class DefaultHashCache extends HashCache {
 					hashtable.put(entry.getFile(), entry);
 				}
 			}
+		} catch (EOFException ex) {
+			//nothing		
 		} catch (IOException ex) {
 			ex.printStackTrace();
 		} catch (Exception ex) {
@@ -169,9 +210,17 @@ class DefaultHashCache extends HashCache {
 		ObjectOutputStream out = null;
 		
 		try {
-			File file = new File("HashCache");
+			File finalfile	=new File(PATH);
+			File backupfile	=new File(BACKUP);
+			if(backupfile.exists()) backupfile.delete();	//on the mac the next line tosses an excption if file already exists.
 			
-			out = new ObjectOutputStream(new FileOutputStream(file));
+			OutputStream basic_out = new FileOutputStream(backupfile);
+			
+			DataOutputStream dout = new DataOutputStream(basic_out); //this line actually ADDS BYTES TO THE STREAM!!!
+			
+			dout.writeUTF(VERSION);
+			
+			out=new ObjectOutputStream(dout);
 			
 			Enumeration enum = hashtable.elements();
 			
@@ -180,6 +229,12 @@ class DefaultHashCache extends HashCache {
 				
 				entry.save(out);
 			}
+			
+			out.flush();
+			out.close();
+			
+			if (!finalfile.delete()&&finalfile.exists()) throw new Exception("Delete not sucessfull! is file in use??");
+			if (!backupfile.renameTo(finalfile)) throw new Exception("Rename not sucessfull! is file in use??");
 		} catch (IOException ex) {
 			ex.printStackTrace();
 		} catch (Exception ex) {
@@ -187,6 +242,7 @@ class DefaultHashCache extends HashCache {
 		} finally {
 			try {out.close();} catch (Exception ex) {}
 		}
+
 	}
 }
 

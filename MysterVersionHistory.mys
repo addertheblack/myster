@@ -847,3 +847,5 @@ Work on DEV 8:
 	  	-> Added an uptime column in the tracker and to the protocol and to about 100 other places needed to add that
 	  			column to the tracker and implemented it and a routine to format the number blah blah blah.
 	  	-> Fixed a typo in the word cancel of the "ask" dialog word.
+	  	-> Added the ability to associate a URL with a banner image.
+	  	-> Did the client side code to make this work. Clickable banners now work on PC and MacOS X.
