@@ -20,8 +20,6 @@ import java.awt.Rectangle;
 import java.awt.TextField;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-import java.awt.event.WindowAdapter;
-import java.awt.event.WindowEvent;
 import java.net.UnknownHostException;
 
 import com.general.mclist.GenericMCListItem;
@@ -94,6 +92,7 @@ public class ClientWindow extends MysterFrame implements Sayable {
         for (int i = 0; i < rectangles.length; i++) {
             ClientWindow window = new ClientWindow();
             window.setBounds(rectangles[i]);
+            window.show();
         }
     }
 
@@ -181,7 +180,6 @@ public class ClientWindow extends MysterFrame implements Sayable {
 
         setResizable(true);
         setSize(XDEFAULT, YDEFAULT);
-        setVisible(true);
 
         //filelisting.addActionListener(???);
         final ActionListener connectButtonEvent = new ActionListener(){
@@ -213,13 +211,17 @@ public class ClientWindow extends MysterFrame implements Sayable {
         });
 
         addWindowListener(new StandardWindowBehavior());
-        addWindowListener(new WindowAdapter(){
-            public void windowClosing(WindowEvent e) {
-                stopConnect();//will stop and clear all
-            }
-        });
     }
-
+    
+    public void show() {
+        super.show();
+    }
+        
+    public void dispose() {
+        super.dispose();
+        stopConnect();
+    }
+    
     private void addComponent(Component c, int row, int column, int width, int height, int weightx,
             int weighty) {
         gbconstrains.gridx = column;

@@ -47,6 +47,8 @@ public class JMCList extends JTable implements MCList {
         setModel(new MCListTableModel());
         scrollPane = new JScrollPane(this);
         scrollPane.setDoubleBuffered(true);
+        setShowHorizontalLines(false);
+        setShowVerticalLines(false);
 
         setSelectionModel(new MCListSelectionModel(getMCTableModel()));
 
@@ -89,14 +91,22 @@ public class JMCList extends JTable implements MCList {
                     return;
                 for (Iterator iterator = listeners.iterator(); iterator.hasNext();) {
                     MCListEventListener handler = (MCListEventListener) iterator.next();
-                    handler.unselectItem(new MCListEvent(JMCList.this));
-                    handler.selectItem(new MCListEvent(JMCList.this));
+                    if (e.getFirstIndex() >= length())
+                        return;
+                    if (getMCListItem(e.getFirstIndex()).isSelected()) {
+                        handler.selectItem(new MCListEvent(JMCList.this));
+                    } else {
+                        handler.unselectItem(new MCListEvent(JMCList.this));
+                    }
                 }
             }
 
         });
 
         setNumberOfColumns(numberOfColumns);
+
+        setSelectionMode(isSingleSelect() ? ListSelectionModel.SINGLE_SELECTION
+                : ListSelectionModel.MULTIPLE_INTERVAL_SELECTION);
     }
 
     private MCListTableModel getMCTableModel() {
@@ -647,9 +657,8 @@ class MCListSelectionModel implements ListSelectionModel {
      */
     public void setSelectionInterval(int index0, int index1) {
         clearSelection();
-        addSelectionInterval(index0, index1);
+        privateAddSelectionInterval(index0, index1);
         setAnchorSelectionIndex(index0);
-        fireValueChanged();
     }
 
     /*
@@ -658,10 +667,20 @@ class MCListSelectionModel implements ListSelectionModel {
      * @see javax.swing.ListSelectionModel#addSelectionInterval(int, int)
      */
     public void addSelectionInterval(int index0, int index1) {
+        if (selectionMode == ListSelectionModel.SINGLE_SELECTION) {
+            setSelectionInterval(index1, index1);
+        } else if (selectionMode == ListSelectionModel.SINGLE_INTERVAL_SELECTION) {
+            setSelectionInterval(index0, index1);
+        } else {
+            privateAddSelectionInterval(index0, index1);
+        }
+    }
+
+    private void privateAddSelectionInterval(int index0, int index1) {
         for (int i = index0; i <= index1; i++) {
             tableModel.getRow(i).setSelected(true);
         }
-        fireValueChanged();
+        fireValueChanged(index0, index1);
     }
 
     /*
@@ -673,7 +692,15 @@ class MCListSelectionModel implements ListSelectionModel {
         for (int i = index0; i <= index1; i++) {
             tableModel.getRow(i).setSelected(false);
         }
-        fireValueChanged();
+        fireValueChanged(index0, index1);
+    }
+
+    /**
+     * @param index0
+     * @param index1
+     */
+    private void fireValueChanged(int index0, int index1) {
+        fireValueChanged(index0, index1, valueIsAdjusting);
     }
 
     /*
@@ -772,11 +799,10 @@ class MCListSelectionModel implements ListSelectionModel {
     /*
      * (non-Javadoc)
      * 
-     * @see javax.swing.ListSelectionModel#insertIndexInterval(int, int,
-     *      boolean)
+     * @see javax.swing.ListSelectionModel#insertIndexInterval(int, int, boolean)
      */
     public void insertIndexInterval(int index, int length, boolean before) {
-        fireValueChanged();
+        //fireValueChanged();
     }
 
     /*
@@ -785,7 +811,7 @@ class MCListSelectionModel implements ListSelectionModel {
      * @see javax.swing.ListSelectionModel#removeIndexInterval(int, int)
      */
     public void removeIndexInterval(int index0, int index1) {
-        fireValueChanged();
+        //fireValueChanged();
     }
 
     /*

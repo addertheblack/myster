@@ -1,7 +1,6 @@
 /*
  * 
- * Title: Myster Open Source Author: Andrew Trumper Description: Generic Myster
- * Code
+ * Title: Myster Open Source Author: Andrew Trumper Description: Generic Myster Code
  * 
  * This code is under GPL
  * 
@@ -66,6 +65,8 @@ public class SearchWindow extends MysterFrame implements SearchResultListener, S
 
     private static final String PREF_LOCATION_KEY = "Search Window";
 
+    private static WindowLocationKeeper keeper;
+
     private static int counter = 0;
 
     public SearchWindow() {
@@ -101,10 +102,6 @@ public class SearchWindow extends MysterFrame implements SearchResultListener, S
         textEntry = new TextField("", 40);
         textEntry.setEditable(true);
 
-        //connect.dispatchEvent(new KeyEvent(connect, KeyEvent.KEY_PRESSED,
-        // System.currentTimeMillis(), 0, KeyEvent.VK_ENTER,
-        // (char)KeyEvent.VK_ENTER));
-
         choice = new TypeChoice();
 
         fileList = MCListFactory.buildMCList(1, true, this);
@@ -112,30 +109,24 @@ public class SearchWindow extends MysterFrame implements SearchResultListener, S
 
         msg = new MessageField("Idle...");
         msg.setEditable(false);
-        //msg.setSize(100, 20);
 
-        //reshape(0, 0, XDEFAULT, YDEFAULT);
-
-        addComponent(textEntry, 0, 1, 1, 1, 0, 0, GridBagConstraints.HORIZONTAL);
-        addComponent(searchButton, 0, 3, 1, 1, 0, 0, GridBagConstraints.HORIZONTAL);
-        addComponent(choice, 0, 2, 1, 1, 0, 0, GridBagConstraints.HORIZONTAL);
-        addComponent(fileList.getPane(), 1, 0, 5, 1, 1, 1, GridBagConstraints.BOTH);
-        addComponent(msg, 2, 0, 5, 1, 1, 0, GridBagConstraints.HORIZONTAL);
+        addComponent(textEntry, 0, 0, 1, 1, 0, 0, GridBagConstraints.HORIZONTAL);
+        addComponent(choice, 0, 1, 1, 1, 0, 0, GridBagConstraints.HORIZONTAL);
+        addComponent(searchButton, 0, 2, 1, 1, 0, 0, GridBagConstraints.HORIZONTAL);
+        addComponent(fileList.getPane(), 1, 0, 4, 1, 1, 1, GridBagConstraints.BOTH);
+        addComponent(msg, 2, 0, 4, 1, 1, 0, GridBagConstraints.HORIZONTAL);
 
         setResizable(true);
         setSize(XDEFAULT, YDEFAULT);
 
-        //setIconImage(Util.loadImage("img.jpg", this));
-
         SearchButtonEvent searchButtonHandler = new SearchButtonEvent(this, searchButton);
         searchButton.addActionListener(searchButtonHandler);
-        
+
         textEntry.addActionListener(new ActionListener() {
             public void actionPerformed(ActionEvent e) {
                 startSearch();
             }
-        }); //not only for buttons
-        // anymore.
+        });
 
         fileList.addMCListEventListener(new MCListEventAdapter() {
             public synchronized void doubleClick(MCListEvent a) {
@@ -145,7 +136,7 @@ public class SearchWindow extends MysterFrame implements SearchResultListener, S
         });
 
         addWindowListener(new StandardWindowBehavior());
-        addWindowListener(new WindowAdapter(){
+        addWindowListener(new WindowAdapter() {
             public void windowClosing(WindowEvent e) {
                 stopSearch();
             }
@@ -158,14 +149,15 @@ public class SearchWindow extends MysterFrame implements SearchResultListener, S
 
         textEntry.setSelectionStart(0);
         textEntry.setSelectionEnd(textEntry.getText().length());
-        pack();
 
+        pack();
     }
 
-    private static WindowLocationKeeper keeper;//cheat to save scrolling. put at top
-
-    // later.
-
+    public void show() {
+        super.show();
+        pack();
+    }
+    
     public static void initWindowLocations() {
         Rectangle[] rectangles = WindowLocationKeeper.getLastLocs(PREF_LOCATION_KEY);
 
@@ -194,7 +186,7 @@ public class SearchWindow extends MysterFrame implements SearchResultListener, S
 
         gbconstrains.weightx = weightx;
         gbconstrains.weighty = weighty;
-        
+
         gbconstrains.fill = fill;
 
         gblayout.setConstraints(component, gbconstrains);
@@ -224,12 +216,12 @@ public class SearchWindow extends MysterFrame implements SearchResultListener, S
         searchEngine.run();
         setTitle("Search for \"" + getSearchString() + "\"");
     }
-    
+
     void stopSearch() {
         if (searchEngine == null) {
             return;
         }
-        
+
         searchEngine.flagToEnd();
         searchEngine = null;
     }
