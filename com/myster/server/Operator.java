@@ -1,0 +1,127 @@
+/* 
+
+	Title:			Myster Open Source
+	Author:			Andrew Trumper
+	Description:	Generic Myster Code
+	
+	This code is under GPL
+
+Copyright Andrew Trumper 2000-2001
+*/
+
+package com.myster.server;
+
+import java.net.*;
+import java.io.*;
+import java.net.Socket;
+import com.general.util.*;
+import com.myster.util.MysterThread;
+import com.myster.tracker.IPListManager;
+import com.myster.tracker.IPListManagerSingleton;
+import com.myster.server.event.*;
+import Myster;
+import java.util.Hashtable;
+
+/**
+*	This class is reponsible for "picking up the phone" or making a TCP connection with clients.
+*	After the connection hasw been made it's up to the connection manager to figure out what kind o
+*	of service to employ and to manage the different connection sections.
+*
+*
+*/
+
+public class Operator extends MysterThread{
+	private OMysterThread refresher;
+	private ServerSocket serverSocket;
+	private ServerEventManager eventSender=new ServerEventManager();
+	private ConnectionManager[] connectionManagers;
+	private DoubleBlockingQueue socketQueue; //Communcation CHANNEL.
+	private DownloadQueue downloadQueue;
+	private Hashtable connectionSections=new Hashtable();
+	
+	protected Operator(DownloadQueue d, int threads) {
+		downloadQueue=d;
+		
+		socketQueue=new DoubleBlockingQueue(0); //comunications channel between operator and section threads.
+		
+		connectionManagers=new ConnectionManager[threads];
+		for (int i=0; i<connectionManagers.length; i++) {
+			connectionManagers[i]=new ConnectionManager(socketQueue, eventSender, downloadQueue, connectionSections);
+		}
+	}
+
+	public void run() {
+		setPriority(MAX_PRIORITY);	//to minimize the time it takes to make a connection.
+		
+		refreshServerSocket(); //creates the sever socket.
+		
+		for (int i=0; i<connectionManagers.length; i++) {
+			connectionManagers[i].start();
+		}
+				
+		refresher=new OMysterThread();
+		refresher.start();
+		
+		Socket socket=null;
+		do {
+			try {
+				socket=serverSocket.accept();
+				socket.setSoTimeout(120000);
+				socketQueue.add(socket);
+				
+				refresher.reset();
+			} catch (IOException ex) {
+				try { socket.close(); } catch (IOException exp) {}
+				synchronized (this) { //synchronized in case the socket is being re-set.
+					try {
+						sleep(100);	//sometimes the OS will crash in such a way that it supplies an
+									//infinite number of brokens sockets.
+									//This is here so that the system remains responsive during that time.
+					} catch (InterruptedException exp) {}
+				} //this is here 
+			}		
+		} while(true);
+	}
+	
+	public ServerEventManager getDispatcher() {
+		return eventSender;
+	}
+	
+	public void addConnectionSection(ConnectionSection section) {
+		connectionSections.put(new Integer(section.getSectionNumber()), section);
+	}
+	
+	//Creates or recreates a new server socket.
+	private synchronized void refreshServerSocket() {
+		for (;;) {
+			try {
+				if (serverSocket!=null) try {serverSocket.close();} catch (IOException ex) {}
+				
+				serverSocket=new ServerSocket(Myster.PORT, 2);
+				break;
+			} catch (IOException ex) {
+				try {sleep(10*1000);} catch (InterruptedException exp) {} //wait 10 seconds then try to make the socket again.
+			}
+		}
+	}
+	
+	private class OMysterThread extends MysterThread { //fix
+		public synchronized void run() {
+			for (;;) {
+				try {
+					wait(10*60*1000);
+					//.. do the code below.
+				} catch (InterruptedException ex) {
+					continue;
+				}
+				
+				System.out.println("RESETING THE CONNECTION");
+				refreshServerSocket();
+			}
+		}
+		
+		public synchronized void reset() {
+			interrupt();
+		}
+	}
+}

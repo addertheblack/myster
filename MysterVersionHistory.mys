@@ -1,0 +1,740 @@
+//!Internal! version history from Dev6 onward
+//© Andrew Trumper 2001
+
+//NOTE TO READERS:
+//THIS DOCUMENT IS MENT FOR INTERNAL USE ONLY
+
+Work on DEV 6:
+
+	2001/04/14
+	-> Fixed singleton synchronization issue with MysterIPPool object.
+	-> Reduced the timeout of the ClientHandshake object to 90 seconds from 120
+
+	2001/04/15
+	-> Fixed a bounds.top bug in the PreferencesDialogBox Window. The bug caused the dialog box text
+			to be squished.
+	
+	2001/04/17
+	-> Made assertFileList routine synchronized.
+	-> Added a check to handshake thread to deal with the possibility that the numberoffiles MML is null.
+			This stops a nasty cascade error..
+	
+	2001/04/21 
+	-> Added the "array of last resort" to the SearchButtonEvent object. This array stores
+			severs addresses to try if the client currently does not know any active servers.
+			Yeah, it's hard coded, deal with it.
+			
+			IPs in the last resort array:
+String[] lastresort={"bigmacs.homeip.net","mysternetworks.homeip.net", "mysternetworks.dyndns.org", "myblueg3.homeip.net", "emaline.homeip.net"}; 
+
+	-> Fixed Server stats window tilt bar + size problem with getInsets()
+	
+	-> added ability to resume file transfers on the server side and in the protocol. 
+	  		Client side still to do!!!
+	  		NOTE TO SELF: Update Myster protocol docs!
+	  		
+
+<Andrew enters the twilight Zone of exams>!
+
+Work on DEV7:
+
+	2001/05/05
+	-> Fixed an EOFException problem inside the handshake object.
+	-> Added the path to the FileListManagerWindow on suggestion from a user.
+	-> Started work on a seperate multicolumn list object.
+	
+	2001/05/06
+	-> working on Multi column list.
+	
+	2001/05/07
+	-> working on Multi column list.
+	
+	2001/05/08
+	-> still working on Multi column list.
+	
+	2001/05/09
+	-> BWAAARRRGGHHHH!!! on MCL...
+	
+	2001/05/12
+	-> designing an architecture that would allow me to combine the MP3 header lister program with the 
+			MCList object to have Myster list file stats. Considering an unbatched system.
+			
+	2001/05/13
+	-> Probably will use a batched system.
+	
+	2001/05/15
+	-> Myster now returns a 0 byte if it does not understand a protocol.
+	-> Ping connection section has been done properly. (ie: simply returns a 1 as a byte)
+			Breaks compatibility with old version! (oh for shame!)
+	-> Updated Myster Protocol docs to include new resume tranfer long.
+	
+	2001/05/16
+	-> Fixed FileManager Caching bug.
+	-> Fixed stupid problem with saving file type locations. I dread to think how long that has been going on.
+	-> Added MCList to the program. Not all functionality is present yet.
+	
+	2001/05/17
+	-> Multicolumn list support is complete but slow and slightly buggy.
+	
+	2001/05/18
+	-> Started tinkering with the list to improve performance an integration.
+	
+	2001/05/20
+	-> Made the list load item information in the background as a seperate thread. Looks sweet.
+	
+	2001/05/23
+	-> Fixed a few retarted problems with the threads continuing after the search has been canceled.
+			NOTE: This routine apears to occasionaly causes VM freezes on Macs.. Looking into it. Probably a stupid mac trick.
+	-> Fixed a bug with a removeCrap() routine in the IPList class. This routine is supposed to traverse the Myster data
+			structures looking for errors and the fix them. It was going through the data structures and
+			crashing the program instead.
+	-> Fixed another bug I introduced early in the Dev 8 cycle to do with file path information not updating
+			properly. Ugh. I am realy starting to regret the design dessisions I made with regard to the prefs.
+	-> Detected a bug in the way Myster handles lists, but have been unable to reproduce it or
+			fix it. The problem is that Myster stops accepting new IPs in its list. This is apart from the bugs
+			that happen if the user tinkers with the Myster prefs file.
+	-> Overal this cycle has been very frustrating since for every bug I seem to fix, I introduce another.
+			This is a testiment to the difficulty of implementing the Myster properly not to mention
+			the difficulties involved in TESTING!!!! 
+	-> Played around with the System.out.println()s.. Removed a whole bunch that didn't tell me anything usefull.
+	-> Myster has grown to 8000 lines!
+	-> Fixed a scary "memory leak" message.
+	-> Experiencing ISP problems. It appears I am unable to send at my full 15k/s. Managing only 500bytes/s!
+	
+	2001/05/24
+	-> Fixed some serious lingering bugs.
+	-> Changed the backend so the MysterIPPool object actually works properly. 
+	-> Bad news.. I found the MysterIPPool object was so screwed up my little homne spun garbage collector was doing
+			two things. jack and shit, so I removed it. Now the list will continue to grow forever.
+			
+	2001/05/25
+	-> Added a few more ips to the array of last resort.
+	-> Added a limiter to the MysterIPPool. (only up until 1200 ips). Makes mouth happy. probably doesn't work.
+	
+Work on DEV 8:
+	
+	2001/06/04
+	-> Looking at code trying to figure out how to build Napster support into Myster.	
+	
+	2001/06/05
+	-> implemented Napster code.
+	
+	2001/06/06
+	-> Tried to figure out what was not working.
+	
+	2001/06/07
+	-> Fixed code to be thread safe.
+	
+	2001/06/09
+	-> Implemented a tracker viewer.
+	
+	2001/06/10
+	-> fixed a few embarassing bugs in the MysterIP object to do with updating them.
+	
+	2001/06/11
+	-> Fixed a small problem with the MPG3 header object: It now recognizes more badly formated files.
+	-> Adjusted the "MINIUPDATETIME" so MysterIP's status is not updated quite as often.
+	-> Myster is now 11 000 line of code. <Andrew does a little dance>
+	
+	<Large void in space time while working on Concordia's University's java Applets>
+	
+	2001/07/07
+	-> Fixed up a few last things in the tracker window.
+	-> tweaking..
+	-> yet more tweaking...
+	-> Set only the search window to apear by default.
+	-> Considering having windows save their location and size so they'll apear in the same place next reload.
+	
+	[Large void in space time]
+	- major code re-org. Put stuff into packages like it should be.
+	- working on a chat program.
+	- Fixed bug encountered when 100+1 ips are in the iplist.
+	- Found crashing - the - VM bug. Can't fix it, don't know the exact cause.. I suspect Myster is 
+	 		causing a thread bomb.
+	[End large void]
+	
+	2001/07/22
+	-> working on a chat program for Myster (Still)
+	-> finaly fixed the bug the the preferences window where the explaination gets squashed on the Windows platform.
+	
+	2001/07/22 - 2001/08/03
+	-> Working on Myster Chat. So far Myster chat is at about 2000 lines and counting. It's 
+		funny that Myster DEV 1 was about this size when I first started testing it. Myster DEV 9
+		is around 12 000 lines if you're wondering.
+		
+	2001/08/04 - 2001/07/05 (12 hour days)
+	-> Added the Semaphore class from the Myster Chat sub-project to Myster.
+	-> Made check status in MysterIP.java a static function.
+	-> Guarded this function with a semaphore at 15. So now no more than 
+		15 threads can ping computers at any one time. This is good because
+		without this cap, Myster occasionally has hundreds of threads pinging 
+		at the same time. If you happened to be playing unreal when this happened,
+		you would most likely end up dead (as I have).
+	-> improved memory management by making sure servers only had at most one
+		"ping" thread active at one time. Before this point MysterIP objects  
+		would often have dozens of outstanding threads. If you do the math ->
+		200 MysterIP object * 12 = 2400 threads. It's no wonder that DEV9 was
+		crashing the VM!
+	-> Fixed the ranking function so that it no longer gives -inf rankings to
+		nodes that haven't set their preferences properly.
+	-> Set the re-ping time at 5 minutes (in DEV 8 it's infinity, in Dev 9.0 
+		it's 30 seconds, so this is an improvement!).
+	-> Working 2 days at 12 hours.. I wonder what the outside looks like? :-)
+	
+	2001/08/06
+	-> Added a semaphore to refreshAll() inside MysterIP(). Since synchronized
+		works on the whole object, and refreshAll() needed to be synchronized, 
+		this ment that any other synchronized functions would be blocked if the
+		slow refreshAll() function was excecuting. refreshAll() is now
+		mutually exclusive using semaphores. (secondsem)
+		
+	2001/08/14
+	-> Started work on a setup "helper" to make setting up Myster less painfull..
+	
+	2001/08/17
+	-> Continued work on Myster setup program.
+	
+	2001/08/18 - 2001/08/23
+	-> Worked on trying to figure out CVS
+	-> Worked on getting the Startup Wizard finished.
+	-> Currently hoping for a sept 1 launch of The Next public Myster client.
+	
+	2001/08/23
+	-> Finishing up Setup assistant
+	-> Working on memory management
+	-> set IPlist max length to 50 instead of 100. (!)
+	-> made the headers in the MCList look more like buttons.
+	-> Speeding up opperation in the MysterIPPool object.
+	-> I remvoed quite a bit of synchronization from the IPPool object so I wouldn't be too
+		suprised if bugs cropped up later. I know for a fact that there are a few.. but they are 
+		really unlikely and the concequencience aren't too bad.
+	-> Fixed a few issues with the MultiColumn list. Added a 3-d effect to the header and
+		fixed up the Default MCList theme with a better background color. It looks nicer now.
+		
+	2001/08/24-25
+	-> worked on CVS again.
+	
+	2001/08/26
+	-> minor fixes
+	-> Completely hooked up the setup wizard. It now works! yeah!
+	-> Note: Chat server is still not implemented, so don't try to chat to yourself; it won't work.
+	
+	2001/08/27
+	-> minor fixes
+	
+	2001/08/28
+	-> Changed the MultiColumn List Double click time to 500ms from 250ms. Should stop the bitching that
+		the MultiColumnList's double click doesn't work sometimes.
+		
+	2001/08/29
+	-> Fixed a massive error inside the Tracker's automatic crawler. The bug made the tracker totaly
+		useless in all previous versions. I'm terrified to think how long this has been not working
+		NOTE TO ALL : ALL PREVIOUS VERSIONS HAVE A TOTALY BROKEN TRACKERS!
+		NOTE TO SELF: Encapsulate the fucking protocol, dumbass!
+		(wow, that was old code. The protocol it implemented was DEV 7's version!)
+	-> Removed some a few stupid debugging messages.
+	-> Added a few more stupid debugging messages.
+	-> Fixed a socket not being closed.
+	
+	2001/08/1
+	-> Fixed a problem to do with "Other Downloads" folder. The setup wizard wasen't writting a correct path 
+		to the FileManager
+	-> Fixed a few typos.
+	-> Got rid of the "Chat Server Setup" panels since there isn't a chat server yet.
+	
+ Work on DEV 9.5:
+	
+	2001/08/05
+	-> Playing with myster to try and speed things up a bit.
+	
+	2001/08/09
+	-> made the MCList allow for listing by greatest to smallest as well as the oposite.
+	-> made the return key start a new search in the search window.
+	
+	2001/08/10
+	-> changed some of the names to be more mac friendly.
+	
+	2001/08/11
+	-> Planes run into world trade center.
+	
+	2001/08/13
+	-> nothing.
+	
+	2001/08/14
+	-> Added auto scroll to the MCList
+	
+	2001/08/15
+	-> Redid the file manager's default paths.
+	-> Made the disable sharing checkmark actually stop the file sharing.
+	
+	2001/08/16
+	-> Worked on updating the wizard and file manager to work with a new folder system.
+	-> updated the wizard back end hooks to work with the new filemanager interface.
+	
+	2001/08/17
+	-> worked on a new interface (GUI) for the new filemanager and folder system.
+	
+	2001/08/18
+	-> job hunting
+	
+	2001/08/19
+	-> finished up the new file manager interface
+	-> job hunting.
+	
+	2001/08/20
+	-> nothing.
+	
+	2001/08/21
+	-> Made a few of the source files follow DOS formating conventions.. it means CVS is less confused...
+	
+	<void in space time>
+	
+	2001/08/29
+	-> ? forget
+	
+	2001/08/30
+	-> ? forget
+	
+	2001/09/01
+	-> Got the MCList setColumnWidth() function working. Updated a bunch of things to make use of that new method
+	-> Fixed a bug that was confusing MaxOS X.
+	
+	<...>
+	
+	-> worked on a "channels" implementation.
+	-> new server stats
+	-> new tabbing system
+	-> Implemented client side file transfer resume. (sort of)
+	-> Tweaks in misc bits.
+	-> made the return key initiate a connection in the peer-to-peer window
+	
+	2001/10/23
+	-> made it so Myster will never forget its preferences again.
+	-> improved performance in the mac version tremendously.
+	
+	2001/10/24
+	-> fixed a small bug in the preferences to do with auto saving. (MML.copy());
+	
+	2001/10/25
+	-> Seperated the search engine from the rest of the program so it can be made pluggin complient.
+	-> Improved the Search GUI behavior.
+			- Search / Stop
+			- "Stopping threads" message and animations.
+			- other things to make that work properly.
+			
+	<worked / argued about event manager>
+		The event manager is a particularly annoying piece of software to write since during its implementation
+		one realises that it is a slew of specific classes with the only difference between them being that
+		the interfaces are different. Since this seemed a rather tedious thing to do, if you consider that computers
+		are usualy quite good at tedious things, I wanted to make sure that the way I was doing the event manager was 
+		correct. I sent out several e-mails to other decent programmers and began to to look through data patterns
+		books for a solution. When the results came back in I was very depressed. None of the books I was reading
+		had any thing new (although I did find out that a few of the things I was doing in Myster had names, which
+		is good and I read up on the Java beans event system.). The e-mails to other programmers turned up
+		imaginative solutions, but nothing new.
+		
+		The tradeoffs were grim. Either I could have a system that I wanted and I had to type out a slew of special cases,
+		or I could devise a standard system and loose the Java type checking... and if you're going to create a 
+		strongly typed language you migth as well make use of it.
+		
+		The final system in Myster is the tedious system. Basically, I wrote my own set of dispatchers. Each connection
+		section (ie: protocol segment) has its OWN independent dispatcher. The idea is that each connection section 
+		both now and in the future, would want to send out different events and possibly sent them out in different 
+		ways. Also, each connection section currently running is at a different point in excecution. SO what we
+		want is to have a seperate event disptacher-event-listener combo for each connection section.
+		
+		In order to avoid having many connections between the back end-server side connection sections and 
+		objects wishing to listener for events, the system must somehow furnish only te dispatcher
+		required when it's required. The only way I can think of to do this is have a special "connection event"
+		that contains within it the dispatcher for the perticular connection section that has just been
+		created. And so this is exactly what happends. A "ConnectionManagerEvent" contains a "getDispatcher()" method
+		that will return the right dispacther for that method. Dispatcher can be told apart by either 
+		doing type checking or looking up the ConnectionSectionInt, which is the connection number that 
+		connecton section is registered under.
+		
+	</>
+
+	2001/11/03
+	-> Compiled the new event manager into Myster.
+	-> Added these files to CVS
+	-> Compiled the SSGui files into Myster
+	-> Added these files to CVS
+	-> Debugged CVS
+		-- insert rant about the Unix mentality, CVS, bad UIs here..
+	-> Debugged the SSGui
+	-> tested to see if the new Event Manager worked. It did.
+	-> Preferences.save() is throwing a utfdataformatexception somehow!
+		???
+		
+	2001/11/04
+	-> Found a bug. out.writeUTF(String s); does not support UTFs string size is bigger 65k. I found no other
+		way around this. I set the String to do a getBytes() and write that to disk in one shot. 
+		This will probably fail at some point as well; I'm not sure how the encoding works, you see.
+		Compatibility with older version is maintained byt having a UTF string at the start. (See code)
+	-> Hooked up more of the enevent system. Geeze, this takes forever.
+	-> Trying to fix CVS version of Myster. It's broke!
+	
+	2001/11/05
+	-> Well, today has been a good example of why you should never make design desicions while watching the
+		Simpsons.
+	-> Watched Simpsons
+	-> Created an architecture that would allow the SSGui to access Server Events.
+	-> Hooked up # of searches and last X searches...
+	-> Told Myster to destroy all references to bluedevil.homeip.net.
+	
+	2001/11/06
+	-> hooked up downloads.
+	-> Re-ordered a slew of things in the stats window.
+	-> Connected up everything except # of bytes transfered and searches in the last hour
+	
+	2001/11/07
+	-> Connected up searches in the last hour
+	-> fixed a display bug in tab window.
+	
+	2001/11/08
+	-> hooked up the download events for the d/l panel.
+		This was unexpectadly difficult.
+	
+	2001/11/09
+	-> fixed a bug in the tracker window that would cause events to pause for 30 seconds - causing Myster to look
+		like it had crashed.
+		
+	2001/11/10
+	-> finished up some work. (no time to work on Myster)
+	
+	2001/11/11
+	-> added proper clietn side resume interface.
+	-> fixed a few bugs in the Download Stats panel.
+	-> re-worked load order. Added a hack that displayes the server stats window briefly off screen. getBounds() sucks.
+	
+	2001/11/12
+	-> gave the tracker thread a timeout value.
+	
+	2001/11/13
+	-> released DEV9.6
+	
+ Work on DEV 9.6:
+	
+	2001/11/14
+	-> fixed the tracker timeout value from 120ms to 120 000ms. oops.
+	
+	2001/11/15
+	-> Fixed DoS bug?
+	
+	2001/11/16
+	-> probably not.
+	
+	2001/11/17
+	-> Misc tweaks and bug fixes..
+	-> The number of active pings allowed hass been increased to 50. I'm hoping that this will speed up
+			the initialization of the tracker. The downside to this is it will crush unworthy computers
+			(increases CPU load and processor spikes.. USE JAVA 1.3 on WINDOWS!)
+	-> I have increased the number of active stats updates allowed. I can do this since I have fixed
+			up the ClientHandshake object to use semaphores instead of a yeild-wait loop and
+			sleep-wait loop that used to be there. As a result stats updates are no longer as
+			CPU-expensive so the limiting them is less important.
+	-> I have changed some of the printfs to give me a better clue as to what is happening in the
+			IPLists. I am a bit paranoid that they are not working correctly.
+	-> Changed the stats update time from 1 day to one hour. The day was walking around
+			masquerading as an hour. The comments are full of lies!
+	-> Changed the components in Client Window so they act more intellegently.
+	-> 50 is too much try 20
+	
+  Work on DEV 9.7:
+  
+  	2001/11/19
+  	-> Removed wizard.
+  	-> Tweaked progress window a bit.
+  	-> This is the version that will ship as PR 1
+  	
+  Work on DEV 9.7.1
+  
+  	2001/11/27
+  	-> Myster now works again on the 5200/75. This is good news since that computer is the slowest computer
+  			in exstance that will run Java. The only problem is Myster tends to take up 30 megs
+  			of ram on its own. I'm fairly sure that this is occuring because of my in-efficient
+  			MML implementation.
+  	-> DEV 9.7.1 is working quite well. With the prefs-corruption bug finaly nuked I can finaly max
+  			out my IPPool. I've realized that, while the system I currently have in place works ok,
+  			a far better system could be devised based on more advanced garbage collection ideas.
+  	-> NOTE: These two problems are not directly related. If I implement the new IPPool object it
+  			will undoutably use MORE memory then the current system but be far less stupid in the way
+  			it deletes IPs. If I implement the new preferens system I am hoping to save 5-10 megs of
+  			memory at least. My goal is to slim Myster's core memory usage down to at least 20 megs so
+  			I cna run in on the 5200/75.
+  	-> Project MLA
+  			MysterNetworks has started production of an applet version of Myster dubbed Myster Lite.
+  			Thi version is ment to be used on intranets an embeed in web pages. Also on the table is
+  			a new proxy system that will allow node-grouping (a way of mergine many nodes into one 
+  			logical node to cut down on traffic (a sort of pseudo hierarchical system)) as well as
+  			things like serving behind a fire wall, serving behind a proxy etc... I've very happy
+  			with the design.
+  	
+  	2001/12/3-4
+  	-> Re-wrote MysterIP object to spawn less threads.
+  	-> Worked on MLA interface
+  	
+  	2001/12/5
+  	-> Re-wrote MysterIPPool garbage collector.
+  			It's now awsome. I love me. :-)
+  			
+  	2001/12/9
+  	-> Fixed bug with tracker not loading on startup.
+  	
+  Work on DEV 9.8
+  
+  	2001/12/10
+  	-> Made some changes in the client connection sections.
+  	
+  	2001/12/10 - 2001/12/?? working on MLA.
+  	
+  	???
+  	-> Made the Multicolumn list resizable
+  	
+  	???
+  	-> continuing to optimise new 9.8 core
+  	-> fixed a silly bug to do with domain names and ips being treated as two different hosts.
+  	-> made optimisations to the crawler thread.
+  	
+  	2002/01/09
+  	-> I'm not sure but I think the memory leak I am experiencing on the mac has to do with
+  			a garbage collection bug in the 1.1 VM. I'm adding back a stray System.gc() call in
+  			the server end of the Server Stats section. This should be called just often
+  			enough to stop mem leaks.
+  			
+  	2002/01/09
+  	-> Allowed batch adding to MCList. MCList should now flicker less.
+  	-> Changed bits of the program to use batch adding on the MCList.
+  	
+  	2002/01/10
+  	-> Made the MCList use a kind of adaptive quicksort.
+  	
+  	2001/01/11
+  	-> Optimised the hell out of the way the MCList uses the sorting algorythms	
+  	
+  	2002/01/14
+  	-> made an event library, so now I can rapidly create event based systems. Hurray!
+  	
+  	2002/01/15
+  	-> Fixed a long standing thread leak that would slowly thread bomb yo computa...
+  	
+  	2002/01/16 -> 2002/02/6
+  	-> Added ID3v1 tag support.
+  	-> Worked on new MML library!
+  	-> Added "server names" so you can give a name to your server...
+  	-> Fixed problems caused by old MML library
+  	-> Fixed problems caused by old MML library
+  	-> Fixed problems caused by old MML library
+  	-> Fixed problems caused by old MML library
+  	-> released a PR2 before it was ready
+  	-> Fixed problems caused by old MML library
+  	-> Fixed problems caused by old MML library
+  	-> Worked for 3 days on new MML library so I don't have to deal with the confusing old one.
+  	
+  Work on DEV 9.9
+  	
+  	2002/02/08
+  	-> worked on windows installer
+  	
+  	2002/02/09
+  	-> working on file descriptor leak. Tracked it down to a lack MP3Header reader.. The in.close() was not als
+  			always being called.
+  	-> Added the ability to detect if there was another version of Myster Open.
+  	
+  	2002/02/10
+	-> Added the ability to recover from interrupted/reconnected i-net connection (it takes 10 minutes to notice)
+	
+	2002/02/13
+	-> Made it so .i is added when a file is first downloaded.
+	
+	2002/02/15
+	-> worked on MML II system.
+	
+	2002/02/19
+	-> finished MML II system.
+	
+	2002/02/20
+	-> Made progresswindow show a little pie chart on currentprogress for an icon.
+	
+	2002/02/20-26
+	-> Worked on cleaning up Myster Chat code.
+	
+	2002/02/25-28
+	-> Bug fixes and misc cleanups inside Myster
+	-> Fixed a deadlock on the tracker (looked like a meme leak on the mac)
+	-> made the pie chart nicer.
+	-> fixed an odd behavior in the downloader thread
+	
+  Work on DEV 10
+    2002/02/01-07
+    -> Synchronized Socket closes
+    -> Added a max number of active server sections per whatever
+    -> Added a dead IP cache queue so down IPs won't continuously be qweried
+    -> Reduced the number of lookup threads to 15
+    -> Nuked the none UDP pinger.
+    -> Made the DNS lookup system dis-ablable by a boolen constant in the source
+  
+  Work on DEV 11
+  	200/02/09
+  	-> Changed server architecture to be way faster and less likely to crash. (worked around MacOS X PRTS leak)
+  	-> fixed bugs in addIP function
+  	-> Rebuit preferences manager to use MML II
+  	-> removed all references to MML I
+  	-> (MML II takes half the memory for the same structure)
+  	-> Changed the preferences file format to use object serialization & MML II objects.
+  	-> Changed the prefs to a hash
+  	-> Created an new download queue structure
+  	-> added the ability to queue downloads on the server
+  	-> changed the server stats window to report when someone was in a queue.
+  	-> Rebuilt the Preferences GUI.
+  	-> Added a few Thread.sleep() to try and solve MacOS classic pausing - probably doesn't work completely
+  	-> un synchronized socket closes (didn't do anything)
+  	-> changed the file manager GUI to match the new Preferences GUI.
+  	-> New search engine matches with "and" (aka &&) and only begining on words. Also recognizes quotes:
+  		eg:
+  			bob zerg foo "faz bar"
+  			
+  		will match:
+  			"bobbet, food zerg faz barbie.mp3"
+  	-> Made the File Manager file indexing filter out .i files.
+  
+  
+  Work on DEV 12
+  	2002/05/18
+  	-> Progress window can now show your position in the download queue.
+  	-> Preferences buttons have been tweaked.
+  	-> Myster now has a plugin loader
+  	-> Preferences now accept pluggins
+  	-> connection sections can be added to the server via a plugin.
+  		(Wrote a HTTP demo plugin)
+  	-> plugins  in a plugins folder at the same level as Myster .jar
+  	-> Added a "loading.." progress bar to assure Mac classic users that Myster isn't frozen.
+  	-> Added a preference to increase the number of server threads (windows 9X users should NOT touch this setting!)
+  	
+  Work on DEV 13
+  	2002/06/01
+  	-> Re aranged the server package structure.
+  	-> Fixed bug where the search crawler was asking for a conneciton section that didn't exist (!!)
+  	-> re-enabled the non-udp pinger (people with NATs can now be clients again).
+  	
+  Work on DEV 13.1
+  	2002/06/05
+  	-> small bug in prefs fixed (what am I, on crack?) that caused Myster to forget all its prefs... 
+  			- I deleted the wrong file!! DOH!
+  	-> Fixed a big bug in the download queueing..
+  	
+  Work on DEV 13.2
+  	2002/06/05
+  	-> fixed a small bug in the work around that stopped the queue from occasionally jamming on some platforms.
+  	-> auto checking if another Myster client is open was off.. Turned it back on.
+  	-> Added a "kick free loaders" button that will tell the server to kick unreachable clients 
+  			(people behind firewalls and other people who aren't running servers). It also sends them a message
+  			explaining why they have been disconnected.
+  			NOTE: it will not auto-kick people not sharing files.
+  			or people who download a lot etc..
+  	-> Added the server name (ip) to the search results listing
+  	-> Added the ping to the tracker and ranking function
+  	-> Re aranged the preferences in the package hierarchy
+  	-> Fixed a bug to do with server stats and not having a file list in the serveer stats MML (doh)
+  	-> Moved FileManager file to their new home in the .com hierarchy
+  	-> Added a .extension filter so that Myster doesn't share in-appropriate types in any given
+  			catagory
+  	-> Added a button to set all types to one folder.
+  	-> Misc tweaks to allow Myster to work with slightly bigger networks
+  			- Find duplicates in addIP queue.
+  			- Ping every 10 vs 5 minutes
+  			- Crawl every 10 vs 5 minutes - !
+  			- Shortend MAX possible UDP ping time to 20 secs from 60.
+  	
+  Work on DEV 14
+	2002/06/25
+	-> Added a few more files types
+	-> Fixed a random drop on queued clients
+	-> Dropped the number of addIP threads to 6 from 4.
+	-> Fixed a bug where Myster classified clients not sharing files of any type as firewalled.
+	
+  Work on DEV 14.1-2
+  	2002/07/10
+  	-> Made the ping time more important in the ranking function
+  	-> Changed the menu the preference option was in. It's now in Edit..
+  	-> Changed the Myster menu to special to make the MacOS X cry babies happy.
+  	-> Corrected a typo. Myster doesn't keep statics on its severing...
+  	-> Added a number of files to the tracker.
+  	-> Made it so -inf rank actually shows up as -inf and not a really big negative number.
+  	-> Made it so the asking for a top ten will give you a top 50 (or so)
+  	-> Clicking on the AddIP closebox will actually close the window.
+  	-> Fixed it so Myster will never again NOT SEARCH for anything because all it's "up" servers haven't
+  			been pinged yet
+  	-> Made the initial search pool bigger (~ 50 from 15)
+  	-> Made servers have a property that can tell the rest of the program if they have been pinged yet.
+  	-> Fixed it so that there are only 15 and not 50 search threads initialy (it should have been like this already)
+  	
+  Work on DEV 14.3
+    2002/07/27
+    -> Fixed a problem where "top ten" was sending 10 ips instead of 50.
+    -> Took all client conneciton sections and made them into a library.
+    -> turned off the frigging tcp pinger again. I hate that thing.
+    -> fixed bug in server search engine that would cause a worked pooled thread to
+    		restart on queries with two spaces.
+	-> Fixed a bug in the indexer that was allowing showing ".i" files in MPG3 and MooV
+   	-> Reorganized most code.
+   		All packages are now in the com hierarchy.
+   		
+   		Myster specific files are in com.myster
+   		General library files are in com.general (violates java naming conventions but I don't care)
+   		
+   		From there file are named per module 
+   		
+   		IN MYSTER: (Files specific to Myster or using Myster specific classes)
+   		
+   		search
+   		Client side search engine
+   		
+   		filemanager
+   		Client side file management
+   		
+   		net
+   		Misc Myster-wide network related
+   		
+   		util
+   		Myster specific utility classes
+   		
+   		client
+   		client network protocols, ui
+   		
+   		server
+   		server, server events, ui (server stats window), server side protocols
+   		
+   		mml
+   		Classes to manipulate mml structures.
+   		
+   		pluggin
+   		Pluggin related classes.
+   		
+   		tracker
+   		tracker and tracker ui
+   		
+   		pref
+   		preferences and preferences ui
+   		
+   		menubar
+   		menubar and menubar actions (events)
+   		
+   		IN GENERAL: (files in general SHOULD NOT access calsses in com.myster!!!!!!!!)
+   		
+   		util
+   		Misc utilitiy classes
+   		
+   		events
+   		my events library
+   		
+   		mclist
+   		my Multi Column List library
+   		
+   		tab
+   		my crappy tab library
+   		
+   	File that are higher up in the hierarchy generaly should not be called be files that are
+   	lower down. So com.myster.search file should not call com.myster.search.ui files. There
+   	are several places where this is violated but they are to be considered bugs.
+   	
