@@ -37,6 +37,8 @@ public class MSDownloadHandler extends MSDownloadListener {
 	public void startDownload(MultiSourceEvent event) {
 		progress.setText("MSDownload is starting...");
 		progress.startBlock(0, 0, event.getMultiSourceDownload().getLength());
+		progress.setPreviouslyDownloaded(event.getMultiSourceDownload().getInitialOffset(), FileProgressWindow.BAR_1);
+		progress.setValue(event.getMultiSourceDownload().getInitialOffset());
 	}
 	
 	int counter = 0;
