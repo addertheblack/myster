@@ -1032,6 +1032,8 @@ Work on DEV 8:
 				resize the window 20 times (once every half second) before giving up.
 		-> Mster is now 28414 lines of code.
 		
+	==>> PR 8
+		 
 	Work on DEV 21.1
 		2004/08/21  4 months with not much happening. wow.
 		-> Got Myster running and compiling under eclipse. Nice.
@@ -1053,22 +1055,28 @@ Work on DEV 8:
 		-> Fixed the box border-not-appearing-on-macOS 9 bug.
 		-> Hopefully fixed the pulsating progress not always shown bug.
 		-> Fixed a bug where clicking cancel on a dialog for multisource download would cause regular download to start.
-		-> Fixed a bug where Myster jsut plain froze.
+		-> Fixed a bug where Myster just plain froze.
 		-> Added two routines that allow for code to be execute on the event thread. is 1.1 compatible! yeah!
 		-> Made as much of Myster as possible run on the event thread.
 		-> Made the "windows" menu special, in that it is built for every subscribed window each time one of the windows is
 				shown/hidden or changes name. This should make Myster faster at opening windows and reduce menu blinking.
 	  	-> Made it so that search and p2p windows are renamed to something more appropriate on the fly.
-	  	-> Wrote a socket pool system so that all stream (TCP based) connection section can be executed 
+	  	-> Wrote a socket pool system so that all stream (TCP based) connection sections can be executed 
 	  	        asychronously from a pool.
 	  	-> Wrote an asychronous function call framework
 	  	-> re-wrote the Myster search sub system to use said socket pool (now only creates one thread!).
-	  	-> Re-wrote standard datagram callbacks to conform to an asynchrnous function call (eclipse rocks
+	  	-> Re-wrote standard datagram callbacks to conform to an asynchronous function call (eclipse rocks
 	  	        for refactoring!)
 	  	-> Added code documentation
 		-> Made it so menu bars appear on progress windows.
 		-> Made it so all windows have a nice looking Myster icon.
 		-> Made multi source download automatically adapt to faster servers.
+		-> Fixed some issues with Multisource FileProgressWindows giving wrong information.
+		-> Made FileProgressWindows use far less CPU power.
+		-> Made it so you can navigate MCLists using the keyboard up/down arrows, page up/down and enter to doubleClick
+		-> Fixed a big memory leak when the memory used by windows wasen't being freed.
+		-> For some reasone none-multisource downloads were turned off.. I guess that explains a few things I've been
+				seeing on the network.
 		
 (Red List)
 to do:
