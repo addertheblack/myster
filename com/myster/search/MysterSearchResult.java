@@ -23,34 +23,11 @@ public class MysterSearchResult implements SearchResult {
 	
 	//is called when the user decides to download the item
 	public void download() {
-		String hashAsString = (mml != null ? mml.get("/hash/md5") : null);
-		
-		long fileLength = -1;
-		if (mml!=null) {
-			try {
-				fileLength = Long.parseLong(mml.get("/size"));
-			} catch (NumberFormatException ex) {
-				System.out.println("Server sent a length that is not a number.");
-			}
-		}
-		
-		System.out.println("-->"+mml.toString());
-		
 		try {
-			if ((hashAsString != null) & (fileLength!=-1)) {
-				MultiSourceDownload download = new MultiSourceDownload(stub, SimpleFileHash.buildFromHexString("md5", hashAsString), fileLength);
-				download.start();
-				return; //!!!!!!!!!!!!!!!!!! tricky
-			}
-		} catch (NumberFormatException ex) {
-			System.out.println("Could not download multi source because hash was not properly formated");
+			com.myster.client.stream.StandardSuite.downloadFile(stub.getMysterAddress(), stub);
 		} catch (java.io.IOException ex) {
-			ex.printStackTrace();
-			return;
+			com.general.util.AnswerDialog.simpleAlert("Could not connect to server.");
 		}
-		
-		Thread t=new DownloaderThread((MysterFileStub)stub);
-		t.start();
 	}
 	
 	//returns the network the search result is on.

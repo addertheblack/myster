@@ -123,6 +123,54 @@ public class StandardSuite {
 		}
 	}
 	
+	/**
+	*	downloadFile downloads a file by starting up a MultiSourceDownload or Regular old style download
+	*	whichever is appropriate.
+	*	<p>
+	*	THIS ROUTINE IS ASYNCHRONOUS!
+	*/
+	public static void downloadFile(MysterAddress ip, MysterFileStub stub) throws IOException {
+		MysterSocket socket=null;
+		try {
+			socket=MysterSocketFactory.makeStreamConnection(ip);
+			downloadFile(socket, stub);
+		} finally {
+			//disconnectWithoutException(socket);
+		}
+	}
+	
+	
+	// should not be public
+	private static void downloadFile(final MysterSocket socket, final MysterFileStub stub ) {
+		(new Thread() { //routine is completely asynchronous
+			public void run() {
+				com.myster.util.FileProgressWindow progress = new com.myster.util.FileProgressWindow("Connecting..");
+					
+				progress.show();
+				
+				progress.addWindowListener(new WindowAdapter() {
+					public void windowClosing(WindowEvent e) {
+						progress.setVisible(false);
+					}
+				});
+				
+				try {
+
+					MultiSourceDownload download = new MultiSourceDownload(socket, stub, progress);
+					
+					if (!download.start()) { //start leave MysterSocket valid
+						DownloaderThread secondDownload = new DownloaderThread(socket, stub, progress);
+						secondDownload.start();
+					}
+				} catch (IOException ex) {
+					//nothing
+					progress.setText("An error has occured ->" + ex.getMessage());
+				} finally {
+					try { socket.close(); } catch (Exception ex) {}
+				}
+			}
+		}).start();
+	}
 	
 	public static RobustMML getFileStats(MysterAddress ip, MysterFileStub stub) throws IOException  {
 		MysterSocket socket=null;

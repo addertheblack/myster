@@ -14,7 +14,6 @@ import com.general.events.EventDispatcher;
 import com.general.events.EventListener;
 import com.general.events.GenericEvent;
 import com.general.util.LinkedList;
-import com.general.util.Timer;
 import com.general.util.AnswerDialog;
 
 import com.myster.search.MultiSourceHashSearch;
@@ -32,26 +31,23 @@ import com.myster.net.MysterAddress;
 import com.myster.net.MysterSocket;
 
 public class MultiSourceDownload {
-	private static volatile int counter = 0; 
-	
+	final FileProgressWindow progress;
+	final MysterSocket socket;
 	final MysterFileStub stub;
-	final FileHash hash;
-	
-	File theFile;
-	RandomAccessFile randomAccessFile;
-	LinkedList  dataQueue = new LinkedList();
+	FileHash hash;								//should be final but can't be...
+	long fileLength; 							//should be final but can't be...
+		
+	File theFile;								//file downloading to
+	RandomAccessFile randomAccessFile;			//file downloading to
 
-	
 	InternalSegmentDownloader[] downloaders;
-	
-	Timer timer;
 	
 	long fileProgress= 0;
 	long bytesWrittenOut = 0;
-	long fileLength;
-	FileProgressWindow progress;
-	//SimpleHash
-	
+	Stack unfinishedSegments = new Stack(); 	//it's a stack 'cause it doens't
+												//matter what data structure so long
+												//as add and remove are O(C).
+
 	CrawlerThread crawler;
 	EventDispatcher dispatcher = new SyncEventDispatcher();
 	
@@ -59,10 +55,10 @@ public class MultiSourceDownload {
 	
 	public static final int MULTI_SOURCE_BLOCK_SIZE = 512 * 1024;
 
-	public MultiSourceDownload(MysterFileStub stub, FileHash hash, long fileLength) {
+	public MultiSourceDownload(MysterSocket socket, MysterFileStub stub, FileProgressWindow progress) {
+		this.socket 		= socket;
 		this.stub 			= stub;
-		this.hash 			= hash;
-		this.fileLength 	= fileLength;
+		this.progress 		= progress;
 	}
 	
 	private synchronized void newDownload(MysterFileStub stub) {
@@ -105,7 +101,23 @@ public class MultiSourceDownload {
 	}
 	
 	public void end() {
+		InternalSegmentDownloader[] downloadersCopy = new InternalSegmentDownloader[downloaders.length];
 		
+		flagToEnd();
+		
+		synchronized (this) {
+			for (int i = 0; i < downloaders.length; i++) {
+				downloadersCopy[i] = downloaders[i]; //have to do this else threading sync problems...
+			}
+		}
+		
+		for (int i = 0; i < downloadersCopy.length; i++) {
+			try {
+				if (downloaders[i]!=null) downloaders[i].end();
+			} catch (InterruptedException ex) {
+				return;
+			}
+		}
 	}
 	
 	private static final String EXTENSION = ".i";
@@ -162,13 +174,37 @@ public class MultiSourceDownload {
 		
 		return new File(dialog.getDirectory()+File.separator+dialog.getFile()+EXTENSION);
 	}
+	
+	private boolean assertLengthAndHash() throws IOException {
+		com.myster.mml.RobustMML mml = StandardSuite.getFileStats(socket, stub);
+		
+		String hashString = mml.get(com.myster.filemanager.FileItem.HASH_PATH+com.myster.hash.HashManager.MD5);
+		String fileLengthString = mml.get("/size");
+		
+		if (hashString == null || fileLengthString == null) return false;
+		
+		try {
+			hash = com.myster.hash.SimpleFileHash.buildFromHexString(com.myster.hash.HashManager.MD5, hashString);
+		} catch (NumberFormatException ex) {
+			return false;
+		}
+		
+		try {
+			fileLength = Long.parseLong(fileLengthString);
+		} catch (NumberFormatException ex) {
+			return false;
+		}
+		
+		return true;
+	}
 
-	public synchronized void start() throws IOException {
+	public synchronized boolean start() throws IOException {
 		downloaders = new InternalSegmentDownloader[5];
 	
-		progress = new FileProgressWindow("Downloading..");
+		if (!assertLengthAndHash()) return false;
+	
+		progress.setTitle("Downloading From Multiple Sources..");
 		progress.setProgressBarNumber(downloaders.length+1);
-		progress.show();
 		
 		try {
 			getFileThingy();
@@ -191,19 +227,18 @@ public class MultiSourceDownload {
 		progress.setText("Downloading file "+stub.getName());
 		
 		for (int i=0; i < downloaders.length; i++) {
-			//downloaders[i] = new InternalSegmentDownloader(
-			//		stub,
-			//		counter++);
-			//downloaders[i].addListener(new SegmentDownloaderHandler(i));
-			
 			progress.setBarColor(new Color(0,(downloaders.length-i)*(255/downloaders.length),150), i+1);
-			
-			//downloaders[i].start();
 		}
 		
 		
-
+		startCrawler();
 		
+		newDownload(stub);
+		
+		return true;
+	}
+	
+	private void startCrawler() {
 		IPQueue ipQueue = new IPQueue();
 		
 		String[] startingIps = com.myster.tracker.IPListManagerSingleton.getIPListManager().getOnRamps();
@@ -214,8 +249,7 @@ public class MultiSourceDownload {
 		for (int i = 0; i < startingIps.length; i++) {
 			try { ipQueue.addIP(new MysterAddress(startingIps[i])); } catch (IOException ex) {ex.printStackTrace();}
 		}
-		
-		//moo.mpg -> "b23b9188a98a3d16854f4167a58e3114"
+	
 		crawler = new CrawlerThread(new MultiSourceHashSearch(stub.getType(), hash, 
 										new HashSearchListener() {
 											public void startSearch(HashSearchEvent event) {
@@ -235,6 +269,7 @@ public class MultiSourceDownload {
 											
 											public void endSearch(HashSearchEvent event) {
 												System.out.println("Search Lstnr-> End search");
+												startCrawler();
 											}
 										}
 									),
@@ -247,8 +282,6 @@ public class MultiSourceDownload {
 									null);
 									
 		crawler.start();
-		
-		newDownload(stub);
 	}
 	
 	private class SegmentDownloaderHandler extends SegmentDownloaderListener {
@@ -288,9 +321,8 @@ public class MultiSourceDownload {
 	}
 
 	
-	Stack stack = new Stack(); //it's a stack 'cause it doens't matter what data structure so long as add and remove are O(C).
 	public synchronized  WorkSegment getNextWorkSegment() {
-		if (stack.size() > 0) return (WorkSegment)(stack.pop());
+		if (unfinishedSegments.size() > 0) return (WorkSegment)(unfinishedSegments.pop());
 		
 		long readLength = (fileLength - fileProgress > MULTI_SOURCE_BLOCK_SIZE ? MULTI_SOURCE_BLOCK_SIZE : fileLength - fileProgress);
 
@@ -326,7 +358,7 @@ public class MultiSourceDownload {
 		
 		File someFile = null;
 		//try {
-			someFile = new File(theFile.getAbsolutePath() + theFile.getName().substring(0, theFile.getName().length()-1));
+			someFile = new File(theFile.getAbsolutePath().substring(0, theFile.getName().length()-1));
 		//} catch (IOException ex) {
 		//	AnswerDialog.simpleAlert(progress, "Could not rename file from \""+theFile.getName()+"\" because of this error -> "+ex);
 		//	return;
@@ -354,7 +386,7 @@ public class MultiSourceDownload {
 	
 	public synchronized void receiveExtraSegments(WorkSegment[] workSegments) {
 		for (int i=0; i < workSegments.length; i++) {
-			stack.push(workSegments[i]);
+			unfinishedSegments.push(workSegments[i]);
 		}
 	}
 	
@@ -545,6 +577,12 @@ public class MultiSourceDownload {
 		
 		public void endWhenPossible() {
 			endFlag = true;
+		}
+		
+		public void end() throws InterruptedException {
+			endWhenPossible();
+			
+			join();
 		}
 	}
 	

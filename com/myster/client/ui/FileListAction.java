@@ -32,9 +32,10 @@ public class FileListAction implements ActionListener {
 		try {
 			if (System.currentTimeMillis()-timeOfLast<500) return;
 			timeOfLast=System.currentTimeMillis();
-			(new DownloaderThread(new MysterFileStub(new MysterAddress(w.getCurrentIP()), w.getCurrentType(), a.getActionCommand()))).start();
-		} catch (UnknownHostException ex) {
-			//... nothing
+			MysterFileStub stub = new MysterFileStub(new MysterAddress(w.getCurrentIP()), w.getCurrentType(), a.getActionCommand());
+			com.myster.client.stream.StandardSuite.downloadFile(stub.getMysterAddress(), stub);
+		} catch (java.io.IOException ex) {
+			com.general.util.AnswerDialog.simpleAlert(w, "Could not connect to server.");
 		}
 	}
 

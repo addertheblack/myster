@@ -77,7 +77,7 @@ public class FileItem {
 		}
 	}
 
-	private static final String HASH_PATH = "/hash/";
+	public static final String HASH_PATH = "/hash/";
 	public MML getMMLRepresentation() {
 		MML mml=new MML();
 		

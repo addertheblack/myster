@@ -48,7 +48,7 @@ public class DownloaderThread extends SafeThread {
 	DataOutputStream out;
 	FileProgressWindow progress;
 	RandomAccessFile o=null; //implements DataOutput Interface
-	MysterSocket socket;
+	final MysterSocket socket;
 	
 	
 	File finalFile;
@@ -60,19 +60,21 @@ public class DownloaderThread extends SafeThread {
 	//String downloadpath;
 	long amountToSkip=0;
 	
-	public DownloaderThread(MysterFileStub file) {
-		this.file=file;
+	public DownloaderThread(MysterSocket socket, MysterFileStub file, FileProgressWindow progress) {
+		this.file		= file;
+		this.socket		= socket;
+		this.progress 	= progress;
 	}
 	
 	
 	public void run() {
-		progress=new FileProgressWindow();
+		//progress=new FileProgressWindow();
 		progress.setMax(100);
 		progress.setMin(0);
 		progress.setProgressBarNumber(2);
 		progress.setValue(-1,FileProgressWindow.BAR_1);
 		progress.setValue(-1,FileProgressWindow.BAR_2);
-		progress.setVisible(true);
+		//progress.setVisible(true);
 		progress.setBarColor(Color.magenta, 1);
 		progress.addWindowListener(new ProgressWindowClose(this));
 		progress.setTitle("Preparing to Download..");
@@ -160,6 +162,7 @@ public class DownloaderThread extends SafeThread {
 		
 		long filesize;
 		
+		/*
 		try {
 			progress.setText("Connecting to server...", FileProgressWindow.BAR_1);
 			socket=MysterSocketFactory.makeStreamConnection(new MysterAddress(file.getIP()));
@@ -167,7 +170,7 @@ public class DownloaderThread extends SafeThread {
 		} catch (Exception ex) {
 			progress.setText("Server at that IP/Domain name is not responding.", FileProgressWindow.BAR_1);
 			return;
-		}
+		}*/
 	
 		try {
 			in=new DataInputStream(socket.getInputStream());
