@@ -23,7 +23,7 @@ public class StandardMysterSearch implements MysterSearchClientSection {
 	}
 	
 	public void start() {
-		listener.startSearch();
+		//listener.startSearch(); (This is already taken care of)
 	}
 
 	public void search(MysterSocket socket, MysterAddress address, MysterType type) throws IOException {
@@ -62,13 +62,14 @@ public class StandardMysterSearch implements MysterSearchClientSection {
 	}
 	
 	public void done() {
-		synchronized (this) {
-			listener.searchOver();
-		}
+		//do nothing
 	}
 	
-	public void flagToEnd() {
+	public synchronized void flagToEnd() {
+		if (endFlag) return;
+	
 		endFlag=true;
+		
 		for (int i=0; i<fileStatsVector.size(); i++) {
 			((FileInfoGetter)(fileStatsVector.elementAt(i))).flagToEnd();	//tells all the threads to cancel
 		}

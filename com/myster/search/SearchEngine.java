@@ -41,6 +41,8 @@ public class SearchEngine extends MysterThread {
 		msearch.start();
 		
 		try {msearch.join();} catch (Exception ex) {}
+		
+		window.searchOver();
 	}
 	
 	public void end() {
