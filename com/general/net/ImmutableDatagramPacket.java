@@ -12,9 +12,9 @@ package com.general.net;
 import java.net.*;
 
 public class ImmutableDatagramPacket {
-	InetAddress address;
-	int port;
-	byte[] data;
+	final InetAddress address;
+	final int port;
+	final byte[] data;
 	
 	public ImmutableDatagramPacket(InetAddress i, int port, byte[] d) {
 		address=i;
@@ -25,19 +25,22 @@ public class ImmutableDatagramPacket {
 	public ImmutableDatagramPacket(DatagramPacket p) {
 		address=p.getAddress();
 		port=p.getPort();
-		data=p.getData();
+		byte[] temp_data=p.getData();
 		int length=p.getLength();
-		if (length<data.length) {
-			byte[] b_temp=new byte[length];
+		
+		byte[] b_temp=new byte[length];
+		
+		if (length<temp_data.length) {
+			b_temp=new byte[length];
 			
 			for (int i=0; i<length; i++) {
-				b_temp[i]=data[i];
+				b_temp[i]=temp_data[i];
 			}
-			
-			data=b_temp;
-		} else if (length>data.length) { //should not happen.
+		} else if (length>temp_data.length) { //should not happen.
 			throw new RuntimeException("Length is bigger then  message, packet is garbage.");
 		}
+		
+		data=b_temp;
 	}
 	
 	/**

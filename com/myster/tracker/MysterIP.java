@@ -83,7 +83,7 @@ class MysterIP {
 		MysterAddress t=new MysterAddress(ip); //to see if address is valid.
 		createNewMysterIP(ip, 1, 50, 50, 1, 1, "", null);
 		if (MysterIP.internalRefreshAll(this)==false) throw new Exception("Failed to created new Myster IP");
-		System.out.println("A New MysterIP Object = "+getAddress());
+		//System.out.println("A New MysterIP Object = "+getAddress());
 	}
 	
 	protected MysterIP(MML mml) {
@@ -341,12 +341,12 @@ class MysterIP {
 			if (!(mysterip.upordown)) throw new MassiveProblemException("");
 			
 			mysterip.timeoflastupdate=System.currentTimeMillis();
-			System.out.println("Getting stats from: "+mysterip.ip);
+			//System.out.println("Getting stats from: "+mysterip.ip);
 			time=System.currentTimeMillis();
 
 			MML mml=StandardSuite.getServerStats(mysterip.ip);
 			if (mml==null) throw new MassiveProblemException("");
-			System.out.println("MML for "+mysterip.ip.toString()+ " is "+mml.toString());
+			//System.out.println("MML for "+mysterip.ip.toString()+ " is "+mml.toString());
 			String temp=mml.get("/Speed");
 			if (temp==null) temp="1"; 
 			mysterip.speed=Double.valueOf(temp).doubleValue();
@@ -376,7 +376,7 @@ class MysterIP {
 				}
 			}
 		
-			System.out.println("The stats update of "+mysterip.ip+" took "+(System.currentTimeMillis()-time)+"ms");
+			//System.out.println("The stats update of "+mysterip.ip+" took "+(System.currentTimeMillis()-time)+"ms");
 			return true;
 		} catch (IOException ex) {
 			System.out.println("MYSTERIP: Error in refresh fuction of MysterIP on IP: "+mysterip.ip+"  "+ex);

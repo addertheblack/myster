@@ -110,8 +110,8 @@ public class PongTransport extends DatagramTransport {
 		
 		public void pingReply(PingEvent e) {
 			value=(e.getPacket()!=null?true:false);
-			if (value) System.out.println("Got pong reply it took "+e.getPingTime()+"ms.");
-			else System.out.println("Ping timeout.");
+			//if (value) System.out.println("Got pong reply it took "+e.getPingTime()+"ms.");
+			//else System.out.println("Ping timeout.");
 			sem.signal();
 		}
 	}
@@ -147,7 +147,7 @@ public class PongTransport extends DatagramTransport {
 						sendPacket((new PingPacket(address)).toImmutableDatagramPacket());
 						sendPacket((new PingPacket(address)).toImmutableDatagramPacket());
 						struct.secondPing=!struct.secondPing;
-						System.out.println("Trying "+address+" again. it only has "+(TIMEOUT-(curTime-struct.timeStamp))+"ms left.");
+						//System.out.println("Trying "+address+" again. it only has "+(TIMEOUT-(curTime-struct.timeStamp))+"ms left.");
 						struct.timer=new Timer(new TimeoutClass(address), TIMEOUT-(curTime-struct.timeStamp)+(1*1000), false);
 						return;
 					} else {
@@ -164,38 +164,6 @@ public class PongTransport extends DatagramTransport {
 			
 			dispatch(address, null, struct);
 		}
-		
-		/*
-		public void run() {
-			long curTime=System.currentTimeMillis();
-			Vector itemsToDelete=new Vector(2,10);
-			synchronized (requests) {
-				Enumeration enum=requests.keys();
-				if (enum.hasMoreElements()) {
-					for (Object key=enum.nextElement();; key=enum.nextElement()) {
-						PongItemStruct pongItem=(PongItemStruct)requests.get(key);
-						
-						if ((pongItem.timeStamp<=(curTime-FIRST_TIMEOUT))&&(!pongItem.secondPing)) {
-							sendPacket((new PingPacket((MysterAddress)key)).toImmutableDatagramPacket());
-							pongItem.secondPing=true;
-							Timer t=new Timer(new TimeoutClass((MysterAddress)key), TIMEOUT-(curTime-pongItem.timeStamp)+(1*1000), false);
-							System.out.println("Trying "+key+" again. it only has "+(TIMEOUT-(curTime-pongItem.timeStamp))+"ms left.");
-						}
-						
-						if (pongItem.timeStamp<=(curTime-TIMEOUT)) {
-							itemsToDelete.addElement(key);
-						}
-						
-						if (!enum.hasMoreElements()) break;
-					}
-				}
-			}
-			
-			for (int i=0; i<itemsToDelete.size(); i++) {
-				dispatch((MysterAddress)(itemsToDelete.elementAt(i)), null);
-			}
-		}
-		*/
 	}
 }
 

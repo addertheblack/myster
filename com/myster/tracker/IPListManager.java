@@ -93,7 +93,12 @@ public class IPListManager { //aka tracker
 	public synchronized MysterServer[] getTopTen(String type) {
 		return getTop(type, 10);
 	}
-
+	
+	/**
+	*	Returns a list of Myster servers. Returns only server that have been confirmed UP in
+	* 	the last 5 minutes or whatever the ping polling time is. If there are not enough UP
+	*	Servers orwhatever, the rest of the array is filled with null!!!!!
+	*/	
 	public synchronized MysterServer[] getTop(String type, int x) {
 		IPList iplist;
 		iplist=getListFromType(type);
@@ -102,6 +107,9 @@ public class IPListManager { //aka tracker
 
 	}
 	
+	/**
+	*	Asks the cache if it knows of this MysterServer and gets stats if it does.
+	*/
 	public synchronized MysterServer getQuickServerStats(String ip) { //returns null if IP is not in the pool.
 		try {
 			return MysterIPPool.getInstance().getMysterIPLevelOne(new MysterAddress(ip));
@@ -110,10 +118,16 @@ public class IPListManager { //aka tracker
 		}
 	}
 	
+	/**
+	*	Gets MysterServer from cache or creates it if not in cache. Blocks!!
+	*/
 	public synchronized MysterServer getServerStats(String ip) throws IOException { //might block for a long time.
 		return MysterIPPool.getInstance().getMysterServer(ip);
 	}
 	
+	/**
+	*	Returns vector of MysterAddress.
+	*/
 	public synchronized Vector getAll(String type) {
 		IPList iplist;
 		iplist=getListFromType(type);
