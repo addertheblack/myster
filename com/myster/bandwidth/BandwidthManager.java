@@ -1,19 +1,22 @@
 package com.myster.bandwidth;
 
 import java.util.Vector;
+import java.awt.event.*;
+import java.awt.*;
 
+import com.general.events.SyncEventDispatcher;
 import com.general.events.EventListener;
 import com.general.events.GenericEvent;
-import com.general.events.SyncEventDispatcher;
+
+import com.general.util.MessagePanel;
 import com.general.util.Semaphore;
 import com.general.util.Timer;
 import com.general.util.MrWrap;
-import com.myster.pref.ui.PreferencesPanel;
-import com.myster.mml.RobustMML;
-import com.myster.pref.Preferences;
 
-import java.awt.*;
-import java.awt.event.*;
+import com.myster.pref.ui.PreferencesPanel;
+import com.myster.pref.Preferences;
+import com.myster.mml.RobustMML;
+
 
 /**
 *	The bandwidth manager is a set of static funcitons that allow multiple dowload/upload threads to
@@ -377,48 +380,6 @@ class BandwithPrefsPanel extends PreferencesPanel {
 		incommingSpeedLabel.setEnabled(bool);
 		incommingBytesField.setEnabled(bool);
 		incommingUnitsLabel.setEnabled(bool);
-	}
-}
-
-class MessagePanel extends Panel { //candidate for re-use
-	int height;
-	int ascent;
-	int descent;
-	
-	FontMetrics metrics;
-	
-	String message;
-	
-	Vector messageVector=new Vector(20);
-	
-	public MessagePanel(String message) {
-		this.message=message;
-	}
-	
-	public java.awt.Dimension getPreferredSize() {
-		return getSize();
-	}
-
-	private void doMessageSetup() {
-		metrics=getFontMetrics(getFont());
-		
-		height=metrics.getHeight();
-		ascent=metrics.getAscent();
-		descent=metrics.getDescent();
-
-		
-		MrWrap wrapper=new MrWrap(message, 380, metrics);
-		for (int i=0; i<wrapper.numberOfElements(); i++) {
-			messageVector.addElement(wrapper.nextElement());
-		}
-	}
-	
-	public void paint(Graphics g) {
-		if (metrics==null) doMessageSetup();
-		g.setColor(Color.black);
-		for (int i=0; i<messageVector.size(); i++) {
-			g.drawString(messageVector.elementAt(i).toString(), 10, 5+height*(i)+ascent);
-		}
 	}
 }
 

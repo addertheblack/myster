@@ -146,6 +146,7 @@ public class Myster{
 				com.myster.ui.WindowManager.init();
 				
 				Preferences.getInstance().addPanel(BandwidthManager.getPrefsPanel());
+				com.myster.server.ui.BannersPreferences.init(); //adds a prefs panel.
 			
 				progress.setText(I18n.tr("Loading Plugins...")+macHack);
 				progress.setValue(80);

@@ -371,7 +371,7 @@ Work on DEV 8:
 		way around this. I set the String to do a getBytes() and write that to disk in one shot. 
 		This will probably fail at some point as well; I'm not sure how the encoding works, you see.
 		Compatibility with older version is maintained byt having a UTF string at the start. (See code)
-	-> Hooked up more of the enevent system. Geeze, this takes forever.
+	-> Hooked up more of the event system. Geeze, this takes forever.
 	-> Trying to fix CVS version of Myster. It's broke!
 	
 	2001/11/05
@@ -834,7 +834,7 @@ Work on DEV 8:
 	  			None progress related code has been taken out and put into its own class.
 	  			ProgressWindow should be moving the com.general.util at some point soon.
 	  			
-	Work on PR 6 (DEV 18.2)
+	Work on DEV 18.2 (PR 6)
 	  2003/04/20
 	  	-> Fixed a very old bug to do with servers that are found down ONCE are never cecked again to see
 	  			if they came back up. VERY old bug.
