@@ -26,8 +26,10 @@ import com.myster.mml.MML;
 import com.myster.mml.MMLException;
 import com.myster.type.MysterType;
 
+import com.myster.hash.*;
+
 class FileTypeList extends MysterThread{
-	private Vector filelist;	//List of java.io.File objects that are shared.
+	private Vector filelist;	//List of java.io.FileItem objects that are shared.
 	private MysterType type;		//Myster type represented by this List.
 	private String rootdir;		//The root directory for this list.
 	//private boolean isShared	//This variable is accessed directly in the preferences data structure! Use isShared() to access!
@@ -43,10 +45,10 @@ class FileTypeList extends MysterThread{
 	public static final int MAX_RESULTS=100; //maximum number of results returnable (doesn't limit "" queries)
 
 	/**
-	*	Creates a new FileTypeList. This shouldn't be called by anybody but the File Manager.
+	*	Creates a new FileTypeList. This shouldn't be called by anybody but the FileItem Manager.
 	*	
-	*	@param	type is the Myster File type to be represented by this object.
-	*	@param	path is the root path IN THE PREFERENCES that this File List should store it's preferences.
+	*	@param	type is the Myster FileItem type to be represented by this object.
+	*	@param	path is the root path IN THE PREFERENCES that this FileItem List should store it's preferences.
 	*/
 	public FileTypeList(MysterType type, String path) {
 		this.type=type;
@@ -62,12 +64,11 @@ class FileTypeList extends MysterThread{
 	}
 	
 	/**
-	*	Updates the File List preferences organization to the new File List prefs org.
+	*	Updates the FileItem List preferences organization to the new FileItem List prefs org.
 	*	The old style was to simply have all the information at root level. The new model put all information into
-	*	sub directories. At this writting there are two sub directories in the constants ACTPREF and PATHPREF. 
-	*	ACTPREF points to the location where the isShared flag is stored. PATHPREF points to the location where the
-	*	rootdir is stored. This method will eventaully be removed.
-	*	@param	mypathinpreferences the path in the preferences when this File List is
+	*	sub directories.
+	*
+	*	@param	mypathinpreferences the path in the preferences when this FileItem List is
 	*			to store (has stored in the past) all its preferences.
 	*/
 	private void updatePrefsFromOldMyster(String mypathinpreferences) {
@@ -78,7 +79,7 @@ class FileTypeList extends MysterThread{
 	*	returns the isShared flag. If isShared returns true, the list will share files if any are available. If isShared returns false,
 	*	the list will not show any files shared even if there are file available. Think of it as a sort of sharing over-ride.
 	*
-	*	@return	<code>true</code> is the File List is sharing files; <code>false</code> is the file list is not sharing files.
+	*	@return	<code>true</code> is the FileItem List is sharing files; <code>false</code> is the file list is not sharing files.
 	*			There might be any files shared even if this function returns true. If this function returns false
 	*			it is guarenteed that no files are being shared.
 	*/
@@ -106,7 +107,7 @@ class FileTypeList extends MysterThread{
 	}
 	
 	/**
-	*	Gets the Myster type associated with this File List.
+	*	Gets the Myster type associated with this FileItem List.
 	*
 	*	@return	the Myster Type associated with this object.
 	*/
@@ -137,7 +138,7 @@ class FileTypeList extends MysterThread{
 	
 		String[] workingarray=new String[filelist.size()];
 		for (int i=0; i<filelist.size(); i++) {
-			workingarray[i]=mergePunctuation(((File)(filelist.elementAt(i))).getName());
+			workingarray[i]=mergePunctuation(((FileItem)(filelist.elementAt(i))).getFile().getName());
 		}
 		return workingarray;
 	}
@@ -199,8 +200,8 @@ class FileTypeList extends MysterThread{
 		//MATCHER
 		for(int iFile = 0; iFile < filelist.size(); iFile++)
 		{	
-			File file = (File)filelist.elementAt(iFile);
-			String filename = mergePunctuation(file.getName());
+			FileItem file = (FileItem)filelist.elementAt(iFile);
+			String filename = mergePunctuation(file.getFile().getName());
 			
 			// Filter out sequential whitespace
 			String simplified=simplify(filename);
@@ -222,7 +223,7 @@ class FileTypeList extends MysterThread{
     *	
     *	@param	keywords to match.
     *	@param	simplified string to match against.
-	*	@return	the java.io.File object corresponding the the query.
+	*	@return	the java.io.FileItem object corresponding the the query.
     *
     */
     private static boolean isMatch(Vector keywords, String simplified) {
@@ -261,16 +262,16 @@ class FileTypeList extends MysterThread{
 
 
 	/**
-	*	rarray a java.io.File object from a file name. NOTE: There is a direct mapping between file names and java.io.File objects.
+	*	rarray a java.io.FileItem object from a file name. NOTE: There is a direct mapping between file names and java.io.FileItem objects.
 	*
 	*	@param	query the name of a file to get the File for.
-	*	@return	the java.io.File object corresponding the the query.
+	*	@return	the java.io.FileItem object corresponding the the query.
 	*/
 	public synchronized File getFileFromString(String query) {
 		assertFileList();	//This must be called before working with filelist or rootdir internal variables.
 		
 		for (int i=0; i<filelist.size(); i++) {
-			if ((mergePunctuation(((File)(filelist.elementAt(i))).getName())).equals(query)) return ((File)(filelist.elementAt(i)));
+			if ((mergePunctuation(((FileItem)(filelist.elementAt(i))).getFile().getName())).equals(query)) return ((FileItem)(filelist.elementAt(i))).getFile();
 		}
 		return null;	//err, file not found.
 	}
@@ -346,7 +347,13 @@ class FileTypeList extends MysterThread{
 			} else {
 				if (!filelist.contains(mergePunctuation(temp.getName()))) {
 					if (FileFilter.isCorrectType(type, temp)) {
-						filelist.addElement(temp);
+						filelist.addElement(createFileItem(temp));
+						
+						HashManager.findHashNoneBlocking(temp, new FileHashListener() {
+							public void foundHash(FileHashEvent e) {
+								System.out.println("Got hash for some file.");
+							}
+						});
 					}
 				} //Don't add a file to the list if it's already there of if a file of the same name is there.. (eg: icon)
 			}
@@ -391,7 +398,7 @@ class FileTypeList extends MysterThread{
 	}
 	
 	/**
-	*	Returns true of the File List is out of date. This function is called by assertFileList and should oly be called by assertFileList
+	*	Returns true of the FileItem List is out of date. This function is called by assertFileList and should oly be called by assertFileList
 	*/
 	long timeoflastupdate=0;	//globalish	Needed to make sure the list is not too old.
 								//NOTE: The user could also change the DIR to force and update... He could also re-start Myster.
@@ -444,8 +451,18 @@ class FileTypeList extends MysterThread{
 	}
 	
 	/**
+	*	Creates a FileItem from a file. Sub classes should over-ride this.
+	*
+	*	@param	File to be the basis of this FileItem.
+	*	@return	FileItem created from file.
+	*/
+	protected FileItem createFileItem(File file) {
+		return new FileItem(file);
+	}
+	
+	/**
 	 *	This function Merges Japaneese punctuation into a form that displays and matches in JAVA
-	 *	THhis function should be called whenever the name or path of a file is read.
+	 *	This function should be called whenever the name or path of a file is read.
 	 *
 	 *	(code submited by heavy_baby@yahoo.co.jp)
 	 *

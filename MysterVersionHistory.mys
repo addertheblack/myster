@@ -823,7 +823,7 @@ Work on DEV 8:
 	Work on DEV 18.1
 	  2003/04/10
 	  	-> Tried to fix dual processor crashing bug.. failed...
-	  	-> Created a progressBar object
+	  	-> Created a ProgressBar object
 	  	-> Re-wrote ProgressWindow completely.
 	  			Progress window code is now readable and will scale well to multi source downloads.
 	  			Each bar is repainted independently.
@@ -833,3 +833,11 @@ Work on DEV 8:
 	  				simply having a progress window open.
 	  			None progress related code has been taken out and put into its own class.
 	  			ProgressWindow should be moving the com.general.util at some point soon.
+	  			
+	Work on PR 6 (DEV 18.2)
+	  2003/04/20
+	  	-> Fixed a very old bug to do with servers that are found down ONCE are never cecked again to see
+	  			if they came back up. VERY old bug.
+	  	-> Added a MysterType class to repesent the 4 byte Myster file type internally
+	  	-> Re-did the File Description List code completely (a pre-requisit to multi source download)
+	  	-> Added an I18n class to support multiple languages in Myster.

@@ -93,6 +93,11 @@ public class Myster{
 				progress.setLocation(100,100);
 				progress.setTitle(I18n.tr("Loading Myster..."));
 				
+				try {
+				com.myster.hash.HashManager.init();
+			} catch (Exception ex) {
+				ex.printStackTrace();
+			}
 				
 				progress.setText(I18n.tr("Loading UDP Operator...")+macHack);
 				progress.setValue(10);
@@ -106,14 +111,14 @@ public class Myster{
 					com.general.util.AnswerDialog.simpleAlert("Myster's UDP sub-system could not initialize. This means Myster will probably not work correctly. Here is the official error:\n\n"+ex);
 				}
 				
-				progress.setText(I18n.tr("Loading Server Stats Window...")+macHack);
+				progress.setText(I18n.tr("Loading Server Stats Window... %1%%", ""+15)+macHack);
 				progress.setValue(15);
 				
 				//System.out.println( "MAIN THREAD: Starting Operator.."+macHack);
 				Point p=ServerStatsWindow.getInstance().getLocation();
 				ServerStatsWindow.getInstance().setLocation(-500,-500);
 				ServerStatsWindow.getInstance().setVisible(true);
-				progress.setText(I18n.tr("Loading Server Stats Window...")+"."+macHack);
+				progress.setText(I18n.tr("Loading Server Stats Window... %1%%", ""+18)+macHack);
 				progress.setValue(18);
 				try {Thread.currentThread().sleep(1000);} catch (Exception ex) {}
 				ServerStatsWindow.getInstance().setVisible(false);

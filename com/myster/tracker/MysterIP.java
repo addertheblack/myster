@@ -48,7 +48,7 @@ class MysterIP {
 	
 	int 			lastPingTime=-1; //in millis. (not saved)
 	
-	private boolean occupied=false; //used in updating...
+	private volatile boolean occupied=false; //used in updating...
 	private long lastminiupdate=0;	//This is to keep the value of the last time internalRefreshStatus() was last called.
 	private long timeoflastupdate=0;
 	
@@ -74,7 +74,7 @@ class MysterIP {
 	private final double STATUSCONSTANT=1;
 	
 	private static final long UPDATETIME=3600000;// 86400000==1 day, 3600000==1 hour ;
-	private static final long MINIUPDATETIME=10*60*1000;//600000;//5 minutes = 300 seconds;
+	private static final long MINIUPDATETIME=10*60*1000;
 	
 	private static final int NUMBER_OF_UPDATER_THREADS=3;
 
@@ -518,6 +518,7 @@ class MysterIP {
 				ip.setStatus(true);
 				ip.lastPingTime=e.getPingTime();
 				statusQueue.add(ip); //doesn't block...
+				ip.occupied = false;
 			}
 			ip.lastminiupdate=System.currentTimeMillis();
 			

@@ -194,7 +194,7 @@ public class ProgressWindow extends Frame {
 	private void updateIcon() {
 		//if (true==true) return;
 	    if (piChart==null) piChart=createImage(32,32);
-	    if (piChart==null) {System.out.println("Wadda fuck?");return;}
+	    if (piChart==null) return; //How does this happen??
 	    double percent=0;
 		
 		percent = (getValue() < getMin() || getValue() > getMax() ? 0 : ((double)(getValue() - getMin()))/((double)(getMax() - getMin())));
