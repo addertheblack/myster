@@ -74,6 +74,10 @@ public class Myster{
 		try { Runtime.getRuntime().exec("explorer http://www.apple.com/"); } catch (Exception ex) {}
 		*/
 		
+		
+		start();
+		
+		
 		try {
 			PongTransport ponger=new PongTransport();UDPPingClient.setPonger(ponger);
 			DatagramProtocolManager.addTransport(ponger);
@@ -86,7 +90,7 @@ public class Myster{
 
 		
 		
-		//start();
+		
 		System.out.println( "MAIN THREAD: Starting loader Thread.." );
 		(new Thread() {
 			public void run() {

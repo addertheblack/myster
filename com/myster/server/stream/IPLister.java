@@ -42,7 +42,7 @@ public class IPLister extends ServerThread {
 		
 		IPListManagerSingleton.getIPListManager().addIP(new MysterAddress(context.socket.getInetAddress()));
 		
-		topten=IPListManagerSingleton.getIPListManager().getTop(new String(type),50);
+		topten=IPListManagerSingleton.getIPListManager().getTop(new String(type),100);
 		if (topten!=null) {
 			for (int i=0; i<topten.length; i++) {
 				if (topten[i]==null) break;

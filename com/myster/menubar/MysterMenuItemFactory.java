@@ -35,7 +35,13 @@ public class MysterMenuItemFactory {
 	}
 	
 	public MenuItem makeMenuItem() {
-		MenuItem menuItem=new MenuItem(name, new MenuShortcut(shortcut,useShift));
+		MenuItem menuItem;
+		
+		if (shortcut!=-1) {
+			menuItem=new MenuItem(name, new MenuShortcut(shortcut,useShift));
+		} else {
+			menuItem=new MenuItem(name);
+		}
 		
 		if (action!=null) {
 			menuItem.addActionListener(action);

@@ -10,6 +10,8 @@ import java.awt.event.ComponentEvent;
 
 import java.awt.Point;
 
+import java.awt.*;
+
 public class MysterFrame extends Frame {	
 	static int xStart=5;
 	static int yStart=5;
@@ -98,7 +100,25 @@ public class MysterFrame extends Frame {
 		
 		com.myster.menubar.MysterMenuBar.addMenuListener(new com.myster.menubar.event.MenuBarListener() {
 			public void stateChanged(com.myster.menubar.event.MenuBarEvent e) {
-				setMenuBar(e.makeNewMenuBar());
+				MenuBar oldMenuBar=getMenuBar();
+				
+				if (oldMenuBar==null) {
+					setMenuBar(e.makeNewMenuBar());
+				} else {
+					MenuBar newMenuBar=e.makeNewMenuBar();
+					int maxOldMenus=oldMenuBar.getMenuCount();
+					int maxNewMenus=newMenuBar.getMenuCount();
+					
+					if (maxNewMenus>0) oldMenuBar.add(newMenuBar.getMenu(0));
+					
+					for (int i=maxOldMenus-1; i>=0; i--) {
+						oldMenuBar.remove(i);
+					}
+					
+					for (int i=1; i<maxNewMenus; i++) {
+						oldMenuBar.add(newMenuBar.getMenu(0));
+					}
+				}
 			}
 		});
 	

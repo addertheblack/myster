@@ -18,14 +18,15 @@ public class WindowManager {
 		synchronized (windows) {
 			if (!windows.contains(frame)) {
 				windows.addElement(frame);
+				updateMenu();
 			}
 		}
-		updateMenu();
+		
 	}
 	
 	protected static void removeWindow(MysterFrame frame) {
-		windows.removeElement(frame);
-		updateMenu();
+		boolean yep=windows.removeElement(frame);
+		if (yep) updateMenu();
 	}
 	
 	protected static void updateMenu() {

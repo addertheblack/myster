@@ -21,6 +21,7 @@ import com.myster.util.MysterThread;
 import java.awt.event.ActionListener;
 import java.awt.event.ActionEvent;
 import com.myster.client.ui.ClientWindow;
+import com.general.util.Timer;
 
 
 public class DownloadInfoPanel extends Panel {
@@ -35,7 +36,6 @@ public class DownloadInfoPanel extends Panel {
 		//init();
 		chandler=new ConnectionHandler();
 		server.addConnectionManagerListener(chandler);
-		//(new JavaIsStupid()).start();
 	}
 	
 	public void inited() {
@@ -99,15 +99,9 @@ public class DownloadInfoPanel extends Panel {
 			}
 		
 		});
-
-		if (repaintThread!=null) {
-			System.out.println("Reaint already init"); 
-			//System.exit(1); //bad
-		}
-		(new RepaintLoop()).start();
 		
+		Timer timer=new Timer(new RepaintLoop(), 10000);
 	}
-	private MysterThread repaintThread;
 	
 	private Image doubleBuffer;		//adds double buffering
 	public void update(Graphics g) {
@@ -178,12 +172,10 @@ public class DownloadInfoPanel extends Panel {
 		}
 	}
 	
-	private class RepaintLoop extends MysterThread {
+	private class RepaintLoop implements Runnable {
 		public void run() {
-			do {
-				list.repaint();
-				try {sleep(500);} catch (Exception ex) {}
-			} while(true);
+			list.repaint();
+			Timer timer=new Timer(this, 700);
 		}
 	}
 	

@@ -156,13 +156,6 @@ public class ServerStatsWindow extends MysterFrame implements Sayable {
 		//hide();
 	}
 	
-	//private void fuckers() { //this is here because Java crashes If I pack() before showing the window.. so I need to repositon on show every fuckig time
-	//
-	//}
-	
-	//public void tabAction(TabEvent e) {
-	//
-	//}
 	
 	private class CloseBox extends WindowAdapter  {
 	
