@@ -84,7 +84,7 @@ public class MultiSourceDownload implements Runnable, Controller {
 		this.hash				= hash;
 		this.fileLength			= fileLength;
 		
-		this.downloaders				= new Hashtable();
+		this.downloaders			= new Hashtable();
 		this.listener				= new MSHashSearchListener();
 		
 		addListener(listener);

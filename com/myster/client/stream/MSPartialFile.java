@@ -9,12 +9,18 @@ package com.myster.client.stream;
 import java.io.IOException;
 import java.io.RandomAccessFile;
 import java.io.File;
+import java.io.FilenameFilter;
+import java.io.ByteArrayOutputStream;
+import java.io.DataOutputStream;
 
 import com.myster.mml.RobustMML;
 import com.myster.mml.MMLException;
+import com.myster.hash.FileHash;
+import com.myster.hash.SimpleFileHash;
 
 public class MSPartialFile {
-	public static void main(String args[]) {
+	public static void main(String args[]) { //broken test case
+		/*
 		try {
 			MSPartialFile file = new MSPartialFile("Testing");
 		
@@ -29,9 +35,75 @@ public class MSPartialFile {
 		} catch (IOException ex) {
 			ex.printStackTrace();
 		}
+		*/
 	}
 	
 	private static final String DIR = "Incomming" + File.separator;
+	
+	
+	
+	//////////// STATIC SUB SYSTEM \\\\\\\\\\\\\\\\
+	public static MSPartialFile recreate(File file) throws IOException {
+		if (! file.exists()) throw new IOException("File does not exist");
+		
+		RandomAccessFile maskFile = new RandomAccessFile(file,"rw");
+		
+		RobustMML mml;
+		try {
+			mml = new RobustMML(maskFile.readUTF());
+		} catch (MMLException ex) {
+			throw new IOException("MML Meta data was badly formed. This file is corrupt.");
+		}
+		
+		return new MSPartialFile(maskFile, new PartialFileHeader(mml));
+	}
+	
+	public static MSPartialFile create(String filename, int blockSize, FileHash[] hashes) throws IOException {
+		File fileReference = new File(DIR+filename);
+		
+		RandomAccessFile maskFile 	= new RandomAccessFile(fileReference,"rw");
+		PartialFileHeader header 	= new PartialFileHeader(filename, blockSize, hashes);
+		
+		maskFile.write(header.toBytes());
+	
+		return new MSPartialFile(maskFile, header);
+	}
+	
+	public static MSPartialFile[] list() throws IOException {
+		File dir = new File(DIR);
+		
+		String[] file_list = dir.list(new FilenameFilter() { //I love this idea. way to go java guys. pitty there's no half decent way to make it generic (yet?)
+			public boolean accept(File dir, String name) {
+				if (! name.endsWith(".p")) return false;
+			
+				File file = new File(dir, name);
+				
+				if (file.isDirectory()) return false;
+				
+				return true;
+			}
+		});
+	
+		MSPartialFile[] msPartialFiles = new MSPartialFile[file_list.length];
+		
+		for (int i = 0; i < file_list.length; i++) {
+			msPartialFiles[i] = recreate(new File(dir, file_list[i]));
+		}
+		
+		return msPartialFiles;
+	}
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	///////////////// OBJECT SYSTEM \\\\\\\\\\\\\\
 	
 	//private static final String filePath;
 	long offset = 0;
@@ -39,74 +111,54 @@ public class MSPartialFile {
 	File fileReference;
 	RandomAccessFile maskFile;
 	PartialFileHeader header;
+	
 
-	public MSPartialFile(String filename) throws IOException {
-		fileReference = new File(DIR+filename);
-		
-		
-		if (fileReference.exists()) {
-		maskFile = new RandomAccessFile(fileReference,"rw");
-		
-		if (mml == null) {
-			try {
-				mml = new RobustMML(maskFile.readUTF());
-			} catch (MMLException ex) {
-				throw new IOException("MML Meta data was badly formed. This file is corrupt.");
-			}
-		} else {
-			maskFile.writeUTF(mmlMetaData.toString());
-			mml = mmlMetaData;
-		}
-		
-		offset = maskFile.getFilePointer();
-	}
 	
-	public MSPartialFile(String filename, int blockSize, FileHash hashes) {
-		header = PartialFileHeader(filename, blockSize, hashes);
-	}
-	
-	public MSPartialFile(String filename) throws IOException {
-		this(fileName, null);
+	private MSPartialFile(RandomAccessFile maskFile, PartialFileHeader header) {
+		this.maskFile 	= maskFile;
+		this.header 	= header;
+		
+		this.offset 	= header.getOffset();
 	}
 	
 	public RobustMML getCopyOfMetaData() {
-		return new RobustMML(mml.copyMML());
+		return new RobustMML(header.toMML());
 	}
 	
 	public long getBlockSize() {
-		header.getBlockSize();
+		return header.getBlockSize();
 	}
 	
 	public FileHash[] getFileHashes() {
-		header.getFileHashes();
+		return header.getFileHashes();
 	}
 	
 	public String getFilename() {
-		header.getFilename();
+		return header.getFilename();
 	}
 	
-	public long getFirstUndownloadedBlock() {
+	public long getFirstUndownloadedBlock() throws IOException {
 		maskFile.seek(offset);
 		
 		final int blockSize = 64*1024;
 		
-		final byte[] buffer = byte[blockSize];
+		final byte[] buffer = new byte[blockSize];
 		
-		numberOfBlocks = (maskFile.size() / buffer.length);
+		int numberOfBlocks = (int)(maskFile.length() / buffer.length); //DANGER! UNSAFE CAST TO INT! THIS CODE CAN FAIL FOR LARGE FILE SIZES! (very, very large but whatever)
 		
 		for (long blockCounter = 0; blockCounter < numberOfBlocks + 1; blockCounter ++) {
-			currentBlockSize = (blockCounter >= numberOfBlocks ? currenmaskFile.size() % buffer.lengthtBlockSize : buffer.length);
+			int currentBlockSize = (int)(blockCounter >= numberOfBlocks ? maskFile.length() % buffer.length : buffer.length); //UNSAFE CAST
 			
 			if (currentBlockSize == 0) break;
 			
 			maskFile.readFully(buffer, 0, currentBlockSize);
 		
 			for (int i = 0 ; i < currentBlockSize; i++) {
-				if (buffer[i]#0xFF) return 8*(i + (blockCounter * blockSize);
+				if (buffer[i]!=0xFF) return 8*(i + (blockCounter * blockSize));
 			}
 		}
 		
-		return maskFile.size() - offset;
+		return maskFile.length() - offset;
 	}
 	
 	private boolean getBit(long bit) throws IOException {
@@ -140,26 +192,22 @@ public class MSPartialFile {
 			try {
 				filename = mml.get(FILENAME_PATH);
 				String string_blockSize = mml.get(BLOCK_SIZE_PATH);
-				String string_hashes = mml.get(BLOCK_SIZE_PATH);
 				
 				assertNotNull(filename); //throws IOException on null
-				assertNotNull(blockSize);
-				assertNotNull(hashes);
+				assertNotNull(string_blockSize);
 			
-				blockSize = Integer.parseInt(blockSize);
-				hashes = getHashesFromHeader(mml);
+				blockSize = Integer.parseInt(string_blockSize);
+				hashes = getHashesFromHeader(mml,HASHES_PATH);
 			} catch (NumberFormatException ex) {
-			
-			} catch (MMLException ex) {
-			
+				throw new IOException(""+ex);
 			}
 		}
 		
-		private FileHash getHashesfromHeader(RobustMML mml) throws IOException {
-			Stringp[] listOfEntries = mml.list(HASHES_PATH);
+		//private FileHash getHashesfromHeader(RobustMML mml) throws IOException {
+		//	Stringp[] listOfEntries = mml.list(HASHES_PATH);
 			
-			assertNotNull(listOfEntries);
-		}
+		//	assertNotNull(listOfEntries);
+		//}
 		
 		private void assertNotNull(Object o) throws IOException { if (o == null) throw new IOException ("Unexpect null object"); }
 		
@@ -169,37 +217,63 @@ public class MSPartialFile {
 			this.hashes = hashes;
 		}
 		
-		PartialFileHeader() {
-			this(new RobustMML());
+		public long getBlockSize() {
+			return blockSize;
 		}
 		
-		public long getBlockSize() {
-		
+		public String getFilename() {
+			return filename;
 		}
 		
 		public FileHash[] getFileHashes() {
+			FileHash[] temp_hashes = new FileHash[hashes.length];
 			
+			for (int i = 0; i < temp_hashes.length; i++) {
+				temp_hashes[i] = hashes[i];
+			}
+			
+			return temp_hashes;
 		}
 		
 		final String FILENAME_PATH = "/Filename";
 		final String BLOCK_SIZE_PATH = "/Block Size Path";
 		final String HASHES_PATH = "/Hashes/";
 		
-		public MML toMML() {
+		public com.myster.mml.MML toMML() {
 			RobustMML mml = new RobustMML();
 			
 			mml.put(FILENAME_PATH, filename);
-			mml.put(BLOCK_SIZE_PATH, blockSize);
+			mml.put(BLOCK_SIZE_PATH, ""+blockSize);
 			
-			addhashesToHeader(hashes, mml, HASHES_PATH);
+			addHashesToHeader(hashes, mml, HASHES_PATH);
+			
+			return mml;
+		}
+		
+		public byte[] toBytes() {
+			ByteArrayOutputStream b_out = new ByteArrayOutputStream();
+			
+			DataOutputStream out = new DataOutputStream(b_out);
+			
+			try {
+				out.writeUTF(toMML().toString());
+			} catch (IOException ex) {
+				throw new com.general.util.UnexpectedError("This line should not throw and error.");
+			}
+			
+			return b_out.toByteArray(); // lots of "to" methods here.
+		}
+		
+		public int getOffset() {
+			return toBytes().length;
 		}
 	}
 	
 	
 	
 	//Hash encoding/decoding
-	final String HASH_NAME_PATH = "Hash Name"
-	final String HASH_AS_STRING	= "Hash Value"
+	static final String HASH_NAME_PATH 	= "Hash Name";
+	static final String HASH_AS_STRING	= "Hash Value";
 	
 	private static void addHashesToHeader(FileHash[] hashes, RobustMML mml, String path) {
 		for (int i = 0 ; i < hashes.length; i++) {
@@ -208,20 +282,20 @@ public class MSPartialFile {
 			String hashName = hash.getHashName();
 			String hashAsString = SimpleFileHash.asHex(hash.getBytes());
 			
-			String workingPath = path+i+"/"
+			String workingPath = path+i+"/";
 			
 			mml.put(workingPath+HASH_NAME_PATH, hashName);
 			mml.put(workingPath+HASH_AS_STRING, hashAsString);
 		}
 	}
 	
-	private static FileHash[] getHashesFromHeader(FileHash[] hashes, RobutsMML mml, String path) throws IOException {
-		String itemsToDecode[] = mml.list(path);
-		if (itemsToDecode == null) throwIOException("itemsTodecode is null");
+	private static FileHash[] getHashesFromHeader(RobustMML mml, String path) throws IOException {
+		java.util.Vector itemsToDecode = mml.list(path);
+		if (itemsToDecode == null) throwIOException("itemsToDecode is null");
 		
-		FileHash[] hashes = new FileHash[itemsToDecode.length];
+		FileHash[] hashes = new FileHash[itemsToDecode.size()];
 		
-		for (int i = 0; i < itemsToDecode.length; i++) {
+		for (int i = 0; i < itemsToDecode.size(); i++) {
 			String workingPath = path + i + "/";
 		
 			String hashName = mml.get(workingPath + HASH_NAME_PATH);
