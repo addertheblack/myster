@@ -994,6 +994,10 @@ Work on DEV 8:
 		-> Changed the tabs in the server stats so they actually look like tabs (thanx rev)
 		-> Made " - Myster" appear after every window name in Linux (Exception Progress windows)
 		-> Made it so that 1 person cannot hog all the download spots.
+		-> Fixed a freeze that happened sometimes when opening a new download.
+		-> Fixed a problem where the disconnect button wouldn't disconnect a user who
+				was downloading from you.
+		
 		
 		bdaba746d51978dbe46844c23f566332
 (Red List)

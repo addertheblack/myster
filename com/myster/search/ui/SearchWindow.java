@@ -43,7 +43,7 @@ public class SearchWindow extends MysterFrame implements SearchResultListener, S
 	
 	
 	private final int BUCKETSIZE=100;
-	private final int XDEFAULT=600;
+	private final int XDEFAULT=640;
 	private final int YDEFAULT=400;
 	
 	private static final String PREF_LOCATION_KEY="Search Window";
@@ -60,7 +60,7 @@ public class SearchWindow extends MysterFrame implements SearchResultListener, S
 		setLayout(gblayout);
 		gbconstrains=new GridBagConstraints();
 		gbconstrains.fill=GridBagConstraints.BOTH;
-		gbconstrains.insets=new Insets(2,2,2,2);
+		gbconstrains.insets=new Insets(5,5,5,5);
 		gbconstrains.ipadx=1;
 		gbconstrains.ipady=1;
 		

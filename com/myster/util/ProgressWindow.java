@@ -35,22 +35,13 @@ public class ProgressWindow extends Frame {
 		
 		addProgressPanel();
 		
-		addComponentListener(new ComponentAdapter() {
-			public void componentShown(ComponentEvent e) {
-				//((ProgressWindow)(e.getComponent())).resize();
-			}
-			
-			public void componentHidden(ComponentEvent e) {
-				
-			}
-		});
-		
 		setResizable(false);
 	}
 	
-	public void show() {
+	public synchronized void show() {
 		super.show();
 		resize();
+		doLayout();
 	}
 	
 	protected synchronized void resize() {
