@@ -12,6 +12,7 @@ import com.myster.tracker.IPListManager;
 import com.myster.tracker.IPListManagerSingleton;
 import com.myster.util.MysterThread;
 import com.myster.util.OpenConnectionHandler;
+import com.myster.util.TypeChoice;
 import com.myster.ui.MysterFrame;
 import com.myster.type.TypeDescription;
 import com.myster.type.TypeDescriptionList;
@@ -22,7 +23,7 @@ public class TrackerWindow extends MysterFrame {
 	private MysterThread updater;
 	
 	private MCList list;
-	private Choice choice;
+	private TypeChoice choice;
 
 	GridBagLayout gblayout;
 	GridBagConstraints gbconstrains;
@@ -51,15 +52,7 @@ public class TrackerWindow extends MysterFrame {
 		gbconstrains.ipady=1;
 		
 		//init objects
-		choice=new Choice();
-		{
-			//init choice
-			TypeDescription[] t = TypeDescriptionList.getDefault().getEnabledTypes();
-			
-			for (int i=0; i<t.length; i++) {
-				choice.add(""+t[i].getDescription()+" ("+t[i].getType()+")");
-			}
-		}
+		choice = new TypeChoice();
 		
 		list=new MCList(7,true,this);
 	
@@ -155,10 +148,7 @@ public class TrackerWindow extends MysterFrame {
 	*/
 	
 	public synchronized MysterType getType() { 
-		int index=choice.getSelectedIndex();
-		
-		TypeDescription[] t = TypeDescriptionList.getDefault().getEnabledTypes();
-		return t[index].getType(); //BAD idea!
+		return choice.getType();
 	}
 	
 	Vector itemsinlist;

@@ -34,7 +34,7 @@ public class TypeChoice extends Choice {
 	private void addItemsToChoice() {
 		types = TypeDescriptionList.getDefault().getEnabledTypes();
 		for (int i = 0; i < types.length; i++) {
-			add(types[i].getType()+" ("+types[i].getDescription()+")");
+			add(types[i].getDescription()+" ("+types[i].getType()+")");
 		}
 	}
 }
