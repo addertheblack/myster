@@ -56,7 +56,7 @@ public class Myster{
 		
 		//Locale.setDefault(new Locale(Locale.JAPANESE.getLanguage(),Locale.JAPAN.getCountry()));
 		try {
-			resources = ResourceBundle.getBundle("properties.Myster");
+			resources = ResourceBundle.getBundle("com.properties.Myster");
 		}
 		catch (MissingResourceException e) {
 			System.err.println("resources not found");
