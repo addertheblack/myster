@@ -255,11 +255,12 @@ public class Myster {
 					System.out.println(""+
 							com.myster.client.datagram.StandardDatagramSuite.getServerStats(
 							new MysterAddress("127.0.0.1")));
-							
-					System.out.println(""+
-							com.myster.client.datagram.StandardDatagramSuite.getFileStats(
-							new MysterFileStub(new MysterAddress("127.0.0.1"),
-								types[0], ""+searchResults.elementAt(0))));
+					
+					//Only works if MPG3 is enabled
+					//System.out.println(""+
+					//		com.myster.client.datagram.StandardDatagramSuite.getFileStats(
+					//		new MysterFileStub(new MysterAddress("127.0.0.1"),
+					//			types[0], ""+searchResults.elementAt(0))));
 								
 					System.out.println(""+
 							com.myster.client.datagram.StandardDatagramSuite.getFileFromHash(

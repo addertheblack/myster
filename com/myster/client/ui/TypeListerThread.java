@@ -15,12 +15,14 @@ import java.awt.event.*;
 import java.awt.*;
 import java.net.*;
 import java.io.*;
-import com.myster.util.*;
-import com.myster.net.MysterSocket;
+
+import com.myster.util.Sayable;
+import com.myster.util.MysterThread;
 import com.myster.client.stream.StandardSuite;
+import com.myster.net.MysterSocket;
 import com.myster.net.MysterAddress;
-import java.util.Vector;
 import com.myster.net.MysterSocketFactory;
+import com.myster.type.MysterType;
 
 
 public class TypeListerThread extends MysterThread {
@@ -59,11 +61,11 @@ public class TypeListerThread extends MysterThread {
 			try {
 				msg.say("Requesting File Type List...");
 				
-				Vector typeList=StandardSuite.getTypes(socket);
+				MysterType[] typeList=StandardSuite.getTypes(socket);
 				
 				msg.say("Adding Items...");
-				for (int i=0; i<typeList.size(); i++){
-					container.addItemToTypeList(typeList.elementAt(i).toString());
+				for (int i=0; i<typeList.length; i++){
+					container.addItemToTypeList(typeList[i].toString());
 				}
 				
 				msg.say("Idle...");

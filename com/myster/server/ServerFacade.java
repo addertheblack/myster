@@ -88,6 +88,7 @@ public class ServerFacade {
 		opp.addConnectionSection(new com.myster.server.stream.FileInfoLister());
 		opp.addConnectionSection(new com.myster.server.stream.FileByHash());
 		opp.addConnectionSection(new com.myster.server.stream.MultiSourceSender());
+		opp.addConnectionSection(new com.myster.server.stream.FileTypeListerII());
 	}
 	
 	private static void setDownloadSpots(int spots) {

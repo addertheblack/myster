@@ -77,7 +77,7 @@ public class StandardSuite {
 		return ipList;
 	}
 
-	public static Vector getTypes(MysterAddress ip) throws IOException {
+	public static MysterType[] getTypes(MysterAddress ip) throws IOException {
 		MysterSocket socket=null;
 		try {
 			socket=MysterSocketFactory.makeStreamConnection(ip);
@@ -87,8 +87,26 @@ public class StandardSuite {
 		}
 	}
 
+	public static MysterType[] getTypes(MysterSocket socket) throws IOException {
+		try {
+			socket.out.writeInt(74);
 
-	public static Vector getTypes(MysterSocket socket) throws IOException {
+			checkProtocol(socket.in);
+		
+			int numberOfTypes = socket.in.readInt();
+			MysterType[] mysterTypes = new MysterType[numberOfTypes];
+			
+			for (int i = 0 ; i < numberOfTypes; i++) {
+				mysterTypes[i] = new MysterType(socket.in.readInt());
+			}
+
+			return mysterTypes;
+		} catch (UnknownProtocolException ex) {
+			return getTypesVersion1Protocol(socket);
+		}
+	}
+	
+	private static MysterType[] getTypesVersion1Protocol(MysterSocket socket) throws IOException {
 		Vector container=new Vector();
 	
 		socket.out.writeInt(79);
@@ -96,10 +114,19 @@ public class StandardSuite {
 		checkProtocol(socket.in);
 
 		for (String temp=socket.in.readUTF(); !temp.equals(""); temp=socket.in.readUTF()) {
-			container.addElement(temp);
+			try {
+				container.addElement(new MysterType(temp));
+			} catch (com.myster.type.MysterTypeException ex) {
+				throw new ProtocolException("Server sent a malformed MysterType");
+			}
 		}
 		
-		return container;
+		MysterType[] types = new MysterType[container.size()];
+		for (int i = 0; i < types.length; i++) {
+			types[i] = (MysterType) container.elementAt(i);
+		}
+		
+		return types;
 	}
 
 	public static RobustMML getServerStats(MysterSocket socket) throws IOException {

@@ -1014,7 +1014,9 @@ Work on DEV 8:
 		-> Fixed up the Search window bar a bit.
 		-> Made it so the search button no longer changes when button gets set to start/stop.
 		-> Switched over the tracker choice box to a TypeChoice object (finally)
-		
+		-> Added all the UDP client and server sections
+		-> Moved ove the top ten conneciton section to UDP / TCP.
+		-> Moved over the get type list to UDP / TCP.
 		
 		bdaba746d51978dbe46844c23f566332
 (Red List)
@@ -1022,4 +1024,4 @@ to do:
 	Need to fix bug with caching MP3 ID3 info
 	Need to fix stupid none batching behavior (MSDownload is slower than it should be)
 	Make it so that people over the queue limit get some sort of banner telling them they are over the queue limit.
-	Write a new file type lsiter that uses the ints and not strings... (With connection section ID of 74)
+	Write a new file type lsiter that uses the ints and not strings... (With connection section ID of 74) (TCP!!)
