@@ -73,12 +73,7 @@ public final class AsyncDatagramSocket {
                 dsocket.receive(bufferPacket);
 
                 if (portListener != null) {
-                    Util.invoke(new Runnable() {
-                        public void run() {
-                            portListener.packetReceived(new ImmutableDatagramPacket(
-                                    bufferPacket));
-                        }
-                    });
+                    Util.invoke(new PrivateRunnable(new ImmutableDatagramPacket(bufferPacket)));
                 }
             } catch (InterruptedIOException ex) {
                 return;
@@ -86,15 +81,12 @@ public final class AsyncDatagramSocket {
             counter++;
 
         }
-        //if (counter>1) System.out.println("Looped "+counter+" times
-        // already.");
     }
 
     private void doSendNewPackets() throws IOException {
         int counter = 0;
         while (queue.getSize() > 0 && counter < 5) {
-            ImmutableDatagramPacket p = (ImmutableDatagramPacket) (queue
-                    .removeFromHead());
+            ImmutableDatagramPacket p = (ImmutableDatagramPacket) (queue.removeFromHead());
 
             if (p != null) {
                 dsocket.send(p.getDatagramPacket());
@@ -145,6 +137,18 @@ public final class AsyncDatagramSocket {
 
         public void end() {
             endFlag = true;
+        }
+    }
+
+    private class PrivateRunnable implements Runnable {
+        ImmutableDatagramPacket packet;
+
+        PrivateRunnable(ImmutableDatagramPacket packet) {
+            this.packet = packet;
+        }
+
+        public void run() {
+            portListener.packetReceived(packet);
         }
     }
 }

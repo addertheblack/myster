@@ -2,6 +2,7 @@ package com.general.util;
 
 import java.awt.AWTEvent;
 import java.awt.Component;
+import java.awt.EventQueue;
 import java.awt.Frame;
 import java.awt.Image;
 import java.awt.MediaTracker;
@@ -99,13 +100,13 @@ public class Util { //This code was taken from an Apple Sample Code package,
 
         for (int i = 0; i < hash.length(); i += 2) {
             bytes[i / 2] = (byte) (Short.parseShort(hash.substring(i, i + 2), 16)); //hopefully
-                                                                                    // the
-                                                                                    // compiler
-                                                                                    // will
-                                                                                    // convert
-                                                                                    // "/2"
-                                                                                    // into
-                                                                                    // >> 1
+            // the
+            // compiler
+            // will
+            // convert
+            // "/2"
+            // into
+            // >> 1
         }
 
         return bytes;
@@ -122,25 +123,27 @@ public class Util { //This code was taken from an Apple Sample Code package,
                 tool.getScreenSize().height / 2 - frame.getSize().height / 2 + yOffset);
     }
 
-    
-    
-    
-    /***************************** CRAMMING STUFF ON THE EVENT THREAD SUB SYSTEM START **********************/
+    /**
+     * *************************** CRAMMING STUFF ON THE EVENT THREAD SUB SYSTEM
+     * START *********************
+     */
     private static Component listener = new SpecialComponent();
 
     /**
      * runs the current runnable on the event thread.
      * 
-     * @param runnable - code to run on event thread.
+     * @param runnable -
+     *            code to run on event thread.
      */
     public static void invoke(final Runnable runnable) {
+        //EventQueue.invokeLater(runnable);
         Toolkit.getDefaultToolkit().getSystemEventQueue().postEvent(
                 new SpecialEvent(runnable, listener));
     }
-    
+
     public static void invokeAndWait(final Runnable runnable) throws InterruptedException {
         final Semaphore sem = new Semaphore(0);
-        
+
         Toolkit.getDefaultToolkit().getSystemEventQueue().postEvent(
                 new SpecialEvent(runnable, listener) {
                     public void run() {
@@ -151,34 +154,51 @@ public class Util { //This code was taken from an Apple Sample Code package,
                         }
                     }
                 });
-        
+
         sem.getLock();
     }
-    
+
     /*
      * We can use this event to put our runnable object into.
      */
     private static class SpecialEvent extends ActionEvent {
         private final Runnable runnable;
-        
+
+        private final long startTime = System.currentTimeMillis();
+
         public SpecialEvent(Runnable runnable, Component source) {
             super(source, ActionEvent.ACTION_PERFORMED, "");
             this.runnable = runnable;
         }
-        
+
         public void run() {
             runnable.run();
+            if (System.currentTimeMillis() - startTime > 500) {
+                try {
+                    throw new Exception("Took too long");
+                } catch (Exception ex) {
+                    //System.out.println("This thread took too long -> ");
+                    ex.printStackTrace();
+                }
+            }
         }
     }
-    
+
     private static class SpecialComponent extends Component {
         public SpecialComponent() {
             enableEvents(ActionEvent.ACTION_EVENT_MASK);
         }
-        
+
         public void processEvent(AWTEvent e) {
-            ((SpecialEvent)e).run();
+            ((SpecialEvent) e).run();
+        }
+        
+        protected AWTEvent coalesceEvents(AWTEvent existingEvent, AWTEvent newEvent) {
+            return null; //don't delete my freaking events!
         }
     }
-    /***************************** CRAMMING STUFF ON THE EVENT THREAD SUB SYSTEM END**********************/
+    /**
+     * *************************** CRAMMING STUFF ON THE EVENT THREAD SUB SYSTEM
+     * END*********************
+     */
 }

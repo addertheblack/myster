@@ -88,7 +88,6 @@ public class ProgressBar extends Panel {
     
     private synchronized void stopTimer() {
     	updaterTimer = null;
-    	repaint();
     }
     
     private synchronized void assertTimer() {
