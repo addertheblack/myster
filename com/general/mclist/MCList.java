@@ -1,18 +1,14 @@
+package com.general.mclist;
 
-package com.general.jmclist;
-
-import java.awt.Component;
+import java.awt.Container;
 import java.awt.Font;
-
-import com.general.mclist.MCListEventListener;
-import com.general.mclist.MCListItemInterface;
 
 public interface MCList {
     public void setNumberOfColumns(int c);
     public void setColumnName(int columnnumber, String name);
     public void setColumnWidth(int index, int size);
     public void sortBy(int column);
-    public Component getPane();
+    public Container getPane();
     public void addItem(MCListItemInterface m);
     public void addItem(MCListItemInterface[] m);
     public void setSorted(boolean isSorted);
@@ -37,4 +33,5 @@ public interface MCList {
     public void reverseSortOrder();
     public int length();
     public Font getFont();
+    public void repaint();
 }

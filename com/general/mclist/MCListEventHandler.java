@@ -20,7 +20,7 @@ import java.util.Vector;
 
 public class MCListEventHandler implements MouseListener, MouseMotionListener, KeyListener {
     //To Access "Component" features...
-    private MCList callback;
+    private AWTMCList callback;
 
     //Double click time
     private static final int DCTIME = 500; //Half a second double click time.
@@ -43,7 +43,7 @@ public class MCListEventHandler implements MouseListener, MouseMotionListener, K
     
     private static final int DIRECTION_DOWN = 1;
 
-    public MCListEventHandler(MCList c) {
+    public MCListEventHandler(AWTMCList c) {
         callback = c;
         vector = new Vector(10);
     }
@@ -173,7 +173,7 @@ public class MCListEventHandler implements MouseListener, MouseMotionListener, K
         // Auto scroll will move the scroll pane around whenever you drag
         // your mouse off the imeadiate MCList area
         //Setup:
-        ScrollPane pane = callback.getPane();
+        ScrollPane pane = (ScrollPane)callback.getPane();
         Point currentLoc = pane.getScrollPosition();
         Dimension currentSize = pane.getViewportSize();
 
@@ -272,10 +272,10 @@ public class MCListEventHandler implements MouseListener, MouseMotionListener, K
             pageScrollViewport(DIRECTION_UP);
             break;
         case KeyEvent.VK_HOME:
-            callback.getPane().setScrollPosition(callback.getPane().getScrollPosition().x, 0);
+            ((ScrollPane)callback.getPane()).setScrollPosition(((ScrollPane)callback.getPane()).getScrollPosition().x, 0);
             break;
         case KeyEvent.VK_END:
-            callback.getPane().setScrollPosition(callback.getPane().getScrollPosition().x,
+            ((ScrollPane)callback.getPane()).setScrollPosition(((ScrollPane)callback.getPane()).getScrollPosition().x,
                     callback.getSize().height);
             break;
         default:
@@ -312,7 +312,7 @@ public class MCListEventHandler implements MouseListener, MouseMotionListener, K
     }
 
     private void pageScrollViewport(int direction) {
-        ScrollPane pane = callback.getPane();
+        ScrollPane pane = (ScrollPane)callback.getPane();
         Point location = pane.getScrollPosition();
         int newViewportYLocation = location.y + (direction * pane.getViewportSize().height);
         pane.setScrollPosition(location.x, newViewportYLocation);

@@ -13,6 +13,7 @@ import java.awt.event.WindowEvent;
 import java.util.Vector;
 
 import com.general.mclist.MCList;
+import com.general.mclist.MCListFactory;
 import com.general.mclist.MCListItemInterface;
 import com.general.mclist.Sortable;
 import com.general.mclist.SortableLong;
@@ -64,7 +65,7 @@ public class TrackerWindow extends MysterFrame {
         //init objects
         choice = new TypeChoice();
 
-        list = new MCList(7, true, this);
+        list = MCListFactory.buildMCList(7, true, this);
 
         //add Objects
         addComponent(choice, 0, 0, 1, 1, 99, 0);

@@ -80,6 +80,7 @@ public class ProgressWindow extends MysterFrame {
         int xSize = X_SIZE + insets.right + insets.left;
         int ySize = AD_HEIGHT + (Y_SIZE * progressPanels.size()) + insets.top + insets.bottom;
         int counter = 0;
+        setSize(xSize, ySize);
         while ((getSize().width != xSize) || (getSize().height != ySize)) {
             setSize(xSize, ySize);
             try {

@@ -10,6 +10,7 @@ package com.general.mclist;
 
 import java.awt.Adjustable;
 import java.awt.Component;
+import java.awt.Container;
 import java.awt.Dimension;
 import java.awt.Font;
 import java.awt.Graphics;
@@ -54,7 +55,7 @@ public class AWTMCList extends Panel implements MCList {
 
     public static final int INTERNAL_PADDING = 1;
 
-    public MCList(int numberofcolumns, boolean singleselect, Component c) {
+    public AWTMCList(int numberofcolumns, boolean singleselect, Component c) {
         this.rowTheme = new DefaultMCRowTheme(c);
 
         header = new MCListHeader(this, numberofcolumns);
@@ -110,7 +111,7 @@ public class AWTMCList extends Panel implements MCList {
         repaint();
     }
 
-    public ScrollPane getPane() {
+    public Container getPane() {
         return pane;
     }
 
@@ -203,7 +204,7 @@ public class AWTMCList extends Panel implements MCList {
 
         RowStats rowstats = header.getRowStats();
 
-        Dimension dimension = getPane().getViewportSize();
+        Dimension dimension = ((ScrollPane)getPane()).getViewportSize();
 
         for (int i = c1; i <= c2; i++) {
             rowTheme.paint(g, list.getElement(i), rowstats, offsetcounter, x1, i, dimension);

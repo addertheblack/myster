@@ -28,6 +28,7 @@ import com.general.mclist.GenericMCListItem;
 import com.general.mclist.MCList;
 import com.general.mclist.MCListEvent;
 import com.general.mclist.MCListEventAdapter;
+import com.general.mclist.MCListFactory;
 import com.general.mclist.Sortable;
 import com.general.mclist.SortableString;
 import com.general.util.AnswerDialog;
@@ -139,11 +140,11 @@ public class ClientWindow extends MysterFrame implements Sayable {
         IP = new TextField("Enter an IP here");
         IP.setEditable(true);
 
-        fileTypeList = new MCList(1, true, this);
+        fileTypeList = MCListFactory.buildMCList(1, true, this);
         fileTypeList.sortBy(-1);
         fileTypeList.setColumnName(0, "Type");
-
-        fileList = new MCList(1, true, this);
+        
+        fileList = MCListFactory.buildMCList(1, true, this);
         fileList.sortBy(-1);
         fileList.setColumnName(0, "Files");
         //fileList.setColumnWidth(0, 300);
@@ -274,7 +275,7 @@ public class ClientWindow extends MysterFrame implements Sayable {
         if (selectedIndex != -1)
             return new MysterType(((String) (fileTypeList.getItem(selectedIndex))).getBytes());
 
-        return new MysterType(new byte[] { (byte) 'M', (byte) 'P', (byte) 'G', (byte) '3' });
+        return null;
     }
 
     public String getCurrentFile() {

@@ -9,18 +9,19 @@ package com.myster.server.ui;
 
 import java.awt.Button;
 import java.awt.Color;
+import java.awt.Container;
 import java.awt.Dimension;
 import java.awt.Graphics;
 import java.awt.GridLayout;
 import java.awt.Image;
 import java.awt.Panel;
-import java.awt.ScrollPane;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 
 import com.general.mclist.MCList;
 import com.general.mclist.MCListEvent;
 import com.general.mclist.MCListEventListener;
+import com.general.mclist.MCListFactory;
 import com.general.mclist.MCListItemInterface;
 import com.general.util.Timer;
 import com.myster.client.ui.ClientWindow;
@@ -31,6 +32,7 @@ import com.myster.server.event.ConnectionManagerListener;
 import com.myster.server.event.ServerDownloadDispatcher;
 import com.myster.server.event.ServerEventManager;
 import com.myster.server.stream.FileSenderThread;
+
 
 
 public class DownloadInfoPanel extends Panel {
@@ -53,9 +55,9 @@ public class DownloadInfoPanel extends Panel {
     public void inited() {
         setLayout(null);
 
-        list = new MCList(6, false, this);
+        list = MCListFactory.buildMCList(6, false, this);
 
-        ScrollPane p = list.getPane();
+        Container p = list.getPane();
 
         p.setSize(590, 300);
         p.setLocation(5, 10);
@@ -69,14 +71,12 @@ public class DownloadInfoPanel extends Panel {
         list.setColumnName(2, "Status");
         list.setColumnName(3, "Progress");
         list.setColumnName(4, "Size");
-        list.setColumnName(5, "???");
 
         list.setColumnWidth(0, 150);
         list.setColumnWidth(1, 215);
         list.setColumnWidth(2, 70);
         list.setColumnWidth(3, 70);
         list.setColumnWidth(4, 70);
-        list.setColumnWidth(5, 100);
 
         list.addMCListEventListener(chandler.new DownloadStatsMCListEventHandler());
 

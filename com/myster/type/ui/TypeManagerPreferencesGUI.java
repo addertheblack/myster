@@ -1,11 +1,12 @@
 package com.myster.type.ui;
 
-import java.awt.ScrollPane;
+import java.awt.Container;
 
 import com.general.mclist.GenericMCListItem;
 import com.general.mclist.MCList;
 import com.general.mclist.MCListEvent;
 import com.general.mclist.MCListEventListener;
+import com.general.mclist.MCListFactory;
 import com.general.mclist.Sortable;
 import com.general.mclist.SortableBoolean;
 import com.general.mclist.SortableString;
@@ -50,7 +51,7 @@ public class TypeManagerPreferencesGUI extends PreferencesPanel {
         message.setSize(STD_XSIZE, HEADER_Y);
         add(message);
 
-        mcList = new MCList(2, true, this);
+        mcList = MCListFactory.buildMCList(2, true, this);
 
         mcList.setColumnName(0, "Type");
         mcList.setColumnName(1, "Enabled?");
@@ -58,7 +59,7 @@ public class TypeManagerPreferencesGUI extends PreferencesPanel {
         mcList.setColumnWidth(0, 300);
         mcList.setColumnWidth(1, 100);
 
-        ScrollPane pane = mcList.getPane();
+        Container pane = mcList.getPane();
         pane.setLocation(0, HEADER_Y);
         pane.setSize(STD_XSIZE, STD_YSIZE - HEADER_Y);
         add(pane);

@@ -1,8 +1,9 @@
-package com.general.jmclist;
+package com.general.mclist;
 
 import java.awt.BorderLayout;
 import java.awt.Color;
 import java.awt.Component;
+import java.awt.Container;
 import java.awt.Graphics;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
@@ -21,11 +22,6 @@ import javax.swing.table.AbstractTableModel;
 import javax.swing.table.JTableHeader;
 import javax.swing.table.TableCellRenderer;
 
-import com.general.mclist.GenericMCListItem;
-import com.general.mclist.MCListEventListener;
-import com.general.mclist.MCListItemInterface;
-import com.general.mclist.Sortable;
-import com.general.mclist.SortableString;
 import com.sun.java.util.collections.Iterator;
 import com.sun.java.util.collections.List;
 import com.sun.java.util.collections.Vector;
@@ -39,10 +35,18 @@ public class JMCList extends JTable implements MCList {
     private List listeners;
 
     public JMCList() {
+        this(1, true);
+    }
+
+    /**
+     * @param numberOfColumns
+     * @param singleselect
+     */
+    public JMCList(int numberOfColumns, boolean singleselect) {
+        listeners = new Vector();
         setModel(new MCListTableModel());
         mScrollPane = new JScrollPane(this);
 
-        setAutoResizeMode(AUTO_RESIZE_OFF);
         setSelectionModel(new MCListSelectionModel(getMCTableModel()));
 
         setColumnSelectionAllowed(false);
@@ -55,8 +59,6 @@ public class JMCList extends JTable implements MCList {
                     return;
                 int selectedColumn = getMCTableModel().getSortByIndex();
                 int clickedColumn = header.columnAtPoint((e.getPoint()));
-                System.out.println("Clicked column: " + clickedColumn + " selected columns -> "
-                        + selectedColumn);
                 if (clickedColumn == selectedColumn) {
                     reverseSortOrder();
                 } else {
@@ -73,7 +75,7 @@ public class JMCList extends JTable implements MCList {
                 if (e.getClickCount() == 2) {
                     for (Iterator iterator = listeners.iterator(); iterator.hasNext();) {
                         MCListEventListener handler = (MCListEventListener) iterator.next();
-                        //handler.doubleClick(new MCListEvent(JMCList.this));
+                        handler.doubleClick(new MCListEvent(JMCList.this));
                     }
                 }
             }
@@ -82,14 +84,18 @@ public class JMCList extends JTable implements MCList {
         getSelectionModel().addListSelectionListener(new ListSelectionListener() {
 
             public void valueChanged(ListSelectionEvent e) {
+                if (listeners == null)
+                    return;
                 for (Iterator iterator = listeners.iterator(); iterator.hasNext();) {
                     MCListEventListener handler = (MCListEventListener) iterator.next();
-//                    handler.unselectItem(new MCListEvent(JMCList.this));
-//                    handler.selectItem(new MCListEvent(JMCList.this));
+                    handler.unselectItem(new MCListEvent(JMCList.this));
+                    handler.selectItem(new MCListEvent(JMCList.this));
                 }
             }
-            
+
         });
+
+        setNumberOfColumns(numberOfColumns);
     }
 
     private MCListTableModel getMCTableModel() {
@@ -105,6 +111,12 @@ public class JMCList extends JTable implements MCList {
         String[] columnarray = new String[numberOfColumns];
         for (int i = 0; i < numberOfColumns; i++)
             columnarray[i] = "unnamed";
+
+        if (numberOfColumns == 1) {
+            setAutoResizeMode(JTable.AUTO_RESIZE_ALL_COLUMNS);
+        } else {
+            setAutoResizeMode(AUTO_RESIZE_OFF);
+        }
         getMCTableModel().setColumnIdentifiers(columnarray);
     }
 
@@ -115,6 +127,8 @@ public class JMCList extends JTable implements MCList {
      */
     public void setColumnName(int columnNumber, String name) {
         getMCTableModel().setColumnName(columnNumber, name);
+        getTableHeader().getColumnModel().getColumn(columnNumber).setHeaderValue(name);
+        getTableHeader().repaint();
     }
 
     /*
@@ -141,7 +155,7 @@ public class JMCList extends JTable implements MCList {
      * 
      * @see com.general.jmclist.MCList#getPane()
      */
-    public Component getPane() {
+    public Container getPane() {
         return mScrollPane;
     }
 
@@ -204,6 +218,8 @@ public class JMCList extends JTable implements MCList {
      * @see com.general.jmclist.MCList#select(int)
      */
     public void select(int i) {
+        if (!(i >= 0 && i < getRowCount()))
+            return;
         getMCListSelectionModel().addSelectionInterval(i, i);
     }
 
@@ -432,8 +448,6 @@ class MCListTableModel extends AbstractTableModel {
 
     public void setColumnName(int columnIndex, String columnName) {
         columnNames.setElementAt(columnName, columnIndex);
-
-        fireTableStructureChanged();
     }
 
     /**
@@ -484,7 +498,7 @@ class MCListTableModel extends AbstractTableModel {
      */
     public void clearAll() {
         rowValues = new Vector();
-        fireTableStructureChanged();
+        fireTableRowsDeleted(0, rowValues.size());
     }
 
     /**
@@ -511,7 +525,7 @@ class MCListTableModel extends AbstractTableModel {
         for (int i = rowValues.size(); i >= 0; i++) {
             rowValues.removeElementAt(i);
         }
-        fireTableStructureChanged();
+        fireTableRowsDeleted(0, rowValues.size());
     }
 
     public void setColumnIdentifiers(String[] names) {
@@ -525,6 +539,7 @@ class MCListTableModel extends AbstractTableModel {
     public void addRow(MCListItemInterface item) {
         rowValues.add(item);
         fireTableRowsInserted(rowValues.size() - 1, rowValues.size() - 1);
+        resort();
     }
 
     public void addRows(MCListItemInterface[] items) {
@@ -532,6 +547,7 @@ class MCListTableModel extends AbstractTableModel {
             rowValues.add(items[i]);
         }
         fireTableRowsInserted(rowValues.size() - items.length, rowValues.size() - 1);
+        resort();
     }
 
     /*
@@ -630,7 +646,6 @@ class MCListSelectionModel implements ListSelectionModel {
      */
     public void setSelectionInterval(int index0, int index1) {
         clearSelection();
-        System.out.println("index0: " + index0 + " index 1:" + index1);
         addSelectionInterval(index0, index1);
         setAnchorSelectionIndex(index0);
         fireValueChanged();

@@ -14,9 +14,10 @@ import java.awt.FontMetrics;
 import java.awt.Graphics;
 import java.awt.Image;
 import java.awt.Panel;
+import java.awt.ScrollPane;
 
 public class MCListHeader extends Panel {
-    private MCList callback;
+    private AWTMCList callback;
 
     private static final int HEIGHT = 17;
 
@@ -39,7 +40,7 @@ public class MCListHeader extends Panel {
 
     private static final int MIN_COLUMN_WIDTH = 15;
 
-    public MCListHeader(MCList c, int numberOfColumns) {
+    public MCListHeader(AWTMCList c, int numberOfColumns) {
         callback = c;
         this.numberOfColumns = numberOfColumns;
         columnarray = new String[numberOfColumns];
@@ -210,7 +211,7 @@ public class MCListHeader extends Panel {
     }
 
     public RowStats getRowStats() {
-        return new RowStats(getColumnWidthArray(), MCList.PADDING, MCList.INTERNAL_PADDING);
+        return new RowStats(getColumnWidthArray(), AWTMCList.PADDING, AWTMCList.INTERNAL_PADDING);
     }
 
     public Dimension getMinimumSize() {
@@ -218,10 +219,10 @@ public class MCListHeader extends Panel {
     }
 
     public Dimension getPreferredSize() {
-        int plength = MCList.PADDING;
+        int plength = AWTMCList.PADDING;
         for (int i = 0; i < numberOfColumns; i++) {
-            plength += Math.min(getPreferredColumnWidth(i), getColumnWidth(i)) + MCList.PADDING + 2
-                    * MCList.INTERNAL_PADDING;
+            plength += Math.min(getPreferredColumnWidth(i), getColumnWidth(i)) + AWTMCList.PADDING + 2
+                    * AWTMCList.INTERNAL_PADDING;
         }
 
         return new Dimension(plength, getHeight());
@@ -256,14 +257,14 @@ public class MCListHeader extends Panel {
      * unspecified use the header title sting width else use the value form the column width array
      */
     public int getColumnWidth(int i) {
-        return (numberOfColumns == 1 ? callback.getPane().getViewportSize().width
-                - (2 * MCList.PADDING) : getPreferredColumnWidth(i));
+        return (numberOfColumns == 1 ? ((ScrollPane)callback.getPane()).getViewportSize().width
+                - (2 * AWTMCList.PADDING) : getPreferredColumnWidth(i));
     }
 
     private int getPreferredColumnWidth(int i) {
         return (columnWidthArray[i] == -1 ? getFontMetrics(getFont()).stringWidth(
                 columnarray[i] + 1)
-                + MCList.PADDING : columnWidthArray[i]);
+                + AWTMCList.PADDING : columnWidthArray[i]);
     }
 
     public int[] getColumnWidthArray() {
@@ -290,7 +291,7 @@ public class MCListHeader extends Panel {
     }
 
     private int getTotalPadding() {
-        return 2 * MCList.PADDING + 2 * MCList.INTERNAL_PADDING;
+        return 2 * AWTMCList.PADDING + 2 * AWTMCList.INTERNAL_PADDING;
     }
 
     public String makeFit(String s, int size) {

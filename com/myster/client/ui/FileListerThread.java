@@ -45,6 +45,7 @@ public class FileListerThread extends MysterThread {
 
         if (endFlag)
             return;
+        if (type ==null) return;
         
         if (socket == null) {
             try {

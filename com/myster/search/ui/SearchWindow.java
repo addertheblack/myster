@@ -28,6 +28,7 @@ import java.awt.event.WindowEvent;
 import com.general.mclist.MCList;
 import com.general.mclist.MCListEvent;
 import com.general.mclist.MCListEventAdapter;
+import com.general.mclist.MCListFactory;
 import com.general.mclist.MCListItemInterface;
 import com.general.util.MessageField;
 import com.general.util.StandardWindowBehavior;
@@ -106,7 +107,7 @@ public class SearchWindow extends MysterFrame implements SearchResultListener, S
 
         choice = new TypeChoice();
 
-        fileList = new MCList(1, true, this);
+        fileList = MCListFactory.buildMCList(1, true, this);
         fileList.getPane().setSize(XDEFAULT, YDEFAULT);
 
         msg = new MessageField("Idle...");
@@ -157,6 +158,7 @@ public class SearchWindow extends MysterFrame implements SearchResultListener, S
 
         textEntry.setSelectionStart(0);
         textEntry.setSelectionEnd(textEntry.getText().length());
+        pack();
 
     }
 
@@ -268,12 +270,6 @@ public class SearchWindow extends MysterFrame implements SearchResultListener, S
 
     public void downloadFile(Object s) {
         ((SearchResult) (s)).download();
-    }
-
-    public void paint(Graphics g) {
-        fileList.repaint(); //needed because when an item is updated this
-        // object's repaint() methods is called. The
-        // repaint() needs to be passed on to the list.
     }
 
     /*
