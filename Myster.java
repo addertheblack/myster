@@ -181,8 +181,11 @@ public class Myster{
 				progress.update(27);
 				if (isServer) {}
 				else {
-					SearchWindow sw=new SearchWindow();
-					sw.say(Myster.tr("Idle.."));
+					SearchWindow.init();
+					ServerStatsWindow.init();
+					com.myster.tracker.ui.TrackerWindow.init();
+					//SearchWindow sw=new SearchWindow();
+					//sw.say(Myster.tr("Idle.."));
 				}
 				progress.setVisible(false);
 				progress.setVisible(true);
@@ -333,11 +336,13 @@ public class Myster{
 	}
 
 	public static final String tr(String text) {
+		if (true==true) return text;
+		
 		try {
 			return resources.getString(text);
 		} catch (MissingResourceException ex) {
-			System.err.println("missing translation key: \"" + text + "\"");
-			ex.printStackTrace();
+			//System.err.println("missing translation key: \"" + text + "\"");
+			//ex.printStackTrace();
 			return text;
 		}
 	}

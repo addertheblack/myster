@@ -424,7 +424,7 @@ public class MML implements Serializable {
 			newPath=newPath+pathVector.getToken(i)+"/";
 		}
 		String tag=pathVector.getToken(size);
-		System.out.println("Tag:"+newPath);
+		//System.out.println("Tag:"+newPath);
 		Link.removeLink(((Branch)(getNode(root, newPath))).head, tag); //note, no cast stuff required here.. MUST be a branch class.
 	}
 	

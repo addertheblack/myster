@@ -120,6 +120,12 @@ public class Preferences {
 		return (MML)(data.get(key));
 	}
 	
+	public synchronized PreferencesMML getAsMML(String key, PreferencesMML defaultMML) {
+		PreferencesMML mml=(PreferencesMML)(data.get(key));
+		
+		return (mml==null?defaultMML:mml);
+	}
+	
 	/**
 	*	
 	*	Deletes that path and all sub paths.

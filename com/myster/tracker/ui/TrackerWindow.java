@@ -14,7 +14,7 @@ import com.myster.util.OpenConnectionHandler;
 import com.myster.ui.MysterFrame;
 
 public class TrackerWindow extends MysterFrame {
-	private static TrackerWindow me = new TrackerWindow();
+	private static TrackerWindow me;// = new TrackerWindow();
 	private MysterThread updater;
 	
 	private MCList list;
@@ -23,8 +23,21 @@ public class TrackerWindow extends MysterFrame {
 	GridBagLayout gblayout;
 	GridBagConstraints gbconstrains;
 	
+	private static com.myster.ui.WindowLocationKeeper keeper=new com.myster.ui.WindowLocationKeeper("Tracker");
+	
+	public static void init() {
+		Rectangle[] rect=com.myster.ui.WindowLocationKeeper.getLastLocs("Tracker");
+		if (rect.length>0) {
+			getInstance().me.setBounds(rect[0]);
+			getInstance().me.setVisible(true);
+		}
+	}
 	
 	private TrackerWindow () {
+		keeper.addFrame(this); //never remove
+		
+		
+	
 		//Do interface setup:
 		gblayout=new GridBagLayout();
 		setLayout(gblayout);
@@ -105,6 +118,10 @@ public class TrackerWindow extends MysterFrame {
 	*	Singleton
 	*/
 	public static synchronized TrackerWindow getInstance() {
+		if (me==null) {
+			me =new TrackerWindow();
+		}
+		
 		return me;
 	}
 

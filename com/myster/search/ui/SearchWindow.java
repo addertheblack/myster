@@ -16,9 +16,11 @@ import com.general.mclist.*;
 import java.awt.*;
 import java.io.*;
 import java.net.*;
+import java.awt.event.WindowAdapter;
+import java.awt.event.WindowEvent;
 import com.general.util.*;
-import com.myster.menubar.MysterMenuBar;
 import java.util.Vector;
+import com.myster.menubar.MysterMenuBar;
 import com.general.util.MessageField;
 import com.myster.client.stream.DownloaderThread;
 import com.myster.search.SearchResultListener;
@@ -26,6 +28,7 @@ import com.myster.search.SearchResult;
 import com.myster.util.Sayable;
 import com.myster.util.TypeChoice;
 import com.myster.ui.MysterFrame;
+import com.myster.ui.WindowLocationKeeper;
 
 public class SearchWindow extends MysterFrame implements SearchResultListener, Sayable {
 	GridBagLayout gblayout;
@@ -48,6 +51,8 @@ public class SearchWindow extends MysterFrame implements SearchResultListener, S
 	private final int BUCKETSIZE=100;
 	private final int XDEFAULT=600;
 	private final int YDEFAULT=400;
+	
+	private static final String PREF_LOCATION_KEY="Search Window";
 	
 	private static int counter=0;
 
@@ -125,12 +130,48 @@ public class SearchWindow extends MysterFrame implements SearchResultListener, S
 		filelist.setColumnName(0, "Search Results appear here");
 		filelist.setColumnWidth(0,400);
 		
+		keeper.addFrame(this);
+		addWindowListener(new RemoveFrameWhenDoneThingy(this, keeper));
+		
 		setVisible(true); // !
 		
 		textentry.setSelectionStart(0);
 		textentry.setSelectionEnd(textentry.getText().length());
-	}
+		
+		
 
+	}
+	
+	static WindowLocationKeeper keeper;//cheat to save scrolling. put at top later.
+	
+	public static void init() {
+		Rectangle[] rectangles=WindowLocationKeeper.getLastLocs(PREF_LOCATION_KEY);
+		
+		keeper=new WindowLocationKeeper(PREF_LOCATION_KEY);
+		
+		for (int i=0; i<rectangles.length; i++) {
+			SearchWindow window=new SearchWindow();
+			window.setBounds(rectangles[i]);
+		}
+		
+		if (rectangles.length==0) {SearchWindow window=new SearchWindow();}
+		
+		
+	}
+	
+	private static class RemoveFrameWhenDoneThingy extends WindowAdapter {
+		Frame frame;
+		WindowLocationKeeper keeper;
+		
+		public RemoveFrameWhenDoneThingy (Frame frame,WindowLocationKeeper keeper) {
+			this.frame=frame;
+			this.keeper=keeper;
+		}
+		
+		public void windowClosed(WindowEvent e) {
+			//keeper.removeFrame(frame);
+		}
+	}
 	
 	public void addComponent(Component c, int row, int column, int width, int height, int weightx, int weighty) {
 		gbconstrains.gridx=column;

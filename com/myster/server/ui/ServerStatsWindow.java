@@ -31,15 +31,25 @@ public class ServerStatsWindow extends MysterFrame implements Sayable {
 
 	public final static int TABYSIZE=50;
 
-	public static ServerStatsWindow singleton=new ServerStatsWindow();
+	private static ServerStatsWindow singleton;//=new ServerStatsWindow();
 
-
+	private static com.myster.ui.WindowLocationKeeper keeper;//=new com.myster.ui.WindowLocationKeeper("Server Stats");
 
 	public synchronized static ServerStatsWindow getInstance() {
 		if (singleton==null) {
-			//singleton=new ServerStatsWindow();
+			singleton=new ServerStatsWindow();
 		}
 		return singleton;
+	}
+	
+	public static void init() {
+		Rectangle[] rect=com.myster.ui.WindowLocationKeeper.getLastLocs("Server Stats");
+		if (rect.length>0) {
+			Dimension d=singleton.getSize();
+			singleton.setBounds(rect[0]);
+			singleton.setSize(d);
+			singleton.setVisible(true);
+		}
 	}
 	
 	public void say(String s) {
@@ -48,6 +58,9 @@ public class ServerStatsWindow extends MysterFrame implements Sayable {
 
 	protected ServerStatsWindow() {
 		super("Server Statistics");
+		
+		keeper=new com.myster.ui.WindowLocationKeeper("Server Stats");
+		keeper.addFrame(this); //never remove.
 		
 		setResizable(false);
 		
@@ -67,7 +80,7 @@ public class ServerStatsWindow extends MysterFrame implements Sayable {
 		addComponentListener(new ComponentAdapter() {
 			public void componentShown(ComponentEvent e) {
 				if (!inited) {
-					init();
+					initSelf();
 				}
 				setSize(XSIZE+getInsets().right+getInsets().left, YSIZE+getInsets().top+getInsets().bottom);
 			}
@@ -87,7 +100,7 @@ public class ServerStatsWindow extends MysterFrame implements Sayable {
 	//	}
 	//}
 	
-	private void init() {
+	private void initSelf() {
 		if (inited==true) System.exit(0);
 		inited=true;
 		new MysterMenuBar(this);
