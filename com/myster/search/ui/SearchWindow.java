@@ -173,14 +173,14 @@ public class SearchWindow extends MysterFrame implements SearchResultListener, S
 	
 	
 	public boolean addSearchResults(SearchResult[] resultArray) {
-			MCListItemInterface[] m=new MCListItemInterface[resultArray.length];
+		MCListItemInterface[] m=new MCListItemInterface[resultArray.length];
+	
+		for (int i=0; i<resultArray.length; i++) {
+			m[i]=metaDateHandler.getMCListItem(resultArray[i]);
+		}
 		
-			for (int i=0; i<resultArray.length; i++) {
-				m[i]=metaDateHandler.getMCListItem(resultArray[i]);
-			}
-			
-			filelist.addItem(m);
-			return true;
+		filelist.addItem(m);
+		return true;
 	}
 	
 	public void searchStats(SearchResult s) {
@@ -203,7 +203,6 @@ public class SearchWindow extends MysterFrame implements SearchResultListener, S
 	
 	public void paint(Graphics g) {
 		filelist.repaint();	//neede dbecause when an item is updated this object's repaint() methoods is called. The repaint() needs to be apssed on to the list.
-		System.out.println("INsets top "+(getInsets().top));
 	}
 	
 	/*
