@@ -5,6 +5,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.FileInputStream;
 import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
 import java.util.Hashtable;
 
 import com.general.util.BlockingQueue;
@@ -115,8 +116,12 @@ public class HashManager implements Runnable {
 				oldHashes.put(item.file, hashes);
 				
 				dispatchHashFoundEvent(item.listener, hashes);		
-			} catch (Exception ex) {
+			} catch (NoSuchAlgorithmException ex) {
 				ex.printStackTrace();
+				// Should never happen
+			} catch (InterruptedException ex) {
+				ex.printStackTrace();
+				// Should never happen.
 			}
 		}
 	}
@@ -125,9 +130,12 @@ public class HashManager implements Runnable {
 		return workQueue.getSize();
 	}
 	
-	private final void calcHash (File file, MessageDigest[] digests) throws IOException {
+	private final void calcHash (File file, MessageDigest[] digests)  {
+	
+		InputStream in = null;
 		
-		InputStream in = new FileInputStream(file); //read only
+		try {
+			in = new FileInputStream(file); //read only
 		
 		long currentByte = 0;
 		
@@ -149,9 +157,14 @@ public class HashManager implements Runnable {
 			progress.setValue(currentByte);
 			//progress.setAdditionalText(Util.getStringFromBytes(currentByte));
 		}
+		} catch (IOException ex) {
+			System.out.println("Could not read a file.");
+		} finally {
+			try {in.close();} catch (Exception ex) {} // don't care
 		
-		progress.setValue(0);
-		progress.setText("Waiting for work...");
+			progress.setValue(0);
+			progress.setText("Waiting for work...");
+		}
 	}
 	
 	private final static void addBytesToDigests(byte[] bytes, int endByte, MessageDigest[] digests) {
