@@ -41,5 +41,5 @@ public interface SearchResultListener {
     /**
      * tells the object a new adding session has begun.
      */
-    public void startSearch();
+    public void searchStart();
 }

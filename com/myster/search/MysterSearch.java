@@ -101,7 +101,7 @@ public class MysterSearch {
 
         Util.invoke(new Runnable() {
             public void run() {
-                listener.startSearch();
+                listener.searchStart();
 
                 IPQueue queue = createPrimedIpQueue();
                 processNewAddresses(queue);

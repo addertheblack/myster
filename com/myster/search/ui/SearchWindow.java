@@ -1,6 +1,7 @@
 /*
  * 
- * Title: Myster Open Source Author: Andrew Trumper Description: Generic Myster Code
+ * Title: Myster Open Source Author: Andrew Trumper Description: Generic Myster
+ * Code
  * 
  * This code is under GPL
  * 
@@ -21,6 +22,8 @@ import java.awt.Label;
 import java.awt.Panel;
 import java.awt.Rectangle;
 import java.awt.TextField;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
 
 import com.general.mclist.MCList;
 import com.general.mclist.MCListEvent;
@@ -28,6 +31,7 @@ import com.general.mclist.MCListEventAdapter;
 import com.general.mclist.MCListItemInterface;
 import com.general.util.MessageField;
 import com.general.util.StandardWindowBehavior;
+import com.myster.search.SearchEngine;
 import com.myster.search.SearchResult;
 import com.myster.search.SearchResultListener;
 import com.myster.type.MysterType;
@@ -126,14 +130,14 @@ public class SearchWindow extends MysterFrame implements SearchResultListener, S
 
         //setIconImage(Util.loadImage("img.jpg", this));
 
-        SearchButtonEvent searchEventObject = new SearchButtonEvent(this, searchButton);
-        searchButton.addActionListener(searchEventObject);
-        /*
-         * searchbutton.addActionListener(new java.awt.event.ActionListener() { public void
-         * actionPerformed(java.awt.event.ActionEvent event) { System.out.println("You clicked the
-         * button"); } });
-         */
-        textEntry.addActionListener(searchEventObject); //not only for buttons
+        SearchButtonEvent searchButtonHandler = new SearchButtonEvent(this, searchButton);
+        searchButton.addActionListener(searchButtonHandler);
+        
+        textEntry.addActionListener(new ActionListener() {
+            public void actionPerformed(ActionEvent e) {
+                startSearch();
+            }
+        }); //not only for buttons
         // anymore.
 
         fileList.addMCListEventListener(new MCListEventAdapter() {
@@ -160,6 +164,8 @@ public class SearchWindow extends MysterFrame implements SearchResultListener, S
     }
 
     static WindowLocationKeeper keeper;//cheat to save scrolling. put at top
+
+    private SearchEngine searchEngine;
 
     // later.
 
@@ -196,19 +202,35 @@ public class SearchWindow extends MysterFrame implements SearchResultListener, S
 
     }
 
-    public void startSearch() {
+    public void searchStart() {
+        searchButton.setLabel("Stop");
         msg.say("Clearing File List...");
         fileList.clearAll();
         recolumnize();
-        searchButton.setEnabled(true);
-        //bucket=new SearchResultBucket(BUCKETSIZE);
     }
 
     public void searchOver() {
         msg.say("Search done. " + fileList.length() + " file" + (fileList.length() == 0 ? "" : "s")
                 + " found...");
-        searchButton.setEnabled(true);
         searchButton.setLabel("Search");
+    }
+
+    void startSearch() {
+        if (searchEngine != null) {
+            stopSearch();
+        }
+        searchEngine = new SearchEngine(this);
+        searchEngine.run();
+        setTitle("Search for \"" + getSearchString() + "\"");
+    }
+    
+    void stopSearch() {
+        if (searchEngine == null) {
+            return;
+        }
+        
+        searchEngine.flagToEnd();
+        searchEngine = null;
     }
 
     public void recolumnize() {
