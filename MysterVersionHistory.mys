@@ -911,11 +911,28 @@ Work on DEV 8:
 		-> Moved multi-source download to its new home on conneciton section 90.
 		-> Changed the 6669 firewall image
 	
-	2003/09/18
+	Work on PR 7
+	
+	2003/09/18 <- DEV 19.3
 		-> Completely re-wrote download queue manager. It now doesn't use any thread (it used to use 4)
 				it's much easyer to debug (7 hours to write instead of 20 hours). Also
 				DOES NOT REQUIRE MYSTER TO BE RESTARTED! Hurray!
 		-> Work around freeze on cancel.
+	
+	< Absence brough about by some sort of depression >
+	
+	Wrote a tutorial on Myster's Transaction framework
+	Wrote the top ten connection section as a UDP section
+	Wrote a UDP connection section event libray so that all calls to the UDP standard suite can be event driven
+	
+	< At some random point got over the depression and started coding again >
+	
+	2003/11/12 <- DEV 19.4
+		-> Fixed a bug where disconnecting one multi-source download disconnects all multi-source downloads forever
+		-> Fixed a bug where queueing didn't work correctly for multi-source downloads
+		-> Re-organized most of the code inside multi-source download server side.
+		-> fixed a bug where queued downloads were not showing up as being queued n the server stats.
+		-> Fixed a bug where the connection was being tested for leeching every single goddam time.
 		
 		
 		to do:
