@@ -36,6 +36,10 @@ public class ProgressWindow extends Frame {
 		addProgressPanel();
 		
 		setResizable(false);
+		
+		Image adImage = com.general.util.Util.loadImage("defaultProgressImage.jpg", adPanel);
+		
+		if (adImage != null) adPanel.addImage(adImage);
 	}
 	
 	public synchronized void show() {

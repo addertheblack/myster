@@ -101,7 +101,6 @@ public class ProgressBar extends Panel {
 			
 			g.setColor(getForeground());
 			g.fillRect(0,0,getXSize(size.width),size.height);
-			
 		}
 		
 		if (getBorder()) {

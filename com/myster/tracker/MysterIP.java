@@ -188,7 +188,7 @@ class MysterIP {
 		}
 		
 		public String getServerIdentity() {
-			return (serverIdentity==null?"Unknown":serverIdentity);//(serverIdentity.length()>31?serverIdentity.substring(0,31):serverIdentity));
+			return (serverIdentity==null?"Unnamed":serverIdentity);//(serverIdentity.length()>31?serverIdentity.substring(0,31):serverIdentity));
 		}	
 		
 		public int getPingTime() {

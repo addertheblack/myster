@@ -33,7 +33,7 @@ public class MSDownloadHandler extends MSDownloadListener {
 	}
 	
 	public void startDownload(MultiSourceEvent event) {
-		progress.setText("MSDownload is starting...");
+		progress.setText("Looking for first source...");
 		progress.startBlock(0, 0, event.getMultiSourceDownload().getLength());
 		progress.setPreviouslyDownloaded(event.getMultiSourceDownload().getInitialOffset(), FileProgressWindow.BAR_1);
 		progress.setValue(event.getMultiSourceDownload().getInitialOffset());
@@ -47,7 +47,7 @@ public class MSDownloadHandler extends MSDownloadListener {
 	}
 	
 	public void startSegmentDownloader(MSSegmentEvent event) {
-		progress.setText("Downloading...");
+		if (segmentCounter == 0) progress.setText("Trying a new source...");
 		
 		++segmentCounter;
 	
@@ -61,7 +61,7 @@ public class MSDownloadHandler extends MSDownloadListener {
 	public void endSegmentDownloader(MSSegmentEvent event) {
 		--segmentCounter;
 		
-		if (segmentCounter == 0) progress.setText("Searching for new sources...");
+		if (segmentCounter == 0) progress.setText("Looking for new sources...");
 	
 		SegmentDownloaderHandler handler = (SegmentDownloaderHandler)(segmentListeners.remove(event.getSegmentDownloader()));
 		
@@ -149,9 +149,12 @@ class SegmentDownloaderHandler extends SegmentDownloaderListener {
 		this.progress = progress;
 		
 		this.progressBannerManager = progressBannerManager;
+		
+		progress.setText("Connecting...", bar);
 	}
 	
 	public void connected(SegmentDownloaderEvent e) {
+		progress.setText("Negotiating...", bar);
 		progress.setValue(0, bar);
 	}
 	

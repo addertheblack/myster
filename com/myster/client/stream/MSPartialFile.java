@@ -160,7 +160,7 @@ public class MSPartialFile {
 													 
 				dialog.show();
 				
-				if (dialog.getFile() == null) throw new IOException("User canceled");
+				if (dialog.getFile() == null) userCancelled(progress, partialFile); //always throws exception !
 				
 				if (! dialog.getFile().equals(finalFileName)) {
 					final String YES_ANSWER = "Yes", NO_ANSWER = "No", CANCEL_ANSWER = "Cancel";
@@ -176,7 +176,7 @@ public class MSPartialFile {
 						shortCircuitFlag = true;
 						continue;
 					} else if (fileIsNotTheSameDialog.getIt().equals(CANCEL_ANSWER)) {
-						throw new IOException("User Canceled");
+						userCancelled(progress, partialFile); //always throws exception !
 					}
 				}
 				
@@ -201,6 +201,16 @@ public class MSPartialFile {
 			});
 			
 			download.run();
+		}
+		
+		private static class UserCanceledException extends IOException {
+			public UserCanceledException() { super("User Cancelled" ); }
+		}
+		
+		private static void userCancelled(FileProgressWindow progress, MSPartialFile file) throws UserCanceledException {
+			progress.hide();
+			file.done();
+			throw new UserCanceledException();
 		}
 	}
 

@@ -110,4 +110,13 @@ public class Util { //This code was taken from an Apple Sample Code package,
 		
 		return bytes;
 	}
+	
+	/**
+	*	Centers the frame passed on the screen. The offsets are to offset the frame from perfect center.
+	*	If you want it centered call this with offsets of 0,0
+	*/
+	public static void centerFrame(Frame frame, int xOffset, int yOffset) {
+		Toolkit tool=Toolkit.getDefaultToolkit();
+		frame.setLocation(tool.getScreenSize().width/2 - frame.getSize().width/2 + xOffset, tool.getScreenSize().height/2 - frame.getSize().height/2 + yOffset);
+	}
 }

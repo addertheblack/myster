@@ -1021,7 +1021,11 @@ Work on DEV 8:
 	Work on DEV 21
 		2004/04/12
 		-> Fixed a bug where the length of the UDP packet was not reset after each packet.
-		-> 
+		-> Fixed a bug where MSSOurce download is started automatically but if you can't
+				find the file you have to delete your preferences to get it to forget about the file.
+		-> Made the startup progress window look pretty.
+		-> Made the file download progress windows show sensible messages when they are negotiating
+				a new transfer...
 		
 		
 (Red List)

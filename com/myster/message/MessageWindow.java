@@ -167,6 +167,7 @@ public class MessageWindow extends MysterFrame {
 							closeThisWindow();
 						} catch (UnknownHostException ex) {
 							System.out.println("Could nto send message 'cause the address is invalid.");
+							com.general.util.AnswerDialog.simpleAlert(MessageWindow.this, "Could not send this message because the address is not valid.");
 						}
 					}
 				});

@@ -97,9 +97,10 @@ public class Myster {
 				
 				String macHack="";//(System.getProperty("java.vm.vendor")==null?" (unknown 1.1 java)":System.getProperty("java.vm.vendor"));
 				com.myster.util.ProgressWindow progress=new com.myster.util.ProgressWindow();
-				progress.setVisible(true);
-				progress.setLocation(100,100);
+				progress.setLocation(-1000,-1000);
 				progress.setTitle(I18n.tr("Loading Myster..."));
+				progress.setVisible(true);
+				com.general.util.Util.centerFrame(progress, 0, -50);
 				
 				try {
 					if (com.myster.type.TypeDescriptionList.getDefault().getEnabledTypes().length <= 0) {
