@@ -63,6 +63,21 @@ public class MultiSourceSender extends ServerThread {
 	}
 
 
+	private static class UploadBlock {
+		public final long start;
+		public final long size;
+		
+		public UploadBlock(long param_start, long param_size) {
+			start = param_start;
+			size = param_size;
+		}
+		
+		public boolean isEndSignal() {
+			return (start==0) && (size==0);
+		}
+	}
+		
+
 	private class MultiSourceDownloadInstance {
 		public boolean endFlag = false;
 	
@@ -284,20 +299,6 @@ public class MultiSourceSender extends ServerThread {
 			
 			return new UploadBlock(offset, fileLength);
 		
-		}
-		
-		private static class UploadBlock {
-			public final long start;
-			public final long size;
-			
-			public UploadBlock(long param_start, long param_size) {
-				start = param_start;
-				size = param_size;
-			}
-			
-			public boolean isEndSignal() {
-				return (start==0) && (size==0);
-			}
 		}
 		
 		private void fireEvent(int id, int queuePosition) {
