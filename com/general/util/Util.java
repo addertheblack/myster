@@ -1,10 +1,12 @@
 package com.general.util;
 
+import java.awt.AWTEvent;
 import java.awt.Component;
 import java.awt.Frame;
 import java.awt.Image;
 import java.awt.MediaTracker;
 import java.awt.Toolkit;
+import java.awt.event.ActionEvent;
 import java.net.URL;
 
 //import Myster;
@@ -17,13 +19,11 @@ public class Util { //This code was taken from an Apple Sample Code package,
         if (filename != null) {
             URL url = watcher.getClass().getResource(filename);
             if (url == null) {
-                System.err.println("loadImage() could not find \"" + filename
-                        + "\"");
+                System.err.println("loadImage() could not find \"" + filename + "\"");
             } else {
                 image = watcher.getToolkit().getImage(url);
                 if (image == null) {
-                    System.err.println("loadImage() getImage() failed for \""
-                            + filename + "\"");
+                    System.err.println("loadImage() getImage() failed for \"" + filename + "\"");
                 } else {
                     MediaTracker tracker = new MediaTracker(watcher);
 
@@ -35,8 +35,7 @@ public class Util { //This code was taken from an Apple Sample Code package,
                     } finally {
                         boolean isError = tracker.isErrorAny();
                         if (isError) {
-                            System.err.println("loadImage() failed to load \""
-                                    + filename + "\"");
+                            System.err.println("loadImage() failed to load \"" + filename + "\"");
                             int flags = tracker.statusAll(true);
 
                             boolean loading = 0 != (flags & MediaTracker.LOADING);
@@ -92,16 +91,21 @@ public class Util { //This code was taken from an Apple Sample Code package,
         return buffer;
     }
 
-    public static byte[] fromHexString(String hash)
-            throws NumberFormatException {
+    public static byte[] fromHexString(String hash) throws NumberFormatException {
         if ((hash.length() % 2) != 0)
             throw new NumberFormatException("Even number of byte pairs");
 
         byte[] bytes = new byte[hash.length() / 2];
 
         for (int i = 0; i < hash.length(); i += 2) {
-            bytes[i / 2] = (byte) (Short.parseShort(hash.substring(i, i + 2),
-                    16)); //hopefully the compiler will convert "/2" into >> 1
+            bytes[i / 2] = (byte) (Short.parseShort(hash.substring(i, i + 2), 16)); //hopefully
+                                                                                    // the
+                                                                                    // compiler
+                                                                                    // will
+                                                                                    // convert
+                                                                                    // "/2"
+                                                                                    // into
+                                                                                    // >> 1
         }
 
         return bytes;
@@ -114,9 +118,67 @@ public class Util { //This code was taken from an Apple Sample Code package,
      */
     public static void centerFrame(Frame frame, int xOffset, int yOffset) {
         Toolkit tool = Toolkit.getDefaultToolkit();
-        frame.setLocation(tool.getScreenSize().width / 2
-                - frame.getSize().width / 2 + xOffset,
-                tool.getScreenSize().height / 2 - frame.getSize().height / 2
-                        + yOffset);
+        frame.setLocation(tool.getScreenSize().width / 2 - frame.getSize().width / 2 + xOffset,
+                tool.getScreenSize().height / 2 - frame.getSize().height / 2 + yOffset);
     }
+
+    
+    
+    
+    /***************************** CRAMMING STUFF ON THE EVENT THREAD SUB SYSTEM START **********************/
+    private static Component listener = new SpecialComponent();
+
+    /**
+     * runs the current runnable on the event thread.
+     * 
+     * @param runnable - code to run on event thread.
+     */
+    public static void invoke(final Runnable runnable) {
+        Toolkit.getDefaultToolkit().getSystemEventQueue().postEvent(
+                new SpecialEvent(runnable, listener));
+    }
+    
+    public static void invokeAndWait(final Runnable runnable) throws InterruptedException {
+        final Semaphore sem = new Semaphore(0);
+        
+        Toolkit.getDefaultToolkit().getSystemEventQueue().postEvent(
+                new SpecialEvent(runnable, listener) {
+                    public void run() {
+                        try {
+                            super.run();
+                        } finally {
+                            sem.signal();
+                        }
+                    }
+                });
+        
+        sem.getLock();
+    }
+    
+    /*
+     * We can use this event to put our runnable object into.
+     */
+    private static class SpecialEvent extends ActionEvent {
+        private final Runnable runnable;
+        
+        public SpecialEvent(Runnable runnable, Component source) {
+            super(source, ActionEvent.ACTION_PERFORMED, "");
+            this.runnable = runnable;
+        }
+        
+        public void run() {
+            runnable.run();
+        }
+    }
+    
+    private static class SpecialComponent extends Component {
+        public SpecialComponent() {
+            enableEvents(ActionEvent.ACTION_EVENT_MASK);
+        }
+        
+        public void processEvent(AWTEvent e) {
+            ((SpecialEvent)e).run();
+        }
+    }
+    /***************************** CRAMMING STUFF ON THE EVENT THREAD SUB SYSTEM END**********************/
 }

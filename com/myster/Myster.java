@@ -22,7 +22,7 @@ import java.net.ServerSocket;
 import java.net.Socket;
 
 import com.general.util.AnswerDialog;
-
+import com.general.util.Util;
 import com.myster.bandwidth.BandwidthManager;
 import com.myster.client.datagram.PongTransport;
 import com.myster.client.datagram.UDPPingClient;
@@ -98,6 +98,23 @@ public class Myster {
                 progress.setVisible(true);
                 com.general.util.Util.centerFrame(progress, 0, -50);
 
+                try {
+                    Util.invokeAndWait(new Runnable() {
+
+                        public void run() {
+                            try {
+                                Thread.sleep(100);
+                            } catch (InterruptedException e) {
+                                e.printStackTrace();
+                            }
+                            
+                            System.out.println("!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!Event thread????");
+                        }
+                    });
+                } catch (InterruptedException e) {
+                    e.printStackTrace();
+                }
+                
                 try {
                     if (com.myster.type.TypeDescriptionList.getDefault().getEnabledTypes().length <= 0) {
                         AnswerDialog
