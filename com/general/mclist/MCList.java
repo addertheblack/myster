@@ -19,6 +19,8 @@ import java.awt.ScrollPane;
 import java.awt.event.AdjustmentEvent;
 import java.awt.event.AdjustmentListener;
 
+import com.general.util.Util;
+
 //import java.awt.image.BufferedImage;//testing
 
 public class MCList extends Panel {
@@ -35,7 +37,7 @@ public class MCList extends Panel {
     //List Itself:
     MCListVector list;
 
-    //I add Myself to the scroll pane so it can scrolll me around! (yeah, I
+    //I add Myself to the scroll pane so it can scroll me around! (yeah, I
     // know)
     ScrollPane pane;
 
@@ -135,16 +137,8 @@ public class MCList extends Panel {
     //Important for canvas
     public synchronized Dimension getPreferredSize() {
         RowStats rowstats = header.getRowStats();
-
         int ysize = list.size() * rowtheme.getHeight() - 1 + header.getHeight();
-
         int xsize = header.getPreferredSize().width;
-
-        //if (pane.getViewportSize().width>xsize)
-        // xsize=pane.getViewportSize().width;
-
-        //if (pane.getViewportSize().height>ysize)
-        // ysize=pane.getViewportSize().height;
         return new Dimension(xsize, ysize);
     }
 
@@ -367,11 +361,14 @@ public class MCList extends Panel {
         // under MacOS X.
         try {
             pane.invalidate(); //invalidate current layout.
-            pane.validate(); //update scroll pane to possible changes in size.
-            //pane.doLayout();
+            Util.invoke(new Runnable() {
+               public void run() {
+                   pane.validate(); //update scroll pane to possible changes in size.
+                   repaint();
+               }
+            });
         } catch (Exception ex) {
         }
-        repaint();
     }
 
     public int length() {
@@ -393,7 +390,8 @@ public class MCList extends Panel {
 
         public Dimension getPreferredSize() {
             //return new Dimension(0,0);
-            return MCList.this.getPreferredSize();
+            //return MCList.this.getPreferredSize();
+            return super.getPreferredSize();
         }
 
         public Dimension getMinimumSize() {

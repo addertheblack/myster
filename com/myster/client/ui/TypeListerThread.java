@@ -47,7 +47,7 @@ public class TypeListerThread extends MysterThread {
                 return;
 
             for (int i = 0; i < types.length; i++) {
-                container.addItemToTypeList("" + types[i]);
+                addItemToTypeList(types[i]);
             }
 
             say("Idle...");
@@ -70,7 +70,7 @@ public class TypeListerThread extends MysterThread {
 
                 say("Adding Items...");
                 for (int i = 0; i < typeList.length; i++) {
-                    container.addItemToTypeList(typeList[i].toString());
+                    addItemToTypeList(typeList[i]);
                 }
 
                 say("Idle...");

@@ -128,6 +128,7 @@ public class MysterFrame extends Frame {
         if (menuBarEnabled) {
             enableMenuBar();
         }
+        
         super.show();
     }
 

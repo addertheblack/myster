@@ -18,7 +18,7 @@ public class FileItem {
 
         HashManager.findHashNoneBlocking(file, new FileHashListener() {
             public void foundHash(FileHashEvent e) {
-                fileHashes = e.getHashes();
+                setHash(e.getHashes());
             }
         });
     }
@@ -91,9 +91,8 @@ public class FileItem {
 
             if (fileHashes != null) {
                 for (int i = 0; i < fileHashes.length; i++) {
-                    mml.put(HASH_PATH
-                            + fileHashes[i].getHashName().toLowerCase(),
-                            fileHashes[i].toString());
+                    mml.put(HASH_PATH + fileHashes[i].getHashName().toLowerCase(), fileHashes[i]
+                            .toString());
                 }
             }
         }
@@ -102,8 +101,7 @@ public class FileItem {
     }
 
     /*
-     * public boolean isMatch(String queryString) {
-     *  }
+     * public boolean isMatch(String queryString) { }
      */
 
 }

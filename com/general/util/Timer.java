@@ -17,13 +17,13 @@ package com.general.util;
  */
 
 public class Timer implements Comparable { //almost but not quite immutable.
-    final Runnable runnable;
+    private final Runnable runnable;
 
-    final long time;
+    private final long time;
 
-    final boolean runAsThread;
+    private final boolean runAsThread;
 
-    volatile boolean isCancelled = false; //is accessed asynchronously
+    private volatile boolean isCancelled = false; //is accessed asynchronously
 
     public Timer(Runnable thingToRun, long timeToWait) {
         this(thingToRun, timeToWait, false);
@@ -85,17 +85,17 @@ public class Timer implements Comparable { //almost but not quite immutable.
         }
     }
 
-    static private MinHeap timers = new MinHeap();
+    private static MinHeap timers = new MinHeap();
 
-    static private Thread thread;
+    private static Thread thread;
 
-    static private void addEvent(Timer timer) {
+    private static void addEvent(Timer timer) {
         synchronized (timers) {
             timers.add(timer);
             timers.notifyAll(); //instead of sem.getLock(time);
 
             if (thread == null) {
-                thread = (new Thread("Timer Thread!!") {
+                thread = (new Thread("Myster's timer thread") {
                     public void run() {
                         try {
                             timerLoop();
@@ -110,7 +110,7 @@ public class Timer implements Comparable { //almost but not quite immutable.
         }
     }
 
-    static private void timerLoop() {
+    private static void timerLoop() {
 
         for (;;) {
             Timer timer = null;

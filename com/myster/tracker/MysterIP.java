@@ -29,30 +29,30 @@ import com.myster.type.MysterType;
 import com.myster.util.MysterThread;
 
 /**
- * MysteriP objects are responsible for two things. 1) Saving server statistics
- * information and 2) keeping this information upt to date.
+ * MysteriP objects are responsible for two things. 1) Saving server statistics information and 2)
+ * keeping this information upt to date.
  */
 
 class MysterIP {
-    MysterAddress ip;
+    private MysterAddress ip;
 
-    double speed;
+    private double speed;
 
-    int timeup;
+    private int timeup;
 
-    int timedown;
+    private int timedown;
 
-    NumOfFiles numberOfFiles;
+    private NumOfFiles numberOfFiles;
 
-    int numberofhits;
+    private int numberofhits;
 
-    boolean upordown = true;
+    private boolean upordown = true;
 
-    String serverIdentity;
+    private String serverIdentity;
 
-    long uptime;
+    private long uptime;
 
-    int lastPingTime = -1; //in millis. (not saved)
+    private int lastPingTime = -1; //in millis. (not saved)
 
     private volatile boolean occupied = false; //used in updating...
 
@@ -62,8 +62,6 @@ class MysterIP {
     // called.
 
     private long timeoflastupdate = 0;
-
-    int mystercount = 0;
 
     //These are the paths in the MML peer:
     //ip = root!
@@ -105,7 +103,7 @@ class MysterIP {
 
     private static final int NUMBER_OF_UPDATER_THREADS = 1;
 
-    protected MysterIP(String ip) throws Exception {
+    MysterIP(String ip) throws Exception {
         if (ip.equals("127.0.0.1"))
             throw new Exception("IP is local host.");
         MysterAddress t = new MysterAddress(ip); //to see if address is valid.
@@ -115,7 +113,7 @@ class MysterIP {
         //System.out.println("A New MysterIP Object = "+getAddress());
     }
 
-    protected MysterIP(MML mml) {
+    MysterIP(MML mml) {
         createNewMysterIP(mml.get(IP), Double.valueOf(mml.get(SPEED)).doubleValue(), Integer
                 .valueOf(mml.get(TIMEUP)).intValue(),
                 Integer.valueOf(mml.get(TIMEDOWN)).intValue(), Integer.valueOf(
@@ -154,20 +152,20 @@ class MysterIP {
         toUpdateOrNotToUpdate();
     }
 
-    protected MysterServer getInterface() {
+    MysterServer getInterface() {
         return new MysterIPInterfaceClass();
     }
 
-    private int interfaceCounter = 0;
+    private int referenceCounter = 0;
 
     /**
-     * This private class implements the com.myster interface and allows outside
-     * objects to get vital server statistics.
+     * This private class implements the com.myster interface and allows outside objects to get
+     * vital server statistics.
      */
 
     private class MysterIPInterfaceClass implements MysterServer {
         public MysterIPInterfaceClass() {
-            interfaceCounter++; //used for garbage collection.
+            referenceCounter++; //used for garbage collection.
         }
 
         public boolean getStatus() {
@@ -200,28 +198,20 @@ class MysterIP {
         }
 
         /**
-         * Ranks self for "goodness" and returns the result. The Rank is for
-         * Comparison to other Myster IP objects.
+         * Ranks self for "goodness" and returns the result. The Rank is for Comparison to other
+         * Myster IP objects.
          */
 
         public double getRank(MysterType type) {
             toUpdateOrNotToUpdate();
-            return ((double) SPEEDCONSTANT * Math.log((double) speed) + //speed
-                    // constants.
-                    // (not
-                    // used)
-                    (double) FILESCONSTANT * Math.log((double) getNumberOfFiles(type)) + //# of
-                                                                                         // files
-                    (double) Math.log(HITSCONSTANT + 1) * numberofhits + //not
-                    // used
-                    (double) UPVSDOWNCONSTANT * ((double) timeup / (double) (timeup + timedown)) + //up
-                    // vs
-                    // down
-                    (double) (STATUSCONSTANT * (upordown ? 4 : 0)))
-                    + //up or down
-                    (lastPingTime == -2 ? (0.1 - (double) 20000 / 2500)
+            return (SPEEDCONSTANT * Math.log(speed) //
+                    + FILESCONSTANT * Math.log(getNumberOfFiles(type)) //
+                    + Math.log(HITSCONSTANT + 1) * numberofhits //
+                    + UPVSDOWNCONSTANT * ((double) timeup / (double) (timeup + timedown)) //up
+                    + STATUSCONSTANT * (upordown ? 4 : 0)) //
+                    + (lastPingTime == -2 ? (0.1 - (double) 20000 / 2500)
                             : (lastPingTime == -1 ? (0.1 - (double) 5000 / 2500)
-                                    : (0.1 - (double) lastPingTime / 2500))); //ping
+                                    : (0.1 - (double) lastPingTime / 2500)));
         }
 
         public String getServerIdentity() {
@@ -233,8 +223,7 @@ class MysterIP {
         }
 
         protected void finalize() throws Throwable {
-            interfaceCounter--; //used for garbage collection. I love the VM
-            // sometimes.
+            referenceCounter--; //used for garbage collection.
             super.finalize();
         }
 
@@ -249,7 +238,6 @@ class MysterIP {
         public long getUptime() {
             return uptime;
         }
-
     }
 
     public boolean getStatus() {
@@ -258,15 +246,13 @@ class MysterIP {
     }
 
     /**
-     * The ever famous toString() method!!! You can't go from string to new
-     * Myster IP easily!!!
+     * The ever famous toString() method!!! You can't go from string to new Myster IP easily!!!
      */
 
     public String toString() {
         toUpdateOrNotToUpdate();
 
-        return "" + toMML(); //return the toString() the MML of this MysterIP!
-        // Fun eh?
+        return "" + toMML();
     }
 
     public MysterAddress getAddress() {
@@ -274,7 +260,7 @@ class MysterIP {
     }
 
     protected int getMysterCount() {
-        return interfaceCounter;
+        return referenceCounter;
     }
 
     protected long getLastUpdate() {
@@ -342,10 +328,9 @@ class MysterIP {
     //NOTICE HOW MOST EVERYTHING IS STATIC.
 
     /**
-     * Refreshes Status non-blocking. Status is whether this IP is up or down
-     * This function doesn't block which means that it won't stop your program
-     * from excecuting while it looks up the Status. It also means that there is
-     * some delay before the stats are updated.
+     * Refreshes Status non-blocking. Status is whether this IP is up or down This function doesn't
+     * block which means that it won't stop your program from excecuting while it looks up the
+     * Status. It also means that there is some delay before the stats are updated.
      */
 
     private static MysterThread[] updaterThreads;
@@ -353,7 +338,7 @@ class MysterIP {
     private static BlockingQueue statusQueue = new BlockingQueue();
 
     private synchronized void toUpdateOrNotToUpdate() {
-        //if an update opperation is already queued, return.
+        //if an update operation is already queued, return.
         if (occupied)
             return;
 
@@ -376,13 +361,12 @@ class MysterIP {
             UDPPingClient.ping(this.getAddress(), new MysterIPPingEventListener(this));
         } catch (IOException ex) {
             ex.printStackTrace();
-            occupied = false; //ver bad things happen if it gets to here!!!
+            occupied = false; //very bad things happen if it gets to here!!!
         }
     }
 
     /**
-     * Refreshes all Stats (Number of files, Speed and upordown) from the IP.
-     * Blocks.
+     * Refreshes all Stats (Number of files, Speed and upordown) from the IP. Blocks.
      */
     private static boolean internalRefreshAll(MysterIP mysterip) {
 
@@ -415,7 +399,6 @@ class MysterIP {
                 temp = "1";
             mysterip.speed = Double.valueOf(temp).doubleValue();
 
-            //62.30.167.63
             if (mml.pathExists("/ServerIdentity")) {
                 mysterip.serverIdentity = mml.get("/ServerIdentity");
             } else {
@@ -426,7 +409,6 @@ class MysterIP {
                 String uptimeString = mml.get(UPTIME);
                 if (uptimeString == null) {
                     mysterip.uptime = -1;
-                    //mysterip.uptime = 1334567890; //(For testing)
                 } else {
                     mysterip.uptime = Long.valueOf(uptimeString).longValue();
                 }
@@ -447,9 +429,9 @@ class MysterIP {
                                 continue; //<- weird err.
 
                             table.put("/" + (String) (dirList.elementAt(i)), s_temp);//<-WARNING
-                                                                                     // could
-                                                                                     // be a
-                                                                                     // number
+                            // could
+                            // be a
+                            // number
                         }
                     }
                 } finally {
@@ -485,42 +467,6 @@ class MysterIP {
             }
         }
     }
-
-    //THIS ROUTINE IS SEPERATE FOR ORGANIZATIONAL PURPOSES
-    /*
-     * private static int countermoo=0; private static void
-     * internalRefreshStatus(MysterIP ip) {
-     * 
-     * long time_temp=System.currentTimeMillis(); //UDP PING SECTION try { if
-     * (UDPPingClient.ping(ip.ip.getIP())) { //System.out.println("There has
-     * been a successfull PING"); ip.setStatus(true);
-     * ip.lastminiupdate=System.currentTimeMillis();
-     * ip.lastPingTime=(int)(ip.lastminiupdate-time_temp); return; }
-     * //ip.setStatus(false); } finally {
-     * //ip.lastminiupdate=System.currentTimeMillis(); }
-     * 
-     * boolean UDPONLY=true; if (UDPONLY) { ip.setStatus(false);
-     * ip.lastPingTime=-2; ip.lastminiupdate=System.currentTimeMillis(); return; }
-     * 
-     * 
-     * time_temp=System.currentTimeMillis(); try {
-     * 
-     * if (System.currentTimeMillis()-ip.lastminiupdate <ip.MINIUPDATETIME)
-     * return; //Don't update if last update was a second ago
-     * 
-     * MysterSocket s=null; try {//If this caused an exception, the ip has no
-     * computer attached. s=MysterSocketFactory.makeStreamConnection(ip.ip);
-     * DataOutputStream out=new DataOutputStream(s.getOutputStream());
-     * out.writeInt(2);//magic number are fun. int
-     * whoCares=s.getInputStream().read(); try {s.close();} catch (Exception
-     * ex){} ip.setStatus(true);
-     * ip.lastPingTime=(int)(System.currentTimeMillis()-time_temp); } catch
-     * (Exception ex) { ip.setStatus(false); ip.lastPingTime=-2; try
-     * {s.close();} catch (Exception exp) {} }//To keep the value of the last
-     * update. } finally {
-     * 
-     * ip.lastminiupdate=System.currentTimeMillis(); } }
-     */
 
     private static class IPStatusUpdaterThread extends MysterThread {
 

@@ -64,7 +64,7 @@ public class FileInfoListerThread extends MysterThread {
 
             listDir(mml, keyvalue, "/", "");
 
-            w.showFileStats(keyvalue);
+            showFileStats(keyvalue);
 
             msg.say("Idle...");
 
@@ -103,10 +103,10 @@ public class FileInfoListerThread extends MysterThread {
         }
     }
     
-    private synchronized void showFileStats(final RobustMML mml) {
+    private synchronized void showFileStats(final KeyValue keyValue) {
         if (endFlag)
             return;
-        showFileStats(mml);
+        w.showFileStats(keyValue);
     }
     
     private synchronized void say(final String message) {

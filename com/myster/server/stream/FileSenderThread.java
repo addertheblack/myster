@@ -21,7 +21,6 @@ import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 
-import com.general.util.Semaphore;
 import com.myster.client.stream.StandardSuite;
 import com.myster.filemanager.FileTypeListManager;
 import com.myster.net.MysterAddress;
@@ -169,9 +168,6 @@ public class FileSenderThread extends ServerThread {
 
         long initialOffset = 0;
 
-        //Threading
-        Semaphore sem = new Semaphore(0);
-
         //?
         boolean endflag = false;
 
@@ -290,10 +286,6 @@ public class FileSenderThread extends ServerThread {
             }
         }
 
-        private void waitUntilDone() throws InterruptedException {
-            sem.getLock();
-        }
-
         private void init(MysterSocket socket) throws IOException {
             this.socket = socket; //io
             in = new DataInputStream(socket.getInputStream());
@@ -385,7 +377,6 @@ public class FileSenderThread extends ServerThread {
         private void cleanUp() {
             if (duplicate)
                 return;
-            sem.signal();
             duplicate = true; //just so this is not called twice.
             endflag = true;
         }
@@ -456,7 +447,7 @@ public class FileSenderThread extends ServerThread {
             return (int) bytesremaining;
         }
 
-        //code 'm' (not used?)
+        //code 'm' (not used?) (the code below is not correct. Strings should be UTF).
         private void sendMessage(String m) throws IOException {
             byte[] bytes = m.getBytes();
             long length = bytes.length;

@@ -17,19 +17,19 @@ import com.general.mclist.MCListItemInterface;
 import com.general.mclist.Sortable;
 import com.general.mclist.SortableLong;
 import com.general.mclist.SortableString;
+import com.general.util.TimerThread;
 import com.myster.tracker.IPListManager;
 import com.myster.tracker.IPListManagerSingleton;
 import com.myster.tracker.MysterServer;
 import com.myster.type.MysterType;
 import com.myster.ui.MysterFrame;
-import com.myster.util.MysterThread;
 import com.myster.util.OpenConnectionHandler;
 import com.myster.util.TypeChoice;
 
 public class TrackerWindow extends MysterFrame {
     private static TrackerWindow me;// = new TrackerWindow();
 
-    private MysterThread updater;
+    private MyThread updater;
 
     private MCList list;
 
@@ -43,8 +43,7 @@ public class TrackerWindow extends MysterFrame {
             "Tracker");
 
     public static void initWindowLocations() {
-        Rectangle[] rect = com.myster.ui.WindowLocationKeeper
-                .getLastLocs("Tracker");
+        Rectangle[] rect = com.myster.ui.WindowLocationKeeper.getLastLocs("Tracker");
         if (rect.length > 0) {
             getInstance().setBounds(rect[0]);
             getInstance().setVisible(true);
@@ -105,18 +104,22 @@ public class TrackerWindow extends MysterFrame {
         addComponentListener(new ComponentAdapter() {
             public void componentShown(ComponentEvent e) {
                 System.out.println("SHOWN!");
-                loadList();
 
-                updater.end();
+                updater.flagToEnd();
                 updater = new MyThread();
                 updater.start();
             }
 
             public void componentHidden(ComponentEvent e) {
                 System.out.println("HIDDEN!");
-                updater.end();
+                updater.flagToEnd();
             }
         });
+    }
+
+    public void show() {
+        loadList();
+        super.show();
     }
 
     /**
@@ -133,8 +136,8 @@ public class TrackerWindow extends MysterFrame {
     /**
      * Makes grid bag layout less nasty.
      */
-    public void addComponent(Component c, int row, int column, int width,
-            int height, int weightx, int weighty) {
+    public void addComponent(Component c, int row, int column, int width, int height, int weightx,
+            int weighty) {
         gbconstrains.gridx = column;
         gbconstrains.gridy = row;
 
@@ -161,10 +164,11 @@ public class TrackerWindow extends MysterFrame {
     Vector itemsinlist;
 
     /**
-     * Remakes the MCList. This routine is called every few minutes to update
-     * the tracker window with the status of the tracker.
+     * Remakes the MCList. This routine is called every few minutes to update the tracker window
+     * with the status of the tracker.
      */
     private synchronized void loadList() {
+        int currentIndex = list.getSelectedIndex();
         list.clearAll();
         itemsinlist = new Vector(IPListManager.LISTSIZE);
         IPListManager manager = IPListManagerSingleton.getIPListManager();
@@ -172,11 +176,11 @@ public class TrackerWindow extends MysterFrame {
         TrackerMCListItem[] m = new TrackerMCListItem[vector.size()];
 
         for (int i = 0; i < vector.size(); i++) {
-            m[i] = new TrackerMCListItem((MysterServer) (vector.elementAt(i)),
-                    getType());
+            m[i] = new TrackerMCListItem((MysterServer) (vector.elementAt(i)), getType());
             itemsinlist.addElement(m[i]);
         }
         list.addItem(m);
+        list.select(currentIndex); //not a problem if out of bounds..
     }
 
     /**
@@ -190,44 +194,23 @@ public class TrackerWindow extends MysterFrame {
     }
 
     /**
-     * This thread is responsible for keeping the tracker window updated. It
-     * does so by polling the IPListManager repeataly. Every once in a while it
-     * reloads the information complely.
+     * This thread is responsible for keeping the tracker window updated. It does so by polling the
+     * IPListManager repeataly. Every once in a while it reloads the information complely.
      */
-    private class MyThread extends MysterThread {
-        public MyThread() {
-        }
+    private class MyThread extends TimerThread {
+        private long counter = 0;
 
-        boolean flag = true;
+        public MyThread() {
+            super(5000);
+        }
 
         public void run() {
-            long counter = 0;
-            do {
-                //loadList();
-                counter++;
-                try {
-                    sleep(30000);
-                } catch (InterruptedException ex) {
-                    continue; //Should check condition and exit! assuing
-                              // interrupt came from end();
-                }
-                //setEnabled(true);
-                //setSize(300,1000);
-                if (counter % 10 == 9) {
-                    loadList();
-                    counter = 0;
-                } else
-                    refreshTheList();
-            } while (flag);
-        }
-
-        public void end() {
-            flag = false;
-            interrupt();
-            try {
-                join();
-            } catch (InterruptedException ex) {
-                //should never happen.
+            counter++;
+            if (counter % 6 == 5) {
+                loadList();
+                counter = 0;
+            } else {
+                refreshTheList();
             }
         }
     }
@@ -281,14 +264,11 @@ public class TrackerWindow extends MysterFrame {
             } else {
                 sortables[0] = new SortableString(server.getServerIdentity());
                 sortables[1] = new SortableLong(server.getNumberOfFiles(type));
-                sortables[2] = new SortableStatus(server.getStatus(), server
-                        .isUntried());
+                sortables[2] = new SortableStatus(server.getStatus(), server.isUntried());
                 sortables[3] = new SortableString("" + server.getAddress());
                 sortables[4] = new SortablePing(server.getPingTime());
-                sortables[5] = new SortableRank(((long) (100 * server
-                        .getRank(type))));
-                sortables[6] = new SortableUptime((server.getStatus() ? server
-                        .getUptime() : -2));
+                sortables[5] = new SortableRank(((long) (100 * server.getRank(type))));
+                sortables[6] = new SortableUptime((server.getStatus() ? server.getUptime() : -2));
             }
         }
 

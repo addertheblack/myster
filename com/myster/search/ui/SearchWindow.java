@@ -18,7 +18,6 @@ import java.awt.Graphics;
 import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
 import java.awt.Insets;
-import java.awt.Label;
 import java.awt.Panel;
 import java.awt.Rectangle;
 import java.awt.TextField;
@@ -52,8 +51,6 @@ public class SearchWindow extends MysterFrame implements SearchResultListener, S
     private MCList fileList;
 
     private TextField textEntry;
-
-    private Label label;
 
     private TypeChoice choice;
 
@@ -106,8 +103,6 @@ public class SearchWindow extends MysterFrame implements SearchResultListener, S
         // System.currentTimeMillis(), 0, KeyEvent.VK_ENTER,
         // (char)KeyEvent.VK_ENTER));
 
-        label = new Label("Type:");
-
         choice = new TypeChoice();
 
         fileList = new MCList(1, true, this);
@@ -115,17 +110,15 @@ public class SearchWindow extends MysterFrame implements SearchResultListener, S
 
         msg = new MessageField("Idle...");
         msg.setEditable(false);
-        msg.setSize(100, 20);
+        //msg.setSize(100, 20);
 
         //reshape(0, 0, XDEFAULT, YDEFAULT);
 
-        addComponent(textEntry, 0, 1, 1, 1, 0, 0);
-        addComponent(searchButton, 0, 3, 1, 1, 0, 0);
-        //addComponent(label ,0,0,1,1,0,0);
-        addComponent(choice, 0, 2, 1, 1, 0, 0);
-        addComponent(fileList.getPane(), 2, 0, 5, 1, 1, 1);
-        addComponent(msg, 3, 0, 5, 1, 1, 0);
-        addComponent(new Panel(), 0, 4, 1, 1, 1, 0);
+        addComponent(textEntry, 0, 1, 1, 1, 0, 0, GridBagConstraints.HORIZONTAL);
+        addComponent(searchButton, 0, 3, 1, 1, 0, 0, GridBagConstraints.HORIZONTAL);
+        addComponent(choice, 0, 2, 1, 1, 0, 0, GridBagConstraints.HORIZONTAL);
+        addComponent(fileList.getPane(), 1, 0, 5, 1, 1, 1, GridBagConstraints.BOTH);
+        addComponent(msg, 2, 0, 5, 1, 1, 0, GridBagConstraints.HORIZONTAL);
 
         setResizable(true);
         setSize(XDEFAULT, YDEFAULT);
@@ -161,8 +154,6 @@ public class SearchWindow extends MysterFrame implements SearchResultListener, S
 
         keeper.addFrame(this);
 
-        setVisible(true); // !
-
         textEntry.setSelectionStart(0);
         textEntry.setSelectionEnd(textEntry.getText().length());
 
@@ -182,16 +173,18 @@ public class SearchWindow extends MysterFrame implements SearchResultListener, S
         for (int i = 0; i < rectangles.length; i++) {
             SearchWindow window = new SearchWindow();
             window.setBounds(rectangles[i]);
+            window.setVisible(true);
         }
 
         if (rectangles.length == 0) {
             SearchWindow window = new SearchWindow();
+            window.setVisible(true);
         }
 
     }
 
     public void addComponent(Component component, int row, int column, int width, int height,
-            int weightx, int weighty) {
+            int weightx, int weighty, int fill) {
         gbconstrains.gridx = column;
         gbconstrains.gridy = row;
 
@@ -200,6 +193,8 @@ public class SearchWindow extends MysterFrame implements SearchResultListener, S
 
         gbconstrains.weightx = weightx;
         gbconstrains.weighty = weighty;
+        
+        gbconstrains.fill = fill;
 
         gblayout.setConstraints(component, gbconstrains);
 

@@ -22,19 +22,8 @@ import com.myster.util.MysterThread;
 /*
  * Things to do
  * 
- * -make it so that 1 queued download is canceled if there is an active download
- * 
- * -make it so that searches don't stop
- * 
- * -change the color of the bars to green again
- * 
  * hook up queued message to something.
  * 
- * hook up resumable download for multi source
- * 
- * try to make it so that PR banner work without an image / URL being put.
- * 
- * try to make server side hash search work (UDP)
  */
 
 public class MultiSourceDownload implements Runnable, Controller {
@@ -257,7 +246,8 @@ public class MultiSourceDownload implements Runnable, Controller {
             //}
         } catch (IOException ex) {
             ex.printStackTrace();
-            flagToEnd();
+            flagToEnd();// humm.. maybe the user should be notified of this problem?
+            //TODO add some sort of notification about these kinds of error here.
         }
     }
 
@@ -661,11 +651,6 @@ class InternalSegmentDownloader extends MysterThread implements
         return true;
     }
 
-    /**
-	 * @param length
-	 * @param timeTakenToDownloadSegment
-	 * @return
-	 */
     private static int IDEAL_BLOCK_TIME = 60*1000;
 	private int calculateNextBlockSize(long length, long timeTakenToDownloadSegment) {
 		int maxLength = (int) (Math.min(length, Integer.MAX_VALUE / 2) * 2); //get the max packet length accounting for int overflow.

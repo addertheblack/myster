@@ -404,7 +404,12 @@ public class Myster {
                                 sin.readInt();
                                 sin.readInt();
                                 sout.write(1);
-                                SearchWindow sw = new SearchWindow();
+                                Util.invoke(new Runnable() {
+                                    public void run() {
+                                        new SearchWindow().setVisible(true);
+                                    }
+                                    
+                                });
                             } catch (Exception ex) {
                                 ex.printStackTrace();
                             }
