@@ -29,7 +29,7 @@ public class Semaphore {
 	}
 	
 	//semaphore wait. "wait" is already used by the API.
-	private synchronized void getLock(int millis) throws InterruptedException {
+	public synchronized void getLock(int millis) throws InterruptedException {
     	counter-- ;
     	if (counter < 0) wait(millis);
 	}
