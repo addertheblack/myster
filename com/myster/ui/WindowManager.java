@@ -7,6 +7,7 @@ import java.awt.event.KeyEvent;
 import com.myster.menubar.MysterMenuItemFactory;
 import com.myster.menubar.MysterMenuFactory;
 import com.myster.menubar.MysterMenuBar;
+import com.general.util.Timer;
 
 public class WindowManager {
 	static Vector windows=new Vector();
@@ -14,10 +15,13 @@ public class WindowManager {
 	static Vector menuItems;
 	static Vector finalMenu;
 	
+	static Runnable doUpdateClass=new Runnable() {public void run() {updateMenu();}};
+	
 	protected static void addWindow(MysterFrame frame) {
 		synchronized (windows) {
 			if (!windows.contains(frame)) {
 				windows.addElement(frame);
+				//Timer t=new Timer(doUpdateClass, 1);//might cause deadlocks.
 				updateMenu();
 			}
 		}
@@ -26,7 +30,10 @@ public class WindowManager {
 	
 	protected static void removeWindow(MysterFrame frame) {
 		boolean yep=windows.removeElement(frame);
-		if (yep) updateMenu();
+		if (yep) {
+			//Timer t=new Timer(doUpdateClass, 1); //might cause deadlocks.
+			updateMenu();
+		}
 	}
 	
 	protected static void updateMenu() {
