@@ -738,3 +738,5 @@ Work on DEV 8:
    	lower down. So com.myster.search file should not call com.myster.search.ui files. There
    	are several places where this is violated but they are to be considered bugs.
    	
+  Work on DEV 15
+    2002/09/24
