@@ -770,7 +770,7 @@ Work on DEV 8:
     	-> Tweaked thread distribution.
     	-> tweaked font usgae in MacOS X
     	-> Made ping sort properly in tracker
-    	==== Release PR 5
+    	==== Released PR 5
     	-> More tweaking to the ping times/patterns and tracker
     	-> MCList fix a bug where the place you click on to move a column moved sideways each column
     	-> MCList now sorts japaneese (and other languages) text better. (hopefully)

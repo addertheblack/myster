@@ -37,6 +37,7 @@ import com.myster.net.*;
 import com.myster.client.datagram.*;
 import com.general.util.*;
 
+import com.myster.mml.*;
 
 import java.util.Locale;
 
@@ -76,6 +77,20 @@ public class Myster{
 		try { Runtime.getRuntime().exec("explorer http://www.apple.com/"); } catch (Exception ex) {}
 		*/
 		
+		/*
+		MML mml=new MML();
+		
+		mml.put("/jack/hill/duck", "this is the value");
+		mml.put("/jack/hill/muck", "this is the value1");
+		mml.put("/jack/pill", "this is the value3");
+		mml.put("/jack/hill/zill", "this is the value4");
+		try {
+			MML mml2=new MML(mml.toString());
+		} catch (Exception ex) {
+			ex.printStackTrace();
+		}
+		
+		if (true==true) return;*/
 		
 		start();
 		

@@ -567,15 +567,35 @@ public class MML implements Serializable {
 		for (int i=s.indexOf("<"); i!=-1; i=s.indexOf("<",i)) {
 			String tag=s.substring(i+1, s.indexOf(">",i));
 			
-			int last=s.indexOf("</"+tag+">", i);
-			
+			int last2=lastBalenced(s, i);//=s.indexOf("</"+tag+">", i);
+			int last=s.indexOf("</"+tag+">", last2);
+			if (last!=last2) System.out.println("MML Error: "+last+" != "+last2 +" in "+s);
+
 			Link mylink=new Link();
+			//System.out.println(s.substring(s.indexOf(">",i)+1, last));
 			mylink.value=createNode(s.substring(s.indexOf(">",i)+1, last), tag);
 			Link.addLink(branch.head, mylink);
 			
 			i=last+1;
 		}
 		return branch;
+	}
+	
+	private static int lastBalenced(String string, int startIndex) {
+		int levelCount=0;
+		for (int i=startIndex; i<string.length(); i++) {
+			if (string.charAt(i)=='<') {
+				if (string.charAt(i+1)=='/') {
+					levelCount--;
+				} else {
+					levelCount++;
+				}
+			}
+			
+			if (levelCount<=0) return i;
+		}
+		
+		return -1;
 	}
 	
 	//Takes an MML String!

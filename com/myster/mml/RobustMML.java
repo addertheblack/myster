@@ -86,6 +86,9 @@ public class RobustMML extends MML {
 		return null;
 	}
 	
+	/**
+		Gets the value at key path. If path doens't exoist, returns "".
+	*/
 	public String query(String path) {
 		try {
 			return super.query(path);
@@ -125,6 +128,9 @@ public class RobustMML extends MML {
 		return false;
 	}
 	
+	/**
+		returns true if path points to a value. false otherwise.
+	*/
 	public boolean isAFile(String path) {
 		try {
 			return super.isAFile(path);
