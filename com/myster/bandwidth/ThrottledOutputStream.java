@@ -25,8 +25,9 @@ public class ThrottledOutputStream extends OutputStream {
 	
 	public void write(byte b[], int off, int len) throws IOException {
 		for (int bytesSent=off, bytesThatCanBeSent; bytesSent<len; bytesSent+=bytesThatCanBeSent) {
-			bytesThatCanBeSent=BandwidthManager.requestBytesOutgoing(len-bytesSent);
+			bytesThatCanBeSent=len-bytesSent;
 			out.write(b, off+bytesSent, bytesThatCanBeSent);
+			bytesThatCanBeSent=BandwidthManager.requestBytesOutgoing(len-bytesSent);
 		}
 	}
 	

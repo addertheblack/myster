@@ -21,9 +21,14 @@ public class ThrottledInputStream extends InputStream {
 	}
 
 	public int read(byte b[], int off, int len) throws IOException {
-		int bytesDownloadable=BandwidthManager.requestBytesIncoming(len);
+		int amountRead=in.read(b,off,len);//bytesDownloadable);
 		
-		return in.read(b,off,bytesDownloadable);//bytesDownloadable);
+		if (amountRead>0) {
+			//System.out.println(""+amountRead);
+			BandwidthManager.requestBytesIncoming(amountRead);
+		}
+		
+		return amountRead;
 	}
 
 	public long skip(long n) throws IOException {

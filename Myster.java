@@ -241,9 +241,9 @@ public class Myster{
 				System.out.println("Could not connect to self... Deleting the lock file");
 			}
 		} catch (Exception ex) {
-			System.out.println("Big error, chief.");
-			System.exit(1);
-			ex.printStackTrace();
+			System.out.println("Big error, chief. Now would be a good time to panic.");
+			ex.printStackTrace();System.exit(1);
+			
 		}
 	}
 	
@@ -310,8 +310,7 @@ public class Myster{
 	public static final String tr(String text) {
 		try {
 			return resources.getString(text);
-		}
-		catch (MissingResourceException ex) {
+		} catch (MissingResourceException ex) {
 			System.err.println("missing translation key: \"" + text + "\"");
 			ex.printStackTrace();
 			return text;

@@ -339,19 +339,22 @@ public class FileSenderThread extends ServerThread {
 		 */
 		private void sendFile(File f, DataOutputStream out) throws Exception{
 			//Opens connection to file...
-			
 			try {
-				fin=new DataInputStream(new FileInputStream(f));
-				long temp=fin.skip(bytessent);	//bytes sent should be 0 but may be not since initial offset is set to bytes sent.
-				if (temp!=bytessent) throw new Exception("Skip() method not working right. found bug in API.AGHH");
-			} catch (Exception ex) {
-				throw ex;
+				try {
+					fin=new DataInputStream(new FileInputStream(f));
+					long temp=fin.skip(bytessent);	//bytes sent should be 0 but may be not since initial offset is set to bytes sent.
+					if (temp!=bytessent) throw new Exception("Skip() method not working right. found bug in API.AGHH");
+				} catch (Exception ex) {
+					throw ex;
+				}
+	
+				starttime=System.currentTimeMillis();
+				do {
+					sendImage();
+				} while (sendDataPacket()==BURSTSIZE);
+			} finally {
+				try {fin.close(); } catch (Exception ex) {}
 			}
-
-			starttime=System.currentTimeMillis();
-			do {
-				sendImage();
-			} while (sendDataPacket()==BURSTSIZE);
 		}
 		
 		

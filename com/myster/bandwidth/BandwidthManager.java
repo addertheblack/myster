@@ -24,7 +24,9 @@ public class BandwidthManager {
 	static SomeStruct data=new SomeStruct();
 
 	public static final int requestBytesIncoming(int maxBytes) {
-		return maxBytes;
+		if (!data.incommingIsEnabled) return maxBytes;
+		
+		return data.incommingImpl.requestBytes(maxBytes);
 	}
 	
 	
@@ -44,16 +46,16 @@ public class BandwidthManager {
 	
 	//////////PREFS
 	private static final String OUTGOING_ENABLED="/Outgoing Enabled";
-	private static final String INGOMMING_ENABLED="/Incomming Enabled";
+	private static final String INCOMMING_ENABLED="/Incomming Enabled";
 	private static final String KEY_IN_PREFS="BANDWIDTH PREFS";
 	private static final String OUTGOING_MAX="/Outgoing Max";
-	private static final String INGOMMING_MAX="/Incomming Max";
+	private static final String INCOMMING_MAX="/Incomming Max";
 	private static final String TRUE_S="TRUE";
 	private static final String FALSE_S="FALSE";
 	
 
 	public static synchronized boolean isOutgoingEnabled() 	{ return data.prefMML.query(OUTGOING_ENABLED).equals(TRUE_S); }
-	public static synchronized boolean isIncommingEnabled() 	{ return data.prefMML.query(INGOMMING_ENABLED).equals(TRUE_S); }
+	public static synchronized boolean isIncommingEnabled() 	{ return data.prefMML.query(INCOMMING_ENABLED).equals(TRUE_S); }
 	
 	public static synchronized boolean setOutgoingEnabled(boolean enabled) { return data.setOutgoingEnabled(enabled); }
 	public static synchronized boolean setIncommingEnabled(boolean enabled) { return data.setIncommingEnabled(enabled); }
@@ -62,12 +64,15 @@ public class BandwidthManager {
 	public static synchronized int getIncommingMax() {return data.getIncommingMax();}
 
 	public static synchronized int setOutgoingMax(int max) { return data.setOutgoingMax(max); }
-	public static synchronized int setIncommngMax(int max) { return data.setIncommngMax(max); }
+	public static synchronized int setIncommingMax(int max) { return data.setIncommingMax(max); }
 
 
 	private static class SomeStruct { //hack..
 		public boolean outgoingIsEnabled=false;
 		public Bandwidth outgoingImpl=new BandwidthImpl();
+		
+		public boolean incommingIsEnabled=false;
+		public Bandwidth incommingImpl=new BandwidthImpl();
 		
 		public RobustMML prefMML;
 	
@@ -78,19 +83,23 @@ public class BandwidthManager {
 			
 			outgoingImpl.setRate(getOutgoingMax());
 			outgoingIsEnabled=isOutgoingEnabled();
+			
+			incommingImpl.setRate(getIncommingMax());
+			incommingIsEnabled=isIncommingEnabled();
 		}
 		
 		
 		public synchronized boolean isOutgoingEnabled() 	{ return prefMML.query(OUTGOING_ENABLED).equals(TRUE_S); }
-		public synchronized boolean isIncommingEnabled() 	{ return prefMML.query(INGOMMING_ENABLED).equals(TRUE_S); }
+		public synchronized boolean isIncommingEnabled() 	{ return prefMML.query(INCOMMING_ENABLED).equals(TRUE_S); }
 		
 		public synchronized boolean setOutgoingEnabled(boolean enabled) { 
 			outgoingIsEnabled=enabled;
 			return setBoolInPrefs(OUTGOING_ENABLED, enabled);
 		}
 		
-		public synchronized boolean setIncommingEnabled(boolean enabled) { 
-			return setBoolInPrefs(INGOMMING_ENABLED, enabled);
+		public synchronized boolean setIncommingEnabled(boolean enabled) {
+			incommingIsEnabled=enabled;
+			return setBoolInPrefs(INCOMMING_ENABLED, enabled);
 		}
 		
 		private synchronized boolean setBoolInPrefs(String path, boolean bool) {
@@ -99,7 +108,7 @@ public class BandwidthManager {
 		}
 		
 		public synchronized int getOutgoingMax() {return getIntFromPrefs(OUTGOING_MAX, 10);}
-		public synchronized int getIncommingMax() {return getIntFromPrefs(INGOMMING_MAX, 10);}
+		public synchronized int getIncommingMax() {return getIntFromPrefs(INCOMMING_MAX, 10);}
 		
 		private synchronized int getIntFromPrefs(String path, int defaultNum) {
 			try {
@@ -119,11 +128,12 @@ public class BandwidthManager {
 			return max;
 		}
 		
-		public synchronized int setIncommngMax(int max) {
+		public synchronized int setIncommingMax(int max) {
 			if (max<2) max=2;
 			
-			prefMML.put(INGOMMING_MAX, ""+max);
+			prefMML.put(INCOMMING_MAX, ""+max);
 			Preferences.getInstance().put(KEY_IN_PREFS, prefMML);
+			incommingImpl.setRate(max);
 			
 			return max;
 		}
@@ -134,8 +144,8 @@ public class BandwidthManager {
 
 
 class BlockedThread {
-	public static volatile double rate=10.24;
-	Vector threads;
+	final double rate;
+	final Vector threads;
 	double bytesLeft;
 	Thread thread;
 	
@@ -153,22 +163,32 @@ class BlockedThread {
 	
 	public synchronized void reSleep() {
 		if (thread!=null) {
-			notify();
+			notifyAll();
 		}
 	}
 	
 	public synchronized void sleepNow() {
 		for (;;) {
 			double thisRate;int sleepAmount;long startTime;
-
 			thisRate=((double)(threads.size()))/rate;
 			sleepAmount=(int)(bytesLeft*thisRate);
 			startTime=System.currentTimeMillis();
-			sleepAmount-=10;
+			sleepAmount-=5;
 			if (sleepAmount<=0) {
 				thread=null;
 				return;
 			}
+			
+			
+			//below is voodoo.
+			if (sleepAmount<50&&((int)(Math.random()*(10+3*sleepAmount)))==5) {
+				thread=null;
+				return;
+			}
+			
+			//below is voodoo.
+			sleepAmount-=50;
+			if (sleepAmount<=0) sleepAmount=1;
 			
 			
 			try {
@@ -179,7 +199,6 @@ class BlockedThread {
 			
 			double timeSlept=(System.currentTimeMillis()-startTime);
 			bytesLeft-=(timeSlept/thisRate); //avoid divide by 0
-
 		}
 	}
 }
@@ -264,7 +283,7 @@ class BandwithPrefsPanel extends PreferencesPanel {
 				setIncommingEnable(state);
 			}
 		});
-		enableIncomming.setEnabled(false);
+		//enableIncomming.setEnabled(false);
 		add(enableIncomming);
 		
 		nextOff+=25;
@@ -293,11 +312,19 @@ class BandwithPrefsPanel extends PreferencesPanel {
 		try {
 			BandwidthManager.setOutgoingMax(Integer.parseInt(outgoingBytesField.getText()));
 		} catch (NumberFormatException ex) {}
+		
+		BandwidthManager.setIncommingEnabled(enableIncomming.getState());
+		try {
+			BandwidthManager.setIncommingMax(Integer.parseInt(incommingBytesField.getText()));
+		} catch (NumberFormatException ex) {}
 	}
 	
 	public void reset()	{ 	//discard changes and reset values to their defaults.
 		setOutgoingEnable(BandwidthManager.isOutgoingEnabled());
 		outgoingBytesField.setText(""+BandwidthManager.getOutgoingMax());
+		
+		setIncommingEnable(BandwidthManager.isIncommingEnabled());
+		incommingBytesField.setText(""+BandwidthManager.getIncommingMax());
 	}
 	
 	public String getKey() { return "Bandwidth"; }//gets the key structure for the place in the pref panel
