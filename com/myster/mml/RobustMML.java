@@ -15,8 +15,8 @@ public class RobustMML extends MML {
 		super();
 	}
 	
-	//MIGHT THROW RUNTIME EXCEPTION (null pointer if argument is null)
-	public RobustMML(String s) throws MMLException{
+	
+	public RobustMML(String s) throws MMLException{//THROWS NullPointerException if argument is null
 		super(s);
 	}
 	

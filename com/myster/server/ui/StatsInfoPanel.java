@@ -20,6 +20,7 @@ import com.myster.filemanager.FileTypeListManager;
 import com.myster.util.MysterThread;
 import com.general.util.LinkedList;
 import com.general.util.Util;
+import com.general.util.Timer;
 
 public class StatsInfoPanel extends Panel{
 	Label numsearchlabel, listoflastten;
@@ -225,20 +226,19 @@ public class StatsInfoPanel extends Panel{
 		}
 	}
 	
-	private class SearchPerHour extends MysterThread {
+	private class SearchPerHour implements Runnable {
 		boolean flag=true;
 		
 		LinkedList list=new LinkedList();
 		
+		public void start() {
+			run();
+		}
+		
 		public void run() {
-			do {
 				searchperhour.setValue(calculateSearchesPerHour());
-				try {
-					sleep(5000);
-				} catch (InterruptedException ex) {
-					//.. nothing
-				}
-			} while (flag);
+				if (!flag) return;
+				Timer timer=new Timer(this, 5000);
 		}
 		
 		public int calculateSearchesPerHour() {
@@ -256,8 +256,6 @@ public class StatsInfoPanel extends Panel{
 		
 		public void end() {
 			flag=false;
-			interrupt();
-			try {join();} catch (InterruptedException ex) {}
 		}
 	}
 	

@@ -777,3 +777,7 @@ Work on DEV 8:
     	-> Ponger is now O(1) and not O(n) (should be faster)
     	-> Made it so that 0 spots in the download queue is not allowed.
     	-> Hopefully fixed a Japaneese punctuation hiccup.
+    	
+   Work on DEV 16.2
+     2002/12/19
+     	-> Removed an extra thread for server stats.. Replaced with a timer..
