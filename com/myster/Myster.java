@@ -22,6 +22,8 @@ import java.net.InetAddress;
 import java.net.ServerSocket;
 import java.net.Socket;
 
+import javax.swing.UIManager;
+
 import com.general.util.AnswerDialog;
 import com.general.util.Util;
 import com.myster.bandwidth.BandwidthManager;
@@ -66,6 +68,11 @@ public class Myster {
          * //ex.printStackTrace(); } } } }).start();
          */
 
+        try {
+            UIManager.setLookAndFeel(
+                UIManager.getSystemLookAndFeelClassName());
+        } catch (Exception e) { }
+        
         System.out.println("java.vm.specification.version:"
                 + System.getProperty("java.vm.specification.version"));
         System.out.println("java.vm.specification.vendor :"

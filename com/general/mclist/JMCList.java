@@ -30,7 +30,7 @@ import com.sun.java.util.collections.Vector;
  */
 public class JMCList extends JTable implements MCList {
 
-    private JScrollPane mScrollPane;
+    private JScrollPane scrollPane;
 
     private List listeners;
 
@@ -45,7 +45,8 @@ public class JMCList extends JTable implements MCList {
     public JMCList(int numberOfColumns, boolean singleselect) {
         listeners = new Vector();
         setModel(new MCListTableModel());
-        mScrollPane = new JScrollPane(this);
+        scrollPane = new JScrollPane(this);
+        scrollPane.setDoubleBuffered(true);
 
         setSelectionModel(new MCListSelectionModel(getMCTableModel()));
 
@@ -156,7 +157,7 @@ public class JMCList extends JTable implements MCList {
      * @see com.general.jmclist.MCList#getPane()
      */
     public Container getPane() {
-        return mScrollPane;
+        return scrollPane;
     }
 
     /*
