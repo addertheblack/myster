@@ -356,7 +356,7 @@ class FileTypeList extends MysterThread{
 	private synchronized void indexDir(File file, Vector filelist, int telomere) {
 		telomere--;
 		if (telomere<0) return;
-		if (!file.isDirectory()) {
+		if (!file.isDirectory() || !file.exists()) {
 			System.out.println("Nonsence sent to indexDir. Does this type have a d/l dir associated with it?");
 			return;
 		}

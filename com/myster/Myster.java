@@ -79,9 +79,6 @@ public class Myster {
 		
 		start();
 		
-		
-
-		
 		System.out.println( "MAIN THREAD: Starting loader Thread.." );
 		(new Thread() {
 			public void run() {
@@ -94,10 +91,36 @@ public class Myster {
 				progress.setTitle(I18n.tr("Loading Myster..."));
 				
 				try {
+					if (com.myster.type.TypeDescriptionList.getDefault().getEnabledTypes().length <= 0) {
+						AnswerDialog.simpleAlert(progress, "There are not enabled types. This screws up Myster. Please make sure"+
+														" the typedescriptionlist.mml is in the right place and correctly"+
+														" formated.");
+						quit();
+						return; //not reached
+					}
+				} catch (Exception ex) {
+					AnswerDialog.simpleAlert(progress, "Could not load the Type Description List: \n\n"+ex);
+					quit();
+					return; //not reached
+				}
+				
+				
+				//list types for fun
+				com.myster.type.TypeDescription[] myList = com.myster.type.TypeDescriptionList.getDefault().getEnabledTypes();
+				for (int i = 0; i < myList.length; i++) {
+					String[] ext = myList[i].getExtensions();
+					System.out.println("Extensions for "+myList[i].getType());
+					for (int j = 0; j < ext.length; j++) {
+						System.out.println(ext[j]);
+					}
+				}
+				
+				try {
 					com.myster.hash.HashManager.init();
 				} catch (Exception ex) {
 					ex.printStackTrace();
 				}
+				
 			
 				com.myster.hash.ui.HashManagerGUI.init();
 				

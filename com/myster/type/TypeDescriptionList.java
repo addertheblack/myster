@@ -6,10 +6,14 @@ import java.util.Hashtable;
 import java.util.StringTokenizer;
 
 import com.myster.pref.PreferencesMML;
+import com.myster.mml.RobustMML;
 import com.general.events.SyncEventDispatcher;
-//import Myster;
+
 
 /**
+* The TypeDescriptionList contains some basic type information for most file based
+* types on the Myster network. The TypeDescriptionList is loaded from a file
+* called "TypeDescriptionList.mml"
 * 
 */
 public abstract class TypeDescriptionList {
@@ -24,12 +28,48 @@ public abstract class TypeDescriptionList {
 		return defaultList;
 	}
 	
+	/**
+	*	Returns a TypeDescription for that MysterType or null if no TypeDescription Exists
+	*/
+	public abstract TypeDescription get(MysterType type) ;
+	
+	/**
+	*	Returns all TypeDescriptionObjects known
+	*/
 	public abstract TypeDescription[] getAllTypes() ;
+	
+	/**
+	*	Returns all enabled TypeDescriptionObjects known
+	*/
 	public abstract TypeDescription[] getEnabledTypes() ;
+	
+	/**
+	*	Returns all TypeDescriptionObjects enabled
+	*/
 	public abstract boolean isTypeEnabled(MysterType type);
+	
+	/**
+	*	Returns if the Type is enabled in the prefs (as opposed to
+	*	if the type was enabled as of the beginning of the last execution
+	*	which is what the "isTypeEnabled" functions does.
+	*/
 	public abstract boolean isTypeEnabledInPrefs(MysterType type);
+	
+	/**
+	*	Adds a listener to be notified if there is a change in the enabled/
+	*	unenabled-ness of of type.
+	*/
 	public abstract void addTypeListener(TypeListener l) ;
+	
+	/**
+	*	Adds a listener to be notified if there is a change in the enabled/
+	*	unenabled-ness of of type.
+	*/
 	public abstract void removeTypeListener(TypeListener l) ;
+	
+	/**
+	*	Enabled / disabled a type. Note this value comes into effect next time Myster is launched.
+	*/
 	public abstract void setEnabledType(MysterType type, boolean enable) ;
 }
 
@@ -38,13 +78,15 @@ class DefaultTypeDescriptionList extends TypeDescriptionList {
 
 	//Ok, so here's the situation
 	//I designed this so that I could change types while the program is running
-	//and have all modules auto update.. but it's too freaking long to program
-	//so rather than nuke the code I've modified it to return the value that was
-	//last saved. The system will still fire events but the list won't send the
-	//values stored in the prefs..
-	//See code for how to get back the intended behavior... (comments actually)
+	//and have all modules auto update without Myster restarting.. but it's too 
+	//freaking long to program
+	//so rather than do all that coding I've modified it to return the value that was
+	//last saved (so that values from typeDescriptionList are CONSTANT PER PROGRAM EXECUTION
+	//. The system will still fire events but the list won't send the
+	//values stored in the prefs only the values that were true as of
+	//the beginning of the last execution.
+	//See code for how to get back the dynamic behavior... (comments actually)
 	TypeDescriptionElement[] types;
-	TypeDescriptionElement[] oldTypes;
 	TypeDescriptionElement[] workingTypes;
 	
 	
@@ -52,7 +94,9 @@ class DefaultTypeDescriptionList extends TypeDescriptionList {
 	SyncEventDispatcher dispatcher;
 
 	public DefaultTypeDescriptionList() {
-		TypeDescription[] list = loadDefaultTypeAndDescriptionList();;
+		TypeDescriptionElement[] oldTypes;
+	
+		TypeDescription[] list = loadDefaultTypeAndDescriptionList();
 		
 
 		types = new TypeDescriptionElement[list.length];
@@ -75,7 +119,7 @@ class DefaultTypeDescriptionList extends TypeDescriptionList {
 			oldTypes[i] = new TypeDescriptionElement(list[i], (string_bool.equals("TRUE") ? true : false));
 		}
 		
-		workingTypes = oldTypes; //set working types to "types" variable. 
+		workingTypes = oldTypes; //set working types to "types" variable to enable on the fly cahnges
 		
 		dispatcher = new SyncEventDispatcher();
 	}
@@ -127,6 +171,16 @@ class DefaultTypeDescriptionList extends TypeDescriptionList {
 		
 		return typeArray_temp;
 	}
+	
+	public TypeDescription get(MysterType type) {
+		for (int i = 0; i < types.length; i++) {
+			if (types.equals(type)) {
+				return types[i].getTypeDescription();
+			}
+		}
+		
+		return null;
+	} 
 	
 	public TypeDescription[] getEnabledTypes() {
 		int counter = 0;
@@ -187,10 +241,11 @@ class DefaultTypeDescriptionList extends TypeDescriptionList {
 
 
 
-	//statics
+
+
 	private static synchronized TypeDescription[] loadDefaultTypeAndDescriptionList() {
 		try {
-			InputStream in = Class.forName("com.myster.Myster").getResourceAsStream("typedescriptionlist.txt");
+			InputStream in = Class.forName("com.myster.Myster").getResourceAsStream("typedescriptionlist.mml");
 			if (in==null) {
 				System.out.println("There is no \"typedescriptionlist.txt\" file at com.myster level. Myster needs this file. Myster will exit now.");
 				System.out.println("Please get a Type Description list.");
@@ -201,55 +256,108 @@ class DefaultTypeDescriptionList extends TypeDescriptionList {
 			
 			Vector vector = new Vector(10,10);
 			
-			int count;
-			for (count=0; true; count++) {
-				try {
-					StringTokenizer tokens = new StringTokenizer(readLine(in),"\\",false);
-					vector.addElement(new TypeDescription(new MysterType(tokens.nextToken().getBytes(com.myster.Myster.DEFAULT_ENCODING)),tokens.nextToken()));
-				} catch (Exception ex) {
-					break;
-				}
+			RobustMML mml = new RobustMML(new String(readResource(in)));
+			/*
+				<List>
+					<1>
+						<Type>...</Type>
+						<Description>...</Description>
+						<Extentions>
+							<1>.exe</1>
+							<2>.zip</2>
+						</Extensions>
+						<Archived>false</Archived>
+					</1>
+			*/
+			
+			final String 
+					LIST 			= "/List/";
+			
+			Vector typeList = mml.list(LIST);
+			for (int i = 0 ; i < typeList.size(); i++) {
+				TypeDescription typeDescription = getTypeDescriptionAtPath(mml, LIST + (String)(typeList.elementAt(i))+"/");
+				
+				if (typeDescription != null) vector.addElement(typeDescription);
 			}
 			
-			TypeDescription[] list=new TypeDescription[count];
-			for (int i=0; i<count; i++) {
-				list[i]=(TypeDescription)vector.elementAt(i);
+			TypeDescription[] typeDescriptions = new TypeDescription[vector.size()];
+			for (int i = 0; i < typeDescriptions.length; i++) {
+				typeDescriptions[i] = (TypeDescription) vector.elementAt(i);
 			}
 			
-			if (list.length == 0) return new TypeDescription[]{new TypeDescription(new MysterType((new String("MPG3")).getBytes()), "Default type since all types are disabled")};
+			System.out.println("Type descriptions length "+typeDescriptions.length);
 			
-			return list;
+			return typeDescriptions;
 		} catch (Exception ex) { 
 			ex.printStackTrace();
-		return null;}
+			throw new RuntimeException(""+ex);
+		}
+
 	}
 
+
+	private static TypeDescription getTypeDescriptionAtPath(RobustMML mml, String path) {
+		final String 					
+				TYPE 			= "Type",
+				DESCRIPTION		= "Description",
+				EXTENSIONS		= "Extensions/",
+				ARCHIVED		= "Archived";
 		
-	private static String readLine(InputStream in) throws Exception {
-		char[] buffer=new char[2000];
-		int i=0;int c=-1;
-		for (i=0; i<2000-2; i++) {
+		String type 				= mml.get(path + TYPE);
+		String description			= mml.get(path + DESCRIPTION);
+		Vector extensionsDirList	= mml.list(path + EXTENSIONS);
+		String archived				= mml.get(path + ARCHIVED);
+		
+		if ((type == null) & (description == null)) return null;
+		
+		boolean isArchived = (archived == null ? false : (archived.equalsIgnoreCase("True")));
+		
+		
+		String[] extensions = new String[0];
+		if (extensionsDirList != null) {
+			Vector recovered = new Vector(10,10);
+			String extensionsPath = path+EXTENSIONS;
 			
-			
-			try {
-				c=in.read();
-			} catch (Exception ex) {
-				c=-1;
+			for (int i = 0; i < extensionsDirList.size(); i++) {
+				String extension = mml.get(extensionsPath + (String)(extensionsDirList.elementAt(i)));
+				if (extension!=null) {
+					recovered.addElement(extension);
+				}	
 			}
 			
-			if (c=='|'||c==-1) {
-				//buffer[i]=' ';
-				//buffer[i-1]=0;
-				break;
+			extensions = new String[recovered.size()];
+			for (int i = 0; i < extensions.length; i++) {
+				extensions[i] = (String)recovered.elementAt(i);
 			}
-			buffer[i]=(char)c;
 		}
 		
-		if (c==-1)  {
-			throw new Exception(); //end of file
+		try {
+			return new TypeDescription(new MysterType(type.getBytes(com.myster.Myster.DEFAULT_ENCODING)), description, extensions, isArchived);
+		} catch (Exception ex) {
+			throw new com.general.util.UnexpectedException(ex);
+		}
+	}
+
+
+	
+	private static byte[] readResource(InputStream in) throws IOException {
+		final int BUFFER_SIZE = 2000;
+		int amountRead = 0;
+		
+		byte[] buffer = new byte[BUFFER_SIZE];
+	
+		ByteArrayOutputStream out = new ByteArrayOutputStream();
+	
+
+		for (;;) {
+			int bytesRead = in.read(buffer);
+			
+			if (bytesRead == -1) break;
+			
+			out.write(buffer, 0, bytesRead);
 		}
 		
-		return new String(buffer,0,i);
+		return out.toByteArray();
 	}
 	
 	private static class TypeDescriptionElement {
@@ -282,7 +390,5 @@ class DefaultTypeDescriptionList extends TypeDescriptionList {
 			return typeDescription.getType();
 		}
 	}
-
-
 }
 	 

@@ -16,13 +16,26 @@ import java.util.*;
 import java.io.InputStream;
 
 public class TypeDescription {
-	MysterType type;
-	String description;
+	MysterType 	type;
+	String 		description;
+	String[]	extensions;
+	boolean		isArchived;
 
-	public TypeDescription(MysterType t, String d) { commonInit(t,d);}
+	public TypeDescription(MysterType type, String description,
+				String[] extensions, boolean isArchived) { 
+		commonInit(type, description, extensions, isArchived);
+	}
 	
-	private void commonInit(MysterType t, String d) {
-		type=t;description=d;
+	public TypeDescription(MysterType type, String description) { 
+		commonInit(type, description, new String[]{}, false);
+	}
+	
+	private void commonInit(MysterType type, String description,
+				String[] extensions, boolean isArchived) {
+		this.type			= type;
+		this.description	= description;
+		this.extensions		= extensions;
+		this.isArchived		= isArchived;
 	}
 	
 	public String getTypeAsString() {
@@ -35,6 +48,14 @@ public class TypeDescription {
 	
 	public String getDescription() {
 		return description;
+	}
+	
+	public String[] getExtensions() {
+		return (String[])extensions.clone();
+	}
+	
+	public boolean isArchived() {
+		return isArchived;
 	}
 	
 	public String toString() {

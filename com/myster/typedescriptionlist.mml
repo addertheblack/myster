@@ -1,0 +1,87 @@
+<List>
+	<1>
+		<Type>MPG3</Type>
+		<Description>Sound</Description>
+		<Extensions>
+		         <0>.mp3</0> <1>.mid</1> <2>.midi</2> <3>.gm</3> <4>.au</4> 
+		         <5>.wav</5> <6>.ogg</6> <7>.snd</7> <8>.mod</8> <9>.s3m</9>
+		         <10>.aif</10> <11>.aiff</11> <12>.aiff1</12> <13>.m3d</13>
+		         <14>.mpeghdr</14> <15>.iff</15> <16>.aifc</16> <17>.avr</17>
+		         <18>.adpcm</18> <19>.gsm</19> <20>.sf</20> <21>.kar</21>
+		         <22>.s3m</22> <23>.mtm</23> <24>.swa</24> <25>.m1a</25>
+		         <26>.m2a</26> <27>.mp2</27> <28>.paf</28> <29>.wve</29> 
+		         <30>.voc</30> <31>.ra</31> <32>.m4a</32>
+		</Extensions>
+		<Archived>True</Archived>
+	</1>
+	<2>
+		<Type>MACS</Type>
+		<Description>Macintosh</Description>
+		<Extensions>
+		         <0>.bin</0> <1>.hqx</1> <2>.sit</2> <3>.cpt</3> <4>.dmg</4> <5>.sea</5>
+		         <6>.nfs</6> <7>.sitx</7> <8>.image</8> <9>.img</9> <10>.pkg</10> <11>.smi</11>
+		</Extensions>
+	</2>
+	<3>
+		<Type>WINT</Type>
+		<Description>PC</Description>
+		<Extensions>
+		         <0>.exe</0> <1>.zip</1> <2>.gz</2> <3>.tar</3> <4>.z</4> <5>.rmj</5> <6>.lqt</6>
+		         <7>.iso</7> <8>.cue</8> <9>.iso</9> <10>.ccd</10> <11>.rar</11> <12>.ace</12>
+		         <13>.cdr</13> <14>.gzip</14> <15>.lzh</15> <16>.lha</16>
+		</Extensions>
+	</3>
+	<4>
+		<Type>PICT</Type>
+		<Description>Pictures</Description>
+		<Extensions>
+		         <0>.jpg</0> <1>.jpeg</1> <2>.png</2> <3>.gif</3> <4>.jpe</4> <5>.tif</5>
+		         <6>.tiff</6> <7>.bmp</7> <8>.jp2</8> <9>.ps</9> <10>.psp</10> <11>.eps</11>
+		         <12>.xpm</12> <13>.tga</13> <14>.xcf</14> <15>.pict</15>
+		</Extensions>
+		<Archived>True</Archived>
+	</4>
+	<5>
+		<Type>PORN</Type>
+		<Description>"Adult" only files and other misc junk</Description>
+	</5>
+	<6>
+		<Type>MooV</Type>
+		<Description>Video Clips</Description>
+		<Extensions>
+		         <0>.mov</0> <1>.avi</1> <2>.asf</2> <3>.rm</3> <4>.ram</4> <5>.mpg</5>
+		         <6>.mp4</6> <7>.mpeg</7> <8>.3iv</8> <9>.div</9> <10>.xiv</10> <11>.rm</11>
+		         <12>.mpe</12> <13>.swf</13> <14>.wmv</14> <15>.mp2v</15> <16>.mlv</16> <17>.mpv</17>
+		         <18>.wm</18> <19>.vob</19> <20>.ifo</20>
+		</Extensions>
+		<Archived>True</Archived>
+	</6>
+		<7>
+		<Type>TEXT</Type>
+		<Description>Documents</Description>
+		<Extensions>
+		         <0>.txt</0> <1>.doc</1> <2>.abw</2> <3>.rtf</3> <4>.pdf</4> <5>.ps</5>
+		         <6>.htm</6> <7>.html</7> <8>.xml</8> <9>.wp4</9>
+		</Extensions>
+	</7>
+		<8>
+		<Type>ROMS</Type>
+		<Description>Emulation</Description>
+		<Extensions>
+		         <0>.rom</0> <1>.smc</1> <2>.n64</2> <3>.v64</3> <4>.gba</4> <5>.gb</5>
+		         <6>.mod</6> <7>.nes</7> <8>.dsk</8>
+		</Extensions>
+		<Archived>True</Archived>
+	</8>
+		<9>
+		<Type>RING</Type>
+		<Description>Ring tones</Description>
+		<Extensions>
+		         <0>.csx</0> <1>.gsm</1> <2>.qcp</2> <3>.jmp</3> <4>.mid</4> <5>.midi</5>
+		         <6>.mmd</6>
+		</Extensions>
+		<Archived>True</Archived>
+	</9>
+</List>
+
+

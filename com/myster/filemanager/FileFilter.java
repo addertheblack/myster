@@ -83,6 +83,18 @@ class FileFilter {
 		return false;
 	}
 
-
+/*
+	public static void listExtensions() {
+		for (int i = 0 ; i < fileextensions.length ; i++) {
+			System.out.println("<Extensions>");
+			String s = "";
+			for (int j = 0; j < fileextensions[i].length; j++) {
+				s = s + " <"+j+">" + fileextensions[i][j] + "</"+j+">";
+			}
+			System.out.println("\t"+s);
+			System.out.println("<Extensions>");
+		}
+	}
+*/
 }
 
