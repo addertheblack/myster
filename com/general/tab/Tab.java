@@ -104,6 +104,7 @@ public class Tab implements TabInterface {
 		int green = (pixel >>  8) & 0xff;
 		int blue  = (pixel      ) & 0xff;
 		
+
 		if (red==0xff&&green==0xff&&blue==0xff) {
 			alpha=0x00;
 		} else {
@@ -112,7 +113,6 @@ public class Tab implements TabInterface {
 			blue=0xFF;
 			alpha=0x2F;
 		}
-		
 		
 		return (alpha << 24) | (red << 16) | (green << 8 ) | blue;
  	}
