@@ -154,18 +154,18 @@ public class StandardSuite {
 					}
 				});
 				
-				//try {
+				try {
 
-				//	MultiSourceDownload download = new MultiSourceDownload(socket, stub, progress);
+					MultiSourceDownload download = new MultiSourceDownload(socket, stub, progress);
 					
-				//	if (!download.start()) { //start leave MysterSocket valid
+					if (!download.start()) { //start leave MysterSocket valid
 						DownloaderThread secondDownload = new DownloaderThread(socket, stub, progress);
 						secondDownload.start();
-				//	}
-				//} catch (IOException ex) {
+					}
+				} catch (IOException ex) {
 					//nothing
 					//progress.setText("An error has occured ->" + ex.getMessage());
-				//}
+				}
 			}
 		}).start();
 	}

@@ -44,7 +44,7 @@ public abstract class AbstractDownloadQueue extends TransferQueue {
 		return downloads.size();
 	}
 	
-	public int getQueuedDownloads() {
+	public final int getQueuedDownloads() {
 		return downloadQueue.getSize();
 	}
 	
@@ -66,11 +66,11 @@ public abstract class AbstractDownloadQueue extends TransferQueue {
 	
 	public void saveDownloadSpotsInPrefs(int newSpots) {}
 
-	public int getMaxQueueLength() {
+	public final int getMaxQueueLength() {
 		return maxDownloadQueueLength;
 	}
 
-	public void setMaxQueueLength(int numberOfAllowedSimutaneousDownloads) {
+	public final void setMaxQueueLength(int numberOfAllowedSimutaneousDownloads) {
 		maxDownloadQueueLength = numberOfAllowedSimutaneousDownloads;
 	}
 	

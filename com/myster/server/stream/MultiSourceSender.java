@@ -15,6 +15,13 @@ import com.myster.server.DownloadInfo;
 import com.myster.server.event.ServerDownloadDispatcher;
 import com.myster.server.event.ServerDownloadEvent;
 
+import com.myster.transferqueue.Downloader;
+import com.myster.transferqueue.TransferQueue;
+import com.myster.transferqueue.QueuedStats;
+import com.myster.transferqueue.MaxQueueLimitException;
+
+
+
 		//1) read in offset(long) + length(long)
 		
 		//send back queue position (int, negative if file not found) (not meta data) ->
@@ -44,7 +51,7 @@ public class MultiSourceSender extends ServerThread {
 	}
 
 	public void section(ConnectionContext context) throws IOException {
-		MultiSourceDownloadInstance download = new MultiSourceDownloadInstance((ServerDownloadDispatcher)(context.sectionObject));
+		MultiSourceDownloadInstance download = new MultiSourceDownloadInstance((ServerDownloadDispatcher)(context.sectionObject), context.transferQueue);
 		
 		try {
 			download.download(context.socket);
@@ -66,24 +73,27 @@ public class MultiSourceSender extends ServerThread {
 		long fileLength = 0, startTime = System.currentTimeMillis(), amountDownloaded= 0;
 		DownloadInfo downloadInfo;
 		
-		public MultiSourceDownloadInstance(ServerDownloadDispatcher dispatcher) {
+		TransferQueue transferQueue;
+		
+		public MultiSourceDownloadInstance(ServerDownloadDispatcher dispatcher, TransferQueue transferQueue) {
 			this.dispatcher 	= dispatcher;
 			this.downloadInfo 	= new Stats();
+			this.transferQueue	= transferQueue;
 			
 			fireEvent(ServerDownloadEvent.SECTION_STARTED, -1);
 		}
 		
 		
-		public void download(MysterSocket socket) throws IOException {
+		public void download(final MysterSocket socket) throws IOException {
 			try {
-				DataOutputStream out = socket.out;
-				DataInputStream in = socket.in;
+				final DataOutputStream out = socket.out;
+				final DataInputStream in = socket.in;
 				
 				type = new MysterType(in.readInt());
 				
 				fileName = in.readUTF();
 				
-				File file = FileTypeListManager.getInstance().getFile(type, fileName);
+				final File file = FileTypeListManager.getInstance().getFile(type, fileName);
 				
 				if (file==null) {
 					out.write(0);
@@ -92,6 +102,8 @@ public class MultiSourceSender extends ServerThread {
 					out.write(1);
 				}
 				
+				boolean firstTimeAround = true;
+				
 				long myCounter = 0;
 				
 				for (;;) {
@@ -99,7 +111,7 @@ public class MultiSourceSender extends ServerThread {
 					fireEvent(ServerDownloadEvent.STARTED, -1);
 					startTime = System.currentTimeMillis();
 					
-					long offset = in.readLong();
+					final long offset = in.readLong();
 					fileLength = in.readLong();
 					
 					if ((offset==0) && (fileLength==0)) break;
@@ -117,11 +129,36 @@ public class MultiSourceSender extends ServerThread {
 					
 					checkForLeechers(socket); //throws an IO Exception if there's a leech.
 
-					sendQueuePosition(out, 0, "Download is starting now..");
 
-					FileSenderThread.ServerTransfer.sendImage(socket.out);
+					if (firstTimeAround) {
+						try {
+							transferQueue.doDownload(new Downloader() {
+								public void download() throws IOException {
+									sendQueuePosition(out, 0, "Download is starting now..");
+								
+									FileSenderThread.ServerTransfer.sendImage(socket.out);
+								
+									sendFileSection(socket, file, offset, fileLength);
+								}
+							
+								public void queued(QueuedStats stats) throws IOException {
+									sendQueuePosition(out, stats.getQueuePosition(), "You are in a queue to download..");
+								}
+							});
+						} catch (MaxQueueLimitException ex) {
+							throw new IOException ("Over the queue limit, disconnecting..");
+						}
+						
+						firstTimeAround = false;
+					} else {
 					
-					sendFileSection(socket, file, offset, fileLength);
+						sendQueuePosition(out, 0, "Download is starting now..");
+						
+						FileSenderThread.ServerTransfer.sendImage(socket.out);
+					
+						sendFileSection(socket, file, offset, fileLength);
+					}
+
 					
 					myCounter += fileLength; //this is so a client cannot suck data forever.
 					
