@@ -17,6 +17,8 @@ public class MSDownloadHandler extends MSDownloadListener {
 	private File					fileBeingDownloadedTo;
 	private ProgressBannerManager 	progressBannerManager;
 	
+	private int						segmentCounter = 0;
+	
 	public MSDownloadHandler(FileProgressWindow progress, File fileBeingDownloadedTo) {
 		this.progress 	= progress;
 		
@@ -38,6 +40,10 @@ public class MSDownloadHandler extends MSDownloadListener {
 	}
 	
 	public void startSegmentDownloader(MSSegmentEvent event) {
+		progress.setText("Downloading...");
+		
+		++segmentCounter;
+	
 		SegmentDownloaderHandler handler = new SegmentDownloaderHandler(progressBannerManager, progress, getAppropriateBarNumber());
 	
 		segmentListeners.put(event.getSegmentDownloader(), handler);
@@ -46,6 +52,10 @@ public class MSDownloadHandler extends MSDownloadListener {
 	}
 	
 	public void endSegmentDownloader(MSSegmentEvent event) {
+		--segmentCounter;
+		
+		if (segmentCounter == 0) progress.setText("Searching for new sources...");
+	
 		SegmentDownloaderHandler handler = (SegmentDownloaderHandler)(segmentListeners.remove(event.getSegmentDownloader()));
 		
 		if (handler == null) throw new RuntimeException("Could not find a segment downloader to match a segment download that has ended");
