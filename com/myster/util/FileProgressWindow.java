@@ -123,7 +123,7 @@ public class FileProgressWindow extends ProgressWindow {
 		}
 		
 		public void end() {
-			if (timer != null) timer.cancleTimer();
+			if (timer != null) timer.cancelTimer();
 			endFlag = true;
 		}
 	}

@@ -323,4 +323,8 @@ public class Myster{
 	public static long getLaunchedTime() {
 		return programLaunchTime;
 	}
+	
+	public static File getCurrentDirectory() {
+		return null; //not yet implemented
+	}
 }

@@ -38,6 +38,7 @@ public class CrawlerThread extends MysterThread {
 	public final int DEPTH=20;
 
 	public CrawlerThread(MysterSearchClientSection searcher, MysterType type, IPQueue iplist,Sayable msg, GroupInt i) {
+		super("Crawler Thread " + type);
 		this.ipQueue=iplist;
 		this.searchType=type;
 		this.msg=msg;

@@ -6,6 +6,8 @@ import java.io.IOException;
 import java.io.File;
 import java.util.Stack;
 import java.awt.Color;
+import java.awt.event.WindowAdapter;
+import java.awt.event.WindowEvent;
 
 import com.general.events.SyncEventDispatcher;
 import com.general.events.EventDispatcher;
@@ -50,6 +52,8 @@ public class MultiSourceDownload {
 	CrawlerThread crawler;
 	EventDispatcher dispatcher = new SyncEventDispatcher();
 	
+	boolean stopDownload = false;
+	
 	public static final int MULTI_SOURCE_BLOCK_SIZE = 512 * 1024;
 	public static final String TEST_TYPE="MooV";
 
@@ -60,6 +64,8 @@ public class MultiSourceDownload {
 	}
 	
 	private synchronized void newDownload(MysterFileStub stub) {
+		if (stopDownload) return;
+		
 		for (int i = 0; i < downloaders.length; i++) {
 			if (downloaders[i] == null) {
 				downloaders[i] = new InternalSegmentDownloader(stub, i);
@@ -76,8 +82,18 @@ public class MultiSourceDownload {
 	private synchronized void removeDownload(int barNumber) {
 		downloaders[barNumber] = null;
 	}
+	
+	private synchronized void flagToEnd() {
+		stopDownload = true;
+		
+		if (crawler!=null) crawler.flagToEnd();
+		
+		for (int i=0; i<downloaders.length; i++) {
+			if (downloaders[i]!=null) downloaders[i].endWhenPossible();
+		}
+	}
 
-	public void start() {
+	public synchronized void start() {
 		downloaders = new InternalSegmentDownloader[5];
 	
 		progress = new ProgressWindow("Downloading..");
@@ -85,6 +101,13 @@ public class MultiSourceDownload {
 		progress.show();
 		progress.setBarColor(Color.blue, 0);
 		progress.setMax(fileLength);
+		progress.addWindowListener(new WindowAdapter() {
+			public void windowClosing(WindowEvent e) {
+				flagToEnd();
+			}
+		});
+		
+		progress.setText("Downloading file "+stub.getName());
 		
 		for (int i=0; i < downloaders.length; i++) {
 			//downloaders[i] = new InternalSegmentDownloader(
@@ -236,7 +259,7 @@ public class MultiSourceDownload {
 
 	
 		public InternalSegmentDownloader(MysterFileStub stub, int downloadNumber) {
-			super(""+downloadNumber);
+			super("SegmentDownloader "+downloadNumber+" for "+stub.getName());
 		
 			this.stub 			= stub;
 			this.downloadNumber = downloadNumber;
@@ -330,8 +353,6 @@ public class MultiSourceDownload {
 				
 				fireEvent(SegmentDownloaderEvent.QUEUED, 0, 0, temp_byte, 0);
 				
-				boolean endFlag = this.endFlag;
-				
 				socket.out.write(endFlag?0:1);
 				if (endFlag) throw new IOException("Was told to end.");
 			}
@@ -376,6 +397,8 @@ public class MultiSourceDownload {
 					long calcBlockSize = (length - bytesDownloaded < CHUNK_SIZE?length-bytesDownloaded:CHUNK_SIZE);
 					
 					byte[] buffer = new byte[(int)calcBlockSize]; //could be made more efficient by using a pool.
+					
+					if (endFlag) throw new IOException("was asked to end");
 					
 					socket.in.readFully(buffer);
 					

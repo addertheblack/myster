@@ -84,6 +84,8 @@ public class DownloadQueue {
 		public static final long WAIT_TIME=45; //in secs.
 		
 		public KeepAlive(DownloadBlockingQueue downloadQueue) {
+			super("Download queue keep alive thread ");
+		
 			this.downloadQueue=downloadQueue;
 		}
 		
@@ -151,6 +153,10 @@ public class DownloadQueue {
 	private static class PokerThread extends MysterThread {
 		QueuedTransfer client;
 		
+		public PokerThread() {
+			super("Download queue poker ");
+		}
+		
 		public synchronized void run() {
 			for(;;) {
 				try {
@@ -182,6 +188,8 @@ public class DownloadQueue {
 		public static final int DEAD=3;
 		
 		DownloadSpot(BlockingQueue queue, KeepAlive a) {
+			super("Download Spot ");
+		
 			this.queue=queue;
 			keepAlive=a;
 		}

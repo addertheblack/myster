@@ -31,7 +31,6 @@ import java.util.Hashtable;
 */
 
 public class Operator extends MysterThread{
-	private OMysterThread refresher;
 	private ServerSocket serverSocket;
 	private ServerEventManager eventSender=new ServerEventManager();
 	private ConnectionManager[] connectionManagers;
@@ -40,6 +39,8 @@ public class Operator extends MysterThread{
 	private Hashtable connectionSections=new Hashtable();
 	
 	protected Operator(DownloadQueue d, int threads) {
+		super("Server Operator");
+	
 		downloadQueue=d;
 		
 		socketQueue=new DoubleBlockingQueue(0); //comunications channel between operator and section threads.
@@ -59,8 +60,7 @@ public class Operator extends MysterThread{
 			connectionManagers[i].start();
 		}
 				
-		refresher=new OMysterThread();
-		refresher.start();
+		resetSocketTimer();
 		
 		Socket socket=null;
 		do {
@@ -69,7 +69,7 @@ public class Operator extends MysterThread{
 				socket.setSoTimeout(120000);
 				socketQueue.add(socket);
 				
-				refresher.reset();
+				resetSocketTimer();
 			} catch (IOException ex) {
 				try { socket.close(); } catch (IOException exp) {}
 				synchronized (this) { //synchronized in case the socket is being re-set.
@@ -105,23 +105,17 @@ public class Operator extends MysterThread{
 		}
 	}
 	
-	private class OMysterThread extends MysterThread { //fix
-		public synchronized void run() {
-			for (;;) {
-				try {
-					wait(10*60*1000);
-					//.. do the code below.
-				} catch (InterruptedException ex) {
-					continue;
-				}
-				
+	Timer timer;
+	public void resetSocketTimer() {
+		if (timer != null) {
+			timer.cancelTimer();
+		}
+					
+		timer = new Timer(new Runnable() {
+			public void run() {
 				System.out.println("RESETING THE CONNECTION");
 				refreshServerSocket();
 			}
-		}
-		
-		public synchronized void reset() {
-			interrupt();
-		}
+		}, 10*60*1000);
 	}
 }

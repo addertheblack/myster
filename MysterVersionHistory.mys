@@ -874,4 +874,4 @@ Work on DEV 8:
 	  	-> enhanced the file server event model.
 	  	-> Merged multi-source download client project with main Myster source
 	  	-> hooked up 6669 error message to FAQ on the myster web page.
-	  	
+	  	-> Replace Operator reseter thread with a timer.

@@ -25,6 +25,8 @@ public class FileInfoGetter extends MysterThread {
 	
 	
 	public FileInfoGetter(MysterSocket s, SearchResultListener a, MysterAddress address, MysterType type,Vector searchResults) {
+		super("File Info Getter : "+address+" ");
+		
 		socket=s;
 		addable=a;
 		vector=new Vector(searchResults.size(), 10);

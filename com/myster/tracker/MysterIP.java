@@ -78,7 +78,7 @@ class MysterIP {
 	private static final long UPDATETIME=3600000;// 86400000==1 day, 3600000==1 hour ;
 	private static final long MINIUPDATETIME=10*60*1000;
 	
-	private static final int NUMBER_OF_UPDATER_THREADS=3;
+	private static final int NUMBER_OF_UPDATER_THREADS=1;
 
 	
 	protected MysterIP(String ip) throws Exception{
