@@ -980,19 +980,8 @@ Work on DEV 8:
 		-> Fixed bug where the wrong amount would be added to bytes transfered if the download had an 
 				initial offset.
 		-> Added ".m4a", ".XXX.zip" where "XXX" is a sound type to .mp3
-
-todo:
-
-find this
-
-> Find the bug:
-> 
-> 	public SearchByHash(String searchString, MysterType type, SearchResultListener listener) {
-> 		this.type = type;
-> 		this.hash = hash;
-> 		this.listener = listener;
-> 	}
-> 
-> What were you trying to do?
-
-and fix..
+		-> Made so that multi-source downloads are resumed if the program crashes or is quit with downloads open.
+				(MAKE SURE YOUR TYPES ARE SET TO VALID DIRECTORIES!!)
+	
+	Work on Dev 19.6
+		
