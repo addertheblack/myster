@@ -862,6 +862,5 @@ Work on DEV 8:
 	  			front end/back end split.
 	  	-> Finished up the HashManagerGUI
 	  	-> Added ability to turn off and on Myster types. Porn is off by default ...
-	  		(must finish)
-	  		(Make it so that all objects load TypeDescription list at startup OR cope with changes)
-	  		(Make it so that changing the enable/disable can be canceled)
+	  	-> Made behavior consistant with itself
+	  	
