@@ -73,7 +73,7 @@ public class TransactionManager implements TransactionSender {
 				if (protocol==null) {
 					System.out.println("No Transaction protocol registered under type: "+transaction.getTransactionCode());
 					
-					sendTransaction(new Transaction(transaction, new byte[0], Transaction.TRANSACTION_TYPE_UNKNOWN));//return error here!
+					sendTransaction(new Transaction(transaction, new byte[0], Transaction.TRANSACTION_TYPE_UNKNOWN));//returning error here!
 					
 					return;
 				}
@@ -85,9 +85,9 @@ public class TransactionManager implements TransactionSender {
 		public void sendTransaction(DataPacket packet, int transactionCode, TransactionListener listener) {
 			int uniqueid=getNextID();
 			
-			outstandingTransactions.put(new Integer(uniqueid), new ListenerRecord(packet.getAddress(), uniqueid, listener, new Timer(new TimeoutTimer(uniqueid), TimeoutTimer.TIMEOUT)));
-			
 			Transaction transaction=new Transaction(packet.getAddress(), transactionCode, uniqueid, packet.getData());
+						
+			outstandingTransactions.put(new Integer(uniqueid), new ListenerRecord(packet.getAddress(), uniqueid, listener, new TimeoutTimer(uniqueid, transaction)));
 			
 			sendPacket(transaction.toImmutableDatagramPacket());
 		}
@@ -109,7 +109,7 @@ public class TransactionManager implements TransactionSender {
 			
 			if (record==null) return; //minor err
 			
-			record.timer.cancelTimer();
+			record.timer.cancleTimer();
 			
 			//if it's not from the right address ignore.. Anti-spoofing
 			if (transaction!=null) {if (transaction.getAddress().equals(record.address)==false) return;}
@@ -143,33 +143,62 @@ public class TransactionManager implements TransactionSender {
 	
 		private static class ListenerRecord { //NOT immutable
 			public final long timeStamp;
-			public final Timer timer;
+			public final TimeoutTimer timer;
 			public final TransactionListener listener;
 			public final int uniqueid;
 			public MysterAddress address; //if reply is from different it won't work.
 			
-			public ListenerRecord(MysterAddress address, int uniqueid, TransactionListener listener, Timer timer) {
+			public ListenerRecord(MysterAddress address, int uniqueid, TransactionListener listener, TimeoutTimer timer) {
 				this.address=address;
 				this.uniqueid=uniqueid;
 				this.listener=listener;
 				this.timeStamp=System.currentTimeMillis();
-				this.timer=timer;//new Timer(new TimeoutTimer(), TimeoutTimer.TIMEOUT); //so we can have timeouts.
+				this.timer=timer;
 			}
 			
 
 		}
 		
 		private class TimeoutTimer implements Runnable {
-			public static final int TIMEOUT=10000;
+			private final int[] TIMEOUTS = {5000,10000,20000,40000};
 			
+			int timeoutCycle = 0;
+			
+			Transaction transaction;
 			int uniqueid;
 			
-			public TimeoutTimer(int uniqueid) {
-				this.uniqueid=uniqueid;
+			boolean endFlag = false;
+			Timer timer ;
+			
+			public TimeoutTimer(int uniqueid, Transaction transaction) {
+				this.uniqueid 		= uniqueid;
+				this.transaction 	= transaction;
+				
+				setTheTimer();
 			}
 			
-			public void run() {
-				timeout(uniqueid);
+			private void setTheTimer() {
+				timer = new Timer(this, TIMEOUTS[timeoutCycle++]);
+			}
+			
+			private void sendTheTransaction() {
+				sendPacket(transaction.toImmutableDatagramPacket());
+			}
+			
+			public synchronized void run() {
+				if (endFlag) return;
+			
+				if (timeoutCycle < TIMEOUTS.length) {
+					sendTheTransaction();
+					setTheTimer();
+				} else {
+					timeout(uniqueid);
+				}
+			}
+			
+			public synchronized void cancleTimer() {
+				endFlag = true;
+				//timer.cancleTimer(); <- It will work but might cause complex threading problesm in cancleTimer if it's synchronized later.
 			}
 		}
 	}

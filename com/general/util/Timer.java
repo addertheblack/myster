@@ -54,7 +54,7 @@ public class Timer implements Comparable { //almost but not quite immutable.
 	
 	public boolean isCancelled() { return isCancelled; }
 	
-	public void cancelTimer() { isCancelled=true; }
+	public void cancleTimer() { isCancelled=true; }
 	
 	
 	

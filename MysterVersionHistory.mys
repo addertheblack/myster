@@ -848,4 +848,10 @@ Work on DEV 8:
 	  			column to the tracker and implemented it and a routine to format the number blah blah blah.
 	  	-> Fixed a typo in the word cancel of the "ask" dialog word.
 	  	-> Added the ability to associate a URL with a banner image.
+	  	-> Added ability to over-ride the way web browsers are launched via a plugin
+	  	-> Created a PC plugin to over-ride web browser launching on the pc
+	  	-> Added ability to over ride web browsing to the MacOS X plugin.
 	  	-> Did the client side code to make this work. Clickable banners now work on PC and MacOS X.
+	  2003/03/20
+	  	-> Fixed the HashCache so that it uses a save system similar to the prefs.
+	  	-> Made it so Transaction library retries a few times if it doesn't recieve a reply initially...

@@ -225,7 +225,10 @@ class InstantMessageTransport extends TransactionProtocol {
 		MessagePacket msg=new MessagePacket(transaction);
 
 		ReceivedMessage receivedMessage=new ReceivedMessage(msg);
-		if (isOld(receivedMessage)) return; //if it's one we've seen before ignore it.
+		if (isOld(receivedMessage)) {
+			sendTransaction(new Transaction(transaction, (new MessagePacket(transaction.getAddress(), 0,"")).getData(), Transaction.NO_ERROR));
+			return; //if it's one we've seen before ignore it.
+		}
 		
 		recentlyReceivedMessages.addToTail(receivedMessage);
 		
@@ -265,7 +268,7 @@ class InstantMessageTransport extends TransactionProtocol {
 			msg=msgPacket.getMessage();
 			address=msgPacket.getAddress();
 			messageID=msgPacket.getID();
-			System.out.println("message id:"+messageID);			
+			//System.out.println("message id:"+messageID);			
 		}
 		
 		public boolean equals(Object o) {

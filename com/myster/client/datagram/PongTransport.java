@@ -68,7 +68,7 @@ public class PongTransport extends DatagramTransport {
 		For code re-use purposes ONLY!.. should be inlined! *Should* be in sychronized block.
 	*/
 	private void justBeforeDispatch(MysterAddress param_address, PongItemStruct pongItem) {
-		pongItem.timer.cancelTimer();
+		pongItem.timer.cancleTimer();
 		requests.remove(param_address);
 	}
 
