@@ -36,11 +36,11 @@ public class ProgressWindow extends Frame {
 		addProgressPanel();
 		
 		addComponentListener(new ComponentAdapter() {
-			public synchronized void componentShown(ComponentEvent e) {
-				((ProgressWindow)(e.getComponent())).resize();
+			public void componentShown(ComponentEvent e) {
+				//((ProgressWindow)(e.getComponent())).resize();
 			}
 			
-			public synchronized void componentHidden(ComponentEvent e) {
+			public void componentHidden(ComponentEvent e) {
 				
 			}
 		});
@@ -48,9 +48,14 @@ public class ProgressWindow extends Frame {
 		setResizable(false);
 	}
 	
-	protected void resize() {
+	public void show() {
+		super.show();
+		resize();
+	}
+	
+	protected synchronized void resize() {
 		Insets insets = getInsets();
-
+		//try { Thread.sleep(1000); } catch (Exception ex) {}
 		setSize(X_SIZE + insets.right + insets.left, AD_HEIGHT + (Y_SIZE * progressPanels.size()) + insets.top + insets.bottom);
 	}
 	

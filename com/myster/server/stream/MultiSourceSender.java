@@ -79,10 +79,11 @@ public class MultiSourceSender extends ServerThread {
 		
 
 	private class MultiSourceDownloadInstance {
-		public boolean endFlag = false;
+		volatile boolean endFlag = false;
 	
 		ServerDownloadDispatcher dispatcher;
 		
+		volatile MysterSocket socket;
 		MysterAddress remoteIP;
 		String fileName = "??";
 		MysterType type = new MysterType("????".getBytes());
@@ -103,6 +104,8 @@ public class MultiSourceSender extends ServerThread {
 		
 		public void download(final MysterSocket socket) throws IOException {
 			try {
+				this.socket = socket;//this is so I can disconnect the stupid socket.
+			
 				final DataOutputStream out = socket.out;
 				final DataInputStream in = socket.in;
 				
@@ -144,6 +147,7 @@ public class MultiSourceSender extends ServerThread {
 							
 							FileSenderThread.ServerTransfer.sendImage(socket.out); //sends an "ad" image and URL
 							
+							startTime = System.currentTimeMillis();
 							sendFileSection(socket, file, currentBlock); //send the first block
 						
 							fireEvent(ServerDownloadEvent.FINISHED, -1);
@@ -355,11 +359,15 @@ public class MultiSourceSender extends ServerThread {
 			
 			public void disconnectClient() {
 				endFlag = true;
+				
+				if (socket == null) return;
+				
+				try { socket.close(); } catch (Exception ex) {}
 			}
 		}
 	}
 	
-	private static class DisconnectCommandException extends RuntimeException  {
+	private static class DisconnectCommandException extends IOException  {
 	
 	}
 }
