@@ -22,25 +22,19 @@ public class SortableBoolean implements Sortable{
 	}
 	
 	public boolean isLessThan(Sortable temp) {
-		if (temp == this)
-	    	return false;
 		if (!(temp instanceof SortableBoolean))
 	    	return false;
 	    Boolean b=(Boolean) temp.getValue();	
 	    
-	   	if (bool==false&&b.booleanValue()) return true;
-	   	return false;
+		return (!bool && b.bool);
 	}
 	
 	public boolean isGreaterThan(Sortable temp) {
-		if (temp == this)
-	    	return false;
 		if (!(temp instanceof SortableBoolean))
 	    	return false;
 	    Boolean b=(Boolean) temp.getValue();
 	    
-	   	if (bool&&!(b.booleanValue())) return true;
-	   	return false;
+	   	return (bool && !b.bool);
 	}
 	
 	public boolean equals(Sortable temp) {
@@ -50,8 +44,7 @@ public class SortableBoolean implements Sortable{
 	    	return false;
 	    Boolean b=(Boolean) temp.getValue();	
 	    
-	    if (bool==b.booleanValue()) return true;
-	    return false;
+	    return (bool == b.bool);
 	}
 	
 	public String toString() {
