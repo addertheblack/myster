@@ -10,11 +10,12 @@ import com.myster.util.FileProgressWindow;
 
 
 public class MSDownloadHandler extends MSDownloadListener {
-	private FileProgressWindow 	progress;
-	private int 				macBarCounter;
-	private Vector				freeBars;
-	private Hashtable			segmentListeners;
-	private File				fileBeingDownloadedTo;
+	private FileProgressWindow 		progress;
+	private int 					macBarCounter;
+	private Vector					freeBars;
+	private Hashtable				segmentListeners;
+	private File					fileBeingDownloadedTo;
+	private ProgressBannerManager 	progressBannerManager;
 	
 	public MSDownloadHandler(FileProgressWindow progress, File fileBeingDownloadedTo) {
 		this.progress 	= progress;
@@ -23,6 +24,8 @@ public class MSDownloadHandler extends MSDownloadListener {
 		freeBars			= new Vector();
 		segmentListeners 	= new Hashtable();
 		this.fileBeingDownloadedTo =	fileBeingDownloadedTo;
+		
+		this.progressBannerManager = new ProgressBannerManager(progress);
 	}
 	
 	public void startDownload(MultiSourceEvent event) {
@@ -35,7 +38,7 @@ public class MSDownloadHandler extends MSDownloadListener {
 	}
 	
 	public void startSegmentDownloader(MSSegmentEvent event) {
-		SegmentDownloaderHandler handler = new SegmentDownloaderHandler(progress, getAppropriateBarNumber());
+		SegmentDownloaderHandler handler = new SegmentDownloaderHandler(progressBannerManager, progress, getAppropriateBarNumber());
 	
 		segmentListeners.put(event.getSegmentDownloader(), handler);
 	
@@ -127,9 +130,13 @@ class SegmentDownloaderHandler extends SegmentDownloaderListener {
 	final int bar;
 	final FileProgressWindow progress;
 	
-	public SegmentDownloaderHandler(FileProgressWindow progress, int bar) {
+	final ProgressBannerManager progressBannerManager;
+	
+	public SegmentDownloaderHandler(ProgressBannerManager progressBannerManager, FileProgressWindow progress, int bar) {
 		this.bar = bar;
 		this.progress = progress;
+		
+		this.progressBannerManager = progressBannerManager;
 	}
 	
 	public void connected(SegmentDownloaderEvent e) {
@@ -162,5 +169,143 @@ class SegmentDownloaderHandler extends SegmentDownloaderListener {
 	
 	public int getBarNumber() {
 		return bar;
+	}
+	
+	
+	////////Meta Data Managers
+	byte[] image;
+	String url;
+	public void downloadedMetaData(SegmentMetaDataEvent e)  {
+		switch (e.getType()) {
+			case 'i':
+				flushBanner();
+				
+				image = e.getCopyOfData();
+				
+				break;
+			case 'u':
+				byte[] temp_buffer = e.getCopyOfData();
+				
+				if (temp_buffer.length > ((int)(0xFFFF))) break;
+				
+				byte[] final_buffer = new byte[temp_buffer.length + 2];
+				
+				final_buffer[0] = (byte) ((temp_buffer.length >> 8) & 0xFF);
+				final_buffer[1] = (byte) ((temp_buffer.length) & 0xFF);
+				
+				for (int i = 0; i < temp_buffer.length; i++) {
+					final_buffer[i + 2] = temp_buffer[i];
+				}
+				
+				java.io.DataInputStream in = new java.io.DataInputStream(new java.io.ByteArrayInputStream(final_buffer));
+				
+				try {
+					url = in.readUTF();
+				} catch (java.io.IOException ex) {
+					//nothing
+					//means UTF was corrupt
+				}
+				
+				flushBanner();
+				break;
+			default:
+				//do nothing
+				break;
+		}
+	}
+	
+	private void flushBanner() {
+		if (image == null) return;
+	
+		progressBannerManager.addNewBannerToQueue(new Banner(image, url));
+		
+		image = null;
+		url = null;
+	}
+}
+
+class ProgressBannerManager implements Runnable {
+	public final static int TIME_TO_WAIT = 1000*30;
+	
+	FileProgressWindow progress;
+	
+	com.general.util.LinkedList queue;
+	RotatingVector oldBanners;
+	
+	boolean isEndFlag = false;
+	boolean isInit;
+	
+	public ProgressBannerManager (FileProgressWindow progress) {
+		this.progress 	= progress;
+		this.queue 		= new com.general.util.LinkedList();
+		this.oldBanners = new RotatingVector();
+	}
+	
+	public synchronized void addNewBannerToQueue(Banner banner) {
+		queue.addToTail(banner);
+		
+		if (! isInit) {
+			isInit = true;
+			run();
+		}
+	}
+	
+	private Banner getNextBannerInQueue() {
+		return (Banner)(queue.removeFromHead());
+	}
+	
+	private void setBanner(Banner banner) {
+		if (banner.image != null) progress.makeImage(banner.image); //also sets image
+		if (banner.url != null) progress.setURL(banner.url);
+	}
+	
+	public synchronized void run() {
+		Banner banner = getNextBannerInQueue();
+		
+		if (banner != null) {
+			oldBanners.addElement(banner);
+		} else {
+			banner = oldBanners.getNextBanner();
+		}
+		
+		if (banner != null) {
+			setBanner(banner);
+		}
+		
+		shedualTimer();
+	}
+	
+	public void shedualTimer() {
+		if ((isEndFlag) || (! progress.isVisible())) return;
+		
+		com.general.util.Timer timer = new com.general.util.Timer(this, TIME_TO_WAIT);
+	}
+	
+	public void end() {
+		//isEndFlag = true; //oops.. leave for now...
+	}
+}
+
+class RotatingVector extends Vector {
+	int currentBanner = 0;
+	
+	public synchronized Banner getNextBanner() {
+		if (size()<1) return null;
+		
+		if (currentBanner >= size()) {
+			currentBanner = 0 ;
+		}
+		
+		return (Banner)(elementAt(currentBanner ++)); // xxx++ is very handy
+	}
+}
+
+class Banner {
+	public final byte[] image;
+	public final String url;
+	
+	public Banner(byte[] image, String url) {
+		this.image 	= image;
+		this.url 	= url;
 	}
 }

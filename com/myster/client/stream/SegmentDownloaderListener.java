@@ -14,26 +14,27 @@ public class SegmentDownloaderListener extends EventListener {
 	*/
 	
 	public void fireEvent(GenericEvent e) {
-		SegmentDownloaderEvent event = (SegmentDownloaderEvent)e;
-		
-		switch (event.getID()) {
+		switch (e.getID()) {
 			case SegmentDownloaderEvent.CONNECTED:
-				connected(event);
+				connected((SegmentDownloaderEvent)e);
 				break;
 			case SegmentDownloaderEvent.QUEUED:
-				queued(event);
+				queued((SegmentDownloaderEvent)e);
 				break;
 			case SegmentDownloaderEvent.START_SEGMENT:
-				startSegment(event);
+				startSegment((SegmentDownloaderEvent)e);
 				break;
 			case SegmentDownloaderEvent.DOWNLOADED_BLOCK:
-				downloadedBlock(event);
+				downloadedBlock((SegmentDownloaderEvent)e);
+				break;
+			case SegmentMetaDataEvent.DOWNLOADED_META_DATA:
+				downloadedMetaData((SegmentMetaDataEvent)e);
 				break;
 			case SegmentDownloaderEvent.END_SEGMENT:
-				endSegment(event);
+				endSegment((SegmentDownloaderEvent)e);
 				break;
 			case SegmentDownloaderEvent.END_CONNECTION:
-				endConnection(event);
+				endConnection((SegmentDownloaderEvent)e);
 				break;
 			default:
 				err();
@@ -45,6 +46,7 @@ public class SegmentDownloaderListener extends EventListener {
 	public void queued(SegmentDownloaderEvent e) {}				//2
 	public void startSegment(SegmentDownloaderEvent e) {}		//3
 	public void downloadedBlock(SegmentDownloaderEvent e) {}	//4
+	public void downloadedMetaData(SegmentMetaDataEvent e) {}	//4.5
 	public void endSegment(SegmentDownloaderEvent e) {}			//5
 	public void endConnection(SegmentDownloaderEvent e) {}		//6
 }

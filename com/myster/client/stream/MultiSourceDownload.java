@@ -348,6 +348,10 @@ class InternalSegmentDownloader extends MysterThread implements SegmentDownloade
 		dispatcher.fireEvent(new SegmentDownloaderEvent(id, this, offset, progress, queuePosition, length, stub));
 	}
 	
+	private void fireEvent(byte type, byte[] data) {
+		dispatcher.fireEvent(new SegmentMetaDataEvent(type, data));
+	}
+	
 	private synchronized void finishUp() {
 		deadFlag = true;
 		
@@ -441,21 +445,8 @@ class InternalSegmentDownloader extends MysterThread implements SegmentDownloade
 					debug("Work Thread "+getName()+" -> Downloading finished");
 
 					break;
-				case 'i':
-					//progress.setURL(""); //!!
-					getDataBlock(socket);
-					//progress.makeImage(getDataBlock(socket)); //!!
-					break;
-				case 'u':
-					socket.in.readInt(); //if this is not 0 is error.
-					socket.in.readShort(); //if this is not 0 is error.
-					String url = socket.in.readUTF(); //UTFs are preceeded by 16-bit short
-					System.out.println("url received :"+url);
-					//progress.setURL(url); //!!
-					break;
 				default:
-					System.out.println("Work Thread "+getName()+" -> Unknown type"+type);
-					socket.in.skip(socket.in.readLong());
+					fireEvent(type, getDataBlock(socket));
 					break;
 			}
 		}
