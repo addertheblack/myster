@@ -139,12 +139,7 @@ public class Myster {
                                 ex.printStackTrace();
                             }
 
-                            com.myster.hash.ui.HashManagerGUI.init(); //not
-                            // sure if
-                            // this should be
-                            // on the event
-                            // thread.
-
+                            com.myster.hash.ui.HashManagerGUI.init();
                         }
                     });
 
@@ -154,16 +149,11 @@ public class Myster {
                         public void run() {
                             progress.setText(I18n.tr("Loading UDP Operator..."));
                             progress.setValue(10);
-                            try { //this stuff is a bit of a hack.. to be fixed
-                                // later..
+                            try {
                                 PongTransport ponger = new PongTransport();
                                 UDPPingClient.setPonger(ponger);
                                 DatagramProtocolManager.addTransport(ponger);
                                 DatagramProtocolManager.addTransport(new PingTransport());
-                                //System.out.println("Ping was
-                                // "+(ponger.ping(new
-                                // MysterAddress("127.0.0.1"))?"a success":"a
-                                // timeout"));
                             } catch (Exception ex) {
                                 ex.printStackTrace();
                                 com.general.util.AnswerDialog
@@ -189,56 +179,45 @@ public class Myster {
                             progress.setText(I18n
                                     .tr("Loading Server Stats Window... %1%%", "" + 15));
                             progress.setValue(15);
-
-                            //System.out.println( "MAIN THREAD: Starting
-                            // Operator.."+macHack);
-                            //Point p = ServerStatsWindow.getInstance().getLocation();
-                            //ServerStatsWindow.getInstance().setLocation(-500, -500);
-                            //ServerStatsWindow.getInstance().setVisible(true);
                             ServerStatsWindow.getInstance().pack();
                             progress.setText(I18n
                                     .tr("Loading Server Stats Window... %1%%", "" + 18));
                             progress.setValue(18);
-                            //try {Thread.currentThread().sleep(1000);} catch
-                            // (Exception
-                            // ex) {}
-                            //ServerStatsWindow.getInstance().setVisible(false);
-                            //ServerStatsWindow.getInstance().setLocation(p);
-
                         }
                     });
 
                     Thread.sleep(1);
 
-                    Util.invokeAndWait(new Runnable() {
+                    Util.invoke(new Runnable() {
                         public void run() {
-
-                            ///\\//\\//\\//\\
-
                             progress.setText(I18n.tr("Loading Server Fascade..."));
                             progress.setValue(25);
                             
                         }
                     });
+                    
                     ServerFacade.assertServer();
 
-                    Util.invokeAndWait(new Runnable() {
+					/*
+                    Util.invoke(new Runnable() {
                         public void run() {
                             progress.setText(I18n.tr("Loading tracker..."));
                             progress.setValue(50);
                         }
                     });
+                    
                     IPListManagerSingleton.getIPListManager();
 
-                    Util.invokeAndWait(new Runnable() {
+                    Util.invoke(new Runnable() {
                         public void run() {
                             progress.setText(I18n.tr("Loading FileManager..."));
                             progress.setValue(70);
                         }
                     });
                     FileTypeListManager.getInstance();
-
-                    Util.invokeAndWait(new Runnable() {
+					*/
+					
+                    Util.invoke(new Runnable() {
                         public void run() {
                             progress.setText(I18n.tr("Loading Instant Messaging..."));
                             progress.setValue(72);
@@ -246,7 +225,7 @@ public class Myster {
                         }
                     });
 
-                    Thread.sleep(100);
+                    Thread.sleep(1);
 
                     Util.invokeAndWait(new Runnable() {
                         public void run() {
@@ -258,7 +237,7 @@ public class Myster {
                         }
                     });
 
-                    Thread.sleep(100);
+                    Thread.sleep(1);
 
                     Util.invokeAndWait(new Runnable() {
                         public void run() {
@@ -278,7 +257,7 @@ public class Myster {
                         }
                     });
 
-                    Thread.sleep(100);
+                    Thread.sleep(1);
 
                     Util.invokeAndWait(new Runnable() {
                         public void run() {
@@ -289,7 +268,7 @@ public class Myster {
                     if (isServer) {
                     } else {
 
-                        Thread.sleep(100);
+                        Thread.sleep(1);
 
                         Util.invokeAndWait(new Runnable() {
                             public void run() {
@@ -304,7 +283,7 @@ public class Myster {
                         });
                     }
 
-                    Thread.sleep(100);
+                    Thread.sleep(1);
                     
                     Util.invokeAndWait(new Runnable() {
                         public void run() {
@@ -315,31 +294,19 @@ public class Myster {
                                 ex.printStackTrace();
                             }
                             
-                            
-                            /*
-                            for (int i = 0; i < 100; i++) {
-                            	java.awt.Frame f = new com.myster.search.ui.SearchWindow();
-                            	//f.setSize(100,100);
-                            	f.setVisible(true);
-                            	f.dispose();
-                            	System.gc();
+                            if (false == true) {
+	                            MysterMenuBar.addMenuItem(new MysterMenuItemFactory("Free Memory", new ActionListener() {
+	                                public void actionPerformed(ActionEvent e) {
+	                                    System.gc();System.gc();System.gc();System.gc();System.gc();
+	                                    System.gc();System.gc();System.gc();System.gc();System.gc();
+	                                    System.gc();System.gc();System.gc();System.gc();System.gc();
+	                                    System.gc();System.gc();System.gc();System.gc();System.gc();
+	                                    System.gc();System.gc();System.gc();System.gc();System.gc();
+	                                    System.gc();System.gc();System.gc();System.gc();System.gc();
+	                                    System.out.println("Memory cleared.");
+	                                }
+	                            }));
                             }
-                            
-                            System.gc();System.gc();System.gc();System.gc();System.gc();System.gc();System.gc();
-                            System.gc();System.gc();System.gc();System.gc();System.gc();System.gc();System.gc();
-                           */ 
-                            
-                            MysterMenuBar.addMenuItem(new MysterMenuItemFactory("Free Memory", new ActionListener() {
-                                public void actionPerformed(ActionEvent e) {
-                                    System.gc();System.gc();System.gc();System.gc();System.gc();
-                                    System.gc();System.gc();System.gc();System.gc();System.gc();
-                                    System.gc();System.gc();System.gc();System.gc();System.gc();
-                                    System.gc();System.gc();System.gc();System.gc();System.gc();
-                                    System.gc();System.gc();System.gc();System.gc();System.gc();
-                                    System.gc();System.gc();System.gc();System.gc();System.gc();
-                                    System.out.println("Memory cleared.");
-                                }
-                            }));
                         }
                     });
 
