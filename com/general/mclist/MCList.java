@@ -311,4 +311,12 @@ public class MCList extends Panel {
 	public int length() {
 		return list.size();
 	}
+	
+	public Font getFont() {
+		Font font=super.getFont();
+		if (super.getFont()==null) {
+			return new Font("Courier", 0, 12);
+		}
+		return font;
+	}
 }

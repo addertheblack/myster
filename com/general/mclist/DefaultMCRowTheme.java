@@ -37,7 +37,11 @@ public class DefaultMCRowTheme implements MCRowThemeInterface {
 	}
 	
 	public int getHeight() {
-		return component.getFontMetrics(component.getFont()).getHeight()+padding;
+		try {
+			return component.getFontMetrics(component.getFont()).getHeight()+padding;
+		} catch (Exception ex) {
+			return 20;
+		}
 	}
 	
 	public int getPadding() {
@@ -49,11 +53,18 @@ public class DefaultMCRowTheme implements MCRowThemeInterface {
 	}
 	
 	public void paint(Graphics g, MCListItemInterface item, RowStats row, int yoffset, int xoffset, int itemnumber) {
-		if (tempfont==null) {
-			tempfont = component.getFontMetrics(component.getFont());	//uses default font
-			height = tempfont.getHeight();
-			ascent = tempfont.getAscent();
-			descent= tempfont.getDescent();
+		try {
+			if (tempfont==null) {
+				tempfont = component.getFontMetrics(component.getFont());	//uses default font
+				height = tempfont.getHeight();
+				ascent = tempfont.getAscent();
+				descent= tempfont.getDescent();
+			}
+		} catch (Exception ex) {
+			tempfont=null;
+			height = 10;
+			ascent = 10;
+			descent= 10;
 		}
 		
 		//Clear secleciton to white:

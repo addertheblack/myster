@@ -26,8 +26,12 @@ public class FileListAction implements ActionListener {
 		this.w=w;
 	} 
 	
+	static volatile long timeOfLast=0;
+	
 	public void actionPerformed(ActionEvent a) {
 		try {
+			if (System.currentTimeMillis()-timeOfLast<20) return;
+			timeOfLast=System.currentTimeMillis();
 			(new DownloaderThread(new MysterFileStub(new MysterAddress(w.getCurrentIP()), w.getCurrentType(), a.getActionCommand()))).start();
 		} catch (UnknownHostException ex) {
 			//... nothing

@@ -348,11 +348,11 @@ public class ProgressWindow extends Frame {
        	updateIcon();
     }
     
-    public void endError(String s){
+    public void endError(String s) {
     	endError(s,BAR_1);
     }
     
-    public void endError(String s, int bar){
+    public void endError(String s, int bar) {
     	done();
     	if (bar >= 0 && bar < numberOfBars)
     	{
@@ -378,26 +378,38 @@ public class ProgressWindow extends Frame {
 
     // create special thread class for progress bar window
 	
-    private class ThreadedProgressWindow extends MysterThread
-    {
+    private class ThreadedProgressWindow extends MysterThread {
        	private final long fUpdateTime = 100;       	
        	public ThreadedProgressWindow() {}
 		
-       	public void run() 
-		{
+		boolean endFlag=false;
+		
+       	public void run() {
        	    setPriority(Thread.MIN_PRIORITY);
-       	    while(true) 
-       	    {
-       	       	update();
-       	       	try
-				{
+       	    try {
+       	    	java.lang.Thread.sleep(1000);
+       	    } catch (Exception ex) {
+       	    	return;
+       	    }
+       	    while(true) {
+       	       	try {
        	       		java.lang.Thread.sleep(fUpdateTime);
-       	       	}
-       	       	catch(Exception e)
-				{
+       	       	} catch(Exception e) {
        	         	e.printStackTrace();
+       	         	return;
        			}
+       			if (endFlag==true) return;
+       			update();
 	    	}
+		}
+		
+		public void end() {
+			try {
+				endFlag=true;
+				join();
+			} catch (InterruptedException ex) {
+				//..
+			}
 		}
     }
        

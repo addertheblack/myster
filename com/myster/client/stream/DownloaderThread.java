@@ -29,6 +29,7 @@ import com.myster.search.MysterFileStub;
 import com.myster.util.ProgressWindow;
 import com.myster.util.ProgressWindowClose;
 import com.myster.net.MysterSocketFactory;
+import java.util.Locale;
 
 
 /**
@@ -72,7 +73,26 @@ public class DownloaderThread extends SafeThread {
 		progress.setTitle("Preparing to Download..");
 		
 		
-		String theFileName=file.getName();
+		boolean isEnglish=Locale.getDefault().getDisplayLanguage().equals(Locale.ENGLISH.getDisplayLanguage());
+		
+		
+		/**
+			Files with none-english chars make MacOS X crash. fucking useless platform.
+		*/
+		String theFileName;
+		if (isEnglish) {
+			String s=file.getName();
+			
+			char[] array=s.toCharArray();
+			for (int i=0; i<array.length; i++) {
+				if (128<array[i]) {
+					array[i]='?';
+				}
+			}
+			theFileName=new String(array);
+		} else {
+			theFileName=file.getName();
+		}
 		
 		if (theFileName.lastIndexOf(""+File.pathSeparator)!=-1) {
 			if (theFileName.lastIndexOf(""+File.pathSeparator)+1==theFileName.length()) theFileName="";
