@@ -995,4 +995,5 @@ to do:
 	Remeber to re-compile the plugins to work with new Myster.class location.
 	Make it so that ".zip" file contents are read looking for files matching one of the extensions.
 	RING was not in "isCorrect Type"
+	- the transfer rates jump sky-high after resumes
 
