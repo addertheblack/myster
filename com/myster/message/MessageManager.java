@@ -320,7 +320,7 @@ class MessagePacket implements DataPacket { //Is Immutable
 		this.address=address;
 		
 		this.msg=msg;
-		this.from=from;
+		this.from=null;
 		this.reply=reply;
 		
 		this.replyErrMsg=null;

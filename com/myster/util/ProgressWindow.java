@@ -314,7 +314,7 @@ public class ProgressWindow extends Frame {
 		} 
 	}
 	
-	private static class AdPanel extends DoubleBufferPanel {
+	protected static class AdPanel extends DoubleBufferPanel {
 		Image ad;
 		String labelText = "";
 		

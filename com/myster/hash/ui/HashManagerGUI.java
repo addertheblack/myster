@@ -139,7 +139,7 @@ public class HashManagerGUI extends MysterFrame {
 			
 			addWindowListener(new WindowAdapter() {
 				public void windowClosing(WindowEvent e) {
-					MysterFrame.this.setVisible(false);
+					HashManagerGUI.this.setVisible(false);
 				}
 			});
 			
