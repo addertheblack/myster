@@ -107,6 +107,18 @@ public class MultiSourceDownload implements Runnable, Controller {
 		downloader.start();
 	}
 	
+	public synchronized boolean isOkToQueue() {
+		Enumeration enum = downloaders.elements();
+		
+		while (enum.hasMoreElements()) {
+			InternalSegmentDownloader internalSegmentDownloader = (InternalSegmentDownloader)(enum.nextElement());
+			
+			if (internalSegmentDownloader.isActive()) return false;
+		}
+		
+		return true;
+	}
+	
 	//removes a download but doesn't stop a download. (so this should be called by downloads that have ended completely.
 	public synchronized boolean removeDownload(SegmentDownloader downloader) {
 		boolean result = (downloaders.remove(downloader)!=null);
@@ -290,6 +302,7 @@ class InternalSegmentDownloader extends MysterThread implements SegmentDownloade
 	//Utility working variables
 	boolean endFlag 	= false;
 	boolean deadFlag 	= false;
+	boolean isActive	= false;	//is active says if the SegmentDownloader is actively downloading a file or if the download is queued
 	
 	//Static variables
 	private static int instanceCounter = 0;
@@ -429,7 +442,14 @@ class InternalSegmentDownloader extends MysterThread implements SegmentDownloade
 				
 				debug("Queued pos ----> "+queuePosition+" "+ message);
 				
-				if (queuePosition == 0) break; //yippy! on to download!
+				if (queuePosition == 0) {
+					isActive = true; // now we're downloading
+					break; //yippy! on to download!
+				}
+				
+				isActive = false; // blagh! Looks like we're queued!
+				
+				if (! controller.isOkToQueue()) throw new IOException("Should not be queued!");
 				
 				fireEvent(SegmentDownloaderEvent.QUEUED, 0, 0, queuePosition, 0);
 			} catch (NumberFormatException ex) {
@@ -469,6 +489,10 @@ class InternalSegmentDownloader extends MysterThread implements SegmentDownloade
 		fireEvent(SegmentDownloaderEvent.END_SEGMENT, workingSegment.workSegment.startOffset,workingSegment.workSegment.startOffset+workingSegment.workSegment.length, 0, workingSegment.workSegment.length);
 		
 		return true;
+	}
+	
+	public boolean isActive() {
+		return isActive;
 	}
 	
 	private byte[] getDataBlock(MysterSocket socket) throws IOException {
@@ -586,4 +610,5 @@ interface Controller {
 	public void receiveExtraSegments(WorkSegment[] workSegments);
 	public void receiveDataBlock(DataBlock dataBlock);
 	public boolean removeDownload(SegmentDownloader downloader);
+	public boolean isOkToQueue(); //returns false if it's not ok to queue.
 }
