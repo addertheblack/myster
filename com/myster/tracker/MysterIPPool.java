@@ -48,17 +48,7 @@ import java.io.IOException;
 		hashtable=new Hashtable();		//You put cereal on the Hashtable. In a bowl of course...
 		Preferences prefs=Preferences.getInstance();
 		
-		//try {
-		//	System.out.println("Sleeping 1");
-		//	Thread.currentThread().sleep(500);
-		//} catch (InterruptedException ex) {}
-		
 		MML mml=prefs.getAsMML(pref_key);
-				
-		//try {
-		//	System.out.println("Sleeping 2");
-		//	Thread.currentThread().sleep(500);
-		//} catch (InterruptedException ex) {}
 														
 		if (mml!=null) {
 			Vector dirList=mml.list("/"); //list root dir
@@ -71,12 +61,7 @@ import java.io.IOException;
 				}
 			}
 		}
-		
-		//try {
-		//	System.out.println("Sleeping 3");
-		//	Thread.currentThread().sleep(500);
-		//} catch (InterruptedException ex) {}
-		
+
 		System.out.println("Loaded IPPool");
 		this.prefs=prefs;
 	}
@@ -157,27 +142,12 @@ import java.io.IOException;
 		return (getMysterIP(s)!=null);
 	}
 	
-	public boolean existsInPool(String s) { 
-		try {
-			return existsInPool(new MysterAddress(s));
-		} catch (UnknownHostException ex) {
-			return false;
-		}
-	}
-	
 	private synchronized MysterServer getMysterIPLevelTwo(MysterIP m) throws IOException{
 			MysterAddress address=m.getAddress();	//possible future bugs here...
 			if (existsInPool(address)) return getMysterIPLevelOne(address);;
 
 			return addANewMysterObjectToThePool(m).getInterface();
 	}
-	
-	/*
-	private MysterIP getObjectAtIndex(int index) {
-		MysterIP temp=(MysterIP)vector.elementAt(index);
-		return temp;
-	}
-	*/
 	
 	/**
 	*	this function adds a new IP to the MysterIPPool data structure.. It's 
@@ -243,7 +213,7 @@ import java.io.IOException;
 	}
 	
 	//Private Should be pretty obvious.
-	private synchronized MysterIP getMysterIP(MysterAddress address) {
+	private MysterIP getMysterIP(MysterAddress address) {
 		return (MysterIP)(hashtable.get(address));
 	}
 	

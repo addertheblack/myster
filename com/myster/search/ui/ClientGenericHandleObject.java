@@ -7,9 +7,9 @@ import com.myster.tracker.IPListManagerSingleton;
 import com.myster.search.SearchResult;
 
 public class ClientGenericHandleObject implements ClientHandleObject {
-	protected String[] 	headerarray={"File Name","File Size","Server"};
-	protected int[]		headerSize={300,70,150};
-	protected String[] 	keyarray={"n/a","size","n/a"};
+	protected String[] 	headerarray={"File Name","File Size","Server", "Ping"};
+	protected int[]		headerSize={300,70,150, 70};
+	protected String[] 	keyarray={"n/a","size","n/a","n/a"};
 	
 	public String getHeader(int index) {
 		return headerarray[index];
@@ -30,6 +30,7 @@ public class ClientGenericHandleObject implements ClientHandleObject {
 	protected class GenericSearchItem extends MCListItemInterface {
 		SearchResult result;
 		SortableString serverString;
+		SortablePing ping;
 		
 		public GenericSearchItem(SearchResult s) {
 			result=s;
@@ -38,6 +39,7 @@ public class ClientGenericHandleObject implements ClientHandleObject {
 			MysterServer server=IPListManagerSingleton.getIPListManager().getQuickServerStats(hostAsString);
 			serverString=new SortableString(server==null?hostAsString:(server.getServerIdentity().equals(hostAsString)?""+hostAsString:server.getServerIdentity()+" ("+hostAsString+")"));
 			//The Three lines above can be combined into one really long line. I hope you appreciate this :-)
+			ping=new SortablePing(result.getHostAddress());
 		}
 		
 		public Sortable getValueOfColumn(int index) {
@@ -53,6 +55,8 @@ public class ClientGenericHandleObject implements ClientHandleObject {
 					}
 				case 2:
 					return serverString;
+				case 3:
+					return ping;
 				default:
 					throw new RuntimeException("Requested a column that doens't exist.");
 			}

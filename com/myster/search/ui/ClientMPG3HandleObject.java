@@ -9,27 +9,30 @@ public class ClientMPG3HandleObject extends ClientGenericHandleObject {
 	protected String[] 	keyarray={"BitRate","Hz", "ID3Name", "Artist", "Album"};
 	protected int[]		headerSize={100,100,100,100, 100};
 	
+	private int numOfColumns;
+	
 	public ClientMPG3HandleObject() {
 		super();
+		numOfColumns=super.getNumberOfColumns();
 	}
 	
 	public int getNumberOfColumns() {
-		return headerarray.length+3;
+		return headerarray.length+super.getNumberOfColumns();
 	}
 	
 	public String getHeader(int index) {
-		if (index<3){
+		if (index<super.getNumberOfColumns()){
 			return super.getHeader(index);
 		} else {
-			return headerarray[index-3];
+			return headerarray[index-super.getNumberOfColumns()];
 		}
 	}
 	
 	public int getHeaderSize(int index) {
-		if (index<3) {
+		if (index<super.getNumberOfColumns()) {
 			return super.getHeaderSize(index);
 		} else {
-			return headerSize[index-3];
+			return headerSize[index-super.getNumberOfColumns()];
 		}
 	}
 	
@@ -47,10 +50,10 @@ public class ClientMPG3HandleObject extends ClientGenericHandleObject {
 		}
 	
 		public Sortable getValueOfColumn(int index) {
-			if (index<3) {
+			if (index<numOfColumns) {
 				return super.getValueOfColumn(index);
 			} else {
-				index-=3;
+				index-=numOfColumns;
 				switch (index) {
 					case 0:
 						try {

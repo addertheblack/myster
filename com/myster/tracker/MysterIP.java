@@ -26,6 +26,8 @@ import com.myster.client.stream.StandardSuite;
 import com.myster.net.MysterSocket;
 import com.myster.net.MysterAddress;
 import com.myster.net.MysterSocketFactory;
+import com.myster.client.datagram.PingEventListener;
+import com.myster.client.datagram.PingEvent;
 
 
 /**
@@ -44,8 +46,11 @@ class MysterIP {
 	String			serverIdentity;
 	
 	int 			lastPingTime=-1; //in millis. (not saved)
-
-	long timeoflastupdate=0;
+	
+	private boolean occupied=false; //used in updating...
+	private long lastminiupdate=0;	//This is to keep the value of the last time internalRefreshStatus() was last called.
+	private long timeoflastupdate=0;
+	
 	int mystercount=0;
 	
 	//These are the paths in the MML peer:
@@ -69,7 +74,7 @@ class MysterIP {
 	
 	private static final long UPDATETIME=3600000;// 86400000==1 day, 3600000==1 hour ;
 	private static final long MINIUPDATETIME=10*60*1000;//600000;//5 minutes = 300 seconds.;
-	private static final int NUMBER_OF_UPDATER_THREADS=15;
+	private static final int NUMBER_OF_UPDATER_THREADS=3;
 
 	
 	protected MysterIP(String ip) throws Exception{
@@ -289,7 +294,6 @@ class MysterIP {
 	
 	private static MysterThread[] updaterThreads;
 	private static BlockingQueue statusQueue=new BlockingQueue();
-	private boolean occupied=false;
 	private synchronized void toUpdateOrNotToUpdate() {
 		//if an update opperation is already queued, return.
 		if (occupied) return;
@@ -306,7 +310,12 @@ class MysterIP {
 		MysterIP.assertUpdaterThreads();
 		
 		//Add this myster IP object to the ones to be updated.
-		statusQueue.add(this);
+		try {
+			UDPPingClient.ping(this.getAddress(), new MysterIPPingEventListener(this));
+		} catch (IOException ex) {
+			ex.printStackTrace();
+			occupied=false; //ver bad things happen if it gets to here!!!
+		}
 	}
 	
 	/**
@@ -316,7 +325,7 @@ class MysterIP {
 	
 		//Do Status updated
 		//Note, routine checks to see if it's required.
-		MysterIP.internalRefreshStatus(mysterip);
+		//MysterIP.internalRefreshStatus(mysterip);
 		
 		//Do Statistics update
 		long time;
@@ -367,7 +376,6 @@ class MysterIP {
 			}
 		
 			System.out.println("The stats update of "+mysterip.ip+" took "+(System.currentTimeMillis()-time)+"ms");
-			mysterip.occupied=false; //we're done.
 			return true;
 		} catch (IOException ex) {
 			System.out.println("MYSTERIP: Error in refresh fuction of MysterIP on IP: "+mysterip.ip+"  "+ex);
@@ -377,9 +385,9 @@ class MysterIP {
 		} catch (Exception ex) {
 			System.out.println("Unexpected error occured in internal refresh all");
 			ex.printStackTrace();
+		} finally {
+			mysterip.occupied=false;	//we're done.
 		}
-		
-		mysterip.occupied=false;	//we're done.
 		return false;
 	}
 	
@@ -395,7 +403,7 @@ class MysterIP {
 	
 	
 	//THIS ROUTINE IS SEPERATE FOR ORGANIZATIONAL PURPOSES
-	long lastminiupdate=0;	//This is to keep the value of the last time internalRefreshStatus() was last called.
+	/*
 	private static int countermoo=0;
 	private static void internalRefreshStatus(MysterIP ip) {
 
@@ -447,7 +455,7 @@ class MysterIP {
 			
 			ip.lastminiupdate=System.currentTimeMillis();
 		}
-	}
+	}*/
 	
 	private static class IPStatusUpdaterThread extends MysterThread {
 		public void run() {
@@ -486,6 +494,26 @@ class MysterIP {
 				ex.printStackTrace();
 				return 0;
 			}
+		}
+	}
+	
+	private static class MysterIPPingEventListener extends PingEventListener {
+		MysterIP ip;
+		public MysterIPPingEventListener(MysterIP ip) {
+			this.ip=ip;
+		}
+		
+		public void pingReply(PingEvent e) {
+			if (e.isTimeout()) {
+				ip.setStatus(false);
+				ip.lastPingTime=-2;
+			} else {
+				ip.setStatus(true);
+				ip.lastPingTime=e.getPingTime();
+				statusQueue.add(ip); //doesn't block...
+			}
+			ip.lastminiupdate=System.currentTimeMillis();
+			
 		}
 	}
 }

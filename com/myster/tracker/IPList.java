@@ -24,6 +24,7 @@ import java.io.*;
 import java.util.StringTokenizer;
 import java.util.Vector;
 import com.myster.pref.*;
+import com.myster.net.MysterAddress;
 
 class IPList {
 	MysterServer[] array=new MysterServer[IPListManager.LISTSIZE];
@@ -53,8 +54,8 @@ class IPList {
 			try {
 				MysterServer temp=null;
 				String workingip=ips.nextToken();
-				if (MysterIPPool.getInstance().existsInPool(workingip)) {
-					try {temp=MysterIPPool.getInstance().getMysterServer(workingip);} catch (Exception ex){}
+				if (MysterIPPool.getInstance().existsInPool(new MysterAddress(workingip))) {
+					try {temp=MysterIPPool.getInstance().getMysterServer(new MysterAddress(workingip));} catch (Exception ex){}
 				}//if IP doens't exist in the pool, remove it form the list!
 				if (temp==null) {
 					System.out.println("Found a list bubble: "+workingip+". Repairing.");

@@ -39,7 +39,7 @@ public class IPListManager { //aka tracker
 	
 	BlockingQueue blockingQueue=new BlockingQueue();
 	
-	AddIP[] adderWorkers=new AddIP[5];
+	AddIP[] adderWorkers=new AddIP[3];
 
 	protected IPListManager() {
 		blockingQueue.setRejectDuplicates(true);
@@ -70,7 +70,7 @@ public class IPListManager { //aka tracker
 	
 	private class Callback extends PingEventListener {
 		public void pingReply(PingEvent e) {
-			if (e.isTimeout()) return;
+			if (e.isTimeout()) return; //dead ip.
 			MysterAddress ip=e.getAddress();
 			MysterIPPool pool=MysterIPPool.getInstance();
 			MysterServer mysterServer;
@@ -82,7 +82,7 @@ public class IPListManager { //aka tracker
 			//Error conditions first.
 			if (mysterServer!=null) {
 				addIPBlocking(mysterServer); //if not truely new then don't make a new thread.
-			} else if (blockingQueue.length()>50) {
+			} else if (blockingQueue.length()>100) {
 				System.out.println("->   !!!!!!!!!!!!!!!!!!!!!!AddIP queue is at Max length.");
 			} else {
 				blockingQueue.add(ip); //if it's truely new then make a new thread to passively add the ip

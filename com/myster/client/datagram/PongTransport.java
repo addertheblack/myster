@@ -16,6 +16,7 @@ import java.util.Enumeration;
 public class PongTransport extends DatagramTransport {
 	static final int transportNumber=1347374663;
 	static final int TIMEOUT=60000;
+	static final int FIRST_TIMEOUT=20000;
 	
 	private Hashtable requests=new Hashtable();
 	
@@ -60,19 +61,18 @@ public class PongTransport extends DatagramTransport {
 
 	
 	
-	public synchronized void ping(MysterAddress param_address, PingEventListener listener) throws IOException {
+	public synchronized void ping(MysterAddress param_address, PingEventListener listener) throws IOException { //DANGER DEADLOCKS!
 		PongItemStruct pongItemStruct=(PongItemStruct)requests.get(param_address);
 		if (pongItemStruct==null) {
 			pongItemStruct=new PongItemStruct();
 			requests.put(param_address,pongItemStruct);
+			Timer t=new Timer(new TimeoutClass(param_address), FIRST_TIMEOUT+(1*1000), false);
 			sendPacket((new PingPacket(param_address)).toImmutableDatagramPacket());
 		}
 		
 		
 		pongItemStruct.vector.addElement(listener);
 		a=param_address;
-		
-		Timer t=new Timer(new TimeoutClass(), TIMEOUT+(1*1000), false);
 	}
 	
 	public boolean ping(MysterAddress param_address) throws IOException, InterruptedException { //should NOT be synchronized!!!
@@ -105,6 +105,7 @@ public class PongTransport extends DatagramTransport {
 	private static class PongItemStruct {
 		public final Vector vector;
 		public final long timeStamp;
+		public boolean secondPing=false;	//used when the connection has timeout on one packet to send a second.
 		
 		public PongItemStruct() {
 			timeStamp=System.currentTimeMillis();
@@ -113,6 +114,12 @@ public class PongTransport extends DatagramTransport {
 	}
 	
 	private class TimeoutClass implements Runnable {
+		MysterAddress address;
+		
+		public TimeoutClass(MysterAddress address) {
+			this.address=address;
+		}
+		
 		public void run() {
 			long curTime=System.currentTimeMillis();
 			Vector itemsToDelete=new Vector(2,10);
@@ -121,6 +128,13 @@ public class PongTransport extends DatagramTransport {
 				if (enum.hasMoreElements()) {
 					for (Object key=enum.nextElement();; key=enum.nextElement()) {
 						PongItemStruct pongItem=(PongItemStruct)requests.get(key);
+						
+						if ((pongItem.timeStamp<=(curTime-FIRST_TIMEOUT))&&(!pongItem.secondPing)) {
+							sendPacket((new PingPacket((MysterAddress)key)).toImmutableDatagramPacket());
+							pongItem.secondPing=true;
+							Timer t=new Timer(new TimeoutClass((MysterAddress)key), TIMEOUT-(curTime-pongItem.timeStamp)+(1*1000), false);
+							System.out.println("Trying "+key+" again. it only has "+(TIMEOUT-(curTime-pongItem.timeStamp))+"ms left.");
+						}
 						
 						if (pongItem.timeStamp<=(curTime-TIMEOUT)) {
 							itemsToDelete.addElement(key);

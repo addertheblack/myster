@@ -32,6 +32,7 @@ public class Timer {
 	*/
 	public Timer(Runnable thingToRun, long timeToWait, boolean runAsThread) {
 		runnable=thingToRun;
+		timeToWait=(timeToWait<=0?1:timeToWait); //assert positive.
 		time=System.currentTimeMillis()+timeToWait;
 		this.runAsThread=runAsThread;
 		
@@ -71,11 +72,12 @@ public class Timer {
 	*
 	*/
 	
+	//Waring.. lock of the class should not be accessed from outside.
+	
 	static TimerVector timers; //should be accessed through getImpl();
 	static Timer nextTimer;
 	static SafeThread thread;
-	static Integer lock=new Integer(1); //so people can't call notify on the class and screw things up.
-	
+	static boolean wasInterrupted=false;
 	
 	//for dynamic loading.
 	private synchronized static TimerVector getImpl() {
@@ -100,28 +102,35 @@ public class Timer {
 		return timers;
 	}
 	
-	private static void addEvent(Timer timer) {
-		synchronized (lock) {
-			getImpl().addTimer(timer);
-			thread.interrupt();
-		}
+	private synchronized static void addEvent(Timer timer) {///DANGER DEADLOCKS!
+		getImpl().addTimer(timer);
+		wasInterrupted=true;
+		Timer.class.notify();
 	}
-	
-	private static void timerLoop() {
-		synchronized (lock) {
-			for (;;) {
-				nextTimer=getImpl().getClosestTimer();
-				try {
-					if (nextTimer==null) lock.wait();
-					else {
-						long timeToWait=nextTimer.getTime()-System.currentTimeMillis();
-						lock.wait(timeToWait<1?1:timeToWait);
-					}
-				} catch (InterruptedException ex) {
-					//System.out.println("Timer was interrupted.");
-					continue;
+
+	private synchronized static void timerLoop() {
+		for (;;) {
+			wasInterrupted=false;
+			nextTimer=getImpl().getClosestTimer(); //This code chooses the next event to run 
+			try {
+				
+				//this code waits until it's time.
+				if (nextTimer==null) Timer.class.wait();
+				else {
+					long timeToWait=nextTimer.getTime()-System.currentTimeMillis();
+					Timer.class.wait(timeToWait<=0?1:timeToWait);	//might be less than 0 or 0. BAD!
 				}
 				
+				//This code loops if it was interrupted.
+				if (wasInterrupted) {
+					continue;
+				}
+			} catch (InterruptedException ex) {
+				ex.printStackTrace(); //error..! should not get here..
+				continue;
+			}
+			
+			if (System.currentTimeMillis()-nextTimer.getTime()>=0) {
 				thread.setPriority(Thread.MAX_PRIORITY); //is run on "interrupt time"
 				nextTimer.doEvent();
 				
@@ -134,23 +143,7 @@ public class Timer {
 	
 	
 	private static class TimerVector extends Vector {
-	
-		public TimerVector(){
-			
-		}
-	
 		public synchronized void addTimer(Timer timer) {
-			/* //this code would enable some O(1) timer code...
-			if (freeBlocks.getSize()>0) {
-				for (Object item=freeBlocks.removeFromHead(); i<freeBlocks.getSize(); item=freeBlocks.removeFromHead()) {
-					int index=((Integer)item).intValue();
-					
-					if (index<size()) {
-						setElementAt(timer, index);
-					}
-				}
-			}
-			*/
 			addElement(timer);
 		}
 		

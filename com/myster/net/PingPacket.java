@@ -7,7 +7,7 @@ public class PingPacket extends PingPongPacket {
 		super(param_packet, PingPongPacket.PING);
 	}
 	
-	public PingPacket(MysterAddress param_address) throws BadPacketException {
+	public PingPacket(MysterAddress param_address) {
 		super(param_address, PingPongPacket.PING);
 	}
 	
