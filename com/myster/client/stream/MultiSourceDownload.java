@@ -254,11 +254,11 @@ public class MultiSourceDownload {
 		}
 	}
 	
-	public void addListener(MultiSourceDownloadListener listener) {
+	public void addListener(MSDownloadListener listener) {
 		dispatcher.addListener(listener);
 	}
 	
-	public void removeListener(MultiSourceDownloadListener listener) {
+	public void removeListener(MSDownloadListener listener) {
 		dispatcher.removeListener(listener);
 	}
 	

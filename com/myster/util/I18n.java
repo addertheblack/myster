@@ -38,7 +38,7 @@ public class I18n {
 
 		resources = ResourceBundle.getBundle("com.properties.Myster");
 	}
-	
+
 	/**
 	*	Find the translated key for this string
 	*
