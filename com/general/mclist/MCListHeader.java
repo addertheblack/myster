@@ -73,9 +73,9 @@ public class MCListHeader extends Panel {
         }
     }
 
-    Image im;
+    private Image im;
 
-    int lastwidth = -1;
+    private int lastwidth = -1;
 
     public void update2(Graphics g) {
         if (getSize().width != lastwidth) {
@@ -114,7 +114,8 @@ public class MCListHeader extends Panel {
         g.setColor(getBackground());
         g.fillRect(0, 0, getSize().width, getHeight());
 
-        g.setColor(new Color(200, 200, 255));
+        //g.setColor(new Color(200, 200, 255));
+        g.setColor(new Color(210,210,210));
         g.fillRect(0, 0, getSize().width, getHeight());
 
         int hozoffset = 0;
@@ -145,20 +146,20 @@ public class MCListHeader extends Panel {
             int internalPadding, boolean isSelected, boolean isMouseOver) {
         //Calculates the "Selected Column" and/or "Mouser Over" colors.
         if (isSelected) {
-            g.setColor(isMouseOver ? new Color(210, 210, 255) : new Color(200, 200, 255));
+            g.setColor(isMouseOver ? new Color(222, 222, 222) : new Color(210, 210, 210));
         } else {
-            g.setColor(isMouseOver ? new Color(222, 222, 222) : new Color(215, 215, 215));
+            g.setColor(isMouseOver ? new Color(222, 222, 222) : new Color(210, 210, 210));
         }
 
         int width = endPixel - hozoffset - padding;
         g.fillRect(padding + hozoffset, padding, width, 2 * internalPadding + HEIGHT);
-
+        
         int height = 2 * internalPadding + padding + HEIGHT;
 
-        g.setColor(new Color(235, 235, 235));
+        g.setColor(new Color(245, 245, 245));
         g.drawLine(padding + hozoffset, padding, padding + hozoffset + width - 1, padding);
         g.drawLine(padding + hozoffset, padding, padding + hozoffset, height - 1);
-        g.setColor(new Color(175, 175, 175));
+        g.setColor(new Color(150, 150, 150));
         g.drawLine(padding + hozoffset, height - 1, padding + hozoffset + width - 1, height - 1);
         g.drawLine(padding + hozoffset + width - 1, padding, padding + hozoffset + width - 1,
                 height - 1);
@@ -169,8 +170,13 @@ public class MCListHeader extends Panel {
         g.fillRect(padding + hozoffset + width - 1, padding, 1, 1);
         g.setColor(new Color(215, 215, 215));
         g.fillRect(padding + hozoffset, height - 1, 1, 1);
-        g.setColor(new Color(140, 140, 140));
+        g.setColor(new Color(100, 100, 100));
         g.fillRect(padding + hozoffset + width - 1, height - 1, 1, 1);
+        
+        if (isSelected) {
+            g.setColor(new Color(50,50,255,45));
+            g.fillRect(padding + hozoffset, padding, width, 2 * internalPadding + HEIGHT);
+        }
 
     }
 

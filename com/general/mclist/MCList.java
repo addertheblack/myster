@@ -39,16 +39,16 @@ public class MCList extends Panel {
 
     //I add Myself to the scroll pane so it can scroll me around! (yeah, I
     // know)
-    ScrollPane pane;
+    private ScrollPane pane;
 
     //Header
-    MCListHeader header;
+    private MCListHeader header;
 
     //Event Handler
-    MCListEventHandler eventhandler;
+    private MCListEventHandler eventhandler;
 
     //Single select flag:
-    boolean singleselectboolean = false;
+    private boolean singleselectboolean = false;
 
     public static final int PADDING = 1;
 
