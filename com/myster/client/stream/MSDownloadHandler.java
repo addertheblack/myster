@@ -97,9 +97,17 @@ public class MSDownloadHandler extends MSDownloadListener {
 		if (freeBars.size() == 0) {
 			progress.setProgressBarNumber(macBarCounter+1);
 			
+			final int MAX_STEP = 5;
+			int i = macBarCounter - 1;
+			
+			i = ((i / MAX_STEP) % 2 == 0 ? i % MAX_STEP : MAX_STEP - (i % MAX_STEP) - 1);
+			
+			progress.setBarColor(new java.awt.Color(0,(MAX_STEP-i)*(255/MAX_STEP),150), macBarCounter);
+			
 			return macBarCounter++;
 		}
 		
+		//this blob of code figures out which of the freebars to re-use
 		int minimum = ((Integer)(freeBars.elementAt(0))).intValue(); //no templates
 		int min_index = 0;
 		for (int i = 0; i< freeBars.size(); i++) {
@@ -183,10 +191,10 @@ class SegmentDownloaderHandler extends SegmentDownloaderListener {
 				image = e.getCopyOfData();
 				
 				break;
-			case 'u':
+			case 'u': //URLs are UTF-8 but java's UTF decoder needs the length in the first two bytes
 				byte[] temp_buffer = e.getCopyOfData();
 				
-				if (temp_buffer.length > ((int)(0xFFFF))) break;
+				if (temp_buffer.length > ((int)(0xFFFF))) break; //error URL is insanely long
 				
 				byte[] final_buffer = new byte[temp_buffer.length + 2];
 				
@@ -325,8 +333,6 @@ class Banner {
 		for (int i = 0; i < image.length ; i++) {
 			if (image[i] != banner.image[i]) return false;
 		}
-		
-		System.out.println("We have returned true form banners quals method");
 		
 		return true;
 	}

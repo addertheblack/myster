@@ -39,9 +39,9 @@ import com.myster.mml.RobustMML;
 /*
 	Things to do
 	
-	make it so that 1 queued download is canceled if there is an active download
+	-make it so that 1 queued download is canceled if there is an active download
 	
-	make it so that searches don't stop
+	-make it so that searches don't stop
 	
 	change the color of the bars to green again
 	
