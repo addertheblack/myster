@@ -53,7 +53,7 @@ public final class AsyncDatagramSocket {
 
     private void open(int port) throws IOException {
         dsocket = new DatagramSocket(port);
-        dsocket.setSoTimeout(50);
+        dsocket.setSoTimeout(5);
     }
 
     public void close() {
@@ -65,7 +65,7 @@ public final class AsyncDatagramSocket {
     private void doGetNewPackets() throws IOException {
         int counter = 0;
         long startTime = System.currentTimeMillis();
-        while (System.currentTimeMillis() - startTime < 50) {
+        while (true) { //System.currentTimeMillis() - startTime < 50) {
             try {
                 bufferPacket.setLength(BIG_BUFFER);
 
@@ -75,7 +75,7 @@ public final class AsyncDatagramSocket {
                     portListener.packetReceived(new ImmutableDatagramPacket(
                             bufferPacket));
             } catch (InterruptedIOException ex) {
-
+                return;
             }
             counter++;
 
@@ -86,8 +86,7 @@ public final class AsyncDatagramSocket {
 
     private void doSendNewPackets() throws IOException {
         int counter = 0;
-        while (queue.getSize() > 0 && counter < 200) { //fix to make more
-                                                       // balenced.
+        while (queue.getSize() > 0 && counter < 5) {
             ImmutableDatagramPacket p = (ImmutableDatagramPacket) (queue
                     .removeFromHead());
 

@@ -12,6 +12,13 @@ package com.myster.util;
 
 import com.general.util.SafeThread;
 
+/**
+ * This class
+ * 
+ * @author Andrew Trumper
+ *
+ */
+
 public abstract class MysterThread extends SafeThread {
 
     public MysterThread() {

@@ -2,6 +2,13 @@ package com.myster.type;
 
 import com.general.events.GenericEvent;
 
+/**
+ * The TypeDescriptionEvent is fired by the TypeDescriptionList.
+ * 
+ * @author Andrew Trumper
+ *
+ */
+
 public class TypeDescriptionEvent extends GenericEvent {
     public static final int DISABLE = 0;
 
@@ -18,11 +25,22 @@ public class TypeDescriptionEvent extends GenericEvent {
         this.list = list;
         this.type = type;
     }
-
+    
+	/**
+	 * Gets the TypeDescriptionList that fired this event.
+	 * 
+	 * @return The TypeDescriptionList that fired this event.
+	 */
     public TypeDescriptionList getList() {
         return list;
     }
 
+    
+	/**
+	 * Requests the type that is associated with this event.
+	 * 
+	 * @return The type that was enabled or disabled.
+	 */
     public MysterType getType() {
         return type;
     }

@@ -5,7 +5,7 @@
  * 
  * This code is under GPL
  * 
- * Copyright Andrew Trumper 2000-2001
+ * Copyright Andrew Trumper 2000-2004
  */
 
 package com.myster;
@@ -43,12 +43,10 @@ public class Myster {
 
     private static long programLaunchTime = 0;
 
-    private static final File WORKING_DIRECTORY = new File(System
-            .getProperty("user.dir"));
+    private static final File WORKING_DIRECTORY = new File(System.getProperty("user.dir"));
 
     public static final boolean ON_LINUX = (System.getProperty("os.name") != null ? System
-            .getProperty("os.name").equals("Linux")
-            : false);
+            .getProperty("os.name").equals("Linux") : false);
 
     public static void main(String args[]) {
         final boolean isServer = (args.length > 0 && args[0].equals("-s"));
@@ -70,12 +68,10 @@ public class Myster {
                 + System.getProperty("java.vm.specification.vendor"));
         System.out.println("java.vm.specification.name   :"
                 + System.getProperty("java.vm.specification.name"));
-        System.out.println("java.vm.version              :"
-                + System.getProperty("java.vm.version"));
-        System.out.println("java.vm.vendor               :"
-                + System.getProperty("java.vm.vendor"));
-        System.out.println("java.vm.name                 :"
-                + System.getProperty("java.vm.name"));
+        System.out
+                .println("java.vm.version              :" + System.getProperty("java.vm.version"));
+        System.out.println("java.vm.vendor               :" + System.getProperty("java.vm.vendor"));
+        System.out.println("java.vm.name                 :" + System.getProperty("java.vm.name"));
 
         programLaunchTime = System.currentTimeMillis();
 
@@ -103,8 +99,7 @@ public class Myster {
                 com.general.util.Util.centerFrame(progress, 0, -50);
 
                 try {
-                    if (com.myster.type.TypeDescriptionList.getDefault()
-                            .getEnabledTypes().length <= 0) {
+                    if (com.myster.type.TypeDescriptionList.getDefault().getEnabledTypes().length <= 0) {
                         AnswerDialog
                                 .simpleAlert(
                                         progress,
@@ -116,8 +111,7 @@ public class Myster {
                     }
                 } catch (Exception ex) {
                     AnswerDialog.simpleAlert(progress,
-                            "Could not load the Type Description List: \n\n"
-                                    + ex);
+                            "Could not load the Type Description List: \n\n" + ex);
                     quit();
                     return; //not reached
                 }
@@ -164,9 +158,7 @@ public class Myster {
                 com.myster.server.datagram.FileStatsDatagramServer.init();
                 com.myster.server.datagram.SearchHashDatagramServer.init();
 
-                progress.setText(I18n.tr("Loading Server Stats Window... %1%%",
-                        "" + 15)
-                        + macHack);
+                progress.setText(I18n.tr("Loading Server Stats Window... %1%%", "" + 15) + macHack);
                 progress.setValue(15);
 
                 //System.out.println( "MAIN THREAD: Starting
@@ -174,17 +166,14 @@ public class Myster {
                 Point p = ServerStatsWindow.getInstance().getLocation();
                 ServerStatsWindow.getInstance().setLocation(-500, -500);
                 ServerStatsWindow.getInstance().setVisible(true);
-                progress.setText(I18n.tr("Loading Server Stats Window... %1%%",
-                        "" + 18)
-                        + macHack);
+                progress.setText(I18n.tr("Loading Server Stats Window... %1%%", "" + 18) + macHack);
                 progress.setValue(18);
                 //try {Thread.currentThread().sleep(1000);} catch (Exception
                 // ex) {}
                 ServerStatsWindow.getInstance().setVisible(false);
                 ServerStatsWindow.getInstance().setLocation(p);
 
-                progress
-                        .setText(I18n.tr("Loading Server Fascade...") + macHack);
+                progress.setText(I18n.tr("Loading Server Fascade...") + macHack);
                 progress.setValue(25);
                 ServerFacade.assertServer();
 
@@ -196,24 +185,20 @@ public class Myster {
                 progress.setValue(70);
                 FileTypeListManager.getInstance();
 
-                progress.setText(I18n.tr("Loading Instant Messaging...")
-                        + macHack);
+                progress.setText(I18n.tr("Loading Instant Messaging...") + macHack);
                 progress.setValue(72);
                 com.myster.message.MessageManager.init();
 
-                progress.setText(I18n.tr(I18n.tr("Loading WindowManager..."))
-                        + macHack);
+                progress.setText(I18n.tr(I18n.tr("Loading WindowManager...")) + macHack);
                 progress.setValue(78);
                 com.myster.ui.WindowManager.init();
 
-                Preferences.getInstance().addPanel(
-                        BandwidthManager.getPrefsPanel());
+                Preferences.getInstance().addPanel(BandwidthManager.getPrefsPanel());
 
                 progress.setText(I18n.tr("Loading Plugins...") + macHack);
                 progress.setValue(80);
                 try {
-                    (new com.myster.plugin.PluginLoader(new File("plugins")))
-                            .loadPlugins();
+                    (new com.myster.plugin.PluginLoader(new File("plugins"))).loadPlugins();
                 } catch (Exception ex) {
                 }
 
@@ -297,19 +282,16 @@ public class Myster {
                 sout.writeInt(passWord);
                 sout.writeInt(0); //a command
                 if (sin.read() == 1) {
-                    System.out
-                            .println("Sucess, other myster client should put up a new window");
+                    System.out.println("Sucess, other myster client should put up a new window");
                     System.exit(0);
                 } else {
-                    System.out
-                            .println("Other Myster Prog wrote back error of type: ??");
+                    System.out.println("Other Myster Prog wrote back error of type: ??");
                     System.exit(1);
                 }
 
             } catch (IOException ex) {
                 newFile(file);
-                System.out
-                        .println("Could not connect to self... Deleting the lock file");
+                System.out.println("Could not connect to self... Deleting the lock file");
             } finally {
                 try {
                     sin.close();
@@ -321,8 +303,7 @@ public class Myster {
                 }
             }
         } catch (IOException ex) {
-            System.out
-                    .println("Big error, chief. Now would be a good time to panic.");
+            System.out.println("Big error, chief. Now would be a good time to panic.");
             ex.printStackTrace();
             System.exit(1);
 
@@ -337,8 +318,7 @@ public class Myster {
     //public static int password=-1;
     public static void newFile(File file) {
         try {
-            DataOutputStream out = new DataOutputStream(new FileOutputStream(
-                    file));
+            DataOutputStream out = new DataOutputStream(new FileOutputStream(file));
             Math.random();
             Math.random();
             Math.random();
@@ -350,18 +330,16 @@ public class Myster {
                     try {
                         DataInputStream sin;
                         DataOutputStream sout;
-                        ServerSocket serversocket = new ServerSocket(10457, 1,
-                                InetAddress.getLocalHost());
+                        ServerSocket serversocket = new ServerSocket(10457, 1, InetAddress
+                                .getLocalHost());
 
                         for (;;) {
                             Socket socket = serversocket.accept();
                             sin = new DataInputStream(socket.getInputStream());
-                            sout = new DataOutputStream(socket
-                                    .getOutputStream());
+                            sout = new DataOutputStream(socket.getOutputStream());
 
                             try {
-                                System.out
-                                        .println("getting connection form self");
+                                System.out.println("getting connection form self");
                                 sin.readInt();
                                 sin.readInt();
                                 sout.write(1);
@@ -380,8 +358,7 @@ public class Myster {
                         AnswerDialog
                                 .simpleAlert("Could not connect on Local socket..\n"
                                         + "Make sure you are connected to the internet, close all open Myster versions and/or restart.");
-                        System.out
-                                .println("Could not connect on Local socket..");
+                        System.out.println("Could not connect on Local socket..");
                         System.out
                                 .println("Close all open Myster versions or just restart.. that should work");
                         System.exit(1);
@@ -461,18 +438,15 @@ public class Myster {
         //Ddays, h:MM
         //Wweeks
         //Wweeks Ddays
-        return (weeks != 0 ? weeks + "weeks " : "")
-                + (days != 0 ? days + "days " : "")
+        return (weeks != 0 ? weeks + "weeks " : "") + (days != 0 ? days + "days " : "")
                 + (weeks == 0 ? hours + ":" : "")
-                + (weeks == 0 ? (minutes < 10 ? "0" + minutes : minutes + "")
-                        : "");
+                + (weeks == 0 ? (minutes < 10 ? "0" + minutes : minutes + "") : "");
 
     }
 
     public static File getCurrentDirectory() {
         if (ON_LINUX) {
-            File result = new File(new File(System.getProperty("user.home")),
-                    "myster");
+            File result = new File(new File(System.getProperty("user.home")), "myster");
             if (!result.exists())
                 result.mkdir();
             return result;

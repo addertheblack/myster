@@ -23,7 +23,11 @@ public abstract class TypeDescriptionList {
         if (defaultList == null)
             defaultList = new DefaultTypeDescriptionList();
     }
-
+    
+	/**
+	 * Request Myster's default TypeDescriptionList
+	 * @return Myster's default TypeDescriptionList
+	 */
     public static synchronized TypeDescriptionList getDefault() {
         init(); //possible pre-mature init here
         return defaultList;
@@ -121,7 +125,7 @@ class DefaultTypeDescriptionList extends TypeDescriptionList {
         }
 
         workingTypes = oldTypes; //set working types to "types" variable to
-                                 // enable on the fly cahnges
+                                 // enable on the fly changes
 
         dispatcher = new SyncEventDispatcher();
     }

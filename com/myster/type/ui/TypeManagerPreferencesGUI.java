@@ -16,6 +16,12 @@ import com.myster.type.MysterType;
 import com.myster.type.TypeDescription;
 import com.myster.type.TypeDescriptionList;
 
+/**
+ * The TypeManagerPreferencesGUI represents the Type Enable/Disable preferences panel.
+ * 
+ * @author Andrew Trumper
+ */
+
 public class TypeManagerPreferencesGUI extends PreferencesPanel {
     public static void init() {
         Preferences.getInstance().addPanel(new TypeManagerPreferencesGUI());
@@ -27,7 +33,10 @@ public class TypeManagerPreferencesGUI extends PreferencesPanel {
 
     private static final int HEADER_Y = 100;
 
-
+	/**
+	 * Constructor for the TypeManagerPreferencesGUI.
+	 *
+	 */
     public TypeManagerPreferencesGUI() {
         setLayout(null);
 
@@ -80,7 +89,10 @@ public class TypeManagerPreferencesGUI extends PreferencesPanel {
 
         setSize(STD_XSIZE, STD_YSIZE);
     }
-
+    
+    /**
+     * Saves the options selected in the TypeManagerPreferencesGUI.
+     */
     public void save() {
         if (!isThereAtLeastOneTypeEnabled()) {
             (new com.general.util.AnswerDialog(
@@ -99,7 +111,12 @@ public class TypeManagerPreferencesGUI extends PreferencesPanel {
                                                                               // line.
         }
     }
-
+    
+    /**
+     * returns if there's any MysterTypes enabled in the GUI. Used for deciding whether to save or not.
+     * 
+     * @return true if there's at least 1 MysterType enabled in the GUI, false otherwise.
+     */
     private boolean isThereAtLeastOneTypeEnabled() {
         for (int i = 0; i < mcList.length(); i++) {
             if (((MyMCListItem) (mcList.getMCListItem(i))).getEnabled())
@@ -108,6 +125,9 @@ public class TypeManagerPreferencesGUI extends PreferencesPanel {
         return false;
     }
 
+    /**
+     * Sets the GUI to match the action state of the default TypeDescriptionList.
+     */
     public void reset() {
         mcList.clearAll();
         TypeDescription[] listOfTypes = TypeDescriptionList.getDefault()
@@ -126,7 +146,7 @@ public class TypeManagerPreferencesGUI extends PreferencesPanel {
 
         mcList.addItem(items);
     }
-
+    
     public String getKey() {
         return "Types enable/disable";
     }
@@ -175,61 +195,3 @@ public class TypeManagerPreferencesGUI extends PreferencesPanel {
     }
 
 }
-
-/*
- * 
- * import java.awt.*;
- * 
- * import com.myster.pref.Preferences; import
- * com.myster.pref.ui.PreferencesPanel;
- * 
- * import com.myster.type.*;
- * 
- * public class TypeManagerPreferencesGUI extends PreferencesPanel { public
- * static void init() { Preferences.getInstance().addPanel(new
- * TypeManagerPreferencesGUI()); }
- * 
- * private List enabledList, disabledList; private Label enabledListLabel,
- * disabledListLabel;
- * 
- * private static final int HEADER_Y = 100; private static final int LABEL_Y =
- * 25;
- * 
- * public TypeManagerPreferencesGUI() { setLayout(null);
- * 
- * enabledListLabel = new Label("Enabled Types:");
- * enabledListLabel.setLocation(0, HEADER_Y); enabledListLabel.setSize(STD_XSIZE /
- * 2, LABEL_Y); add(enabledListLabel);
- * 
- * disabledListLabel = new Label("Disabled Types:");
- * disabledListLabel.setLocation(STD_XSIZE / 2, HEADER_Y);
- * disabledListLabel.setSize(STD_XSIZE / 2, LABEL_Y); add(disabledListLabel);
- * 
- * enabledList = new List(); enabledList.setLocation(0, HEADER_Y+LABEL_Y);
- * enabledList.setSize(STD_XSIZE / 2, STD_YSIZE - (HEADER_Y+LABEL_Y));
- * add(enabledList);
- * 
- * disabledList = new List(); disabledList.setLocation(STD_XSIZE / 2,
- * HEADER_Y+LABEL_Y); disabledList.setSize(STD_XSIZE / 2, STD_YSIZE -
- * (HEADER_Y+LABEL_Y)); add(disabledList);
- * 
- * setSize(STD_XSIZE, STD_YSIZE); }
- * 
- * public void save() {
- *  }
- * 
- * public void reset() { enabledList.clear(); disabledList.clear();
- * 
- * TypeDescription[] listOfTypes =
- * TypeDescriptionList.getDefault().getAllTypes();
- * 
- * for (int i = 0; i < listOfTypes.length; i++) { String typeDescription =
- * listOfTypes[i].getDescription() + " ("
- * +listOfTypes[i].getType().toString()+")";
- * 
- * if (TypeDescriptionList.getDefault().isTypeEnabled(listOfTypes[i].getType())) {
- * enabledList.add(typeDescription); } else { disabledList.add(typeDescription); } } }
- * 
- * public String getKey() { return "Types enabled/disable"; } }
- *  
- */

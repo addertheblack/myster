@@ -1,5 +1,13 @@
 package com.general.util;
 
+/**
+ * This class implements a BlockingQueue. The BlockingQueue implemented here is
+ * fairly similar to the BlockingQueue implemented in Java 1.5. It differs in
+ * that this blocking queue is not setup to block on adding an item (@see
+ * com.general.util.DoubleBlockingQueue)... and of course the functions have
+ * slightly dfferent names.
+ *  
+ */
 public class BlockingQueue {
     protected LinkedList list = new LinkedList();
 
@@ -29,17 +37,29 @@ public class BlockingQueue {
 
     }
 
+    /**
+     * 
+     * @return The number of objects in the queue.
+     */
     public int length() {
         return list.getSize();
     }
 
     /**
-     * gets the number of itemssssss waiting in the queue.
+     * 
+     * @return The number of objects in the queue.
      */
     public int getSize() {
         return length();
     }
 
+    /**
+     * If true is passed here the list will reject objects that are equal to
+     * objects already in this list.
+     * 
+     * @param b
+     *            if true, the list will not add Objects already in the list.
+     */
     public void setRejectDuplicates(boolean b) {
         rejectDuplicates = b;
     }

@@ -16,8 +16,7 @@ public class StandardMysterSearch implements MysterSearchClientSection {
 
     volatile boolean endFlag = false;
 
-    public StandardMysterSearch(String searchString,
-            SearchResultListener listener) {
+    public StandardMysterSearch(String searchString, SearchResultListener listener) {
         this.searchString = searchString;
         this.listener = listener;
     }
@@ -27,34 +26,31 @@ public class StandardMysterSearch implements MysterSearchClientSection {
         // All we have to do is add search results.)
     }
 
-    public void search(MysterSocket socket, MysterAddress address,
-            MysterType type) throws IOException {
+    public void search(MysterSocket socket, MysterAddress address, MysterType type)
+            throws IOException {
         if (endFlag)
             throw new DisconnectException();
 
-        Vector searchResults = com.myster.client.stream.StandardSuite
-                .getSearch(socket, type, searchString);
+        Vector searchResults = com.myster.client.stream.StandardSuite.getSearch(socket, type,
+                searchString);
 
         if (endFlag)
             throw new DisconnectException();
-        ;
 
         if (searchResults.size() != 0) {
-            Vector mysterSearchResults = new Vector(searchResults.size());
-
-            for (int i = 0; i < searchResults.size(); i++) {
-                mysterSearchResults.addElement(new MysterSearchResult(
-                        new MysterFileStub(address, type,
-                                (String) (searchResults.elementAt(i)))));
+            MysterSearchResult[] searchArray = new MysterSearchResult[searchResults.size()];
+            
+            for (int i = 0; i < searchArray.length; i++) {
+                searchArray[i] = new MysterSearchResult(new MysterFileStub(address,
+                        type, (String) (searchResults.elementAt(i))));
             }
+            
+            listener.addSearchResults(searchArray);
 
-            sendSearchResultsToListener(mysterSearchResults, listener);
-
-            dealWithFileStats(socket, type, mysterSearchResults, listener);
+            dealWithFileStats(socket, type, searchArray, listener);
 
             if (endFlag)
-                throw new DisconnectException();
-            ; //FileInfoGetter
+                throw new DisconnectException(); //FileInfoGetter
         }
     }
 
@@ -70,20 +66,41 @@ public class StandardMysterSearch implements MysterSearchClientSection {
         endFlag = true;
     }
 
-    private void dealWithFileStats(MysterSocket socket, MysterType type,
-            Vector mysterSearchResults, SearchResultListener listener)
-            throws IOException {
+    /**
+     * When passed a socket, type and Vector of search results (String) as well
+     * as a listener, this routine will update the search result sin the
+     * listener with the meta data found from the remote server.
+     * 
+     * This is not part of the crawlable interface, but who cares. I need it and
+     * it's a nice routine.
+     * 
+     * 
+     * @param socket
+     *            socket to ask for File information on.
+     * @param type
+     *            type of of files the search results are for.
+     * @param mysterSearchResults
+     *            vector of strings, search results...
+     * @param listener
+     *            the mysterSearchResults listener. This routine only UPDATE the
+     *            information, does not put the vector of search results into
+     *            the listener.
+     * @throws IOException
+     *             (also a Disconnect exception) throws this exception on IO
+     *             errors an if the search object is told to die (die die die!).
+     */
+    public void dealWithFileStats(MysterSocket socket, MysterType type, MysterSearchResult[] mysterSearchResults,
+            SearchResultListener listener) throws IOException {
         //This is a speed hack.
         int pointer = 0;
         int current = 0;
         final int MAX_OUTSTANDING = 25;
-        while (current < mysterSearchResults.size()) { //usefull.
+        while (current < mysterSearchResults.length) { //usefull.
             if (endFlag)
                 throw new DisconnectException();
 
-            if (pointer < mysterSearchResults.size()) {
-                SearchResult result = (SearchResult) (mysterSearchResults
-                        .elementAt(pointer));
+            if (pointer < mysterSearchResults.length) {
+                SearchResult result = mysterSearchResults[pointer];
                 socket.out.writeInt(77);
 
                 socket.out.writeInt(type.getAsInt());
@@ -94,9 +111,8 @@ public class StandardMysterSearch implements MysterSearchClientSection {
             if (endFlag)
                 throw new DisconnectException();
 
-            while (socket.in.available() > 0
-                    || (pointer - current > MAX_OUTSTANDING)
-                    || pointer >= mysterSearchResults.size()) {
+            while (socket.in.available() > 0 || (pointer - current > MAX_OUTSTANDING)
+                    || pointer >= mysterSearchResults.length) {
                 if (socket.in.readByte() != 1)
                     return;
 
@@ -110,30 +126,16 @@ public class StandardMysterSearch implements MysterSearchClientSection {
                     return;
                 }
 
-                ((MysterSearchResult) (mysterSearchResults.elementAt(current)))
-                        .setMML(mml);
+                mysterSearchResults[current].setMML(mml);
 
-                listener.searchStats((SearchResult) (mysterSearchResults
-                        .elementAt(current)));
+                listener.searchStats(mysterSearchResults[current]);
 
                 current++;
 
-                if (current >= mysterSearchResults.size()) {
+                if (current >= mysterSearchResults.length) {
                     break;
                 }
             }
         }
-    }
-
-    private void sendSearchResultsToListener(Vector mysterSearchResults,
-            SearchResultListener listener) {
-        SearchResult[] searchArray = new SearchResult[mysterSearchResults
-                .size()];
-
-        for (int i = 0; i < searchArray.length; i++) {
-            searchArray[i] = (SearchResult) (mysterSearchResults.elementAt(i));
-        }
-
-        listener.addSearchResults(searchArray);
     }
 }

@@ -39,24 +39,41 @@ public abstract class PreferencesPanel extends Panel {
         super(l);
     }
 
+    /**
+     * Tells this panel to commit the changes that ave been made.
+     *  
+     */
     public abstract void save(); //save changes
 
+    /**
+     * Tells this panel to throw away any changes that have been made and to
+     * re-read the state from the prefs.
+     *  
+     */
     public abstract void reset(); //discard changes and reset values to their
-                                  // defaults.
 
+    /**
+     * Gets the key that will be the name of this panel in the prefs.
+     * 
+     * @return the name of this panel to apear in the preferences window.
+     */
     public abstract String getKey();//gets the key structure for the place in
-                                    // the pref panel
+
+    // the pref panel
 
     protected final void addFrame(Frame frame) {
         parentFrame = frame;
     }
 
     /**
-     * Sub classes should not assume that this value is not null if the panel
-     * has been added.
+     * Returns the Frame containing this preference panel. Sub classes should
+     * not assume that this value is not null if the panel has been added.
+     * 
+     * @return the window containing this preference panel.
      */
+
     public Frame getFrame() {
         return parentFrame; //returns the frame that this panel is in else
-                            // null;
+        // null;
     }
 }

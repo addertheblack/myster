@@ -11,8 +11,10 @@
 package com.myster.search;
 
 import com.myster.net.MysterAddress;
+import com.sun.java.util.collections.NoSuchElementException;
+import com.sun.java.util.collections.Queue;
 
-public class IPQueue {
+public class IPQueue implements Queue {
     IPQueueSegment head = null;
 
     IPQueueSegment tail = null;
@@ -72,6 +74,49 @@ public class IPQueue {
         public IPQueueSegment(MysterAddress s) {
             value = s;
         }
+    }
+    /* (non-Javadoc)
+     * @see com.sun.java.util.collections.Queue#element()
+     */
+    public Object element() throws NoSuchElementException {
+        Object o = peek();
+        
+        if (o == null) throw new NoSuchElementException();
+        
+        return o;
+    }
+    /* (non-Javadoc)
+     * @see com.sun.java.util.collections.Queue#offer(java.lang.Object)
+     */
+    public boolean offer(Object o) {
+        addIP((MysterAddress)o);
+        return true;
+    }
+    /* (non-Javadoc)
+     * @see com.sun.java.util.collections.Queue#peek()
+     */
+    public Object peek() {
+        if (head.next != null) {
+            return head.next.value;
+        }
+        
+        return null;
+    }
+    /* (non-Javadoc)
+     * @see com.sun.java.util.collections.Queue#poll()
+     */
+    public Object poll() {
+        return getNextIP();
+    }
+    /* (non-Javadoc)
+     * @see com.sun.java.util.collections.Queue#remove()
+     */
+    public Object remove() throws NoSuchElementException {
+        Object o = getNextIP();
+        
+        if (o == null) throw new NoSuchElementException();
+        
+        return o;
     }
 }
 

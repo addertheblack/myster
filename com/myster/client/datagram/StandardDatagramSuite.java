@@ -25,7 +25,7 @@ public class StandardDatagramSuite {
         return (MysterAddress[]) (makeBlocking(new BlockingListener(ip,
                 new TopTenDatagramClient(type))));
     }
-
+    
     public static void getTopServers(final MysterAddress ip,
             final MysterType type, final StandardDatagramListener listener)
             throws IOException {
@@ -103,8 +103,8 @@ public class StandardDatagramSuite {
 
         TransactionSocket tsocket = new TransactionSocket(impl.getCode());
 
-        //We need to convert between a generic transaciton, listener and a
-        // Stanard Myster
+        //We need to convert between a generic transaction, listener and a
+        // Standard Myster
         //transaction listener (to return the data pre-formated, like we want)
         //This has got to be one of longest single lines in Myster :-)
         tsocket.sendTransaction(new DataPacket() { //inline class
