@@ -238,6 +238,17 @@ public class MCListHeader extends Panel {
 	
 	public int getResizeColumn(int x) {
 		int counter=0;
+		
+		RowStats rowstats=getRowStats();
+		for (int i=0; i<numberofcolumns; i++) {
+			counter+=rowstats.getTotalWidthOfColunm(i);
+			if (x<counter+CLICK_LATITUDE&&x>counter-CLICK_LATITUDE) {
+				return i;
+			}
+		}
+		return -1;
+		
+		/*
 		int[] columnWidthArray=getColumnWidthArray();
 		for (int i=0; i<columnWidthArray.length; i++) {
 			counter+=columnWidthArray[i];
@@ -246,5 +257,6 @@ public class MCListHeader extends Panel {
 			}
 		}
 		return -1;
+		*/
 	}
 }
