@@ -19,6 +19,9 @@ import com.myster.mml.MML;
 import com.myster.filemanager.*;
 import com.myster.server.ConnectionContext;
 import com.myster.util.MP3Header;
+import helliker.id3.ID3v2Tag;
+import helliker.id3.ID3v2Frames;
+import helliker.id3.ID3v2FormatException;
 
 public class FileInfoLister extends ServerThread {
 	public static final int NUMBER=77;
@@ -54,6 +57,43 @@ public class FileInfoLister extends ServerThread {
 		out.writeUTF(""+mml);
 	}
 	
+
+	private void patchFunction2(MML mml, File file, byte[] b)  {
+		if (!(new String(b)).equals("MPG3")) return;
+		ID3v2Tag tag=null;
+		try {tag=new ID3v2Tag(file, 0);} catch (Exception ex) {return;} 
+		
+		try {
+			String temp=tag.getFrameDataString(ID3v2Frames.TITLE);
+			if (temp!=null && !temp.equals("")) {
+				mml.put("/ID3Name", temp);
+			}
+		} catch (ID3v2FormatException ex) {}
+		
+		try {
+			String temp=tag.getFrameDataString(ID3v2Frames.COMPOSER);
+			if (temp!=null && !temp.equals("")) {
+				mml.put("/Artist", temp);
+			} else {
+				temp=tag.getFrameDataString(ID3v2Frames.LEAD_PERFORMERS);
+				if (temp!=null && !temp.equals("")) {
+					mml.put("/Artist", temp);
+				}
+			}
+		} catch (ID3v2FormatException ex) {}
+		
+		try {
+			String temp=tag.getFrameDataString(ID3v2Frames.ALBUM);
+			if (temp!=null && !temp.equals("")) {
+				mml.put("/Album", temp);
+			}
+		} catch (ID3v2FormatException ex) {}
+		
+		System.out.println(""+tag);
+
+	}
+	
+	///*
 	private void patchFunction(MML mml, File file, byte[] b)  {
 		if (!(new String(b)).equals("MPG3")) return;
 		MP3Header head=null;
@@ -65,6 +105,9 @@ public class FileInfoLister extends ServerThread {
 		String temp=head.getMP3Name();
 		if (temp!=null) {
 			mml.put("/ID3Name", temp);
+		} else {
+			patchFunction2(mml,file,b);
+			return;
 		}
 		
 		temp=head.getArtist();
@@ -79,4 +122,5 @@ public class FileInfoLister extends ServerThread {
 		
 		head=null;		//go get 'em GC...
 	}
+	//*/
 }

@@ -39,8 +39,8 @@ public class AddIPDialog extends Dialog {
 				"ADSL", "Cable modem", "DSL (You have an \"ADSL\", trust me)",
 				"T1", "T3", "40Mbits/sec +"};
 	
-	public AddIPDialog (Frame parent) {
-		super(parent, "Add IP", true);
+	public AddIPDialog () {
+		super(com.myster.ui.WindowManager.getFrontMostWindow(), "Add IP", true);
 		
 		
 		//Do interface setup:

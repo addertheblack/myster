@@ -25,8 +25,9 @@ import com.myster.search.SearchResultListener;
 import com.myster.search.SearchResult;
 import com.myster.util.Sayable;
 import com.myster.util.TypeChoice;
+import com.myster.ui.MysterFrame;
 
-public class SearchWindow extends Frame implements SearchResultListener, Sayable {
+public class SearchWindow extends MysterFrame implements SearchResultListener, Sayable {
 	GridBagLayout gblayout;
 	GridBagConstraints gbconstrains;
 	
@@ -48,9 +49,10 @@ public class SearchWindow extends Frame implements SearchResultListener, Sayable
 	private final int XDEFAULT=600;
 	private final int YDEFAULT=400;
 	
+	private static int counter=0;
 
 	public SearchWindow() {
-		super("Welcome to Myster");
+		super("Search Window "+(++counter));
 		
 		setBackground(new Color(240,240,240));
 		
@@ -82,7 +84,7 @@ public class SearchWindow extends Frame implements SearchResultListener, Sayable
 		msg.setSize(100,20);
 
 		
-		reshape(0, 0, XDEFAULT, YDEFAULT);
+		//reshape(0, 0, XDEFAULT, YDEFAULT);
 		
 		
 		addComponent(textentry			,0,1,1,1,99,0);

@@ -11,8 +11,9 @@ import Myster;
 import com.myster.util.MysterThread;
 import com.myster.util.TypeDescription;
 import com.myster.util.OpenConnectionHandler;
+import com.myster.ui.MysterFrame;
 
-public class TrackerWindow extends Frame {
+public class TrackerWindow extends MysterFrame {
 	private static TrackerWindow me = new TrackerWindow();
 	private MysterThread updater;
 	
@@ -81,7 +82,7 @@ public class TrackerWindow extends Frame {
 		
 		
 		setSize(500,300);
-		setTitle("tracker");
+		setTitle("Tracker");
 		addComponentListener(new ComponentAdapter(){
 			public void componentShown(ComponentEvent e) {
 				System.out.println("SHOWN!");

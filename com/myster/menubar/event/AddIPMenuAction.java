@@ -23,7 +23,7 @@ public class AddIPMenuAction implements ActionListener {
 	}
 	
 	public void actionPerformed(ActionEvent e) {
-		AddIPDialog a=new AddIPDialog(f);
+		AddIPDialog a=new AddIPDialog();
 		a.show();
 	}
 

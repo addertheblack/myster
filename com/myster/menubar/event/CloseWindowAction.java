@@ -14,16 +14,9 @@ package com.myster.menubar.event;
 import java.awt.*;
 import java.awt.event.*;
 
-public class CloseWindowAction implements ActionListener {
-	Frame w;
-	
-	public CloseWindowAction(Frame w) {
-		this.w=w;
-	}
-	
+public class CloseWindowAction implements ActionListener {	
 	public void actionPerformed(ActionEvent e) {
-		w.show(false);
-	
+		com.myster.ui.WindowManager.getFrontMostWindow().closeWindowEvent();
 	}
 
 }

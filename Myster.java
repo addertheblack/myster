@@ -135,6 +135,10 @@ public class Myster{
 				progress.say("Loading FileManager..."+macHack);
 				progress.update(70);
 				FileTypeListManager.getInstance();
+				
+				progress.say("Loading WindowManager..."+macHack);
+				progress.update(78);
+				com.myster.ui.WindowManager.init();
 			
 				progress.say("Loading Plugins..."+macHack);
 				progress.update(80);

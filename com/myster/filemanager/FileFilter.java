@@ -29,7 +29,7 @@ class FileFilter {
 			".jpg",".jpeg",".gif",".png",".pict",".psd",".tif",".tiff",".bmp"
 		},
 		new String[]{
-			".bin",".hqx",".sit",".cpt",".dmg",".sea",".nfs"
+			".bin",".hqx",".sit",".cpt",".dmg",".sea",".nfs",".sitx"
 		},
 		new String[]{
 			".zip",".exe",".rar",".lzh",".iso"

@@ -17,8 +17,9 @@ import java.awt.event.*;
 import com.general.util.*;
 import com.myster.menubar.MysterMenuBar;
 import com.myster.util.Sayable;
+import com.myster.ui.MysterFrame;
 
-public class ClientWindow extends Frame implements Sayable{
+public class ClientWindow extends MysterFrame implements Sayable{
 	GridBagLayout gblayout;
 	GridBagConstraints gbconstrains;
 	Button connect;
@@ -40,14 +41,16 @@ public class ClientWindow extends Frame implements Sayable{
 	
 	final int GYDEFAULT=50;		//Generic Y default
 	
+	private static int counter=0;
+	
 	public ClientWindow() {
-		super("Welcome To Myster Pro Client");
+		super("Direct Connection "+(++counter));
 		
 		makeClientWindow();
 	}
 	
 	public ClientWindow(String ip) {
-		super("Welcome To Myster Pro Client");
+		super("Direct Connection "+(++counter));
 		makeClientWindow();
 		IP.setText(ip);
 		connect.dispatchEvent(new KeyEvent(connect, KeyEvent.KEY_PRESSED, System.currentTimeMillis(), 0, KeyEvent.VK_ENTER, (char)KeyEvent.VK_ENTER)); 
@@ -87,7 +90,7 @@ public class ClientWindow extends Frame implements Sayable{
 		msg.setSize(XDEFAULT,GYDEFAULT);
 
 		
-		reshape(0, 0, XDEFAULT, YDEFAULT);
+		//reshape(0, 0, XDEFAULT, YDEFAULT);
 		
 		addComponent(connect,0,0,1,1,0,0);
 		addComponent(IP,0,1,2,1,0,0);

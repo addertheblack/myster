@@ -15,9 +15,10 @@ import java.awt.*;
 import java.awt.event.*;
 import java.awt.image.*;
 import com.myster.menubar.MysterMenuBar;
+import com.myster.ui.MysterFrame;
 
 
-public class ServerStatsWindow extends Frame implements Sayable {
+public class ServerStatsWindow extends MysterFrame implements Sayable {
 	TabPanel tab;
 	
 	DownloadInfoPanel downloadPanel;

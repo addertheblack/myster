@@ -758,4 +758,7 @@ Work on DEV 8:
     			in this version of Myster for greater stability and responsiveness..
     	-> modified parts of the tracker to take advantage of new pinger
     	-> added a "ping" column to search results.
-    	-> Myster is now 17584 lines of yummy java goodness
+    	-> Added new WindowManager
+    	-> re-wrote menubar code
+    	-> Finished MacOS X plugin.
+    	-> Myster is now 18429 lines of yummy java goodness

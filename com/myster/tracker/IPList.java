@@ -198,7 +198,7 @@ class IPList {
 		//System.out.println("Old IP: "+array[array.length-1].getRank(type)+" vs new IP: "+ip.getRank(type));
 		//System.out.println("Old IP: "+array[array.length-1].getIP()+" vs new IP: "+ip.getIP());
 		if (array[array.length-1].getRank(type)<ip.getRank(type)) {
-			//System.out.println("Adding com.myster "+ip.getName()+" to full list "+type);
+			System.out.println("Adding com.myster "+ip.getAddress()+" to full list "+type);
 			array[array.length-1]=ip;
 			sort();
 			save();			//Saves the new IP. 

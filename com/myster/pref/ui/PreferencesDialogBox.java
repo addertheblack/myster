@@ -17,6 +17,7 @@ import com.myster.server.ServerFacade;
 import com.myster.menubar.MysterMenuBar; //!
 import java.util.Hashtable;
 import java.util.Enumeration;
+import com.myster.ui.MysterFrame;
 
 /**
 *	This object is reponsible for the prefferences dialog box that pops up when you select "preferences" from the menu bar.
@@ -24,7 +25,7 @@ import java.util.Enumeration;
 *	from the outside. 
 */
 
-public class PreferencesDialogBox extends Frame {	//protected...!
+public class PreferencesDialogBox extends MysterFrame {	//protected...!
 	Insets insets;
 	
 	final int XDEFAULT=600;
