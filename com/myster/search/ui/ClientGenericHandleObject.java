@@ -5,6 +5,7 @@ import com.myster.mml.*;
 import com.myster.tracker.MysterServer;
 import com.myster.tracker.IPListManagerSingleton;
 import com.myster.search.SearchResult;
+import com.myster.net.*;
 
 public class ClientGenericHandleObject implements ClientHandleObject {
 	protected String[] 	headerarray={"File Name","File Size","Server", "Ping"};
@@ -41,8 +42,9 @@ public class ClientGenericHandleObject implements ClientHandleObject {
 		public GenericSearchItem(SearchResult s) {
 			result=s;
 			
-			String hostAsString=result.getHostAddress().toString();
-			MysterServer server=IPListManagerSingleton.getIPListManager().getQuickServerStats(hostAsString);
+			MysterAddress hostAsAddress=result.getHostAddress();
+			String hostAsString=hostAsAddress.toString();
+			MysterServer server=IPListManagerSingleton.getIPListManager().getQuickServerStats(hostAsAddress);
 			serverString=new SortableString(server==null?hostAsString:(server.getServerIdentity().equals(hostAsString)?""+hostAsString:server.getServerIdentity()+" ("+hostAsString+")"));
 			//The Three lines above can be combined into one really long line. I hope you appreciate this :-)
 			ping=new SortablePing(result.getHostAddress());

@@ -14,7 +14,7 @@ import java.awt.*;
 import java.awt.event.*;
 import java.util.Vector;
 
-import java.awt.image.BufferedImage;//testing
+//import java.awt.image.BufferedImage;//testing
 
 public class MCList extends Panel {
 	private Image im;

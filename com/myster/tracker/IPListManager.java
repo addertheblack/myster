@@ -108,25 +108,23 @@ public class IPListManager { //aka tracker
 	}
 	
 	/**
-	*	Asks the cache if it knows of this MysterServer and gets stats if it does.
+	*	Asks the cache if it knows of this MysterServer and gets stats if it does
+	*	else returns null
 	*/
-	public synchronized MysterServer getQuickServerStats(String ip) { //returns null if IP is not in the pool.
-		try {
-			return MysterIPPool.getInstance().getMysterIPLevelOne(new MysterAddress(ip));
-		} catch (java.net.UnknownHostException ex) {
-			return null;
-		}
+	public synchronized MysterServer getQuickServerStats(MysterAddress address) { //returns null if IP is not in the pool.
+		return MysterIPPool.getInstance().getMysterIPLevelOne(address);
 	}
 	
 	/**
-	*	Gets MysterServer from cache or creates it if not in cache. Blocks!!
+	*	Gets MysterServer from cache or creates if it is available else
+	*	creates in with an IO opperation else throws IOException is server is down.
 	*/
-	public synchronized MysterServer getServerStats(String ip) throws IOException { //might block for a long time.
-		return MysterIPPool.getInstance().getMysterServer(ip);
+	public synchronized MysterServer getServerStats(MysterAddress address) throws IOException { //might block for a long time.
+		return MysterIPPool.getInstance().getMysterServer(address);
 	}
 	
 	/**
-	*	Returns vector of MysterAddress.
+	*	Returns vector of MysterAddress of all the server addresses for that type.
 	*/
 	public synchronized Vector getAll(String type) {
 		IPList iplist;

@@ -263,6 +263,7 @@ public class DownloaderThread extends SafeThread {
 							//progress.say("Getting Image Packet",FileProgressWindow.BAR_1);
 							//System.out.println("Getting Image");
 							receiveImage(progress, length);
+							progress.setValue(-1,FileProgressWindow.BAR_2);
 							break;
 						case 'q':
 							progress.setText("Getting queue position", FileProgressWindow.BAR_1);
@@ -284,11 +285,11 @@ public class DownloaderThread extends SafeThread {
 				}
 			} catch (Exception ex) {
 				progress.setText("ERROR! in file transfer. Did the remote server go off-line?",FileProgressWindow.BAR_1);
-				//progress.done();
+				progress.done();
 				ex.printStackTrace();
 				break CONNECTION;
 			}
-			//progress.done();
+			progress.done();
 			progress.setText("Done.");
 
 			try {

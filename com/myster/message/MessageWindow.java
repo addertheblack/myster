@@ -264,7 +264,7 @@ class HeaderPanel extends Panel {
 			if (address==null) {
 				
 			} else {
-				MysterServer server=IPListManagerSingleton.getIPListManager().getQuickServerStats(address.toString());
+				MysterServer server=IPListManagerSingleton.getIPListManager().getQuickServerStats(address);
 			
 				String serverName;
 				

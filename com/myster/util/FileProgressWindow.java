@@ -16,7 +16,9 @@ public class FileProgressWindow extends ProgressWindow {
 	
 	long previouslyDownloaded1;
 	long previouslyDownloaded2;
-
+	
+	boolean overFlag = false;
+	
 	public FileProgressWindow() {
 		this("");
 	}
@@ -49,6 +51,11 @@ public class FileProgressWindow extends ProgressWindow {
 	
 		super.startBlock(bar, min, max);
     }
+    
+    public void done() {
+    	overFlag = true;
+    }
+    
 	
 	private String calculateRate(int bar) {
 		if (getValue(bar) < getMin(bar) || getValue(bar) > getMax(bar)) return "";
@@ -83,6 +90,8 @@ public class FileProgressWindow extends ProgressWindow {
 		
 		public void run() {
 			if (endFlag) return;
+			if (overFlag) return;
+			if (getValue() == getMax()) return;
 			
 			setAdditionalText(calculateRate(BAR_1), BAR_1);
 			setAdditionalText(calculateRate(BAR_2), BAR_2);
