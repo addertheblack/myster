@@ -25,6 +25,9 @@ public class HashManager implements Runnable {
 	
 	private static HashManager hashManager;
 	
+	/**
+	*	This should be called before any other functions are (ie, on startup)
+	*/
 	public static void init() {
 		hashManager = new HashManager();
 		(new Thread(hashManager)).start();
@@ -59,7 +62,7 @@ public class HashManager implements Runnable {
 	
 	
 	
-	/////////////////////////////////////////\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
+	/////////////////////////////////////////end of static sub system\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
 	
 	private BlockingQueue workQueue;
 	private HashCache oldHashes;

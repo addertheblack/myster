@@ -11,20 +11,78 @@ import java.util.Vector;
 import java.util.Hashtable;
 import java.util.Enumeration;
 
+/**
+*	This class is yet another manager. In this case, this manager should only be used
+*	by the file hashing sub system and not by random bits of code. It is made public because
+*	it is safe for use by third party code although I can't think of a reasone why it would be used.
+*
+* 	It's purpose is to cache all know file hashes and to save and restore these hashes to disk.
+*	All save opperations are automatic although there might be a delay between the time the
+*	change is made and the time the change is written to disk.
+*
+*	The usage is to get the DefaulthashCache and to use the functions expressed in the HashCache
+*	interface.
+*/
+
 public abstract class HashCache {
 	private static HashCache defaultHashCache;
 
+	/**
+	*	Gets Myster's (default) FileHash Cache.
+	*/
 	public synchronized static HashCache getDefault() {
 		if (defaultHashCache ==  null) defaultHashCache = new DefaultHashCache();
 		
 		return defaultHashCache;
 	}
 	
+	/**
+	*	Gets the File Hashes for a files if the information is contained in the cache
+	*
+	*	@param		The java.io.File you wish to get the Hashes for
+	*	@returns	The known FileHashes[] for this file
+	*/
 	public abstract FileHash[] getHashesForFile(File file) ;
+	
+	/**
+	*	Gets the File Hash for a files if the information is contained in the cache
+	*
+	*	@param		The java.io.File you wish to get the Hashes for
+	*	@param		String, the type of hash you wish to extract.
+	*	@returns	The known FileHash for this file
+	*/
 	public abstract FileHash getHashFromFile(File file, String hashType);
+	
+	/**
+	*	Adds and updates the file hashes for a file. If a Hash of that
+	*	type already exists then it is updated. If it doesn't it is added
+	*	to the cache.
+	*
+	*	@param		The java.io.File you wish to add the Hashes for
+	*/
 	public abstract void putHashes(File file, FileHash[] hashes);
+	
+	/**
+	*	Same behavior as putHashes only for one Hash
+	*
+	*	@param		The java.io.File you wish to add the Hass for
+	*/
 	public abstract void putHash(File file, FileHash hash);
+	
+	/**
+	*	Deletes all cached hashes for this File.
+	*
+	*	@param		The java.io.File you wish to delete all cached hashes
+	*/
 	public abstract void clearHashes(File file);
+	
+	/**
+	*	Deletes cached hash for this File given the type. If the type is not
+	*	found this function has no effect.
+	*
+	*	@param		The java.io.File you wish to delete the hash for.
+	*	@param		String, the type of hahs you want to clear from the cache.
+	*/
 	public abstract void clearHash(File file, String hashType);
 }
 
@@ -127,6 +185,9 @@ class DefaultHashCache extends HashCache {
 }
 
 //Immutable
+/**
+*	Represents a cached FileHash entry.
+*/
 class CachedFileHashEntry implements Serializable {
 	//public static CachedFileHashEntry newCachedFileHashEntry(InputStream in) throws IOException {
 	//	
@@ -140,10 +201,17 @@ class CachedFileHashEntry implements Serializable {
 		this.hashes = hashes;
 	}
 	
+	/** Returns all known File Hashes for this file*/
 	public FileHash[] getHashes() {
 		return (FileHash[])hashes.clone();
 	}
 	
+	/** 
+	*	Returns the File Hash of the requested type. Mostly here for speed.
+	*	Since this object is immutable the FileHash Array must be duplicated before
+	*	being sent. This allows the user to access a specific element without needing
+	*	to get a copy of the whole array.
+	*/
 	public FileHash getHash(String type) {
 		for (int i = 0; i < hashes.length ; i++) {
 			if (hashes[i].getHashName().equals(type)) return hashes[i];
@@ -152,6 +220,14 @@ class CachedFileHashEntry implements Serializable {
 		return null;
 	}
 	
+	/**
+	*	Adds a FileHash to the file hash of this object then returns a new
+	*	CachedFileHashEntry representing this new entry. Since this object is
+	*	immutable a new object must be created if any change is to be made.
+	*
+	*	If a FileHash of the same type already exists this function will
+	*	over-ride that value with the new value.
+	*/
 	public CachedFileHashEntry addHashes(FileHash[] sourceHashes) {
 		Vector v_temp = new Vector(sourceHashes.length + hashes.length);
 		
@@ -171,6 +247,13 @@ class CachedFileHashEntry implements Serializable {
 		return new CachedFileHashEntry(file, newHashes);
 	}
 	
+	/**
+	*	Removes a FileHash to the file hash of this object then returns a new
+	*	CachedFileHashEntry representing this new entry. Since this object is
+	*	immutable a new object must be created if any change is to be made.
+	*
+	*	If the type is not found, no changes are made and the new object is a copy.
+	*/
 	public CachedFileHashEntry removeHash(String type) {
 		int index = getIndex(hashes, type);
 		
@@ -188,7 +271,7 @@ class CachedFileHashEntry implements Serializable {
 		return new CachedFileHashEntry(file, newHash);
 	}
 	
-	
+	/** private code reuse method. Gets the index of the FileHash of the type or -1*/
 	private static final int getIndex(FileHash[] hashes, String type) {
 		for (int i = 0; i < hashes.length; i++) {
 			if (hashes[i].getHashName().equals(type)) return i;
@@ -197,10 +280,12 @@ class CachedFileHashEntry implements Serializable {
 		return -1;
 	}
 	
+	/** returns the file associated with this hash */
 	public File getFile() {
 		return file;
 	}
 	
+	/** Going to be redone soon. */
 	public void save(ObjectOutputStream out) throws IOException {
 		out.writeObject(this);
 	}

@@ -18,18 +18,31 @@ import java.awt.event.*;
 /**
 *	The bandwidth manager is a set of static funcitons that allow multiple dowload/upload threads to
 *	make sure their total bandwidth utilisation doesn't exeed a preset amount.
+*	<p>
+*	In general, implementations should feel free to use the ThrottledInputStream and
+*	ThrottledOutputStream provided instead of re-inventing the wheel by using this functions
+*	directly.
 */
 
 public class BandwidthManager {
 	static SomeStruct data=new SomeStruct();
 
+	/**
+	*	This function will pause your thread by the amount of time is would take to
+	*	send the specified number of bytes taking into account all known variables
+	*	at the time and during the time of its calling.
+	*/
 	public static final int requestBytesIncoming(int maxBytes) {
 		if (!data.incommingIsEnabled) return maxBytes;
 		
 		return data.incommingImpl.requestBytes(maxBytes);
 	}
 	
-	
+	/**
+	*	This function will pause your thread by the amount of time is would take to
+	*	send the specified number of bytes taking into account all known variables
+	*	at the time and during the time of its calling.
+	*/
 	public static final int requestBytesOutgoing(int maxBytes) {
 		if (!data.outgoingIsEnabled) return maxBytes;
 		
@@ -38,6 +51,9 @@ public class BandwidthManager {
 	
 	
 	//////////GUI
+	/**
+	*	Please don't use this function.
+	*/
 	public static PreferencesPanel getPrefsPanel() {
 		return new BandwithPrefsPanel();
 	}
@@ -142,7 +158,9 @@ public class BandwidthManager {
 
 
 
-
+/**
+*	Represents a thread being blocked.
+*/
 class BlockedThread {
 	final double rate;
 	final Vector threads;
@@ -214,7 +232,9 @@ class BlockedThread {
 }
 
 
-
+/**
+*	Prefs stuff. It's GUI so blah.
+*/
 class BandwithPrefsPanel extends PreferencesPanel {
 	public static final int STD_XSIZE=450;
 	public static final int STD_YSIZE=300;

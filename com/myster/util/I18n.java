@@ -4,23 +4,68 @@ import java.util.Locale;
 import java.util.ResourceBundle;
 import java.util.MissingResourceException;
 
+/**
+*	This class does translation from ENGLISH KEYS to strings of any language.
+*	It makes use of the Myster properties files included in the app.
+*	<p>
+*	These functions use the submitted string as a KEY only. They assume the
+*	String itself has not meaning but they will return the KEY as the translated
+*	String if a valid String for the current Locale cannot be found.
+*	<p>
+*	This class also does substitutions. Substitutions allow values to b inserted into strings.
+*	<p>
+*	For example the call : I18n.tr("I have %1 rubber ducks in my collection", ""+numberOfDucks);
+*	will substitude the value of the string ""+numberOfDucks in the possition occupied by the character
+*	%1.
+*	<p>
+*	The % trick will work with all numbers from 1 to 9 then from all letters form A - Z (uppercase).
+*	The %n values correspond to which argument in the function + 1 of which offset in the array - 1
+*	<p>
+*	If you want to express a % symbole then type %% instead. It will be sumstitued by a single % symbole.
+*	<p>
+*	If an error occures, you should get a bit of extra text inserted in the place of the error instead
+*	of the value.
+*/
+
 public class I18n {
 	private static ResourceBundle resources;
 	
+	/**
+	*	This function must be called before any other (ie, on startup)
+	*/
 	public static void init() {
 		//Locale.setDefault(new Locale(Locale.JAPANESE.getLanguage(),Locale.JAPAN.getCountry()));
 
 		resources = ResourceBundle.getBundle("com.properties.Myster");
 	}
-
+	
+	/**
+	*	Find the translated key for this string
+	*
+	*	@param	key to the string to translate.
+	*	@return	translated String.
+	*/
 	public static String tr(String stringToTranslate) {
 		return tr(stringToTranslate, new Object[]{});
 	}
 	
+	/**
+	*	Find the translated key for this string
+	*
+	*	@param	key to the string to translate.
+	*	@param	Objec.toString() to substitute
+	*	@return	translated String.
+	*/
 	public static String tr(String stringToTranslate, Object o) {
 		return tr(stringToTranslate, new Object[]{o});
 	}
 	
+	/**
+	*	Find the translated key for this string
+	*
+	*	@param	key to the string to translate.
+	*	@return	translated String.
+	*/
 	public static String tr(String stringToTranslate, Object o, Object o1) {
 		return tr(stringToTranslate, new Object[]{o,o1});
 	}
