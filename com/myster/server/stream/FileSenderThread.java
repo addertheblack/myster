@@ -60,6 +60,7 @@ public class FileSenderThread extends ServerThread {
 				try {
 					//if (!context.serverAddress.getIP().equals("127.0.0.1")) {
 						StandardSuite.disconnectWithoutException(MysterSocketFactory.makeStreamConnection(context.serverAddress));
+						throw new IOException("Test code");
 					//}
 				} catch (Exception ex) { //if host is not reachable it will end up here.
 					ServerTransfer.freeloaderComplain(context.socket.out);
@@ -432,7 +433,7 @@ public class FileSenderThread extends ServerThread {
 	
 		//code 'i'
 		public static void sendImage(DataOutputStream out) throws IOException {
-			DataInputStream in;
+			DataInputStream in = null;
 			File file;
 			
 			
@@ -446,37 +447,27 @@ public class FileSenderThread extends ServerThread {
 				return;
 			}
 			
-			//try {
+			try {
 				in=new DataInputStream(new FileInputStream(file));
-			//} catch (Exception ex) {
-			//	ex.printStackTrace();
-			//	return;
-			//}
+
 			
-			byte[] bytearray=new byte[(int)file.length()];
-			
-			//serveroutput.say("File length is "+file.length());
-			
-			//try {
+				byte[] bytearray=new byte[(int)file.length()];
+				
+
 				in.read(bytearray, 0, (int)file.length());
-			//} catch (IOException ex) {}
-			
-			
-			
-			//OUTPUT::::::::
-			//try {
+				
+
 				out.writeInt(6669);
 				out.write('i');
 				out.writeLong(bytearray.length);
 				out.write(bytearray);
 				
 				sendURLFromImageName(out, imageName);
-	
-			//} catch (IOException ex) {}
-			
-			try {
-				in.close();
-			} catch (IOException ex) {}
+			} finally {
+				try {
+					in.close();
+				} catch (Exception ex) {}
+			}
 			
 		}
 		

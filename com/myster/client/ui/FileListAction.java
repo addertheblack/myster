@@ -28,7 +28,7 @@ public class FileListAction implements ActionListener {
 	
 	static volatile long timeOfLast=0;
 	
-	public void actionPerformed(ActionEvent a) {
+	public synchronized void actionPerformed(ActionEvent a) {
 		try {
 			if (System.currentTimeMillis()-timeOfLast<500) return;
 			timeOfLast=System.currentTimeMillis();

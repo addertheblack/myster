@@ -553,7 +553,11 @@ public class MultiSourceDownload {
 				try {
 					int queuePosition = Integer.parseInt(mml.get(com.myster.server.stream.MultiSourceSender.QUEUED_PATH));
 					
-					System.out.println("Queued pos ----> "+queuePosition);
+					String message = mml.get(com.myster.server.stream.MultiSourceSender.MESSAGE_PATH);
+					
+					if (message!=null) progress.setText(message);
+					
+					System.out.println("Queued pos ----> "+queuePosition+" "+ message);
 					
 					if (queuePosition == 0) break; //yippy! on to download!
 					
@@ -565,7 +569,7 @@ public class MultiSourceDownload {
 				if (endFlag) throw new IOException("Was told to end.");
 			}
 			
-			progress.setText("Starting transfer...");
+			
 
 			while (bytesDownloaded < workSegment.length) {
 				System.out.println("Work Thread "+getName()+" -> Reading in Type");
@@ -578,6 +582,7 @@ public class MultiSourceDownload {
 				
 				switch (type) {
 					case 'd':
+					progress.setText("Starting transfer...");
 						long blockLength = socket.in.readLong();
 						
 						fireEvent(SegmentDownloaderEvent.START_SEGMENT, workSegment.startOffset, 0, 0, blockLength);

@@ -115,7 +115,7 @@ public class MultiSourceSender extends ServerThread {
 					
 					if (myCounter > file.length()) throw new IOException("User has request more bytes than there are in the file!");
 					
-					checkForLeachers(socket); //throws an IO Exception if there's a leech.
+					checkForLeechers(socket); //throws an IO Exception if there's a leech.
 
 					sendQueuePosition(out, 0, "Download is starting now..");
 
@@ -154,7 +154,7 @@ public class MultiSourceSender extends ServerThread {
 		}
 		
 		//Throws an IOException if there's a leech.
-		private void checkForLeachers(MysterSocket socket) throws IOException {
+		private void checkForLeechers(MysterSocket socket) throws IOException {
 			if (FileSenderThread.kickFreeloaders()) {
 				try {
 					com.myster.client.stream.StandardSuite.disconnectWithoutException(com.myster.net.MysterSocketFactory.makeStreamConnection(new com.myster.net.MysterAddress(socket.getInetAddress())));
