@@ -84,8 +84,9 @@ public class SearchWindow extends Frame implements SearchResultListener, Sayable
 		
 		reshape(0, 0, XDEFAULT, YDEFAULT);
 		
-		addComponent(searchbutton		,0,0,1,1,0,0);
+		
 		addComponent(textentry			,0,1,1,1,99,0);
+		addComponent(searchbutton		,0,0,1,1,0,0);
 		addComponent(label				,1,0,1,1,0,0);
 		addComponent(choice				,1,1,2,1,99,0);
 		addComponent(filelist.getPane()	,2,0,2,1,99,99);
@@ -123,6 +124,9 @@ public class SearchWindow extends Frame implements SearchResultListener, Sayable
 		filelist.setColumnWidth(0,400);
 		
 		setVisible(true);
+		
+		textentry.setSelectionStart(0);
+		textentry.setSelectionEnd(textentry.getText().length());
 	}
 
 	

@@ -744,3 +744,5 @@ Work on DEV 8:
     	-> Created PING ad PONG protocols.
     	-> Modified addIP to make use of asynchrous ping/pong.
     	-> Modified MysterIPPool to use a hashtable.
+    	-> Made it so the search windows open with the text selected.
+    	
