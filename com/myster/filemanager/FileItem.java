@@ -86,7 +86,7 @@ public class FileItem {
 			
 			if (fileHashes != null) {
 				for (int i = 0; i < fileHashes.length ; i++) {
-					mml.put(HASH_PATH+fileHashes[i].getHashName(), fileHashes[i].toString());
+					mml.put(HASH_PATH+fileHashes[i].getHashName().toLowerCase(), fileHashes[i].toString());
 				}
 			}
 		}

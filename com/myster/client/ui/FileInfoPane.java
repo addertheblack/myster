@@ -36,7 +36,17 @@ public class FileInfoPane extends Panel {
 		int vertical=metric.getHeight()+3;
 		g.setColor(Color.black);
 		for (int i=0; i<keyvalue.length(); i++) {
-			g.drawString(""+(String)(keyvalue.keyAt(i))+" : "+(String)keyvalue.valueAt(i), HOFFSET, VOFFSET+i*vertical);
+			if (((String)(keyvalue.keyAt(i))).equals("size")) { //hack to show size as bytes string like XXXbytes or XXXMB
+				try {
+					g.drawString(""+(String)(keyvalue.keyAt(i))+" : "+
+							com.general.util.Util.getStringFromBytes(Long.parseLong((String)keyvalue.valueAt(i))),
+							HOFFSET, VOFFSET+i*vertical);
+				} catch (NumberFormatException ex) {
+					g.drawString(""+(String)(keyvalue.keyAt(i))+" : "+(String)keyvalue.valueAt(i), HOFFSET, VOFFSET+i*vertical);
+				}
+			} else {
+				g.drawString(""+(String)(keyvalue.keyAt(i))+" : "+(String)keyvalue.valueAt(i), HOFFSET, VOFFSET+i*vertical);
+			}
 		}	
 		//Util.getStringFromBytes(Long.valueOf((String)keyvalue.valueAt(i)).longValue())
 

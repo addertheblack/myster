@@ -4,6 +4,7 @@ import java.awt.event.*;
 import java.awt.Cursor;
 import java.net.MalformedURLException;
 import java.net.URL;
+import java.util.Vector;
 
 import com.myster.net.web.WebLinkManager;
 import com.general.util.Timer;
@@ -16,11 +17,8 @@ public class FileProgressWindow extends ProgressWindow {
 
 	RateTimer rateTimer;
 	
-	long bar1StartTime;
-	long bar2StartTime;
-	
-	long previouslyDownloaded1;
-	long previouslyDownloaded2;
+	Vector barStartTime 		= new Vector(10,10);
+	Vector previouslyDownloaded = new Vector(10,10);
 	
 	boolean overFlag = false;
 	
@@ -34,11 +32,11 @@ public class FileProgressWindow extends ProgressWindow {
 		super(title);
 		
 		addComponentListener(new ComponentAdapter() {
-			public void componentShown(ComponentEvent e) {
+			public synchronized void componentShown(ComponentEvent e) {
 				rateTimer = new RateTimer();
 			}
 			
-			public void componentHidden(ComponentEvent e) {
+			public synchronized void componentHidden(ComponentEvent e) {
 				if (rateTimer != null) rateTimer.end();
 			}
 		});
@@ -46,22 +44,36 @@ public class FileProgressWindow extends ProgressWindow {
 		addAdClickListener(new AdClickHandler());
 	}
 	
-	public void setPreviouslyDownloaded(long someValue, int bar) {
-		if (bar == BAR_1) {
-			previouslyDownloaded1 = someValue;
-		} else if (bar == BAR_2) {
-			previouslyDownloaded2 = someValue;
+	public synchronized void setProgressBarNumber(int numberOfBars) {
+		resizeVectorWithLongs(barStartTime, numberOfBars);
+		resizeVectorWithLongs(previouslyDownloaded, numberOfBars);
+		
+		super.setProgressBarNumber(numberOfBars);
+	}
+	
+	private static void resizeVectorWithLongs(Vector vector, int newSize) {
+		int oldSize = vector.size();
+		
+		vector.setSize(newSize);
+		
+		if (newSize > oldSize) {
+			for (int i=oldSize; i < newSize; i++) {
+				vector.setElementAt(new Long(0), i);
+			}
 		}
 	}
 	
-	public void startBlock (int bar, long min, long max) {
-		if (bar == BAR_1) bar1StartTime = System.currentTimeMillis();
-		else if (bar == BAR_2) bar2StartTime = System.currentTimeMillis();
+	public synchronized void setPreviouslyDownloaded(long someValue, int bar) {
+		previouslyDownloaded.setElementAt(new Long(someValue), bar);
+	}
 	
+	public synchronized void startBlock (int bar, long min, long max) {
+		barStartTime.setElementAt(new Long(System.currentTimeMillis()), bar);
+		
 		super.startBlock(bar, min, max);
     }
     
-    public void done() {
+    public synchronized void done() {
     	overFlag = true;
     }
     
@@ -69,13 +81,8 @@ public class FileProgressWindow extends ProgressWindow {
 	private String calculateRate(int bar) {
 		if (getValue(bar) < getMin(bar) || getValue(bar) > getMax(bar)) return "";
 		
-		if (bar == BAR_1) {
-			return formatRate(bar1StartTime, getValue(bar) - previouslyDownloaded1);
-		} else if (bar == BAR_2) {
-			return formatRate(bar2StartTime, getValue(bar) - previouslyDownloaded2);
-		} else { 
-			return "";
-		}
+
+		return formatRate(((Long)barStartTime.elementAt(bar)).longValue(), getValue(bar) - ((Long)previouslyDownloaded.elementAt(bar)).longValue());
 	}
 	
 	private long rateCalc(long startTime, long value) {
@@ -84,7 +91,7 @@ public class FileProgressWindow extends ProgressWindow {
 		return (int_temp <= 0 ? 0 : value / int_temp);
 	}
 	
-	public void setURL(String urlString) {
+	public synchronized void setURL(String urlString) {
 		url = (urlString.equals("")?null:urlString);
 		
 		if (url != null) {
@@ -95,7 +102,12 @@ public class FileProgressWindow extends ProgressWindow {
 	}
 	
 	private String formatRate(long startTime, long value) {
-		return Util.getStringFromBytes(rateCalc(startTime, value)) + "/s";
+		long temp = rateCalc(startTime, value);
+		if (temp == 0) {
+			return "";
+		}
+		
+		return Util.getStringFromBytes(temp) + "/s";
 	}
 	
 	private class RateTimer implements Runnable {
@@ -112,8 +124,9 @@ public class FileProgressWindow extends ProgressWindow {
 			if (overFlag) return;
 			if (getValue() == getMax()) return;
 			
-			setAdditionalText(calculateRate(BAR_1), BAR_1);
-			setAdditionalText(calculateRate(BAR_2), BAR_2);
+			for (int i = 0; i < getProgressBarNumber(); i++) {
+				setAdditionalText(calculateRate(i), i);
+			}
 			
 			newTimer();
 		}
@@ -122,7 +135,7 @@ public class FileProgressWindow extends ProgressWindow {
 			timer = new Timer(this, UPDATE_TIME);
 		}
 		
-		public void end() {
+		public synchronized void end() {
 			if (timer != null) timer.cancelTimer();
 			endFlag = true;
 		}
@@ -131,15 +144,15 @@ public class FileProgressWindow extends ProgressWindow {
 	private class AdClickHandler extends MouseAdapter  {
 		public long lastMouseReleaseTime = 0;
 		
-		public void mouseEntered(MouseEvent e) {
+		public synchronized void mouseEntered(MouseEvent e) {
 			if (url != null) adPanel.setLabelText(url);
 		}
 		
-		public void mouseExited(MouseEvent e) {
+		public synchronized void mouseExited(MouseEvent e) {
 			adPanel.setLabelText("");
 		}
 	
-		public void mouseReleased(MouseEvent e) {		
+		public synchronized void mouseReleased(MouseEvent e) {		
 			if ((e.getX() > 0 && e.getX() < X_SIZE) && (e.getY() >0 && e.getY() < AD_HEIGHT)) {
 				if ((System.currentTimeMillis() - lastMouseReleaseTime > 500) && url != null && (! url.equals("")))  {
 					try {

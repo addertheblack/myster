@@ -56,6 +56,14 @@ public class AnswerDialog extends Dialog {
 		return (new AnswerDialog(getCenteredFrame(), s)).answer();
 	}
 	
+	public static String simpleAlert(Frame frame, String s) {
+		return (new AnswerDialog(frame, s)).answer();
+	}
+	
+	public static String simpleAlert(Frame frame, String s, String[] b) {
+		return (new AnswerDialog(frame, s, b)).answer();
+	}
+	
 	public static Frame getCenteredFrame() {
 			Frame tempframe=new Frame();
 			tempframe.setSize(0,0);

@@ -36,11 +36,11 @@ public class ProgressWindow extends Frame {
 		addProgressPanel();
 		
 		addComponentListener(new ComponentAdapter() {
-			public void componentShown(ComponentEvent e) {
+			public synchronized void componentShown(ComponentEvent e) {
 				((ProgressWindow)(e.getComponent())).resize();
 			}
 			
-			public void componentHidden(ComponentEvent e) {
+			public synchronized void componentHidden(ComponentEvent e) {
 				
 			}
 		});
@@ -55,23 +55,23 @@ public class ProgressWindow extends Frame {
 	}
 	
 	// methods to update progress window text 
-    public void setText(String s) {
+    public synchronized void setText(String s) {
 		setText(s,0);
     }
     
-    public void setText(String s, int bar)  {
+    public synchronized void setText(String s, int bar)  {
 		getProgressPanel(bar).setText(s);
     }
     
-    public void setAdditionalText(String newText) {
+    public synchronized void setAdditionalText(String newText) {
 		setAdditionalText(newText, 0);
 	}
 	
-	public void setAdditionalText(String newText, int bar) {
+	public synchronized void setAdditionalText(String newText, int bar) {
 		getProgressPanel(bar).setAdditionalText(newText);
 	}
     
-    public void setProgressBarNumber(int numberOfBars) {
+    public synchronized void setProgressBarNumber(int numberOfBars) {
     	if (numberOfBars<1) return; //yeah ha ha, less than 1, funny guy
     	if (numberOfBars>50) return; //more than 50 is rediculous for this implementation
     	
@@ -90,7 +90,7 @@ public class ProgressWindow extends Frame {
     	resize();
     }
     
-    public int getProgressBarNumber() {
+    public synchronized int getProgressBarNumber() {
     	return progressPanels.size();
     }
     
@@ -107,13 +107,13 @@ public class ProgressWindow extends Frame {
     	progressPanels.addElement(panel);
     }
     
-    public void startBlock (int bar, long min, long max) {
+    public synchronized void startBlock (int bar, long min, long max) {
 		setMin(min, bar);
 		setMax(max, bar);
 		setValue(min, bar);
     }
 	
-    public void makeImage(byte[] b) {
+    public synchronized void makeImage(byte[] b) {
 		Image ad=getToolkit().createImage(b);
 		
        	MediaTracker tracker=new MediaTracker(adPanel);
@@ -124,29 +124,29 @@ public class ProgressWindow extends Frame {
     }
 	
 	// Variation on standard suite
-    public void setValue(long value, int bar) {
+    public synchronized void setValue(long value, int bar) {
 		getProgressPanel(bar).setValue(value);
 		
 		updateIcon();
     }
 		
-	public void setMax(long max, int bar) {
+	public synchronized void setMax(long max, int bar) {
 		getProgressPanel(bar).setMax(max);
 	}
 	
-	public void setMin(long min, int bar) {
+	public synchronized void setMin(long min, int bar) {
 		getProgressPanel(bar).setMin(min);
 	}
 
-	public long getMax(int bar) {
+	public synchronized long getMax(int bar) {
 		return getProgressPanel(bar).getMax();
 	}
 
-	public long getMin(int bar) {
+	public synchronized long getMin(int bar) {
 		return getProgressPanel(bar).getMin();
 	}
 	
-	public long getValue(int bar) {
+	public synchronized long getValue(int bar) {
 		return getProgressPanel(bar).getValue();
 	}
 	
@@ -163,27 +163,27 @@ public class ProgressWindow extends Frame {
 	}
 	
 	//Standard progress suite
-	public void setValue(long value) {
+	public synchronized void setValue(long value) {
 		setValue(value, 0);
     }
 		
-	public void setMax(long max) {
+	public synchronized void setMax(long max) {
 		setMax(max, 0);
 	}
 		
-	public void setMin(long min) {
+	public synchronized void setMin(long min) {
 		setMin(min, 0);
 	}
 	
-	public long getMax() {
+	public synchronized long getMax() {
 		return getMax(0);
 	}
 	
-	public long getMin() {
+	public synchronized long getMin() {
 		return getMin(0);
 	}
 	
-	public long getValue() {
+	public synchronized long getValue() {
 		return getValue(0);
 	}
 	
@@ -216,23 +216,23 @@ public class ProgressWindow extends Frame {
     	setIconImage(piChart);
 	}
     
-    public void setBarColor(Color color) {
+    public synchronized void setBarColor(Color color) {
     	setBarColor(color, 0);
     }
     
-    public void setBarColor(Color color, int bar) {
+    public synchronized void setBarColor(Color color, int bar) {
     	getProgressPanel(bar).setBarColor(color);
     }
     
-    public Color getBarColor() {
+    public synchronized Color getBarColor() {
     	return getBarColor(0);
     }
     
-    public Color getBarColor(int bar) {
+    public synchronized Color getBarColor(int bar) {
     	return getProgressPanel(bar).getBarColor();
     }
     
-    public void addAdClickListener(MouseListener l) {
+    public synchronized void addAdClickListener(MouseListener l) {
     	adPanel.addMouseListener(l);
     }
     
@@ -267,49 +267,49 @@ public class ProgressWindow extends Frame {
 			add(additionalLabel);
 		}
 		
-		public Dimension getPreferredSize() {
+		public synchronized Dimension getPreferredSize() {
 			return new Dimension(X_SIZE, Y_SIZE);
 		}
 		
 		//Standard progress suite, look ma, a forward... aka stupid OOP "is a" overhead
-		public void setValue(long value) {
+		public synchronized void setValue(long value) {
 			progressBar.setValue(value);
 	    }
 			
-		public void setMax(long max) {
+		public synchronized void setMax(long max) {
 			progressBar.setMax(max);
 		}
 			
-		public void setMin(long min) {
+		public synchronized void setMin(long min) {
 			progressBar.setMin(min);
 		}
 		
-		public long getMax() {
+		public synchronized long getMax() {
 			return progressBar.getMax();
 		}
 		
-		public long getMin() {
+		public synchronized long getMin() {
 			return progressBar.getMin();
 		}
 		
-		public long getValue() {
+		public synchronized long getValue() {
 			return progressBar.getValue();
 		}	
 		
-		public void setText(String newText) {
+		public synchronized void setText(String newText) {
 			textLabel.setText(newText);
 		}
 		
-		public void setAdditionalText(String newText) {
+		public synchronized void setAdditionalText(String newText) {
 			additionalLabel.setText(newText);
 		}
 		
-		public void setBarColor(Color color) {
+		public synchronized void setBarColor(Color color) {
 			progressBar.setForeground(color);
 			progressBar.repaint();
 		}
 		
-		public Color getBarColor() {
+		public synchronized Color getBarColor() {
 			return progressBar.getForeground();
 		} 
 	}
@@ -318,7 +318,7 @@ public class ProgressWindow extends Frame {
 		Image ad;
 		String labelText = "";
 		
-		public void setAd(Image im) {
+		public synchronized void setAd(Image im) {
 			ad = im;
 		}
 		
@@ -345,17 +345,17 @@ public class ProgressWindow extends Frame {
 			}
 		}
 		
-		public Dimension getPreferredSize() {
+		public synchronized Dimension getPreferredSize() {
 			return new Dimension(X_SIZE, AD_HEIGHT);
 		}
 		
-		public void addImage(Image newAd) {
+		public synchronized void addImage(Image newAd) {
 			ad = newAd;
 			labelText = "";
 			repaint();
 		}
 		
-		public void setLabelText(String someText) {
+		public synchronized void setLabelText(String someText) {
 			labelText = someText;
 			repaint();
 		}

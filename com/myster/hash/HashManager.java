@@ -167,7 +167,7 @@ public class HashManager implements Runnable {
 				
 				FileHash[] hashes = new FileHash[digestArray.length];
 				for (int i = 0; i < hashes.length; i++) {
-					hashes[i] = new SimpleFileHash(digestArray[i].getAlgorithm(), digestArray[i].digest());
+					hashes[i] = new SimpleFileHash(hashTypes[i], digestArray[i].digest());
 				}
 				
 				oldHashes.putHashes(item.file, hashes);

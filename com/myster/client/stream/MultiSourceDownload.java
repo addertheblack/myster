@@ -15,6 +15,7 @@ import com.general.events.EventListener;
 import com.general.events.GenericEvent;
 import com.general.util.LinkedList;
 import com.general.util.Timer;
+import com.general.util.AnswerDialog;
 
 import com.myster.search.MultiSourceHashSearch;
 import com.myster.search.HashSearchListener;
@@ -22,7 +23,7 @@ import com.myster.search.HashSearchEvent;
 import com.myster.search.MysterFileStub;
 import com.myster.search.CrawlerThread;
 import com.myster.search.IPQueue;
-import com.myster.util.ProgressWindow;
+import com.myster.util.FileProgressWindow;
 import com.myster.util.Sayable;
 import com.myster.hash.FileHash;
 import com.myster.type.MysterType;
@@ -35,6 +36,8 @@ public class MultiSourceDownload {
 	
 	final MysterFileStub stub;
 	final FileHash hash;
+	
+	File theFile;
 	RandomAccessFile randomAccessFile;
 	LinkedList  dataQueue = new LinkedList();
 
@@ -46,7 +49,7 @@ public class MultiSourceDownload {
 	long fileProgress= 0;
 	long bytesWrittenOut = 0;
 	long fileLength;
-	ProgressWindow progress;
+	FileProgressWindow progress;
 	//SimpleHash
 	
 	CrawlerThread crawler;
@@ -104,15 +107,79 @@ public class MultiSourceDownload {
 	public void end() {
 		
 	}
+	
+	private static final String EXTENSION = ".i";
+	private void getFileThingy() throws IOException {
+		File directory = new File(com.myster.filemanager.FileTypeListManager.getInstance().getPathFromType(stub.getType()));
+		File file = new File(directory.getPath()+File.separator+stub.getName()+EXTENSION);
+		
+		if (!directory.isDirectory()) {
+			file = askUserForANewFile(file.getName());
+			
+			if (file == null) throw new IOException("User Cancelled");
+		}
+		
+		while (file.exists())  {
+			final String
+					CANCEL_BUTTON 	= "Cancel",
+					WRITE_OVER		= "Write-Over",
+					RENAME			= "Rename";
+			
+			String answer = (new AnswerDialog(	progress,
+												"A file by the name of "+file.getName()+" already exists. What do you want to do.",
+												new String[]{CANCEL_BUTTON, WRITE_OVER})
+											  ).answer();
+			if (answer.equals(CANCEL_BUTTON)) {
+				throw new IOException("User Canceled.");
+			} else if (answer.equals(WRITE_OVER)) {
+				if (!file.delete()) {
+					AnswerDialog.simpleAlert(progress, "Could not delete the file.");
+					throw new IOException("Could not delete file");
+				}
+			} else if (answer.equals(RENAME)) {
+				file = askUserForANewFile(file.getName());
+				
+				if (file == null) throw new IOException ("User Cancelled");
+			}
+		}
 
-	public synchronized void start() {
+		randomAccessFile = new RandomAccessFile(file, "rw");
+		theFile = file;
+	}
+	
+	private File askUserForANewFile(String name) throws IOException {
+		java.awt.FileDialog dialog = new java.awt.FileDialog(com.general.util.AnswerDialog.getCenteredFrame(),
+															 "What do you want to save the file as?",
+															 java.awt.FileDialog.SAVE);
+		dialog.setFile(name);
+		dialog.setDirectory(name);
+		
+		dialog.show();
+		
+		File directory = new File(dialog.getDirectory());
+		
+		if (dialog.getFile() == null) return null; //canceled.
+		
+		return new File(dialog.getDirectory()+File.separator+dialog.getFile()+EXTENSION);
+	}
+
+	public synchronized void start() throws IOException {
 		downloaders = new InternalSegmentDownloader[5];
 	
-		progress = new ProgressWindow("Downloading..");
+		progress = new FileProgressWindow("Downloading..");
 		progress.setProgressBarNumber(downloaders.length+1);
 		progress.show();
+		
+		try {
+			getFileThingy();
+		} catch (IOException ex) {
+			progress.hide();
+			throw ex;
+		}
+		
+		
 		progress.setBarColor(Color.blue, 0);
-		progress.setMax(fileLength);
+		progress.startBlock(FileProgressWindow.BAR_1, 0, fileLength);
 		progress.addWindowListener(new WindowAdapter() {
 			public void windowClosing(WindowEvent e) {
 				flagToEnd();
@@ -135,35 +202,18 @@ public class MultiSourceDownload {
 		}
 		
 		
-		try {
-			final String EXTENSION = ".i";
-		
-			File directory = new File(com.myster.filemanager.FileTypeListManager.getInstance().getPathFromType(stub.getType()));
-			File file = new File(directory.getPath()+File.separator+stub.getName()+EXTENSION);
-			while ((file.exists()) || (!directory.isDirectory())) {
-				java.awt.FileDialog dialog = new java.awt.FileDialog(com.general.util.AnswerDialog.getCenteredFrame(), "What do you want to save the file as?", java.awt.FileDialog.SAVE);
-				dialog.setFile(file.getName());
-				dialog.setDirectory(file.getName());
-				
-				dialog.show();
-				
-				directory = new File(dialog.getDirectory());
-				
-				if (dialog.getFile() == null) return; //canceled.
-				
-				file = new File(dialog.getDirectory()+File.separator+dialog.getFile()+EXTENSION);
-			}
-			
-			randomAccessFile = new RandomAccessFile(file, "rw");
-		} catch (IOException ex) {
-			ex.printStackTrace();
-		}
+
 		
 		IPQueue ipQueue = new IPQueue();
-		try { ipQueue.addIP(new MysterAddress("emaline.homeip.net")); } catch (IOException ex) {ex.printStackTrace();}
-		try { ipQueue.addIP(new MysterAddress("bluedevil.homeip.net")); } catch (IOException ex) {ex.printStackTrace();}
 		
+		String[] startingIps = com.myster.tracker.IPListManagerSingleton.getIPListManager().getOnRamps();
 		
+		ipQueue.addIP(stub.getMysterAddress());
+		ipQueue.getNextIP(); //this is so we don't start downloading from the first one again.
+		
+		for (int i = 0; i < startingIps.length; i++) {
+			try { ipQueue.addIP(new MysterAddress(startingIps[i])); } catch (IOException ex) {ex.printStackTrace();}
+		}
 		
 		//moo.mpg -> "b23b9188a98a3d16854f4167a58e3114"
 		crawler = new CrawlerThread(new MultiSourceHashSearch(stub.getType(), hash, 
@@ -217,9 +267,10 @@ public class MultiSourceDownload {
 		}
 		
 		public void startSegment(SegmentDownloaderEvent e) {
-			progress.setMin(e.getOffset(), bar);
-			progress.setMax(e.getOffset()+e.getLength(), bar);
+			progress.startBlock(bar, e.getOffset(), e.getOffset()+e.getLength());
+			progress.setPreviouslyDownloaded(e.getOffset(), bar);
 			progress.setValue(e.getOffset(), bar);
+			progress.setText("Downloading from "+e.getMysterFileStub().getMysterAddress(), bar);
 		}
 		
 		public void downloadedBlock(SegmentDownloaderEvent e) {
@@ -272,11 +323,33 @@ public class MultiSourceDownload {
 	private synchronized void done() {
 		cleanUp();
 		progress.setText("File transfer complete.");
+		
+		File someFile = null;
+		//try {
+			someFile = new File(theFile.getAbsolutePath() + theFile.getName().substring(0, theFile.getName().length()-1));
+		//} catch (IOException ex) {
+		//	AnswerDialog.simpleAlert(progress, "Could not rename file from \""+theFile.getName()+"\" because of this error -> "+ex);
+		//	return;
+		//}
+		
+		if (someFile.exists()) {
+			AnswerDialog.simpleAlert(progress, "Could not rename file from \""+theFile.getName()+"\" to \""+someFile.getName()+"\" because a file by that name already exists.");
+			return;
+		}
+		
+		if (!theFile.renameTo(someFile)) {
+			AnswerDialog.simpleAlert(progress, "Could not rename file from \""+theFile.getName()+"\" to \""+someFile.getName()+"\" because an unspecified error occured.");
+			return;
+		}
+		
+		progress.setText("File downloaded");
 	}
 	
 	//call when download is over but not done.
 	private synchronized void cleanUp() {
 		try {randomAccessFile.close();} catch (IOException ex) {}
+		
+		if (crawler!=null) crawler.flagToEnd();
 	}
 	
 	public synchronized void receiveExtraSegments(WorkSegment[] workSegments) {
@@ -360,7 +433,7 @@ public class MultiSourceDownload {
 		}
 		
 		private void fireEvent(int id, long offset, long progress, int queuePosition, long length) {
-			dispatcher.fireEvent(new SegmentDownloaderEvent(id, offset, progress, queuePosition, length, downloadNumber));
+			dispatcher.fireEvent(new SegmentDownloaderEvent(id, offset, progress, queuePosition, length, downloadNumber, stub));
 		}
 		
 		private synchronized void finishUp() {
@@ -564,8 +637,9 @@ class SegmentDownloaderEvent extends GenericEvent {
 	final int 				queuePosition;
 	final long				length;
 	final int				refNumber;
+	final MysterFileStub	stub;
 	
-	public SegmentDownloaderEvent(int id, long offset, long progress, int queuePosition, long length, int refNumber) {
+	public SegmentDownloaderEvent(int id, long offset, long progress, int queuePosition, long length, int refNumber, MysterFileStub stub) {
 		super(id);
 		
 		this.offset			= offset;
@@ -573,6 +647,7 @@ class SegmentDownloaderEvent extends GenericEvent {
 		this.queuePosition	= queuePosition;
 		this.length			= length;
 		this.refNumber		= refNumber;
+		this.stub		= stub;
 	}
 	
 	public int getQueuePosition() {
@@ -593,6 +668,10 @@ class SegmentDownloaderEvent extends GenericEvent {
 	
 	public int getReferenceNumber() {
 		return refNumber;
+	}
+	
+	public MysterFileStub getMysterFileStub() {
+		return stub;
 	}
 }
 

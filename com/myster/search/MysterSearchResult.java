@@ -44,6 +44,9 @@ public class MysterSearchResult implements SearchResult {
 			}
 		} catch (NumberFormatException ex) {
 			System.out.println("Could not download multi source because hash was not properly formated");
+		} catch (java.io.IOException ex) {
+			ex.printStackTrace();
+			return;
 		}
 		
 		Thread t=new DownloaderThread((MysterFileStub)stub);
