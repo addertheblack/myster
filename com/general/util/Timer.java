@@ -13,7 +13,6 @@ public class Timer implements Comparable {
 	long time;
 	boolean runAsThread;
 	
-	
 	public Timer(Runnable thingToRun, long timeToWait) {
 		this(thingToRun, timeToWait, false);
 	}
@@ -65,52 +64,53 @@ public class Timer implements Comparable {
 	static private Thread thread;
 
 	static private void addEvent(Timer timer) {
-    synchronized (timers) 
-    {
-      timers.add(timer);
-      semaphore.signal();
+		synchronized (timers) 
+		{
+			timers.add(timer);
+			semaphore.signal();
 
-      if (thread == null) 
-      { 
-        thread = (new Thread() { public void run() {
-          timerLoop();
-        }});
-        thread.start();
-      }
-    }
-  }
-  
+			if (thread == null) 
+			{ 
+				thread = (new Thread() { public void run() {
+					timerLoop();
+				}});
+				thread.start();
+			}
+		}
+	}
+	
 	static private void timerLoop() {
-    for(;;) 
-    {
-      boolean isEmpty = false;
-      long timeLeft = 0;
-      synchronized(timers)
-      {
-        if (timers.isEmpty()) isEmpty = true;
-        else timeLeft = ((Timer)timers.top()).timeLeft();
-      }
+		for(;;) 
+		{
+			boolean isEmpty = false;
+			long timeLeft = 0;
+			synchronized(timers)
+			{
+				if (timers.isEmpty()) isEmpty = true;
+				else timeLeft = ((Timer)timers.top()).timeLeft();
+			}
 
-      try 
-      {
-        if (isEmpty) semaphore.getLock();
-        else if (timeLeft > 0) semaphore.getLock((int)timeLeft);
-      }
-      catch(InterruptedException e) 
-      {
-        throw new UnexpectedInterrupt(e.getMessage()); 
-      }
+			try 
+			{
+				if (isEmpty) semaphore.getLock();
+				else if (timeLeft > 0) semaphore.getLock((int)timeLeft);
+			}
+			catch(InterruptedException e) 
+			{
+				throw new UnexpectedInterrupt(e.getMessage()); 
+			}
 
-      Timer timer = null;
-      synchronized(timers)
-      {
-        if (!timers.isEmpty() && ((Timer)timers.top()).isReady())
-          timer = (Timer)timers.extractTop();
-      }
-      if (timer != null)
-        timer.doEvent();
-    }
-  }
+			Timer timer = null;
+			synchronized(timers)
+			{
+				if (!timers.isEmpty() && ((Timer)timers.top()).isReady())
+					timer = (Timer)timers.extractTop();
+			}
+			if (timer != null)
+				timer.doEvent();
+		}
+	}
+
 	
 	
 
