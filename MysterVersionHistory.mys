@@ -1071,16 +1071,25 @@ Work on DEV 8:
 		-> Made it so menu bars appear on progress windows.
 		-> Made it so all windows have a nice looking Myster icon.
 		-> Made multi source download automatically adapt to faster servers.
+		-> Windows will now un-minimize automatically if you ctrl-1 to them.
 		-> Fixed some issues with Multisource FileProgressWindows giving wrong information.
 		-> Made FileProgressWindows use far less CPU power.
 		-> Made it so you can navigate MCLists using the keyboard up/down arrows, page up/down and enter to doubleClick
 		-> Fixed a big memory leak when the memory used by windows wasen't being freed.
 		-> For some reasone none-multisource downloads were turned off.. I guess that explains a few things I've been
 				seeing on the network.
+		-> Made the MCList look a bit different: column rows appears to be longer...
+		-> Made starting searching faster by not starting any threads when starting a search.
+		-> Made Myster startup faster.
+	
+	Work on DEV 21.3
+		2005/01/01
+		-> Made a TimerThread class to make doing periodic tasks easyer.
+		-> Used the TimerThread to get rid of a thread used when the tracker window was open.
+		-> Optimized Multi-Column-List resizing code.
+		-> Made it so that the Tracker window is updated more frequently.
 		
 (Red List)
 to do:
-	Need to fix bug with caching MP3 ID3 info
-	Need to fix stupid none batching behavior (MSDownload is slower than it should be)
 	Make it so that people over the queue limit get some sort of banner telling them they are over the queue limit.
-	Write a new file type lsiter that uses the ints and not strings... (With connection section ID of 74) (TCP!!)
+	Fix it so that UDP sections show up in server stats.
