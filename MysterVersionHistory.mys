@@ -1059,7 +1059,15 @@ Work on DEV 8:
 		-> Made the "windows" menu special, in that it is built for every subscribed window each time one of the windows is
 				shown/hidden or changes name. This should make Myster faster at opening windows and reduce menu blinking.
 	  	-> Made it so that search and p2p windows are renamed to something more appropriate on the fly.
-		
+	  	-> Wrote a socket pool system so that all stream (TCP based) connection section can be executed 
+	  	        asychronously from a pool.
+	  	-> Wrote an asychronous function call framework
+	  	-> re-wrote the Myster search sub system to use said socket pool (now only creates one thread!).
+	  	-> Re-wrote standard datagram callbacks to conform to an asynchrnous function call (eclipse rocks
+	  	        for refactoring!)
+	  	-> Added code documentation
+		-> Made it so menu bars appear on progress windows.
+		-> Made it so all windows have a nice looking Myster icon.
 		
 (Red List)
 to do:
