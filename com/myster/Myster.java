@@ -24,7 +24,6 @@ import java.net.ServerSocket;
 import java.net.Socket;
 
 import com.general.util.AnswerDialog;
-import com.general.util.StandardWindowBehavior;
 import com.general.util.Util;
 import com.myster.bandwidth.BandwidthManager;
 import com.myster.client.datagram.PongTransport;
@@ -39,9 +38,7 @@ import com.myster.server.ServerFacade;
 import com.myster.server.datagram.PingTransport;
 import com.myster.server.ui.ServerStatsWindow;
 import com.myster.tracker.IPListManagerSingleton;
-import com.myster.ui.MysterFrame;
 import com.myster.util.I18n;
-import com.myster.util.ProgressWindow;
 import com.myster.util.ProgressWindow;
 
 public class Myster {
@@ -94,7 +91,7 @@ public class Myster {
         (new Thread() {
             public void run() {
                 try {
-                    Thread.sleep(100);
+                    Thread.sleep(1);
 
                     final com.myster.util.ProgressWindow[] tempArray = new ProgressWindow[1];
 
@@ -110,7 +107,7 @@ public class Myster {
                         }
                     });
 
-                    Thread.sleep(100); //for redrawing progress on MacOS X
+                    Thread.sleep(1); //for redrawing progress on MacOS X
 
                     final com.myster.util.ProgressWindow progress = tempArray[0];
 
@@ -151,7 +148,7 @@ public class Myster {
                         }
                     });
 
-                    Thread.sleep(100);
+                    Thread.sleep(1);
 
                     Util.invokeAndWait(new Runnable() {
                         public void run() {
@@ -185,7 +182,7 @@ public class Myster {
                         }
                     });
 
-                    Thread.sleep(100);
+                    Thread.sleep(1);
 
                     Util.invokeAndWait(new Runnable() {
                         public void run() {
@@ -195,22 +192,23 @@ public class Myster {
 
                             //System.out.println( "MAIN THREAD: Starting
                             // Operator.."+macHack);
-                            Point p = ServerStatsWindow.getInstance().getLocation();
-                            ServerStatsWindow.getInstance().setLocation(-500, -500);
-                            ServerStatsWindow.getInstance().setVisible(true);
+                            //Point p = ServerStatsWindow.getInstance().getLocation();
+                            //ServerStatsWindow.getInstance().setLocation(-500, -500);
+                            //ServerStatsWindow.getInstance().setVisible(true);
+                            ServerStatsWindow.getInstance().pack();
                             progress.setText(I18n
                                     .tr("Loading Server Stats Window... %1%%", "" + 18));
                             progress.setValue(18);
                             //try {Thread.currentThread().sleep(1000);} catch
                             // (Exception
                             // ex) {}
-                            ServerStatsWindow.getInstance().setVisible(false);
-                            ServerStatsWindow.getInstance().setLocation(p);
+                            //ServerStatsWindow.getInstance().setVisible(false);
+                            //ServerStatsWindow.getInstance().setLocation(p);
 
                         }
                     });
 
-                    Thread.sleep(100);
+                    Thread.sleep(1);
 
                     Util.invokeAndWait(new Runnable() {
                         public void run() {
@@ -219,31 +217,26 @@ public class Myster {
 
                             progress.setText(I18n.tr("Loading Server Fascade..."));
                             progress.setValue(25);
-                            ServerFacade.assertServer();
+                            
                         }
                     });
-
-                    Thread.sleep(100);
+                    ServerFacade.assertServer();
 
                     Util.invokeAndWait(new Runnable() {
                         public void run() {
                             progress.setText(I18n.tr("Loading tracker..."));
                             progress.setValue(50);
-                            IPListManagerSingleton.getIPListManager();
                         }
                     });
-
-                    Thread.sleep(100);
+                    IPListManagerSingleton.getIPListManager();
 
                     Util.invokeAndWait(new Runnable() {
                         public void run() {
                             progress.setText(I18n.tr("Loading FileManager..."));
                             progress.setValue(70);
-                            FileTypeListManager.getInstance();
                         }
                     });
-
-                    Thread.sleep(100);
+                    FileTypeListManager.getInstance();
 
                     Util.invokeAndWait(new Runnable() {
                         public void run() {

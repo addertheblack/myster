@@ -1,5 +1,6 @@
 package com.general.events;
 
+//TODO docs for event system.
 public class GenericEvent {
     int id;
 

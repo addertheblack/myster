@@ -259,7 +259,7 @@ public class MysterMenuBar extends MenuBar {
      * Adds a new menu item to the end of the plugins menu. Creates the plugins
      * menu if needed.
      * 
-     * @param factory
+     * @param menuItemfactory
      *            that will create the menu item.
      */
     public static void addMenuItem(MysterMenuItemFactory menuItemfactory) {
@@ -276,7 +276,7 @@ public class MysterMenuBar extends MenuBar {
      * Removes the menu item from the plugins menu. Removes the plugins menu if
      * it contains no more items.
      * 
-     * @param factory
+     * @param menuItemfactory
      *            that will create the menu item.
      */
     public static boolean removeMenuItem(MysterMenuItemFactory menuItemfactory) {

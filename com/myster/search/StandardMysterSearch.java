@@ -45,11 +45,14 @@ public class StandardMysterSearch implements MysterSearchClientSection {
                 searchArray[i] = new MysterSearchResult(new MysterFileStub(address, type,
                         (String) (searchResults.elementAt(i))));
             }
-
+            
             try {
                 Util.invokeAndWait(new Runnable() {
                     public void run() {
-                        listener.addSearchResults(searchArray);
+                        synchronized (StandardMysterSearch.this) {
+                            if (endFlag) return;
+                            listener.addSearchResults(searchArray);
+                        }
                     }
                 });
             } catch (InterruptedException ex) {
@@ -59,7 +62,7 @@ public class StandardMysterSearch implements MysterSearchClientSection {
                     ex.printStackTrace();
                     throw new DisconnectException();
                 }
-                    
+
             }
 
             dealWithFileStats(socket, type, searchArray, listener);
@@ -82,12 +85,12 @@ public class StandardMysterSearch implements MysterSearchClientSection {
     }
 
     /**
-     * When passed a socket, type and Vector of search results (String) as well
-     * as a listener, this routine will update the search result sin the
-     * listener with the meta data found from the remote server.
+     * When passed a socket, type and Vector of search results (String) as well as a listener, this
+     * routine will update the search result sin the listener with the meta data found from the
+     * remote server.
      * 
-     * This is not part of the crawlable interface, but who cares. I need it and
-     * it's a nice routine.
+     * This is not part of the crawlable interface, but who cares. I need it and it's a nice
+     * routine.
      * 
      * 
      * @param socket
@@ -97,12 +100,11 @@ public class StandardMysterSearch implements MysterSearchClientSection {
      * @param mysterSearchResults
      *            vector of strings, search results...
      * @param listener
-     *            the mysterSearchResults listener. This routine only UPDATE the
-     *            information, does not put the vector of search results into
-     *            the listener.
+     *            the mysterSearchResults listener. This routine only UPDATE the information, does
+     *            not put the vector of search results into the listener.
      * @throws IOException
-     *             (also a Disconnect exception) throws this exception on IO
-     *             errors an if the search object is told to die (die die die!).
+     *             (also a Disconnect exception) throws this exception on IO errors an if the search
+     *             object is told to die (die die die!).
      */
     public void dealWithFileStats(MysterSocket socket, MysterType type,
             MysterSearchResult[] mysterSearchResults, SearchResultListener listener)

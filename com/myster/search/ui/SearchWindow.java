@@ -1,7 +1,6 @@
 /*
  * 
- * Title: Myster Open Source Author: Andrew Trumper Description: Generic Myster
- * Code
+ * Title: Myster Open Source Author: Andrew Trumper Description: Generic Myster Code
  * 
  * This code is under GPL
  * 
@@ -29,7 +28,6 @@ import com.general.mclist.MCListEventAdapter;
 import com.general.mclist.MCListItemInterface;
 import com.general.util.MessageField;
 import com.general.util.StandardWindowBehavior;
-import com.general.util.TextSpinner;
 import com.myster.search.SearchResult;
 import com.myster.search.SearchResultListener;
 import com.myster.type.MysterType;
@@ -38,17 +36,16 @@ import com.myster.ui.WindowLocationKeeper;
 import com.myster.util.Sayable;
 import com.myster.util.TypeChoice;
 
-public class SearchWindow extends MysterFrame implements SearchResultListener,
-        Sayable {
+public class SearchWindow extends MysterFrame implements SearchResultListener, Sayable {
     private GridBagLayout gblayout;
 
     private GridBagConstraints gbconstrains;
 
-    private Button searchbutton;
+    private Button searchButton;
 
-    private MCList filelist;
+    private MCList fileList;
 
-    private TextField textentry;
+    private TextField textEntry;
 
     private Label label;
 
@@ -80,26 +77,24 @@ public class SearchWindow extends MysterFrame implements SearchResultListener,
         gbconstrains.ipadx = 1;
         gbconstrains.ipady = 1;
 
-        searchbutton = new Button("Search") {
+        searchButton = new Button("Search") {
             public Dimension getPreferredSize() {
-                return new Dimension(Math.max(75,
-                        super.getPreferredSize().width), super
+                return new Dimension(Math.max(75, super.getPreferredSize().width), super
                         .getPreferredSize().height); //hack to stop the button
-                                                     // label from causing
-                                                     // layout oddities.
+                // label from causing
+                // layout oddities.
             }
 
             public Dimension getMinimumSize() {
-                return new Dimension(
-                        Math.max(75, super.getMinimumSize().width), super
-                                .getMinimumSize().height);
+                return new Dimension(Math.max(75, super.getMinimumSize().width), super
+                        .getMinimumSize().height);
             }
         };
 
-        searchbutton.setSize(50, 25);
+        searchButton.setSize(50, 25);
 
-        textentry = new TextField("", 40);
-        textentry.setEditable(true);
+        textEntry = new TextField("", 40);
+        textEntry.setEditable(true);
 
         //connect.dispatchEvent(new KeyEvent(connect, KeyEvent.KEY_PRESSED,
         // System.currentTimeMillis(), 0, KeyEvent.VK_ENTER,
@@ -109,8 +104,8 @@ public class SearchWindow extends MysterFrame implements SearchResultListener,
 
         choice = new TypeChoice();
 
-        filelist = new MCList(1, true, this);
-        filelist.getPane().setSize(XDEFAULT, YDEFAULT);
+        fileList = new MCList(1, true, this);
+        fileList.getPane().setSize(XDEFAULT, YDEFAULT);
 
         msg = new MessageField("Idle...");
         msg.setEditable(false);
@@ -118,11 +113,11 @@ public class SearchWindow extends MysterFrame implements SearchResultListener,
 
         //reshape(0, 0, XDEFAULT, YDEFAULT);
 
-        addComponent(textentry, 0, 1, 1, 1, 0, 0);
-        addComponent(searchbutton, 0, 3, 1, 1, 0, 0);
+        addComponent(textEntry, 0, 1, 1, 1, 0, 0);
+        addComponent(searchButton, 0, 3, 1, 1, 0, 0);
         //addComponent(label ,0,0,1,1,0,0);
         addComponent(choice, 0, 2, 1, 1, 0, 0);
-        addComponent(filelist.getPane(), 2, 0, 5, 1, 1, 1);
+        addComponent(fileList.getPane(), 2, 0, 5, 1, 1, 1);
         addComponent(msg, 3, 0, 5, 1, 1, 0);
         addComponent(new Panel(), 0, 4, 1, 1, 1, 0);
 
@@ -131,18 +126,17 @@ public class SearchWindow extends MysterFrame implements SearchResultListener,
 
         //setIconImage(Util.loadImage("img.jpg", this));
 
-        SearchButtonEvent searchEventObject = new SearchButtonEvent(this,
-                searchbutton);
-        searchbutton.addActionListener(searchEventObject);
+        SearchButtonEvent searchEventObject = new SearchButtonEvent(this, searchButton);
+        searchButton.addActionListener(searchEventObject);
         /*
-         * searchbutton.addActionListener(new java.awt.event.ActionListener() {
-         * public void actionPerformed(java.awt.event.ActionEvent event) {
-         * System.out.println("You clicked the button"); } });
+         * searchbutton.addActionListener(new java.awt.event.ActionListener() { public void
+         * actionPerformed(java.awt.event.ActionEvent event) { System.out.println("You clicked the
+         * button"); } });
          */
-        textentry.addActionListener(searchEventObject); //not only for buttons
-                                                        // anymore.
+        textEntry.addActionListener(searchEventObject); //not only for buttons
+        // anymore.
 
-        filelist.addMCListEventListener(new MCListEventAdapter() {
+        fileList.addMCListEventListener(new MCListEventAdapter() {
             public synchronized void doubleClick(MCListEvent a) {
                 MCList list = a.getParent();
                 downloadFile(list.getItem(list.getSelectedIndex()));
@@ -153,24 +147,24 @@ public class SearchWindow extends MysterFrame implements SearchResultListener,
 
         //bucket=new SearchResultBucket(BUCKETSIZE);
 
-        filelist.setColumnName(0, "Search Results appear here");
-        filelist.setColumnWidth(0, 400);
+        fileList.setColumnName(0, "Search Results appear here");
+        fileList.setColumnWidth(0, 400);
 
         keeper.addFrame(this);
 
         setVisible(true); // !
 
-        textentry.setSelectionStart(0);
-        textentry.setSelectionEnd(textentry.getText().length());
+        textEntry.setSelectionStart(0);
+        textEntry.setSelectionEnd(textEntry.getText().length());
 
     }
 
     static WindowLocationKeeper keeper;//cheat to save scrolling. put at top
-                                       // later.
+
+    // later.
 
     public static void initWindowLocations() {
-        Rectangle[] rectangles = WindowLocationKeeper
-                .getLastLocs(PREF_LOCATION_KEY);
+        Rectangle[] rectangles = WindowLocationKeeper.getLastLocs(PREF_LOCATION_KEY);
 
         keeper = new WindowLocationKeeper(PREF_LOCATION_KEY);
 
@@ -185,8 +179,8 @@ public class SearchWindow extends MysterFrame implements SearchResultListener,
 
     }
 
-    public void addComponent(Component component, int row, int column, int width,
-            int height, int weightx, int weighty) {
+    public void addComponent(Component component, int row, int column, int width, int height,
+            int weightx, int weighty) {
         gbconstrains.gridx = column;
         gbconstrains.gridy = row;
 
@@ -204,24 +198,27 @@ public class SearchWindow extends MysterFrame implements SearchResultListener,
 
     public void startSearch() {
         msg.say("Clearing File List...");
-        filelist.clearAll();
+        fileList.clearAll();
         recolumnize();
+        searchButton.setEnabled(true);
         //bucket=new SearchResultBucket(BUCKETSIZE);
     }
 
     public void searchOver() {
-        msg.say("Search done. " + filelist.length() + " file"
-                + (filelist.length() == 0 ? "" : "s") + " found...");
+        msg.say("Search done. " + fileList.length() + " file" + (fileList.length() == 0 ? "" : "s")
+                + " found...");
+        searchButton.setEnabled(true);
+        searchButton.setLabel("Search");
     }
 
     public void recolumnize() {
         metaDateHandler = ClientInfoFactoryUtilities.getHandler(getType());
         int max = metaDateHandler.getNumberOfColumns();
-        filelist.setNumberOfColumns(max);
+        fileList.setNumberOfColumns(max);
 
         for (int i = 0; i < max; i++) {
-            filelist.setColumnName(i, metaDateHandler.getHeader(i));
-            filelist.setColumnWidth(i, metaDateHandler.getHeaderSize(i));
+            fileList.setColumnName(i, metaDateHandler.getHeader(i));
+            fileList.setColumnWidth(i, metaDateHandler.getHeaderSize(i));
         }
     }
 
@@ -232,7 +229,7 @@ public class SearchWindow extends MysterFrame implements SearchResultListener,
             m[i] = metaDateHandler.getMCListItem(resultArray[i]);
         }
 
-        filelist.addItem(m);
+        fileList.addItem(m);
         return true;
     }
 
@@ -241,7 +238,7 @@ public class SearchWindow extends MysterFrame implements SearchResultListener,
     }
 
     public String getSearchString() {
-        return textentry.getText();
+        return textEntry.getText();
     }
 
     public MysterType getType() {
@@ -253,9 +250,9 @@ public class SearchWindow extends MysterFrame implements SearchResultListener,
     }
 
     public void paint(Graphics g) {
-        filelist.repaint(); //needed because when an item is updated this
-                            // object's repaint() methods is called. The
-                            // repaint() needs to be passed on to the list.
+        fileList.repaint(); //needed because when an item is updated this
+        // object's repaint() methods is called. The
+        // repaint() needs to be passed on to the list.
     }
 
     /*

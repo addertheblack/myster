@@ -5,7 +5,7 @@ package com.general.util;
  * fairly similar to the BlockingQueue implemented in Java 1.5. It differs in
  * that this blocking queue is not setup to block on adding an item (@see
  * com.general.util.DoubleBlockingQueue)... and of course the functions have
- * slightly dfferent names.
+ * slightly different names.
  *  
  */
 public class BlockingQueue {
@@ -19,11 +19,13 @@ public class BlockingQueue {
      * This routine adds an object to the work queue. It does not block.
      */
     public void add(Object o) {
-        if (rejectDuplicates) {
-            if (list.contains(o))
-                return;
+        synchronized (list) {
+            if (rejectDuplicates) {
+                if (list.contains(o))
+                    return;
+            }
+            list.addToTail(o);
         }
-        list.addToTail(o);
         sem.signalx();
     }
 
@@ -57,10 +59,24 @@ public class BlockingQueue {
      * If true is passed here the list will reject objects that are equal to
      * objects already in this list.
      * 
+     * If this property is set to true all adds become order n operations.
+     * 
      * @param b
      *            if true, the list will not add Objects already in the list.
      */
     public void setRejectDuplicates(boolean b) {
         rejectDuplicates = b;
+    }
+
+    /**
+     * Scans through the queue looking for object o using equals(). Removes the
+     * first occurrence.
+     * 
+     * @param o
+     *            Object to removes
+     * @return true if an object was removed, false otherwise.
+     */
+    public boolean remove(Object o) {
+        return list.remove(o);
     }
 }

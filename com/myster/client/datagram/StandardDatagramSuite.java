@@ -3,14 +3,16 @@ package com.myster.client.datagram;
 import java.io.IOException;
 import java.util.Vector;
 
+import com.general.thread.CallListener;
+import com.general.thread.Future;
 import com.general.util.Semaphore;
 import com.myster.hash.FileHash;
 import com.myster.mml.RobustMML;
+import com.myster.net.BadPacketException;
 import com.myster.net.DataPacket;
 import com.myster.net.MysterAddress;
 import com.myster.net.StandardDatagramClientImpl;
-import com.myster.net.StandardDatagramEvent;
-import com.myster.net.StandardDatagramListener;
+import com.myster.net.TimeoutException;
 import com.myster.search.MysterFileStub;
 import com.myster.transaction.TransactionEvent;
 import com.myster.transaction.TransactionListener;
@@ -19,94 +21,78 @@ import com.myster.type.MysterType;
 
 public class StandardDatagramSuite {
 
-    public static MysterAddress[] getTopServers(final MysterAddress ip,
-            final MysterType type) throws IOException {
-
-        return (MysterAddress[]) (makeBlocking(new BlockingListener(ip,
-                new TopTenDatagramClient(type))));
-    }
-    
-    public static void getTopServers(final MysterAddress ip,
-            final MysterType type, final StandardDatagramListener listener)
+    public static MysterAddress[] getTopServers(final MysterAddress ip, final MysterType type)
             throws IOException {
 
-        doSection(ip, new TopTenDatagramClient(type), listener);
+        return (MysterAddress[]) (makeBlocking(new BlockingListener(ip, new TopTenDatagramClient(
+                type))));
+    }
+
+    public static Future getTopServers(final MysterAddress ip, final MysterType type,
+            final CallListener listener) throws IOException {
+        return doSection(ip, new TopTenDatagramClient(type), listener);
     }
 
     //Vector of Strings
-    public static Vector getSearch(final MysterAddress ip,
-            final MysterType type, final String searchString)
+    public static Vector getSearch(final MysterAddress ip, final MysterType type,
+            final String searchString) throws IOException {
+
+        return (Vector) (makeBlocking(new BlockingListener(ip, new SearchDatagramClient(type,
+                searchString))));
+    }
+
+    public static Future getSearch(final MysterAddress ip, final MysterType type,
+            final String searchString, final CallListener listener) throws IOException {
+        return doSection(ip, new SearchDatagramClient(type, searchString), listener);
+    }
+
+    public static MysterType[] getTypes(final MysterAddress ip) throws IOException {
+        return (MysterType[]) (makeBlocking(new BlockingListener(ip, new TypeDatagramClient())));
+    }
+
+    public static Future getTypes(final MysterAddress ip, final CallListener listener)
             throws IOException {
-
-        return (Vector) (makeBlocking(new BlockingListener(ip,
-                new SearchDatagramClient(type, searchString))));
+        return doSection(ip, new TypeDatagramClient(), listener);
     }
 
-    public static void getSearch(final MysterAddress ip, final MysterType type,
-            final String searchString, final StandardDatagramListener listener)
+    public static RobustMML getServerStats(final MysterAddress ip) throws IOException {
+        return (RobustMML) (makeBlocking(new BlockingListener(ip, new ServerStatsDatagramClient())));
+    }
+
+    public static Future getServerStats(final MysterAddress ip, final CallListener listener)
             throws IOException {
-
-        doSection(ip, new SearchDatagramClient(type, searchString), listener);
+        return doSection(ip, new ServerStatsDatagramClient(), listener);
     }
 
-    public static MysterType[] getTypes(final MysterAddress ip)
+    public static RobustMML getFileStats(final MysterFileStub stub) throws IOException {
+        return (RobustMML) (makeBlocking(new BlockingListener(stub.getMysterAddress(),
+                new FileStatsDatagramClient(stub))));
+    }
+
+    public static Future getFileStats(final MysterFileStub stub, final CallListener listener)
             throws IOException {
-        return (MysterType[]) (makeBlocking(new BlockingListener(ip,
-                new TypeDatagramClient())));
+        return doSection(stub.getMysterAddress(), new FileStatsDatagramClient(stub), listener);
     }
 
-    public static void getTypes(final MysterAddress ip,
-            final StandardDatagramListener listener) throws IOException {
-
-        doSection(ip, new TypeDatagramClient(), listener);
+    public static String getFileFromHash(final MysterAddress ip, final MysterType type,
+            final FileHash hash) throws IOException {
+        return (String) (makeBlocking(new BlockingListener(ip, new SearchHashDatagramClient(type,
+                hash))));
     }
 
-    public static RobustMML getServerStats(final MysterAddress ip)
-            throws IOException {
-        return (RobustMML) (makeBlocking(new BlockingListener(ip,
-                new ServerStatsDatagramClient())));
+    public static Future getFileFromHash(final MysterAddress ip, final MysterType type,
+            final FileHash hash, final CallListener listener) throws IOException {
+        return doSection(ip, new SearchHashDatagramClient(type, hash), listener);
     }
 
-    public static void getServerStats(final MysterAddress ip,
-            final StandardDatagramListener listener) throws IOException {
+    private static Future doSection(final MysterAddress address,
+            final StandardDatagramClientImpl impl, final CallListener listener) throws IOException {
 
-        doSection(ip, new ServerStatsDatagramClient(), listener);
-    }
-
-    public static RobustMML getFileStats(final MysterFileStub stub)
-            throws IOException {
-        return (RobustMML) (makeBlocking(new BlockingListener(stub
-                .getMysterAddress(), new FileStatsDatagramClient(stub))));
-    }
-
-    public static void getFileStats(final MysterFileStub stub,
-            final StandardDatagramListener listener) throws IOException {
-        doSection(stub.getMysterAddress(), new FileStatsDatagramClient(stub),
-                listener);
-    }
-
-    public static String getFileFromHash(final MysterAddress ip,
-            final MysterType type, final FileHash hash) throws IOException {
-        return (String) (makeBlocking(new BlockingListener(ip,
-                new SearchHashDatagramClient(type, hash))));
-    }
-
-    public static void getFileFromHash(final MysterAddress ip,
-            final MysterType type, final FileHash hash,
-            final StandardDatagramListener listener) throws IOException {
-        doSection(ip, new SearchHashDatagramClient(type, hash), listener);
-    }
-
-    private static void doSection(final MysterAddress address,
-            final StandardDatagramClientImpl impl,
-            final StandardDatagramListener listener) throws IOException {
-
-        TransactionSocket tsocket = new TransactionSocket(impl.getCode());
+        final TransactionSocket tsocket = new TransactionSocket(impl.getCode());
 
         //We need to convert between a generic transaction, listener and a
-        // Standard Myster
-        //transaction listener (to return the data pre-formated, like we want)
-        //This has got to be one of longest single lines in Myster :-)
+        //Standard CallListener because call listeners make a good abstract and
+        //turn the call into an RMI. cooool eh?
         tsocket.sendTransaction(new DataPacket() { //inline class
                     public MysterAddress getAddress() {
                         return address;
@@ -127,38 +113,41 @@ public class StandardDatagramSuite {
 
                 new TransactionListener() { //inline class
                     public void transactionReply(TransactionEvent e) {
-                        if (DatagramUtilities.dealWithError(e.getTransaction(),
-                                listener))
-                            return;
-
                         try {
-                            listener.response(new StandardDatagramEvent(e
-                                    .getAddress(), impl.getCode(), impl
-                                    .getObjectFromTransaction(e
-                                            .getTransaction())));
-                        } catch (IOException ex) {
-                            //Packet was badly formatted so we send a null
-                            // Object
+                            if (DatagramUtilities.dealWithError(e.getTransaction(), listener))
+                                return;
 
-                            listener.response(new StandardDatagramEvent(e
-                                    .getAddress(), impl.getCode(), impl
-                                    .getNullObject()));
+                            try {
+                                listener.handleResult(impl.getObjectFromTransaction(e
+                                        .getTransaction()));
+                            } catch (IOException ex) {
+                                listener.handleException(new BadPacketException(ex.getMessage()));
+                            }
+                        } finally {
+                            listener.handleFinally();
                         }
                     }
 
                     public void transactionTimout(TransactionEvent e) {
-                        listener.timeout(new StandardDatagramEvent(e
-                                .getAddress(), impl.getCode(), impl
-                                .getNullObject())); // a Null object is better
-                                                    // than a null
+                        try {
+                            listener.handleException(new TimeoutException("Transaction timed out"));
+                        } finally {
+                            listener.handleFinally();
+                        }
+                    }
+
+                    public void transactionCancelled(TransactionEvent event) {
+                        listener.handleFinally();
                     }
                 });
 
         // no need to close socket.. all sockets are one-shot.
+        // We return it, though, in case the thread wants to cancel the
+        // operation.
+        return new UdpFuture(tsocket);
     }
 
-    private static Object makeBlocking(final BlockingListener passable)
-            throws IOException {
+    private static Object makeBlocking(final BlockingListener passable) throws IOException {
         final Semaphore sem = new Semaphore(0);
         final BlockingResult blockingResult = new BlockingResult();
 
@@ -166,24 +155,27 @@ public class StandardDatagramSuite {
         // so I want to
         //make sure all my data uses a common monitor.
         //(Actually, I think there is still a data race)
-        passable.get(new StandardDatagramListener() {
-            public void response(StandardDatagramEvent event) {
-                blockingResult.setData(event.getData());
+        passable.get(new CallListener() {
+            public void handleCancel() {
+                throw new IllegalStateException("Cancel was called here! This is not allowed!");
+            }
 
+            public void handleResult(Object result) {
+                blockingResult.setData(result);
+            }
+
+            public void handleException(Exception ex) {
+                if (!(ex instanceof IOException))
+                    throw new IllegalStateException("Exception " + ex
+                            + " is not an IOException. Some sort of error has occured.");
+
+                blockingResult.setException((IOException) ex);
+            }
+
+            public void handleFinally() {
                 sem.signal();
             }
 
-            public void timeout(StandardDatagramEvent event) {
-                blockingResult.setError(-1);
-
-                sem.signal();
-            }
-
-            public void error(StandardDatagramEvent event) {
-                blockingResult.setError(2);
-
-                sem.signal();
-            }
         });
 
         try {
@@ -193,12 +185,10 @@ public class StandardDatagramSuite {
         }
 
         if (blockingResult.getData() == null) {
-            if (blockingResult.getError() < 0)
-                throw new IOException("Timeout");
-            if (blockingResult.getError() > 0)
-                throw new com.myster.client.stream.UnknownProtocolException(
-                        blockingResult.getError(),
-                        "Protocol is not understood. (none 1 response)");
+            if (blockingResult.getException() == null)//can happen on thread interrupt or
+                // cancelled.
+                return null;
+            throw blockingResult.getException();
         }
 
         return blockingResult.getData();
@@ -209,21 +199,20 @@ public class StandardDatagramSuite {
 
         final MysterAddress address;
 
-        public BlockingListener(MysterAddress address,
-                StandardDatagramClientImpl impl) {
+        public BlockingListener(MysterAddress address, StandardDatagramClientImpl impl) {
             this.impl = impl;
             this.address = address;
         }
 
-        public void get(StandardDatagramListener listener) throws IOException {
+        public void get(CallListener listener) throws IOException {
             doSection(address, impl, listener);
         }
     }
 
     private static class BlockingResult {
-        Object data;
+        private Object data;
 
-        public int error; //at 0 by default
+        private IOException exception; //at 0 by default
 
         public synchronized void setData(Object data) {
             this.data = data;
@@ -233,12 +222,40 @@ public class StandardDatagramSuite {
             return data;
         }
 
-        public synchronized int getError() {
-            return error;
+        public synchronized IOException getException() {
+            return exception;
         }
 
-        public synchronized void setError(int error) {
-            this.error = error;
+        public synchronized void setException(IOException exception) {
+            this.exception = exception;
+        }
+    }
+
+    private static class UdpFuture implements Future {
+        private TransactionSocket tsocket;
+
+        private UdpFuture(TransactionSocket tsocket) {
+            this.tsocket = tsocket;
+        }
+
+        public boolean cancel() {
+            return cancel(true);
+        }
+
+        public boolean cancel(boolean mayInterruptIfRunning) {
+            return tsocket.cancel();
+        }
+
+        public boolean isCancelled() {
+            throw new RuntimeException("Operation not supported - lazy programmer Exception.");
+        }
+
+        public boolean isDone() {
+            throw new RuntimeException("Operation not supported - lazy programmer Exception.");
+        }
+
+        public void setDone() {
+            throw new RuntimeException("Operation not supported - lazy programmer Exception.");
         }
     }
 }

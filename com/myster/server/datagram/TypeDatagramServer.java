@@ -11,6 +11,9 @@ import com.myster.transaction.TransactionManager;
 import com.myster.transaction.TransactionProtocol;
 import com.myster.type.MysterType;
 
+/**
+ * Server side datagram implementation of Myster type lister conneciton section. 
+ */
 public class TypeDatagramServer extends TransactionProtocol {
     public static final int NUMBER_OF_FILE_TYPE_TO_RETURN = 100;
 

@@ -16,7 +16,6 @@ import java.util.Vector;
 
 import com.general.util.BlockingQueue;
 import com.general.util.RInt;
-
 import com.myster.client.datagram.PingEvent;
 import com.myster.client.datagram.PingEventListener;
 import com.myster.client.stream.StandardSuite;
