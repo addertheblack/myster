@@ -46,6 +46,12 @@ import com.myster.mml.RobustMML;
 	change the color of the bars to green again
 	
 	hook up queued message to something.
+	
+	hook up resumable download for multi source
+	
+	try to make it so that pr 7.X banner work.
+	
+	try to make server side hash search work (UDP)
 */
 
 public class MultiSourceDownload implements Runnable, Controller {
