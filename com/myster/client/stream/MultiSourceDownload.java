@@ -76,9 +76,6 @@ public class MultiSourceDownload implements Runnable, Controller {
 
     boolean isDead = false; //is set to true if cleanUp() has been called
 
-    //Constants
-    public static final int MULTI_SOURCE_BLOCK_SIZE = 512 * 1024;
-
     public static final int DEFAULT_CHUNK_SIZE = 2 * 1024;
 
     // Note top self -> elminate one of the twin constructors.
@@ -217,11 +214,13 @@ public class MultiSourceDownload implements Runnable, Controller {
         return false;
     }
 
-    public synchronized WorkSegment getNextWorkSegment() {
+    public synchronized WorkSegment getNextWorkSegment(int requestedBlockSize) {
         if (unfinishedSegments.size() > 0)
             return (WorkSegment) (unfinishedSegments.pop());
-
-        long readLength = (fileLength - fileProgress > MULTI_SOURCE_BLOCK_SIZE ? MULTI_SOURCE_BLOCK_SIZE
+        
+        final int multiBlockSize = Math.max(1, requestedBlockSize / DEFAULT_CHUNK_SIZE) * DEFAULT_CHUNK_SIZE; //quick round off to nearest chunk.
+        
+        long readLength = (fileLength - fileProgress > multiBlockSize ? multiBlockSize
                 : fileLength - fileProgress);
 
         System.out.println("Main Thread -> Adding Work Segment " + fileProgress
@@ -420,8 +419,13 @@ class InternalSegmentDownloader extends MysterThread implements
     //Params
     final int chunkSize;
 
+    //Constants
+    public static final int DEFAULT_MULTI_SOURCE_BLOCK_SIZE = 128 * 1024;
+    
     //Static variables
     private static int instanceCounter = 0;
+
+	private int idealBlockSize = DEFAULT_MULTI_SOURCE_BLOCK_SIZE;
 
     public InternalSegmentDownloader(Controller controller,
             MysterFileStub stub, int chunkSize) {
@@ -466,7 +470,7 @@ class InternalSegmentDownloader extends MysterThread implements
                 if (endFlag)
                     return;
 
-                WorkSegment workSegment = controller.getNextWorkSegment(); //(WorkSegment)workQueue.removeFromHead();
+                WorkSegment workSegment = controller.getNextWorkSegment(idealBlockSize); //(WorkSegment)workQueue.removeFromHead();
 
                 if (workSegment == null)
                     return;
@@ -618,6 +622,7 @@ class InternalSegmentDownloader extends MysterThread implements
                 workingSegment.workSegment.length);//this isn't in the right
                                                    // place
 
+        long timeTakenToDownloadSegment = 0;
         while (workingSegment.progress < workingSegment.workSegment.length) {
             debug("Work Thread " + getName() + " -> Reading in Type");
 
@@ -632,7 +637,9 @@ class InternalSegmentDownloader extends MysterThread implements
                 long blockLength = socket.in.readLong();
 
                 debug("Work Thread " + getName() + " -> Downloading start");
+                final long startTime = System.currentTimeMillis();
                 downloadDataBlock(socket, workingSegment, blockLength);
+                timeTakenToDownloadSegment += System.currentTimeMillis() - startTime;
                 debug("Work Thread " + getName() + " -> Downloading finished");
 
                 break;
@@ -642,6 +649,9 @@ class InternalSegmentDownloader extends MysterThread implements
             }
         }
 
+        debug("Work Thread " + getName() + " -> Took " + (timeTakenToDownloadSegment / 1000) +"s to download "+(workingSegment.workSegment.length/1024)+"k");
+        idealBlockSize = calculateNextBlockSize(workingSegment.workSegment.length, timeTakenToDownloadSegment);
+        debug("Work Thread " + getName() + " -> next block will be "+(idealBlockSize/1024)+"k");
         fireEvent(SegmentDownloaderEvent.END_SEGMENT,
                 workingSegment.workSegment.startOffset,
                 workingSegment.workSegment.startOffset
@@ -651,7 +661,18 @@ class InternalSegmentDownloader extends MysterThread implements
         return true;
     }
 
-    public boolean isActive() {
+    /**
+	 * @param length
+	 * @param timeTakenToDownloadSegment
+	 * @return
+	 */
+    private static int IDEAL_BLOCK_TIME = 60*1000;
+	private int calculateNextBlockSize(long length, long timeTakenToDownloadSegment) {
+		int maxLength = (int) (Math.min(length, Integer.MAX_VALUE / 2) * 2); //get the max packet length accounting for int overflow.
+		return (int) Math.min(maxLength, (IDEAL_BLOCK_TIME * length) / timeTakenToDownloadSegment);
+	}
+
+	public boolean isActive() {
         return isActive;
     }
 
@@ -667,14 +688,16 @@ class InternalSegmentDownloader extends MysterThread implements
             WorkingSegment workingSegment, long length) throws IOException {
         long bytesDownloaded = 0;
 
+        byte[] buffer = new byte[chunkSize];
+        
         for (bytesDownloaded = 0; bytesDownloaded < length;) {
             long calcBlockSize = (length - bytesDownloaded < chunkSize ? length
                     - bytesDownloaded : chunkSize);
 
-            byte[] buffer = new byte[(int) calcBlockSize]; //could be made more
-                                                           // efficient by using
-                                                           // a pool.
-
+            if (calcBlockSize != buffer.length) {
+            	buffer = new byte[(int) calcBlockSize]; //could be made more
+            }
+            	
             if (endFlag)
                 throw new IOException("was asked to end");
 
@@ -728,7 +751,7 @@ class InternalSegmentDownloader extends MysterThread implements
     }
 
     private static void debug(String string) {
-        //System.out.println(string);
+        System.out.println(string);
     }
 
     /**
@@ -800,7 +823,7 @@ class WorkSegment {
 }
 
 interface Controller {
-    public WorkSegment getNextWorkSegment();
+    public WorkSegment getNextWorkSegment(int requestedSize);
 
     public void receiveExtraSegments(WorkSegment[] workSegments);
 

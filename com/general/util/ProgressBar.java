@@ -77,7 +77,8 @@ public class ProgressBar extends Panel {
     }
 
     public final synchronized boolean isValueOutOfBounds() { //inline
-        return (value < min || value > max);
+        //return true;
+    	return (value < min || value > max);
     }
 
     private synchronized void timerCode() {
@@ -96,7 +97,7 @@ public class ProgressBar extends Panel {
     }
     
     private synchronized void runTimerIfAppropriate() {
-        if (isShowing() && isValueOutOfBounds()) {
+        if (isShowing() ){//&& isValueOutOfBounds()) {
             assertTimer();
         } else {
         	stopTimer();
@@ -191,6 +192,6 @@ public class ProgressBar extends Panel {
         }
 
 		runTimerIfAppropriate();
-        repaint();
+        //repaint();
     }
 }

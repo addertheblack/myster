@@ -51,7 +51,7 @@ public class Myster {
 
     public static final boolean ON_LINUX = (System.getProperty("os.name") != null ? System
             .getProperty("os.name").equals("Linux") : false);
-
+    
     public static void main(String args[]) {
         final boolean isServer = (args.length > 0 && args[0].equals("-s"));
 
