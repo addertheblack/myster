@@ -9,6 +9,13 @@
 Copyright Andrew Trumper 2000-2001
 */
 
+
+// REQUIRES AN ITERATION:
+
+// RED LIST:
+// Assumes that closing the file is not nessesairy <-
+// Is too closely coupled with ProgressWindow (should send events)
+
 package com.myster.client.stream;
 
 import java.net.*;
@@ -504,6 +511,11 @@ public class DownloaderThread extends SafeThread {
 		try {out.close();} catch (Exception ex) {}
 		try {socket.close();} catch (Exception ex) {}
 		try {o.close();} catch (Exception ex) {}
+	}
+	
+	public void end() {
+		stopping();
+		super.end();
 	}
 	
 }

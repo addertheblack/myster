@@ -212,16 +212,24 @@ public class FMIChooser extends PreferencesPanel {
 		}
 	
 		flist.removeAll();
+		flist.add("<Indexing files.... this may take a while.....>");
 		textfeild.setText(TIM(path));
 		String[] s=manager.getDirList(choice.getType().getBytes());
+		
+		flist.removeAll();
+		
 		if (s!=null) {
 			if (!checkbox.getState()) {
 				flist.add("<no files are being shared, sharing is disabled>");
 			} else if (s.length==0) {
 				flist.add("<no files are being shared, there's no relevent files in this folder>");
 			} else {
-				for (int i=0; i<s.length; i++) {
-					flist.add(s[i]);
+				if (s.length>150) {
+					flist.add("<You are sharing "+s.length+" files (too many to list)>");
+				} else {
+					for (int i=0; i<s.length; i++) {
+						flist.add(s[i]);
+					}
 				}
 			}
 		}
