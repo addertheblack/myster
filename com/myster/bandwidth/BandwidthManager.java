@@ -14,43 +14,97 @@ import com.general.util.Timer;
 */
 
 public class BandwidthManager {
-	/*
-	private static Bandwidth impl=new BandwithImpl();
-	private static boolean flag=false;
+
 	
-	public static final void replaceImplementation() throws AlreadyImplementedException {
-		if (!flag) {
-			flag=true;
-		} else {
-			throw new AlreadyImplementedException("...");
-		}
-	}
-	*/
-	/*
-	public static final synchronized int requestBytesOutgoing(int maxBytes) {
-		final int speed=10*1024;
-		final int maxWaitTime=100;
-		final int spacing=(maxWaitTime*speed)/1000;
-		
-		if (maxBytes>spacing) {
-			maxBytes=spacing;
-		}
-		
-		int sleepTime=((maxBytes*1000)/speed);
-		
-		//System.out.println("Sleep time = "+sleepTime);
-		if (sleepTime>0) try {Thread.currentThread().sleep(sleepTime);} catch (Exception ex) {}
-		return maxBytes;
-	}
-	*/
+	static Vector incomming = new Vector();
+	
 
 	public static final int requestBytesIncoming(int maxBytes) {
 		return maxBytes;
-		//return impl.requestBytesIncoming(maxBytes);
+	
 	}
 	
+	public static synchronized void reSleepAll() {
+		for (int i=0; i< incomming.size(); i++) {
+			BlockedThread t=(BlockedThread)(incomming.elementAt(i));
+			t.reSleep();
+		}
+	}
+	
+	
+	//NOTE: I RE>WROTE THE BELOW 03/01/04 It works well but I need to get rid of the VECTOR <-
 	public static final int requestBytesOutgoing(int maxBytes) {
-		return maxBytes;//impl.requestBytesOutgoing(maxBytes);
+			BlockedThread b=new BlockedThread(maxBytes,incomming);
+		
+		synchronized (BandwidthManager.class) {
+			incomming.addElement(b);
+			reSleepAll();
+		}
+		
+		b.sleepNow();
+		
+		synchronized (BandwidthManager.class) {
+			incomming.removeElement(b);
+			reSleepAll();
+		}
+		return maxBytes;
+		//return maxBytes;//impl.requestBytesOutgoing(maxBytes);
+	}
+}
+
+class BlockedThread {
+	public static volatile double rate=15;
+	Vector threads;
+	double bytesLeft;
+	Thread thread;
+	
+	BlockedThread(int bytesLeft, Vector threads) {
+		this.bytesLeft=bytesLeft;
+		thread=Thread.currentThread();
+		this.threads=threads;
+	}
+	
+	private void subStractBytes(int bToSub) {
+		double bToSubD=bToSub;
+		bytesLeft-=bToSubD;
+	}
+	
+	public synchronized void reSleep() {
+
+			if (thread!=null) thread.interrupt();
+		
+	}
+	
+	public synchronized void sleepNow() {
+		try {
+			for (;;) {
+				double thisRate;int sleepAmount;long startTime;
+
+					 thisRate=((double)(threads.size()))/rate;
+					 sleepAmount=(int)(bytesLeft*thisRate);
+					 startTime=System.currentTimeMillis();
+					if (sleepAmount<=0) {
+						//thread=null;
+						return;
+					}
+				
+				
+				try {
+					wait(sleepAmount);
+				} catch (InterruptedException ex) {
+						double timeSlept=(System.currentTimeMillis()-startTime);
+						subStractBytes((int)(timeSlept/thisRate)); //avoid divide by 0
+					continue;
+				}
+				return;
+			}
+		} finally {
+			thread=null;
+			try {wait(1);} catch (InterruptedException ex) {}
+			try {wait(1);} catch (InterruptedException ex) {}
+
+			
+		}
 	}
 }
 /*
