@@ -221,8 +221,8 @@ class BandwithPrefsPanel extends PreferencesPanel {
 	
 	Panel explanationPanel=new MessagePanel(
 		"Using the bandwidth preference pannel you can set the maximum rate "+
-		"at which Myster will send and recieve data. This setting is usefull "+
-		"if you want to run a Myster server while using the internet but find "+
+		"at which Myster will send and recieve data. This setting is useful "+
+		"if you want to run a Myster server while using the internet, but find "+
 		"that it slows down your internet connection.");
 	
 	Checkbox enableOutgoing;

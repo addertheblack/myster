@@ -72,7 +72,7 @@ public class MessageManager {
 				}
 				
 				public void transactionTimout(TransactionEvent e) {
-					simpleAlert("Message was not acknowleged.");
+					simpleAlert("Message was not recieved. There does not appear to be anyone at that address.");
 				}
 		});
 	}
@@ -210,7 +210,7 @@ public class MessageManager {
 }
 
 class InstantMessageTransport extends TransactionProtocol {
-	static final long EXPIRE_TIME=60*60*1000;
+	static final long EXPIRE_TIME=60*60*1000; //1 hour.. (wow!)
 
 	static final int transportNumber=1111;
 	

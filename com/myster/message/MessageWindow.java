@@ -17,6 +17,8 @@ public class MessageWindow extends MysterFrame {
 	private GridBagLayout gblayout;
 	private GridBagConstraints gbconstrains;
 	
+	private MessageWindowButtonBar bar;
+	
 	private boolean type;
 	
 	MessageTextArea quoteArea, messageArea;
@@ -59,7 +61,7 @@ public class MessageWindow extends MysterFrame {
 		header = new HeaderPanel(address, type);
 		addComponent(header, 1,1,1,1,10, 0);
 		
-
+		bar = new MessageWindowButtonBar(type);
 		
 		if (quote!=null) {
 			quoteArea = new MessageTextArea(false, quote, "Quotaton: ");
@@ -73,9 +75,17 @@ public class MessageWindow extends MysterFrame {
 		if (message!=null) {
 			messageArea = new MessageTextArea(type, message, "Message: ");
 			addComponent(messageArea, 4,1,1,1,10,1);
+			
+			messageArea.addTextListener(new TextListener() {
+				public void textValueChanged(TextEvent e) {
+					setSendMessageAllowed(((TextArea)(e.getSource())).getText());
+				}
+			});
+			
+			setSendMessageAllowed(messageArea.getText());
 		}
 		
-		MessageWindowButtonBar bar = new MessageWindowButtonBar(type);
+
 		
 		addComponent(bar, 5,1,1,1,10,0);
 		
@@ -137,6 +147,10 @@ public class MessageWindow extends MysterFrame {
 	private String getQuote() {
 		return (quoteArea==null?null:quoteArea.getText());
 	}
+	
+	private void setSendMessageAllowed(String text) {
+		bar.setAcceptEnable(!(text.equals(""))); //this is why doing OO GUIs sucks.. Delegations..
+	}
 
 	private class MessageWindowButtonBar extends Panel {
 		Button accept; //can be reply or send
@@ -156,7 +170,7 @@ public class MessageWindow extends MysterFrame {
 				accept.addActionListener(new ActionListener() {
 					public void actionPerformed(ActionEvent e) {
 						String msg = getMessage();
-						if ((msg==null) || (msg.equals(""))) return; //err
+						if ((msg==null) || (msg.equals(""))) return; //err (this should not be possible)
 						
 						try {
 							MessageManager.sendInstantMessage(new InstantMessage(header.getAddress(), getMessage(),getQuote()));
@@ -199,6 +213,10 @@ public class MessageWindow extends MysterFrame {
 		
 		public Dimension getPreferredSize() {
 			return new Dimension(3*PADDING+2*X_BUTTON_SIZE,Y_BUTTON_SIZE+2*PADDING);
+		}
+		
+		public void setAcceptEnable(boolean isEnabled) {
+			accept.setEnabled(isEnabled);
 		}
 		
 		//MyLayoutManager Basically dsoes nothing
@@ -316,6 +334,10 @@ class MessageTextArea extends Panel {
 	public void focusBaby() {
 		requestFocus();
 		area.requestFocus();
+	}
+	
+	public void addTextListener(TextListener l) {
+		area.addTextListener(l);
 	}
 }
 
