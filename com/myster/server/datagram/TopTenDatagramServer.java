@@ -32,6 +32,8 @@ public class TopTenDatagramServer extends TransactionProtocol {
 	
 	public void transactionReceived(Transaction transaction) throws BadPacketException {
 		try {
+			IPListManagerSingleton.getIPListManager().addIP(transaction.getAddress());
+		
 			MysterServer[] topTenServers = IPListManagerSingleton.getIPListManager().getTop(
 					getTypeFromTransaction(transaction), NUMBER_OF_SERVERS_TO_RETURN);
 
