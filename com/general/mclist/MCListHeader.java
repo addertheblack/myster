@@ -29,7 +29,8 @@ public class MCListHeader extends Panel {
     private String[] columnarray;
 
     private int[] columnWidthArray; // A value of -1 means value should default
-                                    // to width of header string.
+
+    // to width of header string.
 
     private int sortby = 0;
 
@@ -58,8 +59,8 @@ public class MCListHeader extends Panel {
         int[] oldArray = {};
         if (columnWidthArray != null)
             oldArray = columnWidthArray; //line to take care of case where
-                                         // columnWidthArray is not inited. See
-                                         // constructor.
+        // columnWidthArray is not inited. See
+        // constructor.
         int i;
         columnWidthArray = new int[numberOfColumns];
         for (i = 0; i < oldArray.length && i < columnWidthArray.length; i++) {
@@ -103,8 +104,8 @@ public class MCListHeader extends Panel {
         int padding = rowstats.getPadding();
 
         FontMetrics tempfont = callback.getFontMetrics(callback.getFont()); //uses
-                                                                            // default
-                                                                            // font
+        // default
+        // font
         int height = tempfont.getHeight();
         int ascent = tempfont.getAscent();
         int descent = tempfont.getDescent();
@@ -113,58 +114,63 @@ public class MCListHeader extends Panel {
         g.fillRect(0, 0, getSize().width, getHeight());
 
         g.setColor(new Color(200, 200, 255));
-        g.fillRect(0, 0, getRowStats().getTotalLength(), getHeight());
+        g.fillRect(0, 0, getSize().width, getHeight());
 
         int hozoffset = 0;
         for (int i = 0; i < columnarray.length; i++) {
 
             //Calculates the "Selected Column" and/or "Mouser Over" colors.
-            if (i == sortby) {
-                g.setColor(mouseOverColumn == i ? new Color(210, 210, 255)
-                        : new Color(200, 200, 255));
-            } else {
-                g.setColor(mouseOverColumn == i ? new Color(222, 222, 222)
-                        : new Color(215, 215, 215));
-            }
 
-            g.fillRect(padding + hozoffset, padding, rowstats
-                    .getWidthOfColumn(i), HEIGHT);
-
-            g.setColor(new Color(235, 235, 235));
-            g.drawLine(padding + hozoffset, padding, padding + hozoffset
-                    + rowstats.getWidthOfColumn(i) - 1, padding);
-            g.drawLine(padding + hozoffset, padding, padding + hozoffset,
-                    padding + HEIGHT - 1);
-            g.setColor(new Color(175, 175, 175));
-            g.drawLine(padding + hozoffset, padding + HEIGHT - 1, padding
-                    + hozoffset + rowstats.getWidthOfColumn(i) - 1, padding
-                    + HEIGHT - 1);
-            g.drawLine(padding + hozoffset + rowstats.getWidthOfColumn(i) - 1,
-                    padding, padding + hozoffset + rowstats.getWidthOfColumn(i)
-                            - 1, padding + HEIGHT - 1);
-
-            g.setColor(new Color(255, 255, 255));
-            g.fillRect(padding + hozoffset, padding, 1, 1);
-            g.setColor(new Color(215, 215, 215));
-            g.fillRect(padding + hozoffset + rowstats.getWidthOfColumn(i) - 1,
-                    padding, 1, 1);
-            g.setColor(new Color(215, 215, 215));
-            g.fillRect(padding + hozoffset, padding + HEIGHT - 1, 1, 1);
-            g.setColor(new Color(140, 140, 140));
-            g.fillRect(padding + hozoffset + rowstats.getWidthOfColumn(i) - 1,
-                    padding + HEIGHT - 1, 1, 1);
+            paintTitle(g, hozoffset, hozoffset + rowstats.getWidthOfColumn(i) + padding, padding,
+                    i == sortby, mouseOverColumn == i);
 
             hozoffset += padding + rowstats.getWidthOfColumn(i);
         }
 
+        if (hozoffset < getWidth()) {
+            paintTitle(g, hozoffset, getWidth(), padding, false, false);
+        }
+            
         g.setColor(Color.black);
         hozoffset = 0;
         int yplace = padding + ascent;
         for (int i = 0; i < numberOfColumns; i++) {
-            g.drawString(makeFit(columnarray[i], rowstats.getWidthOfColumn(i)),
-                    hozoffset + padding + 2, yplace);
+            g.drawString(makeFit(columnarray[i], rowstats.getWidthOfColumn(i)), hozoffset + padding
+                    + 2, yplace);
             hozoffset += padding + rowstats.getWidthOfColumn(i);
         }
+    }
+
+    private void paintTitle(Graphics g, int hozoffset, int endPixel, int padding,
+            boolean isSelected, boolean isMouseOver) {
+        //Calculates the "Selected Column" and/or "Mouser Over" colors.
+        if (isSelected) {
+            g.setColor(isMouseOver ? new Color(210, 210, 255) : new Color(200, 200, 255));
+        } else {
+            g.setColor(isMouseOver ? new Color(222, 222, 222) : new Color(215, 215, 215));
+        }
+
+        int width = endPixel - hozoffset - padding;
+        g.fillRect(padding + hozoffset, padding, width, HEIGHT);
+
+        g.setColor(new Color(235, 235, 235));
+        g.drawLine(padding + hozoffset, padding, padding + hozoffset + width - 1, padding);
+        g.drawLine(padding + hozoffset, padding, padding + hozoffset, padding + HEIGHT - 1);
+        g.setColor(new Color(175, 175, 175));
+        g.drawLine(padding + hozoffset, padding + HEIGHT - 1, padding + hozoffset + width - 1,
+                padding + HEIGHT - 1);
+        g.drawLine(padding + hozoffset + width - 1, padding, padding + hozoffset + width - 1,
+                padding + HEIGHT - 1);
+
+        g.setColor(new Color(255, 255, 255));
+        g.fillRect(padding + hozoffset, padding, 1, 1);
+        g.setColor(new Color(215, 215, 215));
+        g.fillRect(padding + hozoffset + width - 1, padding, 1, 1);
+        g.setColor(new Color(215, 215, 215));
+        g.fillRect(padding + hozoffset, padding + HEIGHT - 1, 1, 1);
+        g.setColor(new Color(140, 140, 140));
+        g.fillRect(padding + hozoffset + width - 1, padding + HEIGHT - 1, 1, 1);
+
     }
 
     public void setNumberOfColumns(int numberOfColumns) {
@@ -207,8 +213,7 @@ public class MCListHeader extends Panel {
     public Dimension getPreferredSize() {
         int plength = MCList.PADDING;
         for (int i = 0; i < numberOfColumns; i++) {
-            plength += Math.min(getPreferredColumnWidth(i), getColumnWidth(i))
-                    + MCList.PADDING;
+            plength += Math.min(getPreferredColumnWidth(i), getColumnWidth(i)) + MCList.PADDING;
         }
 
         return new Dimension(plength, getHeight());
@@ -217,9 +222,9 @@ public class MCListHeader extends Panel {
     public Dimension calculateSize() {
         int plength = getRowStats().getTotalLength();
         int olength = callback.getSize().width + 250; //not, this is done to
-                                                      // avoid a flickering
-                                                      // effect that occures
-                                                      // when
+        // avoid a flickering
+        // effect that occures
+        // when
         // a panel is resized (and repainted);
         //The idea is to avoid resizing by making the panel JUST big enough
         //to not flicker most of the time.
@@ -228,8 +233,7 @@ public class MCListHeader extends Panel {
         //This effect does not happen in MacOS X, because all windows are
         // double buffered.
 
-        return new Dimension((plength > olength ? plength : olength),
-                getHeight());
+        return new Dimension((plength > olength ? plength : olength), getHeight());
     }
 
     public void setColumnName(int columnnumber, String name) {
@@ -246,13 +250,12 @@ public class MCListHeader extends Panel {
      */
     public int getColumnWidth(int i) {
         return (numberOfColumns == 1 ? callback.getPane().getViewportSize().width
-                - (2 * MCList.PADDING)
-                : getPreferredColumnWidth(i));
+                - (2 * MCList.PADDING) : getPreferredColumnWidth(i));
     }
 
     private int getPreferredColumnWidth(int i) {
-        return (columnWidthArray[i] == -1 ? getFontMetrics(getFont())
-                .stringWidth(columnarray[i] + 1)
+        return (columnWidthArray[i] == -1 ? getFontMetrics(getFont()).stringWidth(
+                columnarray[i] + 1)
                 + MCList.PADDING : columnWidthArray[i]);
     }
 
@@ -282,13 +285,12 @@ public class MCListHeader extends Panel {
     public String makeFit(String s, int size) {
 
         FontMetrics tempfont = callback.getFontMetrics(callback.getFont()); //uses
-                                                                            // default
-                                                                            // font
+        // default
+        // font
 
         int i = 0;
         if (tempfont.stringWidth(s) > size - 8) {
-            for (i = s.length(); ((tempfont.stringWidth(s.substring(0, i)
-                    + "...") > size - 8) && i > 0); i--)
+            for (i = s.length(); ((tempfont.stringWidth(s.substring(0, i) + "...") > size - 8) && i > 0); i--)
                 ;
             return s.substring(0, i) + "...";
         }
@@ -302,8 +304,7 @@ public class MCListHeader extends Panel {
 
         int xcounter = 0;
         for (int i = 0; i < numberOfColumns; i++) {
-            if (x >= xcounter
-                    && x < (rowstats.getTotalWidthOfColunm(i) + xcounter))
+            if (x >= xcounter && x < (rowstats.getTotalWidthOfColunm(i) + xcounter))
                 return i;
             xcounter += rowstats.getTotalWidthOfColunm(i);
         }

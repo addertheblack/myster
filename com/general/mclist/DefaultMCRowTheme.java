@@ -11,6 +11,7 @@ package com.general.mclist;
 
 import java.awt.Color;
 import java.awt.Component;
+import java.awt.Dimension;
 import java.awt.FontMetrics;
 import java.awt.Graphics;
 import java.util.Locale;
@@ -65,7 +66,7 @@ public class DefaultMCRowTheme implements MCRowThemeInterface {
     }
 
     public void paint(Graphics g, MCListItemInterface item, RowStats row,
-            int yoffset, int xoffset, int itemnumber) {
+            int yoffset, int xoffset, int itemnumber, Dimension dimension) {
         try {
             if (tempfont == null) {
                 tempfont = component.getFontMetrics(component.getFont()); //uses
@@ -81,10 +82,10 @@ public class DefaultMCRowTheme implements MCRowThemeInterface {
             ascent = 10;
             //descent= 10;
         }
-
+        
         //Clear secleciton to white:
         g.setColor(Color.white);
-        g.fillRect(0, yoffset, row.getTotalLength(), getHeight());
+        g.fillRect(0, yoffset, Math.max(row.getTotalLength(), dimension.width), getHeight());
 
         //Paint boxes - padding on ONE SIDE!
         if (itemnumber % 2 == 0) {
@@ -101,22 +102,32 @@ public class DefaultMCRowTheme implements MCRowThemeInterface {
 
         int hozoffset = -xoffset;
         for (int i = 0; i < row.getNumberOfColumns(); i++) {
-            g.fillRect(padding + hozoffset, yoffset + padding, row
-                    .getWidthOfColumn(i), height);
+//            g.fillRect(padding + hozoffset, yoffset + padding, row
+//                    .getWidthOfColumn(i), height);
+            paintRow(g, hozoffset, hozoffset + padding + row.getWidthOfColumn(i), padding, yoffset, height);
             hozoffset += padding + row.getWidthOfColumn(i);
         }
-
+        
+        if (hozoffset + xoffset < dimension.width ) {
+            paintRow(g, hozoffset, xoffset + dimension.width, padding, yoffset, height);
+        }
+        
         //Add text at proper off set
         //->Get correct size!!!!! ^%&!
         g.setColor(Color.black);
 
         hozoffset = -xoffset;
-        int yplace = yoffset + padding + ascent;
+        int yplace = yoffset + ascent;
         for (int i = 0; i < row.getNumberOfColumns(); i++) {
             g.drawString(makeFit(item.getValueOfColumn(i).toString(), row
                     .getWidthOfColumn(i)), hozoffset + padding, yplace);
             hozoffset += padding + row.getWidthOfColumn(i);
         }
+    }
+    
+    private void paintRow(Graphics g, int hozoffset, int end, int padding, int yOffset, int height) {
+        int width = end - hozoffset - padding;
+        g.fillRect(padding + hozoffset, yOffset, width, height);
     }
 
     public String makeFit(String s, int size) {

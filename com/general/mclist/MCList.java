@@ -223,14 +223,16 @@ public class MCList extends Panel {
             c2 = -1; //If c1=-1 the means the scroll pane is outside any
         // visible area so draw nothing.
 
-        int offsetcounter = getYFromClicked(c1) - y1; //rounding routine (get
+        int offsetcounter = getYFromClicked(c1) - y1; //rounding routine (get 
         // the offset properly.
         // Gtes initial offset.
 
         RowStats rowstats = header.getRowStats();
 
+        Dimension dimension = getPane().getViewportSize();
+        
         for (int i = c1; i <= c2; i++) {
-            rowtheme.paint(g, list.getElement(i), rowstats, offsetcounter, x1, i);
+            rowtheme.paint(g, list.getElement(i), rowstats, offsetcounter, x1, i, dimension);
             offsetcounter += rowtheme.getHeight();
         }
         g.dispose();
