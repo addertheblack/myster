@@ -1,8 +1,9 @@
 
 
 package com.myster.net;
+
 /**
-	UDP protocol manager
+	Transport manager
 */
 
 import java.io.IOException;

@@ -149,6 +149,8 @@ class BlockedThread {
 	double bytesLeft;
 	Thread thread;
 	
+	private static volatile double WAIT_LATENCY=100;
+	
 	BlockedThread(int bytesLeft, Vector threads, double rate) {
 		this.bytesLeft=bytesLeft;
 		thread=Thread.currentThread();
@@ -173,26 +175,36 @@ class BlockedThread {
 			thisRate=((double)(threads.size()))/rate;
 			sleepAmount=(int)(bytesLeft*thisRate);
 			startTime=System.currentTimeMillis();
-			sleepAmount-=5;
+			
 			if (sleepAmount<=0) {
 				thread=null;
 				return;
 			}
 			
-			
 			//below is voodoo.
-			if (sleepAmount<50&&((int)(Math.random()*(10+3*sleepAmount)))==5) {
-				thread=null;
-				return;
+			if (sleepAmount<WAIT_LATENCY) {
+				int randomNumber=(int)(Math.random()*WAIT_LATENCY);
+				if (randomNumber<(WAIT_LATENCY-sleepAmount)) {
+					thread=null;
+					System.out.println("Skip");
+					return;
+				} else {
+					sleepAmount=1;
+				}
+			} else {
+				sleepAmount-=WAIT_LATENCY;
+				if (sleepAmount<=0) sleepAmount=1;
 			}
 			
-			//below is voodoo.
-			sleepAmount-=50;
-			if (sleepAmount<=0) sleepAmount=1;
-			
-			
 			try {
-				wait(sleepAmount);
+				if (sleepAmount==1) {
+					long sstartTime=System.currentTimeMillis();
+					wait(sleepAmount);
+					WAIT_LATENCY=System.currentTimeMillis()-sstartTime;
+					System.out.println("Wait latency: "+WAIT_LATENCY);
+				} else {
+					wait(sleepAmount);
+				}
 			} catch (InterruptedException ex) {
 				ex.printStackTrace();
 			} //unexpected error!
