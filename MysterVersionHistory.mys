@@ -1068,6 +1068,7 @@ Work on DEV 8:
 	  	-> Added code documentation
 		-> Made it so menu bars appear on progress windows.
 		-> Made it so all windows have a nice looking Myster icon.
+		-> Made multi source download automatically adapt to faster servers.
 		
 (Red List)
 to do:
