@@ -1026,6 +1026,11 @@ Work on DEV 8:
 		-> Made the startup progress window look pretty.
 		-> Made the file download progress windows show sensible messages when they are negotiating
 				a new transfer...
+		-> Added another work around to try and stop the progress windows from freezing Myster.
+		-> Added some code to deal with a bug in MacOS X and 1.3.1.. If the user drags a progress window
+				while the progress window tried to resize, the resizing won't work. Myster now tries to
+				resize the window 20 times (once every half second) before giving up.
+		-> Mster is now 28414 lines of code.
 		
 		
 (Red List)

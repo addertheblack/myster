@@ -50,8 +50,28 @@ public class ProgressWindow extends Frame {
 	
 	protected synchronized void resize() {
 		Insets insets = getInsets();
-		//try { Thread.sleep(1000); } catch (Exception ex) {}
-		setSize(X_SIZE + insets.right + insets.left, AD_HEIGHT + (Y_SIZE * progressPanels.size()) + insets.top + insets.bottom);
+		
+		//Usually I would do a setSize() and leave it at that but
+		//MacOS X 1.3.1 tends to ignore my setSize command if
+		//the user is dragging the window and/or crash if
+		//I continue too soon after sending it. *sigh*
+		int xSize = X_SIZE + insets.right + insets.left;
+		int ySize = AD_HEIGHT + (Y_SIZE * progressPanels.size()) + insets.top + insets.bottom;
+		int counter = 0;
+		while ((getSize().width != xSize) || (getSize().height != ySize)) {
+			setSize(xSize, ySize);
+			try { Thread.sleep(500); } catch (Exception ex) {} //an attempt to stop crashing on resizing...
+			counter ++;
+			
+			if (counter > 20) {
+				System.out.println("Fine, I won't resize the window, but it will be the wrong size!");
+				break;
+			}
+			
+			if (counter > 1) {
+				System.out.println("I have tried "+counter+" times to change the size of the progress window!");
+			}
+		}
 	}
 	
 	// methods to update progress window text 

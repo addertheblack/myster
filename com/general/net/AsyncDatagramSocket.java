@@ -20,11 +20,15 @@ public final class AsyncDatagramSocket {
 	private ManagerThread managerThread;
 	private LinkedList queue=new LinkedList();
 	private int port;
+	private DatagramPacket bufferPacket;
+	private static final int BIG_BUFFER = 65536;
 
 	public AsyncDatagramSocket(int port) throws IOException {
 		this.port=port;
 		
 		open(port);
+		
+		bufferPacket = new DatagramPacket(new byte[BIG_BUFFER], BIG_BUFFER);
 		
 		managerThread=new ManagerThread();
 		managerThread.start();
@@ -53,19 +57,15 @@ public final class AsyncDatagramSocket {
 	}
 	
 	private void doGetNewPackets() throws IOException {
-		final int BIG_BUFFER = 65536;
-	
-		DatagramPacket p=new DatagramPacket(new byte[BIG_BUFFER], BIG_BUFFER);
-	
 		int counter=0;
 		long startTime=System.currentTimeMillis();
 		while(System.currentTimeMillis()-startTime<50) {
 			try {
-				p.setLength(BIG_BUFFER);
+				bufferPacket.setLength(BIG_BUFFER);
 			
-				dsocket.receive(p);
+				dsocket.receive(bufferPacket);
 				
-				if (portListener!=null) portListener.packetReceived(new ImmutableDatagramPacket(p));
+				if (portListener!=null) portListener.packetReceived(new ImmutableDatagramPacket(bufferPacket));
 			} catch (InterruptedIOException ex) {
 			
 			}
