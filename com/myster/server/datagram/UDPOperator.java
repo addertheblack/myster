@@ -13,10 +13,7 @@ import com.general.net.AsyncDatagramSocket;
 	deprecated. now useless.. To be removed.
 */
 public class UDPOperator implements AsyncDatagramListener{
-	int port;
 	AsyncDatagramSocket dsocket=null;
-	ImmutableDatagramPacket workingPacket;
-	ImmutableDatagramPacket outgoingPacket;
 	
 	
 	public UDPOperator (AsyncDatagramSocket dsocket) {

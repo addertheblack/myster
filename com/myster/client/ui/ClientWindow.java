@@ -14,8 +14,9 @@ package com.myster.client.ui;
 
 import java.awt.*;
 import java.awt.event.*;
+
 import com.general.util.*;
-import com.myster.menubar.MysterMenuBar;
+
 import com.myster.util.Sayable;
 import com.myster.ui.MysterFrame;
 import com.myster.type.MysterType;
@@ -29,7 +30,6 @@ public class ClientWindow extends MysterFrame implements Sayable{
 	FileList filelist;
 	FileInfoPane pane;
 	String currentip;
-	MysterMenuBar menubar;
 	Button instant;
 	
 	MessageField msg;

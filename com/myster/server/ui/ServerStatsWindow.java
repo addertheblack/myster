@@ -23,7 +23,7 @@ public class ServerStatsWindow extends MysterFrame implements Sayable {
 	
 	DownloadInfoPanel downloadPanel;
 	StatsInfoPanel statsinfopanel;
-	GraphInfoPanel graphinfopanel;
+	//GraphInfoPanel graphinfopanel;
 
 	
 	public final static int XSIZE=600;

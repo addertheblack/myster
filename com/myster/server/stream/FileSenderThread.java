@@ -160,7 +160,7 @@ public class FileSenderThread extends ServerThread {
 		private File file;
 		private MysterSocket socket;
 		private DataInputStream in, fin;
-		private DataOutputStream out, fout;
+		private DataOutputStream out;
 		
 		//Managers
 		private FileTypeListManager typelist;

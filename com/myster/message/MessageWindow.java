@@ -19,8 +19,6 @@ public class MessageWindow extends MysterFrame {
 	
 	private MessageWindowButtonBar bar;
 	
-	private boolean type;
-	
 	MessageTextArea quoteArea, messageArea;
 	
 	public static final boolean NEW_MESSAGE = true;
@@ -109,15 +107,7 @@ public class MessageWindow extends MysterFrame {
 			}
 		});
 	}
-	
-	public boolean hasReply() {
-		return false;
-	}
-	
-	public boolean isReply() {
-		return type;
-	}
-	
+
 	private void closeThisWindow() {
 		close();
 		//dispose();

@@ -5,8 +5,6 @@ import com.myster.mml.MMLException;
 import com.myster.mml.MML;
 
 public class PreferencesMML extends RobustMML {
-	private boolean trace;
-	
 	public PreferencesMML() {
 		super();
 	}

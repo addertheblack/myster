@@ -38,8 +38,6 @@ public class IPListManager { //aka tracker
 	
 	IPList[] list;
 	TypeDescription[] tdlist;
-
-	IPList iplist;
 	
 	BlockingQueue blockingQueue=new BlockingQueue();
 	

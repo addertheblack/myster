@@ -11,13 +11,13 @@ Copyright Andrew Trumper 2000-2001
 
 package com.myster.search.ui;
 
-import com.general.mclist.*;
-
 import java.awt.*;
 import java.io.*;
 import java.net.*;
+
 import com.general.util.*;
-import com.myster.menubar.MysterMenuBar;
+import com.general.mclist.*;
+
 import com.myster.search.SearchResultListener;
 import com.myster.search.SearchResult;
 import com.myster.util.Sayable;
@@ -36,8 +36,6 @@ public class SearchWindow extends MysterFrame implements SearchResultListener, S
 	Label label;
 	TypeChoice choice;
 	MessageField msg;
-	//SearchResultBucket bucket;
-	MysterMenuBar menubar;
 	
 	TextSpinner spinner=new TextSpinner();
 	

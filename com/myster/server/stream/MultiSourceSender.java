@@ -50,7 +50,7 @@ public class MultiSourceSender extends ServerThread {
 	}
 
 	public void section(ConnectionContext context) throws IOException {
-		MultiSourceDownloadInstance download = new MultiSourceDownloadInstance((ServerDownloadDispatcher)(context.sectionObject), context.transferQueue);
+		MultiSourceDownloadInstance download = new MultiSourceDownloadInstance((ServerDownloadDispatcher)(context.sectionObject), context.transferQueue, new MysterAddress(context.socket.getInetAddress()));
 		
 		try {
 			download.download(context.socket);
@@ -76,10 +76,11 @@ public class MultiSourceSender extends ServerThread {
 		
 		TransferQueue transferQueue;
 		
-		public MultiSourceDownloadInstance(ServerDownloadDispatcher dispatcher, TransferQueue transferQueue) {
+		public MultiSourceDownloadInstance(ServerDownloadDispatcher dispatcher, TransferQueue transferQueu, MysterAddress remoteIP) {
 			this.dispatcher 	= dispatcher;
 			this.downloadInfo 	= new Stats();
 			this.transferQueue	= transferQueue;
+			this.remoteIP		= remoteIP;
 			
 			fireEvent(ServerDownloadEvent.SECTION_STARTED, -1);
 		}

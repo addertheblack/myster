@@ -4,6 +4,9 @@
 	Title:			Server Stats Window Test App
 	Author:			Andrew Trumper
 	Description:	An app to test the server stats window
+	
+	
+	THIS CLASS IS NOT YET IMPLEMENTED!
 */
 
 package com.myster.server.ui;
