@@ -17,8 +17,8 @@ public class SimpleFileHash extends FileHash implements Serializable {
 		return (byte[])hash.clone();
 	}
 	
-	public int getHashLength() {
-		return hash.length;
+	public short getHashLength() {
+		return (short)hash.length;
 	}
 	
 	public String getHashName() {

@@ -24,7 +24,7 @@ public class HashManager implements Runnable {
 	public static final String MD5 = "md5";
 	public static final String SHA1 = "sha1";
 	
-	private static final String[] hashTypes = {MD5, SHA1};
+	private static final String[] hashTypes = {MD5};
 	
 	private static HashManager hashManager;
 	

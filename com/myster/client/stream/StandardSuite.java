@@ -13,10 +13,11 @@ import com.myster.mml.RobustMML;
 import com.myster.mml.MMLException;
 import com.myster.search.MysterFileStub;
 import com.myster.type.MysterType;
+import com.myster.hash.FileHash;
 
 
 /**
-	Contains many of the more common stream based connection sections.
+	Contains many of the more common (simple!) stream based connection sections.
 */
 
 public class StandardSuite {
@@ -146,6 +147,36 @@ public class StandardSuite {
 		} catch (MMLException ex) {
 			throw new ProtocolException("Server sent a corrupt MML String.");
 		}
+	}
+	
+	
+	public static String getFileFromHash(MysterAddress ip, MysterType type, FileHash hash) throws IOException  {
+		MysterSocket socket=null;
+		try {
+			socket=MysterSocketFactory.makeStreamConnection(ip);
+			return getFileFromHash(socket, type, hash);
+		} finally {
+			disconnectWithoutException(socket);
+		}
+	}
+	
+	public static String getFileFromHash(MysterSocket socket, MysterType type, FileHash hash) throws IOException  {
+		socket.out.writeInt(150);
+		
+		checkProtocol(socket.in);
+		
+		socket.out.writeInt(type.getAsInt());
+		
+		socket.out.writeUTF(hash.getHashName());
+		
+		socket.out.writeShort(hash.getHashLength());
+		
+		byte[] byteArray = hash.getBytes();
+		
+		socket.out.write(byteArray,0,byteArray.length);
+
+		return socket.in.readUTF();
+
 	}
 
 	public static void checkProtocol(DataInputStream in) throws IOException {

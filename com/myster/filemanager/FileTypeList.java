@@ -148,32 +148,22 @@ class FileTypeList extends MysterThread{
 	*
 	*	@return	an array of all the shared file with the hashes
 	*/
-	public synchronized FileItem[] getListFromHash(FileHash[] hashes) {
+	public synchronized FileItem getFileFromHash(FileHash hash) {
 		assertFileList();	//This must be called before working with filelist or rootdir internal variables.
 	
-		Vector files = new Vector(10,10);
 		for (int i=0; i<filelist.size(); i++) {
-			if (isMatch((FileItem)filelist.elementAt(i), hashes)) files.addElement(filelist.elementAt(i));
+			if (isMatch((FileItem)filelist.elementAt(i), hash)) return (FileItem)filelist.elementAt(i);
 		}
-		
-		FileItem[] items = new FileItem[files.size()];
-		for (int i=0; i<items.length; i++) {
-			items[i] = (FileItem)files.elementAt(i);
-		}
-		
-		return items;
+
+		return null;
 	}
 	
-	private boolean isMatch(FileItem item, FileHash[] hashes) {
-		for (int i=0; i<hashes.length; i++) {
-			FileHash hash = item.getHash(hashes[i].getHashName());
+	private boolean isMatch(FileItem item, FileHash hash) {
+		FileHash myHash = item.getHash(hash.getHashName());
 			
-			if (hash == null) continue;
-			
-			if (!hash.equals(hashes[i])) return false;
-		}
+		if (myHash == null) return false;
 		
-		return true;
+		return hash.equals(myHash);
 	}
 	
 	/**

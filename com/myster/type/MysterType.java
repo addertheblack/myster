@@ -12,6 +12,10 @@ public class MysterType {
 		this.type = (byte[]) type.clone();
 	}
 	
+	public MysterType(int type) {
+		this(new byte[]{(byte)((type>>24) & 0xFF), (byte)((type>>16) & 0xFF),(byte)((type>>8) & 0xFF), (byte)((type>>0) & 0xFF)});
+	}
+	
 	public boolean equals(Object o) {
 		MysterType other = (MysterType)o;
 		
@@ -23,10 +27,14 @@ public class MysterType {
 	}
 	
 	public int hashCode() {
+		return getAsInt();
+	}
+	
+	public int getAsInt() {
 		int temp = 0;
-		for (int i = type.length; i >0; i--) {
+		for (int i = 0; i<type.length; i++) {
 			temp <<= 8;
-			temp |= ((int)(type[i-1]) & 0xFF);
+			temp |= ((int)(type[i]) & 0xFF);
 		}
 		
 		return temp;

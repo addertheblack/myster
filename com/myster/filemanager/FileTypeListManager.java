@@ -136,10 +136,10 @@ public class FileTypeListManager{
 	*	@param	a MysterType
 	*	@return	an array of Myster file identifiers. In this implementation, a list of file names. (else null if invalid fil type)
 	*/
-    public FileItem[] getListFromHash(MysterType type, FileHash[] hashes) {
+    public FileItem getFileFromHash(MysterType type, FileHash hashes) {
     	FileTypeList list = getFileTypeList(type);
         if (list == null) return null;
-        return list.getListFromHash(hashes);
+        return list.getFileFromHash(hashes);
     }
 
 
