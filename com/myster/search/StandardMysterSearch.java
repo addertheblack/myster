@@ -3,6 +3,7 @@ package com.myster.search;
 import java.io.IOException;
 import java.util.Vector;
 
+import com.general.util.Util;
 import com.myster.mml.RobustMML;
 import com.myster.net.DisconnectException;
 import com.myster.net.MysterAddress;
@@ -38,14 +39,28 @@ public class StandardMysterSearch implements MysterSearchClientSection {
             throw new DisconnectException();
 
         if (searchResults.size() != 0) {
-            MysterSearchResult[] searchArray = new MysterSearchResult[searchResults.size()];
-            
+            final MysterSearchResult[] searchArray = new MysterSearchResult[searchResults.size()];
+
             for (int i = 0; i < searchArray.length; i++) {
-                searchArray[i] = new MysterSearchResult(new MysterFileStub(address,
-                        type, (String) (searchResults.elementAt(i))));
+                searchArray[i] = new MysterSearchResult(new MysterFileStub(address, type,
+                        (String) (searchResults.elementAt(i))));
             }
-            
-            listener.addSearchResults(searchArray);
+
+            try {
+                Util.invokeAndWait(new Runnable() {
+                    public void run() {
+                        listener.addSearchResults(searchArray);
+                    }
+                });
+            } catch (InterruptedException ex) {
+                if (endFlag) {
+                    throw new DisconnectException();
+                } else {
+                    ex.printStackTrace();
+                    throw new DisconnectException();
+                }
+                    
+            }
 
             dealWithFileStats(socket, type, searchArray, listener);
 
@@ -89,8 +104,9 @@ public class StandardMysterSearch implements MysterSearchClientSection {
      *             (also a Disconnect exception) throws this exception on IO
      *             errors an if the search object is told to die (die die die!).
      */
-    public void dealWithFileStats(MysterSocket socket, MysterType type, MysterSearchResult[] mysterSearchResults,
-            SearchResultListener listener) throws IOException {
+    public void dealWithFileStats(MysterSocket socket, MysterType type,
+            MysterSearchResult[] mysterSearchResults, SearchResultListener listener)
+            throws IOException {
         //This is a speed hack.
         int pointer = 0;
         int current = 0;

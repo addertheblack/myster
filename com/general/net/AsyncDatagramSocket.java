@@ -13,6 +13,7 @@ import java.net.DatagramPacket;
 import java.net.DatagramSocket;
 
 import com.general.util.LinkedList;
+import com.general.util.Util;
 
 public final class AsyncDatagramSocket {
     private AsyncDatagramListener portListener;
@@ -71,9 +72,14 @@ public final class AsyncDatagramSocket {
 
                 dsocket.receive(bufferPacket);
 
-                if (portListener != null)
-                    portListener.packetReceived(new ImmutableDatagramPacket(
-                            bufferPacket));
+                if (portListener != null) {
+                    Util.invoke(new Runnable() {
+                        public void run() {
+                            portListener.packetReceived(new ImmutableDatagramPacket(
+                                    bufferPacket));
+                        }
+                    });
+                }
             } catch (InterruptedIOException ex) {
                 return;
             }
