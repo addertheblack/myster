@@ -180,7 +180,7 @@ public class ClientWindow extends MysterFrame implements Sayable {
 
         setResizable(true);
         setSize(XDEFAULT, YDEFAULT);
-        show(true);
+        setVisible(true);
 
         //filelisting.addActionListener(???);
         final ActionListener connectButtonEvent = new ActionListener(){

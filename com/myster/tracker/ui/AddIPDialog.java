@@ -75,7 +75,7 @@ public class AddIPDialog extends Dialog {
 
         ok = new Button("OK");
 
-        reshape(0, 0, XDEFAULT, YDEFAULT);
+        setBounds(0, 0, XDEFAULT, YDEFAULT);
 
         addComponent(speed, 0, 0, 1, 1, 0, 0);
         addComponent(textentry, 0, 1, 1, 1, 99, 0);

@@ -273,7 +273,7 @@ public class BannersManager {
         }
 
         private void refreshImagesList() {
-            list.clear();
+            list.removeAll();
 
             String[] directoryListing = getImageNameList();
 

@@ -102,6 +102,7 @@ public class MysterAddress {
     }
 
     public boolean equals(Object aa) {
+        if (!(aa instanceof MysterAddress)) return false;
         MysterAddress a = (MysterAddress) aa;
         if (fullAddress.equals(a.fullAddress) && (port == a.port))
             return true;

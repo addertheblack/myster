@@ -283,7 +283,7 @@ public class PreferencesDialogBox extends MysterFrame { //protected...!
                 if (pp_temp != null)
                     showerPanel.remove(pp_temp);
                 hash.remove(type);
-                if (list.countItems() != 0) {
+                if (list.getItemCount() != 0) {
                     list.select(0);
                 }
             }

@@ -89,7 +89,7 @@ public class JarClassLoader extends ClassLoader {
             if (c == null) {
                 System.out.println("Loading class : " + name);
                 byte data[] = loadClassData(name);
-                c = defineClass(data, 0, data.length);
+                c = defineClass(name, data, 0, data.length);
                 cache.put(name, c);
             }
             if (resolve)
