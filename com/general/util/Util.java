@@ -7,7 +7,7 @@ import java.awt.Frame;
 import java.awt.Image;
 import java.awt.MediaTracker;
 import java.awt.Toolkit;
-import java.awt.event.ActionEvent;
+import java.awt.event.ComponentEvent;
 import java.net.URL;
 
 //import Myster;
@@ -161,13 +161,13 @@ public class Util { //This code was taken from an Apple Sample Code package,
     /*
      * We can use this event to put our runnable object into.
      */
-    private static class SpecialEvent extends ActionEvent {
+    private static class SpecialEvent extends ComponentEvent {
         private final Runnable runnable;
 
         private final long startTime = System.currentTimeMillis();
 
         public SpecialEvent(Runnable runnable, Component source) {
-            super(source, ActionEvent.ACTION_PERFORMED, "");
+            super(source, ComponentEvent.COMPONENT_FIRST);
             this.runnable = runnable;
         }
 
@@ -186,10 +186,10 @@ public class Util { //This code was taken from an Apple Sample Code package,
 
     private static class SpecialComponent extends Component {
         public SpecialComponent() {
-            enableEvents(ActionEvent.ACTION_EVENT_MASK);
+            enableEvents(ComponentEvent.COMPONENT_EVENT_MASK);
         }
 
-        public void processEvent(AWTEvent e) {
+        protected void processEvent(AWTEvent e) {
             ((SpecialEvent) e).run();
         }
         
