@@ -54,7 +54,7 @@ public class Myster{
 	public static void main(String args[]) {
 		final boolean isServer=(args.length>0&&args[0].equals("-s"));
 		
-		//Locale.setDefault(new Locale(Locale.JAPANESE.getLanguage(),Locale.JAPAN.getCountry()));
+		Locale.setDefault(new Locale(Locale.JAPANESE.getLanguage(),Locale.JAPAN.getCountry()));
 		try {
 			resources = ResourceBundle.getBundle("com.properties.Myster");
 		}
@@ -311,8 +311,9 @@ public class Myster{
 		try {
 			return resources.getString(text);
 		}
-		catch (MissingResourceException e) {
+		catch (MissingResourceException ex) {
 			System.err.println("missing translation key: \"" + text + "\"");
+			ex.printStackTrace();
 			return text;
 		}
 	}

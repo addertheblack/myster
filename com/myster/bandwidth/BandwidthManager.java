@@ -152,37 +152,34 @@ class BlockedThread {
 	}
 	
 	public synchronized void reSleep() {
-
-			if (thread!=null) thread.interrupt();
-		
+		if (thread!=null) {
+			notify();
+		}
 	}
 	
 	public synchronized void sleepNow() {
-		try {
-			for (;;) {
-				double thisRate;int sleepAmount;long startTime;
+		for (;;) {
+			double thisRate;int sleepAmount;long startTime;
 
-					 thisRate=((double)(threads.size()))/rate;
-					 sleepAmount=(int)(bytesLeft*thisRate);
-					 startTime=System.currentTimeMillis();
-					if (sleepAmount<=0) {
-						thread=null;
-						try {wait(1);} catch (InterruptedException ex) {}
-						return;
-					}
-				
-				
-				try {
-					wait(sleepAmount);
-				} catch (InterruptedException ex) {
-						double timeSlept=(System.currentTimeMillis()-startTime);
-						subStractBytes((int)(timeSlept/thisRate)); //avoid divide by 0
-					continue;
-				}
+			thisRate=((double)(threads.size()))/rate;
+			sleepAmount=(int)(bytesLeft*thisRate);
+			startTime=System.currentTimeMillis();
+			sleepAmount-=10;
+			if (sleepAmount<=0) {
+				thread=null;
 				return;
 			}
-		} finally {
-			thread=null;
+			
+			
+			try {
+				wait(sleepAmount);
+			} catch (InterruptedException ex) {
+				ex.printStackTrace();
+			} //unexpected error!
+			
+			double timeSlept=(System.currentTimeMillis()-startTime);
+			bytesLeft-=(timeSlept/thisRate); //avoid divide by 0
+
 		}
 	}
 }
