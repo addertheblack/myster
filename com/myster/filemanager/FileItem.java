@@ -43,9 +43,9 @@ public class FileItem {
         return -1;
     }
 
-    private synchronized void setHash(FileHash[] fileHashes) {
-        this.fileHashes = fileHashes;
-    }
+//    private synchronized void setHash(FileHash[] fileHashes) {
+//        this.fileHashes = fileHashes;
+//    }
 
     public synchronized FileHash getHash(String hashType) {
         int index = getIndex(hashType);
