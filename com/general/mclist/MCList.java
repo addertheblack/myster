@@ -151,7 +151,8 @@ public class MCList extends Panel {
         if (previousimagex != pane.getViewportSize().width || //makes sure the
                 // image buffer is
                 // up to date!
-                previousimagey != pane.getViewportSize().height) {
+                previousimagey != pane.getViewportSize().height
+                || true) {
             im = createImage(pane.getViewportSize().width, pane.getViewportSize().height
                     - header.getHeight());//new
             // BufferedImage(pane.getViewportSize().width,pane.getViewportSize().height-header.getHeight(),BufferedImage.TYPE_INT_BGR);//
