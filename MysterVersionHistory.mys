@@ -765,4 +765,6 @@ Work on DEV 8:
     	
   Work on DEV 16
     2002/10/26
-    	-> 
+    	-> Found work arounf for double clicking on an awt.List object fire two double click events
+    	-> Found work around for downloading files with japaneese chars chrashes english systems.
+    	-> Tweaked thread distribution.
