@@ -247,16 +247,5 @@ public class MCListHeader extends Panel {
 			}
 		}
 		return -1;
-		
-		/*
-		int[] columnWidthArray=getColumnWidthArray();
-		for (int i=0; i<columnWidthArray.length; i++) {
-			counter+=columnWidthArray[i];
-			if (x<counter+CLICK_LATITUDE&&x>counter-CLICK_LATITUDE) {
-				return i;
-			}
-		}
-		return -1;
-		*/
 	}
 }

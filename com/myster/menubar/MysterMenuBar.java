@@ -156,7 +156,7 @@ public class MysterMenuBar extends MenuBar {
 			//Myster menu items
 			special.addElement(new MysterMenuItemFactory("Add IP",							new AddIPMenuAction(new Frame())));
 			special.addElement(new MysterMenuItemFactory("Show Server Stats", 				new StatsWindowAction(), 			java.awt.event.KeyEvent.VK_S, true));
-			special.addElement(new MysterMenuItemFactory("Show tracker",					new TrackerWindowAction(), 			java.awt.event.KeyEvent.VK_T));
+			special.addElement(new MysterMenuItemFactory("Show Tracker",					new TrackerWindowAction(), 			java.awt.event.KeyEvent.VK_T));
 			
 			//Myster plugins Menu
 			plugins=new Vector();
