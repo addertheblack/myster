@@ -41,7 +41,7 @@ public class DownloadInfoPanel extends Panel {
 	public void inited() {
 		setLayout(null);
 
-		list=new MCList(6, true, this);
+		list=new MCList(6, false, this);
 
 		ScrollPane p=list.getPane();
 		
@@ -136,13 +136,17 @@ public class DownloadInfoPanel extends Panel {
 		}
 		
 		public void disconnectSelected() {
-			if (list.getSelectedIndex()==-1) return; //fix this so buttons are disabled.
-			((ServerDownloadDispatcher)(list.getItem(list.getSelectedIndex()))).getDownloadInfo().disconnectClient(); //isn't this a great line or what?
+			int[] array=list.getSelectedIndexes();
+			for (int i=0; i<array.length; i++) {
+				((ServerDownloadDispatcher)(list.getItem(array[i]))).getDownloadInfo().disconnectClient(); //isn't this a great line or what?
+			}
 		}
 		
 		public void newConnectWindow() {
-		if (list.getSelectedIndex()==-1) return; //fix this so buttons are disabled.
-			(new ClientWindow(""+(((DownloadMCListItem)(list.getMCListItem(list.getSelectedIndex())))).getAddress())).show();
+			int[] array=list.getSelectedIndexes();
+			for (int i=0; i<array.length; i++) {
+				(new ClientWindow(""+(((DownloadMCListItem)(list.getMCListItem(array[i])))).getAddress())).show();
+			}
 		}
 		
 		

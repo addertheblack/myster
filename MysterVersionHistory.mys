@@ -762,9 +762,12 @@ Work on DEV 8:
     	-> re-wrote menubar code
     	-> Finished MacOS X plugin.
     	-> Myster is now 18429 lines of yummy java goodness
-    	
+
   Work on DEV 16
     2002/10/26
     	-> Found work arounf for double clicking on an awt.List object fire two double click events
-    	-> Found work around for downloading files with japaneese chars chrashes english systems.
+    	-> Eleminated one thread per download (progress windows now use Timer Class)
     	-> Tweaked thread distribution.
+    	-> tweaked font usgae in MacOS X
+    	
+    	
