@@ -133,69 +133,116 @@ public class StandardSuite {
 	*	THIS ROUTINE IS ASYNCHRONOUS!
 	*/
 	public static void downloadFile(final MysterAddress ip, final MysterFileStub stub) {
-		(new Thread() { //routine is completely asynchronous
-			public void run() {
-				MysterSocket socket=null;
-				try {
-					socket=MysterSocketFactory.makeStreamConnection(ip);
-				} catch (Exception ex) {
-				 	com.general.util.AnswerDialog.simpleAlert("Could not connect to server.");
-				 	return;
+		(new DownloadThread(ip, stub)).start();
+	}
+	
+	private static class DownloadThread extends com.myster.util.MysterThread {
+		private MysterAddress ip;
+		private MysterFileStub stub;
+	
+		public DownloadThread(MysterAddress ip, MysterFileStub stub) {
+			this.ip = ip;
+			this.stub = stub;
+		}
+	
+		public void run() {
+			MysterSocket socket=null;
+			try {
+				socket=MysterSocketFactory.makeStreamConnection(ip);
+			} catch (Exception ex) {
+			 	com.general.util.AnswerDialog.simpleAlert("Could not connect to server.");
+			 	return;
+			}
+			
+			try {
+				downloadFile(socket, stub);
+			} catch (IOException ex) {
+				//..
+			} finally {
+				disconnectWithoutException(socket);
+			}
+			
+		}
+		
+			// should not be public
+		private void downloadFile(final MysterSocket socket, final MysterFileStub stub ) throws IOException {
+			final com.myster.util.FileProgressWindow progress = new com.myster.util.FileProgressWindow("Connecting..");
+			
+			progress.setTitle("Downloading " + stub.getName());
+			progress.setText("Starting...");
+			
+			progress.show();
+			
+			progress.addWindowListener(new java.awt.event.WindowAdapter() {
+				public void windowClosing(java.awt.event.WindowEvent e) {
+					StandardSuite.DownloadThread.this.flagToEnd();
+					
+					progress.hide();
+				}
+			});
+			
+			try {
+				progress.setText("Getting File Statistics...");
+				
+				if (endFlag) return;
+				RobustMML mml = getFileStats(socket, stub);
+			
+				progress.setText("Trying to use multi-source download...");
+				
+				final boolean DONT_USE_MULTISOURCE = false;
+				if (DONT_USE_MULTISOURCE) throw new IOException ("Toss and catch: Multisource download diabled");
+				
+				if (endFlag) return;
+				
+				File theFile = MultiSourceUtilities.getFileToDownloadTo(stub, progress);
+				
+				synchronized (StandardSuite.DownloadThread.this) {
+					if (endFlag) return;
+				
+					msDowload = new MultiSourceDownload(stub, MultiSourceUtilities.getHashFromStats(mml), MultiSourceUtilities.getLengthFromStats(mml), new MSDownloadHandler(progress, theFile), new RandomAccessFile(theFile, "rw"));
 				}
 				
+				msDowload.run();
+			} catch (IOException ex) {
+				ex.printStackTrace();
+			
 				try {
-					downloadFile(socket, stub);
-				} catch (IOException ex) {
-					//..
-				} finally {
-					disconnectWithoutException(socket);
+					progress.setText("Trying to use normal download...");
+					
+					synchronized (StandardSuite.DownloadThread.this) {
+						if (endFlag);
+					
+						secondDownload = new DownloaderThread(MysterSocketFactory.makeStreamConnection(stub.getMysterAddress()), stub, progress);
+					}
+					secondDownload.run();
+				} catch (IOException exp) {
+					progress.setText("Could not download file by either method...");
 				}
 			}
-		}).start();
-	}
-	
-	
-	// should not be public
-	private static void downloadFile(final MysterSocket socket, final MysterFileStub stub ) throws IOException {
-		com.myster.util.FileProgressWindow progress = new com.myster.util.FileProgressWindow("Connecting..");
-		
-		progress.setTitle("Downloading " + stub.getName());
-		progress.setText("Starting...");
-		
-		progress.show();
-		
-		progress.addWindowListener(new java.awt.event.WindowAdapter() {
-			public void windowClosing(java.awt.event.WindowEvent e) {
-				//((java.awt.Frame)e.getWindow()).setVisible(false);
-			}
-		});
-		
-		try {
-			progress.setText("Getting File Statistics...");
-			RobustMML mml = getFileStats(socket, stub);
-		
-			progress.setText("Trying to use multi-source download...");
-			
-			final boolean DONT_USE_MULTISOURCE = false;
-			if (DONT_USE_MULTISOURCE) throw new IOException ("Toss and catch: Multisource download diabled");
-			
-			File theFile = MultiSourceUtilities.getFileToDownloadTo(stub, progress);
-			MultiSourceDownload download = new MultiSourceDownload(stub, MultiSourceUtilities.getHashFromStats(mml), MultiSourceUtilities.getLengthFromStats(mml), new MSDownloadHandler(progress, theFile), new RandomAccessFile(theFile, "rw"));
-			
-			download.run();
-		} catch (IOException ex) {
-			ex.printStackTrace();
-		
-			try {
-				progress.setText("Trying to use normal download...");
-				DownloaderThread secondDownload = new DownloaderThread(MysterSocketFactory.makeStreamConnection(stub.getMysterAddress()), stub, progress);
-				secondDownload.start();
-			} catch (IOException exp) {
-				progress.setText("Could not download file by either method...");
-			}
 		}
-
+	
+		MultiSourceDownload msDowload;
+		DownloaderThread secondDownload;
+		boolean endFlag;
+		
+		public synchronized void flagToEnd() {
+			endFlag = true;
+			
+			if (msDowload!=null) msDowload.flagToEnd();
+			
+			if (secondDownload!=null) secondDownload.end();
+		}
+		
+		public void end() {
+			flagToEnd();
+			
+			//try {
+			//	join();
+			//} catch (InterruptedException ex) {}
+		}
 	}
+	
+
 	
 	public static RobustMML getFileStats(MysterAddress ip, MysterFileStub stub) throws IOException  {
 		MysterSocket socket=null;

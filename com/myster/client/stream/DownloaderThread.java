@@ -53,7 +53,7 @@ public class DownloaderThread extends SafeThread {
 	
 	File finalFile;
 	File fileToWriteTo;
-	
+
 	
 	final int BUFFERSIZE=2024;	//I like turnips
 	
