@@ -11,6 +11,7 @@ Copyright Andrew Trumper 2001
 package com.general.mclist;
 
 import java.awt.*;
+import java.util.Locale;
 
 public class DefaultMCRowTheme implements MCRowThemeInterface {
 	private int padding=0;
@@ -26,12 +27,13 @@ public class DefaultMCRowTheme implements MCRowThemeInterface {
 	private static final Color lightselectedc=new Color(205,205,255), selectedc=new Color(200,200,250) , lightc=new Color(240,240,240), c=new Color(230,230,230);
 	private Color backgroundColor=lightc;
 	
+	private boolean filterNonEnglish;
 	
 	public DefaultMCRowTheme(Component c, int padding){
 		component=c;
 		this.padding=padding;
 		
-
+		filterNonEnglish=Locale.getDefault().getDisplayLanguage().equals(Locale.ENGLISH.getDisplayLanguage());
 	}
 	
 	public int getHeight() {
@@ -100,6 +102,15 @@ public class DefaultMCRowTheme implements MCRowThemeInterface {
 			descent= tempfont.getDescent();
 		}
 		
+		if (filterNonEnglish) {
+			char[] array=s.toCharArray();
+			for (int i=0; i<array.length; i++) {
+				if (128<array[i]) {
+					array[i]='?';
+				}
+			}
+			s=new String(array);
+		}
 		
 		int i=0;
 		if (tempfont.stringWidth(s)>size-8) {
