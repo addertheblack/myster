@@ -837,7 +837,7 @@ Work on DEV 8:
 	Work on DEV 18.2 (PR 6)
 	  2003/04/20
 	  	-> Fixed a very old bug to do with servers that are found down ONCE are never checked again to see
-	  			if they came back up. VERY old bug.
+	  			if they came back up. VERY old bug. (thanx to Warcraft III)
 	  	-> Added a MysterType class to repesent the 4 byte Myster file type internally
 	  	-> Re-did the File Description List code completely (a pre-requisit to multi source download)
 	  	-> Added an I18n class to support multiple languages in Myster.
@@ -858,4 +858,6 @@ Work on DEV 8:
 	  	-> Added an event system to the hash manage to deal with enable / disable
 	  	-> Added a GUI to turn of File Hashing. Plz don't turn it off!
 	  	-> Made a work around for the double click bug with awt.list in MRJ 1.3.X for banners..
+	  	-> Enhanced the HashManager Event system. Trying to make hashManager module have a proper
+	  			front end/back end split.
 	  	
