@@ -53,8 +53,8 @@ public class PongTransport extends DatagramTransport {
 	
 	
 	/**
-	* Private methos for code reuse.
-	* should NOT be in any chychronized block.
+	* Private method for code reuse.
+	* should NOT be in any sychronized block.
 	*/
 	private void dispatch(MysterAddress param_address, ImmutableDatagramPacket immutablePacket, PongItemStruct pongItem) {
 		long pingTime=System.currentTimeMillis()-pongItem.timeStamp;
@@ -65,7 +65,7 @@ public class PongTransport extends DatagramTransport {
 	}
 	
 	/**
-		For code re-use purposes ONLY!.. should be inlined! Should be in sychronized block.
+		For code re-use purposes ONLY!.. should be inlined! *Should* be in sychronized block.
 	*/
 	private void justBeforeDispatch(MysterAddress param_address, PongItemStruct pongItem) {
 		pongItem.timer.cancelTimer();
@@ -97,7 +97,9 @@ public class PongTransport extends DatagramTransport {
 	
 	
 	private static class DefaultPingListener extends PingEventListener {
-		
+		/*
+		* THis is a utiltity class that allows calling the ping routine in a synchrous way.
+		*/
 		Semaphore sem=new Semaphore(0);
 		boolean value;
 		
@@ -110,8 +112,6 @@ public class PongTransport extends DatagramTransport {
 		
 		public void pingReply(PingEvent e) {
 			value=(e.getPacket()!=null?true:false);
-			//if (value) System.out.println("Got pong reply it took "+e.getPingTime()+"ms.");
-			//else System.out.println("Ping timeout.");
 			sem.signal();
 		}
 	}
@@ -144,8 +144,8 @@ public class PongTransport extends DatagramTransport {
 				struct=(PongItemStruct)(requests.get(address));
 				if (struct!=null) {
 					if (!struct.secondPing) {
-						sendPacket((new PingPacket(address)).toImmutableDatagramPacket());
-						sendPacket((new PingPacket(address)).toImmutableDatagramPacket());
+						sendPacket((new PingPacket(address)).toImmutableDatagramPacket());	//send two packet the second time
+						sendPacket((new PingPacket(address)).toImmutableDatagramPacket());	//send two packet the second time
 						struct.secondPing=!struct.secondPing;
 						//System.out.println("Trying "+address+" again. it only has "+(TIMEOUT-(curTime-struct.timeStamp))+"ms left.");
 						struct.timer=new Timer(new TimeoutClass(address), TIMEOUT-(curTime-struct.timeStamp)+(1*1000), false);

@@ -35,3 +35,4 @@ public abstract class DatagramTransport implements DatagramSender {
 	public abstract void packetReceived(ImmutableDatagramPacket p) throws BadPacketException ;
 
 }
+

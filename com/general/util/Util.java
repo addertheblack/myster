@@ -92,4 +92,14 @@ public class Util { //This code was taken from an Apple Sample Code package,
 		return new String(temp.substring(0,temp.indexOf(".")+2)+"GB");
 	}
 	
+	public static byte[] concatenateBytes(byte[] array, byte[] array2) {
+		byte[] buffer=new byte[array.length+array2.length];
+		
+		System.arraycopy(array,0,buffer,0,array.length);
+		System.arraycopy(array2,0,buffer,array.length, array2.length);
+		
+		return buffer;
+	}
+
+	
 }

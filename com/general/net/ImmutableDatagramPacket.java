@@ -11,7 +11,7 @@ package com.general.net;
 
 import java.net.*;
 
-public class ImmutableDatagramPacket {
+public final class ImmutableDatagramPacket {
 	final InetAddress address;
 	final int port;
 	final byte[] data;
