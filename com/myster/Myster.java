@@ -11,6 +11,8 @@
 package com.myster;
 
 import java.awt.Point;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.io.File;
@@ -27,6 +29,8 @@ import com.myster.bandwidth.BandwidthManager;
 import com.myster.client.datagram.PongTransport;
 import com.myster.client.datagram.UDPPingClient;
 import com.myster.filemanager.FileTypeListManager;
+import com.myster.menubar.MysterMenuBar;
+import com.myster.menubar.MysterMenuItemFactory;
 import com.myster.net.DatagramProtocolManager;
 import com.myster.pref.Preferences;
 import com.myster.search.ui.SearchWindow;
@@ -313,6 +317,18 @@ public class Myster {
                                 System.out.println("Error in restarting downloads.");
                                 ex.printStackTrace();
                             }
+                            
+                            MysterMenuBar.addMenuItem(new MysterMenuItemFactory("Free Memory", new ActionListener() {
+                                public void actionPerformed(ActionEvent e) {
+                                    System.gc();System.gc();System.gc();System.gc();System.gc();
+                                    System.gc();System.gc();System.gc();System.gc();System.gc();
+                                    System.gc();System.gc();System.gc();System.gc();System.gc();
+                                    System.gc();System.gc();System.gc();System.gc();System.gc();
+                                    System.gc();System.gc();System.gc();System.gc();System.gc();
+                                    System.gc();System.gc();System.gc();System.gc();System.gc();
+                                    System.out.println("Memory cleared.");
+                                }
+                            }));
                         }
                     });
 
