@@ -57,75 +57,79 @@ public class CrawlerThread extends MysterThread {
 		
 		//System.out.println("!CRAWLER THREAD Starting the crawl");
 		
-		for (MysterAddress currentIp=ipQueue.getNextIP(); currentIp!=null||counter==0; currentIp=ipQueue.getNextIP()) {
-			try {
+		try {
 			
+			for (MysterAddress currentIp=ipQueue.getNextIP(); currentIp!=null||counter==0; currentIp=ipQueue.getNextIP()) {
+				try {
 				
-				counter++;
-				if (currentIp==null) {
-					try {
-						sleep(10*1000); //wait 10 seconds for more ips to come in.
-						continue;
-					} catch (InterruptedException ex) {
-						continue;
+					
+					counter++;
+					if (currentIp==null) {
+						try {
+							sleep(10*1000); //wait 10 seconds for more ips to come in.
+							continue;
+						} catch (InterruptedException ex) {
+							continue;
+						}
 					}
-				}
-			
-				if (endFlag) {
-					cleanUp();
-					return;
-				}
+				
+					if (endFlag) {
+						cleanUp();
+						return;
+					}
 
-				socket=MysterSocketFactory.makeStreamConnection(currentIp);
-				
-				if (endFlag) {
-					cleanUp();
-					return;
-				}
-				
-				if (counter<DEPTH) {
-					Vector ipList=StandardSuite.getTopServers(socket, searchType);
+					socket=MysterSocketFactory.makeStreamConnection(currentIp);
 					
 					if (endFlag) {
 						cleanUp();
 						return;
 					}
 					
-					for (int i=0; i<ipList.size(); i++) {
-						try {
-							MysterAddress temp=new MysterAddress((String)(ipList.elementAt(i)));
-							ipQueue.addIP(temp);
-							IPListManagerSingleton.getIPListManager().addIP(temp);
-						} catch (UnknownHostException es) {
-							//nothing.
+					if (counter<DEPTH) {
+						Vector ipList=StandardSuite.getTopServers(socket, searchType);
+						
+						if (endFlag) {
+							cleanUp();
+							return;
+						}
+						
+						for (int i=0; i<ipList.size(); i++) {
+							try {
+								MysterAddress temp=new MysterAddress((String)(ipList.elementAt(i)));
+								ipQueue.addIP(temp);
+								IPListManagerSingleton.getIPListManager().addIP(temp);
+							} catch (UnknownHostException es) {
+								//nothing.
+							}
 						}
 					}
+					
+					if (endFlag) {
+						cleanUp();
+						return;
+					}
+					
+					searcher.search(socket, currentIp, searchType);
+					
+					msg.say("Searched "+ipQueue.getIndexNumber()+" Myster servers.");
+					//don't close the connection... It's being used by the getting thread...
+					
+				} catch (IOException ex) {
+					if (socket!=null) {
+						try {
+							socket.close();
+						} catch (IOException exp){}
+					}
 				}
-				
-				if (endFlag) {
-					cleanUp();
-					return;
-				}
-				
-				searcher.search(socket, currentIp, searchType);
-				
-				msg.say("Searched "+ipQueue.getIndexNumber()+" Myster servers.");
-				//don't close the connection... It's being used by the getting thread...
-				
-			} catch (IOException ex) {
-				if (socket!=null) {
-					try {
-						socket.close();
-					} catch (IOException exp){}
-				}
-			}
 
+			}
+			
+			
+			if (group.subtractOne()<=0) msg.say("Done search");
+			else msg.say("Still Searching: "+group.getValue()+" outstanding searches");
+		} finally {
+			searcher.endSearch(searchType);
 		}
-		
-		
-		if (group.subtractOne()<=0) msg.say("Done search");
-		else msg.say("Still Searching: "+group.getValue()+" outstanding searches");
-		
 		
 	}
 	

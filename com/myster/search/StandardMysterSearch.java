@@ -50,6 +50,8 @@ public class StandardMysterSearch implements MysterSearchClientSection {
 		}
 	}
 	
+	public void endSearch(MysterType type) {}
+	
 	public void end() {
 		endFlag = true;
 	

@@ -40,7 +40,7 @@ public class MultiSourceHashSearch implements MysterSearchClientSection {
 		
 		entriesVector.addElement(new SearchEntry(hash, listener));
 		
-		if (entriesVector.size() == 1) {
+		if ((entriesVector.size() == 1)) {
 			startCrawler(type);
 		}
 	}
@@ -67,17 +67,31 @@ public class MultiSourceHashSearch implements MysterSearchClientSection {
 		return entries;
 	}
 	
+	// asserts that the crawler is stopping
 	private synchronized static void stopCrawler(MysterType type) {
 		BatchedType batchedType = getBatchForType(type);
+	
+		if (batchedType.crawler == null) return;
 		
 		batchedType.crawler.flagToEnd();
 		
 		batchedType.crawler = null;
 	}
 	
+	private synchronized static void restartCrawler(MysterType type) {
+		stopCrawler(type);
+		if (getEntriesForType(type).size()>0) { // are we still relevent?
+			MultiSourceUtilities.debug("Retarting crawler!");
+			startCrawler(type);
+		}
+	}
 	
-	
+	// asserts that the crawler is running
 	private synchronized static void startCrawler(MysterType type) {
+		BatchedType batchedType = getBatchForType(type);
+	
+		if (batchedType.crawler != null) return;
+	
 		IPQueue ipQueue = new IPQueue();
 		
 		String[] startingIps = com.myster.tracker.IPListManagerSingleton.getIPListManager().getOnRamps();
@@ -85,9 +99,6 @@ public class MultiSourceHashSearch implements MysterSearchClientSection {
 		for (int i = 0; i < startingIps.length; i++) {
 			try { ipQueue.addIP(new MysterAddress(startingIps[i])); } catch (IOException ex) {ex.printStackTrace();}
 		}
-	
-			
-		BatchedType batchedType = getBatchForType(type);
 		
 		batchedType.crawler = new CrawlerThread(new MultiSourceHashSearch(), //note.. will not restart when crawl is done 
 									type,
@@ -180,12 +191,18 @@ public class MultiSourceHashSearch implements MysterSearchClientSection {
 		}
 	}
 	
-	private void endSearch() {
-		// lalalalal... not hoocked up to anything...!
+	public void endSearch(final MysterType type) {
+		MultiSourceUtilities.debug("Hash Search -> Crawler has crawled the whole network!");
+		com.general.util.Timer timer = new com.general.util.Timer(new Runnable() {
+				public void run() {
+					restartCrawler(type);
+				}
+		}, 1);
 	}
 	
+	
 	public void flagToEnd() {
-		//..
+		// crawler thread passes this along to make quitting faster..
 	}
 	
 	public void end() {

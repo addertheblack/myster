@@ -544,7 +544,7 @@ class InternalSegmentDownloader extends MysterThread implements SegmentDownloade
 			return false;
 		}
 		
-		return (stub.equals(other.stub));
+		return (stub.getMysterAddress().equals(other.stub.getMysterAddress()));
 	}
 	
 	private static void debug(String string) {
