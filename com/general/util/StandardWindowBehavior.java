@@ -17,6 +17,9 @@ import java.awt.event.*;
 public class StandardWindowBehavior extends WindowAdapter {
 	public void windowClosing(WindowEvent e) {
 		e.getWindow().setVisible(false);
+	}
+	
+	public void windowClosed(WindowEvent e) {
 		//e.getWindow().dispose();
 	}
 }

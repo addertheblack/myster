@@ -64,6 +64,17 @@ public class Preferences {
 		prefsWindow=new PreferencesDialogBox();
 	}
 	
+	static final String WINDOW_KEEPER_KEY="MysterPrefsGUI";
+	static com.myster.ui.WindowLocationKeeper windowKeeper=new com.myster.ui.WindowLocationKeeper(WINDOW_KEEPER_KEY);
+	
+	public static void initWindowLocations() {
+		Rectangle[] rect=com.myster.ui.WindowLocationKeeper.getLastLocs(WINDOW_KEEPER_KEY);
+		if (rect.length>0) {
+			getInstance().prefsWindow.setBounds(rect[0]);
+			getInstance().setGUI(true);
+		}
+	}
+	
 	/**
 	*	Needed in order to get an instance of the preference object. This is included
 	*	Since their should only be one instance of the preferences object but
@@ -72,9 +83,8 @@ public class Preferences {
 	public static synchronized Preferences getInstance() {
 		
 		if (pref==null) {
-			//System.out.println("Loading prefs...");
 			pref=new Preferences();
-			//System.out.println("Loading done");
+			windowKeeper.addFrame(pref.prefsWindow);
 		}
 		
 		return pref;

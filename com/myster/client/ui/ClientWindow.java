@@ -43,10 +43,24 @@ public class ClientWindow extends MysterFrame implements Sayable{
 	
 	private static int counter=0;
 	
+	private static final String WINDOW_KEEPER_KEY="Myster's Client Windows"; 
+	private static com.myster.ui.WindowLocationKeeper windowKeeper=new com.myster.ui.WindowLocationKeeper(WINDOW_KEEPER_KEY);
+	
+	public static void initWindowLocations() {
+		Rectangle[] rectangles=com.myster.ui.WindowLocationKeeper.getLastLocs(WINDOW_KEEPER_KEY);
+		
+		for (int i=0; i<rectangles.length; i++) {
+			ClientWindow window=new ClientWindow();
+			window.setBounds(rectangles[i]);
+		}
+	}
+	
 	public ClientWindow() {
 		super("Direct Connection "+(++counter));
 		
 		makeClientWindow();
+		
+		windowKeeper.addFrame(this);
 	}
 	
 	public ClientWindow(String ip) {

@@ -12,10 +12,79 @@ import java.util.Vector;
 import java.util.NoSuchElementException;
 import com.myster.pref.*;
 
-//remove below later!
-import com.myster.mml.MML;
+
+
+/**
+*	Creates a window keeper object for your class of window. A window keeper
+*	takes upon itself the responsibility of managing the location preferences for your
+*	window type. Simply create a window keeper for you class of window and add
+*	every new frame of that class. Window keeper will keep track of that window's
+*	location and visibility. In order to read back this information simply call
+*	getLastLocs(..) for your window type. Window keeper will return the locations
+*	for every window of that type that was on screen last time Myster was quit.
+*	It will even makes sure the previous window locs are
+*	all on screen when the routine is called (ie: not too far to the left or right).
+*
+*/
 
 public class WindowLocationKeeper {
+
+
+	private String key;
+	private volatile int counter=0;
+
+	public WindowLocationKeeper(String key) {
+		init();
+		if (key.indexOf("/")!=-1) throw new RuntimeException("Key cannot contain a \"/\"!");
+		this.key="/"+key+"/";
+	}
+	
+	public void addFrame(Frame frame) {
+		final int privateID=counter++;
+		
+		if (frame.isVisible()) {
+			saveLocation(frame, privateID);
+		}
+		
+		frame.addComponentListener(new ComponentListener() {
+			public void componentResized(ComponentEvent e) {
+				saveLocation(((Component)(e.getSource())), privateID);
+			}
+
+			public void componentMoved(ComponentEvent e) {
+				saveLocation(((Component)(e.getSource())), privateID);
+			}
+
+			public void componentShown(ComponentEvent e) {
+				saveLocation(((Component)(e.getSource())), privateID);
+			}
+
+			public void componentHidden(ComponentEvent e) {
+				prefs.remove(key+privateID);
+				Preferences.getInstance().put(PREF_KEY,prefs);
+			}
+
+		});
+	}
+	 
+	private void saveLocation(Component c, int id) {
+		prefs.put(key+id, rect2String(c.getBounds()));
+
+		Preferences.getInstance().put(PREF_KEY,prefs);
+	}
+	
+
+
+
+
+
+
+
+
+
+
+/////////// STATIC SUB SYSTEM
+
 	private static final String PREF_KEY="Window Locations and Sizes/";
 	
 	private static PreferencesMML prefs=new PreferencesMML();
@@ -48,7 +117,7 @@ public class WindowLocationKeeper {
 		Rectangle[] rectangles=new Rectangle[keyList.size()];
 		
 		for (int i=0; i<keyList.size(); i++) {
-			rectangles[i]=getRectangleFromString(oldPrefs.get(key+(String)(keyList.elementAt(i)), "0,0,400,400"));
+			rectangles[i]=string2Rect(oldPrefs.get(key+(String)(keyList.elementAt(i)), "0,0,400,400"));
 			if (!fitsOnScreen(rectangles[i])) rectangles[i].setLocation(50,50);
 			//System.out.println(key+(String)(keyList.elementAt(i)));
 		}
@@ -58,7 +127,7 @@ public class WindowLocationKeeper {
 		return rectangles;
 	}
 	
-	private static synchronized Rectangle getRectangleFromString(String s) {
+	private static synchronized Rectangle string2Rect(String s) {
 		int x,y,width,height;
 		
 		StringTokenizer tokenizer=new StringTokenizer(s,SEPERATOR, false);
@@ -77,70 +146,9 @@ public class WindowLocationKeeper {
 		return new Rectangle(x,y,width,height);
 	}
 
-	
-	private String key;
-	private volatile int counter=0;
-
-	public WindowLocationKeeper(String key) {
-		init();
-		if (key.indexOf("/")!=-1) throw new RuntimeException("Key cannot contain a \"/\"!");
-		this.key="/"+key+"/";
-	}
-	
-	Hashtable listenerHash=new Hashtable();
-	
-	public void addFrame(Frame frame) {
-		final int privateID=counter++;
-	
-		ComponentListener cListener=new ComponentListener() {
-			public void componentResized(ComponentEvent e) {
-				saveLocation(((Component)(e.getSource())), privateID);
-			}
-
-			public void componentMoved(ComponentEvent e) {
-				saveLocation(((Component)(e.getSource())), privateID);
-			}
-
-			public void componentShown(ComponentEvent e) {
-				saveLocation(((Component)(e.getSource())), privateID);
-			}
-
-			public void componentHidden(ComponentEvent e) {
-				System.out.println("AGGGHH");
-				System.out.println("hello ->"+prefs.remove(key+privateID));
-				Preferences.getInstance().put(PREF_KEY,prefs);
-			}
-		};
-		
-		listenerHash.put(frame, cListener);
-		
-		if (frame.isVisible()) {
-			saveLocation(frame, privateID);
-		}
-		
-		frame.addComponentListener(cListener);
-	}
-	
-	public void removeFrame(Frame frame) {
-		ComponentListener cListener=(ComponentListener)(listenerHash.remove(frame));
-		
-		if (cListener==null) return;
-		
-		//frame.removeComponentListener(cListener);
-	}
-	
-	private void saveLocation(Component c, int id) {
-		prefs.put(key+id, rect2String(c.getBounds()));
-		//MML mml=new MML();
-		//try {mml.put(key+id+"/", rect2String(c.getBounds()));} catch (Exception ex) {System.out.println(""+ex);}
-		Preferences.getInstance().put(PREF_KEY,prefs);
-		//System.out.println(""+key+id+"/ ->> "+rect2String(c.getBounds()));
-		//System.out.println(""+prefs);
-	}
-	
 	private static final String SEPERATOR=",";
 	
-	private String rect2String(Rectangle rect) { //here for code reuse
+	private static String rect2String(Rectangle rect) { //here for code reuse
 		return ""+rect.x+SEPERATOR+rect.y+SEPERATOR+rect.width+SEPERATOR+rect.height;
 	}
 }

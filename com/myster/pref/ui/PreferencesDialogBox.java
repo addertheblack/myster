@@ -37,6 +37,7 @@ public class PreferencesDialogBox extends MysterFrame {	//protected...!
 				
 	MainPanel mypanel;
 
+
 	/**
 	*	Builds a new Preferences Dialog
 	*/

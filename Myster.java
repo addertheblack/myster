@@ -179,15 +179,7 @@ public class Myster{
 
 				progress.say(Myster.tr("Loading a search window...")+macHack);
 				progress.update(27);
-				if (isServer) {}
-				else {
-					SearchWindow.init();
-					ServerStatsWindow.init();
-					com.myster.tracker.ui.TrackerWindow.init();
-					//SearchWindow sw=new SearchWindow();
-					//sw.say(Myster.tr("Idle.."));
-				}
-				progress.setVisible(false);
+				//progress.setVisible(false);
 				progress.setVisible(true);
 				
 				progress.say(Myster.tr("Loading tracker...")+macHack);
@@ -213,6 +205,20 @@ public class Myster{
 				progress.done();
 				progress.setVisible(false);
 				progress.dispose();
+				
+				if (isServer) {}
+				else {
+					Preferences.initWindowLocations();
+					com.myster.client.ui.ClientWindow.initWindowLocations();
+					ServerStatsWindow.initWindowLocations();
+					com.myster.tracker.ui.TrackerWindow.initWindowLocations();
+					SearchWindow.initWindowLocations();
+					
+					
+					
+					//SearchWindow sw=new SearchWindow();
+					//sw.say(Myster.tr("Idle.."));
+				}
 			}
 		}).start();
 	}

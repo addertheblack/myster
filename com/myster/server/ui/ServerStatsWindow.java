@@ -42,7 +42,7 @@ public class ServerStatsWindow extends MysterFrame implements Sayable {
 		return singleton;
 	}
 	
-	public static void init() {
+	public static void initWindowLocations() {
 		Rectangle[] rect=com.myster.ui.WindowLocationKeeper.getLastLocs("Server Stats");
 		if (rect.length>0) {
 			Dimension d=singleton.getSize();

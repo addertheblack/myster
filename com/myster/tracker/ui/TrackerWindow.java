@@ -25,7 +25,7 @@ public class TrackerWindow extends MysterFrame {
 	
 	private static com.myster.ui.WindowLocationKeeper keeper=new com.myster.ui.WindowLocationKeeper("Tracker");
 	
-	public static void init() {
+	public static void initWindowLocations() {
 		Rectangle[] rect=com.myster.ui.WindowLocationKeeper.getLastLocs("Tracker");
 		if (rect.length>0) {
 			getInstance().me.setBounds(rect[0]);

@@ -131,7 +131,6 @@ public class SearchWindow extends MysterFrame implements SearchResultListener, S
 		filelist.setColumnWidth(0,400);
 		
 		keeper.addFrame(this);
-		addWindowListener(new RemoveFrameWhenDoneThingy(this, keeper));
 		
 		setVisible(true); // !
 		
@@ -144,7 +143,7 @@ public class SearchWindow extends MysterFrame implements SearchResultListener, S
 	
 	static WindowLocationKeeper keeper;//cheat to save scrolling. put at top later.
 	
-	public static void init() {
+	public static void initWindowLocations() {
 		Rectangle[] rectangles=WindowLocationKeeper.getLastLocs(PREF_LOCATION_KEY);
 		
 		keeper=new WindowLocationKeeper(PREF_LOCATION_KEY);
@@ -157,20 +156,6 @@ public class SearchWindow extends MysterFrame implements SearchResultListener, S
 		if (rectangles.length==0) {SearchWindow window=new SearchWindow();}
 		
 		
-	}
-	
-	private static class RemoveFrameWhenDoneThingy extends WindowAdapter {
-		Frame frame;
-		WindowLocationKeeper keeper;
-		
-		public RemoveFrameWhenDoneThingy (Frame frame,WindowLocationKeeper keeper) {
-			this.frame=frame;
-			this.keeper=keeper;
-		}
-		
-		public void windowClosed(WindowEvent e) {
-			//keeper.removeFrame(frame);
-		}
 	}
 	
 	public void addComponent(Component c, int row, int column, int width, int height, int weightx, int weighty) {
