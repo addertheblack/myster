@@ -362,7 +362,6 @@ class FileTypeList extends MysterThread{
 			System.out.println("Nonsence sent to indexDir. Does this type have a d/l dir associated with it?");
 			return;
 		}
-		//System.out.println("file:" + file.getName());
 		String[] listing=file.list();
 		File temp;
 		if (listing != null) { // listing is null on permission denied

@@ -94,7 +94,7 @@ public class FileInfoLister extends ServerThread {
 			}
 		} catch (ID3v2FormatException ex) {}
 		
-		System.out.println(""+tag);
+		// System.out.println(""+tag);
 
 	}
 	

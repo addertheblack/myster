@@ -72,7 +72,7 @@ public class MessageManager {
 				}
 				
 				public void transactionTimout(TransactionEvent e) {
-					simpleAlert("Message was not recieved. There does not appear to be anyone at that address.");
+					simpleAlert("Message was not received. There does not appear to be anyone at that address.");
 				}
 		});
 	}

@@ -10,7 +10,9 @@ Copyright Andrew Trumper 2001
 
 package com.general.mclist;
 
-import java.util.Vector;
+import com.sun.java.util.collections.Vector;
+import com.sun.java.util.collections.Collections;
+import com.sun.java.util.collections.Comparator;
 
 public class MCListVector{
 	Vector vector; //"no dog food for Vector tonight" -- Paraphrase of Futurama.
@@ -82,9 +84,23 @@ public class MCListVector{
     }
     
     protected synchronized void sort() {
-		quickSort(0, vector.size() - 1);
-		insertionSort();
-    }
+			//quickSort(0, vector.size() - 1);
+			//insertionSort();
+			com.sun.java.util.collections.Collections.sort(
+				vector, 
+				new Comparator() {
+					public int compare(Object a, Object b) {
+						Sortable sa = (Sortable)((MCListItemInterface)a).getValueOfColumn(sortby);
+						Sortable sb = (Sortable)((MCListItemInterface)b).getValueOfColumn(sortby);
+						if (sa.equals(sb)) return 0;
+						int cmp = (sa.isLessThan(sb) ? 1 : -1);
+						if (lessthan) return cmp;
+						else return -cmp;
+					}
+					public boolean equals(Object other) { return this == other; }
+				});
+		}
+	
 	
 	protected synchronized boolean getSortOrder() {
 		return lessthan;
