@@ -35,7 +35,7 @@ public class MultiSourceDownload {
 	
 	final MysterFileStub stub;
 	final FileHash hash;
-	RandomAccessFile file;
+	RandomAccessFile randomAccessFile;
 	LinkedList  dataQueue = new LinkedList();
 
 	
@@ -122,7 +122,25 @@ public class MultiSourceDownload {
 		
 		
 		try {
-			file = new RandomAccessFile(new File("downloadedFile.avi"), "rw");
+			final String EXTENSION = ".i";
+		
+			File directory = new File(com.myster.filemanager.FileTypeListManager.getInstance().getPathFromType(stub.getType()));
+			File file = new File(directory.getPath()+File.separator+stub.getName()+EXTENSION);
+			while ((file.exists()) || (!directory.isDirectory())) {
+				java.awt.FileDialog dialog = new java.awt.FileDialog(com.general.util.AnswerDialog.getCenteredFrame(), "What do you want to save the file as?", java.awt.FileDialog.SAVE);
+				dialog.setFile(file.getName());
+				dialog.setDirectory(file.getName());
+				
+				dialog.show();
+				
+				directory = new File(dialog.getDirectory());
+				
+				if (dialog.getFile() == null) return; //canceled.
+				
+				file = new File(dialog.getDirectory()+File.separator+dialog.getFile()+EXTENSION);
+			}
+			
+			randomAccessFile = new RandomAccessFile(file, "rw");
 		} catch (IOException ex) {
 			ex.printStackTrace();
 		}
@@ -219,9 +237,9 @@ public class MultiSourceDownload {
 	
 	public synchronized void receiveDataBlock(DataBlock dataBlock) {
 		try {
-			file.seek(dataBlock.offset);
+			randomAccessFile.seek(dataBlock.offset);
 		
-			file.write(dataBlock.bytes);
+			randomAccessFile.write(dataBlock.bytes);
 			
 			bytesWrittenOut+=dataBlock.bytes.length;
 			progress.setValue(bytesWrittenOut);
