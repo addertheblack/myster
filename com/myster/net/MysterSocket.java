@@ -27,9 +27,9 @@ public abstract class MysterSocket {
 
     public abstract int getLocalPort();
 
-    public abstract InputStream getInputStream() throws IOException;
+    public abstract DataInputStream getInputStream() throws IOException;
 
-    public abstract OutputStream getOutputStream() throws IOException;
+    public abstract DataOutputStream getOutputStream() throws IOException;
 
     public abstract void setSoLinger(boolean on, int val)
             throws SocketException;

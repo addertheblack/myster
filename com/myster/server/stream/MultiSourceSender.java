@@ -234,6 +234,8 @@ public class MultiSourceSender extends ServerThread {
                 mml.put(MESSAGE_PATH, message);
 
             out.writeUTF("" + mml); //this would loop until 1
+            
+            out.flush();
 
             fireEvent(ServerDownloadEvent.QUEUED, queued);
         }

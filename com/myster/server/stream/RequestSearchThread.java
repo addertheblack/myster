@@ -38,8 +38,8 @@ public class RequestSearchThread extends ServerThread {
      */
 
     public void section(ConnectionContext c) throws IOException {
-        DataInputStream in = new DataInputStream(c.socket.getInputStream());
-        DataOutputStream out = new DataOutputStream(c.socket.getOutputStream());
+        DataInputStream in = c.socket.getInputStream();
+        DataOutputStream out = c.socket.getOutputStream();
 
         ServerSearchDispatcher dispatcher = (ServerSearchDispatcher) (c.sectionObject);
 

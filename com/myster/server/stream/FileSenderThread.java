@@ -87,7 +87,7 @@ public class FileSenderThread extends ServerThread {
              * Server is over loaded. } }
              */
         } catch (IOException ex) {
-            transfer.cleanUp(); //does usefull things like fires an event to
+            transfer.cleanUp(); //does useful things like fires an event to
                                 // say download is dead.
             throw ex;
         } finally {
@@ -277,6 +277,7 @@ public class FileSenderThread extends ServerThread {
                 out.writeByte('i');
                 out.writeLong(sizeOfImage);
                 out.write(queuedImage, 0, sizeOfImage);
+                out.flush();
 
             } catch (IOException ex) {
                 throw ex;
@@ -288,8 +289,8 @@ public class FileSenderThread extends ServerThread {
 
         private void init(MysterSocket socket) throws IOException {
             this.socket = socket; //io
-            in = new DataInputStream(socket.getInputStream());
-            out = new DataOutputStream(socket.getOutputStream());
+            in = socket.getInputStream();
+            out = socket.getOutputStream();
 
             remoteIP = new MysterAddress(socket.getInetAddress()); //stats
 
@@ -303,7 +304,7 @@ public class FileSenderThread extends ServerThread {
             filelength = file.length(); //stats
             initialOffset = in.readLong(); //initial offset for restarting file
                                            // transfers half way done!
-            bytessent = initialOffset; //hereafter refered to as....
+            bytessent = initialOffset; //hereafter referred to as....
 
             if (file == null || (file.length() - initialOffset) < 0) { //File
                                                                        // does
@@ -334,7 +335,7 @@ public class FileSenderThread extends ServerThread {
         /**
          * Protcal-> Get TYPE and FILENAME and initial offset (long) Send 1 or 0
          * (Int); if 1 send LONG of filelength send char (data type 'd' for data
-         * 'g' for graphic 'u' for URL) send lenght of data being sent send that
+         * 'g' for graphic 'u' for URL) send length of data being sent send that
          * data... etc.. until all of length of data (or 'd') has been sent.
          * 
          * eg: get ("MPG3" -> "song.mp3" -> 0) send (3000000 -> 'i' -> 20000 ->

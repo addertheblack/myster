@@ -28,10 +28,10 @@ public class RequestDirThread extends ServerThread {
     public void section(ConnectionContext context) throws IOException {
         byte[] b = new byte[4];
 
-        DataInputStream in = new DataInputStream(context.socket
-                .getInputStream());
-        DataOutputStream out = new DataOutputStream(context.socket
-                .getOutputStream());
+        DataInputStream in = context.socket
+                .getInputStream();
+        DataOutputStream out = context.socket
+                .getOutputStream();
 
         in.readFully(b);
         System.out.println("Reading: " + (new String(b)));

@@ -28,10 +28,10 @@ public class FileTypeLister extends ServerThread {
     public void section(ConnectionContext context) throws IOException {
         MysterType[] temp;
 
-        DataInputStream in = new DataInputStream(context.socket
-                .getInputStream());
-        DataOutputStream out = new DataOutputStream(context.socket
-                .getOutputStream());
+        DataInputStream in = context.socket
+                .getInputStream();
+        DataOutputStream out = context.socket
+                .getOutputStream();
 
         temp = FileTypeListManager.getInstance().getFileTypeListing();
 

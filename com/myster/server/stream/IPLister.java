@@ -23,10 +23,9 @@ public class IPLister extends ServerThread {
      */
 
     public void section(ConnectionContext context) throws IOException {
-        DataInputStream in = new DataInputStream(context.socket
-                .getInputStream());
-        DataOutputStream out = new DataOutputStream(context.socket
-                .getOutputStream());
+        DataInputStream in = context.socket.in;
+        DataOutputStream out = context.socket
+                .getOutputStream();
 
         MysterServer[] topten;
 

@@ -1,5 +1,7 @@
 package com.myster.client.stream;
 
+import java.io.BufferedInputStream;
+import java.io.BufferedOutputStream;
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.io.IOException;
@@ -17,16 +19,16 @@ public class TCPSocket extends MysterSocket {
     Socket internalSocket;
 
     public TCPSocket(Socket socket) throws IOException {
-        super(new DataInputStream(new ThrottledInputStream(socket
-                .getInputStream())), new DataOutputStream(
-                new ThrottledOutputStream(socket.getOutputStream())));
+        super(buildInput(socket), buildOutput(socket));
         internalSocket = socket;
+    }
 
-        //myIn=internalSocket.getInputStream();
-        //myOut=internalSocket.getOutputStream();
+    private static DataInputStream buildInput(Socket socket) throws IOException {
+        return new DataInputStream((new ThrottledInputStream(socket.getInputStream())));
+    }
 
-        myIn = new ThrottledInputStream(internalSocket.getInputStream());
-        myOut = new ThrottledOutputStream(internalSocket.getOutputStream());
+    private static DataOutputStream buildOutput(Socket socket) throws IOException {
+        return new DataOutputStream(new ThrottledOutputStream(socket.getOutputStream()));
     }
 
     public InetAddress getInetAddress() {
@@ -45,16 +47,12 @@ public class TCPSocket extends MysterSocket {
         return internalSocket.getLocalPort();
     }
 
-    public InputStream myIn;
-
-    public InputStream getInputStream() throws IOException {
-        return myIn;
+    public DataInputStream getInputStream() throws IOException {
+        return in;
     }
 
-    public OutputStream myOut;
-
-    public OutputStream getOutputStream() throws IOException {
-        return myOut;
+    public DataOutputStream getOutputStream() throws IOException {
+        return out;
     }
 
     public void setTcpNoDelay(boolean on) throws SocketException {

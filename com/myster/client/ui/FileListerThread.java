@@ -63,8 +63,8 @@ public class FileListerThread extends MysterThread {
         
         main: {
             try {
-                out = new DataOutputStream(socket.getOutputStream());
-                in = new DataInputStream(socket.getInputStream());
+                out = socket.getOutputStream();
+                in = socket.getInputStream();
 
                 say("Requesting File List...");
 
@@ -118,7 +118,7 @@ public class FileListerThread extends MysterThread {
                         + spinner.getSpin() + " Complete.");
                 say("Idle...");
             } catch (Exception ex) {
-                say("An unexpected error occured during the transfer of the file list.");
+                say("An unexpected error occurred during the transfer of the file list.");
                 ex.printStackTrace();
             } finally {
                 try {
