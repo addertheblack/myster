@@ -51,7 +51,7 @@ public class FileInfoGetter extends MysterThread {
 		
 		int pointer=0;
 		int current=0;
-		final int MAX_OUTSTANDING=50;
+		final int MAX_OUTSTANDING=10;
 		try { //This is a speed hack.
 			if (vector.size()>0) {
 				while (!endFlag) { //usefull.

@@ -44,7 +44,7 @@ public class Operator extends MysterThread{
 	
 		transferQueue=d;
 		
-		socketQueue=new DoubleBlockingQueue(1); //comunications channel between operator and section threads.
+		socketQueue=new DoubleBlockingQueue(0); //comunications channel between operator and section threads.
 		
 		connectionManagers=new ConnectionManager[threads];
 		for (int i=0; i<connectionManagers.length; i++) {
@@ -98,7 +98,7 @@ public class Operator extends MysterThread{
 			try {
 				if (serverSocket!=null) try {serverSocket.close();} catch (IOException ex) {}
 				
-				serverSocket=new ServerSocket(com.myster.Myster.DEFAULT_PORT, 3); //bigger buffer
+				serverSocket=new ServerSocket(com.myster.Myster.DEFAULT_PORT, 5); //bigger buffer
 				break;
 			} catch (IOException ex) {
 				try {sleep(10*1000);} catch (InterruptedException exp) {} //wait 10 seconds then try to make the socket again.

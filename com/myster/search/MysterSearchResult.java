@@ -15,7 +15,6 @@ public class MysterSearchResult implements SearchResult {
 	
 	public void setMML(RobustMML m) {
 		mml=m;
-		System.out.println(mml.toString());
 	}
 	
 	//is called when the user decides to download the item

@@ -60,7 +60,7 @@ public class Myster {
 							, new com.myster.type.MysterType("MooV")
 							, com.myster.hash.SimpleFileHash.buildFromHexString("md5", "bdaba746d51978dbe46844c23f566332")));
 					} catch (Exception ex) {
-						ex.printStackTrace();
+						//ex.printStackTrace();
 					}
 				}
 			}

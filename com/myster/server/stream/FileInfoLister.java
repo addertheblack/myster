@@ -39,6 +39,7 @@ public class FileInfoLister extends ServerThread {
 	*/
 	
 	public void section(ConnectionContext context) throws IOException {
+		try {
 		String[] temp;
 
 		DataInputStream in=new DataInputStream(context.socket.getInputStream());
@@ -62,6 +63,10 @@ public class FileInfoLister extends ServerThread {
 		
 		out.writeUTF(mml.toString());
 		//System.out.println(mml.toString());
+		} catch (IOException ex) {
+			ex.printStackTrace();
+			throw ex;
+		}
 	}
 	
 	//ugh.. for Mp3 stuff
