@@ -18,7 +18,7 @@ public abstract class MCListItemInterface {
         return null;
     }
 
-    protected final void setSelected(boolean b) {
+    public final void setSelected(boolean b) {
         selected = b;
     }
 

@@ -23,7 +23,7 @@ import com.general.util.Util;
 
 //import java.awt.image.BufferedImage;//testing
 
-public class MCList extends Panel {
+public class AWTMCList extends Panel implements MCList {
     private Image im;
 
     //For image double buffer:
@@ -249,7 +249,7 @@ public class MCList extends Panel {
         }
     }
 
-    public synchronized int getClicked(int x, int y) {
+    synchronized int getClicked(int x, int y) {
         y -= 0; //hahahahhaha
         y -= header.getHeight();
         int temp = y / rowTheme.getHeight(PADDING, INTERNAL_PADDING);
