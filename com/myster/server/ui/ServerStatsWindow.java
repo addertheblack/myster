@@ -103,7 +103,6 @@ public class ServerStatsWindow extends MysterFrame implements Sayable {
 	private void initSelf() {
 		if (inited==true) System.exit(0);
 		inited=true;
-		new MysterMenuBar(this);
 		
 		//pack();
 		setSize(XSIZE+50, YSIZE+50);

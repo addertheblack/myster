@@ -73,7 +73,7 @@ public class TransactionManager implements TransactionSender {
 				if (protocol==null) {
 					System.out.println("No Transaction protocol registered under type: "+transaction.getTransactionCode());
 					
-					//return error here!
+					sendTransaction(new Transaction(transaction, new byte[0], Transaction.TRANSACTION_TYPE_UNKNOWN));//return error here!
 					
 					return;
 				}

@@ -135,12 +135,32 @@ public class Myster{
 		MessageManager.init();
 		
 		try {
-			MessageManager.sendInstantMessage(new MysterAddress("127.0.0.1"), "Hello");
-			MessageManager.sendInstantMessage(new MysterAddress("127.0.0.1"), "Hello");
-			MessageManager.sendInstantMessage(new MysterAddress("127.0.0.1"), "Hello");
+			//MessageManager.sendInstantMessage(new MysterAddress("127.0.0.1"), "Hello");
+			//MessageManager.sendInstantMessage(new MysterAddress("127.0.0.1"), "Hello");
+			//MessageManager.sendInstantMessage(new MysterAddress("127.0.0.1"), "Hello");
 		} catch (Exception ex) {
 			ex.printStackTrace();
 		}
+		
+		com.myster.menubar.MysterMenuBar.addMenuItem(new com.myster.menubar.MysterMenuItemFactory("Instant Message...", new java.awt.event.ActionListener() {
+			public void actionPerformed(java.awt.event.ActionEvent e) {
+				String answer = AskDialog.simpleAsk("What message do you want to send?");
+				
+				if (answer==null || answer.equals("")) return ; //cancel
+				
+				String ip = AskDialog.simpleAsk("Which server do you want to send it to?");
+				
+				if (ip==null || ip.equals("")) return ; //cancel
+				
+				try {
+					MessageManager.sendInstantMessage(new MysterAddress(ip), answer);
+				} catch (UnknownHostException ex) {
+					AnswerDialog.simpleAlert("Could not send to server : "+ip+" because it is not a proper server address.");
+				}
+				
+				
+			}
+		}));
 		
 		//if (true==true) return ;
 		

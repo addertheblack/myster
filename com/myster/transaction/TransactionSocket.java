@@ -4,11 +4,9 @@ import com.myster.net.MysterAddress;
 import com.myster.net.DataPacket;
 
 public class TransactionSocket {
-	MysterAddress address;
 	int protocolNumber;
 
-	public TransactionSocket(MysterAddress address, int protocolNumber) {
-		this.address=address;
+	public TransactionSocket(int protocolNumber) {
 		this.protocolNumber=protocolNumber;
 	}
 

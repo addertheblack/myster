@@ -128,7 +128,6 @@ public class ClientWindow extends MysterFrame implements Sayable{
 		filelist.addItemListener(new FileStatsAction(this));
 		
 		addWindowListener(new StandardWindowBehavior());
-		menubar=new MysterMenuBar(this);
 		
 	}
 	

@@ -124,6 +124,13 @@ public class AskDialog extends Dialog {
 		return msg;
 	}
 	
+	public static String simpleAsk(String question) {
+		return simpleAsk(question, "");
+	}
+	
+	public static String simpleAsk(String question, String suggestedAnswer) {
+		return (new AskDialog(AnswerDialog.getCenteredFrame(), question, suggestedAnswer)).ask();
+	}
 	
 	private class ActionHandler implements ActionListener {
 	

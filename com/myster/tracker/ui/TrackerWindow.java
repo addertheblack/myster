@@ -111,7 +111,6 @@ public class TrackerWindow extends MysterFrame {
 				updater.end();
 			}
 		});
-		new MysterMenuBar(this);
 	}
 	
 	/**

@@ -800,6 +800,12 @@ Work on DEV 8:
     Work on DEV 17
       2003/02/22
      	-> Made it so that clicking an entry in the download stats (server stats) makes a connect window pop up
-     	-> Made it so that if a p2p window is created with an ip, the windo automatically connects.
+     	-> Made it so that if a p2p window is created with an ip, the window automatically connects.
      	-> Wrote up an instant messaging system fixing bugs with the Myster UDP transaction libraries as I go.
+     	-> Found out that MenuBarManager is not thread safe or very safe at all for that matter. 
+     			I will have to fix that later..
+     	-> Worked some more on cleaning up Chat's code... Code should be much smaller when I am finished
+     			with it. This might take a while. Wondering if I should release chat as is and fix it later. :-)
+     	
+     			
 	  	

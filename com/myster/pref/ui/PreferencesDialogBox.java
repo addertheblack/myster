@@ -45,7 +45,7 @@ public class PreferencesDialogBox extends MysterFrame {	//protected...!
 		super("Preferences Browser");
 		setBackground(new Color(240,240,240));
 		//setLayout(null);
-		MysterMenuBar m=new MysterMenuBar(this);
+
 		mypanel=new MainPanel();
 
 		add(mypanel);

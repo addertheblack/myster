@@ -125,7 +125,6 @@ public class SearchWindow extends MysterFrame implements SearchResultListener, S
 		addWindowListener(new StandardWindowBehavior());
 		
 		//bucket=new SearchResultBucket(BUCKETSIZE);
-		menubar=new MysterMenuBar(this);
 		
 		filelist.setColumnName(0, "Search Results appear here");
 		filelist.setColumnWidth(0,400);

@@ -24,28 +24,40 @@ public class MessageManager {
 	}
 	
 	public static void sendInstantMessage(MysterAddress address, String msg, String reply) {
-		TransactionSocket tsocket=new TransactionSocket(address, InstantMessageTransport.transportNumber);
+		TransactionSocket tsocket=new TransactionSocket(InstantMessageTransport.transportNumber);
 		
-		tsocket.sendTransaction(new MessagePacket(39, address, msg, reply), new TransactionListener() {
+		tsocket.sendTransaction(new MessagePacket(generateID(), address, msg, reply), new TransactionListener() {
 				public void transactionReply(TransactionEvent e) {
 					System.out.println("Message reply.");
 					
-					try {
-						MessagePacket msgPacket=new MessagePacket(e.getTransaction());
-						if (msgPacket.getErrorCode()!=0) {
-							if (msgPacket.getErrorCode()==1) {
-								System.out.println("Client is refusing messages.");
-							} else {
-								System.out.println("Client got the message, with error code "+msgPacket.getErrorCode());
-							}
+					Transaction transaction=e.getTransaction();
+					
+					if (transaction.isError()) {
+						if (transaction.getErrorCode()==Transaction.TRANSACTION_TYPE_UNKNOWN) {
+							simpleAlert("Client doesn't know how to receive messages.");
+						} else {
+							simpleAlert("Some sort of unknown error occured.");
 						}
-					} catch (BadPacketException ex) {
-						System.out.println("Remote host returned a bad packet.");
+					} else {
+						try {
+							MessagePacket msgPacket=new MessagePacket(transaction);
+							if (msgPacket.getErrorCode()!=0) {
+								if (msgPacket.getErrorCode()==1) {
+									simpleAlert("Client is refusing messages.");
+								} else {
+									simpleAlert("Client got the message, with error code "+msgPacket.getErrorCode());
+								}
+							} else {
+								simpleAlert("Message was sent successfully...");	
+							}
+						} catch (BadPacketException ex) {
+							simpleAlert("Remote host returned a bad packet.");
+						}
 					}
 				}
 				
 				public void transactionTimout(TransactionEvent e) {
-					System.out.println("Message timeout.");
+					simpleAlert("Message was not acknowleged.");
 				}
 		});
 	}
@@ -61,13 +73,22 @@ public class MessageManager {
 	protected static boolean messageReceived(MessagePacket msg) {
 		final String message=msg.getAddress().toString()+" sent: \n\n"+msg.getMessage();
 	
+		simpleAlert(message);
+		
+		return true;
+	}
+	
+	private static void simpleAlert(final String message) {
 		(new Thread(){
 			public void run() {
 				AnswerDialog.simpleAlert(message);
 			}
 		}).start();
-		
-		return true;
+	}
+	
+	public static int counter=1;
+	private static synchronized int generateID() {
+		return counter++;
 	}
 }
 
@@ -83,24 +104,8 @@ class InstantMessageTransport extends TransactionProtocol {
 		return transportNumber;
 	}
 	
-	private void sendMessage(MessagePacket msg) {
-		//sendTransaction(new Transaction())
-		/*
-		sendTransaction(msg.getAddress(), msg.getData(), new TransactionListener() {
-				public void transactionReply(TransactionEvent e) {
-					System.out.println("Message reply.");
-				}
-				
-				public void transactionTimout(TransactionEvent e) {
-					System.out.println("Message timeout.");
-				}
-		});*/
-	}
-	
 	public synchronized void transactionReceived(Transaction transaction) throws BadPacketException {
 		MessagePacket msg=new MessagePacket(transaction);
-
-		System.out.println("transaction data : " + (new String(transaction.getBytes())));
 
 		ReceivedMessage receivedMessage=new ReceivedMessage(msg);
 		if (isOld(receivedMessage)) return; //if it's one we've seen before ignore it.
@@ -109,9 +114,9 @@ class InstantMessageTransport extends TransactionProtocol {
 		
 		//below is where the event system would go.
 		if (MessageManager.messageReceived(msg)) {
-			sendTransaction(new Transaction(transaction, (new MessagePacket(transaction.getAddress(), 0,"")).getData()));
+			sendTransaction(new Transaction(transaction, (new MessagePacket(transaction.getAddress(), 0,"")).getData(), Transaction.NO_ERROR));
 		} else {
-			sendTransaction(new Transaction(transaction, (new MessagePacket(transaction.getAddress(), 1,"Messages are being refused.")).getData()));
+			sendTransaction(new Transaction(transaction, (new MessagePacket(transaction.getAddress(), 1,"Messages are being refused.")).getData(), Transaction.NO_ERROR));
 		}
 		
 		//reply with err or not
@@ -142,7 +147,8 @@ class InstantMessageTransport extends TransactionProtocol {
 			timeStamp=System.currentTimeMillis();
 			msg=msgPacket.getMessage();
 			address=msgPacket.getAddress();
-			messageID=msgPacket.getID();			
+			messageID=msgPacket.getID();
+			System.out.println("message id:"+messageID);			
 		}
 		
 		public boolean equals(Object o) {
@@ -152,7 +158,7 @@ class InstantMessageTransport extends TransactionProtocol {
 			
 			return  (	message.msg.equals(msg) &&
 						message.address.equals(address) &&
-						message.messageID==message.messageID);
+						message.messageID==messageID);
 		}
 		
 		public long getTimeStamp() {

@@ -18,16 +18,19 @@ public final class Transaction implements DataPacket { 		//Immutable (Java needs
 	final int transactionCode;
 	final int connectionNumber;
 	final boolean isForClient;
+	final byte errorByte; //To server transactions should have simply 0000 0000 here or "NO_ERROR" (padding ick!)
 	
 	final byte[] data;
 	
-	private final static int HEADER_SIZE=10; //holy shit!
+	private final static int HEADER_SIZE=11;
 	
 	public final static short TRANSACTION_PROTOCOL_NUMBER=1234;
 	
+	public final static byte NO_ERROR=0;
+	public final static byte TRANSACTION_TYPE_UNKNOWN=1;
 	
 	///note: put in checks for length etc...
-	public Transaction(ImmutableDatagramPacket packet) throws NotATransactionException {	//makes a Transaction representation.. Inverse of toImmutableDatagramPacket
+	protected Transaction(ImmutableDatagramPacket packet) throws NotATransactionException {	//makes a Transaction representation.. Inverse of toImmutableDatagramPacket
 		this.address=new MysterAddress(packet.getAddress(), packet.getPort());
 		
 		byte[] bytes=packet.getData();
@@ -41,6 +44,9 @@ public final class Transaction implements DataPacket { 		//Immutable (Java needs
 			if (int_temp!=TRANSACTION_PROTOCOL_NUMBER) throw new NotATransactionException("Tried to make a transaction from a packet of type "+int_temp+" instead of type "+TRANSACTION_PROTOCOL_NUMBER+".");
 			transactionCode=in.readInt();
 			fullyQualifiedConnectionNumber=in.readInt();
+			int errorTemp=in.read();
+			if (errorTemp==-1) throw new NotATransactionException("Transaction shorter than header.");
+			errorByte=(byte)errorTemp;
 		} catch (IOException ex) {
 			throw new NotATransactionException("Formating error occured: "+ex);
 		}
@@ -58,23 +64,24 @@ public final class Transaction implements DataPacket { 		//Immutable (Java needs
 	 * 	the inverse recipient from itself (ie: if the passed transaction is for a client then this packet will
 	 *	be for a server.
 	 */
-	public Transaction(Transaction transaction, byte[] bytes) {
-		this(transaction.getAddress(), transaction.getTransactionCode(), transaction.getConnectionNumber(), bytes, ! transaction.isForClient());
+	public Transaction(Transaction transaction, byte[] bytes, byte errorByte) {
+		this(transaction.getAddress(), transaction.getTransactionCode(), transaction.getConnectionNumber(), bytes, ! transaction.isForClient(), errorByte);
 	}
 	
 	/**
 	 *	Default to assuming it is NOT for client (ie it's an outgoing packet)
 	 */
-	public Transaction(MysterAddress transaction, int transactionCode, int connectionNumber, byte[] bytes) {
-		this(transaction,transactionCode,connectionNumber,bytes, false);
+	protected Transaction(MysterAddress transaction, int transactionCode, int connectionNumber, byte[] bytes) {
+		this(transaction,transactionCode,connectionNumber,bytes, false, NO_ERROR);
 	}
 	
-	public Transaction(MysterAddress address, int transactionCode, int connectionNumber, byte[] bytes, boolean isForClient) {
+	protected Transaction(MysterAddress address, int transactionCode, int connectionNumber, byte[] bytes, boolean isForClient, byte errorByte) {
 		this.address=address;
 		this.transactionCode=transactionCode;
 		this.connectionNumber=connectionNumber;
 		this.isForClient=isForClient;
 		this.data=bytes;
+		this.errorByte=errorByte;
 	}
 	
 	public MysterAddress getAddress() {
@@ -91,6 +98,14 @@ public final class Transaction implements DataPacket { 		//Immutable (Java needs
 	
 	public int getConnectionNumber() {
 		return connectionNumber;
+	}
+	
+	public byte getErrorCode() {
+		return errorByte;
+	}
+	
+	public boolean isError() {
+		return (errorByte!=NO_ERROR);
 	}
 	
 	public ImmutableDatagramPacket getImmutableDatagramPacket() {
@@ -113,6 +128,7 @@ public final class Transaction implements DataPacket { 		//Immutable (Java needs
 			out.writeShort(TRANSACTION_PROTOCOL_NUMBER);
 			out.writeInt(transactionCode);
 			out.writeInt(getFullyQualifiedConnectionNumber());
+			out.write(errorByte);
 		} catch (IOException ex) {
 			ex.printStackTrace(); //!!!!!!
 		}
