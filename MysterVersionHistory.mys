@@ -841,3 +841,6 @@ Work on DEV 8:
 	  	-> Added a MysterType class to repesent the 4 byte Myster file type internally
 	  	-> Re-did the File Description List code completely (a pre-requisit to multi source download)
 	  	-> Added an I18n class to support multiple languages in Myster.
+	  	-> Added md5, sha1 has code
+	  	-> Added hash code to File Stats protocol
+	  	-> Added framework for opening a web browser with a URL (for clickable banners)

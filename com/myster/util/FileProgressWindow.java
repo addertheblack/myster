@@ -1,8 +1,12 @@
 package com.myster.util;
 
 import java.awt.event.*;
-import com.general.util.Util;
+import java.net.MalformedURLException;
+import java.net.URL;
+
+import com.myster.net.web.WebLinkManager;
 import com.general.util.Timer;
+import com.general.util.Util;
 
 
 public class FileProgressWindow extends ProgressWindow {
@@ -35,6 +39,8 @@ public class FileProgressWindow extends ProgressWindow {
 				if (rateTimer != null) rateTimer.end();
 			}
 		});
+		
+		addAdClickListener(new AdClickHandler());
 	}
 	
 	public void setPreviouslyDownloaded(long someValue, int bar) {
@@ -106,6 +112,18 @@ public class FileProgressWindow extends ProgressWindow {
 		public void end() {
 			if (timer != null) timer.cancelTimer();
 			endFlag = true;
+		}
+	}
+	
+	private static class AdClickHandler extends MouseAdapter {
+		public void mouseReleased(MouseEvent e) {		
+			if ((e.getX() > 0 && e.getX() < X_SIZE) && (e.getY() >0 && e.getY() < AD_HEIGHT)) {
+				try {
+					WebLinkManager.openURL(new URL("http://www.apple.com/"));
+				} catch (MalformedURLException ex) {
+					ex.printStackTrace();
+				}
+			}
 		}
 	}
 }

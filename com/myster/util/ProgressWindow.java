@@ -234,6 +234,10 @@ public class ProgressWindow extends Frame {
     	return getProgressPanel(bar).getBarColor();
     }
     
+    public void addAdClickListener(MouseListener l) {
+    	adPanel.addMouseListener(l);
+    }
+    
 	private static class ProgressPanel extends DoubleBufferPanel {
 		public static final int PROGRESS_X_OFFSET = 10;
 		public static final int PROGRESS_Y_OFFSET = 25;

@@ -12,6 +12,10 @@ public abstract class EventDispatcher {
 	public void removeListener(EventListener l) {
 		listeners.removeElement(l);
 	}
+	
+	public int getNumberOfListeners() {
+		return listeners.size();
+	}
 
 	protected Vector getListeners() {return listeners;}
 	
