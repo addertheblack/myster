@@ -22,6 +22,7 @@ package com.myster.server.event;
 import java.util.Vector;
 
 import com.general.events.SyncEventDispatcher;
+import com.general.util.Util;
 
 public class ServerEventManager {
     //Vector dispatchers;
@@ -53,34 +54,52 @@ public class ServerEventManager {
     }
 
     //whatever events
-    public synchronized void fireCEvent(ConnectionManagerEvent e) {
-        synchronized (connectionlisteners) { //gets the lock of...
-            switch (e.getID()) {
-            case ConnectionManagerEvent.SECTIONCONNECT:
-                for (int i = 0; i < connectionlisteners.size(); i++)
-                    ((ConnectionManagerListener) (connectionlisteners
-                            .elementAt(i))).sectionEventConnect(e);
-                break;
-            case ConnectionManagerEvent.SECTIONDISCONNECT:
-                for (int i = 0; i < connectionlisteners.size(); i++)
-                    ((ConnectionManagerListener) (connectionlisteners
-                            .elementAt(i))).sectionEventDisconnect(e);
-                break;
-            default:
-                err();
-            }
+    public synchronized void fireCEvent(final ConnectionManagerEvent e) {
+        try {
+            Util.invokeAndWait(new Runnable() {
+                public void run() {
+                    synchronized (connectionlisteners) { //gets the lock of...
+                        switch (e.getID()) {
+                        case ConnectionManagerEvent.SECTIONCONNECT:
+                            for (int i = 0; i < connectionlisteners.size(); i++)
+                                ((ConnectionManagerListener) (connectionlisteners.elementAt(i)))
+                                        .sectionEventConnect(e);
+                            break;
+                        case ConnectionManagerEvent.SECTIONDISCONNECT:
+                            for (int i = 0; i < connectionlisteners.size(); i++)
+                                ((ConnectionManagerListener) (connectionlisteners.elementAt(i)))
+                                        .sectionEventDisconnect(e);
+                            break;
+                        default:
+                            err();
+                        }
+                    }
+                }
+            });
+        } catch (InterruptedException e1) {
+            // TODO Auto-generated catch block
+            e1.printStackTrace();
         }
 
     }
 
     private void err() {
-        System.out
-                .println("Unknown id type in ServerEnevt manager for Connection manager");
+        System.out.println("Unknown id type in ServerEnevt manager for Connection manager");
     }
 
-    public void fireOEvent(OperatorEvent event) { //should be private but cn't
-                                                  // be not a public API.
-        operatorDispatcher.fireEvent(event);
+    public void fireOEvent(final OperatorEvent event) { //should be private but
+        // cn't
+        try {
+            // be not a public API.
+            Util.invokeAndWait(new Runnable() {
+                public void run() {
+                    operatorDispatcher.fireEvent(event);
+                }
+            });
+        } catch (InterruptedException e) {
+            // TODO Auto-generated catch block
+            e.printStackTrace();
+        }
     }
 
 }

@@ -16,6 +16,7 @@ import java.util.Vector;
 
 import com.general.events.EventDispatcher;
 import com.general.events.SyncEventDispatcher;
+import com.general.util.Util;
 import com.myster.menubar.event.AddIPMenuAction;
 import com.myster.menubar.event.CloseWindowAction;
 import com.myster.menubar.event.MenuBarEvent;
@@ -55,11 +56,10 @@ public class MysterMenuBar extends MenuBar {
             special = new Vector();
 
             //File menu items
-            file.addElement(new MysterMenuItemFactory("New Search",
-                    new NewSearchWindowAction(), java.awt.event.KeyEvent.VK_N));
-            file.addElement(new MysterMenuItemFactory(
-                    "New Peer-to-Peer Connection", new NewClientWindowAction(),
-                    java.awt.event.KeyEvent.VK_N, true));
+            file.addElement(new MysterMenuItemFactory("New Search", new NewSearchWindowAction(),
+                    java.awt.event.KeyEvent.VK_N));
+            file.addElement(new MysterMenuItemFactory("New Peer-to-Peer Connection",
+                    new NewClientWindowAction(), java.awt.event.KeyEvent.VK_N, true));
             file.addElement(new MysterMenuItemFactory("New Instant Message",
                     new java.awt.event.ActionListener() {
                         public void actionPerformed(java.awt.event.ActionEvent e) {
@@ -67,26 +67,23 @@ public class MysterMenuBar extends MenuBar {
                             window.setVisible(true);
                         }
                     }));
-            file.addElement(new MysterMenuItemFactory("Close Window",
-                    new CloseWindowAction(), java.awt.event.KeyEvent.VK_W));
+            file.addElement(new MysterMenuItemFactory("Close Window", new CloseWindowAction(),
+                    java.awt.event.KeyEvent.VK_W));
             file.addElement(new MysterMenuItemFactory("-", NULL));
-            file.addElement(new MysterMenuItemFactory("Quit",
-                    new QuitMenuAction(), java.awt.event.KeyEvent.VK_Q));
+            file.addElement(new MysterMenuItemFactory("Quit", new QuitMenuAction(),
+                    java.awt.event.KeyEvent.VK_Q));
 
             //Edit menu items
             edit.addElement(new MysterMenuItemFactory("Undo", NULL));
             edit.addElement(new MysterMenuItemFactory("-", NULL));
             edit.addElement(new MysterMenuItemFactory("Cut", NULL));
-            edit.addElement(new MysterMenuItemFactory("Copy (use command-c)",
-                    NULL));
-            edit.addElement(new MysterMenuItemFactory("Paste (use command-v)",
-                    NULL));
+            edit.addElement(new MysterMenuItemFactory("Copy (use command-c)", NULL));
+            edit.addElement(new MysterMenuItemFactory("Paste (use command-v)", NULL));
             edit.addElement(new MysterMenuItemFactory("Clear", NULL));
             edit.addElement(new MysterMenuItemFactory("-", NULL));
             edit.addElement(new MysterMenuItemFactory("Select All", NULL));
             edit.addElement(new MysterMenuItemFactory("-", NULL));
-            edit.addElement(new MysterMenuItemFactory("Preferences",
-                    new PreferencesAction(),
+            edit.addElement(new MysterMenuItemFactory("Preferences", new PreferencesAction(),
                     java.awt.event.KeyEvent.VK_SEMICOLON));
 
             //Disable all Edit menu commands
@@ -95,14 +92,11 @@ public class MysterMenuBar extends MenuBar {
             }
 
             //Myster menu items
-            special.addElement(new MysterMenuItemFactory("Add IP",
-                    new AddIPMenuAction()));
-            special
-                    .addElement(new MysterMenuItemFactory("Show Server Stats",
-                            new StatsWindowAction(),
-                            java.awt.event.KeyEvent.VK_S, true));
-            special.addElement(new MysterMenuItemFactory("Show Tracker",
-                    new TrackerWindowAction(), java.awt.event.KeyEvent.VK_T));
+            special.addElement(new MysterMenuItemFactory("Add IP", new AddIPMenuAction()));
+            special.addElement(new MysterMenuItemFactory("Show Server Stats",
+                    new StatsWindowAction(), java.awt.event.KeyEvent.VK_S, true));
+            special.addElement(new MysterMenuItemFactory("Show Tracker", new TrackerWindowAction(),
+                    java.awt.event.KeyEvent.VK_T));
             special.addElement(com.myster.hash.ui.HashManagerGUI.getMenuItem());
 
             //Myster plugins Menu
@@ -124,8 +118,7 @@ public class MysterMenuBar extends MenuBar {
     public static void addMenuListener(MenuBarListener listener) { //Not
         // sycnhronized
         dispatcher.addListener(listener);
-        listener.fireEvent(new MenuBarEvent(MenuBarEvent.BAR_CHANGED,
-                getFactory()));
+        listener.fireEvent(new MenuBarEvent(MenuBarEvent.BAR_CHANGED, getFactory()));
     }
 
     public static void removeMenuLister(MenuBarListener listener) { //Not
@@ -136,11 +129,9 @@ public class MysterMenuBar extends MenuBar {
     public static boolean removeBuiltInMenu(String menuName) {
         getFactory(); //assert menu bar stuff is loaded.
         for (int i = 0; i < menuBar.size(); i++) {
-            if (((MysterMenuFactory) (menuBar.elementAt(i))).getName()
-                    .equalsIgnoreCase(menuName)) {
+            if (((MysterMenuFactory) (menuBar.elementAt(i))).getName().equalsIgnoreCase(menuName)) {
                 menuBar.removeElementAt(i);
-                dispatcher.fireEvent(new MenuBarEvent(MenuBarEvent.BAR_CHANGED,
-                        getFactory()));
+                dispatcher.fireEvent(new MenuBarEvent(MenuBarEvent.BAR_CHANGED, getFactory()));
                 return true;
             }
         }
@@ -166,13 +157,12 @@ public class MysterMenuBar extends MenuBar {
         getFactory(); //assert menu bar stuff is loaded.
 
         for (int i = 0; i < vector.size(); i++) {
-            MysterMenuItemFactory item = (MysterMenuItemFactory) (vector
-                    .elementAt(i));
+            MysterMenuItemFactory item = (MysterMenuItemFactory) (vector.elementAt(i));
             if (item.getName().equalsIgnoreCase(menuItem)) {
                 vector.removeElementAt(i);
                 while ((vector.size() > 0)
-                        && (((MysterMenuItemFactory) (vector.elementAt(vector
-                                .size() - 1))).getName().equals("-"))) {
+                        && (((MysterMenuItemFactory) (vector.elementAt(vector.size() - 1)))
+                                .getName().equals("-"))) {
                     vector.removeElementAt(vector.size() - 1);
                 }
 
@@ -186,8 +176,11 @@ public class MysterMenuBar extends MenuBar {
     }
 
     public static void updateMenuBars() {
-        dispatcher.fireEvent(new MenuBarEvent(MenuBarEvent.BAR_CHANGED,
-                getFactory()));
+        Util.invoke(new Runnable() {
+            public void run() {
+                dispatcher.fireEvent(new MenuBarEvent(MenuBarEvent.BAR_CHANGED, getFactory()));
+            }
+        });
     }
 
     public static void addMenu(MysterMenuFactory factory) {

@@ -65,6 +65,11 @@ public class ProgressWindow extends Frame {
         resize();
         doLayout();
     }
+    
+    public void pack() {
+        super.pack();
+        resize();
+    }
 
     protected synchronized void resize() {
         Insets insets = getInsets();

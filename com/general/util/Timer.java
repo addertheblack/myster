@@ -31,7 +31,7 @@ public class Timer implements Comparable { //almost but not quite immutable.
 
     /**
      * Run as thread means that the timer should launch the runnable item in its
-     * own thread. Items are not run as threa dby default. Items not run as
+     * own thread. Items are not run as thread by default. Items not run as
      * thread should return ASAP.
      * 
      * Time to wait is relative to the current time ad is in millis.
