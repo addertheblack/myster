@@ -255,9 +255,9 @@ public class SearchWindow extends MysterFrame implements SearchResultListener,
     }
 
     public void paint(Graphics g) {
-        filelist.repaint(); //neede dbecause when an item is updated this
-                            // object's repaint() methoods is called. The
-                            // repaint() needs to be apssed on to the list.
+        filelist.repaint(); //needed because when an item is updated this
+                            // object's repaint() methods is called. The
+                            // repaint() needs to be passed on to the list.
     }
 
     /*
