@@ -353,6 +353,7 @@ public class ProgressWindow extends Frame {
 		
 		public void addImage(Image newAd) {
 			ad = newAd;
+			labelText = "";
 			repaint();
 		}
 		
