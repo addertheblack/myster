@@ -1,8 +1,7 @@
 /*
  * MCList.java
  * 
- * Title: Multi Column List Package Author: Andrew Trumper Description: A
- * MultiColumn List Package
+ * Title: Multi Column List Package Author: Andrew Trumper Description: A MultiColumn List Package
  * 
  * Copyright Andrew Trumper 2001
  */
@@ -55,8 +54,7 @@ public class MCList extends Panel {
         this(numberofcolumns, singleselect, new DefaultMCRowTheme(c, PADDING));
     }
 
-    public MCList(int numberofcolumns, boolean singleselect,
-            MCRowThemeInterface theme) {
+    public MCList(int numberofcolumns, boolean singleselect, MCRowThemeInterface theme) {
 
         this.rowtheme = theme;
         eventhandler = new MCListEventHandler(this);
@@ -86,6 +84,7 @@ public class MCList extends Panel {
 
         setBackground(theme.getBackground());
 
+        addKeyListener(eventhandler);
     }
 
     public void setNumberOfColumns(int c) {
@@ -106,7 +105,7 @@ public class MCList extends Panel {
 
     public synchronized void sortBy(int column) {
         list.setSortBy(column);
-        header.sortBy(list.isSorted ? column : -1);
+        header.sortBy(list.isSorted() ? column : -1);
         repaint();
     }
 
@@ -157,24 +156,23 @@ public class MCList extends Panel {
         if (pane.getViewportSize().height - header.getHeight() < 0)
             return;
         if (previousimagex != pane.getViewportSize().width || //makes sure the
-                                                              // image buffer is
-                                                              // up to date!
+                // image buffer is
+                // up to date!
                 previousimagey != pane.getViewportSize().height) {
-            im = createImage(pane.getViewportSize().width, pane
-                    .getViewportSize().height
+            im = createImage(pane.getViewportSize().width, pane.getViewportSize().height
                     - header.getHeight());//new
-                                          // BufferedImage(pane.getViewportSize().width,pane.getViewportSize().height-header.getHeight(),BufferedImage.TYPE_INT_BGR);//
+            // BufferedImage(pane.getViewportSize().width,pane.getViewportSize().height-header.getHeight(),BufferedImage.TYPE_INT_BGR);//
             previousimagex = pane.getViewportSize().width;
             previousimagey = pane.getViewportSize().height;
         }
-        paint(im.getGraphics(), pane.getScrollPosition().x, pane
-                .getScrollPosition().x
-                + pane.getViewportSize().width, pane.getScrollPosition().y,
-                pane.getScrollPosition().y + pane.getViewportSize().height);
-        g.setClip(pane.getScrollPosition().x, pane.getScrollPosition().y, pane
-                .getViewportSize().width, pane.getViewportSize().height);
-        g.drawImage(im, pane.getScrollPosition().x, pane.getScrollPosition().y
-                + header.getHeight(), this);
+        paint(im.getGraphics(), pane.getScrollPosition().x, pane.getScrollPosition().x
+                + pane.getViewportSize().width, pane.getScrollPosition().y, pane
+                .getScrollPosition().y
+                + pane.getViewportSize().height);
+        g.setClip(pane.getScrollPosition().x, pane.getScrollPosition().y,
+                pane.getViewportSize().width, pane.getViewportSize().height);
+        g.drawImage(im, pane.getScrollPosition().x,
+                pane.getScrollPosition().y + header.getHeight(), this);
     }
 
     // private void updatey(Graphics g) { //not double buffered.
@@ -207,9 +205,9 @@ public class MCList extends Panel {
     }
 
     public void paint(Graphics g, int x1, int x2, int y1, int y2) { //uppper
-                                                                    // and lower
-                                                                    // bounds to
-                                                                    // draw
+        // and lower
+        // bounds to
+        // draw
         //if (true==true) return ;
         g.setColor(getBackground());
         g.fillRect(0, 0, im.getWidth(this), im.getHeight(this));
@@ -223,17 +221,16 @@ public class MCList extends Panel {
             c2 = list.size() - 1;
         if (c1 == -1)
             c2 = -1; //If c1=-1 the means the scroll pane is outside any
-                     // visible area so draw nothing.
+        // visible area so draw nothing.
 
         int offsetcounter = getYFromClicked(c1) - y1; //rounding routine (get
-                                                      // the offset properly.
-                                                      // Gtes initial offset.
+        // the offset properly.
+        // Gtes initial offset.
 
         RowStats rowstats = header.getRowStats();
 
         for (int i = c1; i <= c2; i++) {
-            rowtheme.paint(g, list.getElement(i), rowstats, offsetcounter, x1,
-                    i);
+            rowtheme.paint(g, list.getElement(i), rowstats, offsetcounter, x1, i);
             offsetcounter += rowtheme.getHeight();
         }
         g.dispose();
@@ -294,8 +291,8 @@ public class MCList extends Panel {
     }
 
     /**
-     * Returns the selected index Returns -1 is there is none selected or if
-     * more than one item is selected.
+     * Returns the selected index Returns -1 is there is none selected or if more than one item is
+     * selected.
      */
 
     public int getSelectedIndex() {
@@ -365,7 +362,7 @@ public class MCList extends Panel {
     }
 
     private void listChangedSize() { //if it is synchronized, the it wil break
-                                     // under MacOS X.
+        // under MacOS X.
         try {
             pane.invalidate(); //invalidate current layout.
             pane.validate(); //update scroll pane to possible changes in size.

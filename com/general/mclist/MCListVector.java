@@ -13,24 +13,24 @@ import com.sun.java.util.collections.Comparator;
 import com.sun.java.util.collections.Vector;
 
 public class MCListVector {
-    Vector vector; //"no dog food for Vector tonight" -- Paraphrase of
+    private Vector vector; //"no dog food for Vector tonight" -- Paraphrase of
                    // Futurama.
 
-    int sortby = 0;
+    private int sortby = 0;
 
-    boolean lessthan = true;
+    private boolean lessthan = true;
 
-    boolean isSorted = true;
+    private boolean isSorted = true;
 
     public static final boolean ASENDING = true;
 
     public static final boolean DESCENDING = false;
 
-    protected MCListVector() {
+    MCListVector() {
         vector = new Vector(100, 100);
     }
 
-    protected boolean isSorted() {
+    boolean isSorted() {
         return isSorted;
     }
 
@@ -38,11 +38,11 @@ public class MCListVector {
      * If isSorted is true the List will try to always remain properly sorted.
      * If it is false, the list will only sort if explicitly told to.
      */
-    protected void setSorted(boolean isSorted) {
+    void setSorted(boolean isSorted) {
         this.isSorted = isSorted;
     }
 
-    protected synchronized void sort() {
+    synchronized void sort() {
         if (sortby == -1)
             return;
 
@@ -69,15 +69,15 @@ public class MCListVector {
                 });
     }
 
-    protected synchronized boolean getSortOrder() {
+    synchronized boolean getSortOrder() {
         return lessthan;
     }
 
-    protected synchronized boolean reverseSortOrder() {
+    synchronized boolean reverseSortOrder() {
         return setSortOrder(!lessthan);
     }
 
-    protected synchronized boolean setSortOrder(boolean b) {
+    synchronized boolean setSortOrder(boolean b) {
         if (lessthan != b) {
             lessthan = !lessthan;
             sort();
@@ -86,7 +86,7 @@ public class MCListVector {
         return lessthan;
     }
 
-    protected synchronized void addElement(MCListItemInterface[] o) {
+    synchronized void addElement(MCListItemInterface[] o) {
         vector.ensureCapacity(vector.size() + o.length + 1);//the +1 is for
                                                             // kicks...
         for (int i = 0; i < o.length; i++)
@@ -95,32 +95,32 @@ public class MCListVector {
             sort();
     }
 
-    protected synchronized void removeElement(int index) {
+    synchronized void removeElement(int index) {
         vector.removeElementAt(index);
     }
 
-    protected synchronized void removeElement(Object o) {
+    synchronized void removeElement(Object o) {
         vector.removeElement(o);
     }
 
-    protected synchronized MCListItemInterface getElement(int index) {
+    synchronized MCListItemInterface getElement(int index) {
         return (MCListItemInterface) (vector.elementAt(index));
     }
 
-    protected synchronized void setSortBy(int i) {
+    synchronized void setSortBy(int i) {
         sortby = i;
         sort();
     }
 
-    protected int size() {
+    int size() {
         return vector.size();
     }
 
-    protected synchronized void removeAllElements() {
+    synchronized void removeAllElements() {
         vector.removeAllElements();
     }
 
-    protected synchronized void removeIndexes(int[] indexes) {
+    synchronized void removeIndexes(int[] indexes) {
         MCListItemInterface[] objectsToRemove = new MCListItemInterface[indexes.length];
 
         for (int i = 0; i < indexes.length; i++) {
@@ -130,14 +130,14 @@ public class MCListVector {
         removeElements(objectsToRemove);
     }
 
-    protected synchronized void removeElements(
+    synchronized void removeElements(
             MCListItemInterface[] objectsToRemove) {
         for (int i = 0; i < objectsToRemove.length; i++) {
             removeElement(objectsToRemove[i]);
         }
     }
 
-    protected synchronized boolean isAnythingSelected() {
+    synchronized boolean isAnythingSelected() {
         for (int i = 0; i < size(); i++) {
             if (getElement(i).isSelected())
                 return true;
@@ -146,7 +146,7 @@ public class MCListVector {
         return false;
     }
 
-    protected synchronized int[] getSelectedIndexes() {
+    synchronized int[] getSelectedIndexes() {
         int counter = 0;
         for (int i = 0; i < size(); i++) {
             if (getElement(i).isSelected())
@@ -165,7 +165,12 @@ public class MCListVector {
         return temp;
     }
 
-    protected synchronized int getSelectedIndex() {
+    /**
+     * Returns the index of the first selected item form the top of the list.
+     * 
+     * @return the first selected item or -1 if there is no item currently selected.
+     */
+    synchronized int getSelectedIndex() {
         int workingindex = -1;
         for (int i = 0; i < size(); i++) {
             if (getElement(i).isSelected()) {
@@ -177,5 +182,4 @@ public class MCListVector {
         }
         return workingindex;
     }
-
 }

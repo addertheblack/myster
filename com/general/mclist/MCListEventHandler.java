@@ -1,8 +1,7 @@
 /*
  * MCList.java
  * 
- * Title: Multi Column List Package Author: Andrew Trumper Description: A
- * MultiColumn List Package
+ * Title: Multi Column List Package Author: Andrew Trumper Description: A MultiColumn List Package
  * 
  * Copyright Andrew Trumper 2001
  */
@@ -12,12 +11,14 @@ package com.general.mclist;
 import java.awt.Dimension;
 import java.awt.Point;
 import java.awt.ScrollPane;
+import java.awt.event.KeyEvent;
+import java.awt.event.KeyListener;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
 import java.awt.event.MouseMotionListener;
 import java.util.Vector;
 
-public class MCListEventHandler implements MouseListener, MouseMotionListener {
+public class MCListEventHandler implements MouseListener, MouseMotionListener, KeyListener {
     //To Access "Component" features...
     private MCList callback;
 
@@ -37,6 +38,10 @@ public class MCListEventHandler implements MouseListener, MouseMotionListener {
 
     //Event Queue!
     private Vector vector;
+    
+    private static final int DIRECTION_UP = -1;
+    
+    private static final int DIRECTION_DOWN = 1;
 
     public MCListEventHandler(MCList c) {
         callback = c;
@@ -56,15 +61,13 @@ public class MCListEventHandler implements MouseListener, MouseMotionListener {
 
         if (e.isShiftDown() && firstselect != -1 && !callback.isSingleSelect()) {
             int sign = getSign(firstselect - workingselection);
-            for (int i = firstselect; i != (workingselection - sign); i = i
-                    - sign) {
+            for (int i = firstselect; i != (workingselection - sign); i = i - sign) {
                 callback.select(i);
             }
             if (firstselect != (workingselection - sign))
                 selectItemEventDispatch();
             callback.repaint();
-        } else if (e.isMetaDown() && firstselect != -1
-                && !callback.isSingleSelect()) {
+        } else if (e.isMetaDown() && firstselect != -1 && !callback.isSingleSelect()) {
             if (workingselection != -1)
                 callback.toggle(workingselection);
             if (callback.isSelected(workingselection))
@@ -82,8 +85,7 @@ public class MCListEventHandler implements MouseListener, MouseMotionListener {
                 doubleclickflag = false;
             }
 
-            if (!callback.isSelected(workingselection)
-                    || workingselection == -1) {
+            if (!callback.isSelected(workingselection) || workingselection == -1) {
                 firstselect = workingselection;
                 callback.clearAllSelected();
                 unselectItemEventDispatch();
@@ -109,8 +111,8 @@ public class MCListEventHandler implements MouseListener, MouseMotionListener {
         long currenttime = System.currentTimeMillis();
         int workingselection = -1;
         workingselection = callback.getClicked(e.getX(), e.getY());
-        if (callback.isSelected(workingselection)
-                && currenttime - clickedtime < DCTIME && doubleclickflag) {
+        if (callback.isSelected(workingselection) && currenttime - clickedtime < DCTIME
+                && doubleclickflag) {
             doubleclickflag = false;
             doubleClickEventDispatch();
         }
@@ -129,12 +131,11 @@ public class MCListEventHandler implements MouseListener, MouseMotionListener {
     public void mouseDragged(MouseEvent e) {
         int workingselection = callback.getClicked(e.getX(), e.getY());
 
-        if (e.isShiftDown() && firstselect != -1
-                && workingselection != lastselect && !callback.isSingleSelect()) {
+        if (e.isShiftDown() && firstselect != -1 && workingselection != lastselect
+                && !callback.isSingleSelect()) {
             if (workingselection != -1) {
                 int sign = getSign(firstselect - workingselection);
-                for (int i = firstselect; i != (workingselection - sign); i = i
-                        - sign) {
+                for (int i = firstselect; i != (workingselection - sign); i = i - sign) {
                     callback.select(i);
                 }
 
@@ -143,8 +144,7 @@ public class MCListEventHandler implements MouseListener, MouseMotionListener {
 
                 callback.repaint();
             }
-        } else if (e.isMetaDown() && firstselect != -1
-                && !callback.isSingleSelect()) {
+        } else if (e.isMetaDown() && firstselect != -1 && !callback.isSingleSelect()) {
             if (workingselection != -1 && workingselection != lastselect) {
                 if (select && !callback.isSelected(workingselection)) {
                     callback.select(workingselection);
@@ -185,20 +185,19 @@ public class MCListEventHandler implements MouseListener, MouseMotionListener {
 
         //check if scrolling is possible.
         if (mcListSize.width > currentSize.width) { //Only do this code is
-                                                    // scrolling is possible.
+            // scrolling is possible.
 
             //check if click is off to the negative:
             if (xloc < currentLoc.x) {
                 //scrolling is possible
 
                 int difference = (currentLoc.x - xloc) / 4 + 1; //Amount to
-                                                                // scroll is
-                                                                // proportional
-                                                                // to away from
-                                                                // edge.
+                // scroll is
+                // proportional
+                // to away from
+                // edge.
                 if (currentLoc.x >= difference) {
-                    pane.setScrollPosition(currentLoc.x - difference,
-                            currentLoc.y);
+                    pane.setScrollPosition(currentLoc.x - difference, currentLoc.y);
                 } else {
                     pane.setScrollPosition(0, currentLoc.y);
                 }
@@ -207,11 +206,9 @@ public class MCListEventHandler implements MouseListener, MouseMotionListener {
 
                 int difference = (xloc - (currentLoc.x + currentSize.width)) / 4 + 1;
                 if ((currentLoc.x + currentSize.width) <= (mcListSize.width - difference)) {
-                    pane.setScrollPosition(currentLoc.x + difference,
-                            currentLoc.y);
+                    pane.setScrollPosition(currentLoc.x + difference, currentLoc.y);
                 } else {
-                    pane.setScrollPosition(
-                            mcListSize.width - currentSize.width, currentLoc.y);
+                    pane.setScrollPosition(mcListSize.width - currentSize.width, currentLoc.y);
                 }
             }
         }
@@ -221,15 +218,14 @@ public class MCListEventHandler implements MouseListener, MouseMotionListener {
 
         //check if scrolling is possible.
         if (mcListSize.height > currentSize.height) { //ignore if scrolling is
-                                                      // simply not possible!
+            // simply not possible!
             //check if click is off to the negative:
             if (yloc < currentLoc.y) {
                 //scrolling is possible
 
                 int difference = (currentLoc.y - yloc) / 4 + 1;
                 if (currentLoc.y >= difference) {
-                    pane.setScrollPosition(currentLoc.x, currentLoc.y
-                            - difference);
+                    pane.setScrollPosition(currentLoc.x, currentLoc.y - difference);
                 } else {
                     pane.setScrollPosition(currentLoc.x, 0);
                 }
@@ -238,11 +234,9 @@ public class MCListEventHandler implements MouseListener, MouseMotionListener {
 
                 int difference = (yloc - (currentLoc.y + currentSize.height)) / 4 + 1;
                 if ((currentLoc.y + currentSize.height) <= (mcListSize.height - difference)) {
-                    pane.setScrollPosition(currentLoc.x, currentLoc.y
-                            + difference);
+                    pane.setScrollPosition(currentLoc.x, currentLoc.y + difference);
                 } else {
-                    pane.setScrollPosition(currentLoc.x, mcListSize.height
-                            - currentSize.height);
+                    pane.setScrollPosition(currentLoc.x, mcListSize.height - currentSize.height);
                 }
             }
         }
@@ -254,6 +248,74 @@ public class MCListEventHandler implements MouseListener, MouseMotionListener {
         if (x != 0)
             return x / Math.abs(x);
         return 1;
+    }
+
+    //Key listeners
+    public void keyPressed(KeyEvent e) {
+        int selectedIndex = callback.getSelectedIndex();
+        int indexToSelect;
+
+        switch (e.getKeyCode()) {
+        case KeyEvent.VK_UP:
+            arrowKeySelect(DIRECTION_UP);
+            break;
+        case KeyEvent.VK_DOWN:
+            arrowKeySelect(DIRECTION_DOWN);
+            break;
+        case KeyEvent.VK_ENTER:
+            doubleClickEventDispatch();
+            break;
+        case KeyEvent.VK_PAGE_DOWN:
+            pageScrollViewport(DIRECTION_DOWN);
+            break;
+        case KeyEvent.VK_PAGE_UP:
+            pageScrollViewport(DIRECTION_UP);
+            break;
+        case KeyEvent.VK_HOME:
+            callback.getPane().setScrollPosition(callback.getPane().getScrollPosition().x, 0);
+            break;
+        case KeyEvent.VK_END:
+            callback.getPane().setScrollPosition(callback.getPane().getScrollPosition().x,
+                    callback.getSize().height);
+            break;
+        default:
+            ;
+        }
+
+        callback.repaint();
+    }
+
+    private int pushIndexIntoBound(int index) {
+        if (index >= callback.list.size()) {
+            return callback.list.size();
+        }
+        if (index < 0) {
+            return 0;
+        }
+
+        return index;
+    }
+
+    private void arrowKeySelect(int direction) {
+        int selectedIndex = callback.getSelectedIndex();
+        
+        if (selectedIndex == -1)
+            return;
+
+        callback.clearAllSelected();
+        unselectItemEventDispatch();
+
+        int indexToSelect = pushIndexIntoBound(selectedIndex + direction);
+        callback.select(pushIndexIntoBound(selectedIndex + direction));
+        firstselect = indexToSelect;
+        selectItemEventDispatch();
+    }
+
+    private void pageScrollViewport(int direction) {
+        ScrollPane pane = callback.getPane();
+        Point location = pane.getScrollPosition();
+        int newViewportYLocation = location.y + (direction * pane.getViewportSize().height);
+        pane.setScrollPosition(location.x, newViewportYLocation);
     }
 
     //Event Dispatch routines
@@ -282,5 +344,13 @@ public class MCListEventHandler implements MouseListener, MouseMotionListener {
 
     private MCListEvent buildEvent() {
         return new MCListEvent(callback);
+    }
+
+    public void keyReleased(KeyEvent e) {
+        //nothing
+    }
+
+    public void keyTyped(KeyEvent e) {
+        //nothing
     }
 }
