@@ -19,6 +19,7 @@ package com.myster.filemanager;
 
 import java.io.*;
 import java.util.Vector;
+import java.util.Locale;
 import com.myster.util.MysterThread;
 import com.myster.pref.Preferences;
 import com.myster.mml.MML;
@@ -135,7 +136,7 @@ class FileTypeList extends MysterThread{
 	
 		String[] workingarray=new String[filelist.size()];
 		for (int i=0; i<filelist.size(); i++) {
-			workingarray[i]=((File)(filelist.elementAt(i))).getName();
+			workingarray[i]=mergePunctuation(((File)(filelist.elementAt(i))).getName());
 		}
 		return workingarray;
 	}
@@ -160,6 +161,8 @@ class FileTypeList extends MysterThread{
         
         boolean inWord = false;
         boolean aggregate = false;
+        
+        queryStr=mergePunctuation(queryStr);
         
         // Split queryStr into keywords at the whitespaces into keywords
 		//    (Anything !Character.isLetterOrDigit() is considered whitespace)
@@ -266,7 +269,7 @@ class FileTypeList extends MysterThread{
 		assertFileList();	//This must be called before working with filelist or rootdir internal variables.
 		
 		for (int i=0; i<filelist.size(); i++) {
-			if (((File)(filelist.elementAt(i))).getName().equals(query)) return ((File)(filelist.elementAt(i)));
+			if ((mergePunctuation(((File)(filelist.elementAt(i))).getName())).equals(query)) return ((File)(filelist.elementAt(i)));
 		}
 		return null;	//err, file not found.
 	}
@@ -290,7 +293,7 @@ class FileTypeList extends MysterThread{
 		if (s==null) {
 			local_prefs.remove(PATH_PREF);
 		} else {
-			local_prefs.put(PATH_PREF, s);	//Change info
+			local_prefs.put(PATH_PREF, mergePunctuation(s));	//Change info
 		}
 
 		savePrefs();
@@ -438,5 +441,35 @@ class FileTypeList extends MysterThread{
 	private boolean hasSetPath() {
 		return (local_prefs.get(PATH_PREF)!=null);
 	}
+	
+	/**
+	 *	This function Merges Japaneese punctuation into a form that displays and matches in JAVA
+	 *
+	 *	@param	String of a filename or path that needs merging.
+	 *	@return	String with punctuation merged
+	 */
+	public static String mergePunctuation(String text){
+		if (Locale.getDefault().getDisplayLanguage().equals(Locale.JAPANESE.getDisplayLanguage())) {
+			if(text.length() <= 1) return text;
+			StringBuffer buffer = new StringBuffer(text.length());
+			char pre= text.charAt(0);
+			for(int i=1; i<text.length();i++){
+				char ch = text.charAt(i);
+				if(ch == '\u3099'){
+					pre=(char)(pre + 1);
+				} else if(ch == '\u309a'){
+					pre=(char)(pre + 2);
+				} else {
+					buffer.append(pre);
+					pre = ch;
+				}
+			}
+			buffer.append(pre);
+			return buffer.toString();
+		} else {
+			return text;
+		}
+	}
+
 
 }
