@@ -52,7 +52,7 @@ public class MysterFrame extends Frame {
 
     private void initEvents() {
         setLocation(getWindowStartingLocation());
-System.out.println("Init");
+
         addWindowListener(new WindowListener() { //inline class
 
             public void windowOpened(WindowEvent e) {
@@ -124,7 +124,7 @@ System.out.println("hiding...");
     public void show() {
      WindowManager.addWindow(MysterFrame.this);
                 MysterMenuBar.addMenuListener(menuListener);
-                setNewMenuBar(MysterMenuBar.getFactory().makeMenuBar(MysterFrame.this));
+                setMenuBar(MysterMenuBar.getFactory().makeMenuBar(MysterFrame.this));
     	super.show();
     	
     }

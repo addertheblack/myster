@@ -220,7 +220,7 @@ public class MysterMenuBar extends MenuBar {
      * 
      * This routine is not blocking.
      */
-    public static void updateMenuBars() {
+    private static void updateMenuBars() {
         Util.invoke(new Runnable() {
             public void run() {
                 dispatcher.fireEvent(new MenuBarEvent(MenuBarEvent.BAR_CHANGED, getFactory()));

@@ -73,8 +73,6 @@ public class WindowManager {
             while (enum.hasMoreElements()) {
                 fixMenu((Menu)enum.nextElement());
             }
-            
-            System.out.println(""+windows.size());
         }
     }
 
