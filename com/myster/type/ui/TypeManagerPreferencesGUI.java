@@ -27,7 +27,6 @@ public class TypeManagerPreferencesGUI extends PreferencesPanel {
 
     private static final int HEADER_Y = 100;
 
-    private static final int LABEL_Y = 25;
 
     public TypeManagerPreferencesGUI() {
         setLayout(null);
