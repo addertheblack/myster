@@ -25,14 +25,14 @@ public class HashPreferences extends PreferencesPanel {
 	public static final int CHECKBOX_Y_SIZE = 25;
 	
 	public static void init() {
-		Preferences.getInstance().addPanel(new HashPreferences());
+		//Preferences.getInstance().addPanel(new HashPreferences()); //People should never disable hashing.
 	}
 	
 	public HashPreferences() {
 		setLayout(null);
 	
 		explanation = new MessagePanel(
-			"File Hashing makes sure the file your downloading is the correct one and not corrupt.\n\n"+
+			"Enables files to be hashed in the background so they can be downloaded with multi source download.\n\n"+
 			"NOTE: Files stop hashing after the current one."
 		);
 		explanation.setLocation(0,0);

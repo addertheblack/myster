@@ -31,6 +31,9 @@ public class FileProgressWindow extends ProgressWindow {
 	public FileProgressWindow(String title) {
 		super(title);
 		
+		resizeVectorWithLongs(barStartTime, getProgressBarNumber());
+		resizeVectorWithLongs(previouslyDownloaded, getProgressBarNumber());
+		
 		addComponentListener(new ComponentAdapter() {
 			public synchronized void componentShown(ComponentEvent e) {
 				rateTimer = new RateTimer();
@@ -122,10 +125,13 @@ public class FileProgressWindow extends ProgressWindow {
 		public void run() {
 			if (endFlag) return;
 			if (overFlag) return;
-			if (getValue() == getMax()) return;
+			//if (getValue() == getMax()) return;
 			
-			for (int i = 0; i < getProgressBarNumber(); i++) {
-				setAdditionalText(calculateRate(i), i);
+			
+			synchronized (FileProgressWindow.this) {
+				for (int i = 0; i < getProgressBarNumber(); i++) {
+					setAdditionalText(calculateRate(i), i);
+				}
 			}
 			
 			newTimer();

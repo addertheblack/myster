@@ -148,9 +148,9 @@ public class StandardSuite {
 					
 				progress.show();
 				
-				progress.addWindowListener(new WindowAdapter() {
-					public void windowClosing(WindowEvent e) {
-						progress.setVisible(false);
+				progress.addWindowListener(new java.awt.event.WindowAdapter() {
+					public void windowClosing(java.awt.event.WindowEvent e) {
+						((java.awt.Frame)e.getWindow()).setVisible(false);
 					}
 				});
 				

@@ -56,7 +56,9 @@ public class BannersManager {
 	}
 	
 	public static synchronized String getURLFromImageName(String imageName) {
-		return (String)imageNamesToUrls.get(imageName);
+		String string = (String)imageNamesToUrls.get(imageName);
+		
+		return (string == null?"":string);
 	}
 	
 	private static synchronized void prefsHaveChanged() {

@@ -115,6 +115,8 @@ public class MultiSourceSender extends ServerThread {
 					fireEvent(ServerDownloadEvent.QUEUED, 0);
 					if (in.read() != 1) break; //end
 					
+					sendImage(socket.out);
+					
 					sendFileSection(socket, file, offset, fileLength);
 					
 					myCounter += fileLength; //this is so a client cannot suck data forever.
@@ -213,6 +215,70 @@ public class MultiSourceSender extends ServerThread {
 				endFlag = true;
 			}
 		}
+	}
+	
+	//code 'i'
+	private void sendImage(DataOutputStream out) {
+		DataInputStream in;
+		File file;
+		
+		
+		String imageName = com.myster.server.BannersManager.getNextImageName();
+		
+		if (imageName == null) return;
+		
+		file = com.myster.server.BannersManager.getFileFromImageName(imageName);
+	
+		if (file==null) { //is needed (Threading issue)
+			return;
+		}
+		
+		try {
+			in=new DataInputStream(new java.io.FileInputStream(file));
+		} catch (Exception ex) {
+			ex.printStackTrace();
+			return;
+		}
+		
+		byte[] bytearray=new byte[(int)file.length()];
+		
+		//serveroutput.say("File length is "+file.length());
+		
+		try {
+			in.read(bytearray, 0, (int)file.length());
+		} catch (IOException ex) {}
+		
+		
+		
+		//OUTPUT::::::::
+		try {
+			out.write('i');
+			out.writeLong(bytearray.length);
+			out.write(bytearray);
+			
+			sendURLFromImageName(out, imageName);
+
+		} catch (IOException ex) {}
+		
+		try {
+			in.close();
+		} catch (IOException ex) {}
+		
+	}
+	
+	private void sendURLFromImageName(DataOutputStream out, String imageName) throws IOException {
+		String url = com.myster.server.BannersManager.getURLFromImageName(imageName);
+		
+		if (url == null) return;
+		
+		sendURL(out, url);
+	}
+
+	private void sendURL(DataOutputStream out, String url) throws IOException {
+		out.write('u');
+		out.writeInt(0);  //padding 'cause writeUTF preceed the UTF with a short.
+		out.writeShort(0);
+		out.writeUTF(url);
 	}
 	
 	private class DisconnectCommandException extends RuntimeException  {

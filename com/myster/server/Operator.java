@@ -71,14 +71,14 @@ public class Operator extends MysterThread{
 				
 				resetSocketTimer();
 			} catch (IOException ex) {
-				try { socket.close(); } catch (IOException exp) {}
+				try { socket.close(); } catch (Exception exp) {}
 				synchronized (this) { //synchronized in case the socket is being re-set.
 					try {
 						sleep(100);	//sometimes the OS will crash in such a way that it supplies an
 									//infinite number of brokens sockets.
 									//This is here so that the system remains responsive during that time.
 					} catch (InterruptedException exp) {}
-				} //this is here 
+				}
 			}		
 		} while(true);
 	}
@@ -116,6 +116,6 @@ public class Operator extends MysterThread{
 				System.out.println("RESETING THE CONNECTION");
 				refreshServerSocket();
 			}
-		}, 10*60*1000);
+		}, 10*60*1000); //ms -> seconds -> minutes 10 minutes.
 	}
 }

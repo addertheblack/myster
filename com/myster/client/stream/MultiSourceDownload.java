@@ -72,6 +72,11 @@ public class MultiSourceDownload {
 		
 		for (int i = 0; i < downloaders.length; i++) {
 			if (downloaders[i] == null) {
+				if (i+2 > progress.getProgressBarNumber()) {
+					progress.setProgressBarNumber(i+2);
+					progress.setBarColor(new Color(0,(downloaders.length-i)*(255/downloaders.length),150), i+1);
+				}
+				
 				downloaders[i] = new InternalSegmentDownloader(stub, i);
 				
 				downloaders[i].addListener(new SegmentDownloaderHandler(i+1));
@@ -204,7 +209,7 @@ public class MultiSourceDownload {
 		if (!assertLengthAndHash()) return false;
 	
 		progress.setTitle("Downloading From Multiple Sources..");
-		progress.setProgressBarNumber(downloaders.length+1);
+		progress.setProgressBarNumber(1);
 		
 		try {
 			getFileThingy();
@@ -226,9 +231,9 @@ public class MultiSourceDownload {
 		
 		progress.setText("Downloading file "+stub.getName());
 		
-		for (int i=0; i < downloaders.length; i++) {
-			progress.setBarColor(new Color(0,(downloaders.length-i)*(255/downloaders.length),150), i+1);
-		}
+		//for (int i=0; i < downloaders.length; i++) {
+		//	progress.setBarColor(new Color(0,(downloaders.length-i)*(255/downloaders.length),150), i+1);
+		//}
 		
 		
 		startCrawler();
@@ -316,7 +321,7 @@ public class MultiSourceDownload {
 		
 		public void endConnection(SegmentDownloaderEvent e) {
 			progress.setValue(0, bar);
-			progress.setText("Connection ended.", bar);
+			progress.setText("Searching for new source...", bar);
 		}
 	}
 
@@ -358,11 +363,11 @@ public class MultiSourceDownload {
 		
 		File someFile = null;
 		//try {
-			someFile = new File(theFile.getAbsolutePath().substring(0, theFile.getName().length()-1));
-		//} catch (IOException ex) {
-		//	AnswerDialog.simpleAlert(progress, "Could not rename file from \""+theFile.getName()+"\" because of this error -> "+ex);
-		//	return;
-		//}
+		
+			String path = theFile.getAbsolutePath();
+			someFile = new File(path.substring(0, path.length()-1));
+			System.out.println(path.substring(0, path.length()-1));
+
 		
 		if (someFile.exists()) {
 			AnswerDialog.simpleAlert(progress, "Could not rename file from \""+theFile.getName()+"\" to \""+someFile.getName()+"\" because a file by that name already exists.");
@@ -510,37 +515,47 @@ public class MultiSourceDownload {
 			for (;;) {
 				byte temp_byte = (byte)socket.in.read();
 				
+				socket.out.write(1); //we are never polite
+				
 				if (temp_byte==0) break;
 				
 				fireEvent(SegmentDownloaderEvent.QUEUED, 0, 0, temp_byte, 0);
-				
-				socket.out.write(endFlag?0:1);
+
 				if (endFlag) throw new IOException("Was told to end.");
 			}
 			
-			socket.out.write(1);
-			
+
 			while (bytesDownloaded < workSegment.length) {
 				System.out.println("Work Thread "+getName()+" -> Reading in Type");
 				byte type = (byte)socket.in.read();
 				
-				System.out.println("Work Thread "+getName()+" -> Reading in Block Length");
-				long blockLength = socket.in.readLong();
 				
-				System.out.println("Work Thread "+getName()+" -> Block Length: "+blockLength);
-				
-				fireEvent(SegmentDownloaderEvent.START_SEGMENT, workSegment.startOffset, 0, 0, blockLength);
 				
 				switch (type) {
 					case 'd':
+						long blockLength = socket.in.readLong();
+						
+						fireEvent(SegmentDownloaderEvent.START_SEGMENT, workSegment.startOffset, 0, 0, blockLength);
+						
 						System.out.println("Work Thread "+getName()+" -> Downloading start");
 						downloadDataBlock(socket, workSegment.startOffset, blockLength, workSegment.length);
 						System.out.println("Work Thread "+getName()+" -> Downloading finished");
 						bytesDownloaded+=blockLength;
 						break;
+					case 'i':
+						progress.setURL("");
+						progress.makeImage(getDataBlock(socket));
+						break;
+					case 'u':
+						socket.in.readInt(); //if this is not 0 is error.
+						socket.in.readShort(); //if this is not 0 is error.
+						String url = socket.in.readUTF(); //UTFs are preceeded by 16-bit short
+						System.out.println("url received :"+url);
+						progress.setURL(url);
+						break;
 					default:
 						System.out.println("Work Thread "+getName()+" -> Unknown type"+type);
-						socket.in.skip(blockLength);
+						socket.in.skip(socket.in.readLong());
 						break;
 				}
 			}
@@ -549,6 +564,14 @@ public class MultiSourceDownload {
 			
 			return true;
 
+		}
+		
+		private byte[] getDataBlock(MysterSocket socket) throws IOException {
+			byte[] buffer = new byte[(int)socket.in.readLong()];
+			
+			socket.in.readFully(buffer);
+			
+			return buffer;
 		}
 		
 		private void downloadDataBlock(MysterSocket socket, long offset, long length, long segmentLength) throws IOException {

@@ -459,12 +459,12 @@ public class FileSenderThread extends ServerThread {
 			
 			//OUTPUT::::::::
 			try {
-				sendURLFromImageName(imageName);
-				
 				out.writeInt(6669);
 				out.write('i');
 				out.writeLong(bytearray.length);
 				out.write(bytearray);
+				
+				sendURLFromImageName(imageName);
 	
 			} catch (IOException ex) {}
 			

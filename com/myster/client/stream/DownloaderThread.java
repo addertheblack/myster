@@ -274,6 +274,7 @@ public class DownloaderThread extends SafeThread {
 							length=in.readLong();
 							//progress.say("Getting Image Packet",FileProgressWindow.BAR_1);
 							//System.out.println("Getting Image");
+							progress.setURL("");
 							receiveImage(progress, length);
 							progress.setValue(-1,FileProgressWindow.BAR_2);
 							break;

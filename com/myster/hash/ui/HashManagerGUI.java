@@ -31,11 +31,14 @@ public class HashManagerGUI extends MysterFrame {
 	public static void init() {
 		singleton = new HashManagerGUI();
 		
-		com.myster.menubar.MysterMenuBar.addMenuItem(new com.myster.menubar.MysterMenuItemFactory("Show Hash Manager", new ActionListener() {
+	}
+	
+	public static com.myster.menubar.MysterMenuItemFactory getMenuItem() {
+		return new com.myster.menubar.MysterMenuItemFactory("Show Hash Manager", new ActionListener() {
 			public void actionPerformed(ActionEvent e) {
 				singleton.setVisible(true);
 			}
-		}));
+		},java.awt.event.KeyEvent.VK_H);
 	}
 	
 	private static final int XSIZE = 480;
@@ -111,12 +114,12 @@ public class HashManagerGUI extends MysterFrame {
 			totalSizeValue.setLocation(PADDING + LABEL_X_SIZE, PADDING + PADDING + LABEL_Y_SIZE);
 			add(totalSizeValue);
 			
-			isEnabledLabel	= new Label("Hashing is enabled:");
+			isEnabledLabel	= new Label(enabled?"Hashing is enabled":"Hashing is disabled");
 			isEnabledLabel.setSize(LABEL_X_SIZE,LABEL_Y_SIZE);
 			isEnabledLabel.setLocation(PADDING, PADDING + PADDING + PADDING + LABEL_Y_SIZE + LABEL_Y_SIZE);
 			add(isEnabledLabel);
 			
-			isEnabledValue	= new Label("" + enabled);
+			isEnabledValue	= new Label(""); //used for a spacer
 			isEnabledValue.setSize(LABEL_X_SIZE,LABEL_Y_SIZE);
 			isEnabledValue.setLocation(PADDING + LABEL_X_SIZE, PADDING + PADDING + PADDING + LABEL_Y_SIZE + LABEL_Y_SIZE);
 			add(isEnabledValue);
@@ -144,7 +147,13 @@ public class HashManagerGUI extends MysterFrame {
 				public void enabledStateChanged(HashManagerEvent e) {
 					enabled = e.isEnabled();
 					
-					isEnabledValue.setText("" + enabled);
+					if (enabled) {
+						isEnabledLabel.setText("Hashing is enabled");
+					} else {
+						isEnabledLabel.setText("Hashing is disabled");
+					}
+					
+					
 				}
 				
 				public void fileHashStart(HashManagerEvent e) {

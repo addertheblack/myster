@@ -157,11 +157,13 @@ public class HashManager implements Runnable {
 		
 		for (;;) {
 			try {
+				WorkingQueueItem item = (WorkingQueueItem)(workQueue.get());
+				
+				if (! hashingIsEnabled) continue;
+				
 				for (int i = 0; i < digestArray.length; i++) {
 					digestArray[i] = MessageDigest.getInstance(hashTypes[i].toUpperCase());
 				}
-				
-				WorkingQueueItem item = (WorkingQueueItem)(workQueue.get());
 				
 				calcHash(item.file, digestArray);
 				
