@@ -25,7 +25,6 @@ import com.myster.Myster;
 import com.myster.mml.MML;
 import com.myster.pref.ui.PreferencesDialogBox;
 import com.myster.pref.ui.PreferencesPanel;
-import com.myster.ui.WindowManager;
 import com.myster.util.MysterThread;
 
 /**

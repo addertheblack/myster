@@ -11,9 +11,6 @@
  */
 package com.myster.search;
 
-import com.general.util.TextSpinner;
-import com.general.util.UnexpectedException;
-import com.general.util.Util;
 import com.myster.search.ui.SearchWindow;
 import com.myster.util.MysterThread;
 

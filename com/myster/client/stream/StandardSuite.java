@@ -6,7 +6,6 @@ import java.io.IOException;
 import java.io.RandomAccessFile;
 import java.util.Vector;
 
-import com.general.util.AnswerDialog;
 import com.myster.hash.FileHash;
 import com.myster.mml.MMLException;
 import com.myster.mml.RobustMML;

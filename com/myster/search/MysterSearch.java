@@ -325,7 +325,7 @@ public class MysterSearch {
             queue.addIP(iparray[i].getAddress());
         }
 
-        if (i == 0) {
+        if (i <= 4) {
             String[] lastresort = IPListManagerSingleton.getIPListManager().getOnRamps();
 
             for (int j = 0; j < lastresort.length; j++) {
