@@ -71,7 +71,6 @@ public class MysterFrame extends Frame {
                             WindowManager.removeWindow(MysterFrame.this);
                                 WindowManager.removeWindow(MysterFrame.this);
                 MysterMenuBar.removeMenuListener(menuListener);
-System.out.println("Closed");
             }
 
             public void windowIconified(WindowEvent e) {
@@ -106,7 +105,6 @@ System.out.println("Closed");
             }
 
             public void componentHidden(ComponentEvent e) {
-System.out.println("hiding...");
                             WindowManager.removeWindow(MysterFrame.this);
                                 WindowManager.removeWindow(MysterFrame.this);
                 MysterMenuBar.removeMenuListener(menuListener);
