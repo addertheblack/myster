@@ -21,12 +21,16 @@ import java.io.File;
 import java.util.Locale;
 import java.util.Vector;
 
+import com.general.thread.CallListener;
+import com.general.thread.CancellableCallable;
+import com.general.thread.Future;
 import com.myster.Myster;
 import com.myster.hash.FileHash;
 import com.myster.mml.MML;
 import com.myster.mml.MMLException;
 import com.myster.pref.Preferences;
 import com.myster.type.MysterType;
+import com.myster.util.MysterExecutor;
 import com.myster.util.MysterThread;
 
 class FileTypeList extends MysterThread {
@@ -57,7 +61,8 @@ class FileTypeList extends MysterThread {
     // returnable (doesn't limit ""
     // queries)
 
-    private boolean isIndexing; // if true then the list is indexing...
+    private volatile Future indexingFuture = null; // if true then the list is
+                                                   // indexing...
 
     /**
      * Creates a new FileTypeList. This shouldn't be called by anybody but the
@@ -107,10 +112,23 @@ class FileTypeList extends MysterThread {
     }
 
     /**
+     * Some lists may be temporarily out of date while they perform and
+     * expensive "indexing" operation. call this method to find out if this list
+     * is in the middle of indexing...
+     * 
+     * @return true if this file list has an update pending.
+     */
+    public boolean isIndexing() {
+        return indexingFuture != null;
+    }
+
+    /**
      * Sets the isShared flag. If isShared is set to true, the list will share
      * files if any are available. If isShared is set to false, the list will
      * not show any files shared even if there are file available. Think of it
-     * as a sort of sharing over-ride.
+     * as a sort of sharing over-ride. The effects of this function will not be
+     * visible until the directory being pointed to has been indexed. In the
+     * mean time, the file list will be empty.
      * 
      * @param b
      *            if b is false, no files will be shared.
@@ -348,8 +366,9 @@ class FileTypeList extends MysterThread {
     }
 
     /**
-     * Sets the root directory in the preferences. The rootdir variable is
-     * updated when it's needed (and used to detect a change in the prefs.
+     * Sets the root directory in the preferences. The effects of this function
+     * will not be visible until the directory being passed has been indexed. In
+     * the mean time, the file list will maintain its old list.
      * 
      * @param s,
      *            the new root dir path.
@@ -362,9 +381,9 @@ class FileTypeList extends MysterThread {
         }
 
         savePrefs();
+        assertFileList();
         //notice not root=pref value or anything.. This omition needed to clue
         // assertFileList to rebuild.
-        System.out.println("Type: " + type + " has a path of " + s);
     }
 
     private synchronized void savePrefs() {
@@ -372,63 +391,15 @@ class FileTypeList extends MysterThread {
         // info
     }
 
-    /**
-     * an internal proceedure used to do the setup of file indexing. This
-     * function is only called in one place at this writting.
-     */
-    private static Vector indexFiles(MysterType type, String rootdir) {
-        Vector temp = new Vector(10000, 10000); //Preallocates a whole lot of
-        // space
-        File dir = new File(rootdir);
-        if (dir.exists() && dir.isDirectory())
-            indexDir(type, dir, temp, 5); //Indexes root dir into temp with 5 levels
-        // deep.
-        temp.trimToSize(); //save some space
-        return temp;
-    }
-    
-    private synchronized void setFileList( Vector fileList ) {
+    private synchronized void setFileList(Vector fileList) {
+        resetIndexingVariables();
         filelist = fileList;
+        assertFileList();
     }
 
-    /**
-     * an internal proceedure used to do the actual file indexing. This function
-     * is called recursively for each sub directories up to telomere levels
-     * 
-     * @param file
-     *            is the directory to index
-     * @param filelist
-     *            is the data structure to save the indexed filename to.
-     * @param telomere
-     *            is a recusion counter. The function will recurse a maximum of
-     *            telomere times
-     */
-    private static void indexDir(MysterType type, File file, Vector filelist, int telomere) {
-        telomere--;
-        if (telomere < 0)
-            return;
-        if (!file.isDirectory() || !file.exists()) {
-            System.out
-                    .println("Nonsence sent to indexDir. Does this type have a d/l dir associated with it?");
-            return;
-        }
-        String[] listing = file.list();
-        File temp;
-        if (listing != null) { // listing is null on permission denied
-            for (int i = 0; i < listing.length; i++) {
-                temp = new File(file.getAbsolutePath() + File.separator + listing[i]);
-                if (temp.isDirectory()) {
-                    indexDir(type, temp, filelist, telomere);
-                } else {
-                    if (!filelist.contains(mergePunctuation(temp.getName()))) {
-                        if (FileFilter.isCorrectType(type, temp)) {
-                            filelist.addElement(createFileItem(temp));
-                        }
-                    } //Don't add a file to the list if it's already there of
-                    // if a file of the same name is there.. (eg: icon)
-                }
-            }
-        }
+    private synchronized void resetIndexingVariables() {
+        timeoflastupdate = System.currentTimeMillis();
+        indexingFuture = null;
     }
 
     /**
@@ -443,11 +414,12 @@ class FileTypeList extends MysterThread {
      *  
      */
     private synchronized void assertFileList() {
+        if (filelist == null) {
+            filelist = new Vector(1, 1);
+        }
         if (!isShared()) { //if file list is not shared make sure list has
             // length = 0 then continue.
-            if (filelist == null) {
-                filelist = new Vector(1, 1);
-            } else if (filelist.size() != 0) {
+            if (filelist.size() != 0) {
                 filelist = new Vector(1, 1);
             }
             timeoflastupdate = 0; //never updated (we just buggered up the
@@ -460,20 +432,142 @@ class FileTypeList extends MysterThread {
         //load the dir for this type
         String workingdir = getPath();
 
-        if (!isIndexing && (filelist == null || isOld() || !rootdir.equals(workingdir))) {
-            if (filelist == null) {
-                filelist = new Vector(1, 1);
-            }
+        /*
+         * If the directory need indexing or the user has changed the directory
+         * to index from, this part of the code will start a new indexing task
+         * off.. assuming there's not one already running..
+         */
+        if (indexingFuture == null && (isOld() || !rootdir.equals(workingdir))) {
             rootdir = workingdir; //in case the dir for this type has changed.
-            isIndexing = true;
-            (new Thread() {
-                public void run() {
-                    setFileList(indexFiles(type, rootdir));
-                    timeoflastupdate = System.currentTimeMillis();
-                    isIndexing = false;
-                }
-            }).start();
+            indexingFuture = MysterExecutor.getInstance().execute(new FileListIndexCall(),
+                    new FileListCallListener());
         }
+    }
+
+    private class FileListCallListener implements CallListener {
+
+        /*
+         * (non-Javadoc)
+         * 
+         * @see com.general.thread.CallListener#handleCancel()
+         */
+        public void handleCancel() {
+            //nothing
+        }
+
+        /*
+         * (non-Javadoc)
+         * 
+         * @see com.general.thread.CallListener#handleResult(java.lang.Object)
+         */
+        public void handleResult(Object result) {
+            setFileList((Vector) result);
+        }
+
+        /*
+         * (non-Javadoc)
+         * 
+         * @see com.general.thread.CallListener#handleException(java.lang.Exception)
+         */
+        public void handleException(Exception ex) {
+            ex.printStackTrace();
+        }
+
+        /*
+         * (non-Javadoc)
+         * 
+         * @see com.general.thread.CallListener#handleFinally()
+         */
+        public void handleFinally() {
+            resetIndexingVariables();
+        }
+
+    }
+
+    private class FileListIndexCall implements CancellableCallable {
+        private boolean endFlag = false;
+
+        /*
+         * (non-Javadoc)
+         * 
+         * @see com.general.thread.CancellableCallable#call()
+         */
+        public Object call() throws Exception {
+            return indexFiles(type, rootdir);
+        }
+
+        /**
+         * an internal procedure used to do the setup of file indexing. This
+         * function is only called in one place at this writting.
+         */
+        private Vector indexFiles(MysterType type, String rootdir) {
+            Vector temp = new Vector(10000, 10000); //Preallocates a whole lot
+                                                    // of
+            // space
+            File dir = new File(rootdir);
+            if (dir.exists() && dir.isDirectory())
+                indexDir(type, dir, temp, 5); //Indexes root dir into temp with
+                                              // 5 levels
+            // deep.
+            temp.trimToSize(); //save some space
+            return temp;
+        }
+
+        /**
+         * an internal proceedure used to do the actual file indexing. This
+         * function is called recursively for each sub directories up to
+         * telomere levels
+         * 
+         * @param file
+         *            is the directory to index
+         * @param filelist
+         *            is the data structure to save the indexed filename to.
+         * @param telomere
+         *            is a recusion counter. The function will recurse a maximum
+         *            of telomere times
+         */
+        private void indexDir(MysterType type, File file, Vector filelist, int telomere) {
+            telomere--;
+            if (telomere < 0)
+                return;
+            if (!file.isDirectory() || !file.exists()) {
+                System.out
+                        .println("Nonsence sent to indexDir. Does this type have a d/l dir associated with it?");
+                return;
+            }
+            String[] listing = file.list();
+            File temp;
+            if (listing != null) { // listing is null on permission denied
+                for (int i = 0; i < listing.length; i++) {
+                    if (endFlag)
+                        return;
+
+                    temp = new File(file.getAbsolutePath() + File.separator + listing[i]);
+                    if (temp.isDirectory()) {
+                        indexDir(type, temp, filelist, telomere);
+                    } else {
+                        FileItem item = createFileItem(temp);
+                        if (!filelist.contains(item)) {
+                            if (FileFilter.isCorrectType(type, temp)) {
+                                filelist.addElement(createFileItem(temp));
+                            }
+                        } //Don't add a file to the list if it's already there
+                          // of
+                        // if a file of the same name is there.. (eg: icon)
+                    }
+                }
+            }
+        }
+
+        /*
+         * (non-Javadoc)
+         * 
+         * @see com.general.thread.CancellableCallable#cancel()
+         */
+        public void cancel() {
+            endFlag = true;
+        }
+
     }
 
     /**

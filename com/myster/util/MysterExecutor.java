@@ -34,7 +34,7 @@ public class MysterExecutor implements Executor {
     }
 
     public void start() {
-        threads = new Thread[15];
+        threads = new Thread[3];
         for (int i = 0; i < threads.length; i++) {
             threads[i] = new PooledThread(queue);
             threads[i].start();
@@ -71,6 +71,8 @@ public class MysterExecutor implements Executor {
         public synchronized boolean cancel(boolean mayInterruptIfRunning) {
             if (isCancelled())
                 return false;
+            if (isDone())
+                return false;
 
             callable.cancel();
 
@@ -94,7 +96,7 @@ public class MysterExecutor implements Executor {
             return listener;
         }
 
-        public void signalDone() {
+        public synchronized void signalDone() {
             done = true;
         }
     }
@@ -113,6 +115,7 @@ public class MysterExecutor implements Executor {
 
                     try {
                         final Object result = executableTask.getCallable().call();
+                        executableTask.signalDone();
                         if (executableTask.isCancelled())
                             continue;
                         Util.invokeAndWait(new Runnable() {
@@ -121,6 +124,7 @@ public class MysterExecutor implements Executor {
                             }
                         });
                     } catch (final Exception ex) {
+                        executableTask.signalDone();
                         if (executableTask.isCancelled())
                             continue;
                         Util.invokeAndWait(new Runnable() {
@@ -130,14 +134,10 @@ public class MysterExecutor implements Executor {
                         });
                     } finally {
                         if (executableTask.isCancelled())
-                            executableTask.getListener().handleCancel();
+                            handelCancel(executableTask.getListener());
                         Util.invokeAndWait(new Runnable() {
                             public void run() {
-                                try {
-                                    executableTask.getListener().handleFinally();
-                                } finally {
-                                    executableTask.signalDone();
-                                }
+                                executableTask.getListener().handleFinally();
                             }
                         });
                     }
@@ -145,7 +145,14 @@ public class MysterExecutor implements Executor {
                     ex.printStackTrace();
                 }
             }
-
+        }
+        
+        public void handelCancel(final CallListener listener) throws InterruptedException {
+            Util.invokeAndWait(new Runnable() {
+                public void run() {
+                    listener.handleFinally();
+                }
+            });
         }
     }
 }
