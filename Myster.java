@@ -45,7 +45,7 @@ import com.myster.bandwidth.BandwidthManager;
 import java.util.Locale;
 
 import com.myster.transaction.*; //test
-import com.myster.message.MessageManager;
+import com.myster.message.*;
 
 public class Myster{
 
@@ -78,87 +78,18 @@ public class Myster{
 			//System.exit(1);
 		}*/
 		
-		/*
-		int i_temp=0;
-		byte[] ping=(new String("PI")).getBytes();
-		for (int i=0; i<ping.length; i++) {
-			i_temp<<=8;
-			i_temp|=255 & ((int)ping[i]);
-			
-		}
-		System.out.println(""+ i_temp);
-		*/
-
-		/*
-		Useless code:
-		System.setProperty("sun.net.inetaddr.ttl", "0");	//gets around DNS caching problem. not supported in 1.1
-		*/
 
 
-/*
-		try {
-		TransactionManager.addTransactionProtocol(new TransactionProtocol() {
-			public  int getTransactionCode() {
-				return 666;
-			}
-			
-			public void transactionReceived(Transaction transaction)  {
-				System.out.println("Got a transaction!.");
-				sendTransaction(new Transaction(transaction, new byte[0]));
-			}
-		});
-		
-		final MysterAddress address=new MysterAddress("127.0.0.1");
-		
-		TransactionSocket s=new TransactionSocket(address, 666);
-		
-		DataPacket data=new DataPacket() {
-				public MysterAddress getAddress() { return address; }
-				public byte[] getData() { return new byte[1]; }
-				public byte[] getBytes()	{ return new byte[1]; }
-				public byte[] getHeader() 	{ return new byte[1]; }
-		};
-		
-		s.sendTransaction(data, new TransactionListener() {
-				public  void transactionReply(TransactionEvent e) { System.out.println("REPLY!"); }
-				public  void transactionTimout(TransactionEvent e) { System.out.println("TIMOUT!");}
-		});
+		//if (true==true) return;
 
-		} catch (Exception ex) {
-			ex.printStackTrace();
-			return;
-		}
-		
-		if (true==true) return;
-*/
 
 		MessageManager.init();
 		
-		try {
-			//MessageManager.sendInstantMessage(new MysterAddress("127.0.0.1"), "Hello");
-			//MessageManager.sendInstantMessage(new MysterAddress("127.0.0.1"), "Hello");
-			//MessageManager.sendInstantMessage(new MysterAddress("127.0.0.1"), "Hello");
-		} catch (Exception ex) {
-			ex.printStackTrace();
-		}
 		
 		com.myster.menubar.MysterMenuBar.addMenuItem(new com.myster.menubar.MysterMenuItemFactory("Instant Message...", new java.awt.event.ActionListener() {
 			public void actionPerformed(java.awt.event.ActionEvent e) {
-				String answer = AskDialog.simpleAsk("What message do you want to send?");
-				
-				if (answer==null || answer.equals("")) return ; //cancel
-				
-				String ip = AskDialog.simpleAsk("Which server do you want to send it to?");
-				
-				if (ip==null || ip.equals("")) return ; //cancel
-				
-				try {
-					MessageManager.sendInstantMessage(new MysterAddress(ip), answer);
-				} catch (UnknownHostException ex) {
-					AnswerDialog.simpleAlert("Could not send to server : "+ip+" because it is not a proper server address.");
-				}
-				
-				
+				MessageWindow window=new MessageWindow();
+				window.setVisible(true);
 			}
 		}));
 		

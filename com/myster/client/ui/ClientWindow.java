@@ -81,6 +81,7 @@ public class ClientWindow extends MysterFrame implements Sayable{
 		setLayout(gblayout);
 		gbconstrains=new GridBagConstraints();
 		gbconstrains.fill=GridBagConstraints.BOTH;
+		gbconstrains.insets=new Insets(1,1,1,1);
 		gbconstrains.ipadx=1;
 		gbconstrains.ipady=1;
 		
@@ -132,7 +133,7 @@ public class ClientWindow extends MysterFrame implements Sayable{
 	}
 	
 	
-	public void addComponent(Component c, int row, int column, int width, int height, int weightx, int weighty) {
+	private void addComponent(Component c, int row, int column, int width, int height, int weightx, int weighty) {
 		gbconstrains.gridx=column;
 		gbconstrains.gridy=row;
 		

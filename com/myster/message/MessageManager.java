@@ -23,6 +23,10 @@ public class MessageManager {
 		sendInstantMessage(address, msg, null);
 	}
 	
+	public static void sendInstantMessage(InstantMessage message) {
+		sendInstantMessage(message.address,message.message,message.quote);
+	}
+	
 	public static void sendInstantMessage(MysterAddress address, String msg, String reply) {
 		TransactionSocket tsocket=new TransactionSocket(InstantMessageTransport.transportNumber);
 		
@@ -73,7 +77,7 @@ public class MessageManager {
 	protected static boolean messageReceived(MessagePacket msg) {
 		final String message=msg.getAddress().toString()+" sent: \n\n"+msg.getMessage();
 	
-		simpleAlert(message);
+		(new MessageWindow(new InstantMessage(msg.getAddress(), msg.getMessage(), msg.getReply()))).show();
 		
 		return true;
 	}
@@ -360,7 +364,7 @@ class MessagePacket implements DataPacket { //Is Immutable
 	}
 	
 	public byte[] getBytes() {
-		return getData(); //warning.. does not access getHeader!!!!!! 
+		return getData(); //warning.. does not access getHeader!!!!!! (is not nessesairy at this writting)
 	}
 }
 

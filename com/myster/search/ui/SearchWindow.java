@@ -66,11 +66,12 @@ public class SearchWindow extends MysterFrame implements SearchResultListener, S
 		setLayout(gblayout);
 		gbconstrains=new GridBagConstraints();
 		gbconstrains.fill=GridBagConstraints.BOTH;
+		gbconstrains.insets=new Insets(2,2,2,2);
 		gbconstrains.ipadx=1;
 		gbconstrains.ipady=1;
 		
 		searchbutton=new Button("Search");
-		searchbutton.setSize(50, 20);
+		searchbutton.setSize(100, 20);
 		
 		textentry=new TextField("");
 		textentry.setEditable(true);
@@ -92,12 +93,12 @@ public class SearchWindow extends MysterFrame implements SearchResultListener, S
 		//reshape(0, 0, XDEFAULT, YDEFAULT);
 		
 		
-		addComponent(textentry			,0,1,1,1,99,0);
+		addComponent(textentry			,0,1,2,1,1,0);
 		addComponent(searchbutton		,0,0,1,1,0,0);
 		addComponent(label				,1,0,1,1,0,0);
-		addComponent(choice				,1,1,2,1,99,0);
-		addComponent(filelist.getPane()	,2,0,2,1,99,99);
-		addComponent(msg			,3,0,2,1,99,0);
+		addComponent(choice				,1,1,2,1,1,0);
+		addComponent(filelist.getPane()	,2,0,3,1,1,1);
+		addComponent(msg				,3,0,3,1,1,0);
 		
 		
 		setResizable(true);

@@ -1,3 +1,23 @@
+/**
+*	The transaction class is reponsible for encapsulation transaction data / header formating
+*	This class does double duty filling in for both to -> transactions and thier replies <-
+*	. This leads to code to be more nasty than usual but does very nicely on the code reuse front.
+*	To client (replies) and to server (to) packets are formated the same except that to client
+*	packets have an extra byte to signal basic protocol level errors. The only error defined at
+*	the moment is the TRANSACTION_TYPE_UNKNOWN which is sent by servers who have been asked
+*	for data of an unknown type. This itself is here so that unknown transaction type errors
+*	can sperated from timeout and other errors that might confuse debugging or lead to 
+*	ambiguous error messages.
+*	<p>
+*	This object is intended to be immutable. This object should not be created by outside packages
+*	as their are several feilds that need to be filled out that outside code cannot fill out.
+*	Since the object is supposed to be immutable it can be sent outside core protocol code
+*	after it has been created without fear of corruption. This class should not be subclassed
+*	but wrapper instead using the DataPacket interface.
+*	
+*/
+
+
 package com.myster.transaction;
 
 import com.myster.net.DataPacket;
@@ -22,7 +42,7 @@ public final class Transaction implements DataPacket { 		//Immutable (Java needs
 	
 	final byte[] data;
 	
-	private final static int HEADER_SIZE=11;
+	private final static int HEADER_SIZE=10; //reply packets are 1 byte longer
 	
 	public final static short TRANSACTION_PROTOCOL_NUMBER=1234;
 	
@@ -39,14 +59,19 @@ public final class Transaction implements DataPacket { 		//Immutable (Java needs
 		DataInputStream in=new DataInputStream(bin);
 		
 		int fullyQualifiedConnectionNumber;
+		
 		try {
 			int int_temp=in.readShort();
 			if (int_temp!=TRANSACTION_PROTOCOL_NUMBER) throw new NotATransactionException("Tried to make a transaction from a packet of type "+int_temp+" instead of type "+TRANSACTION_PROTOCOL_NUMBER+".");
 			transactionCode=in.readInt();
 			fullyQualifiedConnectionNumber=in.readInt();
-			int errorTemp=in.read();
-			if (errorTemp==-1) throw new NotATransactionException("Transaction shorter than header.");
-			errorByte=(byte)errorTemp;
+			if (isForClient()) { //reply packets have a 1 byte longer header. THis byte is the error byte. !=0 is err
+				int errorTemp=in.read(); 
+				if (errorTemp==-1) throw new NotATransactionException("Transaction shorter than header.");
+				errorByte=(byte)errorTemp;
+			} else {
+				errorByte=0;
+			}
 		} catch (IOException ex) {
 			throw new NotATransactionException("Formating error occured: "+ex);
 		}
@@ -54,9 +79,9 @@ public final class Transaction implements DataPacket { 		//Immutable (Java needs
 		connectionNumber=getConnectionNumber(fullyQualifiedConnectionNumber);
 		isForClient=getPacketDirection(fullyQualifiedConnectionNumber);
 		
-		data=new byte[bytes.length-HEADER_SIZE];
 		
-		System.arraycopy(bytes, HEADER_SIZE, data, 0, data.length);
+		data=new byte[bytes.length-getHeaderSize()];
+		System.arraycopy(bytes, getHeaderSize(), data, 0, data.length);
 	}
 	
 	/**
@@ -120,7 +145,7 @@ public final class Transaction implements DataPacket { 		//Immutable (Java needs
 		return Util.concatenateBytes(getHeader(), data); //byteOut.. funny.
 	}
 	
-	public byte[] getHeader() {
+	public byte[] getHeader() { //slow
 		ByteArrayOutputStream byteOut=new ByteArrayOutputStream();
 		DataOutputStream out=new DataOutputStream(byteOut);
 		
@@ -128,9 +153,9 @@ public final class Transaction implements DataPacket { 		//Immutable (Java needs
 			out.writeShort(TRANSACTION_PROTOCOL_NUMBER);
 			out.writeInt(transactionCode);
 			out.writeInt(getFullyQualifiedConnectionNumber());
-			out.write(errorByte);
+			if (isForClient()) out.write(errorByte); //...
 		} catch (IOException ex) {
-			ex.printStackTrace(); //!!!!!!
+			ex.printStackTrace(); //!!!!!! should never happen since all calls are to byte[]
 		}
 		
 		return byteOut.toByteArray();
@@ -138,7 +163,7 @@ public final class Transaction implements DataPacket { 		//Immutable (Java needs
 	
 	
 	private int getHeaderSize() {	//sizeToSkip for header! (should be equal to getBytes().length)
-		return HEADER_SIZE;
+		return HEADER_SIZE + (isForClient()?1:0); //reply packets are 1 byte longer (the err packet)
 	}
 	
 	public byte[] getData() { //for those who wish to parse the juice (You know what is the juice?).
