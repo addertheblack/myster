@@ -40,7 +40,7 @@ public class MysterSearch extends MysterThread {
 		this.searcher = new StandardMysterSearch(searchString, listener);
 		this.type = type;
 		
-		t=new CrawlerThread[15];
+		t=new CrawlerThread[20];
 	}
 	
 	public void run() {
@@ -51,7 +51,6 @@ public class MysterSearch extends MysterThread {
 		MysterServer[] iparray=IPListManagerSingleton.getIPListManager().getTop(type,50);
 		
 		IPQueue queue=new IPQueue();
-		GroupInt group=new GroupInt();
 		
 		int i=0;
 		
@@ -75,8 +74,7 @@ public class MysterSearch extends MysterThread {
 		
 		
 		for (i=0; i<t.length; i++) {
-			t[i]=new CrawlerThread(searcher,type ,  queue, msg,group);
-			group.addOne();
+			t[i]=new CrawlerThread(searcher,type ,  queue, msg);
 			t[i].start();
 			msg.say("Starting a new Search Thread...");
 			
@@ -88,17 +86,12 @@ public class MysterSearch extends MysterThread {
 		for (int index=0; index<t.length; index++) {
 			try {t[index].join();} catch (InterruptedException ex) {}	// slow: change someday.
 		}
-		
-		searcher.done();
 	}
 	
 	public void flagToEnd() {
 		for (int i=0; i<IPListManager.LISTSIZE; i++) {
 			try {t[i].flagToEnd();} catch (Exception ex) {}	// slow: change someday.
 		}
-		
-		searcher.flagToEnd();
-		
 	}
 	
 	public void end() {
@@ -108,8 +101,6 @@ public class MysterSearch extends MysterThread {
 		try {
 			join();
 		} catch (Exception ex) {}
-		
-		searcher.end();
 	}
 	
 	

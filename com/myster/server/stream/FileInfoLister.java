@@ -42,15 +42,13 @@ public class FileInfoLister extends ServerThread {
 		try {
 		String[] temp;
 
-		DataInputStream in=new DataInputStream(context.socket.getInputStream());
-		DataOutputStream out=new DataOutputStream(context.socket.getOutputStream());
+		DataInputStream in = context.socket.in;
+		DataOutputStream out = context.socket.out;
 
-		byte[] b=new byte[4];
-
-		in.readFully(b);
+		MysterType type = new MysterType(in.readInt());
 		String filename=in.readUTF();
 		
-		FileItem fileItem = FileTypeListManager.getInstance().getFileItem(new MysterType(b),filename);
+		FileItem fileItem = FileTypeListManager.getInstance().getFileItem(type,filename);
 		MML mml;
 		
 		if (fileItem == null) { //file not found
@@ -59,19 +57,21 @@ public class FileInfoLister extends ServerThread {
 			mml = fileItem.getMMLRepresentation();
 		}
 		
-		patchFunction2(mml, FileTypeListManager.getInstance().getFile(new MysterType(b),filename), b);
+		if (type.equals("MPG3")) patchFunction2(mml, FileTypeListManager.getInstance().getFile(type,filename));
 		
 		out.writeUTF(mml.toString());
 		//System.out.println(mml.toString());
 		} catch (IOException ex) {
 			ex.printStackTrace();
 			throw ex;
+		} catch (RuntimeException ex) {
+			ex.printStackTrace();
+			throw ex;
 		}
 	}
 	
 	//ugh.. for Mp3 stuff
-	private void patchFunction2(MML mml, File file, byte[] b)  {
-		if (!(new String(b)).equals("MPG3")) return;
+	private void patchFunction2(MML mml, File file)  {
 		ID3v2Tag tag=null;
 		try {tag=new ID3v2Tag(file, 0);} catch (Exception ex) {return;} 
 		
@@ -106,8 +106,7 @@ public class FileInfoLister extends ServerThread {
 	}
 	
 	// ugh.. mp3 stuff
-	private void patchFunction(MML mml, File file, byte[] b)  {
-		if (!(new String(b)).equals("MPG3")) return;
+	private void patchFunction(MML mml, File file)  {
 		MP3Header head=null;
 		try {head=new MP3Header(file);} catch (Exception ex) {return;}
 		
@@ -118,7 +117,7 @@ public class FileInfoLister extends ServerThread {
 		if (temp!=null) {
 			mml.put("/ID3Name", temp);
 		} else {
-			patchFunction2(mml,file,b);
+			patchFunction2(mml,file);
 			return;
 		}
 		

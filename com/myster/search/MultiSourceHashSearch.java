@@ -117,8 +117,7 @@ public class MultiSourceHashSearch implements MysterSearchClientSection {
 									new com.myster.util.Sayable() {
 										public void say(String string) {
 											MultiSourceUtilities.debug("Hash Search -> "+string);
-										}},
-									null);
+										}});
 									
 		batchedType.crawler.start();
 	}
@@ -192,8 +191,6 @@ public class MultiSourceHashSearch implements MysterSearchClientSection {
 				}
 			}
 		} catch (UnknownProtocolException ex) {
-			StandardSuite.disconnectWithoutException(socket);
-			
 			MultiSourceUtilities.debug("Hash Search -> Server "+address+" doesn't understand search by hash connection section.");
 		}
 		

@@ -28,7 +28,6 @@ public class CrawlerThread extends MysterThread {
 	MysterType searchType;
 	IPQueue ipQueue;
 	MysterSearchClientSection searcher;
-	GroupInt group;
 	MysterSocket socket;
 	Sayable msg;
 	
@@ -36,14 +35,12 @@ public class CrawlerThread extends MysterThread {
 
 	public final int DEPTH=20;
 
-	public CrawlerThread(MysterSearchClientSection searcher, MysterType type, IPQueue iplist,Sayable msg, GroupInt i) {
+	public CrawlerThread(MysterSearchClientSection searcher, MysterType type, IPQueue iplist,Sayable msg) {
 		super("Crawler Thread " + type);
 		this.ipQueue=iplist;
 		this.searchType=type;
 		this.msg=msg;
 		this.searcher=searcher;
-		
-		group=(i==null?new GroupInt():i); //MASSIVE CHEAT! Fix this.
 	}
 	
 	/** The thread does a top ten then searchs.. It only does a top ten on the first few IPs, so we don't
@@ -111,8 +108,8 @@ public class CrawlerThread extends MysterThread {
 					searcher.search(socket, currentIp, searchType);
 					
 					msg.say("Searched "+ipQueue.getIndexNumber()+" Myster servers.");
-					//don't close the connection... It's being used by the getting thread...
 					
+					StandardSuite.disconnectWithoutException(socket);
 				} catch (IOException ex) {
 					if (socket!=null) {
 						try {
@@ -122,10 +119,6 @@ public class CrawlerThread extends MysterThread {
 				}
 
 			}
-			
-			
-			if (group.subtractOne()<=0) msg.say("Done search");
-			else msg.say("Still Searching: "+group.getValue()+" outstanding searches");
 			
 			searcher.searchedAll(searchType);
 		} finally {
@@ -145,8 +138,6 @@ public class CrawlerThread extends MysterThread {
 	
 	public void end() {
 		flagToEnd();
-		
-		searcher.end();
 		
 		try {
 			join();

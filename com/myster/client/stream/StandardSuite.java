@@ -33,6 +33,8 @@ public class StandardSuite {
 		}
 	}
 	
+	
+	//Vector of strings
 	public static Vector getSearch(MysterSocket socket, MysterType searchType,String searchString) throws IOException {
 		Vector searchResults=new Vector();
 		

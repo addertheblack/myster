@@ -80,11 +80,11 @@ public class ConnectionManager extends MysterThread {
 		try {
 		
 			context=new ConnectionContext();
-			context.socket=new com.myster.client.stream.TCPSocket(socket);
+			context.socket = new com.myster.client.stream.TCPSocket(socket);
 			context.transferQueue=transferQueue;
 			context.serverAddress=new MysterAddress(socket.getInetAddress());
 			
-			DataInputStream i=new DataInputStream(socket.getInputStream());	//opens the connection
+			DataInputStream i=context.socket.in;	//opens the connection
 
 			int protocalcode;
 			setPriority(Thread.MIN_PRIORITY);
@@ -108,19 +108,16 @@ public class ConnectionManager extends MysterThread {
 
 				switch (protocalcode) {
 					case 1:
-						{DataOutputStream out=new DataOutputStream(socket.getOutputStream());
-						out.write(1);}			//Tells the other end that the command is good bad!
+						context.socket.out.write(1);			//Tells the other end that the command is good bad!
 						break;
 					case 2:
-						{DataOutputStream out=new DataOutputStream(socket.getOutputStream());
-						out.write(1);}			//Tells the other end that the command is good bad!
+						context.socket.out.write(1);			//Tells the other end that the command is good bad!
 						return;
 					default:
 						ConnectionSection section=(ConnectionSection)(connectionSections.get(new Integer(protocalcode)));
 						if (section==null) {
 							System.out.println("!!!System detects unknown protocol number : "+protocalcode);
-							{DataOutputStream out=new DataOutputStream(socket.getOutputStream());
-							out.write(0);}			//Tells the other end that the command is bad!
+							context.socket.out.write(0);			//Tells the other end that the command is bad!
 						} else {
 							doSection(section, remoteip, context);
 						} 

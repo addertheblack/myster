@@ -997,7 +997,15 @@ Work on DEV 8:
 		-> Fixed a freeze that happened sometimes when opening a new download.
 		-> Fixed a problem where the disconnect button wouldn't disconnect a user who
 				was downloading from you.
-		
+		-> The file info getting now doesn't jam as much.
+		-> The file info getting is no longer a seperate thread. Putting it in a seperate thread
+				was causing it to crash in some circumstances. Making the info getting part
+				of the duties of the main search thread should increase the responsiveness
+				of Myster while searching and increase the chances of file meta data
+				being successfully downloaded. (This change might also make
+				cancelling searches faster)
+		-> The search engine now uses 20 searcher threads insteead of 15
+				This should improve search performance by > 25%.
 		
 		bdaba746d51978dbe46844c23f566332
 (Red List)

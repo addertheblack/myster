@@ -20,7 +20,7 @@ public interface SearchResultListener {
 	
 	
 	/**
-		Is called when new search begins.
+		Is called when The search is over.
 	*/
 	public void searchOver() ;
 

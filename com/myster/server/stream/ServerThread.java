@@ -30,8 +30,7 @@ public abstract class ServerThread implements ConnectionSection {
 	}
 	
 	public final void doSection(ConnectionContext context) throws IOException { //if you want to modify this implementation inherit from ConnectionSection
-		DataOutputStream out=new DataOutputStream(context.socket.getOutputStream());
-		out.write(1);			//Tells the other end that the command is good! (Standard Myster header)
+		context.socket.out.write(1); //Tells the other end that the command is good! (Standard Myster header)
 		
 		section(context);		//!!!!!
 	}
