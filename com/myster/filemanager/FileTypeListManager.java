@@ -12,9 +12,12 @@ Copyright Andrew Trumper 2000-2001
 /**
 *	The FileTypeListManager, Better known simply as the the FileManager provides a 
 *	set of standard interfaces for accessing the user's file library.
-*
+*<p>
 * 	From a design perspective the File Manager is a fascade object that manages all the 
 *	independent File Lists, one for each Myster type.
+*<p>
+*	All public methods in this Object can be considered stable and available to any plugin
+*	writter.
 */
 
 package com.myster.filemanager;
@@ -105,7 +108,7 @@ public class FileTypeListManager{
 	*	For a type. The reasone for the odd name is historical and has to do with the original paradigm being that
 	*	all Myster servers are 2 level directory structures with the first level being type and the second level
 	*	being the files inside that type. Hence the name and the parameters.
-	*
+	*<p>
 	*	NOTE: In the Myster protocol, when files are listed, these file names are not so much file names as
 	*	a way of identifying a unique file given a type.
 	*
@@ -166,7 +169,7 @@ public class FileTypeListManager{
 	
 	/**
 	*	Gets a com.myster.filemanager.FileItem object from a Myster type and Unique file identifyer string (a file name).
-	*
+	*<p>
 	*	NOTE: In the Myster protocol, when files are listed, these file names are not so much file names as
 	*	a way of identifying a unique file given a type.
 	*
@@ -206,6 +209,7 @@ public class FileTypeListManager{
 	
 	/**
 	*	Gets the total number of shared files for a given type. Returns 0 if type is unknown to File Manager.
+	*
 	*	@param	type a Myster file type as a String
 	*	@return	number of shared files for a type.
 	*/
@@ -218,6 +222,7 @@ public class FileTypeListManager{
 	
 	/**
 	*	Gets the root directory path for a given type. The command is ignore if the type is not known by the File Manager.
+	*
 	*	@param	type a Myster file type
 	*	@return	a path in the host filing system.
 	*/
@@ -230,6 +235,7 @@ public class FileTypeListManager{
 	
 	/**
 	*	Sets the root directory path for a given type. The command is ignore if the type is not known by the File Manager.
+	*
 	*	@param	type a Myster file type
 	*	@param	a path in the host filing system.
 	*/

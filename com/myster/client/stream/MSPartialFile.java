@@ -38,9 +38,6 @@ public class MSPartialFile {
 		*/
 	}
 	
-	private static final String DIR = "Incomming" + File.separator;
-	
-	
 	
 	//////////// STATIC SUB SYSTEM \\\\\\\\\\\\\\\\
 	public static MSPartialFile recreate(File file) throws IOException {
@@ -59,7 +56,7 @@ public class MSPartialFile {
 	}
 	
 	public static MSPartialFile create(String filename, int blockSize, FileHash[] hashes) throws IOException {
-		File fileReference = new File(DIR+filename);
+		File fileReference = new File(MultiSourceUtilities.getIncomingDirectory(), filename);
 		
 		RandomAccessFile maskFile 	= new RandomAccessFile(fileReference,"rw");
 		PartialFileHeader header 	= new PartialFileHeader(filename, blockSize, hashes);
@@ -70,7 +67,7 @@ public class MSPartialFile {
 	}
 	
 	public static MSPartialFile[] list() throws IOException {
-		File dir = new File(DIR);
+		File dir = MultiSourceUtilities.getIncomingDirectory();
 		
 		String[] file_list = dir.list(new FilenameFilter() { //I love this idea. way to go java guys. pitty there's no half decent way to make it generic (yet?)
 			public boolean accept(File dir, String name) {

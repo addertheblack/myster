@@ -10,11 +10,19 @@ import com.myster.search.MysterFileStub;
 import com.myster.hash.FileHash;
 import com.myster.net.MysterSocket;
 
+import Myster;
+
 public class MultiSourceUtilities {
 
 	
 	private static final String EXTENSION = ".i";
 	public static File getFileToDownloadTo(MysterFileStub stub, Frame parentFrame) throws IOException {
+		File incomingDirectory = getIncomingDirectory();
+		
+		return new File(incomingDirectory.getPath()+File.separator+stub.getName()+EXTENSION);
+		
+		
+		/*
 		File directory = new File(com.myster.filemanager.FileTypeListManager.getInstance().getPathFromType(stub.getType()));
 		File file = new File(directory.getPath()+File.separator+stub.getName()+EXTENSION);
 		
@@ -49,6 +57,62 @@ public class MultiSourceUtilities {
 		}
 
 		return file;
+		*/
+	}
+	
+	public static boolean moveFileToFinalDestination(final MysterFileStub stub, final File sourceFile, Frame parentFrame) throws IOException {
+		File directory = new File(com.myster.filemanager.FileTypeListManager.getInstance().getPathFromType(stub.getType()));
+		File file = new File(directory.getPath()+File.separator+stub.getName());
+		
+		if (!directory.isDirectory()) {
+			file = askUserForANewFile(file.getName());
+			
+			if (file == null) throw new IOException("User Cancelled");
+		}
+		
+		while (file.exists())  {
+			final String
+					CANCEL_BUTTON 	= "Cancel",
+					WRITE_OVER		= "Write-Over",
+					RENAME			= "Rename";
+			
+			String answer = (new AnswerDialog(	parentFrame,
+												"A file by the name of "+file.getName()+" already exists. What do you want to do.",
+												new String[]{CANCEL_BUTTON, WRITE_OVER, RENAME})
+											  ).answer();
+			if (answer.equals(CANCEL_BUTTON)) {
+				throw new IOException("User Canceled.");
+			} else if (answer.equals(WRITE_OVER)) {
+				if (!file.delete()) {
+					AnswerDialog.simpleAlert(parentFrame, "Could not delete the file.");
+					throw new IOException("Could not delete file");
+				}
+			} else if (answer.equals(RENAME)) {
+				file = askUserForANewFile(file.getName());
+				
+				if (file == null) throw new IOException ("User Cancelled");
+			}
+		}
+
+		return sourceFile.renameTo(file);
+	}
+	
+	/**
+	*	Returns a file object containing te path that a multi-source object will be downloaded to.
+	*<p>
+	*	This routine is not stable as it is dependent on the way multi-source downloads are downloaded.
+	*/
+	public static File getIncomingDirectory() throws IOException {
+		File file = new File(Myster.getCurrentDirectory(), "Incoming"); //! This will only ever return null;
+		
+		if ((file.exists()) && (file.isDirectory())) return file;
+		
+		if (!file.exists()) {
+			file.mkdir();
+			return file;
+		} else {
+			throw new IOException ("Could not make an incomming directory because there is a file in the way.");
+		}
 	}
 	
 	private static File askUserForANewFile(String name) throws IOException {

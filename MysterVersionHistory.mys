@@ -961,3 +961,4 @@ Work on DEV 8:
 		-> Added number of concurrent connections to server stats
 		-> Added number of pings to server stats.
 		-> added number of connections to server stats.
+		-> Added uptime to server stats
