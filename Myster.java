@@ -49,10 +49,19 @@ public class Myster{
 	public static File file;
 	public static final String fileLockName=".lockFile";
 
+	private static ResourceBundle resources;
+
 	public static void main(String args[]) {
 		final boolean isServer=(args.length>0&&args[0].equals("-s"));
 		
 		//Locale.setDefault(new Locale(Locale.JAPANESE.getLanguage(),Locale.JAPAN.getCountry()));
+		try {
+			resources = ResourceBundle.getBundle("properties.Myster");
+		}
+		catch (MissingResourceException e) {
+			System.err.println("resources not found");
+			System.exit(1);
+		}
 		
 		System.out.println("java.vm.specification.version:"+System.getProperty("java.vm.specification.version"));
 		System.out.println("java.vm.specification.vendor :"+System.getProperty("java.vm.specification.vendor"));
@@ -120,55 +129,54 @@ public class Myster{
 				String macHack="";//(System.getProperty("java.vm.vendor")==null?" (unknown 1.1 java)":System.getProperty("java.vm.vendor"));
 				com.myster.util.ProgressWindow progress=new com.myster.util.ProgressWindow();
 				progress.setLocation(100,100);
-				progress.setTitle("Loading Myster...");
+				progress.setTitle(Myster.tr("Loading Myster..."));
 				progress.showBytes=false;
-				progress.say("Loading UDP Operator..."+macHack);
+				progress.say(Myster.tr("Loading UDP Operator...")+macHack);
 				progress.update(10);
 				
 				(new UDPOperator(DatagramProtocolManager.getSocket())).start();
 				
-				progress.say("Loading Server Stats Window..."+macHack);
+				progress.say(Myster.tr("Loading Server Stats Window...")+macHack);
 				progress.update(15);
 				
 				//System.out.println( "MAIN THREAD: Starting Operator.."+macHack);
 				Point p=ServerStatsWindow.getInstance().getLocation();
 				ServerStatsWindow.getInstance().setLocation(-1111,-1111);
 				ServerStatsWindow.getInstance().setVisible(true);
-				progress.say("Loading Server Stats Window...."+macHack);
+				progress.say(Myster.tr("Loading Server Stats Window....")+macHack);
 				try {Thread.currentThread().sleep(1000);} catch (Exception ex) {}
-				progress.say("Loading Server Stats Window....."+macHack);
 				ServerStatsWindow.getInstance().setVisible(false);
 				ServerStatsWindow.getInstance().setLocation(p);
 				
-				progress.say("Loading Server Fascade..."+macHack);
+				progress.say(Myster.tr("Loading Server Fascade...")+macHack);
 				progress.update(25);
 				ServerFacade.assertServer();
 
-				progress.say("Loading a search window..."+macHack);
+				progress.say(Myster.tr("Loading a search window...")+macHack);
 				progress.update(27);
 				if (isServer) {}
 				else {
 					SearchWindow sw=new SearchWindow();
-					sw.say("Idle..");
+					sw.say(Myster.tr("Idle.."));
 				}
 				progress.setVisible(false);
 				progress.setVisible(true);
 				
-				progress.say("Loading tracker..."+macHack);
+				progress.say(Myster.tr("Loading tracker...")+macHack);
 				progress.update(50);
 				IPListManagerSingleton.getIPListManager();
 				
-				progress.say("Loading FileManager..."+macHack);
+				progress.say(Myster.tr("Loading FileManager...")+macHack);
 				progress.update(70);
 				FileTypeListManager.getInstance();
 				
-				progress.say("Loading WindowManager..."+macHack);
+				progress.say(Myster.tr(Myster.tr("Loading WindowManager..."))+macHack);
 				progress.update(78);
 				com.myster.ui.WindowManager.init();
 				
 				Preferences.getInstance().addPanel(BandwidthManager.getPrefsPanel());
 			
-				progress.say("Loading Plugins..."+macHack);
+				progress.say(Myster.tr("Loading Plugins...")+macHack);
 				progress.update(80);
 				try {
 					(new com.myster.plugin.PluginLoader(new File("plugins"))).loadPlugins();
@@ -179,7 +187,7 @@ public class Myster{
 				progress.dispose();
 			}
 		}).start();
-	}//
+	}
 	
 	
 	//Utils, globals etc..
@@ -299,4 +307,13 @@ public class Myster{
 		System.exit(0);
 	}
 
+	public static final String tr(String text) {
+		try {
+			return resources.getString(text);
+		}
+		catch (MissingResourceException e) {
+			System.err.println("missing translation key: \"" + text + "\"");
+			return text;
+		}
+	}
 }
