@@ -39,6 +39,9 @@ import com.general.util.*;
 
 import com.myster.mml.*;
 
+import com.myster.pref.Preferences;
+import com.myster.bandwidth.BandwidthManager;
+
 import java.util.Locale;
 
 public class Myster{
@@ -162,6 +165,8 @@ public class Myster{
 				progress.say("Loading WindowManager..."+macHack);
 				progress.update(78);
 				com.myster.ui.WindowManager.init();
+				
+				Preferences.getInstance().addPanel(BandwidthManager.getPrefsPanel());
 			
 				progress.say("Loading Plugins..."+macHack);
 				progress.update(80);
