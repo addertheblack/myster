@@ -34,7 +34,7 @@ public class I18n {
 	*	This function must be called before any other (ie, on startup)
 	*/
 	public static void init() {
-		//Locale.setDefault(new Locale(Locale.JAPANESE.getLanguage(),Locale.JAPAN.getCountry()));
+		Locale.setDefault(new Locale(Locale.JAPANESE.getLanguage(),Locale.JAPAN.getCountry()));
 
 		resources = ResourceBundle.getBundle("com.properties.Myster");
 	}
@@ -94,7 +94,8 @@ public class I18n {
 		StringBuffer sourceBuffer = new StringBuffer(stringToReplace);
 		StringBuffer destinationBuffer = new StringBuffer(sourceBuffer.length()*2); // allocate som extra space
 		
-		for (int i = 0; i < sourceBuffer.length()-1; i++ ) { //the -1 is because we always assume there is a 
+		int i;
+		for (i = 0; i < sourceBuffer.length()-1; i++ ) { //the -1 is because we always assume there is a 
 			if (sourceBuffer.charAt(i) == SUB_CHAR) {
 				i++;
 				
@@ -110,6 +111,10 @@ public class I18n {
 			} else {
 				destinationBuffer.append(sourceBuffer.charAt(i));
 			}
+		}
+		
+		if (i ==  sourceBuffer.length()-1) {
+			destinationBuffer.append(sourceBuffer.charAt(sourceBuffer.length()-1));
 		}
 		
 		return new String(destinationBuffer);

@@ -38,9 +38,9 @@ public class MysterMenuItemFactory {
 		MenuItem menuItem;
 		
 		if (shortcut!=-1) {
-			menuItem=new MenuItem(name, new MenuShortcut(shortcut,useShift));
+			menuItem=new MenuItem(com.myster.util.I18n.tr(name), new MenuShortcut(shortcut,useShift));
 		} else {
-			menuItem=new MenuItem(name);
+			menuItem=new MenuItem(com.myster.util.I18n.tr(name));
 		}
 		
 		if (action!=null) {
