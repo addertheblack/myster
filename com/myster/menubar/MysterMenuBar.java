@@ -120,7 +120,8 @@ public class MysterMenuBar extends MenuBar {
 	/** Static sub-system is below */
 	static EventDispatcher dispatcher=new SyncEventDispatcher();
 	private static MysterMenuBarFactory impl;
-	private static Vector file, edit, special, menuBar;
+	private static Vector file, edit, special, menuBar, plugins;
+	private static MysterMenuFactory pluginMenuFactory;
 	
 	private static synchronized MysterMenuBarFactory getFactory() {
 		if (impl==null) {
@@ -157,11 +158,17 @@ public class MysterMenuBar extends MenuBar {
 			special.addElement(new MysterMenuItemFactory("Show Server Stats", 				new StatsWindowAction(), 			java.awt.event.KeyEvent.VK_S, true));
 			special.addElement(new MysterMenuItemFactory("Show tracker",					new TrackerWindowAction(), 			java.awt.event.KeyEvent.VK_T));
 			
-
+			//Myster plugins Menu
+			plugins=new Vector();
+			pluginMenuFactory=new MysterMenuFactory("Plugins", plugins);
+	
 			menuBar=new Vector();
 			menuBar.addElement(new MysterMenuFactory("File",	file));
 			menuBar.addElement(new MysterMenuFactory("Edit",	edit));
 			menuBar.addElement(new MysterMenuFactory("Special",	special));
+			//plugins menu is not added here.
+			
+			
 			
 			impl=new MysterMenuBarFactory(menuBar);
 		}
@@ -231,16 +238,31 @@ public class MysterMenuBar extends MenuBar {
 		updateMenuBars();
 	}
 	
-	public static boolean removeMenu() {
-		return false;
+	public static boolean removeMenu(MysterMenuFactory factory) {
+		boolean sucess=menuBar.removeElement(factory);
+		updateMenuBars();
+		return sucess;
 	}
 	
-	public static void addMenuItem() {
+	public static void addMenuItem(MysterMenuItemFactory menuItemfactory) {
+		if (plugins.size()==0) {
+			menuBar.addElement(pluginMenuFactory);
+		}
+		plugins.addElement(menuItemfactory);
+		updateMenuBars();
+	}
+	
+	public static boolean removeMenuItem(MysterMenuItemFactory menuItemfactory) {
+		boolean success=false;
 		
-	}
-	
-	public static boolean removeMenuItem() {
-		return false;
+		success=plugins.removeElement(menuItemfactory);
+		
+		if (plugins.size()==0) {
+			menuBar.removeElement(pluginMenuFactory);
+		}
+		
+		updateMenuBars();
+		return success;
 	}
 	
 	private static Vector getPreBuiltMenuBar() {
@@ -250,23 +272,4 @@ public class MysterMenuBar extends MenuBar {
 		
 		return menuBarVector;
 	}
-	
-	
-	
-	/*private static class MenuBarFactory {
-		private Menu file, edit, myster;
-		private MysterMenuItem[] fileitems,edititems,mysteritems;
-		
-		private final int SIZEOFFILEMENU=5;
-		private final int SIZEOFEDITMENU=10;
-		private final int SIZEOFMYSTERMENU=3;
-		
-		private static final NullAction NULL=new NullAction(); 
-		
-		
-		public MenuBar makeMenuBar() {
-			
-		}
-	}*/
-
 }

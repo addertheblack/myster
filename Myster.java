@@ -87,17 +87,17 @@ public class Myster{
 			System.out.println("Ping was "+(ponger.ping(new MysterAddress("127.0.0.1"))?"a success":"a timeout"));
 		} catch (Exception ex) {
 			ex.printStackTrace();
-			return;
+			com.general.util.AnswerDialog.simpleAlert("Myster's UDP sub-system could not initialize. This means Myster will probably not work correctly. Here is the official error:\n\n"+ex);
 		}
 
-		
+
 		
 		
 		System.out.println( "MAIN THREAD: Starting loader Thread.." );
 		(new Thread() {
 			public void run() {
 				//if (true) return;
-				try {Thread.currentThread().sleep(2000);} catch (Exception ex) {}
+				try {Thread.currentThread().sleep(1000);} catch (Exception ex) {}
 				
 				String macHack="";//(System.getProperty("java.vm.vendor")==null?" (unknown 1.1 java)":System.getProperty("java.vm.vendor"));
 				com.myster.util.ProgressWindow progress=new com.myster.util.ProgressWindow();
@@ -112,11 +112,13 @@ public class Myster{
 				progress.say("Loading Server Stats Window..."+macHack);
 				progress.update(15);
 				
-				System.out.println( "MAIN THREAD: Starting Operator.."+macHack);
+				//System.out.println( "MAIN THREAD: Starting Operator.."+macHack);
 				Point p=ServerStatsWindow.getInstance().getLocation();
 				ServerStatsWindow.getInstance().setLocation(-1111,-1111);
 				ServerStatsWindow.getInstance().setVisible(true);
+				progress.say("Loading Server Stats Window...."+macHack);
 				try {Thread.currentThread().sleep(1000);} catch (Exception ex) {}
+				progress.say("Loading Server Stats Window....."+macHack);
 				ServerStatsWindow.getInstance().setVisible(false);
 				ServerStatsWindow.getInstance().setLocation(p);
 				

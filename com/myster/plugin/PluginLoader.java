@@ -44,7 +44,7 @@ public class PluginLoader implements Runnable{
 			} catch (IllegalAccessException ex) {
 				ex.printStackTrace();
 			} catch (Exception ex) {
-				System.out.println("Unexpected Exception.");
+				System.out.println("Unexpected Exception. While loading a plugin.w");
 				ex.printStackTrace();
 			} catch (NoClassDefFoundError ex) {
 				System.out.println("NoClassDefFoundError: The pluggin "+f_temp.getName()+" is not compatiable with Myster.");

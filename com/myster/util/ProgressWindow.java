@@ -211,7 +211,7 @@ public class ProgressWindow extends Frame {
 
     public void update() // redraw the image with all of the current values
     {
-       	repaint();
+       	//repaint();
        	//System.gc();
     }
 
