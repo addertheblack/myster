@@ -242,7 +242,9 @@ class ProgressBannerManager implements Runnable {
 	}
 	
 	public synchronized void addNewBannerToQueue(Banner banner) {
-		queue.addToTail(banner);
+		if (! queue.contains(banner)) { //NOTE THAT WE DO NOT CHECK IN OLDBANNERS! THIS IS ON PURPOSE!
+			queue.addToTail(banner);
+		}
 		
 		if (! isInit) {
 			isInit = true;
@@ -263,7 +265,7 @@ class ProgressBannerManager implements Runnable {
 		Banner banner = getNextBannerInQueue();
 		
 		if (banner != null) {
-			oldBanners.addElement(banner);
+			if (! oldBanners.contains(banner)) oldBanners.addElement(banner); //if unique image then add to banners
 		} else {
 			banner = oldBanners.getNextBanner();
 		}
@@ -307,5 +309,25 @@ class Banner {
 	public Banner(byte[] image, String url) {
 		this.image 	= image;
 		this.url 	= url;
+	}
+	
+	public boolean equals(Object o) {
+		Banner banner;
+		
+		try {
+			banner = (Banner) o;
+		} catch (ClassCastException ex) {
+			return false;
+		}
+		
+		if (image.length != banner.image.length) return false;
+		
+		for (int i = 0; i < image.length ; i++) {
+			if (image[i] != banner.image[i]) return false;
+		}
+		
+		System.out.println("We have returned true form banners quals method");
+		
+		return true;
 	}
 }
