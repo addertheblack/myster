@@ -67,11 +67,11 @@ public class DownloadMCListItem extends MCListItemInterface {
             case 1:
                 return doneFileName;
             case 2:
-                return doneSize;
-            case 3:
                 return doneRate;
-            case 4:
+            case 3:
                 return doneProgress;
+            case 4:
+                return doneSize;
             default:
                 return new SortableString("Error");
             }
@@ -82,9 +82,9 @@ public class DownloadMCListItem extends MCListItemInterface {
             case 1:
                 return new SortableString("?");
             case 2:
-                return new SortableByte(0);
-            case 3:
                 return new SortableRate(0);
+            case 3:
+                return new SortableByte(0);
             case 4:
                 return new SortableByte(0);
             default:
@@ -97,8 +97,6 @@ public class DownloadMCListItem extends MCListItemInterface {
             case 1:
                 return new SortableString(info.getFileName());
             case 2:
-                return new SortableByte(info.getFileSize());
-            case 3:
                 if (status == TRANSFERING) {
                     return new SortableRate(((long) (info.getTransferRate())));
                 } else if (status == QUEUED) {
@@ -106,8 +104,10 @@ public class DownloadMCListItem extends MCListItemInterface {
                 } else {
                     return new SortableRate(SortableRate.UNKNOWN);
                 }
-            case 4:
+            case 3:
                 return new SortableByte(info.getAmountDownloaded());
+            case 4:
+                return new SortableByte(info.getFileSize());
             default:
                 return new SortableString("Error");
             }

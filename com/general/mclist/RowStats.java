@@ -10,16 +10,19 @@
 package com.general.mclist;
 
 public class RowStats {
-    int numberofcolumns;
+    private int numberofcolumns;
 
-    int[] columnwidtharray;
+    private int[] columnwidtharray;
 
-    int padding;
+    private int padding;
 
-    public RowStats(int[] columnwidtharray, int padding) {
+    private int internalPadding;
+
+    public RowStats(int[] columnwidtharray, int padding, int internalPadding) {
         this.numberofcolumns = columnwidtharray.length;
         this.columnwidtharray = columnwidtharray;
         this.padding = padding;
+        this.internalPadding = internalPadding;
     }
 
     public int getNumberOfColumns() {
@@ -31,11 +34,15 @@ public class RowStats {
     }
 
     public int getTotalWidthOfColunm(int x) {
-        return getWidthOfColumn(x) + padding;
+        return getWidthOfColumn(x) + padding + 2*internalPadding;
     }
 
     public int getPadding() {
         return padding;
+    }
+    
+    public int getInternalPadding() {
+        return internalPadding;
     }
 
     public int getTotalLength() {
@@ -43,7 +50,7 @@ public class RowStats {
         for (int i = 0; i < columnwidtharray.length; i++) {
             count += columnwidtharray[i];
         }
-        count += padding * columnwidtharray.length + padding; //padding calcs
+        count += (2*internalPadding) * padding * columnwidtharray.length + padding; //padding calcs
         return count;
     }
 }

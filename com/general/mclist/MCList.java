@@ -32,7 +32,7 @@ public class MCList extends Panel {
     private int previousimagey = -1;
 
     //Themes support of sorts
-    private MCRowThemeInterface rowtheme;
+    private MCRowThemeInterface rowTheme;
 
     //List Itself:
     MCListVector list;
@@ -52,13 +52,15 @@ public class MCList extends Panel {
 
     public static final int PADDING = 1;
 
+    public static final int INTERNAL_PADDING = 1;
+
     public MCList(int numberofcolumns, boolean singleselect, Component c) {
-        this(numberofcolumns, singleselect, new DefaultMCRowTheme(c, PADDING));
-    }
+        this.rowTheme = new DefaultMCRowTheme(c);
 
-    public MCList(int numberofcolumns, boolean singleselect, MCRowThemeInterface theme) {
+        header = new MCListHeader(this, numberofcolumns);
 
-        this.rowtheme = theme;
+        setBackground(rowTheme.getBackground());
+
         eventhandler = new MCListEventHandler(this);
 
         singleselectboolean = singleselect;
@@ -68,7 +70,6 @@ public class MCList extends Panel {
         setSize(1024, 1024);
         setLayout(null);
         pane.add(this);
-        header = new MCListHeader(this, numberofcolumns);
 
         add(header);
         addMouseListener(eventhandler);
@@ -83,8 +84,6 @@ public class MCList extends Panel {
                 header.setLocation(0, e.getValue());
             }
         });
-
-        setBackground(theme.getBackground());
 
         addKeyListener(eventhandler);
     }
@@ -137,7 +136,7 @@ public class MCList extends Panel {
     //Important for canvas
     public synchronized Dimension getPreferredSize() {
         RowStats rowstats = header.getRowStats();
-        int ysize = list.size() * rowtheme.getHeight() - 1 + header.getHeight();
+        int ysize = list.size() * rowTheme.getHeight(PADDING, INTERNAL_PADDING) - 1 + header.getHeight();
         int xsize = header.getPreferredSize().width;
         return new Dimension(xsize, ysize);
     }
@@ -169,26 +168,6 @@ public class MCList extends Panel {
                 pane.getScrollPosition().y + header.getHeight(), this);
     }
 
-    // private void updatey(Graphics g) { //not double buffered.
-    //if (pane.getViewportSize().height-header.getHeight()<0) return;
-    //	if (previousimagex!=pane.getViewportSize().width|| //makes sure the image
-    // buffer is up to date!
-    //		previousimagey!=pane.getViewportSize().height){
-    //		im=createImage(pane.getViewportSize().width,
-    // pane.getViewportSize().height-header.getHeight());
-    //		previousimagex=pane.getViewportSize().width;
-    //		previousimagey=pane.getViewportSize().height;
-    //  	}
-    //   	paint(g, pane.getScrollPosition().x,
-    // pane.getScrollPosition().x+pane.getViewportSize().width
-    // ,pane.getScrollPosition().y,
-    // pane.getScrollPosition().y+pane.getViewportSize().height);
-    //g.setClip(pane.getScrollPosition().x, pane.getScrollPosition().y
-    // ,pane.getViewportSize().width,pane.getViewportSize().height);
-    //g.drawImage(im, pane.getScrollPosition().x ,
-    // pane.getScrollPosition().y+header.getHeight(), this);
-    //}
-
     public void paint(Graphics g) { //done.
         header.setLocation(0, pane.getScrollPosition().y);
         header.setSize(header.calculateSize());
@@ -217,17 +196,17 @@ public class MCList extends Panel {
             c2 = -1; //If c1=-1 the means the scroll pane is outside any
         // visible area so draw nothing.
 
-        int offsetcounter = getYFromClicked(c1) - y1; //rounding routine (get 
+        int offsetcounter = getYFromClicked(c1) - y1; //rounding routine (get
         // the offset properly.
         // Gtes initial offset.
 
         RowStats rowstats = header.getRowStats();
 
         Dimension dimension = getPane().getViewportSize();
-        
+
         for (int i = c1; i <= c2; i++) {
-            rowtheme.paint(g, list.getElement(i), rowstats, offsetcounter, x1, i, dimension);
-            offsetcounter += rowtheme.getHeight();
+            rowTheme.paint(g, list.getElement(i), rowstats, offsetcounter, x1, i, dimension);
+            offsetcounter += rowTheme.getHeight(PADDING, INTERNAL_PADDING);
         }
         g.dispose();
     }
@@ -272,7 +251,7 @@ public class MCList extends Panel {
     public synchronized int getClicked(int x, int y) {
         y -= 0; //hahahahhaha
         y -= header.getHeight();
-        int temp = y / rowtheme.getHeight();
+        int temp = y / rowTheme.getHeight(PADDING, INTERNAL_PADDING);
         if (temp < list.size())
             return temp;
         return -1;
@@ -352,7 +331,7 @@ public class MCList extends Panel {
 
     private int getYFromClicked(int c) {
         int spacingindex = 0;
-        spacingindex = c * rowtheme.getHeight() + header.getHeight();
+        spacingindex = c * rowTheme.getHeight(PADDING, INTERNAL_PADDING) + header.getHeight();
         return spacingindex;
 
     }
@@ -362,10 +341,10 @@ public class MCList extends Panel {
         try {
             pane.invalidate(); //invalidate current layout.
             Util.invoke(new Runnable() {
-               public void run() {
-                   pane.validate(); //update scroll pane to possible changes in size.
-                   repaint();
-               }
+                public void run() {
+                    pane.validate(); //update scroll pane to possible changes in size.
+                    repaint();
+                }
             });
         } catch (Exception ex) {
         }
@@ -389,8 +368,6 @@ public class MCList extends Panel {
         }
 
         public Dimension getPreferredSize() {
-            //return new Dimension(0,0);
-            //return MCList.this.getPreferredSize();
             return super.getPreferredSize();
         }
 

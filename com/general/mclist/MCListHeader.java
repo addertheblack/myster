@@ -1,8 +1,7 @@
 /*
  * MCList.java
  * 
- * Title: Multi Column List Package Author: Andrew Trumper Description: A
- * MultiColumn List Package
+ * Title: Multi Column List Package Author: Andrew Trumper Description: A MultiColumn List Package
  * 
  * Copyright Andrew Trumper 2001
  */
@@ -102,6 +101,8 @@ public class MCListHeader extends Panel {
 
         RowStats rowstats = getRowStats();
         int padding = rowstats.getPadding();
+        int internalPadding = rowstats.getInternalPadding();
+        int doubleInternalPadding = 2 * internalPadding;
 
         FontMetrics tempfont = callback.getFontMetrics(callback.getFont()); //uses
         // default
@@ -118,31 +119,30 @@ public class MCListHeader extends Panel {
 
         int hozoffset = 0;
         for (int i = 0; i < columnarray.length; i++) {
-
             //Calculates the "Selected Column" and/or "Mouser Over" colors.
+            paintTitle(g, hozoffset, hozoffset + rowstats.getWidthOfColumn(i) + padding
+                    + doubleInternalPadding, padding, internalPadding, i == sortby,
+                    mouseOverColumn == i);
 
-            paintTitle(g, hozoffset, hozoffset + rowstats.getWidthOfColumn(i) + padding, padding,
-                    i == sortby, mouseOverColumn == i);
-
-            hozoffset += padding + rowstats.getWidthOfColumn(i);
+            hozoffset += padding + rowstats.getWidthOfColumn(i) + doubleInternalPadding;
         }
 
         if (hozoffset < getSize().width) {
-            paintTitle(g, hozoffset, getSize().width, padding, false, false);
+            paintTitle(g, hozoffset, getSize().width, padding, internalPadding, false, false);
         }
-            
+
         g.setColor(Color.black);
         hozoffset = 0;
         int yplace = padding + ascent;
         for (int i = 0; i < numberOfColumns; i++) {
             g.drawString(makeFit(columnarray[i], rowstats.getWidthOfColumn(i)), hozoffset + padding
-                    + 2, yplace);
-            hozoffset += padding + rowstats.getWidthOfColumn(i);
+                    + 2 + internalPadding, yplace + internalPadding);
+            hozoffset += padding + rowstats.getWidthOfColumn(i) + doubleInternalPadding;
         }
     }
 
     private void paintTitle(Graphics g, int hozoffset, int endPixel, int padding,
-            boolean isSelected, boolean isMouseOver) {
+            int internalPadding, boolean isSelected, boolean isMouseOver) {
         //Calculates the "Selected Column" and/or "Mouser Over" colors.
         if (isSelected) {
             g.setColor(isMouseOver ? new Color(210, 210, 255) : new Color(200, 200, 255));
@@ -151,25 +151,26 @@ public class MCListHeader extends Panel {
         }
 
         int width = endPixel - hozoffset - padding;
-        g.fillRect(padding + hozoffset, padding, width, HEIGHT);
+        g.fillRect(padding + hozoffset, padding, width, 2 * internalPadding + HEIGHT);
+
+        int height = 2 * internalPadding + padding + HEIGHT;
 
         g.setColor(new Color(235, 235, 235));
         g.drawLine(padding + hozoffset, padding, padding + hozoffset + width - 1, padding);
-        g.drawLine(padding + hozoffset, padding, padding + hozoffset, padding + HEIGHT - 1);
+        g.drawLine(padding + hozoffset, padding, padding + hozoffset, height - 1);
         g.setColor(new Color(175, 175, 175));
-        g.drawLine(padding + hozoffset, padding + HEIGHT - 1, padding + hozoffset + width - 1,
-                padding + HEIGHT - 1);
+        g.drawLine(padding + hozoffset, height - 1, padding + hozoffset + width - 1, height - 1);
         g.drawLine(padding + hozoffset + width - 1, padding, padding + hozoffset + width - 1,
-                padding + HEIGHT - 1);
+                height - 1);
 
         g.setColor(new Color(255, 255, 255));
         g.fillRect(padding + hozoffset, padding, 1, 1);
         g.setColor(new Color(215, 215, 215));
         g.fillRect(padding + hozoffset + width - 1, padding, 1, 1);
         g.setColor(new Color(215, 215, 215));
-        g.fillRect(padding + hozoffset, padding + HEIGHT - 1, 1, 1);
+        g.fillRect(padding + hozoffset, height - 1, 1, 1);
         g.setColor(new Color(140, 140, 140));
-        g.fillRect(padding + hozoffset + width - 1, padding + HEIGHT - 1, 1, 1);
+        g.fillRect(padding + hozoffset + width - 1, height - 1, 1, 1);
 
     }
 
@@ -203,7 +204,7 @@ public class MCListHeader extends Panel {
     }
 
     public RowStats getRowStats() {
-        return new RowStats(getColumnWidthArray(), MCList.PADDING);
+        return new RowStats(getColumnWidthArray(), MCList.PADDING, MCList.INTERNAL_PADDING);
     }
 
     public Dimension getMinimumSize() {
@@ -213,7 +214,8 @@ public class MCListHeader extends Panel {
     public Dimension getPreferredSize() {
         int plength = MCList.PADDING;
         for (int i = 0; i < numberOfColumns; i++) {
-            plength += Math.min(getPreferredColumnWidth(i), getColumnWidth(i)) + MCList.PADDING;
+            plength += Math.min(getPreferredColumnWidth(i), getColumnWidth(i)) + MCList.PADDING + 2
+                    * MCList.INTERNAL_PADDING;
         }
 
         return new Dimension(plength, getHeight());
@@ -244,9 +246,8 @@ public class MCListHeader extends Panel {
     }
 
     /**
-     * If there is only one column then fill all the space available else if the
-     * column width is unspecified use the header title sting width else use the
-     * value form the column width array
+     * If there is only one column then fill all the space available else if the column width is
+     * unspecified use the header title sting width else use the value form the column width array
      */
     public int getColumnWidth(int i) {
         return (numberOfColumns == 1 ? callback.getPane().getViewportSize().width
@@ -279,7 +280,11 @@ public class MCListHeader extends Panel {
     }
 
     public int getHeight() {
-        return 2 * MCList.PADDING + HEIGHT;
+        return HEIGHT + getTotalPadding();
+    }
+
+    private int getTotalPadding() {
+        return 2 * MCList.PADDING + 2 * MCList.INTERNAL_PADDING;
     }
 
     public String makeFit(String s, int size) {

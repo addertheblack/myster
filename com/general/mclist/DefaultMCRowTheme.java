@@ -17,8 +17,6 @@ import java.awt.Graphics;
 import java.util.Locale;
 
 public class DefaultMCRowTheme implements MCRowThemeInterface {
-    private int padding = 0;
-
     private Component component; //for font metrics
 
     //font stuff
@@ -38,35 +36,33 @@ public class DefaultMCRowTheme implements MCRowThemeInterface {
     private Color backgroundColor = lightc;
 
     private boolean filterNonEnglish;
-
-    public DefaultMCRowTheme(Component c, int padding) {
+    
+    public DefaultMCRowTheme(Component c) {
         component = c;
-        this.padding = padding;
 
         filterNonEnglish = Locale.getDefault().getDisplayLanguage().equals(
                 Locale.ENGLISH.getDisplayLanguage());
         filterNonEnglish = false;
     }
 
-    public int getHeight() {
+    public int getHeight(int padding, int internalPadding) {
         try {
             return component.getFontMetrics(component.getFont()).getHeight()
-                    + padding;
+                    + padding + (internalPadding * 2);
         } catch (Exception ex) {
             return 20;
         }
-    }
-
-    public int getPadding() {
-        return padding;
     }
 
     public Color getBackground() {
         return backgroundColor;
     }
 
-    public void paint(Graphics g, MCListItemInterface item, RowStats row,
+    public void paint(Graphics g, MCListItemInterface item, RowStats rowStats,
             int yoffset, int xoffset, int itemnumber, Dimension dimension) {
+        int padding = rowStats.getPadding();
+        int internalPadding = rowStats.getInternalPadding();
+        
         try {
             if (tempfont == null) {
                 tempfont = component.getFontMetrics(component.getFont()); //uses
@@ -85,7 +81,7 @@ public class DefaultMCRowTheme implements MCRowThemeInterface {
         
         //Clear secleciton to white:
         g.setColor(Color.white);
-        g.fillRect(0, yoffset, Math.max(row.getTotalLength(), dimension.width), getHeight());
+        g.fillRect(0, yoffset, Math.max(rowStats.getTotalLength(), dimension.width), getHeight(padding, internalPadding));
 
         //Paint boxes - padding on ONE SIDE!
         if (itemnumber % 2 == 0) {
@@ -101,15 +97,15 @@ public class DefaultMCRowTheme implements MCRowThemeInterface {
         }
 
         int hozoffset = -xoffset;
-        for (int i = 0; i < row.getNumberOfColumns(); i++) {
+        for (int i = 0; i < rowStats.getNumberOfColumns(); i++) {
 //            g.fillRect(padding + hozoffset, yoffset + padding, row
 //                    .getWidthOfColumn(i), height);
-            paintRow(g, hozoffset, hozoffset + padding + row.getWidthOfColumn(i), padding, yoffset, height);
-            hozoffset += padding + row.getWidthOfColumn(i);
+            paintRow(g, hozoffset, hozoffset + padding + rowStats.getWidthOfColumn(i), padding, internalPadding, yoffset, height);
+            hozoffset += padding + rowStats.getWidthOfColumn(i) + (2* internalPadding);
         }
         
         if (hozoffset + xoffset < dimension.width ) {
-            paintRow(g, hozoffset, xoffset + dimension.width, padding, yoffset, height);
+            paintRow(g, hozoffset, xoffset + dimension.width, padding, internalPadding, yoffset, height);
         }
         
         //Add text at proper off set
@@ -118,16 +114,17 @@ public class DefaultMCRowTheme implements MCRowThemeInterface {
 
         hozoffset = -xoffset;
         int yplace = yoffset + ascent;
-        for (int i = 0; i < row.getNumberOfColumns(); i++) {
-            g.drawString(makeFit(item.getValueOfColumn(i).toString(), row
-                    .getWidthOfColumn(i)), hozoffset + padding, yplace);
-            hozoffset += padding + row.getWidthOfColumn(i);
+        for (int i = 0; i < rowStats.getNumberOfColumns(); i++) {
+            g.drawString(makeFit(item.getValueOfColumn(i).toString(), rowStats
+                    .getWidthOfColumn(i)), hozoffset + padding + internalPadding, yplace + internalPadding);
+            hozoffset += padding + rowStats.getWidthOfColumn(i) + (2 * internalPadding);
         }
     }
     
-    private void paintRow(Graphics g, int hozoffset, int end, int padding, int yOffset, int height) {
+    private void paintRow(Graphics g, int hozoffset, int end, int padding, int internalPadding, int yOffset, int height) {
+        int doubleInternalPadding = 2 * internalPadding;
         int width = end - hozoffset - padding;
-        g.fillRect(padding + hozoffset, yOffset, width, height);
+        g.fillRect(padding + hozoffset, yOffset, width + doubleInternalPadding, height + doubleInternalPadding);
     }
 
     public String makeFit(String s, int size) {

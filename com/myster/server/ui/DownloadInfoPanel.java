@@ -66,20 +66,19 @@ public class DownloadInfoPanel extends Panel {
 
         list.setColumnName(0, "User");
         list.setColumnName(1, "File");
-        list.setColumnName(2, "Size");
-        list.setColumnName(3, "Rate");
-        list.setColumnName(4, "Progress");
+        list.setColumnName(2, "Status");
+        list.setColumnName(3, "Progress");
+        list.setColumnName(4, "Size");
         list.setColumnName(5, "???");
 
-        list.setColumnWidth(0, 165);
-        list.setColumnWidth(1, 200);
+        list.setColumnWidth(0, 150);
+        list.setColumnWidth(1, 215);
         list.setColumnWidth(2, 70);
         list.setColumnWidth(3, 70);
         list.setColumnWidth(4, 70);
         list.setColumnWidth(5, 100);
 
-        list
-                .addMCListEventListener(chandler.new DownloadStatsMCListEventHandler());
+        list.addMCListEventListener(chandler.new DownloadStatsMCListEventHandler());
 
         p.doLayout();
 
