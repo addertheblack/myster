@@ -242,8 +242,6 @@ public class FileSenderThread extends ServerThread {
 			} catch (RuntimeException ex) {
 				ex.printStackTrace();
 				throw ex;
-			} finally {
-				fireEvent(ServerDownloadEvent.FINISHED, (char)-1);
 			}
 		}
 	
@@ -283,8 +281,6 @@ public class FileSenderThread extends ServerThread {
 				out.writeInt(1);
 				out.writeLong(file.length()-initialOffset);			//Sends size of file that remains to be sent.
 			}
-			
-
 		}
 		
 		
@@ -324,6 +320,7 @@ public class FileSenderThread extends ServerThread {
 					//But would still like to try and close them if the first one fails.
 				}
 			} finally {
+				fireEvent(ServerDownloadEvent.FINISHED, (char)-1);
 				cleanUp();
 			}
 		}
