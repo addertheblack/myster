@@ -200,7 +200,7 @@ public class MultiSourceDownload implements Runnable, Controller {
 		long readLength = (fileLength - fileProgress > MULTI_SOURCE_BLOCK_SIZE ? MULTI_SOURCE_BLOCK_SIZE : fileLength - fileProgress);
 
 		System.out.println("Main Thread -> Adding Work Segment "  +fileProgress + " " + readLength);
-		WorkSegment workSegment = new WorkSegment((readLength==0?0:fileProgress), readLength);
+		WorkSegment workSegment = new WorkSegment((readLength==0?0:fileProgress), readLength); // generate an end signal.
 		
 		fileProgress+=readLength;
 		

@@ -109,8 +109,10 @@ public class MultiSourceSender extends ServerThread {
 
 				final UploadBlock currentBlock = startNewBlock(socket, file);
 				
-				if (currentBlock.isEndSignal()) {
-					
+				if (currentBlock.isEndSignal()) { //must fix this duplicate code!!!!!! AGHHH!!
+					this.offset = this.fileLength;
+					amountDownloaded=0;
+					System.out.println("GOT END SIGNAL: "+this.offset+" : "+this.fileLength);
 					return;
 				}
 				
