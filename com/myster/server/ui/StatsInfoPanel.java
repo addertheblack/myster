@@ -45,7 +45,7 @@ public class StatsInfoPanel extends Panel{
 	
 	
 	Label numofFILabel;
-	CountLabel numofFI;	//files shared
+	CountLabel numofFI;		//files shared
 	
 	Label numMatchesLabel;
 	CountLabel numMaches;

@@ -22,11 +22,12 @@ import java.awt.event.ActionListener;
 import java.awt.event.ActionEvent;
 import com.myster.client.ui.ClientWindow;
 import com.general.util.Timer;
+import com.myster.message.MessageWindow;
 
 
 public class DownloadInfoPanel extends Panel {
 	MCList list;
-	Button disconnect, browse, clearAll;
+	Button disconnect, browse, clearAll,message;
 	ServerEventManager server;
 	ConnectionHandler chandler;
 	
@@ -72,22 +73,22 @@ public class DownloadInfoPanel extends Panel {
 		
 		
 		disconnect	=new Button("Disconnect User");
-		disconnect.setSize(200,35);
-		disconnect.setLocation(10, 260);
+		disconnect.setSize(175,25);
+		disconnect.setLocation(10, 255);
 		add(disconnect);
 		disconnect.addActionListener(chandler.new DisconnectHandler());
 		
 		
 		browse		=new Button("Browse User's Files");
-		browse.setSize(200,35);
-		browse.setLocation(10, 305);
+		browse.setSize(175,25);
+		browse.setLocation(10, 285);
 		add(browse);
 		browse.addActionListener(chandler.new ConnectHandler());
 		
 
 		clearAll	=new Button("Clear All Done");
-		clearAll.setSize(200,35);
-		clearAll.setLocation(220, 260);
+		clearAll.setSize(175,25);
+		clearAll.setLocation(10, 315);
 		add(clearAll);
 		clearAll.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent e) {
@@ -100,6 +101,26 @@ public class DownloadInfoPanel extends Panel {
 				}
 			}
 		
+		});
+		
+		
+		message		=new Button("Instant Message User");
+		message.setSize(175,25);
+		message.setLocation(200, 255);
+		add(message);
+		message.addActionListener(new ActionListener() {
+			public void actionPerformed(ActionEvent e) {
+				int[] array=list.getSelectedIndexes();
+				for (int i=0; i<array.length; i++) {
+					try {
+						MessageWindow window=new MessageWindow(new com.myster.net.MysterAddress((((DownloadMCListItem)(list.getMCListItem(array[i])))).getAddress()));
+						window.setVisible(true);
+					} catch (java.net.UnknownHostException ex) {
+					
+					}
+				}
+
+			}
 		});
 		
 		Timer timer=new Timer(new RepaintLoop(), 10000);

@@ -32,6 +32,10 @@ public class MessageWindow extends MysterFrame {
 	public MessageWindow(MysterAddress address, String quote) {
 		this(NEW_MESSAGE, "", quote, address);
 	}
+	
+	public MessageWindow(MysterAddress address) {
+		this(NEW_MESSAGE, "", null, address);
+	}
 
 	public MessageWindow() {
 		this(NEW_MESSAGE, "", null, null);
