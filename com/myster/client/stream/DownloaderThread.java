@@ -27,6 +27,7 @@ import com.myster.net.MysterSocket;
 import com.myster.net.MysterAddress;
 import com.myster.search.MysterFileStub;
 import com.myster.util.ProgressWindow;
+import com.myster.util.FileProgressWindow;
 import com.myster.util.ProgressWindowClose;
 import com.myster.net.MysterSocketFactory;
 import java.util.Locale;
@@ -44,7 +45,7 @@ public class DownloaderThread extends SafeThread {
 	long bytessent=0;
 	DataInputStream in;
 	DataOutputStream out;
-	ProgressWindow progress;
+	FileProgressWindow progress;
 	RandomAccessFile o=null; //implements DataOutput Interface
 	MysterSocket socket;
 	
@@ -64,11 +65,14 @@ public class DownloaderThread extends SafeThread {
 	
 	
 	public void run() {
-		
-
-		
-		progress=new ProgressWindow(0,100,2);
-		progress.update(-1,ProgressWindow.BAR_1);
+		progress=new FileProgressWindow();
+		progress.setMax(100);
+		progress.setMin(0);
+		progress.setProgressBarNumber(2);
+		progress.setValue(-1,FileProgressWindow.BAR_1);
+		progress.setValue(-1,FileProgressWindow.BAR_2);
+		progress.setVisible(true);
+		progress.setBarColor(Color.magenta, 1);
 		progress.addWindowListener(new ProgressWindowClose(this));
 		progress.setTitle("Preparing to Download..");
 		
@@ -85,7 +89,7 @@ public class DownloaderThread extends SafeThread {
 		
 		String temp=file.getType();
 		if (temp==null) {
-			progress.say("No type selected Error...",ProgressWindow.BAR_1);
+			progress.setText("No type selected Error...",FileProgressWindow.BAR_1);
 			return;
 		}
 		String dp=FileTypeListManager.getInstance().getPathFromType(temp);
@@ -93,7 +97,7 @@ public class DownloaderThread extends SafeThread {
 		if (dp!=null) doubleDumbAssOnYou=new File(dp);
 		else doubleDumbAssOnYou=new File("I love roman peaches yeah");
 		if (dp==null||!doubleDumbAssOnYou.isDirectory()) {
-			progress.say("Can't download file: the download directory for this type is not set?",ProgressWindow.BAR_1);
+			progress.setText("Can't download file: the download directory for this type is not set?",FileProgressWindow.BAR_1);
 			
 			FileDialog dialog=new FileDialog(progress, "Where do you want to save this file? (NOTE: You can avoid seeing this dialog"+
 					" by setting a download directory for this type in the download preferences.)", FileDialog.SAVE);
@@ -106,7 +110,7 @@ public class DownloaderThread extends SafeThread {
 			System.out.println(temppath);
 			theFileName=dialog.getFile();
 						if (theFileName==null) {
-				progress.say("User Canceled",ProgressWindow.BAR_1);
+				progress.setText("User Canceled",FileProgressWindow.BAR_1);
 				return;
 			}
 			dp=temppath;
@@ -118,7 +122,7 @@ public class DownloaderThread extends SafeThread {
 						" already exists. Would you like to over-write the file or rename the file you're downloading?\n\nWarning: Over-writting will delete the current file contents.",
 						new String[]{"Cancel", "Rename", "Over-Write"})).answer();
 				if (it.equals("Cancel")) {
-					progress.say("User Canceled",ProgressWindow.BAR_1);
+					progress.setText("User Canceled",FileProgressWindow.BAR_1);
 					return;
 				} else if (it.equals("Rename")) {
 					String[] blah=askUser(progress, dp, theFileName);
@@ -156,11 +160,11 @@ public class DownloaderThread extends SafeThread {
 		long filesize;
 		
 		try {
-			progress.say("Connecting to server...", ProgressWindow.BAR_1);
+			progress.setText("Connecting to server...", FileProgressWindow.BAR_1);
 			socket=MysterSocketFactory.makeStreamConnection(new MysterAddress(file.getIP()));
 			socket.setSoTimeout(3*60*1000);
 		} catch (Exception ex) {
-			progress.say("Server at that IP/Domain name is not responding.", ProgressWindow.BAR_1);
+			progress.setText("Server at that IP/Domain name is not responding.", FileProgressWindow.BAR_1);
 			return;
 		}
 	
@@ -168,11 +172,11 @@ public class DownloaderThread extends SafeThread {
 			in=new DataInputStream(socket.getInputStream());
 			out=new DataOutputStream(socket.getOutputStream());
 		} catch (Exception ex) {
-			progress.say("Error oppening connection", ProgressWindow.BAR_1);
+			progress.setText("Error oppening connection", FileProgressWindow.BAR_1);
 			return;
 		}
 		CONNECTION: {
-			progress.say("Negotiating file transfer..",ProgressWindow.BAR_1);
+			progress.setText("Negotiating file transfer..",FileProgressWindow.BAR_1);
 			
 			
 			
@@ -181,7 +185,7 @@ public class DownloaderThread extends SafeThread {
 				int ii=in.read();
 				if (ii!=1) {
 					System.out.println("Server says:"+ii);
-					progress.say("Server says it does not know how to send files (server is insane)",ProgressWindow.BAR_1);
+					progress.setText("Server says it does not know how to send files (server is insane)",FileProgressWindow.BAR_1);
 					break CONNECTION;
 				}
 				out.write(temp.getBytes());
@@ -191,7 +195,7 @@ public class DownloaderThread extends SafeThread {
 				
 				
 			} catch (Exception ex) {
-				progress.say("Error negotiating file transfer. Remote host is not setup right or under heavy load?",ProgressWindow.BAR_1);
+				progress.setText("Error negotiating file transfer. Remote host is not setup right or under heavy load?",FileProgressWindow.BAR_1);
 				ex.printStackTrace();
 				break CONNECTION;
 			}
@@ -201,7 +205,7 @@ public class DownloaderThread extends SafeThread {
 			try {
 				//File fileToWriteTo=//getBestFileName(file.getName());
 				if (fileToWriteTo==null) {
-					progress.say("Canceling...");
+					progress.setText("Canceling...");
 					progress.hide();
 					progress.dispose();
 					break CONNECTION;
@@ -217,20 +221,22 @@ public class DownloaderThread extends SafeThread {
 				}
 				
 				if (in.readInt()==0) {
-					progress.say("File Does not exist on remote server!",ProgressWindow.BAR_1);
+					progress.setText("File Does not exist on remote server!",FileProgressWindow.BAR_1);
 					
 					break CONNECTION;
 				}
 				
 				filesize=in.readLong();
 			} catch (Exception ex) {ex.printStackTrace();
-				progress.say("The d/l dir for this type is invalid",ProgressWindow.BAR_1);
+				progress.setText("The d/l dir for this type is invalid",FileProgressWindow.BAR_1);
 				ex.printStackTrace();
 				break CONNECTION;
 			}
 			
-			progress.startBlock(ProgressWindow.BAR_1,0,filesize+amountToSkip);
-			progress.say("Transfering: "+file.getName(),ProgressWindow.BAR_1);
+			progress.startBlock(FileProgressWindow.BAR_1,0,filesize+amountToSkip);
+			progress.setValue(-1);
+			progress.setPreviouslyDownloaded(amountToSkip, FileProgressWindow.BAR_1); //here because of the queue stuff
+			progress.setText("Transfering: "+file.getName(),FileProgressWindow.BAR_1);
 			progress.setTitle("Transfering: ("+file.getIP()+")"+file.getName());
 			
 			long length;
@@ -239,7 +245,7 @@ public class DownloaderThread extends SafeThread {
 			try {
 				while (bytessent!=filesize) {
 					if (in.readInt()!=6669) {
-						progress.say("Error.I didn't receive my sync Int; this is quite impossible.",ProgressWindow.BAR_1);
+						progress.setText("Error.I didn't receive my sync Int; this is quite impossible.",FileProgressWindow.BAR_1);
 						System.out.println("AGGHGHGHGHGHGHGHGGGGHGHGHGHGH!!!");
 						break CONNECTION;
 					}
@@ -248,41 +254,42 @@ public class DownloaderThread extends SafeThread {
 					length=in.readLong();
 					switch (code) {
 						case 'd':
+							if (bytessent==0) progress.startBlock(FileProgressWindow.BAR_1,0,filesize+amountToSkip); //fixes queuing bug for the d/l rate
 							//System.out.println("Getting data packet of size "+length);
-							progress.say("Getting data packet of size "+length+". I have gotten "+bytessent+" bytes so far",ProgressWindow.BAR_1);
+							progress.setText("Getting data packet of size "+length+". I have gotten "+bytessent+" bytes so far",FileProgressWindow.BAR_1);
 							receiveDataPacket(progress, o, length);
 							break;
 						case 'i':
-							progress.say("Getting Image Packet",ProgressWindow.BAR_1);
+							//progress.say("Getting Image Packet",FileProgressWindow.BAR_1);
 							//System.out.println("Getting Image");
 							receiveImage(progress, length);
 							break;
 						case 'q':
-							progress.say("Getting queue position", ProgressWindow.BAR_1);
+							progress.setText("Getting queue position", FileProgressWindow.BAR_1);
 							if (length==4) {
-								progress.setQueue(in.readInt());
+								progress.setText("You are #" + in.readInt() + " in queue.");
 							} else if (length==8) {
-								progress.setQueue((int)(in.readLong()));
+								progress.setText("You are #" + (int)(in.readLong()) + " in queue.");
 							} else {
 								byte[] b=new byte[(int)length];
 								in.readFully(b);
 							}
 							break;
 						default:
-							progress.say("Receiving unknown data of type: "+code,ProgressWindow.BAR_1);
+							progress.setText("Receiving unknown data of type: "+code,FileProgressWindow.BAR_1);
 							byte[] b=new byte[(int)length];
 							in.readFully(b);
 							break;
 					}
 				}
 			} catch (Exception ex) {
-				progress.say("ERROR! in file transfer. Did the remote server go off-line?",ProgressWindow.BAR_1);
-				progress.done();
+				progress.setText("ERROR! in file transfer. Did the remote server go off-line?",FileProgressWindow.BAR_1);
+				//progress.done();
 				ex.printStackTrace();
 				break CONNECTION;
 			}
-			progress.done();
-			progress.say("Done.");
+			//progress.done();
+			progress.setText("Done.");
 
 			try {
 				o.close();
@@ -327,7 +334,7 @@ public class DownloaderThread extends SafeThread {
 		String temppath=dialog.getDirectory();
 		theFileName=dialog.getFile();
 		if (theFileName==null) {
-			progress.say("User Canceled",ProgressWindow.BAR_1);
+			progress.setText("User Canceled",FileProgressWindow.BAR_1);
 			return null;
 		}
 		dp=temppath;
@@ -354,13 +361,13 @@ public class DownloaderThread extends SafeThread {
 			if (it.equals("restart")) {
 				if (!(fileToWriteTo.delete())) {
 					(new AnswerDialog(progress, "Could not restart the download.\n\n"+theFileName+".i could not be deleted")).answer();
-					progress.say("Canceled",ProgressWindow.BAR_1);
+					progress.setText("Canceled",FileProgressWindow.BAR_1);
 					return false;
 				}
 			} else if (it.equals("continue")) {
 				//nothing
 			} else {
-				progress.say("User Canceled",ProgressWindow.BAR_1);
+				progress.setText("User Canceled",FileProgressWindow.BAR_1);
 				return false;
 			}
 		}
@@ -373,17 +380,17 @@ public class DownloaderThread extends SafeThread {
 	private int receiveDataPacket(ProgressWindow progress, DataOutput out, long size) {
 		byte[] buffer=new byte[BUFFERSIZE];
 		
-		progress.startBlock(ProgressWindow.BAR_2,0,(int)size);
-		progress.say("Transfering a Block of the File.", ProgressWindow.BAR_2);
+		progress.startBlock(FileProgressWindow.BAR_2,0,(int)size);
+		progress.setText("Transfering a Block of the File.", FileProgressWindow.BAR_2);
 		for (int i=0; i<(size/BUFFERSIZE); i++) {
 			if (readWrite(progress, out, BUFFERSIZE, buffer)==-1) return -1;
 			
-			progress.update(i*BUFFERSIZE, ProgressWindow.BAR_2);
+			progress.setValue(i*BUFFERSIZE, FileProgressWindow.BAR_2);
 			
 		}
 		if (readWrite(progress, out, (int)(size%BUFFERSIZE), buffer)==-1) return -1;
 		
-		progress.update(size, ProgressWindow.BAR_2);
+		progress.setValue(size, FileProgressWindow.BAR_2);
 
 		return (int)size;
 	}
@@ -392,20 +399,20 @@ public class DownloaderThread extends SafeThread {
 		if (size==0) return 0;
 		try {
 			in.readFully(buffer,0, (int)size);
-			if ((int)size!=BUFFERSIZE) progress.say("Finishing up the transfer..");
+			if ((int)size!=BUFFERSIZE) progress.setText("Finishing up the transfer..");
 			out.write(buffer,0, (int)size);
-		} catch (Exception ex) {progress.say("Transmission error!"); System.out.println("Transmission error"); return -1;}
+		} catch (Exception ex) {progress.setText("Transmission error!"); System.out.println("Transmission error"); return -1;}
 		
 		bytessent+=size;
-		progress.say("Transfered: "+Util.getStringFromBytes(bytessent), ProgressWindow.BAR_1);
-		progress.update(bytessent+amountToSkip, ProgressWindow.BAR_1);
+		progress.setText("Transfered: "+Util.getStringFromBytes(bytessent), FileProgressWindow.BAR_1);
+		progress.setValue(bytessent+amountToSkip, FileProgressWindow.BAR_1);
 		return size;
 	}
 	//////////////////Data Packet Stuff end
 	
 	private void receiveImage(ProgressWindow progress, long size) {
 		try {
-			progress.say("Getting Image....",  ProgressWindow.BAR_2);
+			progress.setText("Getting Image....",  FileProgressWindow.BAR_2);
 			progress.makeImage(getDataBlock(progress, size));
 		} catch (Exception ex) {
 			System.out.println(""+ex);
@@ -423,13 +430,13 @@ public class DownloaderThread extends SafeThread {
 		int amounttoread;
 		
 
-		progress.startBlock(ProgressWindow.BAR_2, 0, (int)size);
+		progress.startBlock(FileProgressWindow.BAR_2, 0, (int)size);
 		
 		
 		try { 
 			amounttoread=0;
 			for (int i=0; i<size; i+=amounttoread ){
-				progress.update(i, ProgressWindow.BAR_2);
+				progress.setValue(i, FileProgressWindow.BAR_2);
 				
 				//Calculates amount to read
 				if ((size-i)<BUFFERSIZE) {
@@ -443,13 +450,13 @@ public class DownloaderThread extends SafeThread {
 					in.readFully(buffer, i,  amounttoread);
 				} catch (Exception ex) {
 					System.out.println("Error READING block data. Tranfer interrupted.");
-					progress.say("Error READING block data. Tranfer interrupted.");
+					progress.setText("Error READING block data. Tranfer interrupted.");
 					throw ex;
 				}
 			}
 		 } catch (Exception ex) {
 			System.out.println("Error getting block data. Tranfer interrupted.");
-			progress.say("Error getting block data. Tranfer interrupted.");
+			progress.setText("Error getting block data. Tranfer interrupted.");
 			throw ex;
 		}
 		return buffer;
@@ -505,7 +512,7 @@ public class DownloaderThread extends SafeThread {
 	*/
 	
 	public void stopping() { 
-		progress.say("Download Cancled by user!",ProgressWindow.BAR_1);
+		progress.setText("Download Cancled by user!",FileProgressWindow.BAR_1);
 		try {in.close();} catch (Exception ex) {}
 		try {out.close();} catch (Exception ex) {}
 		try {socket.close();} catch (Exception ex) {}

@@ -1,25 +1,40 @@
 package com.general.util;
 
 import java.awt.*;
+import java.awt.event.*;
 
 public class ProgressBar extends Panel {
-	long min;
-	long max;
-	long value;
+	volatile long min; //valatile for threading
+	volatile long max;
+	volatile long value;
 	
-	boolean hasBorder;
+	boolean hasBorder = true;
 	
 	Dimension doubleBufferSize;
 	
 	Image im;
+	
+	Timer updaterTimer;
 
 	public ProgressBar() {
 		this(0,100);
+		
+		init();
 	}
 	
 	public ProgressBar(long min, long max) {
-		setMinSize(min);
-		setMaxSize(max);
+		setMin(min);
+		setMax(max);
+		
+		init();
+	}
+	
+	private void init() {
+		addComponentListener(new ComponentAdapter() {
+			
+			public void componentHidden(ComponentEvent e) {;
+			}
+		});
 	}
 	
 	public void update(Graphics g) {
@@ -27,23 +42,43 @@ public class ProgressBar extends Panel {
 	
 		if (doubleBufferSize==null) doubleBufferSize = currentSize;
 		
-		if (! currentSize.equals(doubleBufferSize) || (im == null)) {
+		if ((! currentSize.equals(doubleBufferSize)) || (im == null)) {
 			im = createImage(currentSize.width, currentSize.height);
 		}
 		
        	paint(im.getGraphics());
        	
-       	g.drawImage(im, 0 , 0, this);
+       	g.drawImage(im, 0, 0, this);
+	}
+	
+	public final boolean isValueOutOfBounds() { //inline
+		return (value < min || value > max);
 	}
 
 	public void paint(Graphics g) {
-		Dimension size = doubleBufferSize;
-					
+		if (updaterTimer == null && isShowing() && isValueOutOfBounds()) {
+			updaterTimer = new Timer(new Runnable() {
+				public void run() {
+					repaint();
+					if ((! isShowing()) || (! isValueOutOfBounds())){
+						System.out.println("Stopping the Progress Window auto update timer.");
+						updaterTimer = null;
+					} else {
+						updaterTimer = new Timer(this, 50);
+					}
+				}
+			}, 50);
+		}
+		
+		Dimension size = (doubleBufferSize == null ? getSize() : doubleBufferSize);
 		if (max <= min) {
 			g.setColor(getBackground());
 			g.fillRect(0,0,size.width,size.height);
-		} else if (value < min || value > max) {
-			g.setColor(Color.red);
+		} else if (isValueOutOfBounds()) {
+			double percent = Math.sin((((double)System.currentTimeMillis()/(double)70))/(2*Math.PI));
+			percent = (percent + 1) / 2;
+			int gray = (int)((double)(255) * percent);
+			g.setColor(new Color(gray, gray, gray));
 			g.fillRect(0,0,size.width,size.height);
 		} else {
 			g.setColor(getBackground());
@@ -52,21 +87,22 @@ public class ProgressBar extends Panel {
 			g.setColor(getForeground());
 			g.fillRect(0,0,getXSize(size.width),size.height);
 			
-			if (getBorder()) {
-				g.setColor(Color.black);
-				g.drawRect(0,0,size.width,size.height);
-			}
+		}
+		
+		if (getBorder()) {
+			g.setColor(Color.black);
+			g.drawRect(0,0,size.width-1,size.height-1);
 		}
 	}
 	
-	private long getXSize(int maxWidth) {
-		double percent = (value - min) / (max - min);
-		
-		return (int)(value * maxWidth);
+	private int getXSize(int maxWidth) {
+		double percent = (double)(value - min) / (double)(max - min);
+
+		return (int)(percent * maxWidth);
 	}
 	
 	public Dimension getPreferredSize() {
-		return new Dimension(max-min, 10);
+		return new Dimension((int)(max - min), 10);
 	}
 	
 	public void setBorder(boolean hasBorder) {
@@ -78,16 +114,28 @@ public class ProgressBar extends Panel {
 		return hasBorder;
 	}
 	
-	public long setMinSize(int min) {
+	public void setMin(long min) {
 		this.min = min;
 	}
 	
-	public long setMaxSize(int max) {
+	public void setMax(long max) {
 		this.max = max;
+	}
+	
+	public long getMax() {
+		return max;
+	}
+	
+	public long getMin() {
+		return min;
+	}
+	
+	public long getValue() {
+		return value;
 	}
 	
 	public void setValue(long value) {
 		this.value = value;
-		//repaint?
+		repaint();
 	}
 }

@@ -103,13 +103,14 @@ public class Myster{
 				
 				String macHack="";//(System.getProperty("java.vm.vendor")==null?" (unknown 1.1 java)":System.getProperty("java.vm.vendor"));
 				com.myster.util.ProgressWindow progress=new com.myster.util.ProgressWindow();
+				progress.setVisible(true);
 				progress.setLocation(100,100);
 				progress.setTitle(Myster.tr("Loading Myster..."));
-				progress.showBytes=false;
+				//progress.showBytes=false;
 				
 				
-				progress.say(Myster.tr("Loading UDP Operator...")+macHack);
-				progress.update(10);
+				progress.setText(Myster.tr("Loading UDP Operator...")+macHack);
+				progress.setValue(10);
 				try { //this stuff is a bit of a hack.. to be fixed later..
 					PongTransport ponger=new PongTransport();UDPPingClient.setPonger(ponger);
 					DatagramProtocolManager.addTransport(ponger);
@@ -120,48 +121,48 @@ public class Myster{
 					com.general.util.AnswerDialog.simpleAlert("Myster's UDP sub-system could not initialize. This means Myster will probably not work correctly. Here is the official error:\n\n"+ex);
 				}
 				
-				progress.say(Myster.tr("Loading Server Stats Window...")+macHack);
-				progress.update(15);
+				progress.setText(Myster.tr("Loading Server Stats Window...")+macHack);
+				progress.setValue(15);
 				
 				//System.out.println( "MAIN THREAD: Starting Operator.."+macHack);
 				Point p=ServerStatsWindow.getInstance().getLocation();
 				ServerStatsWindow.getInstance().setLocation(-500,-500);
 				ServerStatsWindow.getInstance().setVisible(true);
-				progress.say(Myster.tr("Loading Server Stats Window....")+macHack);
-				progress.update(18);
+				progress.setText(Myster.tr("Loading Server Stats Window....")+macHack);
+				progress.setValue(18);
 				try {Thread.currentThread().sleep(1000);} catch (Exception ex) {}
 				ServerStatsWindow.getInstance().setVisible(false);
 				ServerStatsWindow.getInstance().setLocation(p);
 				
-				progress.say(Myster.tr("Loading Server Fascade...")+macHack);
-				progress.update(25);
+				progress.setText(Myster.tr("Loading Server Fascade...")+macHack);
+				progress.setValue(25);
 				ServerFacade.assertServer();
 				
-				progress.say(Myster.tr("Loading tracker...")+macHack);
-				progress.update(50);
+				progress.setText(Myster.tr("Loading tracker...")+macHack);
+				progress.setValue(50);
 				IPListManagerSingleton.getIPListManager();
 				
-				progress.say(Myster.tr("Loading FileManager...")+macHack);
-				progress.update(70);
+				progress.setText(Myster.tr("Loading FileManager...")+macHack);
+				progress.setValue(70);
 				FileTypeListManager.getInstance();
 				
-				progress.say(Myster.tr("Loading Instant Messaging...")+macHack);
-				progress.update(72);
+				progress.setText(Myster.tr("Loading Instant Messaging...")+macHack);
+				progress.setValue(72);
 				com.myster.message.MessageManager.init();
 				
-				progress.say(Myster.tr(Myster.tr("Loading WindowManager..."))+macHack);
-				progress.update(78);
+				progress.setText(Myster.tr(Myster.tr("Loading WindowManager..."))+macHack);
+				progress.setValue(78);
 				com.myster.ui.WindowManager.init();
 				
 				Preferences.getInstance().addPanel(BandwidthManager.getPrefsPanel());
 			
-				progress.say(Myster.tr("Loading Plugins...")+macHack);
-				progress.update(80);
+				progress.setText(Myster.tr("Loading Plugins...")+macHack);
+				progress.setValue(80);
 				try {
 					(new com.myster.plugin.PluginLoader(new File("plugins"))).loadPlugins();
 				} catch (Exception ex) {}
 				
-				progress.done();
+				//progress.done();
 				progress.setVisible(false);
 				progress.dispose();
 				

@@ -821,4 +821,15 @@ Work on DEV 8:
       	-> Added an instant message button to the p2p window.
 
 	Work on DEV 18.1
-	  ??
+	  2003/04/10
+	  	-> Tried to fix dual processor crashing bug.. failed...
+	  	-> Created a progressBar object
+	  	-> Re-wrote ProgressWindow completely.
+	  			Progress window code is now readable and will scale well to multi source downloads.
+	  			Each bar is repainted independently.
+	  			Texts are now text labels and not just painted on text so they should be faster too.
+	  			Both bars can have that cool pulsating effect now
+	  			Only bars that are changing get repainted so there is no more performance penalty for
+	  				simply having a progress window open.
+	  			None progress related code has been taken out and put into its own class.
+	  			ProgressWindow should be moving the com.general.util at some point soon.
