@@ -151,7 +151,7 @@ public class FileSenderThread extends ServerThread {
 		String filetype="?";
 		long filelength=0;
 		long starttime=1;
-		String remoteIP="?";
+		MysterAddress remoteIP;
 		long initialOffset=0;
 		
 		//Threading
@@ -273,7 +273,7 @@ public class FileSenderThread extends ServerThread {
 			in=new DataInputStream(socket.getInputStream());
 			out=new DataOutputStream(socket.getOutputStream());
 		
-			remoteIP=socket.getInetAddress().getHostAddress();	//stats
+			remoteIP=new MysterAddress(socket.getInetAddress());	//stats
 			
 			starttime=System.currentTimeMillis();
 			

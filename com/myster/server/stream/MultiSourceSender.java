@@ -8,6 +8,7 @@ import java.io.DataInputStream;
 
 import com.myster.mml.RobustMML;
 import com.myster.net.MysterSocket;
+import com.myster.net.MysterAddress;
 import com.myster.type.MysterType;
 import com.myster.filemanager.FileTypeListManager;
 import com.myster.server.ConnectionContext;
@@ -67,7 +68,7 @@ public class MultiSourceSender extends ServerThread {
 	
 		ServerDownloadDispatcher dispatcher;
 		
-		String remoteIP = "??";
+		MysterAddress remoteIP;
 		String fileName = "??";
 		MysterType type = new MysterType("????".getBytes());
 		long fileLength = 0, startTime = System.currentTimeMillis(), amountDownloaded= 0, myCounter = 0;

@@ -6,6 +6,7 @@
 package com.myster.server.event;
 
 import com.myster.server.DownloadInfo;
+import com.myster.net.MysterAddress;
 
 public class ServerDownloadEvent extends ServerEvent {
 	public final static int SECTION_STARTED=-1;
@@ -24,11 +25,11 @@ public class ServerDownloadEvent extends ServerEvent {
 
 
 	//if id is 3 (QUEUED) the 'i' argument is queue position.
-	public ServerDownloadEvent(int id, String s, int section,
+	public ServerDownloadEvent(int id, MysterAddress addressOfRemote, int section,
 							 String filename, String type, 
 							 int i, long filesofar, long filelength, 
 							 DownloadInfo downloadInfo) {
-		super(id, s, section);
+		super(id, addressOfRemote, section);
 		this.type=type;
 		this.filename=filename;
 		this.d=i;

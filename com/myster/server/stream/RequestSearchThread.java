@@ -21,6 +21,8 @@ import com.myster.server.ConnectionContext;
 import com.myster.filemanager.FileTypeListManager;
 import com.myster.type.MysterType;
 
+import com.myster.net.MysterAddress;
+
 public class RequestSearchThread extends ServerThread {
 	
 	public static final int NUMBER=35;
@@ -54,13 +56,13 @@ public class RequestSearchThread extends ServerThread {
 		
        	stringarray = FileTypeListManager.getInstance().getDirList(new MysterType(type), searchstring);
 		
-		dispatcher.fireEvent(new ServerSearchEvent(ServerSearchEvent.REQUESTED, c.socket.getInetAddress().getHostAddress(), NUMBER, searchstring, new String(type), null));
+		dispatcher.fireEvent(new ServerSearchEvent(ServerSearchEvent.REQUESTED, new MysterAddress(c.socket.getInetAddress()), NUMBER, searchstring, new String(type), null));
 
 		if (stringarray!=null) {
 			for (int j=0; j<stringarray.length; j++) {
 				out.writeUTF(stringarray[j]);
 
-				dispatcher.fireEvent(new ServerSearchEvent(ServerSearchEvent.RESULT, c.socket.getInetAddress().getHostAddress(), NUMBER, searchstring,new String(type),  stringarray[j]));
+				dispatcher.fireEvent(new ServerSearchEvent(ServerSearchEvent.RESULT, new MysterAddress(c.socket.getInetAddress()), NUMBER, searchstring,new String(type),  stringarray[j]));
 
 			}
 		}

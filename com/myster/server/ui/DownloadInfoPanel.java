@@ -147,7 +147,7 @@ public class DownloadInfoPanel extends Panel {
 				ServerDownloadDispatcher d=(ServerDownloadDispatcher)e.getSectionObject();
 				DownloadMCListItem i=new DownloadMCListItem(d);
 				list.addItem(i);
-				i.setUser(e.getIP());
+				i.setUser(e.getAddress()==null?"?":""+e.getAddress());
 			}
 		}
 		

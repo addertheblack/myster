@@ -50,9 +50,23 @@ public class StatsInfoPanel extends Panel{
 	Label numMatchesLabel;
 	CountLabel numMaches;
 	
-	
 	Label transferedLabel;
 	ByteCounter transfered;
+	//
+	Label numberOfHashSearchesLabel;
+	CountLabel numberOfHashSearches;
+	
+	Label numberOfConnectionsLabel;
+	CountLabel numberOfConnections;
+		
+	Label currentConnectionsLabel;
+	CountLabel currentConnections;
+		
+	Label numberOfPingsLabel;
+	CountLabel numberOfPings;
+	
+	
+	
 	
 	ServerEventManager server;
 	
@@ -66,6 +80,21 @@ public class StatsInfoPanel extends Panel{
 		
 		//Load stuff
 		init();
+		
+		server.addOperatorListener(new OperatorListener() {
+			public void pingEvent(OperatorEvent e) {
+				numberOfPings.increment();
+			}
+			
+			public void disconnectEvent(OperatorEvent e) {
+				currentConnections.decrement();
+			}
+			
+			public void connectEvent(OperatorEvent e) {
+				currentConnections.increment();
+				numberOfConnections.increment();
+			}
+		});
 		
 		searches=new SearchPerHour();
 		searches.start();
@@ -164,6 +193,46 @@ public class StatsInfoPanel extends Panel{
 		transfered.setSize(50, 25);
 		transfered.setLocation(200, 320);
 		add(transfered);
+		
+		numberOfHashSearchesLabel=new Label("Hash Look Ups:");
+		numberOfHashSearchesLabel.setSize(175, 25);
+		numberOfHashSearchesLabel.setLocation(300, 200);
+		add(numberOfHashSearchesLabel);
+		
+		numberOfHashSearches=new CountLabel("0");
+		numberOfHashSearches.setSize(50, 25);
+		numberOfHashSearches.setLocation(500, 200);
+		add(numberOfHashSearches);
+		
+		numberOfConnectionsLabel=new Label("Number Of Connections:");
+		numberOfConnectionsLabel.setSize(175, 25);
+		numberOfConnectionsLabel.setLocation(300, 230);
+		add(numberOfConnectionsLabel);
+		
+		numberOfConnections=new CountLabel("0");
+		numberOfConnections.setSize(50, 25);
+		numberOfConnections.setLocation(500, 230);
+		add(numberOfConnections);
+		
+		currentConnectionsLabel=new Label("Number Of Current Connections:");
+		currentConnectionsLabel.setSize(175, 25);
+		currentConnectionsLabel.setLocation(300, 260);
+		add(currentConnectionsLabel);
+		
+		currentConnections=new CountLabel("0");
+		currentConnections.setSize(50, 25);
+		currentConnections.setLocation(500, 260);
+		add(currentConnections);
+		
+		numberOfPingsLabel=new Label("Connections With No Requests:");
+		numberOfPingsLabel.setSize(175, 25);
+		numberOfPingsLabel.setLocation(300, 290);
+		add(numberOfPingsLabel);
+		
+		numberOfPings=new CountLabel("0");
+		numberOfPings.setSize(50, 25);
+		numberOfPings.setLocation(500, 290);
+		add(numberOfPings);
 	}
 	
 	private Image doubleBuffer;		//adds double buffering
@@ -207,6 +276,8 @@ public class StatsInfoPanel extends Panel{
 				numofSSR.increment();
 			} else if (e.getSection()==FileInfoLister.NUMBER) {
 				numofFI.increment();
+			} else if (e.getSection()==FileByHash.NUMBER) {
+				numberOfHashSearches.increment();
 			}
 			
 		}

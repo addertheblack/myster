@@ -5,13 +5,15 @@
 
 package com.myster.server.event;
 
+import com.myster.net.MysterAddress;;
+
 public class ServerSearchEvent extends ServerEvent {
 	public final static int REQUESTED=0;
 	public final static int RESULT=1;
 	
 	String searchString, result, type;
 	
-	public ServerSearchEvent(int id, String ip, int section, 
+	public ServerSearchEvent(int id, MysterAddress ip, int section, 
 								String searchString, String type, String result) {
 		super(id, ip, section);
 		this.searchString=searchString;
@@ -19,7 +21,7 @@ public class ServerSearchEvent extends ServerEvent {
 		this.type=type;
 	}
 	
-	public ServerSearchEvent(int id, String ip, int section, String searchString, String type) {
+	public ServerSearchEvent(int id, MysterAddress ip, int section, String searchString, String type) {
 		this(id, ip, section, searchString, type,null);
 	}
 	

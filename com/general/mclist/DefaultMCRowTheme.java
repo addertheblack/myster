@@ -54,12 +54,12 @@ public class DefaultMCRowTheme implements MCRowThemeInterface {
 	
 	public void paint(Graphics g, MCListItemInterface item, RowStats row, int yoffset, int xoffset, int itemnumber) {
 		try {
-			//if (tempfont==null) {
+			if (tempfont==null) {
 				tempfont = component.getFontMetrics(component.getFont());	//uses default font
 				height = tempfont.getHeight();
 				ascent = tempfont.getAscent();
 				descent= tempfont.getDescent();
-			//}
+			}
 		} catch (Exception ex) {
 			tempfont=null;
 			height = 10;

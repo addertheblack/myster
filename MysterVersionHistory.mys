@@ -955,3 +955,9 @@ Work on DEV 8:
 		-> hooked up events in the crawler code to what they should be. 
 			I've noticed the design of my crawler is somewhat crap. I intend to fix this.
 		-> Fixed a bug where the search list was cleared TWICE.
+		-> Refactored Opperator event model.
+			Removed another thread!!
+		-> Added number of search - by - hash statistic to server stats window.
+		-> Added number of concurrent connections to server stats
+		-> Added number of pings to server stats.
+		-> added number of connections to server stats.

@@ -20,26 +20,20 @@
 package com.myster.server.event;
 
 import java.util.Vector;
+
 import com.general.util.Channel;
+import com.general.events.SyncEventDispatcher;
 
 public class ServerEventManager {
 	//Vector dispatchers;
 	Vector connectionlisteners;
-	Vector operatorlisteners;
-	Channel ochannel, cchannel;
-	
-	Thread cthread, othread;
+	SyncEventDispatcher operatorDispatcher;
 	
 	public ServerEventManager() {
 		//dispatchers=new Vector(10,10);
-		connectionlisteners=new Vector(10,10);
-		operatorlisteners=new Vector(10,10);
+		connectionlisteners	=	new Vector(10,10);
+		operatorDispatcher	= 	new SyncEventDispatcher();
 		
-		ochannel=new Channel();
-		
-		othread=new FireOEvents();
-		
-		othread.start();
 	}
 	
 	public void addConnectionManagerListener(ConnectionManagerListener l) {
@@ -51,11 +45,11 @@ public class ServerEventManager {
 	}
 	
 	public void addOperatorListener(OperatorListener l) {
-		operatorlisteners.addElement(l);
+		operatorDispatcher.addListener(l);
 	}
 	
 	public void removeOperatorListener(OperatorListener l) {
-		operatorlisteners.removeElement(l);
+		operatorDispatcher.removeListener(l);
 	}
 	
 	//whatever events
@@ -82,38 +76,8 @@ public class ServerEventManager {
 		System.out.println("Unknown id type in ServerEnevt manager for Connection manager");
 	}
 	
-	public synchronized void fireOEvent(OperatorEvent e) {
-		ochannel.in.put(e);
-	}
-	
-	public void finalize() {
-		othread.stop();
-	}
-
-	
-	
-	private class FireOEvents extends Thread {
-		public void run() {
-			do {
-				OperatorEvent e=(OperatorEvent)(ochannel.out.get());
-				synchronized (operatorlisteners) { //gets the lock of...
-					switch (e.getID()) {
-						case OperatorEvent.PING:
-							for (int i=0; i<operatorlisteners.size(); i++) 
-								((OperatorListener)(operatorlisteners.elementAt(i))).ping(e);
-							break;
-						case OperatorEvent.DISCONNECT:
-							for (int i=0; i<operatorlisteners.size(); i++) 
-								((OperatorListener)(operatorlisteners.elementAt(i))).disconnectEvent(e);
-							break;
-						default:
-							err(); 
-					}
-				}
-			} while (true);
-		}
-		
-		public void err() {}
+	public void fireOEvent(OperatorEvent event) { //should be private but cn't be not a public API.
+		operatorDispatcher.fireEvent(event);
 	}
 	
 }

@@ -43,7 +43,7 @@ public class ConnectionManager extends MysterThread {
 	private ConnectionContext context;
 	
 	private static volatile int threadCounter=0;
-	private static volatile int waitingThreads = 0;
+
 	
 	public ConnectionManager(BlockingQueue q, ServerEventManager eventSender, TransferQueue transferQueue, Hashtable connectionSections) {
 		super("Server Thread "+(++threadCounter));
@@ -67,16 +67,13 @@ public class ConnectionManager extends MysterThread {
 	
 	private void doConnection() {
 		try {
-			++waitingThreads;
-			//System.out.println("Wating Threads in server "+waitingThreads);
 			socket=(Socket)(socketQueue.get());
-			--waitingThreads;
-			System.out.println("Wating Threads in server "+waitingThreads);
 		} catch (InterruptedException ex) {
 			//should never happen
 			return;//exit quickly in case it's being called by System.exit();
 		}
 		
+		eventSender.fireOEvent(new OperatorEvent(OperatorEvent.CONNECT, new MysterAddress(socket.getInetAddress())));
 
 		int sectioncounter=0;
 		try {
@@ -106,7 +103,7 @@ public class ConnectionManager extends MysterThread {
 				
 				//Figures out which object to invoke for the connection type:
 				//NOTE: THEY SAY RUN() NOT START()!!!!!!!!!!!!!!!!!!!!!!!!!
-				String remoteip=socket.getInetAddress().getHostAddress();
+				MysterAddress remoteip = new MysterAddress(socket.getInetAddress().getHostAddress());
 
 				switch (protocalcode) {
 					case 1:
@@ -132,22 +129,22 @@ public class ConnectionManager extends MysterThread {
 			
 		} finally {
 			
-			if (sectioncounter==0) eventSender.fireOEvent(new OperatorEvent(OperatorEvent.PING, ""+socket.getInetAddress()));
-			else eventSender.fireOEvent(new OperatorEvent(OperatorEvent.DISCONNECT, ""+socket.getInetAddress()));
+			if (sectioncounter==0) eventSender.fireOEvent(new OperatorEvent(OperatorEvent.PING, new MysterAddress(socket.getInetAddress())));
+			else eventSender.fireOEvent(new OperatorEvent(OperatorEvent.DISCONNECT, new MysterAddress(socket.getInetAddress())));
 			close(socket);
 		}
 		
 	}
 	
-	private void fireConnectEvent(ConnectionSection d, String r, Object o) {
-		eventSender.fireCEvent(new ConnectionManagerEvent(ConnectionManagerEvent.SECTIONCONNECT, r, d.getSectionNumber(), o));
+	private void fireConnectEvent(ConnectionSection d, MysterAddress remoteAddress, Object o) {
+		eventSender.fireCEvent(new ConnectionManagerEvent(ConnectionManagerEvent.SECTIONCONNECT, remoteAddress, d.getSectionNumber(), o));
 	}
 	
-	private void fireDisconnectEvent(ConnectionSection d, String r, Object o) {
-		eventSender.fireCEvent(new ConnectionManagerEvent(ConnectionManagerEvent.SECTIONDISCONNECT, r, d.getSectionNumber(), o));
+	private void fireDisconnectEvent(ConnectionSection d, MysterAddress remoteAddress, Object o) {
+		eventSender.fireCEvent(new ConnectionManagerEvent(ConnectionManagerEvent.SECTIONDISCONNECT, remoteAddress, d.getSectionNumber(), o));
 	}
 	
-	private void doSection(ConnectionSection d, String remoteIP, ConnectionContext context) throws IOException {
+	private void doSection(ConnectionSection d, MysterAddress remoteIP, ConnectionContext context) throws IOException {
 		Object o=d.getSectionObject();
 		context.sectionObject=o;
 		fireConnectEvent(d, remoteIP, o);
