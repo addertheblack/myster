@@ -29,6 +29,8 @@ import com.myster.type.MysterType;
 import com.myster.net.MysterSocketFactory;
 import com.myster.net.MysterAddress;
 import com.myster.net.MysterSocket;
+import com.myster.mml.MMLException;
+import com.myster.mml.RobustMML;
 
 public class MultiSourceDownload {
 	final FileProgressWindow progress;
@@ -525,6 +527,7 @@ public class MultiSourceDownload {
 			return deadFlag;
 		}
 		
+		
 		private boolean doWorkBlock(MysterSocket socket, WorkSegment workSegment) throws IOException {
 			long bytesDownloaded = 0;
 			
@@ -540,17 +543,30 @@ public class MultiSourceDownload {
 			
 			System.out.println("Work Thread "+getName()+" -> Reading in QueuePostion");
 			for (;;) {
-				byte temp_byte = (byte)socket.in.read();
+				RobustMML mml = null;
 				
-				socket.out.write(1); //we are never polite
+				try {
+					mml = new RobustMML(socket.in.readUTF());
+				} catch (MMLException ex) {
+					throw new IOException("MML String was corrupt.");
+				}
 				
-				if (temp_byte==0) break;
-				
-				fireEvent(SegmentDownloaderEvent.QUEUED, 0, 0, temp_byte, 0);
+				try {
+					int queuePosition = Integer.parseInt(mml.get(com.myster.server.stream.MultiSourceSender.QUEUED_PATH));
+					
+					System.out.println("Queued pos ----> "+queuePosition);
+					
+					if (queuePosition == 0) break; //yippy! on to download!
+					
+					fireEvent(SegmentDownloaderEvent.QUEUED, 0, 0, queuePosition, 0);
+				} catch (NumberFormatException ex) {
+					throw new IOException("Server sent garble as queue position -> "+mml);
+				}
 
 				if (endFlag) throw new IOException("Was told to end.");
 			}
 			
+			progress.setText("Starting transfer...");
 
 			while (bytesDownloaded < workSegment.length) {
 				System.out.println("Work Thread "+getName()+" -> Reading in Type");

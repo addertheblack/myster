@@ -6,6 +6,7 @@ import java.io.IOException;
 import java.io.DataOutputStream;
 import java.io.DataInputStream;
 
+import com.myster.mml.RobustMML;
 import com.myster.net.MysterSocket;
 import com.myster.type.MysterType;
 import com.myster.filemanager.FileTypeListManager;
@@ -28,8 +29,10 @@ import com.myster.server.event.ServerDownloadEvent;
 
 public class MultiSourceSender extends ServerThread {
 	public boolean endFlag = false;
+	
+	public static final String QUEUED_PATH = "/queued";
 
-	public static final int SECTION_NUMBER=88888; //testing port
+	public static final int SECTION_NUMBER=88889; //testing port
 
 	public int getSectionNumber() {
 		return SECTION_NUMBER;
@@ -111,9 +114,17 @@ public class MultiSourceSender extends ServerThread {
 					
 					if (myCounter > file.length()) throw new IOException("User has request more bytes than there are in the file!");
 					
-					out.write(0); //this would loop until 1
+					RobustMML mml = new RobustMML();
+					
+					
+					for (int i = 0 ; i>=0; i--) {
+						mml.put(QUEUED_PATH,""+i);
+						out.writeUTF(""+mml); //this would loop until 1
+						//try {	Thread.sleep(4000); } catch (InterruptedException ex) {}
+					}
+					
+					
 					fireEvent(ServerDownloadEvent.QUEUED, 0);
-					if (in.read() != 1) break; //end
 					
 					sendImage(socket.out);
 					
