@@ -81,7 +81,7 @@ public class TrackerWindow extends MysterFrame {
 		
 		
 		
-		setSize(500,300);
+		setSize(600,400);
 		setTitle("Tracker");
 		addComponentListener(new ComponentAdapter(){
 			public void componentShown(ComponentEvent e) {
