@@ -14,6 +14,7 @@ import com.general.util.Timer;
 */
 
 public class BandwidthManager {
+	/*
 	private static Bandwidth impl=new BandwithImpl();
 	private static boolean flag=false;
 	
@@ -24,7 +25,7 @@ public class BandwidthManager {
 			throw new AlreadyImplementedException("...");
 		}
 	}
-	
+	*/
 	/*
 	public static final synchronized int requestBytesOutgoing(int maxBytes) {
 		final int speed=10*1024;
@@ -52,7 +53,7 @@ public class BandwidthManager {
 		return maxBytes;//impl.requestBytesOutgoing(maxBytes);
 	}
 }
-
+/*
 class AlreadyImplementedException extends Exception {
 	public AlreadyImplementedException(String s) {
 		super(s);
@@ -215,4 +216,4 @@ class BandwidthEvent extends GenericEvent {
 	public int getAmount() {
 		return amount;
 	}
-}
+}*/
