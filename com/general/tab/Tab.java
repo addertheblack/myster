@@ -15,7 +15,7 @@ public class Tab implements TabInterface {
 	private boolean isselected=false;
 	private TabPanel tabPanel;
 	private String text;
-	private Image image;
+	private Image image, imageMask; //imageMask is null if customgraphics
 	private Image selectedImageMask;
 	private int advance;
 	private String customGraphics;
@@ -38,16 +38,22 @@ public class Tab implements TabInterface {
 		
 		if (!isselected) {
 			g.drawImage(image,0,0,tabPanel);
+			if (imageMask != null) {
+				g.drawImage(imageMask,0,0,tabPanel);
+				//g.setColor(new Color(100,100,100));
+				//g.drawLine(0, image.getHeight(tabPanel)-1, 0, 0);
+				//g.drawLine(0,0,image.getWidth(tabPanel)-1,0);
+				//g.drawLine(image.getWidth(tabPanel)-1, 0, image.getWidth(tabPanel)-1, image.getHeight(tabPanel)-1);
+			}
 			g.setColor(Color.black);
 			g.drawLine(0, image.getHeight(tabPanel)-1, image.getWidth(tabPanel), image.getHeight(tabPanel)-1);
-		}
-		else {
+		} else {
 			g.drawImage(image,0,0,tabPanel);
 			g.drawImage(selectedImageMask,0,0,tabPanel);
 			if (customFlag) {
-				g.drawLine(0, image.getHeight(tabPanel)-1, 0, 0);
-				g.drawLine(0,0,image.getWidth(tabPanel)-1,0);
-				g.drawLine(image.getWidth(tabPanel)-1, 0, image.getWidth(tabPanel)-1, image.getHeight(tabPanel)-1);
+				//g.drawLine(0, image.getHeight(tabPanel)-1, 0, 0);
+				//g.drawLine(0,0,image.getWidth(tabPanel)-1,0);
+				//g.drawLine(image.getWidth(tabPanel)-1, 0, image.getWidth(tabPanel)-1, image.getHeight(tabPanel)-1);
 			}
 		}
 		g.drawString(text, advance, 30);
@@ -73,11 +79,22 @@ public class Tab implements TabInterface {
 		int[] array=TabUtilities.getPixels(image, 0,0,image.getWidth(tabPanel), image.getHeight(tabPanel));
 		
 		for (int i=0; i<array.length; i++) {
-			array[i]=handleSinglePixel(array[i]);
+			array[i]=0x00000000;//handleSinglePixel(array[i]);
 		}
 		
 		MemoryImageSource source = new MemoryImageSource(image.getWidth(tabPanel), image.getHeight(tabPanel), array, 0, image.getWidth(tabPanel));
-		selectedImageMask=tabPanel.createImage(source);
+		selectedImageMask = tabPanel.createImage(source);
+	}
+	
+	private void makeUnselectedImage() {
+		int[] array=TabUtilities.getPixels(image, 0,0,image.getWidth(tabPanel), image.getHeight(tabPanel));
+		
+		for (int i=0; i<array.length; i++) {
+			array[i] = handleSinglePixel(array[i]);
+		}
+		
+		MemoryImageSource source = new MemoryImageSource(image.getWidth(tabPanel), image.getHeight(tabPanel), array, 0, image.getWidth(tabPanel));
+		imageMask = tabPanel.createImage(source);
 	}
 	
 	//Does the select effect.
@@ -87,24 +104,15 @@ public class Tab implements TabInterface {
 		int green = (pixel >>  8) & 0xff;
 		int blue  = (pixel      ) & 0xff;
 		
-		//blue=0xff;
-		//if (red==0xff&&blue==0xff&&green==0xff) alpha=0;
-		final double greyness=1.3;
-		
-		if (customFlag) {
-			alpha=20;
-			red=0;
-			green=0;
+		if (red==0xff&&green==0xff&&blue==0xff) {
+			alpha=0x00;
 		} else {
-			if (red==0xff&&green==0xff&&blue==0xff) {
-				alpha=0xff;
-			} else {
-				red=0;
-				green=0;
-				blue=0;
-				alpha=15;
-			}
+			red=0xA8;
+			green=0xA8;
+			blue=0xFF;
+			alpha=0x2F;
 		}
+		
 		
 		return (alpha << 24) | (red << 16) | (green << 8 ) | blue;
  	}
@@ -132,5 +140,6 @@ public class Tab implements TabInterface {
 		if (grr==null) advance=10;
 		else advance=grr.getWidth(tabPanel);
 		makeSelectedImage();
+		if (customFlag) makeUnselectedImage();
 	}
 }

@@ -122,8 +122,8 @@ public class ServerStatsWindow extends MysterFrame implements Sayable {
 		*/
 		
 		///*
-		tab.addCustomTab("outbound.gif");
-		tab.addCustomTab("serverstats.gif");
+		tab.addCustomTab("outbound.jpg");
+		tab.addCustomTab("serverstats.jpg");
 		
 		//tab.addTab("Outbound");
 		//tab.addTab("Server Stats");

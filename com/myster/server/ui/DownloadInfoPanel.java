@@ -48,8 +48,8 @@ public class DownloadInfoPanel extends Panel {
 
 		ScrollPane p=list.getPane();
 		
-		p.setSize(590,240);
-		p.setLocation(5,5);
+		p.setSize(590,300);
+		p.setLocation(5,10);
 
 		add(p);
 
@@ -73,25 +73,27 @@ public class DownloadInfoPanel extends Panel {
 		
 		p.doLayout();
 		
+		ButtonPanel panel = new ButtonPanel();
+		
 		
 		disconnect	=new Button("Disconnect User");
-		disconnect.setSize(175,25);
-		disconnect.setLocation(10, 255);
-		add(disconnect);
+		//disconnect.setSize(175,25);
+		//disconnect.setLocation(10, 255);
+		panel.add(disconnect);
 		disconnect.addActionListener(chandler.new DisconnectHandler());
 		
 		
-		browse		=new Button("Browse User's Files");
-		browse.setSize(175,25);
-		browse.setLocation(10, 285);
-		add(browse);
+		browse		=new Button("Browse Files");
+		//browse.setSize(175,25);
+		//browse.setLocation(10, 285);
+		panel.add(browse);
 		browse.addActionListener(chandler.new ConnectHandler());
 		
 
 		clearAll	=new Button("Clear All Done");
 		clearAll.setSize(175,25);
 		clearAll.setLocation(10, 315);
-		add(clearAll);
+		panel.add(clearAll);
 		clearAll.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent e) {
 				for (int i=0; i<list.length(); i++) {
@@ -106,10 +108,10 @@ public class DownloadInfoPanel extends Panel {
 		});
 		
 		
-		message		=new Button("Instant Message User");
+		message		=new Button("Instant Message");
 		message.setSize(175,25);
 		message.setLocation(200, 255);
-		add(message);
+		panel.add(message);
 		message.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent e) {
 				int[] array=list.getSelectedIndexes();
@@ -124,6 +126,12 @@ public class DownloadInfoPanel extends Panel {
 
 			}
 		});
+		
+		panel.setSize(590, 25);
+		panel.setLocation(5, 317);
+		//panel.setBackground(Color.red);
+		add(panel);
+		panel.doLayout();
 		
 		Timer timer=new Timer(new RepaintLoop(), 10000);
 	}
@@ -207,14 +215,6 @@ public class DownloadInfoPanel extends Panel {
 	}
 	
 
-	
-	private class JavaIsStupid extends MysterThread {
-		public void run() {
-			try {sleep(5000); }catch (Exception ex){}
-			inited();
-		}
-	}
-	
 	private class RepaintLoop implements Runnable {
 		public void run() {
 			list.repaint();
@@ -222,66 +222,13 @@ public class DownloadInfoPanel extends Panel {
 		}
 	}
 	
+	private static class ButtonPanel extends Panel {
+		public ButtonPanel() {
+			setLayout(new GridLayout(1, 4, 7,7));
+		}
 	
-
-//}
-	
-	
-	
-	
-	
-	
-	
-	
-	
-	
-	
-	
-	
-	
-	
-	
-	
-	
-	
-	// Noise maker ->>
-	/*
-	public class MyThread extends Thread {
-	
-		public void run() {
-			MemoryImageSource source=null;
-			int xsize=600;
-			int ysize=400;
-			
-			if (image==null) System.out.println("AGH!");
-			int[] array=TabUtilities.getPixels(image, 0,0,xsize, ysize);
-			int counter=0;
-			do {
-			//init
-	counter++;
-			
-				for (int i=0; i<array.length; i++) {
-					array[i]=(((int)(Math.random()*2))==0?0xEEFFFFFF:0xff000000);
-					//array[i]=(counter%2==0?0xEEFFFFFF:0xff000000);
-					//array[i]=0xee00ff00;
-				}
-				
-				if (source==null) {
-					source = new MemoryImageSource(xsize, ysize, array, 0, xsize);
-			    	source.setAnimated(true);
-					image=createImage(source);				
-				}
-				try {
-					sleep(100);
-				} catch (Exception ex) {
-				
-				}
-				source.newPixels(0,0,xsize,ysize);
-				//repaint();
-
-			//..
-			} while (true);
+		public Dimension getPreferedSize() {
+			return getLayout().preferredLayoutSize(this);
 		}
 	}
-	*/
 }

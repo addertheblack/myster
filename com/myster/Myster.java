@@ -48,8 +48,21 @@ public class Myster {
 
 	public static void main(String args[]) {
 		final boolean isServer=(args.length>0&&args[0].equals("-s"));
-		
-
+		/*
+		(new Thread() {
+			public void run() {
+				for (;;) {
+					try {
+						System.out.println("File info -> "+
+							com.myster.client.stream.StandardSuite.getFileFromHash(new com.myster.net.MysterAddress("68.227.184.219")
+							, new com.myster.type.MysterType("MooV")
+							, com.myster.hash.SimpleFileHash.buildFromHexString("md5", "bdaba746d51978dbe46844c23f566332")));
+					} catch (Exception ex) {
+						ex.printStackTrace();
+					}
+				}
+			}
+		}).start(); */
 		
 		System.out.println("java.vm.specification.version:"+System.getProperty("java.vm.specification.version"));
 		System.out.println("java.vm.specification.vendor :"+System.getProperty("java.vm.specification.vendor"));
@@ -108,7 +121,7 @@ public class Myster {
 				} catch (Exception ex) {
 					ex.printStackTrace();
 				}
-				
+			
 			
 				com.myster.hash.ui.HashManagerGUI.init();
 				

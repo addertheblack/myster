@@ -117,8 +117,8 @@ public class TabUtilities {
 		int green = (pixel >>  8) & 0xff;
 		int blue  = (pixel      ) & 0xff;
 		
-		//blue=0xff;
-		if (red==0xff&&blue==0xff&&green==0xff) alpha=0;
+		int threshold = 0xfA;
+		if (red>=threshold && blue>=threshold && green>=threshold) alpha=0;
 		
 		return (alpha << 24) | (red << 16) | (green << 8 ) | blue;
  	}
