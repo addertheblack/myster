@@ -48,7 +48,7 @@ public class ProgressWindow extends Frame {
 		setResizable(false);
 	}
 	
-	private void resize() {
+	protected void resize() {
 		Insets insets = getInsets();
 
 		setSize(X_SIZE + insets.right + insets.left, AD_HEIGHT + (Y_SIZE * progressPanels.size()) + insets.top + insets.bottom);

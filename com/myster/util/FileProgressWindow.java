@@ -45,6 +45,8 @@ public class FileProgressWindow extends ProgressWindow {
 		});
 		
 		addAdClickListener(new AdClickHandler());
+		
+		resize();
 	}
 	
 	public synchronized void setProgressBarNumber(int numberOfBars) {
