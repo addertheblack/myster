@@ -247,10 +247,10 @@ class DefaultTypeDescriptionList extends TypeDescriptionList {
 		try {
 			InputStream in = Class.forName("com.myster.Myster").getResourceAsStream("typedescriptionlist.mml");
 			if (in==null) {
-				System.out.println("There is no \"typedescriptionlist.txt\" file at com.myster level. Myster needs this file. Myster will exit now.");
+				System.out.println("There is no \"typedescriptionlist.mml\" file at com.myster level. Myster needs this file. Myster will exit now.");
 				System.out.println("Please get a Type Description list.");
 				
-				com.general.util.AnswerDialog.simpleAlert("PROGRAMER'S ERROR: There is no \"typedescriptionlist.txt\" file at com.myster level. Myster needs this file. Myster will exit now.\n\nThe Type Description List should be inside the Myster program. If you can see this message it means the developer has forgotten to merge this file into the program. You should contact the developer and tell him of his error.");
+				com.general.util.AnswerDialog.simpleAlert("PROGRAMER'S ERROR: There is no \"typedescriptionlist.mml\" file at com.myster level. Myster needs this file. Myster will exit now.\n\nThe Type Description List should be inside the Myster program. If you can see this message it means the developer has forgotten to merge this file into the program. You should contact the developer and tell him of his error.");
 				System.exit(0);
 			}
 			

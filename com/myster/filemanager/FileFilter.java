@@ -63,7 +63,6 @@ class FileFilter {
 	public static boolean isCorrectType(MysterType type, File file) {
 		if (file.length()==0) return false; //all 0k files are bad.
 		Entry entry = (Entry)types.get(type);
-		System.out.println("isCorrectType: " + file.getName());
 		if (hasExtension(file.getName(), entry.extensions))
 			return true;
 
@@ -82,12 +81,8 @@ class FileFilter {
 					}
 				} finally { zipFile.close(); }
 			}
-			catch(java.io.IOException e) { 
-				System.out.println("not-isCorrectType ioexception:" + file.getName() + " " + e.getMessage());
-				return false; 
-			}
+			catch(java.io.IOException e) { return false; }
 		}
-		System.out.println("not-isCorrectType:" + file.getName());
 		return false;
 	}
 
