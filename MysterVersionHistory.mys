@@ -933,15 +933,6 @@ Work on DEV 8:
 		-> Re-organized most of the code inside multi-source download server side.
 		-> fixed a bug where queued downloads were not showing up as being queued n the server stats.
 		-> Fixed a bug where the connection was being tested for leeching every single goddam time.
-		
-		
-		to do:
-			Need to fix bug with caching MP3 ID3 info
-			Need to fix freeze on cancel
-			Need to fix stupid none batching behavior (MSDownload is slower than it should be)
-			Make it so multi source resumables are named different (idiot)
-			Make sensible behavior for queued multi source downloads.
-			
 		-> re-wrote most of the client side Multi Source Download code.
 			- Will now consistantly rename files from "blag.i" to "blag".
 			- Shows more sensible text messages
@@ -979,12 +970,26 @@ Work on DEV 8:
 				how far through the current block.
 		-> Fixed bug where the wrong amount would be added to bytes transfered if the download had an 
 				initial offset.
-		-> Added ".m4a", ".XXX.zip" where "XXX" is a sound type to .mp3
+		-> Added ".m4a" to .mp3
 		-> Made so that multi-source downloads are resumed if the program crashes or is quit with downloads open.
 		-> Fixed a bug where a download that was downloaded to a directory shown by the users would
 				aquire a double ".i".
+
 	
 	Work on Dev 19.6
 		-> Guillaume added code to move the preference file lcoation around on Linux & added an architechture to
 				find the current working folder consistantly.
 		-> Added the RING type.
+		-> 
+		
+		
+(Red List)
+to do:
+	Need to fix bug with caching MP3 ID3 info
+	Need to fix freeze on cancel
+	Need to fix stupid none batching behavior (MSDownload is slower than it should be)
+	Make it so multi source resumables are named different (idiot)
+	Remeber to re-compile the plugins to work with new Myster.class location.
+	Make it so that ".zip" file contents are read looking for files matching one of the extensions.
+	RING was not in "isCorrect Type"
+
