@@ -66,7 +66,7 @@ public class TypeDescription {
 	}
 	
 	public String toString() {
-		return new String(type+" "+description);
+		return type+" "+description;
 	}
 
 

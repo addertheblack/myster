@@ -168,7 +168,6 @@ public class TransactionManager implements TransactionSender {
 			int uniqueid;
 			
 			boolean endFlag = false;
-			Timer timer ;
 			
 			public TimeoutTimer(int uniqueid, Transaction transaction) {
 				this.uniqueid 		= uniqueid;
@@ -178,7 +177,7 @@ public class TransactionManager implements TransactionSender {
 			}
 			
 			private void setTheTimer() {
-				timer = new Timer(this, TIMEOUTS[timeoutCycle++]);
+				Timer timer = new Timer(this, TIMEOUTS[timeoutCycle++]); // doens't have to be read
 			}
 			
 			private void sendTheTransaction() {

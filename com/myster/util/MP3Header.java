@@ -1,6 +1,7 @@
 
 
 package com.myster.util;
+
 import java.io.File;
 import java.io.RandomAccessFile;
 import java.io.IOException;
@@ -39,7 +40,6 @@ public class MP3Header {
 	private int samplingrate;
 	private int MPEGversion;
 	private boolean copyright;
-	private String filename;
 	
 	private String songName;
 	private String artist;
@@ -63,11 +63,7 @@ public class MP3Header {
 		RandomAccessFile in=new RandomAccessFile(f, "rw");
 		
 		try {
-			filename=f.getName();
-			
-			//if (f.getName().indexOf(".mp3")==-1) error();
-			
-			
+
 			int bytebuffer;
 			byte workingbyte;
 			int bitrateindex;

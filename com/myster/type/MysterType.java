@@ -14,7 +14,7 @@ package com.myster.type;
 import java.io.UnsupportedEncodingException;
 
 public class MysterType {
-	final int TYPE_LENGTH = 4;
+	public static final int TYPE_LENGTH = 4;
 	final byte[] type;
 	
 	public MysterType(byte[] type) {

@@ -76,7 +76,7 @@ public class MultiSourceSender extends ServerThread {
 		
 		TransferQueue transferQueue;
 		
-		public MultiSourceDownloadInstance(ServerDownloadDispatcher dispatcher, TransferQueue transferQueu, MysterAddress remoteIP) {
+		public MultiSourceDownloadInstance(ServerDownloadDispatcher dispatcher, TransferQueue transferQueue, MysterAddress remoteIP) {
 			this.dispatcher 	= dispatcher;
 			this.downloadInfo 	= new Stats();
 			this.transferQueue	= transferQueue;

@@ -834,11 +834,11 @@ public class MML implements Serializable {
 
 	
 	public static void main(String args[]) {
-		MML moo=new MML();
+		//MML moo=new MML();
 		//moo.createMML();
 		//System.out.println(""+moo);
 		//System.out.println(""+moo.mml);
-		System.gc();
-		try {System.in.read();} catch (Exception ex){}
+		//System.gc();
+		//try {System.in.read();} catch (Exception ex){}
 	}
 }
