@@ -13,26 +13,34 @@ class FileFilter {
 	
 	private static String[][] fileextensions=new String[][]{
 		new String[]{
-			".mp3",".mid",".midi",".gm",".au",".wav",".ogg", ".snd",
+			".mp3",".mid",".midi",".gm",".au",".wav",".ogg",".snd",
 			".mod",".s3m",".aif",".aiff",".aiff1",".m3d",".mpeghdr",
 			".iff","aifc",".avr",".adpcm",".gsm",".sf",".kar",".s3m",
 			".mtm",".swa",".m1a",".m2a",".mp2",".paf",".wve",".voc",".ra"
 		},
 		new String[]{
-			".mov",".avi",".asf",".rm",".ram",".mpg",".mp4",".mpeg",".3iv"
-		},
+			".mov",".avi",".asf",".rm",".ram",".mpg",".mp4",".mpeg",".3iv",
+                        ".div",".xiv",".rm",".mpe",".swf",".wmv",".mp2v",".mlv",".mpv",
+                        ".wm",".vob","ifo"
+                },
 		new String[]{
-			".txt",".doc",".abw",".rtf", ".pdf",".ps",".htm",
+			".txt",".doc",".abw",".rtf",".pdf",".ps",".htm",
 			".html",".xml",".wp4"
 		},
 		new String[]{
-			".jpg",".jpeg",".gif",".png",".pict",".psd",".tif",".tiff",".bmp"
+                        ".jpg",".jpeg",".png",".gif",".jpe",".tif",".tiff",".bmp",
+                        ".jp2",".ps",".psp",".eps",".xpm",".tga",".xcf",".pict"
 		},
 		new String[]{
-			".bin",".hqx",".sit",".cpt",".dmg",".sea",".nfs",".sitx"
+			".bin",".hqx",".sit",".cpt",".dmg",".sea",".nfs",".sitx",
+                        ".zip",".gz",".tar",".tgz",".image",".img",".pkg",".smi",
+                        "rom","smc","n64","v64","gba","gb","mod","img"
 		},
 		new String[]{
-			".zip",".exe",".rar",".lzh",".iso"
+                        "exe","zip","gz","tar","tgz","z","rmj","lqt","iso",
+                        "rpm","cue","iso","bin","com","deb","rom","smc","n64",
+                        "v64","gba","gb","mod","7z","fcd","ccd","rar","ace","cdr", 
+                        "gzip","lzh","lha"
 		}
 	};
 	
