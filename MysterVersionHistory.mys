@@ -748,3 +748,4 @@ Work on DEV 8:
     	-> Set the tracker to 100 items
     	-> added a bucnh of keyboard shortcuts to menu items in myster
     	-> Made a MacOS X compatibility plugin
+    	-> Added a timer class
