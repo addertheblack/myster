@@ -16,7 +16,7 @@ import com.general.mclist.*;
 
 
 public class CountLabel extends Label {
-	int value=0;
+	volatile int value=0;
 	
 	public CountLabel(String s) {
 		super(s);
@@ -32,12 +32,12 @@ public class CountLabel extends Label {
 	}
 	
 	public synchronized void increment() {
-		value++;
+		++value;
 		setUpdateLabel();
 	}
 	
 	public synchronized void decrement() {
-		value--;
+		--value;
 		setUpdateLabel();
 	}
 	

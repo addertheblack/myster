@@ -130,7 +130,9 @@ public class ConnectionManager extends MysterThread {
 		} finally {
 			
 			if (sectioncounter==0) eventSender.fireOEvent(new OperatorEvent(OperatorEvent.PING, new MysterAddress(socket.getInetAddress())));
-			else eventSender.fireOEvent(new OperatorEvent(OperatorEvent.DISCONNECT, new MysterAddress(socket.getInetAddress())));
+			
+			eventSender.fireOEvent(new OperatorEvent(OperatorEvent.DISCONNECT, new MysterAddress(socket.getInetAddress())));
+			
 			close(socket);
 		}
 		

@@ -13,6 +13,9 @@ import java.awt.*;
 import com.general.tab.*;
 import java.awt.image.*;
 import com.general.mclist.*;
+
+import Myster;
+
 import com.myster.server.event.*;
 import com.myster.server.stream.*;
 import com.myster.server.ServerFacade;
@@ -65,7 +68,8 @@ public class StatsInfoPanel extends Panel{
 	Label numberOfPingsLabel;
 	CountLabel numberOfPings;
 	
-	
+	Label uptimeLabel;
+	Label uptime;
 	
 	
 	ServerEventManager server;
@@ -233,6 +237,16 @@ public class StatsInfoPanel extends Panel{
 		numberOfPings.setSize(50, 25);
 		numberOfPings.setLocation(500, 290);
 		add(numberOfPings);
+				
+		uptimeLabel=new Label("Uptime:");
+		uptimeLabel.setSize(175, 25);
+		uptimeLabel.setLocation(300, 320);
+		add(uptimeLabel);
+		
+		uptime=new CountLabel("0");
+		uptime.setSize(50, 25);
+		uptime.setLocation(500, 320);
+		add(uptime);
 	}
 	
 	private Image doubleBuffer;		//adds double buffering
@@ -263,6 +277,33 @@ public class StatsInfoPanel extends Panel{
 	
 	private class ConnectionHandler implements ConnectionManagerListener {
 		public void sectionEventConnect(ConnectionManagerEvent e) {
+		
+			switch (e.getSection()) {
+				case RequestSearchThread.NUMBER:
+					numsearch.increment();
+					searches.addSearch(e.getTimeStamp());
+					((ServerSearchDispatcher)(e.getSectionObject())).addServerSearchListener(new SearchHandler());
+					break;
+				case FileSenderThread.NUMBER:
+				case MultiSourceSender.SECTION_NUMBER:
+					numofld.increment();
+					((ServerDownloadDispatcher)(e.getSectionObject())).addServerDownloadListener(new DownloadHandler());
+					break;
+				case IPLister.NUMBER:
+					numofTT.increment();
+					break;
+				case HandshakeThread.NUMBER:
+					numofSSR.increment();
+					break;
+				case FileInfoLister.NUMBER:
+					numofFI.increment();
+					break;
+				case FileByHash.NUMBER:
+					numberOfHashSearches.increment();
+					break;
+			}
+		
+			/*
 			if (e.getSection()==RequestSearchThread.NUMBER) {
 				numsearch.increment();
 				searches.addSearch(e.getTimeStamp());
@@ -278,7 +319,7 @@ public class StatsInfoPanel extends Panel{
 				numofFI.increment();
 			} else if (e.getSection()==FileByHash.NUMBER) {
 				numberOfHashSearches.increment();
-			}
+			}*/
 			
 		}
 		public void sectionEventDisconnect(ConnectionManagerEvent e) {
@@ -308,6 +349,7 @@ public class StatsInfoPanel extends Panel{
 		
 		public void run() {
 				searchperhour.setValue(calculateSearchesPerHour());
+				uptime.setText(Myster.getUptimeAsString(System.currentTimeMillis()-Myster.getLaunchedTime()));
 				if (!flag) return;
 				Timer timer=new Timer(this, 5000);
 		}
