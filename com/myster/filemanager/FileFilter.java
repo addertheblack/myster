@@ -21,7 +21,7 @@ class FileFilter {
 		new String[]{
 			".mov",".avi",".asf",".rm",".ram",".mpg",".mp4",".mpeg",".3iv",
                         ".div",".xiv",".rm",".mpe",".swf",".wmv",".mp2v",".mlv",".mpv",
-                        ".wm",".vob","ifo"
+                        ".wm",".vob",".ifo"
                 },
 		new String[]{
 			".txt",".doc",".abw",".rtf",".pdf",".ps",".htm",
@@ -34,13 +34,13 @@ class FileFilter {
 		new String[]{
 			".bin",".hqx",".sit",".cpt",".dmg",".sea",".nfs",".sitx",
                         ".zip",".gz",".tar",".tgz",".image",".img",".pkg",".smi",
-                        "rom","smc","n64","v64","gba","gb","mod","img"
+                        ".rom",".smc",".n64",".v64",".gba",".gb",".mod",".img"
 		},
 		new String[]{
-                        "exe","zip","gz","tar","tgz","z","rmj","lqt","iso",
-                        "rpm","cue","iso","bin","com","deb","rom","smc","n64",
-                        "v64","gba","gb","mod","7z","fcd","ccd","rar","ace","cdr", 
-                        "gzip","lzh","lha"
+                        ".exe",".zip",".gz",".tar",".tgz",".z",".rmj",".lqt",".iso",
+                        ".rpm",".cue",".iso",".bin",".com",".deb",".rom",".smc",".n64",
+                        ".v64",".gba",".gb",".mod",".7z",".fcd",".ccd",".rar",".ace",
+                        ".cdr",".gzip",".lzh",".lha"
 		}
 	};
 	
