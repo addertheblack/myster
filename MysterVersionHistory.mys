@@ -785,6 +785,8 @@ Work on DEV 8:
      	-> made bandwidth throttling system work with prefs
      	-> made bandwidth prefs pane UI
      	-> baby_p added more .extensions to the file list filter
-     	-> 
+     	-> added a ROMS type.
+     	-> Working on a Chat plugin (not finished)
+     	-> Working on a UDP Transaction system
      	
      	

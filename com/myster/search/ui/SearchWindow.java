@@ -125,7 +125,7 @@ public class SearchWindow extends MysterFrame implements SearchResultListener, S
 		filelist.setColumnName(0, "Search Results appear here");
 		filelist.setColumnWidth(0,400);
 		
-		setVisible(true);
+		setVisible(true); // !
 		
 		textentry.setSelectionStart(0);
 		textentry.setSelectionEnd(textentry.getText().length());
@@ -215,4 +215,75 @@ public class SearchWindow extends MysterFrame implements SearchResultListener, S
 		msg.say(""+s);
 	}
 	
+	
+	
+	//////PREFERENCES AND WINDOW POSITIONS
+	/*
+	private static Hashtable searchWindowTable=new HashTable();
+	private static final String prefsKey=new String("Search Window Locations");
+	
+	/**
+	*	Class that can keep track of windows and their locations and output/input to strings.
+
+	private static class WindowLocationHelper {
+		Hashtable hashtable=new Hashtable();
+		
+		private Rectangle[] getOldWindowLocations(String oldValues) {
+			Vector vector=new Vector();
+			
+			Tokenizer rects=new Tockenizer(oldValues, "|");
+			
+			while (rects.hasMoreTokens()) {
+				String currentToken=rects.nextToken();
+				
+				Tokenizer positions=new Tokenizer(currentToken, ",");
+				
+				try {
+					int x		=	Integer.parseInt(positions.nextToken());
+					int y		=	Integer.parseInt(positions.nextToken());
+					int width	=	Integer.parseInt(positions.nextToken());
+					int heigth	=	Integer.parseInt(positions.nextToken());
+					
+					vector.addElement(new Rectangle(x,y,width,heigth));
+				} catch (NumberFormatException ex) {
+					ex.printStackTrace();
+				} catch (NoMoreTokensException ex) {
+					ex.printStackTrace();
+				}
+			}
+			
+			Rectangle[] rect=new Rectangle[vector.size()];
+			for (int i=0; i<vector.size(); i++) {
+				rect[i]=(Rectangle)(vector.elementAt(i));
+			}
+			
+			return rect;
+		} 
+		
+		private static void setRect(Rectangle rect, Frame window) {
+			hashtable.put(window, rect);
+		}
+		
+		private static String getStringToSave() {
+			Enumeration hashEnum=hashtable.elements();
+			
+			StringBuffer buffer=new StringBuffer(); //fix
+			while (hashEnum.hasMoreLements()) {
+				Rectangle rect=(Rectangle)(hash.getElement());
+				
+				buffer.append(rect.getX());
+				buffer.append(",");
+				buffer.append(rect.getY());
+				buffer.append(",");
+				buffer.append(rect.getWidth());
+				buffer.append(",");
+				buffer.append(rect.getHeight());
+				
+				buffer.append("|");
+			}
+			
+			return new String(buffer);
+		}
+	}
+	*/
 }
