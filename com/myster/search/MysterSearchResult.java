@@ -25,11 +25,20 @@ public class MysterSearchResult implements SearchResult {
 	public void download() {
 		String hashAsString = (mml != null ? mml.get("/hash/md5") : null);
 		
+		long fileLength = -1;
+		if (mml!=null) {
+			try {
+				fileLength = Long.parseLong(mml.get("/size"));
+			} catch (NumberFormatException ex) {
+				System.out.println("Server sent a length that is not a number.");
+			}
+		}
+		
 		System.out.println("-->"+mml.toString());
 		
 		try {
-			if (hashAsString != null) {
-				MultiSourceDownload download = new MultiSourceDownload(stub, SimpleFileHash.buildFromHexString("md5", hashAsString));
+			if ((hashAsString != null) & (fileLength!=-1)) {
+				MultiSourceDownload download = new MultiSourceDownload(stub, SimpleFileHash.buildFromHexString("md5", hashAsString), fileLength);
 				download.start();
 				return; //!!!!!!!!!!!!!!!!!! tricky
 			}

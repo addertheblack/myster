@@ -27,6 +27,8 @@ import com.myster.server.event.ServerDownloadEvent;
 		//repeat from 1
 
 public class MultiSourceSender extends ServerThread {
+	public boolean endFlag = false;
+
 	public static final int SECTION_NUMBER=88888; //testing port
 
 	public int getSectionNumber() {
@@ -49,85 +51,7 @@ public class MultiSourceSender extends ServerThread {
 			download.endBlock();
 		}
 	}
-	/////\\\\\\
-	/*
-		try {
-			MysterSocket socket = context.socket;
-			DataOutputStream out = socket.out;
-			DataInputStream in = socket.in;
-			ServerDownloadDispatcher dispatcher = (ServerDownloadDispatcher)(context.sectionObject);
-			
-			MysterType type = new MysterType(in.readInt());
-			
-			String fileName = in.readUTF();
-			
-			File file = FileTypeListManager.getInstance().getFile(type, fileName);
-			
-			long myCounter = 0;
-			
-			if (file==null) {
-				out.write(0);
-				return ;
-			} else {
-				out.write(1);
-			}
-			
-			for (;;) {
-				long offset = in.readLong();
-				long fileLength = in.readLong();
-				
-				if ((offset==0) && (fileLength==0)) break;
-				
-				if ((fileLength < 0) |
-						(offset < 0) | 
-						(fileLength + offset <= 0) | 
-						(fileLength + offset > file.length())) {
-					throw new IOException("Client sent garbage fileLengths and offsets of "+fileLength+" and " +offset);		
-				}
-				
-				if (fileLength == -1) fileLength = file.length();
-				
-				if (myCounter > file.length()) throw new IOException("User has request more bytes than there are in the file!");
-				
-				out.write(0); //this would loop until 1
-				if (in.read() != 1) break; //end
-				
-				sendFileSection(socket, file, offset, fileLength);
-				
-				myCounter += fileLength; //this is so a client cannot suck data forever.
-			}
-		} catch (IOException ex) {
-			ex.printStackTrace();
-			throw ex;
-		}
-	}
-	
-	long CHUNK_SIZE = 4024;
-	private void sendFileSection(MysterSocket socket, File file_arg, long offset, long length) throws IOException {
-		RandomAccessFile file =  null;
-		try {
-			 file = new RandomAccessFile(file_arg, "r");
-			 //System.out.println(""+file.length());
-			 file.seek(offset);
-			byte[] buffer = new byte[(int)CHUNK_SIZE];
-			
-			socket.out.write('d');
-			socket.out.writeLong(length);
-			
-			for (long counter = 0; counter < (length); ) {
-				long calcBlockSize = (length - counter < CHUNK_SIZE?length - counter:CHUNK_SIZE);
-				
-				file.readFully(buffer, 0, (int)calcBlockSize);
-				
-				socket.out.write(buffer, 0, (int)calcBlockSize);
-				
-				counter+=calcBlockSize;
-			}
-		
-		} finally {
-			if (file != null) file.close();
-		}
-	}*/
+
 
 	private class MultiSourceDownloadInstance {
 		ServerDownloadDispatcher dispatcher;
@@ -226,6 +150,8 @@ public class MultiSourceSender extends ServerThread {
 				for (long counter = 0; counter < (length); ) {
 					long calcBlockSize = (length - counter < CHUNK_SIZE?length - counter:CHUNK_SIZE);
 					
+					if (endFlag) throw new DisconnectCommandException();
+					
 					file.readFully(buffer, 0, (int)calcBlockSize);
 					
 					socket.out.write(buffer, 0, (int)calcBlockSize);
@@ -284,8 +210,12 @@ public class MultiSourceSender extends ServerThread {
 			}
 			
 			public void disconnectClient() {
-				//..
+				endFlag = true;
 			}
 		}
+	}
+	
+	private class DisconnectCommandException extends RuntimeException  {
+	
 	}
 }

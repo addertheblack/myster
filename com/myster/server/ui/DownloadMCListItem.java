@@ -43,7 +43,7 @@ public class DownloadMCListItem extends MCListItemInterface {
 	
 	public synchronized void disconnectClient() {
 		endFlag = true;
-		if (info == null) info.disconnectClient();
+		if (info != null) info.disconnectClient();
 	}
 	
 	public synchronized  Sortable getValueOfColumn(int i) {

@@ -872,4 +872,6 @@ Work on DEV 8:
 	  	-> created Multi source client project am testing it with server.
 	  	-> fixed a slew of bugs and oddities
 	  	-> enhanced the file server event model.
+	  	-> Merged multi-source download client project with main Myster source
+	  	-> hooked up 6669 error message to FAQ on the myster web page.
 	  	

@@ -53,9 +53,10 @@ public class MultiSourceDownload {
 	public static final int MULTI_SOURCE_BLOCK_SIZE = 512 * 1024;
 	public static final String TEST_TYPE="MooV";
 
-	public MultiSourceDownload(MysterFileStub stu, FileHash hash) {
-		this.stub = stub;
-		this.hash = hash;
+	public MultiSourceDownload(MysterFileStub stub, FileHash hash, long fileLength) {
+		this.stub 			= stub;
+		this.hash 			= hash;
+		this.fileLength 	= fileLength;
 	}
 	
 	private synchronized void newDownload(MysterFileStub stub) {
@@ -63,7 +64,7 @@ public class MultiSourceDownload {
 			if (downloaders[i] == null) {
 				downloaders[i] = new InternalSegmentDownloader(stub, i);
 				
-				downloaders[i].addListener(new SegmentDownloaderHandler(i));
+				downloaders[i].addListener(new SegmentDownloaderHandler(i+1));
 				
 				downloaders[i].start();
 				
@@ -80,8 +81,10 @@ public class MultiSourceDownload {
 		downloaders = new InternalSegmentDownloader[5];
 	
 		progress = new ProgressWindow("Downloading..");
-		progress.setProgressBarNumber(downloaders.length);
+		progress.setProgressBarNumber(downloaders.length+1);
 		progress.show();
+		progress.setBarColor(Color.blue, 0);
+		progress.setMax(fileLength);
 		
 		for (int i=0; i < downloaders.length; i++) {
 			//downloaders[i] = new InternalSegmentDownloader(
@@ -89,7 +92,7 @@ public class MultiSourceDownload {
 			//		counter++);
 			//downloaders[i].addListener(new SegmentDownloaderHandler(i));
 			
-			progress.setBarColor(new Color(0,(downloaders.length-i)*(255/downloaders.length),150), i);
+			progress.setBarColor(new Color(0,(downloaders.length-i)*(255/downloaders.length),150), i+1);
 			
 			//downloaders[i].start();
 		}
@@ -196,6 +199,9 @@ public class MultiSourceDownload {
 			file.seek(dataBlock.offset);
 		
 			file.write(dataBlock.bytes);
+			
+			bytesWrittenOut+=dataBlock.bytes.length;
+			progress.setValue(bytesWrittenOut);
 		} catch (IOException ex) {
 			ex.printStackTrace(); //fix
 		}
