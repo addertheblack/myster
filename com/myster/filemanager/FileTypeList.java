@@ -338,7 +338,9 @@ class FileTypeList extends MysterThread{
 		//setPriority(MAX_PRIORITY);
 		
 		Vector temp=new Vector(10000, 10000);	//Preallocates a whole lot of space
-		indexDir(new File(rootdir),temp,5);		//Indexes root dir into temp with 5 levels deep.
+		File dir = new File(rootdir);
+		if (dir.exists() && dir.isDirectory())
+			indexDir(dir,temp,5);		//Indexes root dir into temp with 5 levels deep.
 		temp.trimToSize();	//save some space
 		filelist=temp;
 		//setPriority(tempp);
@@ -360,23 +362,24 @@ class FileTypeList extends MysterThread{
 			System.out.println("Nonsence sent to indexDir. Does this type have a d/l dir associated with it?");
 			return;
 		}
-		
+		System.out.println("file:" + file.getName());
 		String[] listing=file.list();
 		File temp;
-		for (int i=0; i<listing.length; i++) {
-			temp=new File(file.getAbsolutePath()+File.separator+listing[i]);
-			if (temp.isDirectory()) {
-				indexDir(temp,filelist,telomere);
-			} else {
-				if (!filelist.contains(mergePunctuation(temp.getName()))) {
-					if (FileFilter.isCorrectType(type, temp)) {
-						filelist.addElement(createFileItem(temp));
-					}
-				} //Don't add a file to the list if it's already there of if a file of the same name is there.. (eg: icon)
+		if (listing != null) { // listing is null on permission denied
+			for (int i=0; i<listing.length; i++) {
+				temp=new File(file.getAbsolutePath()+File.separator+listing[i]);
+				if (temp.isDirectory()) {
+					indexDir(temp,filelist,telomere);
+				} else {
+					if (!filelist.contains(mergePunctuation(temp.getName()))) {
+						if (FileFilter.isCorrectType(type, temp)) {
+							filelist.addElement(createFileItem(temp));
+						}
+					} //Don't add a file to the list if it's already there of if a file of the same name is there.. (eg: icon)
+				}
 			}
-		}	
+		}
 	}
-	
 	
 	/**
 	*	This function makes sure the the filelist and rootdir variables are up to date. The general design of this object

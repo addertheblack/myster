@@ -17,7 +17,7 @@ EXTRAFILES = ./com/myster/server/stream/firewall.gif \
 	./com/general/tab/outbound.gif \
 	./com/general/tab/right.gif \
 	./com/general/tab/serverstats.gif \
-	./com/myster/typedescriptionlist.txt \
+	./com/myster/typedescriptionlist.mml \
 	./com/properties/Myster.properties \
 	./com/properties/Myster_ja.properties
 
