@@ -55,6 +55,8 @@ public class Myster{
 	public static final String fileLockName=".lockFile";
 
 	private static long programLaunchTime = 0;
+	
+	private static final File WORKING_DIRECTORY = new File(System.getProperty("user.dir"));
 
 	public static void main(String args[]) {
 		final boolean isServer=(args.length>0&&args[0].equals("-s"));
@@ -178,6 +180,13 @@ public class Myster{
 					
 					//SearchWindow sw=new SearchWindow();
 					//sw.say(I18n.tr("Idle.."));
+				}
+				
+				try {
+					com.myster.client.stream.MSPartialFile.restartDownloads();
+				} catch (IOException ex) {
+					System.out.println("Error in restarting downloads.");
+					ex.printStackTrace();
 				}
 				
 				/*
@@ -386,6 +395,6 @@ public class Myster{
 	
 	
 	public static File getCurrentDirectory() {
-		return null; //not yet implemented
+		return WORKING_DIRECTORY; //not yet implemented
 	}
 }
