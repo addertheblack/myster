@@ -1,8 +1,12 @@
 package com.myster.hash;
 
-public class SimpleFileHash extends FileHash {
+import java.io.Serializable;
+
+public class SimpleFileHash extends FileHash implements Serializable {
 	private byte[] hash;
 	private String hashName;
+	
+	private SimpleFileHash(){}
 	
 	protected SimpleFileHash(String hashName, byte[] hash) {
 		this.hashName = hashName;

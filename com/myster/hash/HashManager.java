@@ -62,21 +62,21 @@ public class HashManager implements Runnable {
 	/////////////////////////////////////////\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
 	
 	private BlockingQueue workQueue;
-	private Hashtable oldHashes;
+	private HashCache oldHashes;
 	private ProgressWindow progress;
 	
 	public HashManager() {
 		workQueue = new BlockingQueue();
 		workQueue.setRejectDuplicates(true);
 		
-		oldHashes = new Hashtable();
+		oldHashes = HashCache.getDefault();
 		
 		progress = new ProgressWindow("Hashing...");
 		progress.setVisible(true);
 	}
 	
 	public void findHash(File file, FileHashListener listener) {
-		FileHash[] hashes = (FileHash[])(oldHashes.get(file));
+		FileHash[] hashes = (FileHash[])(oldHashes.getHashesForFile(file));
 		
 		if (hashes == null) {
 			if (file.exists()) {
@@ -113,7 +113,7 @@ public class HashManager implements Runnable {
 					hashes[i] = new SimpleFileHash(digestArray[i].getAlgorithm(), digestArray[i].digest());
 				}
 				
-				oldHashes.put(item.file, hashes);
+				oldHashes.putHashes(item.file, hashes);
 				
 				dispatchHashFoundEvent(item.listener, hashes);		
 			} catch (NoSuchAlgorithmException ex) {

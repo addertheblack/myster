@@ -351,7 +351,7 @@ class FileTypeList extends MysterThread{
 						
 						HashManager.findHashNoneBlocking(temp, new FileHashListener() {
 							public void foundHash(FileHashEvent e) {
-								System.out.println("Got hash for some file.");
+								//System.out.println("Got hash for some file.");
 							}
 						});
 					}
