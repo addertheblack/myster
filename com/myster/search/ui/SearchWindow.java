@@ -66,7 +66,11 @@ public class SearchWindow extends MysterFrame implements SearchResultListener, S
 		
 		searchbutton=new Button("Search") {
 			public Dimension getPreferredSize() {
-				return new Dimension(75, super.getPreferredSize().height); //hack to stop the button label from causing layout oddities.
+				return new Dimension(Math.max(75, super.getPreferredSize().width), super.getPreferredSize().height); //hack to stop the button label from causing layout oddities.
+			}
+			
+			public Dimension getMinimumSize() {
+				return new Dimension(Math.max(75, super.getMinimumSize().width), super.getMinimumSize().height);
 			}
 		};
 		
