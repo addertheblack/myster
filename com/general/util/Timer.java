@@ -110,7 +110,7 @@ public class Timer {
 
 	private static void timerLoop() {
 		for (;;) {
-			synchronized(Timer.class){ //this MUST be done to avoid deadlocks.
+			synchronized(Timer.class){ //The wait() waits on this monitor...
 				wasInterrupted=false;
 				nextTimer=getImpl().getClosestTimer(); //This code chooses the next event to run 
 				try {
@@ -132,8 +132,10 @@ public class Timer {
 				}
 			}
 			
+			//The code below cannot be in s synchronized block as it is part of a dispatcher.
+			//Putting synchronized code in the dispatching part leads to deadlocks.
 			if (System.currentTimeMillis()-nextTimer.getTime()>=0) {
-				thread.setPriority(Thread.MAX_PRIORITY); //is run on "interrupt time"
+				//thread.setPriority(Thread.MAX_PRIORITY); //is run on "interrupt time"
 				nextTimer.doEvent(); //thread must not be in the same lock as the dispatcher when dispatching.
 				
 				getImpl().removeTimer(nextTimer);

@@ -4,6 +4,10 @@ import java.util.Vector;
 import com.myster.util.MysterThread;
 import com.general.util.Channel;
 
+/**
+*	Warning this call creates yet another thread.. 
+*/
+
 public class SemiAsyncEventDispatcher extends EventDispatcher { //untested
 	MysterThread thread;
 	Channel channel=new Channel();

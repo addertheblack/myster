@@ -7,6 +7,11 @@ public class SyncEventDispatcher extends EventDispatcher {
 	private LinkedList queue=new LinkedList();
 	private boolean isDispatching=false;
 	
+	
+	/**
+	*	THis command cannot be called inside a monitor used to forward the addListener/removeListener commands
+	*	because there is a serious risk of deadlock with the current implementation.
+	*/
 	public void fireEvent(GenericEvent e) {
 		doCommandBacklog();
 	
