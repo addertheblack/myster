@@ -141,8 +141,18 @@ public class ProgressBar extends Panel {
 		return value;
 	}
 	
+	int lastValue = 0;	//To make sure not repaint is done if it's not needed.
 	public void setValue(long value) {
+		if (this.value == value) return;
 		this.value = value;
+		
+		if (isValueOutOfBounds()) {
+			int temp_xsize = getXSize(doubleBufferSize.width);
+			if (lastValue == temp_xsize) return;
+			
+			lastValue = temp_xsize;
+		}
+		
 		repaint();
 	}
 }

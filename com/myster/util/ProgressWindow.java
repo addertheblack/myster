@@ -128,6 +128,8 @@ public class ProgressWindow extends Frame {
 	// Variation on standard suite
     public void setValue(long value, int bar) {
 		getProgressPanel(bar).setValue(value);
+		
+		updateIcon();
     }
 		
 	public void setMax(long max, int bar) {
@@ -186,15 +188,35 @@ public class ProgressWindow extends Frame {
 	public long getValue() {
 		return getValue(0);
 	}
-
-	//other misc garbage   
-	//public void done() {	
-//
-	//}
 	
-   // public void done(int bar) {
-	//	setValue(getMax(bar), bar);
-   // }
+	Image piChart;
+	int lastPercent;
+	private void updateIcon() {
+		//if (true==true) return;
+	    if (piChart==null) piChart=createImage(32,32);
+	    if (piChart==null) {System.out.println("Wadda fuck?");return;}
+	    double percent=0;
+		
+		percent = (getValue() < getMin() || getValue() > getMax() ? 0 : ((double)(getValue() - getMin()))/((double)(getMax() - getMin())));
+		
+		int int_temp = (int)(percent * 100);
+		
+		if (int_temp == lastPercent) return;
+		
+		lastPercent = int_temp;
+		
+		Graphics gp=piChart.getGraphics();
+    	gp.setColor(Color.white);
+    	gp.fillRect(0,0,32,32);
+		gp.setColor(new Color(240,240,240));
+    	gp.fillArc(1,1,30,30,90,360);
+    	gp.setColor(getBarColor());
+    	gp.fillArc(1,1,30,30,90,-(int)(percent*360));
+    	//gp.setColor(Color.black);
+    	//gp.drawString(""+((int)(percent/100-1))+"%", 1, 16);
+
+    	setIconImage(piChart);
+	}
     
     public void setBarColor(Color color) {
     	setBarColor(color, 0);
@@ -202,6 +224,14 @@ public class ProgressWindow extends Frame {
     
     public void setBarColor(Color color, int bar) {
     	getProgressPanel(bar).setBarColor(color);
+    }
+    
+    public Color getBarColor() {
+    	return getBarColor(0);
+    }
+    
+    public Color getBarColor(int bar) {
+    	return getProgressPanel(bar).getBarColor();
     }
     
 	private static class ProgressPanel extends DoubleBufferPanel {
@@ -276,6 +306,10 @@ public class ProgressWindow extends Frame {
 			progressBar.setForeground(color);
 			progressBar.repaint();
 		}
+		
+		public Color getBarColor() {
+			return progressBar.getForeground();
+		} 
 	}
 	
 	private static class AdPanel extends DoubleBufferPanel {
