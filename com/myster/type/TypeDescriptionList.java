@@ -190,7 +190,7 @@ class DefaultTypeDescriptionList extends TypeDescriptionList {
 	//statics
 	private static synchronized TypeDescription[] loadDefaultTypeAndDescriptionList() {
 		try {
-			InputStream in = Class.forName("Myster").getResourceAsStream("typedescriptionlist.txt");
+			InputStream in = Class.forName("com.myster.Myster").getResourceAsStream("typedescriptionlist.txt");
 			if (in==null) {
 				System.out.println("There is no \"typedescriptionlist.txt\" file at com.myster level. Myster needs this file. Myster will exit now.");
 				System.out.println("Please get a Type Description list.");
@@ -219,7 +219,9 @@ class DefaultTypeDescriptionList extends TypeDescriptionList {
 			if (list.length == 0) return new TypeDescription[]{new TypeDescription(new MysterType((new String("MPG3")).getBytes()), "Default type since all types are disabled")};
 			
 			return list;
-		} catch (Exception ex) { return null;}
+		} catch (Exception ex) { 
+			ex.printStackTrace();
+		return null;}
 	}
 
 		
