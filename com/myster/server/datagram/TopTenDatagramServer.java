@@ -43,9 +43,6 @@ public class TopTenDatagramServer extends TransactionProtocol {
 			
 			sendTransaction(new Transaction(transaction,
 					getBytesFromStrings(topTenStrings), Transaction.NO_ERROR));
-					
-			System.out.println("SIZE OF ARRAY IS -> "+getBytesFromStrings(topTenStrings).length);
-					
 		} catch (IOException ex) {
 			throw new BadPacketException("Bad packet "+ex);
 		}

@@ -68,22 +68,4 @@ public class FileByHash extends ServerThread {
 			throw ex;
 		}
 	}
-	
-	private static FileHash buildFileHash(RobustMML mml) {
-		String hashType = mml.get(HASH_TYPE);
-		String hash 	= mml.get(HASH);
-		
-		if (hashType == null || hash == null) return null;
-		
-		byte[] hash_bytes;
-		try {
-			hash_bytes = com.general.util.Util.fromHexString(hash);
-		} catch (NumberFormatException ex) {
-			return null;
-		}
-		
-		if (hash_bytes == null) return null;
-		
-		return com.myster.hash.SimpleFileHash.buildFileHash(hashType, hash_bytes);
-	}
 }

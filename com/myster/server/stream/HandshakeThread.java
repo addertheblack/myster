@@ -30,14 +30,11 @@ public class HandshakeThread extends ServerThread {
 	}
 	
 	public void section(ConnectionContext context) throws IOException {
-		byte[] b=new byte[4];
-		
-		String temp=""+getMMLToSend(b);
-		
-		context.socket.out.writeUTF(temp);
+		context.socket.out.writeUTF(""+getMMLToSend());
 	}
 
-	private MML getMMLToSend(byte[] b) {
+	//Returns an MML that would be send as a string via a Handshake.
+	public static MML getMMLToSend() {
 		try {
 			MML mml=new MML();
 			Preferences prefs;
@@ -77,7 +74,7 @@ public class HandshakeThread extends ServerThread {
 		 
 	}
 	
-	private MML getNumberOfFilesMML(MML mml) { //in-line
+	private static MML getNumberOfFilesMML(MML mml) { //in-line
 		FileTypeListManager filemanager=FileTypeListManager.getInstance();
 		
 		MysterType[] filetypelist=filemanager.getFileTypeListing();

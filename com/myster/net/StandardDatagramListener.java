@@ -13,7 +13,7 @@ public interface StandardDatagramListener {
 	public void timeout(StandardDatagramEvent event);
 	
 	/**
-	*	This is calle dif there was a negative responce
+	*	This is called if there was a negative responce
 	*	(This can be assume to mean the protocol was not understood)
 	*/
 	public void error(StandardDatagramEvent event);

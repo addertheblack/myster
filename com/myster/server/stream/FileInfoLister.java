@@ -71,7 +71,7 @@ public class FileInfoLister extends ServerThread {
 	}
 	
 	//ugh.. for Mp3 stuff
-	private void patchFunction2(MML mml, File file)  {
+	public static void patchFunction2(MML mml, File file)  {
 		ID3v2Tag tag=null;
 		try {tag=new ID3v2Tag(file, 0);} catch (Exception ex) {return;} 
 		
@@ -106,7 +106,7 @@ public class FileInfoLister extends ServerThread {
 	}
 	
 	// ugh.. mp3 stuff
-	private void patchFunction(MML mml, File file)  {
+	private static void patchFunction(MML mml, File file)  {
 		MP3Header head=null;
 		try {head=new MP3Header(file);} catch (Exception ex) {return;}
 		

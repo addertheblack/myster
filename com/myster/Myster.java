@@ -37,6 +37,13 @@ import com.myster.pref.Preferences;
 import com.myster.net.DatagramProtocolManager;
 import com.myster.util.I18n;
 
+
+//TEST
+import com.myster.net.MysterAddress;
+import com.myster.type.MysterType;
+import com.myster.search.MysterFileStub;
+import java.util.Vector;
+
 public class Myster {
 
 	//public static File file;
@@ -144,7 +151,11 @@ public class Myster {
 				
 				//UDP Server INIT
 				com.myster.server.datagram.TopTenDatagramServer.init();
-				com.myster.server.datagram.FileTypeListDatagramServer.init();
+				//com.myster.server.datagram.TypeDatagramServer.init();
+				com.myster.server.datagram.SearchDatagramServer.init();
+				com.myster.server.datagram.ServerStatsDatagramServer.init();
+				com.myster.server.datagram.FileStatsDatagramServer.init();
+				com.myster.server.datagram.SearchHashDatagramServer.init();
 				
 				progress.setText(I18n.tr("Loading Server Stats Window... %1%%", ""+15)+macHack);
 				progress.setValue(15);
@@ -218,36 +229,42 @@ public class Myster {
 					ex.printStackTrace();
 				}
 				
-				/*
+				
 				try {
-					TopTenDatagramClient.getTopTen(new MysterAddress("127.0.0.1"), new com.myster.type.MysterType("MPG3".getBytes()), 
-							new StandardDatagramListener() {
-								public void response(StandardDatagramEvent event) {
-									AnswerDialog.simpleAlert("Number of thingies returned = "+((Object[])event.getData()).length);
-								}
-								
-								public void timeout(StandardDatagramEvent event) {
-									AnswerDialog.simpleAlert("Timeout");
-								}
-							});
+					MysterAddress[] addresses = com.myster.client.datagram.StandardDatagramSuite.getTopServers(
+							new MysterAddress("127.0.0.1"), new MysterType("MPG3"));
+							
+					for (int i = 0; i<addresses.length; i++) {
+						System.out.println(""+addresses[i]);
+					}
+					
+					Vector searchResults = com.myster.client.datagram.StandardDatagramSuite.getSearch(
+							new MysterAddress("127.0.0.1"), new MysterType("MPG3"), "Beatles");
+							
+					for (int i = 0; i<searchResults.size(); i++) {
+						System.out.println(""+searchResults.elementAt(i));
+					}
+					
+					MysterType[] types = com.myster.client.datagram.StandardDatagramSuite.getTypes(
+							new MysterAddress("127.0.0.1"));
+					
+					for (int i = 0; i<types.length; i++) {
+						System.out.println(""+types[i]);
+					}
+					
+					System.out.println(""+
+							com.myster.client.datagram.StandardDatagramSuite.getServerStats(
+							new MysterAddress("127.0.0.1")));
+							
+					System.out.println(""+
+							com.myster.client.datagram.StandardDatagramSuite.getFileStats(
+							new MysterFileStub(new MysterAddress("127.0.0.1"),
+								types[0], ""+searchResults.elementAt(0))));
+					
+					
 				} catch (Exception ex) {
 					ex.printStackTrace();
-				}*/
-				/*
-				try {
-					FileTypeListDatagramClient.getFileTypeList(new MysterAddress("127.0.0.1"), 
-							new StandardDatagramListener() {
-								public void response(StandardDatagramEvent event) {
-									AnswerDialog.simpleAlert("Number of thingies returned = "+((Object[])event.getData()).length);
-								}
-					            
-								public void timeout(StandardDatagramEvent event) {
-									AnswerDialog.simpleAlert("Timeout");
-								}
-					        });
-				} catch (Exception ex) {
-					ex.printStackTrace();
-				}*/
+				}
 			}
 		}).start();
 	}

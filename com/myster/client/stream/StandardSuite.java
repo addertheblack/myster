@@ -313,7 +313,6 @@ public class StandardSuite {
 		socket.out.writeUTF("");
 		
 		return socket.in.readUTF();
-
 	}
 
 	public static void checkProtocol(DataInputStream in) throws IOException, UnknownProtocolException { //this should have its own exception type
