@@ -31,6 +31,12 @@ public class ClientGenericHandleObject implements ClientHandleObject {
 		SearchResult result;
 		SortableString serverString;
 		SortablePing ping;
+		SortableString sortableName;
+		
+		SortableByte sortableSize;
+		
+		private final SortableByte NOT_IN=new SortableByte(-1);
+		private final SortableByte NUMBER_ERR=new SortableByte(-2);
 		
 		public GenericSearchItem(SearchResult s) {
 			result=s;
@@ -40,18 +46,23 @@ public class ClientGenericHandleObject implements ClientHandleObject {
 			serverString=new SortableString(server==null?hostAsString:(server.getServerIdentity().equals(hostAsString)?""+hostAsString:server.getServerIdentity()+" ("+hostAsString+")"));
 			//The Three lines above can be combined into one really long line. I hope you appreciate this :-)
 			ping=new SortablePing(result.getHostAddress());
+			sortableName=new SortableString(result.getName());
 		}
 		
 		public Sortable getValueOfColumn(int index) {
 			switch (index) {
 				case 0:
-					return new SortableString(result.getName());
+					return sortableName;
 				case 1:
 					String size=result.getMetaData(keyarray[1]);
 					try {
-						return (size==null?new SortableByte(-1):new SortableByte(Integer.parseInt(size)));	//I am in a one-line mood today.
+						if (size!=null && sortableSize==null) {
+							sortableSize=new SortableByte(Integer.parseInt(size));
+						}
+					
+						return (size==null?NOT_IN:sortableSize);	//I am in a one-line mood today.
 					} catch (NumberFormatException ex) {
-						return new SortableByte(-2);
+						return NUMBER_ERR;
 					}
 				case 2:
 					return serverString;

@@ -749,3 +749,4 @@ Work on DEV 8:
     	-> added a bucnh of keyboard shortcuts to menu items in myster
     	-> Made a MacOS X compatibility plugin
     	-> Added a timer class
+    	-> Added some optimisations for MacOS 9.
