@@ -146,7 +146,7 @@ class MysterIPPool {
      * functions (for two levels of checking
      */
 
-    public MysterServer getMysterIPLevelOne(MysterAddress address) {
+    public synchronized MysterServer getMysterIPLevelOne(MysterAddress address) {
         MysterIP mysterip = getMysterIP(address);
 
         if (mysterip == null)
@@ -180,14 +180,15 @@ class MysterIPPool {
 
     private synchronized MysterServer addANewMysterObjectToThePool(MysterIP ip) {
         if (!existsInPool(ip.getAddress())) {
-            deleteUseless(); //Cleans up the pool, deletes useless MysterIP
-                             // objects!
+            MysterServer mysterServer = ip.getInterface();
             hashtable.put(ip.getAddress(), ip); //if deleteUseless went first,
                                                 // the garbag collector would
                                                 // get the ip we just added!
                                                 // DOH!
+            deleteUseless(); //Cleans up the pool, deletes useless MysterIP
+                             // objects!
             save();
-            return ip.getInterface();
+            return mysterServer;
         } else {
             return getMysterIP(ip.getAddress()).getInterface();
         }

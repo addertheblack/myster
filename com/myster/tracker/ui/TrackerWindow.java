@@ -184,7 +184,7 @@ public class TrackerWindow extends MysterFrame {
     }
 
     /**
-     * Refreshes the list information with new information form the tracker.
+     * Refreshes the list information with new information from the tracker.
      */
     private synchronized void refreshTheList() {
         for (int i = 0; i < itemsinlist.size(); i++) {

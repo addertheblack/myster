@@ -156,7 +156,7 @@ class MysterIP {
         return new MysterIPInterfaceClass();
     }
 
-    private int referenceCounter = 0;
+    private volatile int referenceCounter = 0;
 
     /**
      * This private class implements the com.myster interface and allows outside objects to get
@@ -261,10 +261,6 @@ class MysterIP {
 
     protected int getMysterCount() {
         return referenceCounter;
-    }
-
-    protected long getLastUpdate() {
-        return timeoflastupdate;
     }
 
     /**
