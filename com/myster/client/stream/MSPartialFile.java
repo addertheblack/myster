@@ -146,6 +146,8 @@ public class MSPartialFile {
 		
 			final FileProgressWindow progress = new FileProgressWindow();
 			
+			progress.setTitle("Downloading " + partialFile.getFilename());
+			
 			final MultiSourceDownload download = new MultiSourceDownload(randomAccessFile, new MSDownloadHandler(progress,file), partialFile);
 			download.addListener(new MSDownloadListener() {
 				public void endDownload(MultiSourceEvent event) {
@@ -155,12 +157,13 @@ public class MSPartialFile {
 				}
 			
 				public void doneDownload(MultiSourceEvent event) {
-				
 					try {
 						if (! MultiSourceUtilities.moveFileToFinalDestination(file, progress)) throw new IOException("");
 					} catch (IOException ex) {
 						com.general.util.AnswerDialog.simpleAlert(progress, "Error: Couldn't move and rename file. "+ex); //yuck
 					}
+					
+					partialFile.done();
 				}
 			});
 			
@@ -170,7 +173,7 @@ public class MSPartialFile {
 			
 			progress.addWindowListener(new java.awt.event.WindowAdapter() {
 				public void windowClosing(java.awt.event.WindowEvent e) {
-					download.flagToEnd();
+					download.cancel();
 					
 					progress.hide();
 				}

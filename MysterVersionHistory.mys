@@ -940,7 +940,19 @@ Work on DEV 8:
 			Need to fix freeze on cancel
 			Need to fix stupid none batching behavior (MSDownload is slower than it should be)
 			Make it so multi source resumables are named different (idiot)
-		
+			Make sensible behavior for queued multi source downloads.
+			
+		-> re-wrote most of the client side Multi Source Download code.
+			- Will now consistantly rename files from "blag.i" to "blag".
+			- Shows more sensible text messages
+			- Re-uses spots left open by abandonned download segments in the
+				progress window
+			- Doesn't connect to a queued download server if there's already and active download in progress.
+		-> Re-wrote some of the hash / crawler code
+			- crawler now batches it's connections when it can
+		-> Banners will now change every 30 seconds and not whenever a new banner comes in.
+		-> Continued writting UDP connection section code.=======
+
 	//?
 	Re-qrote most of the multi source download client code. It now is much nocer to work with
 	- Myste ris now 27 000 line of yummy java goodness
@@ -962,4 +974,4 @@ Work on DEV 8:
 		-> Added number of pings to server stats.
 		-> added number of connections to server stats.
 		-> Added uptime to server stats
-		-> Fixed bug where files downloaded to an unexpected location would not rename properly
+		-> Fixed bug where files downloaded to an unexpected location would not rename properly>>>>>>> 1.67

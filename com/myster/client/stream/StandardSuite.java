@@ -218,6 +218,8 @@ public class StandardSuite {
 							} catch (IOException ex) {
 								com.general.util.AnswerDialog.simpleAlert(progress, "Error: Couldn't move and rename file. "+ex); //yuck
 							}
+							
+							partialFile.done();
 						}
 					});
 				}
