@@ -137,6 +137,7 @@ public class Util { //This code was taken from an Apple Sample Code package,
      */
     public static void invoke(final Runnable runnable) {
         //EventQueue.invokeLater(runnable);
+        
         Toolkit.getDefaultToolkit().getSystemEventQueue().postEvent(
                 new SpecialEvent(runnable, listener));
     }
@@ -175,15 +176,16 @@ public class Util { //This code was taken from an Apple Sample Code package,
             runnable.run();
             if (System.currentTimeMillis() - startTime > 500) {
                 try {
-                    throw new Exception("Took too long");
+                    throw new Exception("Took too long"); //toss and catch.
                 } catch (Exception ex) {
-                    //System.out.println("This thread took too long -> ");
                     ex.printStackTrace();
                 }
             }
         }
     }
-
+	
+	static volatile int counter = 0 ;
+	
     private static class SpecialComponent extends Component {
         public SpecialComponent() {
             enableEvents(ComponentEvent.COMPONENT_EVENT_MASK);
