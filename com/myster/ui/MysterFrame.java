@@ -96,9 +96,7 @@ public class MysterFrame extends Frame {
             }
 
             public void componentShown(ComponentEvent e) {
-                WindowManager.addWindow(MysterFrame.this);
-                MysterMenuBar.addMenuListener(menuListener);
-                setNewMenuBar(MysterMenuBar.getFactory().makeMenuBar(MysterFrame.this));
+               
             }
 
             public void componentHidden(ComponentEvent e) {
@@ -113,6 +111,14 @@ public class MysterFrame extends Frame {
             }
         };
 
+    }
+    
+    public void show() {
+     WindowManager.addWindow(MysterFrame.this);
+                MysterMenuBar.addMenuListener(menuListener);
+                setNewMenuBar(MysterMenuBar.getFactory().makeMenuBar(MysterFrame.this));
+    	super.show();
+    	
     }
 
     private void setNewMenuBar(MenuBar newMenuBar) {
