@@ -106,6 +106,7 @@ public class Myster {
 				
 				
 				//list types for fun
+				/*
 				com.myster.type.TypeDescription[] myList = com.myster.type.TypeDescriptionList.getDefault().getEnabledTypes();
 				for (int i = 0; i < myList.length; i++) {
 					String[] ext = myList[i].getExtensions();
@@ -114,7 +115,7 @@ public class Myster {
 						System.out.println(ext[j]);
 					}
 				}
-				
+				*/
 				try {
 					com.myster.hash.HashManager.init();
 				} catch (Exception ex) {
