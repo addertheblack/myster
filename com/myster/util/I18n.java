@@ -34,7 +34,7 @@ public class I18n {
 	*	This function must be called before any other (ie, on startup)
 	*/
 	public static void init() {
-		Locale.setDefault(new Locale(Locale.JAPANESE.getLanguage(),Locale.JAPAN.getCountry()));
+		//Locale.setDefault(new Locale(Locale.JAPANESE.getLanguage(),Locale.JAPAN.getCountry()));
 
 		resources = ResourceBundle.getBundle("com.properties.Myster");
 	}

@@ -1,5 +1,6 @@
 package com.myster.pref.ui;
 
+import java.awt.Frame;
 import java.awt.LayoutManager;
 import java.awt.Panel;
 
@@ -22,6 +23,7 @@ public abstract class PreferencesPanel extends Panel {
 	public static final int STD_XSIZE=450;
 	public static final int STD_YSIZE=300;
 	
+	Frame parentFrame;
 	
 	/**
 	*	Wrapper.. See java.awt.Panel.
@@ -40,4 +42,15 @@ public abstract class PreferencesPanel extends Panel {
 	public abstract void save();	//save changes
 	public abstract void reset();	//discard changes and reset values to their defaults.
 	public abstract String getKey();//gets the key structure for the place in the pref panel
+	
+	protected final void addFrame(Frame frame) {
+		parentFrame = frame;
+	}
+	
+	/**
+	*	Sub classes should not assume that this value is not null if the panel has been added.
+	*/
+	public Frame getFrame() {
+		return parentFrame; //returns the frame that this panel is in else null;
+	}
 }

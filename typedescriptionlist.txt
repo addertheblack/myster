@@ -1,1 +1,1 @@
-MPG3\Music|MACS\Macintosh|WINT\PC|PICT\Pictures|PORN\Pornography|MooV\Movies|TEXT\Documents|ROMS\Game Console Roms|
+MPG3\Sound|MACS\Macintosh|WINT\PC|PICT\Pictures|PORN\Junk|MooV\Movies|TEXT\Documents|ROMS\Emulation|

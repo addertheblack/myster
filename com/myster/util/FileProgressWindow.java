@@ -23,6 +23,8 @@ public class FileProgressWindow extends ProgressWindow {
 	
 	boolean overFlag = false;
 	
+	String url;
+	
 	public FileProgressWindow() {
 		this("");
 	}
@@ -81,6 +83,10 @@ public class FileProgressWindow extends ProgressWindow {
 		return (int_temp <= 0 ? 0 : value / int_temp);
 	}
 	
+	public void setURL(String urlString) {
+		url = (urlString.equals("")?null:urlString);
+	}
+	
 	private String formatRate(long startTime, long value) {
 		return Util.getStringFromBytes(rateCalc(startTime, value)) + "/s";
 	}
@@ -115,11 +121,11 @@ public class FileProgressWindow extends ProgressWindow {
 		}
 	}
 	
-	private static class AdClickHandler extends MouseAdapter {
+	private class AdClickHandler extends MouseAdapter {
 		public void mouseReleased(MouseEvent e) {		
 			if ((e.getX() > 0 && e.getX() < X_SIZE) && (e.getY() >0 && e.getY() < AD_HEIGHT)) {
 				try {
-					WebLinkManager.openURL(new URL("http://www.apple.com/"));
+					if (url!=null) WebLinkManager.openURL(new URL(url));
 				} catch (MalformedURLException ex) {
 					ex.printStackTrace();
 				}

@@ -31,6 +31,7 @@ import com.myster.client.stream.StandardSuite;
 import com.myster.net.MysterSocketFactory;
 import com.myster.net.MysterSocket;
 import com.myster.type.MysterType;
+import com.myster.server.BannersManager;
 
 public class FileSenderThread extends ServerThread {
 	//public constants
@@ -404,43 +405,35 @@ public class FileSenderThread extends ServerThread {
 			out.writeInt(i);
 		}
 	
+		private void sendURL(String imageName) throws IOException {
+			String url = BannersManager.getURLFromImageName(imageName);
+			
+			if (url == null) url = "";
+			
+			out.writeInt(6669);
+			out.write('u');
+			out.writeInt(0);  //padding 'cause writeUTF preceed the UTF with a short.
+			out.writeShort(0);
+			out.writeUTF(url);
+
+		}
+	
 		//code 'i'
 		private void sendImage() {
 			DataInputStream in;
 			File file;
 			
-			//get directory
-			String list[];
-			list=(new File(IMAGE_DIRECTORY)).list();
 			
-			if (list==null) {
-				return;
-			}
+			String imageName = BannersManager.getNextImageName();
 			
+			if (imageName == null) return;
 			
-			/*
-			This code gets a file from the directory at random. If it's not a graphic
-			(ie: not .jpg or .gif) it cycles through every item in the directory until it
-			find one. Note: This isnt totaly random, but it's good enoght most of the time.
-			
-			If it can't find a graphic... it eventually causes an exception and sends another data block
-			*/
-			RInt rint=new RInt(list.length-1);
-			file=new File(IMAGE_DIRECTORY+list[rint.setValue((int)(list.length*Math.random()))]);
+			file = BannersManager.getFileFromImageName(imageName);
 		
-			
-			for(int i=0; i<list.length; i++) {
-				file=new File(IMAGE_DIRECTORY+list[rint.inc()]);
-				if (file.getName().endsWith(".jpg")||file.getName().endsWith(".gif")) break;
-				else {file=null;}
-			}
-			
-			if (file==null) {
+			if (file==null) { //is needed (Threading issue)
 				return;
 			}
 			
-	
-	
 			try {
 				in=new DataInputStream(new FileInputStream(file));
 			} catch (Exception ex) {
@@ -457,8 +450,11 @@ public class FileSenderThread extends ServerThread {
 			} catch (IOException ex) {}
 			
 			
+			
 			//OUTPUT::::::::
 			try {
+				sendURL(imageName);
+				
 				out.writeInt(6669);
 				out.write('i');
 				out.writeLong(bytearray.length);

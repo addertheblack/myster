@@ -836,7 +836,7 @@ Work on DEV 8:
 	  			
 	Work on DEV 18.2 (PR 6)
 	  2003/04/20
-	  	-> Fixed a very old bug to do with servers that are found down ONCE are never cecked again to see
+	  	-> Fixed a very old bug to do with servers that are found down ONCE are never checked again to see
 	  			if they came back up. VERY old bug.
 	  	-> Added a MysterType class to repesent the 4 byte Myster file type internally
 	  	-> Re-did the File Description List code completely (a pre-requisit to multi source download)
@@ -844,3 +844,5 @@ Work on DEV 8:
 	  	-> Added md5, sha1 has code
 	  	-> Added hash code to File Stats protocol
 	  	-> Added framework for opening a web browser with a URL (for clickable banners)
+	  	-> Added an uptime column in the tracker and to the protocol and to about 100 other places needed to add that
+	  			column to the tracker and implemented it and a routine to format the number blah blah blah.

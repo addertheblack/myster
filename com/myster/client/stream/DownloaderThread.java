@@ -252,21 +252,30 @@ public class DownloaderThread extends SafeThread {
 					}
 
 					code=(char)in.readByte();
-					length=in.readLong();
 					switch (code) {
+						case 'u':
+							in.readInt();
+							in.readShort();
+							String url = in.readUTF(); //UTF are preceeded by 16-bit short
+							System.out.println("url received :"+url);
+							progress.setURL(url);
+							break;
 						case 'd':
+							length=in.readLong();
 							if (bytessent==0) progress.startBlock(FileProgressWindow.BAR_1,0,filesize+amountToSkip); //fixes queuing bug for the d/l rate
 							//System.out.println("Getting data packet of size "+length);
 							progress.setText("Getting data packet of size "+length+". I have gotten "+bytessent+" bytes so far",FileProgressWindow.BAR_1);
 							receiveDataPacket(progress, o, length);
 							break;
 						case 'i':
+							length=in.readLong();
 							//progress.say("Getting Image Packet",FileProgressWindow.BAR_1);
 							//System.out.println("Getting Image");
 							receiveImage(progress, length);
 							progress.setValue(-1,FileProgressWindow.BAR_2);
 							break;
 						case 'q':
+							length=in.readLong();
 							progress.setText("Getting queue position", FileProgressWindow.BAR_1);
 							if (length==4) {
 								progress.setText("You are #" + in.readInt() + " in queue.");
@@ -278,6 +287,7 @@ public class DownloaderThread extends SafeThread {
 							}
 							break;
 						default:
+							length=in.readLong();
 							progress.setText("Receiving unknown data of type: "+code,FileProgressWindow.BAR_1);
 							byte[] b=new byte[(int)length];
 							in.readFully(b);

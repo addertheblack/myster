@@ -29,6 +29,8 @@ public class ServerFacade {
 	
 	private static synchronized Operator getInstance() {
 		if (opp==null) {
+			BannersManager.init(); //init banners stuff..
+		
 			queue=new DownloadQueue();
 			opp=new Operator(queue, getServerThreads());
 			Preferences.getInstance().addPanel(new PrefPanel());

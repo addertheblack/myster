@@ -96,7 +96,9 @@ public class PreferencesDialogBox extends MysterFrame {	//protected...!
 	//Adds a panel, duh.
 	//Responsible for encapsulation all book-keeping required for adding a panel.
 	public void addPanel(PreferencesPanel p) {
+		p.addFrame(this);
 		mypanel.addPanel(p);
+		
 	}
 	
 	//Removes a panel, duh.
