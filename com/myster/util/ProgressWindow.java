@@ -135,9 +135,9 @@ public class ProgressWindow extends Frame {
        	ad=Toolkit.getDefaultToolkit().getImage("cat.GIF");
 		setSize(XDEFAULT, yWindowSize);
        	setVisible(true);
-       	update();
+       	//update();
        	setResizable(false);
-       	repaint();
+       //	repaint();
        	t=new ThreadedProgressWindow();
        	t.start();
        	//addWindowListener(new StandardWindowBehavior());
@@ -378,38 +378,23 @@ public class ProgressWindow extends Frame {
 
     // create special thread class for progress bar window
 	
-    private class ThreadedProgressWindow extends MysterThread {
+    private class ThreadedProgressWindow implements Runnable {
        	private final long fUpdateTime = 100;       	
        	public ThreadedProgressWindow() {}
 		
 		boolean endFlag=false;
 		
+		public void start() {
+			com.general.util.Timer t=new com.general.util.Timer(this, 100);
+		}
+		
        	public void run() {
-       	    setPriority(Thread.MIN_PRIORITY);
-       	    try {
-       	    	java.lang.Thread.sleep(1000);
-       	    } catch (Exception ex) {
-       	    	return;
-       	    }
-       	    while(true) {
-       	       	try {
-       	       		java.lang.Thread.sleep(fUpdateTime);
-       	       	} catch(Exception e) {
-       	         	e.printStackTrace();
-       	         	return;
-       			}
-       			if (endFlag==true) return;
-       			update();
-	    	}
+       		repaint();
+       	    if (!endFlag) start();
 		}
 		
 		public void end() {
-			try {
-				endFlag=true;
-				join();
-			} catch (InterruptedException ex) {
-				//..
-			}
+			endFlag=true;
 		}
     }
        

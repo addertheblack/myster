@@ -72,28 +72,7 @@ public class DownloaderThread extends SafeThread {
 		progress.addWindowListener(new ProgressWindowClose(this));
 		progress.setTitle("Preparing to Download..");
 		
-		
-		boolean isEnglish=Locale.getDefault().getDisplayLanguage().equals(Locale.ENGLISH.getDisplayLanguage());
-		
-		
-		/**
-			Files with none-english chars make MacOS X crash. fucking useless platform.
-		*/
-		String theFileName;
-		if (isEnglish) {
-			String s=file.getName();
-			
-			char[] array=s.toCharArray();
-			for (int i=0; i<array.length; i++) {
-				if (128<array[i]) {
-					array[i]='?';
-				}
-			}
-			theFileName=new String(array);
-		} else {
-			theFileName=file.getName();
-		}
-		
+		String theFileName=file.getName();
 		if (theFileName.lastIndexOf(""+File.pathSeparator)!=-1) {
 			if (theFileName.lastIndexOf(""+File.pathSeparator)+1==theFileName.length()) theFileName="";
 			else theFileName=theFileName.substring(theFileName.lastIndexOf(""+File.pathSeparator)+1);
