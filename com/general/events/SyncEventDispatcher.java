@@ -7,7 +7,7 @@ import com.general.util.LinkedList;
 /**
  * Dispatches event synchronously on the same thread that fired them.
  */
-public class SyncEventDispatcher extends EventDispatcher {
+public class SyncEventDispatcher extends AbstractEventDispatcher {
     private LinkedList queue = new LinkedList();
 
     private boolean isDispatching = false;
@@ -24,7 +24,7 @@ public class SyncEventDispatcher extends EventDispatcher {
         }
 
         Vector listeners = this.listeners;
-        //synchronized (listeners) { //should not be nessesairy since no one
+        //synchronized (listeners) { //should not be necessary since no one
         // should be adding while dispatching.
         for (int i = 0; i < listeners.size(); i++) {
             try {

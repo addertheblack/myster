@@ -7,7 +7,8 @@ import java.io.InputStream;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 
-import com.general.events.SyncEventDispatcher;
+import com.general.events.AsyncEventThreadDispatcher;
+import com.general.events.EventDispatcher;
 import com.general.util.BlockingQueue;
 import com.myster.pref.Preferences;
 
@@ -24,7 +25,7 @@ public class HashManager implements Runnable {
 
     private static HashManager hashManager;
 
-    private static SyncEventDispatcher hashManagerDispatcher;
+    private static EventDispatcher hashManagerDispatcher;
 
     private static volatile boolean hashingIsEnabled = true;
 
@@ -38,10 +39,10 @@ public class HashManager implements Runnable {
      * This should be called before any other functions are (ie, on startup)
      */
     public static void init() {
-        hashManagerDispatcher = new SyncEventDispatcher();
+        hashManagerDispatcher = new AsyncEventThreadDispatcher();
 
-        hashingIsEnabled = (TRUE_AS_STRING.equals(Preferences.getInstance()
-                .get(HASHING_ENABLED_PREF_KEY, TRUE_AS_STRING)));
+        hashingIsEnabled = (TRUE_AS_STRING.equals(Preferences.getInstance().get(
+                HASHING_ENABLED_PREF_KEY, TRUE_AS_STRING)));
 
         hashManager = new HashManager();
 
@@ -143,18 +144,16 @@ public class HashManager implements Runnable {
                 workQueue.add(new WorkingQueueItem(file, listener));
             } else {
                 dispatchHashFoundEvent(listener, new FileHash[] {}, file); // file
-                                                                           // doens't
-                                                                           // EXIST!
+                // doens't
+                // EXIST!
             }
         } else {
             dispatchHashFoundEvent(listener, hashes, file);
         }
     }
 
-    private void dispatchHashFoundEvent(FileHashListener listener,
-            FileHash[] hashes, File file) {
-        listener.fireEvent(new FileHashEvent(FileHashEvent.FOUND_HASH, hashes,
-                file));
+    private void dispatchHashFoundEvent(FileHashListener listener, FileHash[] hashes, File file) {
+        listener.fireEvent(new FileHashEvent(FileHashEvent.FOUND_HASH, hashes, file));
     }
 
     public void run() {
@@ -170,16 +169,14 @@ public class HashManager implements Runnable {
                     continue;
 
                 for (int i = 0; i < digestArray.length; i++) {
-                    digestArray[i] = MessageDigest.getInstance(hashTypes[i]
-                            .toUpperCase());
+                    digestArray[i] = MessageDigest.getInstance(hashTypes[i].toUpperCase());
                 }
 
                 calcHash(item.file, digestArray);
 
                 FileHash[] hashes = new FileHash[digestArray.length];
                 for (int i = 0; i < hashes.length; i++) {
-                    hashes[i] = new SimpleFileHash(hashTypes[i], digestArray[i]
-                            .digest());
+                    hashes[i] = new SimpleFileHash(hashTypes[i], digestArray[i].digest());
                 }
 
                 oldHashes.putHashes(item.file, hashes);
@@ -213,20 +210,23 @@ public class HashManager implements Runnable {
 
             byte[] buffer = new byte[64 * 1024]; //64k buffer
 
-            hashManagerDispatcher.fireEvent(new HashManagerEvent(
-                    HashManagerEvent.START_HASH, hashingIsEnabled, file, 0));
+            hashManagerDispatcher.fireEvent(new HashManagerEvent(HashManagerEvent.START_HASH,
+                    hashingIsEnabled, file, 0));
 
-            //long sTime=System.currentTimeMillis();
-
-            for (int bytesRead = in.read(buffer); bytesRead != -1; bytesRead = in
-                    .read(buffer)) {
+            long timeOfLastUpdate = 0;
+            long previousByte = 0;
+            for (int bytesRead = in.read(buffer); bytesRead != -1; bytesRead = in.read(buffer)) {
                 currentByte += bytesRead;
 
                 addBytesToDigests(buffer, bytesRead, digests);
 
-                hashManagerDispatcher.fireEvent(new HashManagerEvent(
-                        HashManagerEvent.PROGRESS_HASH, hashingIsEnabled, file,
-                        currentByte));
+                if (currentByte - previousByte > 1024 * 1024
+                        && (System.currentTimeMillis() - timeOfLastUpdate) > 500) { // blarg! too many events!
+                    hashManagerDispatcher.fireEvent(new HashManagerEvent(
+                            HashManagerEvent.PROGRESS_HASH, hashingIsEnabled, file, currentByte));
+                    previousByte = currentByte;
+                    timeOfLastUpdate = System.currentTimeMillis();
+                }
             }
         } catch (IOException ex) {
             System.out.println("Could not read a file.");
@@ -236,15 +236,13 @@ public class HashManager implements Runnable {
             } catch (Exception ex) {
             } // don't care
 
-            hashManagerDispatcher.fireEvent(new HashManagerEvent(
-                    HashManagerEvent.END_HASH, hashingIsEnabled, file, file
-                            .length()));
+            hashManagerDispatcher.fireEvent(new HashManagerEvent(HashManagerEvent.END_HASH,
+                    hashingIsEnabled, file, file.length()));
         }
     }
 
-    private final static void addBytesToDigests(byte[] bytes, int endByte,
-            MessageDigest[] digests) {
-        
+    private final static void addBytesToDigests(byte[] bytes, int endByte, MessageDigest[] digests) {
+
         for (int i = 0; i < digests.length; i++) {
             digests[i].update(bytes, 0, endByte);
             Thread.yield();

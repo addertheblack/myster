@@ -10,8 +10,6 @@
 
 package com.myster;
 
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.io.File;
@@ -30,8 +28,6 @@ import com.myster.bandwidth.BandwidthManager;
 import com.myster.client.datagram.PongTransport;
 import com.myster.client.datagram.UDPPingClient;
 import com.myster.filemanager.FileTypeListManager;
-import com.myster.menubar.MysterMenuBar;
-import com.myster.menubar.MysterMenuItemFactory;
 import com.myster.net.DatagramProtocolManager;
 import com.myster.pref.Preferences;
 import com.myster.search.ui.SearchWindow;
@@ -53,7 +49,7 @@ public class Myster {
 
     public static final boolean ON_LINUX = (System.getProperty("os.name") != null ? System
             .getProperty("os.name").equals("Linux") : false);
-    
+
     public static void main(String args[]) {
         final boolean isServer = (args.length > 0 && args[0].equals("-s"));
 
@@ -69,10 +65,10 @@ public class Myster {
          */
 
         try {
-            UIManager.setLookAndFeel(
-                UIManager.getSystemLookAndFeelClassName());
-        } catch (Exception e) { }
-        
+            UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
+        } catch (Exception e) {
+        }
+
         System.out.println("java.vm.specification.version:"
                 + System.getProperty("java.vm.specification.version"));
         System.out.println("java.vm.specification.vendor :"
@@ -94,217 +90,196 @@ public class Myster {
         start();
 
         System.out.println("MAIN THREAD: Starting loader Thread..");
-        (new Thread() {
-            public void run() {
-                try {
-                    Thread.sleep(1);
 
-                    final com.myster.util.ProgressWindow[] tempArray = new ProgressWindow[1];
+        try {
+            Thread.sleep(1);
 
-                    Util.invokeAndWait(new Runnable() {
+            final com.myster.util.ProgressWindow[] tempArray = new ProgressWindow[1];
 
-                        public void run() {
-                            tempArray[0] = new com.myster.util.ProgressWindow();
-                            ProgressWindow progress = tempArray[0];
-                            progress.setMenuBarEnabled(false);
-                            progress.setTitle(I18n.tr("Loading Myster..."));
-                            progress.pack();
-                            com.general.util.Util.centerFrame(progress, 0, -50);
-                            progress.setVisible(true);
+            Util.invokeAndWait(new Runnable() {
+
+                public void run() {
+                    tempArray[0] = new com.myster.util.ProgressWindow();
+                    ProgressWindow progress = tempArray[0];
+                    progress.setMenuBarEnabled(false);
+                    progress.setTitle(I18n.tr("Loading Myster..."));
+                    progress.pack();
+                    com.general.util.Util.centerFrame(progress, 0, -50);
+                    progress.setVisible(true);
+                }
+            });
+
+            Thread.sleep(1); //for redrawing progress on MacOS X
+
+            final com.myster.util.ProgressWindow progress = tempArray[0];
+
+            Util.invokeAndWait(new Runnable() {
+                public void run() {
+
+                    try {
+                        if (com.myster.type.TypeDescriptionList.getDefault().getEnabledTypes().length <= 0) {
+                            AnswerDialog
+                                    .simpleAlert(
+                                            progress,
+                                            "There are not enabled types. This screws up Myster. Please make sure"
+                                                    + " the typedescriptionlist.mml is in the right place and correctly"
+                                                    + " formated.");
+                            quit();
+                            return; //not reached
                         }
-                    });
-
-                    Thread.sleep(1); //for redrawing progress on MacOS X
-
-                    final com.myster.util.ProgressWindow progress = tempArray[0];
-
-                    Util.invokeAndWait(new Runnable() {
-                        public void run() {
-
-                            try {
-                                if (com.myster.type.TypeDescriptionList.getDefault()
-                                        .getEnabledTypes().length <= 0) {
-                                    AnswerDialog
-                                            .simpleAlert(
-                                                    progress,
-                                                    "There are not enabled types. This screws up Myster. Please make sure"
-                                                            + " the typedescriptionlist.mml is in the right place and correctly"
-                                                            + " formated.");
-                                    quit();
-                                    return; //not reached
-                                }
-                            } catch (Exception ex) {
-                                AnswerDialog.simpleAlert(progress,
-                                        "Could not load the Type Description List: \n\n" + ex);
-                                quit();
-                                return; //not reached
-                            }
-
-                            try {
-                                com.myster.hash.HashManager.init();
-                            } catch (Exception ex) {
-                                ex.printStackTrace();
-                            }
-
-                            com.myster.hash.ui.HashManagerGUI.init();
-                        }
-                    });
-
-                    Thread.sleep(1);
-
-                    Util.invokeAndWait(new Runnable() {
-                        public void run() {
-                            progress.setText(I18n.tr("Loading UDP Operator..."));
-                            progress.setValue(10);
-                            try {
-                                PongTransport ponger = new PongTransport();
-                                UDPPingClient.setPonger(ponger);
-                                DatagramProtocolManager.addTransport(ponger);
-                                DatagramProtocolManager.addTransport(new PingTransport());
-                            } catch (Exception ex) {
-                                ex.printStackTrace();
-                                com.general.util.AnswerDialog
-                                        .simpleAlert("Myster's UDP sub-system could not initialize. "
-                                                + "This means Myster will probably not work correctly. "
-                                                + "Here is the official error:\n\n" + ex);
-                            }
-
-                            //UDP Server INIT
-                            com.myster.server.datagram.TopTenDatagramServer.init();
-                            com.myster.server.datagram.TypeDatagramServer.init();
-                            com.myster.server.datagram.SearchDatagramServer.init();
-                            com.myster.server.datagram.ServerStatsDatagramServer.init();
-                            com.myster.server.datagram.FileStatsDatagramServer.init();
-                            com.myster.server.datagram.SearchHashDatagramServer.init();
-                        }
-                    });
-
-                    Thread.sleep(1);
-
-                    Util.invokeAndWait(new Runnable() {
-                        public void run() {
-                            progress.setText(I18n
-                                    .tr("Loading Server Stats Window... %1%%", "" + 15));
-                            progress.setValue(15);
-                            ServerStatsWindow.getInstance().pack();
-                            progress.setText(I18n
-                                    .tr("Loading Server Stats Window... %1%%", "" + 18));
-                            progress.setValue(18);
-                        }
-                    });
-
-                    Thread.sleep(1);
-
-                    Util.invoke(new Runnable() {
-                        public void run() {
-                            progress.setText(I18n.tr("Loading Server Fascade..."));
-                            progress.setValue(25);
-                            
-                        }
-                    });
-                    
-                    ServerFacade.assertServer();
-					
-                    Util.invoke(new Runnable() {
-                        public void run() {
-                            progress.setText(I18n.tr("Loading Instant Messaging..."));
-                            progress.setValue(72);
-                            com.myster.message.MessageManager.init();
-                        }
-                    });
-
-                    Thread.sleep(1);
-
-                    Util.invokeAndWait(new Runnable() {
-                        public void run() {
-                            progress.setText(I18n.tr(I18n.tr("Loading WindowManager...")));
-                            progress.setValue(78);
-                            com.myster.ui.WindowManager.init();
-
-                            Preferences.getInstance().addPanel(BandwidthManager.getPrefsPanel());
-                        }
-                    });
-
-                    Thread.sleep(1);
-
-                    Util.invokeAndWait(new Runnable() {
-                        public void run() {
-                            progress.setText(I18n.tr("Loading Plugins..."));
-                            progress.setValue(80);
-                            try {
-                                (new com.myster.plugin.PluginLoader(new File("plugins")))
-                                        .loadPlugins();
-                            } catch (Exception ex) {
-                            }
-
-                            com.myster.hash.ui.HashPreferences.init(); //meep
-
-                            com.myster.type.ui.TypeManagerPreferencesGUI.init();
-
-                            com.myster.hash.HashManager.start();
-                        }
-                    });
-
-                    Thread.sleep(1);
-
-                    Util.invokeAndWait(new Runnable() {
-                        public void run() {
-                            progress.setVisible(false);
-                        }
-                    });
-
-                    if (isServer) {
-                    } else {
-
-                        Thread.sleep(1);
-
-                        Util.invokeAndWait(new Runnable() {
-                            public void run() {
-                                Preferences.initWindowLocations();
-                                com.myster.client.ui.ClientWindow.initWindowLocations();
-                                ServerStatsWindow.initWindowLocations();
-                                com.myster.tracker.ui.TrackerWindow.initWindowLocations();
-                                SearchWindow.initWindowLocations();
-                                com.myster.hash.ui.HashManagerGUI.initGui();
-                                Preferences.initGui();
-                            }
-                        });
+                    } catch (Exception ex) {
+                        AnswerDialog.simpleAlert(progress,
+                                "Could not load the Type Description List: \n\n" + ex);
+                        quit();
+                        return; //not reached
                     }
 
-                    Thread.sleep(1);
-                    
-                    Util.invokeAndWait(new Runnable() {
-                        public void run() {
-                            try {
-                                com.myster.client.stream.MSPartialFile.restartDownloads();
-                            } catch (IOException ex) {
-                                System.out.println("Error in restarting downloads.");
-                                ex.printStackTrace();
-                            }
-                            
-                            if (false == true) {
-	                            MysterMenuBar.addMenuItem(new MysterMenuItemFactory("Free Memory", new ActionListener() {
-	                                public void actionPerformed(ActionEvent e) {
-	                                    System.gc();System.gc();System.gc();System.gc();System.gc();
-	                                    System.gc();System.gc();System.gc();System.gc();System.gc();
-	                                    System.gc();System.gc();System.gc();System.gc();System.gc();
-	                                    System.gc();System.gc();System.gc();System.gc();System.gc();
-	                                    System.gc();System.gc();System.gc();System.gc();System.gc();
-	                                    System.gc();System.gc();System.gc();System.gc();System.gc();
-	                                    System.out.println("Memory cleared.");
-	                                }
-	                            }));
-                            }
-                        }
-                    });
-					
-					IPListManagerSingleton.getIPListManager();
-                    FileTypeListManager.getInstance();
-                } catch (InterruptedException ex) {
-                    ex.printStackTrace(); //never reached.
+                    try {
+                        com.myster.hash.HashManager.init();
+                    } catch (Exception ex) {
+                        ex.printStackTrace();
+                    }
+
+                    com.myster.hash.ui.HashManagerGUI.init();
                 }
+            });
+
+            Thread.sleep(1);
+
+            Util.invokeAndWait(new Runnable() {
+                public void run() {
+                    progress.setText(I18n.tr("Loading UDP Operator..."));
+                    progress.setValue(10);
+                    try {
+                        PongTransport ponger = new PongTransport();
+                        UDPPingClient.setPonger(ponger);
+                        DatagramProtocolManager.addTransport(ponger);
+                        DatagramProtocolManager.addTransport(new PingTransport());
+                    } catch (Exception ex) {
+                        ex.printStackTrace();
+                        com.general.util.AnswerDialog
+                                .simpleAlert("Myster's UDP sub-system could not initialize. "
+                                        + "This means Myster will probably not work correctly. "
+                                        + "Here is the official error:\n\n" + ex);
+                    }
+
+                    //UDP Server INIT
+                    com.myster.server.datagram.TopTenDatagramServer.init();
+                    com.myster.server.datagram.TypeDatagramServer.init();
+                    com.myster.server.datagram.SearchDatagramServer.init();
+                    com.myster.server.datagram.ServerStatsDatagramServer.init();
+                    com.myster.server.datagram.FileStatsDatagramServer.init();
+                    com.myster.server.datagram.SearchHashDatagramServer.init();
+                }
+            });
+
+            Thread.sleep(1);
+
+            Util.invokeAndWait(new Runnable() {
+                public void run() {
+                    progress.setText(I18n.tr("Loading Server Stats Window... %1%%", "" + 15));
+                    progress.setValue(15);
+                    ServerStatsWindow.getInstance().pack();
+                    progress.setText(I18n.tr("Loading Server Stats Window... %1%%", "" + 18));
+                    progress.setValue(18);
+                }
+            });
+
+            Thread.sleep(1);
+
+            Util.invoke(new Runnable() {
+                public void run() {
+                    progress.setText(I18n.tr("Loading Server Fascade..."));
+                    progress.setValue(25);
+
+                }
+            });
+
+            ServerFacade.assertServer();
+
+            Util.invoke(new Runnable() {
+                public void run() {
+                    progress.setText(I18n.tr("Loading Instant Messaging..."));
+                    progress.setValue(72);
+                    com.myster.message.MessageManager.init();
+                }
+            });
+
+            Thread.sleep(1);
+
+            Util.invokeAndWait(new Runnable() {
+                public void run() {
+                    progress.setText(I18n.tr(I18n.tr("Loading WindowManager...")));
+                    progress.setValue(78);
+                    com.myster.ui.WindowManager.init();
+
+                    Preferences.getInstance().addPanel(BandwidthManager.getPrefsPanel());
+                }
+            });
+
+            Thread.sleep(1);
+
+            Util.invokeAndWait(new Runnable() {
+                public void run() {
+                    progress.setText(I18n.tr("Loading Plugins..."));
+                    progress.setValue(80);
+                    try {
+                        (new com.myster.plugin.PluginLoader(new File("plugins"))).loadPlugins();
+                    } catch (Exception ex) {
+                    }
+
+                    com.myster.hash.ui.HashPreferences.init(); //meep
+
+                    com.myster.type.ui.TypeManagerPreferencesGUI.init();
+
+                    com.myster.hash.HashManager.start();
+                }
+            });
+
+            Thread.sleep(1);
+
+            Util.invokeAndWait(new Runnable() {
+                public void run() {
+                    progress.setVisible(false);
+                }
+            });
+
+            if (isServer) {
+            } else {
+
+                Thread.sleep(1);
+
+                Util.invokeAndWait(new Runnable() {
+                    public void run() {
+                        Preferences.initWindowLocations();
+                        com.myster.client.ui.ClientWindow.initWindowLocations();
+                        ServerStatsWindow.initWindowLocations();
+                        com.myster.tracker.ui.TrackerWindow.initWindowLocations();
+                        SearchWindow.initWindowLocations();
+                        com.myster.hash.ui.HashManagerGUI.initGui();
+                        Preferences.initGui();
+                    }
+                });
             }
-        }).start();
+
+            Thread.sleep(1);
+
+            Util.invokeAndWait(new Runnable() {
+                public void run() {
+                    try {
+                        com.myster.client.stream.MSPartialFile.restartDownloads();
+                    } catch (IOException ex) {
+                        System.out.println("Error in restarting downloads.");
+                        ex.printStackTrace();
+                    }
+                }
+            });
+
+            IPListManagerSingleton.getIPListManager();
+            FileTypeListManager.getInstance();
+        } catch (InterruptedException ex) {
+            ex.printStackTrace(); //never reached.
+        }
     } //Utils, globals etc.. //These variables are System wide variables //
 
     // that
@@ -415,7 +390,7 @@ public class Myster {
                                     public void run() {
                                         new SearchWindow().setVisible(true);
                                     }
-                                    
+
                                 });
                             } catch (Exception ex) {
                                 ex.printStackTrace();

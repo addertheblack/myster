@@ -21,19 +21,21 @@ package com.myster.server.event;
 
 import java.util.Vector;
 
-import com.general.events.SyncEventDispatcher;
+import com.general.events.EventDispatcher;
+import com.general.events.SyncEventThreadDispatcher;
 import com.general.util.Util;
 
 public class ServerEventManager {
     //Vector dispatchers;
     Vector connectionlisteners;
 
-    SyncEventDispatcher operatorDispatcher;
+    EventDispatcher operatorDispatcher;
 
     public ServerEventManager() {
         //dispatchers=new Vector(10,10);
+        //TODO: Fix this so it works using the regular event system
         connectionlisteners = new Vector(10, 10);
-        operatorDispatcher = new SyncEventDispatcher();
+        operatorDispatcher = new SyncEventThreadDispatcher();
 
     }
 
@@ -88,18 +90,7 @@ public class ServerEventManager {
     }
 
     public void fireOEvent(final OperatorEvent event) { //should be private but
-        // cn't
-        try {
-            // be not a public API.
-            Util.invokeAndWait(new Runnable() {
-                public void run() {
-                    operatorDispatcher.fireEvent(event);
-                }
-            });
-        } catch (InterruptedException e) {
-            // TODO Auto-generated catch block
-            e.printStackTrace();
-        }
+        operatorDispatcher.fireEvent(event);
     }
 
 }

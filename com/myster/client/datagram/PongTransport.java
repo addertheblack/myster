@@ -71,6 +71,13 @@ public class PongTransport extends DatagramTransport {
         requests.remove(param_address);
     }
 
+    /**
+     * Pings this address. Reply is on the event thread.
+     * 
+     * @param param_address
+     * @param listener
+     * @throws IOException
+     */
     public void ping(MysterAddress param_address, PingEventListener listener)
             throws IOException { //DANGER DEADLOCKS!
         synchronized (requests) {

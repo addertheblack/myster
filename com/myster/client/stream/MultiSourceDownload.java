@@ -7,7 +7,7 @@ import java.util.Hashtable;
 import java.util.Stack;
 
 import com.general.events.EventDispatcher;
-import com.general.events.SyncEventDispatcher;
+import com.general.events.SyncEventThreadDispatcher;
 import com.myster.hash.FileHash;
 import com.myster.mml.MMLException;
 import com.myster.mml.RobustMML;
@@ -57,7 +57,7 @@ public class MultiSourceDownload implements Runnable, Controller {
     //matter what data structure so long
     //as add and remove are O(C).
 
-    EventDispatcher dispatcher = new SyncEventDispatcher();
+    EventDispatcher dispatcher = new SyncEventThreadDispatcher();
 
     boolean isCancelled = false;
 
@@ -67,7 +67,7 @@ public class MultiSourceDownload implements Runnable, Controller {
 
     public static final int DEFAULT_CHUNK_SIZE = 2 * 1024;
 
-    // Note top self -> elminate one of the twin constructors.
+    // Note top self -> eliminate one of the twin constructors.
     public MultiSourceDownload(MysterFileStub stub, FileHash hash,
             long fileLength, MSDownloadListener listener,
             RandomAccessFile randomAccessFile, MSPartialFile partialFile)
@@ -395,7 +395,7 @@ class InternalSegmentDownloader extends MysterThread implements
     WorkingSegment workingSegment;
 
     //Utility variables
-    EventDispatcher dispatcher = new SyncEventDispatcher();
+    EventDispatcher dispatcher = new SyncEventThreadDispatcher();
 
     //Utility working variables
     boolean endFlag = false;

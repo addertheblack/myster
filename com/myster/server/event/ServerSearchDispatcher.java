@@ -4,9 +4,9 @@
 
 package com.myster.server.event;
 
-import com.general.events.SyncEventDispatcher;
+import com.general.events.SyncEventThreadDispatcher;
 
-public class ServerSearchDispatcher extends SyncEventDispatcher {
+public class ServerSearchDispatcher extends SyncEventThreadDispatcher {
     public void addServerSearchListener(ServerSearchListener l) {
         addListener(l);
     }

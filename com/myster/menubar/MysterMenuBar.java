@@ -14,9 +14,8 @@ package com.myster.menubar;
 import java.awt.MenuBar;
 import java.util.Vector;
 
+import com.general.events.AsyncEventThreadDispatcher;
 import com.general.events.EventDispatcher;
-import com.general.events.SyncEventDispatcher;
-import com.general.util.Util;
 import com.myster.menubar.event.AddIPMenuAction;
 import com.myster.menubar.event.CloseWindowAction;
 import com.myster.menubar.event.MenuBarEvent;
@@ -42,7 +41,7 @@ public class MysterMenuBar extends MenuBar {
     private static final NullAction NULL = new NullAction();
 
     /** Static sub-system is below */
-    static EventDispatcher dispatcher = new SyncEventDispatcher();
+    static EventDispatcher dispatcher = new AsyncEventThreadDispatcher();
 
     private static MysterMenuBarFactory impl;
 
@@ -131,19 +130,20 @@ public class MysterMenuBar extends MenuBar {
      * 
      * This method is thread safe.
      * 
-     * @param listener to add.
+     * @param listener
+     *            to add.
      */
     public static void addMenuListener(MenuBarListener listener) { //Not
         dispatcher.addListener(listener);
     }
 
-    
     /**
      * Removes a MenuBarListener.
      * 
      * This method is thread safe.
      * 
-     * @param listener to remove.
+     * @param listener
+     *            to remove.
      */
     public static void removeMenuListener(MenuBarListener listener) { //Not
         dispatcher.removeListener(listener);
@@ -221,11 +221,7 @@ public class MysterMenuBar extends MenuBar {
      * This routine is not blocking.
      */
     private static void updateMenuBars() {
-        Util.invoke(new Runnable() {
-            public void run() {
-                dispatcher.fireEvent(new MenuBarEvent(MenuBarEvent.BAR_CHANGED, getFactory()));
-            }
-        });
+        dispatcher.fireEvent(new MenuBarEvent(MenuBarEvent.BAR_CHANGED, getFactory()));
     }
 
     /**

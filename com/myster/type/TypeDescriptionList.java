@@ -6,6 +6,7 @@ import java.io.InputStream;
 import java.util.Hashtable;
 import java.util.Vector;
 
+import com.general.events.EventDispatcher;
 import com.general.events.SyncEventDispatcher;
 import com.myster.mml.RobustMML;
 import com.myster.pref.PreferencesMML;
@@ -98,7 +99,7 @@ class DefaultTypeDescriptionList extends TypeDescriptionList {
 
     TypeDescriptionElement[] workingTypes;
 
-    SyncEventDispatcher dispatcher;
+    EventDispatcher dispatcher;
 
     public DefaultTypeDescriptionList() {
         TypeDescriptionElement[] oldTypes;
@@ -230,6 +231,9 @@ class DefaultTypeDescriptionList extends TypeDescriptionList {
         dispatcher.removeListener(listener);
     }
 
+    /**
+     * Must be done on the event thread!
+     */
     public void setEnabledType(MysterType type, boolean enable) {
         int index = getIndexFromType(type);
 

@@ -9,7 +9,7 @@ import com.myster.util.MysterThread;
  * Warning this call creates yet another thread..
  */
 
-public final class SemiAsyncEventDispatcher extends EventDispatcher { //untested
+public final class SemiAsyncEventDispatcher extends AbstractEventDispatcher { //untested
     MysterThread thread;
 
     Channel channel = new Channel();

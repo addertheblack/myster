@@ -19,6 +19,10 @@ public class WebLinkManager {
         return dispatcher.getNumberOfListeners();
     }
 
+    /**
+     * Call this if you want a URL to open in a web browser. Must be done on the event thread.
+     * @param url
+     */
     public static void openURL(URL url) {
         dispatcher.fireEvent(new WebLinkEvent(WebLinkEvent.LINK, url));
     }

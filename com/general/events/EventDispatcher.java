@@ -1,9 +1,8 @@
 package com.general.events;
 
-import java.util.Vector;
 
 /**
- * Basic Event dispatcher with abstract event firing mechanism.
+ * Interface for an event dispatcher with abstract event firing mechanism.
  * <p>
  * Generally there is one dispatcher per object firing events. A one dispatcher per event type
  * fired. This setup allows event listeners to be garbage collected when the object dies instead of
@@ -12,36 +11,27 @@ import java.util.Vector;
  * @see com.general.events.EventListener
  * @see com.general.events.GenericEvent
  */
-public abstract class EventDispatcher {
-    /** Contains the event listeners for this dispatcher. */
-    protected Vector listeners = new Vector(10, 10);
-
+public interface EventDispatcher {
     /**
      * Adds a listener to this event dispatcher.
      * 
      * @param listener
      */
-    public void addListener(EventListener listener) {
-        listeners.addElement(listener);
-    }
+    public void addListener(EventListener listener);
 
     /**
      * Removes a listener form this dispatcher.
      * 
      * @param listener
      */
-    public void removeListener(EventListener listener) {
-        listeners.removeElement(listener);
-    }
+    public void removeListener(EventListener listener);
 
     /**
      * Returns the number of listeners currently registered with this dispatcher.
      * 
      * @return the number of listeners that this dispatcher contains.
      */
-    public int getNumberOfListeners() {
-        return listeners.size();
-    }
+    public int getNumberOfListeners();
 
     /**
      * Dispatches an event to its listeners.
@@ -49,5 +39,5 @@ public abstract class EventDispatcher {
      * @param event
      *            to dispatch
      */
-    public abstract void fireEvent(GenericEvent event);
+    public void fireEvent(GenericEvent event);
 }

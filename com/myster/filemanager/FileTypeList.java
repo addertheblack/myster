@@ -31,7 +31,8 @@ import com.myster.util.MysterThread;
 
 class FileTypeList extends MysterThread {
     private Vector filelist; //List of java.io.FileItem objects that are
-                             // shared.
+
+    // shared.
 
     private MysterType type; //Myster type represented by this List.
 
@@ -44,15 +45,19 @@ class FileTypeList extends MysterThread {
     private String pref_key;
 
     private static final String ACTIVE_PREF = "/ActPref"; //Active.. sub dir
-                                                          // (active flag)
+
+    // (active flag)
 
     private static final String PATH_PREF = "/PathPref"; //path pref sub dir.
 
     private static final String PREF_KEY = "FileManager.FileTypeList";
 
     public static final int MAX_RESULTS = 100; //maximum number of results
-                                               // returnable (doesn't limit ""
-                                               // queries)
+
+    // returnable (doesn't limit ""
+    // queries)
+
+    private boolean isIndexing; // if true then the list is indexing...
 
     /**
      * Creates a new FileTypeList. This shouldn't be called by anybody but the
@@ -122,7 +127,7 @@ class FileTypeList extends MysterThread {
      */
     public MysterType getType() {
         return type; //note: no assertFileList(); file list ins't needed so
-                     // don't load it.
+        // don't load it.
     }
 
     /**
@@ -149,12 +154,12 @@ class FileTypeList extends MysterThread {
      */
     public synchronized String[] getFileListAsStrings() {
         assertFileList(); //This must be called before working with filelist or
-                          // rootdir internal variables.
+        // rootdir internal variables.
 
         String[] workingarray = new String[filelist.size()];
         for (int i = 0; i < filelist.size(); i++) {
-            workingarray[i] = mergePunctuation(((FileItem) (filelist
-                    .elementAt(i))).getFile().getName());
+            workingarray[i] = mergePunctuation(((FileItem) (filelist.elementAt(i))).getFile()
+                    .getName());
         }
         return workingarray;
     }
@@ -167,7 +172,7 @@ class FileTypeList extends MysterThread {
      */
     public synchronized FileItem getFileFromHash(FileHash hash) {
         assertFileList(); //This must be called before working with filelist or
-                          // rootdir internal variables.
+        // rootdir internal variables.
 
         for (int i = 0; i < filelist.size(); i++) {
             if (isMatch((FileItem) filelist.elementAt(i), hash))
@@ -296,8 +301,8 @@ class FileTypeList extends MysterThread {
      */
     private static String simplify(String filename) {
         StringBuffer simplified = new StringBuffer(255); //pre-allocate some
-                                                         // space to the string
-                                                         // buffer!
+        // space to the string
+        // buffer!
 
         simplified.append(' ');
 
@@ -321,11 +326,11 @@ class FileTypeList extends MysterThread {
      */
     public synchronized FileItem getFileItemFromString(String query) {
         assertFileList(); //This must be called before working with filelist or
-                          // rootdir internal variables.
+        // rootdir internal variables.
 
         for (int i = 0; i < filelist.size(); i++) {
-            if ((mergePunctuation(((FileItem) (filelist.elementAt(i)))
-                    .getFile().getName())).equals(query))
+            if ((mergePunctuation(((FileItem) (filelist.elementAt(i))).getFile().getName()))
+                    .equals(query))
                 return (FileItem) (filelist.elementAt(i));
         }
         return null; //err, file not found.
@@ -338,7 +343,7 @@ class FileTypeList extends MysterThread {
      */
     public synchronized int getNumOfFiles() {
         assertFileList(); //This must be called before working with filelist or
-                          // rootdir internal variables.
+        // rootdir internal variables.
         return filelist.size();
     }
 
@@ -364,27 +369,26 @@ class FileTypeList extends MysterThread {
 
     private synchronized void savePrefs() {
         Preferences.getInstance().put(pref_key, local_prefs.toString()); //Change
-                                                                         // info
+        // info
     }
 
     /**
      * an internal proceedure used to do the setup of file indexing. This
      * function is only called in one place at this writting.
      */
-    private synchronized void indexFiles() {
-        //int tempp=getPriority(); //cheap, priority inversion + speed tweek
-        // tactic.
-        //setPriority(MAX_PRIORITY);
-
+    private static Vector indexFiles(MysterType type, String rootdir) {
         Vector temp = new Vector(10000, 10000); //Preallocates a whole lot of
-                                                // space
+        // space
         File dir = new File(rootdir);
         if (dir.exists() && dir.isDirectory())
-            indexDir(dir, temp, 5); //Indexes root dir into temp with 5 levels
-                                    // deep.
+            indexDir(type, dir, temp, 5); //Indexes root dir into temp with 5 levels
+        // deep.
         temp.trimToSize(); //save some space
-        filelist = temp;
-        //setPriority(tempp);
+        return temp;
+    }
+    
+    private synchronized void setFileList( Vector fileList ) {
+        filelist = fileList;
     }
 
     /**
@@ -399,7 +403,7 @@ class FileTypeList extends MysterThread {
      *            is a recusion counter. The function will recurse a maximum of
      *            telomere times
      */
-    private synchronized void indexDir(File file, Vector filelist, int telomere) {
+    private static void indexDir(MysterType type, File file, Vector filelist, int telomere) {
         telomere--;
         if (telomere < 0)
             return;
@@ -412,17 +416,16 @@ class FileTypeList extends MysterThread {
         File temp;
         if (listing != null) { // listing is null on permission denied
             for (int i = 0; i < listing.length; i++) {
-                temp = new File(file.getAbsolutePath() + File.separator
-                        + listing[i]);
+                temp = new File(file.getAbsolutePath() + File.separator + listing[i]);
                 if (temp.isDirectory()) {
-                    indexDir(temp, filelist, telomere);
+                    indexDir(type, temp, filelist, telomere);
                 } else {
                     if (!filelist.contains(mergePunctuation(temp.getName()))) {
                         if (FileFilter.isCorrectType(type, temp)) {
                             filelist.addElement(createFileItem(temp));
                         }
                     } //Don't add a file to the list if it's already there of
-                      // if a file of the same name is there.. (eg: icon)
+                    // if a file of the same name is there.. (eg: icon)
                 }
             }
         }
@@ -441,14 +444,14 @@ class FileTypeList extends MysterThread {
      */
     private synchronized void assertFileList() {
         if (!isShared()) { //if file list is not shared make sure list has
-                           // length = 0 then continue.
+            // length = 0 then continue.
             if (filelist == null) {
                 filelist = new Vector(1, 1);
             } else if (filelist.size() != 0) {
                 filelist = new Vector(1, 1);
             }
             timeoflastupdate = 0; //never updated (we just buggered up the
-                                  // list, you see...)
+            // list, you see...)
             return;
         }
 
@@ -457,15 +460,19 @@ class FileTypeList extends MysterThread {
         //load the dir for this type
         String workingdir = getPath();
 
-        if (filelist == null || isOld() || (!(rootdir.equals(workingdir)))) {
-            rootdir = workingdir; //in case the dir for this type has changed.
-            timeoflastupdate = System.currentTimeMillis();
-            try {
-                Thread.sleep(250);
-            } catch (InterruptedException ex) {
-
+        if (!isIndexing && (filelist == null || isOld() || !rootdir.equals(workingdir))) {
+            if (filelist == null) {
+                filelist = new Vector(1, 1);
             }
-            indexFiles();
+            rootdir = workingdir; //in case the dir for this type has changed.
+            isIndexing = true;
+            (new Thread() {
+                public void run() {
+                    setFileList(indexFiles(type, rootdir));
+                    timeoflastupdate = System.currentTimeMillis();
+                    isIndexing = false;
+                }
+            }).start();
         }
     }
 
@@ -474,7 +481,8 @@ class FileTypeList extends MysterThread {
      * by assertFileList and should oly be called by assertFileList
      */
     long timeoflastupdate = 0; //globalish Needed to make sure the list is not
-                               // too old.
+
+    // too old.
 
     //NOTE: The user could also change the DIR to force and update... He could
     // also re-start Myster.
@@ -506,7 +514,7 @@ class FileTypeList extends MysterThread {
             if (empty.exists()) {
                 if (empty.isDirectory())
                     return empty; //here is where the routine should go most of
-                                  // the time.
+                // the time.
                 else {
                     empty = new File(type + " Downloads" + counter);
                     counter++;
@@ -541,7 +549,7 @@ class FileTypeList extends MysterThread {
      *            to be the basis of this FileItem.
      * @return FileItem created from file.
      */
-    protected FileItem createFileItem(File file) {
+    protected static FileItem createFileItem(File file) {
         return new FileItem(file);
     }
 
@@ -557,8 +565,7 @@ class FileTypeList extends MysterThread {
      * @return String with punctuation merged
      */
     public static String mergePunctuation(String text) {
-        if (Locale.getDefault().getDisplayLanguage().equals(
-                Locale.JAPANESE.getDisplayLanguage())) {
+        if (Locale.getDefault().getDisplayLanguage().equals(Locale.JAPANESE.getDisplayLanguage())) {
             if (text.length() <= 1)
                 return text;
             StringBuffer buffer = new StringBuffer(text.length());
