@@ -8,7 +8,7 @@ public abstract class PingEventListener extends EventListener {
 	public final void fireEvent(GenericEvent event) {
 		PingEvent e=(PingEvent)event;
 		switch (e.getID()) {
-			case e.PING:
+			case PingEvent.PING:
 				pingReply(e);
 				break;
 			default:
