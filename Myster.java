@@ -113,6 +113,7 @@ public class Myster{
 				
 				//UDP Server INIT
 				com.myster.server.datagram.TopTenDatagramServer.init();
+				com.myster.server.datagram.FileTypeListDatagramServer.init();
 				
 				progress.setText(I18n.tr("Loading Server Stats Window... %1%%", ""+15)+macHack);
 				progress.setValue(15);
@@ -194,7 +195,21 @@ public class Myster{
 				} catch (Exception ex) {
 					ex.printStackTrace();
 				}*/
-				
+				/*
+				try {
+					FileTypeListDatagramClient.getFileTypeList(new MysterAddress("127.0.0.1"), 
+							new StandardDatagramListener() {
+								public void response(StandardDatagramEvent event) {
+									AnswerDialog.simpleAlert("Number of thingies returned = "+((Object[])event.getData()).length);
+								}
+					            
+								public void timeout(StandardDatagramEvent event) {
+									AnswerDialog.simpleAlert("Timeout");
+								}
+					        });
+				} catch (Exception ex) {
+					ex.printStackTrace();
+				}*/
 			}
 		}).start();
 	}
