@@ -26,7 +26,7 @@ import com.myster.client.datagram.PingEvent;
 
 
 public class IPListManager { //aka tracker
-	public static final int LISTSIZE=50;		//Size of any given list..
+	public static final int LISTSIZE=100;		//Size of any given list..
 	
 	String[] lastresort={"bigmacs.homeip.net","mysternetworks.homeip.net",
 			 "mysternetworks.dyndns.org", "emaline.homeip.net","myster.homeip.net"

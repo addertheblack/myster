@@ -37,6 +37,7 @@ public class MysterMenuBar extends MenuBar {
 	*/
 	
 	public MysterMenuBar(Frame hostframe) {
+
 		file	=	new Menu("File");
 		edit	=	new Menu("Edit");
 		myster	=	new Menu("Special");
@@ -47,11 +48,11 @@ public class MysterMenuBar extends MenuBar {
 		
 		//File menu items
 		fileitems				=	new MysterMenuItem[SIZEOFFILEMENU];
-		fileitems[0]			=	new MysterMenuItem("New Search", 						new NewSearchWindowAction());
-		fileitems[1]			=	new MysterMenuItem("New Peer-to-Peer Connection", 		new NewClientWindowAction());
-		fileitems[2]			=	new MysterMenuItem("Close Window", 						new CloseWindowAction(hostframe));
+		fileitems[0]			=	new MysterMenuItem("New Search", 						new NewSearchWindowAction()	, java.awt.event.KeyEvent.VK_N);
+		fileitems[1]			=	new MysterMenuItem("New Peer-to-Peer Connection", 		new NewClientWindowAction()	, java.awt.event.KeyEvent.VK_N, true);
+		fileitems[2]			=	new MysterMenuItem("Close Window", 						new CloseWindowAction(hostframe),java.awt.event.KeyEvent.VK_W);
 		fileitems[3]			=	new MysterMenuItem("-", 								NULL);
-		fileitems[4]			=	new MysterMenuItem("Quit", 								new QuitMenuAction());
+		fileitems[4]			=	new MysterMenuItem("Quit", 								new QuitMenuAction()		, java.awt.event.KeyEvent.VK_Q);
 			
 		//Edit menu items
 		edititems				=	new MysterMenuItem[SIZEOFEDITMENU];
@@ -64,7 +65,7 @@ public class MysterMenuBar extends MenuBar {
 		edititems[6]			=	new MysterMenuItem("-", 								NULL);
 		edititems[7]			=	new MysterMenuItem("Select All",						NULL);
 		edititems[8]			=	new MysterMenuItem("-", 								NULL);
-		edititems[9]			=	new MysterMenuItem("Preferences", 						new PreferencesAction());
+		edititems[9]			=	new MysterMenuItem("Preferences", 						new PreferencesAction(),	java.awt.event.KeyEvent.VK_SEMICOLON);
 		
 		//Disable all Edit menu commands
 		for (int i=0; i<edititems.length-1; i++) {
@@ -74,8 +75,8 @@ public class MysterMenuBar extends MenuBar {
 		//Myster menu items
 		mysteritems				=	new MysterMenuItem[SIZEOFMYSTERMENU];
 		mysteritems[0]			=	new MysterMenuItem("Add IP",							new AddIPMenuAction(hostframe));
-		mysteritems[1]			=	new MysterMenuItem("Show Server Stats", 				new StatsWindowAction());
-		mysteritems[2]			=	new MysterMenuItem("Show tracker",						new TrackerWindowAction());
+		mysteritems[1]			=	new MysterMenuItem("Show Server Stats", 				new StatsWindowAction(), 	java.awt.event.KeyEvent.VK_S, true);
+		mysteritems[2]			=	new MysterMenuItem("Show tracker",						new TrackerWindowAction(), 	java.awt.event.KeyEvent.VK_T);
 		
 		//make menus
 		makeMenu(fileitems		,	file);
@@ -86,9 +87,16 @@ public class MysterMenuBar extends MenuBar {
 		add(file	);
 		add(edit	);
 		add(myster	);
-		
+
 		hostframe.setMenuBar(this);
 	}
+	
+	private MysterMenuBar() {
+		
+		
+	}
+	
+
 	
 	private void makeMenu(MysterMenuItem[] items, Menu menu) {
 		for (int i=0; i<items.length; i++) {
@@ -96,5 +104,15 @@ public class MysterMenuBar extends MenuBar {
 			else menu.add(items[i]);
 		}
 	}
+	
+	
+	
+	
+	
+	
+	/** Static sub-system is below */
+	
+	
+	
 
 }

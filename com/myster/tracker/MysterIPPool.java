@@ -37,8 +37,7 @@ import java.io.IOException;
 	Preferences prefs;						//So I don't have to call preferences.getInstance() all the time.
 	
 		
-	private static final int GC_LOWER_LIMIT=350;	//limit of number of IPs before IP start getting deleted.
-	private static final int GC_UPPER_LIMIT=100;		//limit of number of IPs before "up" IPs start getting deleted.
+	private static final int GC_UPPER_LIMIT=100;		//Number before gc turns on...
 	
 	private static final int VECTOR_INITIAL_SIZE=400;
 	private static final int VECTOR_GROWTH_FACTOR=100;

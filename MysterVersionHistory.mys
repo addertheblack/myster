@@ -745,4 +745,6 @@ Work on DEV 8:
     	-> Modified addIP to make use of asynchrous ping/pong.
     	-> Modified MysterIPPool to use a hashtable.
     	-> Made it so the search windows open with the text selected.
-    	
+    	-> Set the tracker to 100 items
+    	-> added a bucnh of keyboard shortcuts to menu items in myster
+    	-> Made a MacOS X compatibility plugin
