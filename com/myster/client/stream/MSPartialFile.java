@@ -13,6 +13,8 @@ import java.io.FilenameFilter;
 import java.io.ByteArrayOutputStream;
 import java.io.DataOutputStream;
 
+import com.general.util.AnswerDialog;
+
 import com.myster.mml.RobustMML;
 import com.myster.mml.MMLException;
 import com.myster.hash.FileHash;
@@ -118,58 +120,77 @@ public class MSPartialFile {
 			try {
 				doIt();
 			} catch (IOException ex) {
+				ex.printStackTrace();
+				//partialFile.done();
 				System.out.println("Tried to start an old download but couldn't.");
 			}
 		}
 		
+		// Resumable multisource driver.
 		public void doIt() throws IOException {
-			String pathToType = com.myster.filemanager.FileTypeListManager.getInstance().getPathFromType(partialFile.getType());
-			
-			if (pathToType == null) {
-				throw new IOException("blah");
-			}
-			
-			File dir = new File(pathToType);
-			
-			if ((! dir.exists()) || (dir.isFile())) {
-				throw new IOException("blah");
-			}
-			
-			final File file = new File(dir, partialFile.getFilename()+".i");
-			
-			if ((! dir.exists()) || (dir.isFile())) {
-				throw new IOException("blah");
-			}
-		
-			RandomAccessFile randomAccessFile = new RandomAccessFile(file, "rw");
-			
-		
+			final String finalFileName = partialFile.getFilename()+".i";
 			final FileProgressWindow progress = new FileProgressWindow();
+			boolean shortCircuitFlag = false;
+			String pathToType = com.myster.filemanager.FileTypeListManager.getInstance().getPathFromType(partialFile.getType());
 			
 			progress.setTitle("Downloading " + partialFile.getFilename());
 			
-			final MultiSourceDownload download = new MultiSourceDownload(randomAccessFile, new MSDownloadHandler(progress,file), partialFile);
-			download.addListener(new MSDownloadListener() {
-				public void endDownload(MultiSourceEvent event) {
-					if (event.getMultiSourceDownload().isCancelled()) {
-						partialFile.done();
-					}
-				}
+			progress.show();
 			
-				public void doneDownload(MultiSourceEvent event) {
-					try {
-						if (! MultiSourceUtilities.moveFileToFinalDestination(file, progress)) throw new IOException("");
-					} catch (IOException ex) {
-						com.general.util.AnswerDialog.simpleAlert(progress, "Error: Couldn't move and rename file. "+ex); //yuck
-					}
+			File dir = null, file = null;
+			
+			if (pathToType == null) {
+				shortCircuitFlag = true; //Without this a null pointer error shall occur
+			} else {
+				dir = new File(pathToType);
+				file = new File(dir, partialFile.getFilename()+".i");
+			}
+			
+			for(int loopCounter = 0; (loopCounter < 3) && (shortCircuitFlag || 
+						(! dir.exists()) || dir.isFile() ||
+						(! file.exists()) || (! file.isFile())); loopCounter++) {
+				shortCircuitFlag = false;
+				
+				final String DIALOG_PROMPT = "Where is the file " + partialFile.getFilename() + "?";
+						
+				final java.awt.FileDialog dialog = new java.awt.FileDialog(
+													 progress,
+													 DIALOG_PROMPT,
+													 java.awt.FileDialog.LOAD);
+													 
+				dialog.show();
+				
+				if (dialog.getFile() == null) throw new IOException("User canceled");
+				
+				if (! dialog.getFile().equals(finalFileName)) {
+					final String YES_ANSWER = "Yes", NO_ANSWER = "No", CANCEL_ANSWER = "Cancel";
+					AnswerDialog fileIsNotTheSameDialog = new AnswerDialog(progress, "The file name \"" +
+							dialog.getFile() + "\" is not the same name as \"" +
+							finalFileName + ". If this is not the right file it will be end" +
+							" up being destroyed. Are you sure you want to resume this download" +
+							" with this file?",
+							new String[]{YES_ANSWER, NO_ANSWER, CANCEL_ANSWER});
 					
-					partialFile.done();
+					fileIsNotTheSameDialog.answer();
+					if (fileIsNotTheSameDialog.getIt().equals(NO_ANSWER)) {
+						shortCircuitFlag = true;
+						continue;
+					} else if (fileIsNotTheSameDialog.getIt().equals(CANCEL_ANSWER)) {
+						throw new IOException("User Canceled");
+					}
 				}
-			});
+				
+				dir 	= new File(dialog.getDirectory());
+				file	= new File(dialog.getDirectory(), dialog.getFile());
+			}
+		
 			
+			RandomAccessFile randomAccessFile = new RandomAccessFile(file, "rw");
+			
+			
+			final MultiSourceDownload download = new MultiSourceDownload(randomAccessFile, new MSDownloadHandler(progress,file, partialFile), partialFile);
 			
 			//there are no exceptions after this so that is why we can get away with it.
-			progress.show();
 			
 			progress.addWindowListener(new java.awt.event.WindowAdapter() {
 				public void windowClosing(java.awt.event.WindowEvent e) {

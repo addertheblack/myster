@@ -981,7 +981,8 @@ Work on DEV 8:
 				initial offset.
 		-> Added ".m4a", ".XXX.zip" where "XXX" is a sound type to .mp3
 		-> Made so that multi-source downloads are resumed if the program crashes or is quit with downloads open.
-				(MAKE SURE YOUR TYPES ARE SET TO VALID DIRECTORIES!!)
+		-> Fixed a bug where a download that was downloaded to a directory shown by the users would
+				aquire a double ".i".
 	
 	Work on Dev 19.6
 		

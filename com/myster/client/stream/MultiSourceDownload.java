@@ -85,6 +85,7 @@ public class MultiSourceDownload implements Runnable, Controller {
 	public static final int MULTI_SOURCE_BLOCK_SIZE = 512 * 1024;
 	public static final int DEFAULT_CHUNK_SIZE = 2*1024;
 
+	// Note top self -> elminate one of the twin constructors.
 	public MultiSourceDownload(MysterFileStub stub, FileHash hash, long fileLength, MSDownloadListener listener, RandomAccessFile randomAccessFile, MSPartialFile partialFile) throws IOException {
 		this.randomAccessFile	= randomAccessFile;
 		this.stub 				= stub;
@@ -107,7 +108,7 @@ public class MultiSourceDownload implements Runnable, Controller {
 	
 	public MultiSourceDownload(RandomAccessFile randomAccessFile, MSDownloadListener listener, MSPartialFile partialFile) throws IOException {
 		this.randomAccessFile	= randomAccessFile;
-		this.stub				= new MysterFileStub(new MysterAddress(""),partialFile.getType(), partialFile.getFilename());
+		this.stub				= new MysterFileStub(null ,partialFile.getType(), partialFile.getFilename());
 		this.hash				= partialFile.getHash(com.myster.hash.HashManager.MD5);
 		this.fileLength			= partialFile.getFileLength();
 		this.chunkSize			= (int)partialFile.getBlockSize();
@@ -140,6 +141,8 @@ public class MultiSourceDownload implements Runnable, Controller {
 	
 	private synchronized void newDownload(MysterFileStub stub) {
 		if (endFlag) return;
+		
+		if (stub.getMysterAddress() == null) return; //cheap hack
 		
 		InternalSegmentDownloader downloader = new InternalSegmentDownloader(this, stub, chunkSize);
 	

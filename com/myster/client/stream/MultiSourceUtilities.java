@@ -29,7 +29,7 @@ public class MultiSourceUtilities {
 		File file = new File(directory.getPath()+File.separator+stub.getName()+EXTENSION);
 		
 		if (!directory.isDirectory()) {
-			file = askUserForANewFile(file.getName());
+			file = askUserForANewFile(stub.getName());
 			
 			if (file == null) throw new IOException("User Cancelled");
 		}
@@ -52,7 +52,7 @@ public class MultiSourceUtilities {
 					throw new IOException("Could not delete file");
 				}
 			} else if (answer.equals(RENAME)) {
-				file = askUserForANewFile(file.getName());
+				file = askUserForANewFile(stub.getName());
 				
 				if (file == null) throw new IOException ("User Cancelled");
 			}

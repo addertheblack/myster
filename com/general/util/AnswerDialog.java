@@ -69,6 +69,8 @@ public class AnswerDialog extends Dialog {
 			tempframe.setSize(0,0);
 			Toolkit tool=Toolkit.getDefaultToolkit();
 			tempframe.setLocation(tool.getScreenSize().width/2-200, tool.getScreenSize().height/2-150);
+			tempframe.setTitle("Dialog Box!");
+			tempframe.show();
 			return tempframe;
 	}
 	

@@ -3,6 +3,7 @@ package com.myster.client.stream;
 import java.util.Vector;
 import java.util.Hashtable;
 import java.io.File;
+import java.io.IOException;
 
 import com.general.util.AnswerDialog;
 
@@ -16,10 +17,11 @@ public class MSDownloadHandler extends MSDownloadListener {
 	private Hashtable				segmentListeners;
 	private File					fileBeingDownloadedTo;
 	private ProgressBannerManager 	progressBannerManager;
+	private MSPartialFile			partialFile;
 	
 	private int						segmentCounter = 0;
 	
-	public MSDownloadHandler(FileProgressWindow progress, File fileBeingDownloadedTo) {
+	public MSDownloadHandler(FileProgressWindow progress, File fileBeingDownloadedTo, MSPartialFile partialFile) {
 		this.progress 	= progress;
 		
 		macBarCounter		= 1; // the first bar is used for overall progress
@@ -28,6 +30,8 @@ public class MSDownloadHandler extends MSDownloadListener {
 		this.fileBeingDownloadedTo =	fileBeingDownloadedTo;
 		
 		this.progressBannerManager = new ProgressBannerManager(progress);
+		
+		this.partialFile	= partialFile;
 	}
 	
 	public void startDownload(MultiSourceEvent event) {
@@ -69,37 +73,22 @@ public class MSDownloadHandler extends MSDownloadListener {
 	public void endDownload(MultiSourceEvent event) {
 		progress.setText("Download Stopped");
 
-
-
+		if (event.getMultiSourceDownload().isCancelled()) {
+			partialFile.done();
+		}
 	}
 	
 	public void doneDownload(MultiSourceEvent event) {
 		progress.setText("Download Finished");
 		progress.done();
 		
-		/*
-		final String FILE_ENDING = ".i";
-	
-		File theFile = fileBeingDownloadedTo; //!
-	
-		if (! theFile.getName().endsWith(FILE_ENDING)) {
-			AnswerDialog.simpleAlert(progress, "Could not rename file \""+theFile.getName()+"\" because it does not end with "+FILE_ENDING+".");
-			return;
-		}
-	
-		String path = theFile.getAbsolutePath();
-		File someFile = someFile = new File(path.substring(0, path.length()-(FILE_ENDING.length()))); //-2 is for .i
-		
-		if (someFile.exists()) {
-			AnswerDialog.simpleAlert(progress, "Could not rename file from \""+theFile.getName()+"\" to \""+someFile.getName()+"\" because a file by that name already exists.");
-			return;
+		try {
+			if (! MultiSourceUtilities.moveFileToFinalDestination(fileBeingDownloadedTo, progress)) throw new IOException("");
+		} catch (IOException ex) {
+			com.general.util.AnswerDialog.simpleAlert(progress, "Error: Couldn't move and rename file. "+ex); //yuck
 		}
 		
-		if (!theFile.renameTo(someFile)) {
-			AnswerDialog.simpleAlert(progress, "Could not rename file from \""+theFile.getName()+"\" to \""+someFile.getName()+"\" because an unspecified error occured.");
-			return;
-		}
-		*/
+		partialFile.done();
 	}
 	
 	/**

@@ -203,25 +203,7 @@ public class StandardSuite {
 					
 					final MSPartialFile partialFile = MSPartialFile.create(stub.getName(), stub.getType(), MultiSourceDownload.DEFAULT_CHUNK_SIZE,new FileHash[]{hash}, MultiSourceUtilities.getLengthFromStats(mml));
 					
-					msDownload = new MultiSourceDownload(stub, hash, MultiSourceUtilities.getLengthFromStats(mml), new MSDownloadHandler(progress, theFile), new RandomAccessFile(theFile, "rw"), partialFile);
-					msDownload.addListener(new MSDownloadListener() { //warning cut and paste code from MSPArtialFile 
-						public void endDownload(MultiSourceEvent event) {
-							if (event.getMultiSourceDownload().isCancelled()) {
-								partialFile.done();
-							}
-						}
-					
-						public void doneDownload(MultiSourceEvent event) {
-						
-							try {
-								if (! MultiSourceUtilities.moveFileToFinalDestination(theFile, progress)) throw new IOException("");
-							} catch (IOException ex) {
-								com.general.util.AnswerDialog.simpleAlert(progress, "Error: Couldn't move and rename file. "+ex); //yuck
-							}
-							
-							partialFile.done();
-						}
-					});
+					msDownload = new MultiSourceDownload(stub, hash, MultiSourceUtilities.getLengthFromStats(mml), new MSDownloadHandler(progress, theFile, partialFile), new RandomAccessFile(theFile, "rw"), partialFile);
 				}
 				
 				msDownload.run();
