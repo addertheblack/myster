@@ -12,7 +12,7 @@ import java.io.*;
 import com.general.util.LinkedList;
 
 public class AsyncDatagramSocket {
-	private AsyncDatagramSocketListener portListener;
+	private AsyncDatagramListener portListener;
 	private DatagramSocket dsocket;
 	private ManagerThread managerThread;
 	private LinkedList queue=new LinkedList();
@@ -25,7 +25,7 @@ public class AsyncDatagramSocket {
 		managerThread.start();
 	}
 	
-	public void setPortListener(AsyncDatagramSocketListener p) {
+	public void setPortListener(AsyncDatagramListener p) {
 		portListener=p;
 	}
 	

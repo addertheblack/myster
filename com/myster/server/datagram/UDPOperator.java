@@ -6,11 +6,11 @@ import java.net.*;
 import java.io.*;
 import java.util.Hashtable;
 import com.myster.net.MysterAddress;
-import com.general.net.AsyncDatagramSocketListener;
+import com.general.net.AsyncDatagramListener;
 import com.general.net.ImmutableDatagramPacket;
 import com.general.net.AsyncDatagramSocket;
 
-public class UDPOperator implements AsyncDatagramSocketListener{
+public class UDPOperator implements AsyncDatagramListener{
 	int port;
 	AsyncDatagramSocket dsocket=null;
 	ImmutableDatagramPacket workingPacket;

@@ -1,5 +1,5 @@
 package com.general.net;
 
-public interface AsyncDatagramSocketListener {
+public interface AsyncDatagramListener {
 	public void packetReceived(ImmutableDatagramPacket p);
 }
