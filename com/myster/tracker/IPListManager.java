@@ -21,6 +21,8 @@ import com.myster.util.MysterThread;
 import com.myster.util.TypeDescription;
 import com.myster.util.TypeChoice;
 import com.myster.net.MysterAddress;
+import com.myster.client.datagram.PingEventListener;
+import com.myster.client.datagram.PingEvent;
 
 
 public class IPListManager { //aka tracker
@@ -37,7 +39,7 @@ public class IPListManager { //aka tracker
 	
 	BlockingQueue blockingQueue=new BlockingQueue();
 	
-	AddIP[] adderWorkers=new AddIP[10];
+	AddIP[] adderWorkers=new AddIP[5];
 
 	protected IPListManager() {
 		blockingQueue.setRejectDuplicates(true);
@@ -56,21 +58,35 @@ public class IPListManager { //aka tracker
 		
 		(new IPWalker()).start();
 	}
+	
+	private Callback pingEventListener=new Callback();
 	public void addIP(MysterAddress ip) {
-		MysterIPPool pool=MysterIPPool.getInstance();
-		MysterServer mysterServer;
-
-		
-		mysterServer=pool.getMysterIPLevelOne(ip);
-		
-		
-		//Error conditions first.
-		if (mysterServer!=null) {
-			addIPBlocking(mysterServer); //if not truely new then don't make a new thread.
-		} else if (blockingQueue.length()>50) {
-			System.out.println("AddIP queue is at Max length.");
-		} else {
-			blockingQueue.add(ip); //if it's truely new then make a new thread to passively add the ip
+		try {
+			com.myster.client.datagram.UDPPingClient.ping(ip, pingEventListener); //temporary.. should be inside tracker...
+		} catch (IOException ex) {
+			ex.printStackTrace();
+		}	
+	}
+	
+	private class Callback extends PingEventListener {
+		public void pingReply(PingEvent e) {
+			if (e.isTimeout()) return;
+			MysterAddress ip=e.getAddress();
+			MysterIPPool pool=MysterIPPool.getInstance();
+			MysterServer mysterServer;
+	
+			
+			mysterServer=pool.getMysterIPLevelOne(ip);
+			
+			
+			//Error conditions first.
+			if (mysterServer!=null) {
+				addIPBlocking(mysterServer); //if not truely new then don't make a new thread.
+			} else if (blockingQueue.length()>50) {
+				System.out.println("->   !!!!!!!!!!!!!!!!!!!!!!AddIP queue is at Max length.");
+			} else {
+				blockingQueue.add(ip); //if it's truely new then make a new thread to passively add the ip
+			}
 		}
 	}
 	

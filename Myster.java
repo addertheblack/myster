@@ -30,6 +30,16 @@ import com.general.util.AskDialog;
  
 import com.myster.server.ServerFacade;
 
+
+
+import com.myster.server.datagram.*;
+import com.myster.net.*;
+import com.myster.client.datagram.*;
+import com.general.util.*;
+
+
+
+
 public class Myster{
 
 	public static File file;
@@ -46,6 +56,17 @@ public class Myster{
 		System.out.println("java.vm.name                 :"+System.getProperty("java.vm.name"));
 		
 		/*
+		int i_temp=0;
+		byte[] ping=(new String("PONG")).getBytes();
+		for (int i=0; i<ping.length; i++) {
+			i_temp<<=8;
+			i_temp|=255 & ((int)ping[i]);
+			
+		}
+		System.out.println(""+ i_temp);
+		*/
+		
+		/*
 		Useless code:
 		System.setProperty("sun.net.inetaddr.ttl", "0");	//gets around DNS caching problem. not supported in 1.1
 		if (UDPPingClient.ping("127.0.0.1")) System.out.println("yep.");
@@ -53,10 +74,23 @@ public class Myster{
 		try { Runtime.getRuntime().exec("explorer http://www.apple.com/"); } catch (Exception ex) {}
 		*/
 		
-		start();
+		try {
+			PongTransport ponger=new PongTransport();UDPPingClient.setPonger(ponger);
+			DatagramProtocolManager.addTransport(ponger);
+			DatagramProtocolManager.addTransport(new PingTransport());
+			System.out.println("Ping was "+(ponger.ping(new MysterAddress("127.0.0.1"))?"a success":"a timeout"));
+		} catch (Exception ex) {
+			ex.printStackTrace();
+			return;
+		}
+
+		
+		
+		//start();
 		System.out.println( "MAIN THREAD: Starting loader Thread.." );
 		(new Thread() {
 			public void run() {
+				//if (true) return;
 				try {Thread.currentThread().sleep(2000);} catch (Exception ex) {}
 				
 				String macHack="";//(System.getProperty("java.vm.vendor")==null?" (unknown 1.1 java)":System.getProperty("java.vm.vendor"));
@@ -67,7 +101,7 @@ public class Myster{
 				progress.say("Loading UDP Operator..."+macHack);
 				progress.update(10);
 				
-				(new UDPOperator()).start();
+				(new UDPOperator(DatagramProtocolManager.getSocket())).start();
 				
 				progress.say("Loading Server Stats Window..."+macHack);
 				progress.update(15);

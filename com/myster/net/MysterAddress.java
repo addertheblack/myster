@@ -59,8 +59,13 @@ public class MysterAddress {
 		return (port!=6669?getIP()+":"+port:getIP());
 	}
 	
-	public boolean equals(MysterAddress a) {
+	public boolean equals(Object aa) {
+		MysterAddress a=(MysterAddress)aa;
 		if (fullAddress.equals(a.fullAddress)&&(port==a.port)) return true;
 		return false;
+	}
+	
+	public int hashCode() {
+		return fullAddress.hashCode() ^ port;
 	}
 }

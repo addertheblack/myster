@@ -17,24 +17,18 @@ public class UDPOperator implements AsyncDatagramListener{
 	ImmutableDatagramPacket outgoingPacket;
 	
 	
-	public UDPOperator (int p) {
-		port=p;
-	}
-	
-	public UDPOperator() {
-		this(6669);
+	public UDPOperator (AsyncDatagramSocket dsocket) {
+		this.dsocket=dsocket;
+		//dsocket.setPortListener(this);
 	}
 
 	public void start() {
-		try {
-			dsocket=new AsyncDatagramSocket(port);
-		} catch (IOException ex) {
-			ex.printStackTrace();
-		}
-		dsocket.setPortListener(this);
+
 	}
 
 	public void packetReceived(ImmutableDatagramPacket workingPacket) {
+		/*
+		
 		byte[] data=workingPacket.getData();
 		byte[] comp=(new String("PING")).getBytes();
 		if (data[0]==comp[0]&&data[1]==comp[1]&&data[2]==comp[2]&&data[3]==comp[3]) {
@@ -43,5 +37,7 @@ public class UDPOperator implements AsyncDatagramListener{
 			dsocket.sendPacket(outgoingPacket);
 		}
 		System.out.println("Replied to a ping!");
+		
+		*/
 	}
 }

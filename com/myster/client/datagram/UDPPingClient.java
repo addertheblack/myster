@@ -5,6 +5,7 @@ import java.net.*;
 import java.io.InterruptedIOException;
 import java.io.IOException;
 import com.general.util.Semaphore;
+import com.myster.net.MysterAddress;
 
 
 public class UDPPingClient extends Thread{
@@ -26,6 +27,27 @@ public class UDPPingClient extends Thread{
 		return value;
 	}
 	
+	private static PongTransport ponger;
+	
+	
+	public static void setPonger(PongTransport p) {
+		ponger=p;
+	}
+	
+	public static boolean ping(String s) {
+		try {
+			return ponger.ping(new MysterAddress(s));
+		} catch (Exception ex) {
+		ex.printStackTrace();
+			return false;
+		}
+	}
+	
+	public static void ping(MysterAddress address, PingEventListener listener) throws IOException {
+		 ponger.ping(address, listener);
+	}
+	
+	/*
 	public static boolean ping(String s) {
 		DatagramSocket dsocket=null;
 		int port=6669;
@@ -77,6 +99,6 @@ public class UDPPingClient extends Thread{
 		} finally {
 			try { dsocket.close(); } catch (Exception ex) {}
 		}
-	}
+	}*/
 
 }
