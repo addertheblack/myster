@@ -158,11 +158,6 @@ class BlockedThread {
 		this.rate=rate;
 	}
 	
-	private void subStractBytes(int bToSub) {
-		double bToSubD=bToSub;
-		bytesLeft-=bToSubD;
-	}
-	
 	public synchronized void reSleep() {
 		if (thread!=null) {
 			notifyAll();
@@ -181,27 +176,30 @@ class BlockedThread {
 				return;
 			}
 			
+			//sleepAmount=1;
+			
 			//below is voodoo.
-			if (sleepAmount<WAIT_LATENCY) {
-				int randomNumber=(int)(Math.random()*WAIT_LATENCY);
-				if (randomNumber<(WAIT_LATENCY-sleepAmount)) {
+			double waitLatency=WAIT_LATENCY;
+			
+			if (sleepAmount>waitLatency) {
+				sleepAmount-=waitLatency;
+			} else {
+				int randomNumber=(int)(Math.random()*waitLatency);
+				if (randomNumber<(waitLatency-sleepAmount)) {
 					thread=null;
-					System.out.println("Skip");
+					//System.out.println("Skip");
 					return;
 				} else {
 					sleepAmount=1;
 				}
-			} else {
-				sleepAmount-=WAIT_LATENCY;
-				if (sleepAmount<=0) sleepAmount=1;
 			}
 			
 			try {
 				if (sleepAmount==1) {
 					long sstartTime=System.currentTimeMillis();
 					wait(sleepAmount);
-					WAIT_LATENCY=System.currentTimeMillis()-sstartTime;
-					System.out.println("Wait latency: "+WAIT_LATENCY);
+					WAIT_LATENCY=System.currentTimeMillis()-sstartTime+1-sleepAmount; //the +1 is important
+					//System.out.println("Wait latency: "+WAIT_LATENCY);
 				} else {
 					wait(sleepAmount);
 				}

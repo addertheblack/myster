@@ -294,7 +294,6 @@ public class FileSenderThread extends ServerThread {
 				if (endflag) throw new IOException("toss and catch");
 				sendFile(file, out);
 				
-				
 				try {
 					in.close();
 					out.close();

@@ -8,9 +8,9 @@ import com.myster.net.PongPacket;
 import com.myster.net.MysterAddress;
 
 public class PingTransport extends DatagramTransport {
-	static final int transportNumber=1346981447;
+	static final short transportNumber=20553;
 	
-	public int getTransportCode() {
+	public short getTransportCode() {
 		return transportNumber;
 	}
 	

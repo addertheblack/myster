@@ -72,7 +72,7 @@ public class DatagramProtocolManager {
 		}
 		
 		public boolean addTransport(DatagramTransport t) {
-			if (transportProtocols.get(new Integer(t.getTransportCode()))!=null) return false;	//could not add because it already exists.
+			if (transportProtocols.get(new Short(t.getTransportCode()))!=null) return false;	//could not add because it already exists.
 			
 			transportProtocols.put(new Integer(t.getTransportCode()), t);
 			
@@ -88,7 +88,6 @@ public class DatagramProtocolManager {
 		public void packetReceived(ImmutableDatagramPacket p) {
 			try {
 				DatagramTransport t=(DatagramTransport)(transportProtocols.get(new Integer(getCodeFromPacket(p))));
-				
 				if (t!=null) {
 					t.packetReceived(p);
 				}
@@ -102,14 +101,14 @@ public class DatagramProtocolManager {
 		}
 	
 		private static int getCodeFromPacket(ImmutableDatagramPacket p) throws IOException {
-			byte[] data=p.getDataRange(0, 4);
+			byte[] data=p.getDataRange(0, 2);
 	
-			if (p.getSize()<4) throw new IOException();
+			if (p.getSize()<2) throw new IOException();
 					
 			int code=0;
 			for (int i=0; i<data.length; i++) {
 				code<<=8; //inititally it shifts zeros...
-				code|=data[i];
+				code|=((int)data[i]) & 255; //oops sign extending bug was here.
 			}
 			
 			return code;

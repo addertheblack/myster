@@ -32,7 +32,7 @@ public abstract class DatagramTransport implements DatagramSender {
 		this.sender=sender; //weeeee...
 	}
 	
-	public abstract int getTransportCode() ;
+	public abstract short getTransportCode() ;
 	
 	public abstract void packetReceived(ImmutableDatagramPacket p) throws BadPacketException ;
 

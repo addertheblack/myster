@@ -44,6 +44,8 @@ import com.myster.bandwidth.BandwidthManager;
 
 import java.util.Locale;
 
+import com.myster.transaction.*; //testing
+
 public class Myster{
 
 	public static File file;
@@ -70,9 +72,10 @@ public class Myster{
 		System.out.println("java.vm.vendor               :"+System.getProperty("java.vm.vendor"));
 		System.out.println("java.vm.name                 :"+System.getProperty("java.vm.name"));
 		
+		
 		/*
 		int i_temp=0;
-		byte[] ping=(new String("PONG")).getBytes();
+		byte[] ping=(new String("PI")).getBytes();
 		for (int i=0; i<ping.length; i++) {
 			i_temp<<=8;
 			i_temp|=255 & ((int)ping[i]);
@@ -80,6 +83,7 @@ public class Myster{
 		}
 		System.out.println(""+ i_temp);
 		*/
+
 		
 		/*
 		Useless code:
@@ -88,22 +92,43 @@ public class Myster{
 		else System.out.println("nope.");
 		try { Runtime.getRuntime().exec("explorer http://www.apple.com/"); } catch (Exception ex) {}
 		*/
-		
+
 		/*
-		MML mml=new MML();
-		
-		mml.put("/jack/hill/duck", "this is the value");
-		mml.put("/jack/hill/muck", "this is the value1");
-		mml.put("/jack/pill", "this is the value3");
-		mml.put("/jack/hill/zill", "this is the value4");
 		try {
-			MML mml2=new MML(mml.toString());
+		TransactionManager.addTransactionProtocol(new TransactionProtocol() {
+			public  int getTransactionCode() {
+				return 666;
+			}
+			
+			public void transactionReceived(Transaction transaction)  {
+				System.out.println("Got a transaction!.");
+				sendTransaction(new Transaction(transaction, new byte[0]));
+			}
+		});
+		
+		final MysterAddress address=new MysterAddress("127.0.0.1");
+		
+		TransactionSocket s=new TransactionSocket(address, 666);
+		
+		DataPacket data=new DataPacket() {
+				public MysterAddress getAddress() { return address; }
+				public byte[] getData() { return new byte[1]; }
+				public byte[] getBytes()	{ return new byte[1]; }
+				public byte[] getHeader() 	{ return new byte[1]; }
+		};
+		
+		s.sendTransaction(data, new TransactionListener() {
+				public  void transactionReply(TransactionEvent e) { System.out.println("REPLY!"); }
+				public  void transactionTimout(TransactionEvent e) { System.out.println("TIMOUT!");}
+		});
+
 		} catch (Exception ex) {
 			ex.printStackTrace();
+			return;
 		}
 		
-		if (true==true) return;*/
-		
+		if (true==true) return;
+		*/
 		start();
 		
 		

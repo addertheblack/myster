@@ -16,7 +16,7 @@ import com.general.events.EventDispatcher;
 import com.general.events.SyncEventDispatcher;
 
 public class PongTransport extends DatagramTransport {
-	static final int transportNumber=1347374663;
+	static final short transportNumber=20559;
 	static final int TIMEOUT=60000;
 	static final int FIRST_TIMEOUT=10000;
 	
@@ -26,7 +26,7 @@ public class PongTransport extends DatagramTransport {
 	MysterAddress a;
 	
 	
-	public int getTransportCode() {
+	public short getTransportCode() {
 		return transportNumber;
 	}
 	
