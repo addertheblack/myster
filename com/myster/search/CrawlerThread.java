@@ -171,6 +171,14 @@ public class CrawlerThread extends MysterThread {
 		for (int i=0; i<filestatsvector.size(); i++) {
 			((FileInfoGetter)(filestatsvector.elementAt(i))).flagToEnd();	//tells all the threads to cancel
 		}
+		
+		/*
+		try {
+			socket.close();
+		} catch (Exception ex) {
+			System.out.println("Crawler thread was not happy about being asked to close.");
+		}
+		*/
 	}
 	
 	private void endOthers() {
