@@ -6,6 +6,8 @@ import java.awt.Rectangle;
 import java.awt.Toolkit;
 import java.awt.event.ComponentEvent;
 import java.awt.event.ComponentListener;
+import java.awt.event.WindowAdapter;
+import java.awt.event.WindowEvent;
 import java.util.NoSuchElementException;
 import java.util.StringTokenizer;
 import java.util.Vector;
@@ -66,16 +68,26 @@ public class WindowLocationKeeper {
             }
 
             public void componentHidden(ComponentEvent e) {
-                prefs.remove(key + privateID);
-                Preferences.getInstance().put(PREF_KEY, prefs);
+                deleteLocation(((Component) (e.getSource())), privateID);
             }
 
+        });
+        
+        frame.addWindowListener(new WindowAdapter() {
+        	public void windowClosing(WindowEvent e) {
+        		deleteLocation(((Component) (e.getSource())), privateID);
+        	}
         });
     }
 
     private void saveLocation(Component c, int id) {
         prefs.put(key + id, rect2String(c.getBounds()));
 
+        Preferences.getInstance().put(PREF_KEY, prefs);
+    }
+    
+    private void deleteLocation(Component c, int id) {
+        prefs.remove(key + id);
         Preferences.getInstance().put(PREF_KEY, prefs);
     }
 
