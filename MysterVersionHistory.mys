@@ -1018,7 +1018,12 @@ Work on DEV 8:
 		-> Moved ove the top ten conneciton section to UDP / TCP.
 		-> Moved over the get type list to UDP / TCP.
 		
-		bdaba746d51978dbe46844c23f566332
+	Work on DEV 21
+		2004/04/12
+		-> Fixed a bug where the length of the UDP packet was not reset after each packet.
+		-> 
+		
+		
 (Red List)
 to do:
 	Need to fix bug with caching MP3 ID3 info
