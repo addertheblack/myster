@@ -187,7 +187,22 @@ public class MML implements Serializable {
 		}
 	}
 	/*
-	
+	public synchronized MML copyMML(String path) {
+		String sectionString;
+		try {
+			sectionString = makeString(getBranch(startNode, path));
+		} catch (NonExistantPathException ex) {
+			return null;
+		}
+		
+		try {
+			return new MML(sectionString);
+		} catch (Exception ex) {
+			throw new Error("A serious programming error in copyMML(String)");
+		}
+	}
+	*/
+	/*
     private void calculateMemoryUsage(String s) throws Exception {
       mml=new MML(s);
       //startNode=createBranch(s, null);

@@ -9,12 +9,14 @@ public class TransactionEvent extends GenericEvent {
 
 	long transactionTime;
 	MysterAddress address;
+	Transaction transaction;
 	
-	public TransactionEvent(int id, long transactionTime, MysterAddress address) {
+	public TransactionEvent(int id, long transactionTime, MysterAddress address, Transaction transaction) {
 		super(id);
 		
 		this.transactionTime=transactionTime;
 		this.address=address;
+		this.transaction=transaction;
 	}
 	
 	public MysterAddress getAddress() {
@@ -23,5 +25,14 @@ public class TransactionEvent extends GenericEvent {
 	
 	public long getTransactionTime() { //ping time
 		return transactionTime;
+	}
+	
+	
+	/**
+	 *  Returns the transaction attached to this event. Returns null if transaction
+	 *  is not available..
+	 */
+	public Transaction getTransaction() {
+		return transaction;
 	}
 }

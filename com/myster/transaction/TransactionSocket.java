@@ -17,10 +17,10 @@ public class TransactionSocket {
 	}
 	
 	//public Transaction sendTransactionBlocking(Transaction r) {
-	//	return reply;	//blocking version
+	//	return reply;	//blocking version (not yet implemented)
 	//}
 	
 	public void close() {
-		//nothing
+		//nothing (not nessesairy for transactions)
 	}
 }

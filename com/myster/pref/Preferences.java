@@ -280,6 +280,19 @@ public class Preferences {
 		return true; //wow.. retarded...
 	}
 	
+	/**
+	*	Flushes the Preferences to disk
+	* <p>
+	*	When preferences are told to save, the save opperation might not happen
+	*	imediately since saved are batched automatically to avoid acessive
+	*	disk activity. Calling this function guarentees the information will be saved
+	* <p>
+	*	Warning: is blocking and accesses io so this opperation is slow.
+	*/
+	public void flush() {
+		saveFile();
+	}
+	
 	
 	private class SaveThread extends MysterThread {
 		private Semaphore sem=new Semaphore(0); 

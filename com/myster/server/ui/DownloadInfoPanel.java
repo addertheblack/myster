@@ -66,6 +66,8 @@ public class DownloadInfoPanel extends Panel {
 		list.setColumnWidth(4,70);
 		list.setColumnWidth(5,100);
 		
+		list.addMCListEventListener(chandler.new DownloadStatsMCListEventHandler());
+		
 		p.doLayout();
 		
 		
@@ -162,6 +164,20 @@ public class DownloadInfoPanel extends Panel {
 		
 			public void actionPerformed(ActionEvent e) {
 				newConnectWindow();
+			}
+		}
+		
+		public class DownloadStatsMCListEventHandler implements MCListEventListener {
+			public void doubleClick(MCListEvent e) {
+				newConnectWindow();
+			}
+			
+			public void selectItem(MCListEvent e) {
+				//nothing
+			}
+			
+			public void unselectItem(MCListEvent e) {
+				//nothing
 			}
 		}
 		

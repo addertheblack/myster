@@ -44,6 +44,8 @@ import com.myster.bandwidth.BandwidthManager;
 
 import java.util.Locale;
 
+import com.myster.transaction.*; //test
+import com.myster.message.MessageManager;
 
 public class Myster{
 
@@ -93,7 +95,7 @@ public class Myster{
 		*/
 
 
-		/*
+/*
 		try {
 		TransactionManager.addTransactionProtocol(new TransactionProtocol() {
 			public  int getTransactionCode() {
@@ -128,7 +130,20 @@ public class Myster{
 		}
 		
 		if (true==true) return;
-		*/
+*/
+
+		MessageManager.init();
+		
+		try {
+			MessageManager.sendInstantMessage(new MysterAddress("127.0.0.1"), "Hello");
+			MessageManager.sendInstantMessage(new MysterAddress("127.0.0.1"), "Hello");
+			MessageManager.sendInstantMessage(new MysterAddress("127.0.0.1"), "Hello");
+		} catch (Exception ex) {
+			ex.printStackTrace();
+		}
+		
+		//if (true==true) return ;
+		
 
 		start();
 		
@@ -218,6 +233,7 @@ public class Myster{
 					//SearchWindow sw=new SearchWindow();
 					//sw.say(Myster.tr("Idle.."));
 				}
+		
 			}
 		}).start();
 	}
@@ -332,7 +348,15 @@ public class Myster{
 		}
 	}
 	
+	/**
+	* Instead of calling System.exit() directly to quit, call this routine. It makes shure cleanup is done.
+	*
+	* NOTE: It's a very fequent occurence for the program to quit without calling this routine
+	*		 so your code should in no  way depend on it. (Some platform do not call this at all
+	*		 when quitting!).
+	*/
 	public static void quit() {
+		Preferences.getInstance().flush(); //flushes prefs to disk.
 		File file =new File(fileLockName);
 		if (file.exists()) {
 			file.delete();

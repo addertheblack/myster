@@ -1,6 +1,8 @@
 
 package com.myster.transaction;
 
+import com.myster.net.BadPacketException;
+
 public abstract class TransactionProtocol {
 	private TransactionSender sender; 
 	
@@ -23,9 +25,9 @@ public abstract class TransactionProtocol {
 		this.sender=sender; //weeeee...
 	}
 	
-	public final void sendTransaction(Transaction reply) {
+	protected final void sendTransaction(Transaction reply) {
 		sender.sendTransaction(reply);
 	}
 	
-	public abstract void transactionReceived(Transaction transaction) ;
+	public abstract void transactionReceived(Transaction transaction) throws BadPacketException ;
 }

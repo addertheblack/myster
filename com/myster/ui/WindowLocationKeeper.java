@@ -102,7 +102,10 @@ public class WindowLocationKeeper {
 	
 	public static boolean fitsOnScreen(Rectangle rect) {
 		Rectangle screenBorders=new Rectangle(Toolkit.getDefaultToolkit().getScreenSize());
-		return (rect.x+50<screenBorders.width && rect.y+50<screenBorders.height);
+		return (rect.x>0 
+				&& rect.y>0 
+				&& (rect.x+50)<screenBorders.width 
+				&& rect.y+50<screenBorders.height);
 	}
 
 	public static synchronized Rectangle[] getLastLocs(String key) {

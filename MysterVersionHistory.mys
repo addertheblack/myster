@@ -786,13 +786,20 @@ Work on DEV 8:
      	-> made bandwidth prefs pane UI
      	-> baby_p added more .extensions to the file list filter
      	-> added a ROMS type.
-     	-> Working on a Chat plugin (not finished)
-     	-> Working on a UDP Transaction system
-     	-> Finished UDP Transaction sub system
-     	-> Added proper window behavior (Windows now remember their location on close and pop back when opened)
+     	-> Working on a Chat plugin (not finished) (still!!!)
+     	-> Working on a UDP Transaction system (Finished but not implemented in the rest
+     			of the app)
+     	-> Added proper window behavior
+     			(Window positions are now remebered)
+     	-> Fixed loss of recent prefs when quitting bug
      	-> Myster is now ~20 000 lines of code
      	-> Fixed a bug in my new MML parser implementation (<></> error).
      			It was dicovered when I was working on the chat plugin.
      	-> Started work on changing the chat plugin architecture into something less crap.
      	
-     	
+    Work on DEV 17
+      2003/02/22
+     	-> Made it so that clicking an entry in the download stats (server stats) makes a connect window pop up
+     	-> Made it so that if a p2p window is created with an ip, the windo automatically connects.
+     	-> Wrote up an instant messaging system fixing bugs with the Myster UDP transaction libraries as I go.
+	  	

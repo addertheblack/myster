@@ -67,8 +67,9 @@ public class ClientWindow extends MysterFrame implements Sayable{
 		super("Direct Connection "+(++counter));
 		makeClientWindow();
 		IP.setText(ip);
-		connect.dispatchEvent(new KeyEvent(connect, KeyEvent.KEY_PRESSED, System.currentTimeMillis(), 0, KeyEvent.VK_ENTER, (char)KeyEvent.VK_ENTER)); 
-		connect.dispatchEvent(new KeyEvent(connect, KeyEvent.KEY_RELEASED, System.currentTimeMillis(), 0, KeyEvent.VK_ENTER, (char)KeyEvent.VK_ENTER));   
+		//connect.dispatchEvent(new KeyEvent(connect, KeyEvent.KEY_PRESSED, System.currentTimeMillis(), 0, KeyEvent.VK_ENTER, (char)KeyEvent.VK_ENTER)); 
+		//connect.dispatchEvent(new KeyEvent(connect, KeyEvent.KEY_RELEASED, System.currentTimeMillis(), 0, KeyEvent.VK_ENTER, (char)KeyEvent.VK_ENTER)); 
+		connect.dispatchEvent(new ActionEvent(connect, ActionEvent.ACTION_PERFORMED,"Connect Button"));
 	}
 	
 	private void makeClientWindow() {

@@ -72,6 +72,9 @@ public class TransactionManager implements TransactionSender {
 				
 				if (protocol==null) {
 					System.out.println("No Transaction protocol registered under type: "+transaction.getTransactionCode());
+					
+					//return error here!
+					
 					return;
 				}
 				
@@ -115,7 +118,8 @@ public class TransactionManager implements TransactionSender {
 					new TransactionEvent(
 						(transaction==null?TransactionEvent.TIMEOUT:TransactionEvent.REPLY),
 						System.currentTimeMillis()-record.timeStamp,
-						(transaction==null?null:transaction.getAddress())));
+						(transaction==null?null:transaction.getAddress()),
+						transaction));
 		}
 		
 		
