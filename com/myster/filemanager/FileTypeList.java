@@ -33,7 +33,7 @@ import com.myster.type.MysterType;
 import com.myster.util.MysterExecutor;
 import com.myster.util.MysterThread;
 
-class FileTypeList extends MysterThread {
+public class FileTypeList extends MysterThread {
     private Vector filelist; //List of java.io.FileItem objects that are
 
     // shared.
@@ -118,7 +118,7 @@ class FileTypeList extends MysterThread {
      * 
      * @return true if this file list has an update pending.
      */
-    public boolean isIndexing() {
+    public synchronized boolean isIndexing() {
         return indexingFuture != null;
     }
 
@@ -136,6 +136,7 @@ class FileTypeList extends MysterThread {
     public synchronized void setShared(boolean b) {
         local_prefs.put(ACTIVE_PREF, (b ? "true" : "false"));
         savePrefs();
+        assertFileList();
     }
 
     /**
@@ -424,6 +425,11 @@ class FileTypeList extends MysterThread {
             }
             timeoflastupdate = 0; //never updated (we just buggered up the
             // list, you see...)
+            
+            if (indexingFuture!=null) {
+                indexingFuture.cancel();
+                indexingFuture = null;
+            }
             return;
         }
 

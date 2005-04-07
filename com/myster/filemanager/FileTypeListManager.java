@@ -84,16 +84,16 @@ public class FileTypeListManager {
         }
     }
 
-    /*
+    /**
      * Gets a File Type List from a type. This routine is only used internally.
-     * The reasone it is not accessable is to hide implementaion details of the
+     * The reasone it is not accessible is to hide implementation details of the
      * FileManager. That and to keep the FileManager's interface as simple as
      * possible
      * 
      * @param type a Myster file type as a String. @return The FileTypeList for
      * that type if it exists; null otherwise.
      */
-    private FileTypeList getFileTypeList(MysterType type) {
+    public FileTypeList getFileTypeList(MysterType type) {
         for (int i = 0; i < filelist.length; i++) {
             if (filelist[i].getType().equals(type))
                 return filelist[i];

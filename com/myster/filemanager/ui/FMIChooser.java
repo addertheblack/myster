@@ -27,6 +27,8 @@ import java.awt.event.ItemListener;
 import java.util.Enumeration;
 import java.util.Hashtable;
 
+import com.general.util.Timer;
+import com.general.util.TimerThread;
 import com.myster.filemanager.FileTypeListManager;
 import com.myster.pref.ui.PreferencesPanel;
 import com.myster.type.MysterType;
@@ -51,7 +53,7 @@ public class FMIChooser extends PreferencesPanel {
 
     private Button button;
 
-    private Label textfeild;
+    private Label pathLabel;
 
     private Label folderl, filelistl;
 
@@ -61,9 +63,11 @@ public class FMIChooser extends PreferencesPanel {
 
     private Hashtable hash = new Hashtable();
 
-    private final int XPAD = 10;
+    private static final int XPAD = 10;
 
-    private final int SAB = 200;
+    private static final int SAB = 200;
+
+    private static final int MAX_PATH_LABEL_SIZE = STD_XSIZE - 100 - 3 * XPAD - 5;
 
     public FMIChooser(FileTypeListManager manager) {
         this.manager = manager;
@@ -75,7 +79,7 @@ public class FMIChooser extends PreferencesPanel {
         choice.setLocation(5, 4);
         choice.setSize(STD_XSIZE - XPAD - XPAD - SAB, 20);
         choice.addItemListener(new ItemListener() {
-            public synchronized void itemStateChanged(ItemEvent a) {
+            public void itemStateChanged(ItemEvent a) {
                 restoreState();
                 repaint();
             }
@@ -86,7 +90,7 @@ public class FMIChooser extends PreferencesPanel {
         setAllButton.setLocation(STD_XSIZE - XPAD - SAB, 4);
         setAllButton.setSize(SAB, 20);
         setAllButton.addActionListener(new ActionListener() {
-            public synchronized void actionPerformed(ActionEvent a) {
+            public void actionPerformed(ActionEvent a) {
                 String newPath = path;
 
                 for (int i = 0; i < choice.getItemCount(); i++) {
@@ -97,12 +101,11 @@ public class FMIChooser extends PreferencesPanel {
                     if (o != null) {
                         bool_temp = ((SettingsStruct) (o)).shared;
                     } else {
-                        bool_temp = FMIChooser.this.manager.isShared(choice
-                                .getType(i));
+                        bool_temp = FMIChooser.this.manager.isShared(choice.getType(i));
                     } //end
 
-                    hash.put(choice.getType(i), new SettingsStruct(choice
-                            .getType(i), newPath, bool_temp));
+                    hash.put(choice.getType(i), new SettingsStruct(choice.getType(i), newPath,
+                            bool_temp));
                     System.out.println(newPath);
                 }
             }
@@ -111,14 +114,13 @@ public class FMIChooser extends PreferencesPanel {
 
         path = manager.getPathFromType(choice.getType());
 
-        checkbox = new Checkbox("Share this type", manager.isShared(choice
-                .getType()));
+        checkbox = new Checkbox("Share this type", manager.isShared(choice.getType()));
         checkbox.setLocation(10, 55);
         checkbox.setSize(150, 25);
         checkbox.addItemListener(new ItemListener() {
             public void itemStateChanged(ItemEvent e) {
-                hash.put(choice.getType(), new SettingsStruct(choice.getType(),
-                        path, checkbox.getState()));
+                hash.put(choice.getType(), new SettingsStruct(choice.getType(), path, checkbox
+                        .getState()));
             }
         });
         add(checkbox);
@@ -139,9 +141,9 @@ public class FMIChooser extends PreferencesPanel {
                     return;
                 }
                 path = p;
-                textfeild.setText(TIM(path));
-                hash.put(choice.getType(), new SettingsStruct(choice.getType(),
-                        path, checkbox.getState()));
+                setPathLabel(path);
+                hash.put(choice.getType(), new SettingsStruct(choice.getType(), path, checkbox
+                        .getState()));
             }
 
         });
@@ -152,16 +154,17 @@ public class FMIChooser extends PreferencesPanel {
         folderl.setSize(100, 20);
         add(folderl);
 
-        textfeild = new Label(TIM(manager.getPathFromType(choice.getType()))); //dependency
-                                                                               // on
-                                                                               // choice
-                                                                               // being
-                                                                               // created
-                                                                               // first.
-        textfeild.setLocation(100 + XPAD + 5, 85);
+        pathLabel = new Label(); //dependency
+        // on
+        // choice
+        // being
+        // created
+        // first.
+        pathLabel.setLocation(100 + XPAD + 5, 85);
         //textfeild.setEditable(false);
-        textfeild.setSize(STD_XSIZE - 100 - 2 * XPAD - 5, 20);
-        add(textfeild);
+        pathLabel.setSize(STD_XSIZE - 100 - 3 * XPAD - 5, 20);
+        setPathLabel(manager.getPathFromType(choice.getType()));
+        add(pathLabel);
 
         filelistl = new Label("Shared Files (click \"Apply\" to see changes) :");
         filelistl.setLocation(10, 110);
@@ -176,6 +179,14 @@ public class FMIChooser extends PreferencesPanel {
         repaint();
         reset();
         restoreState();
+    }
+
+    private void setPathLabel(String newPath) {
+        pathLabel.setText(newPath);
+        for (int i = newPath.length(); MAX_PATH_LABEL_SIZE < pathLabel.getPreferredSize().width
+                && i >= 0; i--) {
+            pathLabel.setText(TIM(newPath, i));
+        }
     }
 
     public void save() {
@@ -236,27 +247,34 @@ public class FMIChooser extends PreferencesPanel {
             path = ss.path;
             checkbox.setState(ss.shared);
         } else {
-            loadStateFromPrefs(); //if the state hasen't been chenged then load
-                                  // form prefs.
+            loadStateFromPrefs(); //if the state hasen't been changed then load
+            // form prefs.
         }
 
-        flist.removeAll();
-        flist.add("<Indexing files.... this may take a while.....>");
-        textfeild.setText(TIM(path));
+        setPathLabel(path);
         String[] s = manager.getDirList(choice.getType());
+        boolean isShared = manager.isShared(choice.getType());
 
         flist.removeAll();
+        if (manager.getFileTypeList(choice.getType()).isIndexing()) {
+            flist.add("<Indexing files...>");
+            pokeTimer();
+            return;
+        } else {
+            if (timer!=null)
+                timer.cancelTimer(); //speed hack.
+            
+            timer = null;
+        }
 
         if (s != null) {
-            if (!checkbox.getState()) {
+            if (!isShared) {
                 flist.add("<no files are being shared, sharing is disabled>");
             } else if (s.length == 0) {
-                flist
-                        .add("<no files are being shared, there's no relevent files in this folder>");
+                flist.add("<no files are being shared, there's no relevant files in this folder>");
             } else {
                 if (s.length > 150) {
-                    flist.add("<You are sharing " + s.length
-                            + " files (too many to list)>");
+                    flist.add("<You are sharing " + s.length + " files (too many to list)>");
                 } else {
                     for (int i = 0; i < s.length; i++) {
                         flist.add(s[i]);
@@ -266,20 +284,43 @@ public class FMIChooser extends PreferencesPanel {
         }
     }
 
-    /*
-     * TIM = Trim in the Middle. This is a utility function that keepos strings
-     * under 69 characters and removes characters from the middle and adding
-     * "..."
-     */
-    private String TIM(String input) {
-        final int MAX = 69;
-        if (input.length() > MAX) {
-            return input.substring(0, 25)
-                    + "..."
-                    + input.substring(input.length() - (MAX - (28)), input
-                            .length());
+    Timer timer = null;
+
+    public void pokeTimer() {
+        if (timer != null)
+            return;
+        if (manager.getFileTypeList(choice.getType()).isIndexing()) {
+            timer = new Timer(new Runnable() {/*
+                                               * (non-Javadoc)
+                                               * 
+                                               * @see java.lang.Runnable#run()
+                                               */
+                public void run() {
+                    timer = null;
+                    pokeTimer();
+                }
+            }, 100);
+        } else {
+            restoreState();
         }
-        return input;
+    }
+
+    /*
+     * TIM = Trim in the Middle. This is a utility function that keeps strings
+     * under numberOfChars characters and removes characters from the middle and
+     * adding "..."
+     */
+    private String TIM(String input, int numberOfChars) {
+        if (input.length() <= numberOfChars)
+            return input;
+        if (input.length() < 2)
+            return "...";
+
+        int amountToDelete = numberOfChars / 2;
+        return input.substring(0, amountToDelete)
+                + "..."
+                + input.substring(input.length() - (numberOfChars - amountToDelete) - 1, input
+                        .length());
     }
 
 }

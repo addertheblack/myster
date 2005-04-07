@@ -264,7 +264,7 @@ public class Myster {
 
             Thread.sleep(1);
 
-            Util.invokeAndWait(new Runnable() {
+            Util.invoke(new Runnable() {
                 public void run() {
                     try {
                         com.myster.client.stream.MSPartialFile.restartDownloads();

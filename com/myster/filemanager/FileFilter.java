@@ -42,7 +42,7 @@ class FileFilter {
         if (hasExtension(file.getName(), extensions))//entry.extensions))
             return true;
 
-        if (typeDescription.isArchived()) {
+        if (typeDescription.isArchived() && isArchive(file.getName())) {
             try {
                 ZipFile zipFile = new ZipFile(file);
                 try {
@@ -68,6 +68,11 @@ class FileFilter {
             if (lowFilename.endsWith(extensions[i]))
                 return true;
         return false;
+    }
+    
+    private static boolean isArchive(String fileName) {
+        fileName = fileName.toLowerCase();
+        return fileName.startsWith(".zip") || fileName.startsWith(".gz") || fileName.startsWith(".gzip");
     }
 }
 
