@@ -93,7 +93,7 @@ public class ProgressBar extends Panel {
     
     private synchronized void assertTimer() {
     	if (updaterTimer==null)
-    		updaterTimer = new Timer(timerCode, 50);
+    		updaterTimer = new Timer(timerCode, 75);
     }
     
     private synchronized void runTimerIfAppropriate() {

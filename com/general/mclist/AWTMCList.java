@@ -342,7 +342,7 @@ public class AWTMCList extends Panel implements MCList {
         // under MacOS X.
         try {
             pane.invalidate(); //invalidate current layout.
-            Util.invoke(new Runnable() {
+            Util.invokeLater(new Runnable() {
                 public void run() {
                     pane.validate(); //update scroll pane to possible changes in size.
                     repaint();

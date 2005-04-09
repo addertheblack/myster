@@ -62,7 +62,8 @@ public class FileTypeList extends MysterThread {
     // queries)
 
     private volatile Future indexingFuture = null; // if true then the list is
-                                                   // indexing...
+
+    // indexing...
 
     /**
      * Creates a new FileTypeList. This shouldn't be called by anybody but the
@@ -425,8 +426,8 @@ public class FileTypeList extends MysterThread {
             }
             timeoflastupdate = 0; //never updated (we just buggered up the
             // list, you see...)
-            
-            if (indexingFuture!=null) {
+
+            if (indexingFuture != null) {
                 indexingFuture.cancel();
                 indexingFuture = null;
             }
@@ -508,12 +509,12 @@ public class FileTypeList extends MysterThread {
          */
         private Vector indexFiles(MysterType type, String rootdir) {
             Vector temp = new Vector(10000, 10000); //Preallocates a whole lot
-                                                    // of
+            // of
             // space
             File dir = new File(rootdir);
             if (dir.exists() && dir.isDirectory())
                 indexDir(type, dir, temp, 5); //Indexes root dir into temp with
-                                              // 5 levels
+            // 5 levels
             // deep.
             temp.trimToSize(); //save some space
             return temp;
@@ -552,14 +553,15 @@ public class FileTypeList extends MysterThread {
                     if (temp.isDirectory()) {
                         indexDir(type, temp, filelist, telomere);
                     } else {
-                        FileItem item = createFileItem(temp);
-                        if (!filelist.contains(item)) {
-                            if (FileFilter.isCorrectType(type, temp)) {
-                                filelist.addElement(createFileItem(temp));
+                        if (FileFilter.isCorrectType(type, temp)) {
+                            FileItem fileItem = createFileItem(temp);
+                            if (!filelist.contains(fileItem)) {//Don't add a
+                                                               // file to the
+                                                               // list if it's
+                                                               // already there
+                                filelist.addElement(fileItem);
                             }
-                        } //Don't add a file to the list if it's already there
-                          // of
-                        // if a file of the same name is there.. (eg: icon)
+                        }
                     }
                 }
             }

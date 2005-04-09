@@ -111,7 +111,11 @@ public class MSPartialFile {
         MSPartialFile[] files = list();
 
         for (int i = 0; i < files.length; i++) {
-            startDownload(files[i]);
+            try {
+                startDownload(files[i]);
+            } catch (IOException ex) {
+                ex.printStackTrace();
+            }
         }
     }
 
@@ -207,7 +211,7 @@ public class MSPartialFile {
                 progress.hide();
             }
         });
-        new Thread(download).start(); //this is a bit stupid. The run() method is none-blocking!
+        download.run();
     }
 
     private static class UserCanceledException extends IOException {

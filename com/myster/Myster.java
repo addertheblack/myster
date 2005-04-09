@@ -92,10 +92,10 @@ public class Myster {
         System.out.println("MAIN THREAD: Starting loader Thread..");
 
         try {
-            Thread.sleep(1);
-
             final com.myster.util.ProgressWindow[] tempArray = new ProgressWindow[1];
-
+            
+            Util.initInvoke();
+            
             Util.invokeAndWait(new Runnable() {
 
                 public void run() {
@@ -187,7 +187,7 @@ public class Myster {
 
             Thread.sleep(1);
 
-            Util.invoke(new Runnable() {
+            Util.invokeLater(new Runnable() {
                 public void run() {
                     progress.setText(I18n.tr("Loading Server Fascade..."));
                     progress.setValue(25);
@@ -197,7 +197,7 @@ public class Myster {
 
             ServerFacade.assertServer();
 
-            Util.invoke(new Runnable() {
+            Util.invokeLater(new Runnable() {
                 public void run() {
                     progress.setText(I18n.tr("Loading Instant Messaging..."));
                     progress.setValue(72);
@@ -264,7 +264,7 @@ public class Myster {
 
             Thread.sleep(1);
 
-            Util.invoke(new Runnable() {
+            Util.invokeLater(new Runnable() {
                 public void run() {
                     try {
                         com.myster.client.stream.MSPartialFile.restartDownloads();
@@ -386,7 +386,7 @@ public class Myster {
                                 sin.readInt();
                                 sin.readInt();
                                 sout.write(1);
-                                Util.invoke(new Runnable() {
+                                Util.invokeLater(new Runnable() {
                                     public void run() {
                                         new SearchWindow().setVisible(true);
                                     }

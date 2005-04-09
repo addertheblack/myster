@@ -81,7 +81,7 @@ public class Timer implements Comparable { //almost but not quite immutable.
         if (runAsThread) {
             (new Thread(runnable)).start();
         } else {
-            Util.invoke(runnable);
+            Util.invokeLater(runnable);
         }
     }
 

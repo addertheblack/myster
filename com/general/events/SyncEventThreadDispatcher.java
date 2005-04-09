@@ -33,19 +33,26 @@ public class SyncEventThreadDispatcher implements EventDispatcher {
      * @see com.general.events.EventDispatcher#fireEvent(com.general.events.GenericEvent)
      */
     public void fireEvent(final GenericEvent event) {
-        try {
-            Util.invokeAndWait(new Runnable() {
-                public void run() {
-                    dispatcher.fireEvent(event);
-                }
-            });
-        } catch (InterruptedException ignore) {
-            // I have no idea what to do here... We should throw an interrupt
-            // exception.. but we can't!
+        if (Util.isEventDispatchThread()) {
+            dispatcher.fireEvent(event);
+        } else {
+            try {
+                Util.invokeAndWait(new Runnable() {
+                    public void run() {
+                        dispatcher.fireEvent(event);
+                    }
+                });
+            } catch (InterruptedException ignore) {
+                // I have no idea what to do here... We should throw an
+                // interrupt
+                // exception.. but we can't!
+            }
         }
     }
 
-    /* (non-Javadoc)
+    /*
+     * (non-Javadoc)
+     * 
      * @see com.general.events.EventDispatcher#getNumberOfListeners()
      */
     public int getNumberOfListeners() {

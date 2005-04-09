@@ -26,22 +26,19 @@ public class SegmentDownloaderEvent extends GenericEvent {
 
     private final long length;
 
-    private final SegmentDownloader segmentDownloader;
-
     private final MysterFileStub stub;
 
     private final String queuedMessage;
 
-    public SegmentDownloaderEvent(int id, SegmentDownloader segmentDownloader,
-            long offset, long progress, int queuePosition, long length,
-            MysterFileStub stub, String queuedMessage) {
+    public SegmentDownloaderEvent(int id, long offset,
+            long progress, int queuePosition, long length, MysterFileStub stub,
+            String queuedMessage) {
         super(id);
 
         this.offset = offset;
         this.progress = progress;
         this.queuePosition = queuePosition;
         this.length = length;
-        this.segmentDownloader = segmentDownloader;
         this.stub = stub;
         this.queuedMessage = queuedMessage;
     }
@@ -60,10 +57,6 @@ public class SegmentDownloaderEvent extends GenericEvent {
 
     public long getLength() {
         return length;
-    }
-
-    public SegmentDownloader getSegmentDownloader() {
-        return segmentDownloader;
     }
 
     public MysterFileStub getMysterFileStub() {

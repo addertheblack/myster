@@ -211,7 +211,7 @@ public class StandardSuite {
                     }
                 });
             } catch (InterruptedException e1) {
-                Util.invoke(new Runnable() {
+                Util.invokeLater(new Runnable() {
                     public void run() {
                         progressArray[0].close();
                     }
@@ -315,7 +315,7 @@ public class StandardSuite {
 
         private void progressSetTextThreadSafe(final FileProgressWindow progress,
                 final String string) {
-            Util.invoke(new Runnable() {
+            Util.invokeLater(new Runnable() {
                 public void run() {
                     progress.setText(string);
                 }

@@ -73,7 +73,7 @@ public final class AsyncDatagramSocket {
                 dsocket.receive(bufferPacket);
 
                 if (portListener != null) {
-                    Util.invoke(new PrivateRunnable(new ImmutableDatagramPacket(bufferPacket)));
+                    Util.invokeLater(new PrivateRunnable(new ImmutableDatagramPacket(bufferPacket)));
                 }
             } catch (InterruptedIOException ex) {
                 return;

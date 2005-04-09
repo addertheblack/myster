@@ -118,8 +118,9 @@ public class Util { //This code was taken from an Apple Sample Code package,
     }
 
     /**
-     * Centers the frame passed on the screen. The offsets are to offset the frame from perfect
-     * center. If you want it centered call this with offsets of 0,0
+     * Centers the frame passed on the screen. The offsets are to offset the
+     * frame from perfect center. If you want it centered call this with offsets
+     * of 0,0
      */
     public static void centerFrame(Frame frame, int xOffset, int yOffset) {
         Toolkit tool = Toolkit.getDefaultToolkit();
@@ -128,10 +129,25 @@ public class Util { //This code was taken from an Apple Sample Code package,
     }
 
     /**
-     * *************************** CRAMMING STUFF ON THE EVENT THREAD SUB SYSTEM START
-     * *********************
+     * *************************** CRAMMING STUFF ON THE EVENT THREAD SUB SYSTEM
+     * START *********************
      */
     private static Component listener = new SpecialComponent();
+
+    private static Thread eventThread = null;
+
+    public static void initInvoke() {
+        try {
+            invokeAndWait(new Runnable() {
+                public void run() {
+                    eventThread = Thread.currentThread();
+                }
+            });
+        } catch (InterruptedException e) {
+            // TODO Auto-generated catch block
+            e.printStackTrace();
+        }
+    }
 
     /**
      * runs the current runnable on the event thread.
@@ -139,13 +155,17 @@ public class Util { //This code was taken from an Apple Sample Code package,
      * @param runnable -
      *            code to run on event thread.
      */
-    public static void invoke(final Runnable runnable) {
+    public static void invokeLater(final Runnable runnable) {
         //EventQueue.invokeLater(runnable);
 
         Toolkit.getDefaultToolkit().getSystemEventQueue().postEvent(
                 new SpecialEvent(runnable, listener));
     }
 
+    public static boolean isEventDispatchThread() {
+        return Thread.currentThread() == eventThread;
+    }
+    
     public static void invokeAndWait(final Runnable runnable) throws InterruptedException {
         final Semaphore sem = new Semaphore(0);
 

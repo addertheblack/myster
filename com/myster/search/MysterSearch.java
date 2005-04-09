@@ -99,7 +99,7 @@ public class MysterSearch {
         msg.say("SEARCH: Starting Search..");
         searcher.start();
 
-        Util.invoke(new Runnable() {
+        Util.invokeLater(new Runnable() {
             public void run() {
                 listener.searchStart();
 
@@ -133,7 +133,7 @@ public class MysterSearch {
 
         searcher.flagToEnd();
 
-        Util.invoke(new Runnable() {
+        Util.invokeLater(new Runnable() {
             public void run() {
                 for (Iterator iter = outStandingFutures.iterator(); iter.hasNext();) {
                     Future future = (Future) iter.next();
@@ -254,7 +254,7 @@ public class MysterSearch {
      *            to execute.
      */
     private void queueStreamSection(final StreamSection section) {
-        Util.invoke(new Runnable() {
+        Util.invokeLater(new Runnable() {
             public void run() {
                 if (endFlag)
                     return;
@@ -523,7 +523,7 @@ public class MysterSearch {
         public void doSection() throws IOException {
             searcher.search(socket, address, type);
             
-            Util.invoke(new Runnable() {
+            Util.invokeLater(new Runnable() {
                 public void run() {
                     if (endFlag)
                         return;

@@ -108,12 +108,12 @@ public class MysterSocketPool implements Executor {
             callable.cancel();
             isDone = true;
             if (removeFromQueue(this)) {
-                Util.invoke(new Runnable() {
+                Util.invokeLater(new Runnable() {
                     public void run() {
                         listener.handleCancel();
                     }
                 });
-                Util.invoke(new Runnable() {
+                Util.invokeLater(new Runnable() {
                     public void run() {
                         listener.handleFinally();
                     }
@@ -193,7 +193,7 @@ public class MysterSocketPool implements Executor {
                         continue;
                     }
 
-                    Util.invoke(new Runnable() {
+                    Util.invokeLater(new Runnable() {
                         public void run() {
                             listener.handleResult(result);
                         }
@@ -207,7 +207,7 @@ public class MysterSocketPool implements Executor {
                         continue;
                     }
 
-                    Util.invoke(new Runnable() {
+                    Util.invokeLater(new Runnable() {
                         public void run() {
                             listener.handleException(ex);
                         }
@@ -215,7 +215,7 @@ public class MysterSocketPool implements Executor {
                 } catch (final Error ex) {
                     ex.printStackTrace();
                 } finally {
-                    Util.invoke(new Runnable() {
+                    Util.invokeLater(new Runnable() {
                         public void run() {
                             listener.handleFinally();
                         }
@@ -242,7 +242,7 @@ public class MysterSocketPool implements Executor {
          * Calls handleCancel() on the event thread... and that's all!
          */
         private void cancelNow(final CallListener listener) {
-            Util.invoke(new Runnable() {
+            Util.invokeLater(new Runnable() {
                 public void run() {
                     listener.handleCancel();
                 }

@@ -7,6 +7,7 @@ import java.util.Hashtable;
 import java.util.Stack;
 
 import com.general.events.EventDispatcher;
+import com.general.events.SyncEventDispatcher;
 import com.general.events.SyncEventThreadDispatcher;
 import com.myster.hash.FileHash;
 import com.myster.mml.MMLException;
@@ -57,7 +58,7 @@ public class MultiSourceDownload implements Runnable, Controller {
     //matter what data structure so long
     //as add and remove are O(C).
 
-    EventDispatcher dispatcher = new SyncEventThreadDispatcher();
+    EventDispatcher dispatcher = new SyncEventDispatcher();
 
     boolean isCancelled = false;
 
@@ -516,8 +517,8 @@ class InternalSegmentDownloader extends MysterThread implements
     
     private void fireEvent(int id, long offset, long progress,
             int queuePosition, long length, String queuedMessage) {
-        dispatcher.fireEvent(new SegmentDownloaderEvent(id, this, offset,
-                progress, queuePosition, length, stub, queuedMessage));
+        dispatcher.fireEvent(new SegmentDownloaderEvent(id, offset, progress,
+                queuePosition, length, stub, queuedMessage));
     }
 
     private void fireEvent(byte type, byte[] data) {
@@ -685,6 +686,7 @@ class InternalSegmentDownloader extends MysterThread implements
 
         byte[] buffer = new byte[chunkSize];
         
+        long lastProgressTime = System.currentTimeMillis();
         for (bytesDownloaded = 0; bytesDownloaded < length;) {
             long calcBlockSize = (length - bytesDownloaded < chunkSize ? length
                     - bytesDownloaded : chunkSize);
@@ -705,10 +707,12 @@ class InternalSegmentDownloader extends MysterThread implements
                                               // exception
             workingSegment.progress += calcBlockSize;
 
-            fireEvent(SegmentDownloaderEvent.DOWNLOADED_BLOCK,
-                    workingSegment.workSegment.startOffset, workingSegment
-                            .getProgress(), 0,
-                    workingSegment.workSegment.length); //nor this.
+            if (System.currentTimeMillis() - lastProgressTime > 100) {
+                fireEvent(SegmentDownloaderEvent.DOWNLOADED_BLOCK,
+                        workingSegment.workSegment.startOffset, workingSegment.getProgress(), 0,
+                        workingSegment.workSegment.length); //nor this.
+                lastProgressTime = System.currentTimeMillis();
+            }
         }
     }
 

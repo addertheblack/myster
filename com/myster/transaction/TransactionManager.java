@@ -223,7 +223,7 @@ public class TransactionManager implements TransactionSender {
              * There's also no reason for it when we can cancel the event THEN
              * asynchronously update all listeners. It's a feature.
              */
-            Util.invoke(new Runnable() {
+            Util.invokeLater(new Runnable() {
                 public void run() {
                     record.listener.fireEvent(new TransactionEvent(TransactionEvent.CANCELLED,
                             System.currentTimeMillis() - record.timeStamp, record.address, null));

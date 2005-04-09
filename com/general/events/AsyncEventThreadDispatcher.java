@@ -46,7 +46,7 @@ public class AsyncEventThreadDispatcher implements EventDispatcher {
      * @see com.general.events.EventDispatcher#fireEvent(com.general.events.GenericEvent)
      */
     public void fireEvent(final GenericEvent event) {
-        Util.invoke(new Runnable() {
+        Util.invokeLater(new Runnable() {
             public void run() {
                 dispatcher.fireEvent(event);
             }

@@ -168,13 +168,20 @@ public class HashManager implements Runnable {
                 if (!hashingIsEnabled)
                     continue;
 
+                FileHash[] hashes = oldHashes.getHashesForFile(item.file);
+
+                if (hashes !=null) { //Humm we have already hashed this.
+                    dispatchHashFoundEvent(item.listener, hashes, item.file);
+                    continue;
+                }
+                
                 for (int i = 0; i < digestArray.length; i++) {
                     digestArray[i] = MessageDigest.getInstance(hashTypes[i].toUpperCase());
                 }
 
                 calcHash(item.file, digestArray);
 
-                FileHash[] hashes = new FileHash[digestArray.length];
+                hashes = new FileHash[digestArray.length];
                 for (int i = 0; i < hashes.length; i++) {
                     hashes[i] = new SimpleFileHash(hashTypes[i], digestArray[i].digest());
                 }
@@ -214,17 +221,14 @@ public class HashManager implements Runnable {
                     hashingIsEnabled, file, 0));
 
             long timeOfLastUpdate = 0;
-            long previousByte = 0;
             for (int bytesRead = in.read(buffer); bytesRead != -1; bytesRead = in.read(buffer)) {
                 currentByte += bytesRead;
 
                 addBytesToDigests(buffer, bytesRead, digests);
 
-                if (currentByte - previousByte > 1024 * 1024
-                        && (System.currentTimeMillis() - timeOfLastUpdate) > 500) { // blarg! too many events!
+                if ((System.currentTimeMillis() - timeOfLastUpdate) > 100) { // blarg! too many events!
                     hashManagerDispatcher.fireEvent(new HashManagerEvent(
                             HashManagerEvent.PROGRESS_HASH, hashingIsEnabled, file, currentByte));
-                    previousByte = currentByte;
                     timeOfLastUpdate = System.currentTimeMillis();
                 }
             }
