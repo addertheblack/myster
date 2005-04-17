@@ -232,9 +232,9 @@ public class Myster {
 
                     com.myster.type.ui.TypeManagerPreferencesGUI.init();
 
-                    com.myster.hash.HashManager.start();
                 }
             });
+                    com.myster.hash.HashManager.start();
 
             Thread.sleep(1);
 

@@ -28,7 +28,6 @@ import java.util.Enumeration;
 import java.util.Hashtable;
 
 import com.general.util.Timer;
-import com.general.util.TimerThread;
 import com.myster.filemanager.FileTypeListManager;
 import com.myster.pref.ui.PreferencesPanel;
 import com.myster.type.MysterType;

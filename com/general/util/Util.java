@@ -7,6 +7,8 @@ import java.awt.Image;
 import java.awt.MediaTracker;
 import java.awt.Toolkit;
 import java.awt.event.ComponentEvent;
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
 import java.net.URL;
 
 //import Myster;
@@ -118,9 +120,8 @@ public class Util { //This code was taken from an Apple Sample Code package,
     }
 
     /**
-     * Centers the frame passed on the screen. The offsets are to offset the
-     * frame from perfect center. If you want it centered call this with offsets
-     * of 0,0
+     * Centers the frame passed on the screen. The offsets are to offset the frame from perfect
+     * center. If you want it centered call this with offsets of 0,0
      */
     public static void centerFrame(Frame frame, int xOffset, int yOffset) {
         Toolkit tool = Toolkit.getDefaultToolkit();
@@ -129,8 +130,8 @@ public class Util { //This code was taken from an Apple Sample Code package,
     }
 
     /**
-     * *************************** CRAMMING STUFF ON THE EVENT THREAD SUB SYSTEM
-     * START *********************
+     * *************************** CRAMMING STUFF ON THE EVENT THREAD SUB SYSTEM START
+     * *********************
      */
     private static Component listener = new SpecialComponent();
 
@@ -163,9 +164,23 @@ public class Util { //This code was taken from an Apple Sample Code package,
     }
 
     public static boolean isEventDispatchThread() {
+        try {
+            Class swingUtilities = Class.forName("javax.swing.SwingUtilities");
+            Method isEventDispatchThread = swingUtilities.getMethod("isEventDispatchThread",
+                    new Class[] {});
+            Boolean result = (Boolean) isEventDispatchThread.invoke(null, new Object[] {});
+            return result.booleanValue();
+        } catch (ClassNotFoundException ignore) {
+        } catch (SecurityException ignore) {
+        } catch (NoSuchMethodException ignore) {
+        } catch (IllegalArgumentException e) {
+        } catch (IllegalAccessException e) {
+        } catch (InvocationTargetException e) {
+        }
         return Thread.currentThread() == eventThread;
+
     }
-    
+
     public static void invokeAndWait(final Runnable runnable) throws InterruptedException {
         final Semaphore sem = new Semaphore(0);
 
@@ -189,21 +204,16 @@ public class Util { //This code was taken from an Apple Sample Code package,
     private static class SpecialEvent extends ComponentEvent {
         private final Runnable runnable;
 
-        private final long startTime = System.currentTimeMillis();
-
         public SpecialEvent(Runnable runnable, Component source) {
             super(source, ComponentEvent.COMPONENT_FIRST);
             this.runnable = runnable;
         }
 
         public void run() {
+            final long startTime = System.currentTimeMillis();
             runnable.run();
             if (System.currentTimeMillis() - startTime > 500) {
-                try {
-                    throw new Exception("Took too long"); //toss and catch.
-                } catch (Exception ex) {
-                    //ex.printStackTrace();
-                }
+                System.out.println("This runnable took : "+(System.currentTimeMillis() - startTime)+" : "+runnable);
             }
         }
     }

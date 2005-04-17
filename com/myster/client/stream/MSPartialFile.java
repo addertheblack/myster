@@ -14,7 +14,6 @@ import java.io.IOException;
 import java.io.RandomAccessFile;
 
 import com.general.util.AnswerDialog;
-import com.general.util.Util;
 import com.myster.hash.FileHash;
 import com.myster.hash.SimpleFileHash;
 import com.myster.mml.MMLException;
