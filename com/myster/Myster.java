@@ -1,7 +1,6 @@
 /*
  * 
- * Title: Myster Open Source Author: Andrew Trumper Description: Generic Myster
- * Code
+ * Title: Myster Open Source Author: Andrew Trumper Description: Generic Myster Code
  * 
  * This code is under GPL
  * 
@@ -54,19 +53,19 @@ public class Myster {
         final boolean isServer = (args.length > 0 && args[0].equals("-s"));
 
         /*
-         * (new Thread() { public void run() { for (;;) { try {
-         * System.out.println("File info -> "+
+         * (new Thread() { public void run() { for (;;) { try { System.out.println("File info -> "+
          * com.myster.client.stream.StandardSuite.getFileFromHash(new
-         * com.myster.net.MysterAddress("68.227.184.219") , new
-         * com.myster.type.MysterType("MooV") ,
+         * com.myster.net.MysterAddress("68.227.184.219") , new com.myster.type.MysterType("MooV") ,
          * com.myster.hash.SimpleFileHash.buildFromHexString("md5",
-         * "bdaba746d51978dbe46844c23f566332"))); } catch (Exception ex) {
-         * //ex.printStackTrace(); } } } }).start();
+         * "bdaba746d51978dbe46844c23f566332"))); } catch (Exception ex) { //ex.printStackTrace(); } } }
+         * }).start();
          */
 
-        try {
-            UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
-        } catch (Exception e) {
+        if (!ON_LINUX) {
+            try {
+                UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
+            } catch (Exception e) {
+            }
         }
 
         System.out.println("java.vm.specification.version:"
@@ -93,9 +92,9 @@ public class Myster {
 
         try {
             final com.myster.util.ProgressWindow[] tempArray = new ProgressWindow[1];
-            
+
             Util.initInvoke();
-            
+
             Util.invokeAndWait(new Runnable() {
 
                 public void run() {
@@ -234,7 +233,7 @@ public class Myster {
 
                 }
             });
-                    com.myster.hash.HashManager.start();
+            com.myster.hash.HashManager.start();
 
             Thread.sleep(1);
 
@@ -424,12 +423,12 @@ public class Myster {
     }
 
     /**
-     * Instead of calling System.exit() directly to quit, call this routine. It
-     * makes sure cleanup is done.
+     * Instead of calling System.exit() directly to quit, call this routine. It makes sure cleanup
+     * is done.
      * 
-     * NOTE: It's a very fequent occurence for the program to quit without
-     * calling this routine so your code should in no way depend on it. (Some
-     * platform do not call this at all when quitting!).
+     * NOTE: It's a very fequent occurence for the program to quit without calling this routine so
+     * your code should in no way depend on it. (Some platform do not call this at all when
+     * quitting!).
      */
     public static void quit() {
         Preferences.getInstance().flush(); //flushes prefs to disk.
@@ -442,8 +441,8 @@ public class Myster {
     }
 
     /**
-     * Returns the time that was returned by System.currentTimeMillis when the
-     * program was first launched.
+     * Returns the time that was returned by System.currentTimeMillis when the program was first
+     * launched.
      */
     public static long getLaunchedTime() {
         return programLaunchTime;
