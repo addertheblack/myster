@@ -1097,6 +1097,9 @@ Work on DEV 8:
 	  	-> Fixed up the DEFAULT_PORT variable so changing that actually changes the port without causing Myster to
 	  			behave badly (maybe a user preference soon?).
 	  	-> The hash manager now takes up less process time thanx to limiting the number of events it sends.
+	  	-> Multisource downloads now automatically adjust their download window depending on the speed of the server. (FASTER DOWNLOADS!)
+	  	-> Did a whole lot of work on the search engine (MUCH faster searching!)
+	  	-> Fixed a bunch of looonnngg standing bugs in the p2p window.
 		
 (Red List)
 to do:
