@@ -26,7 +26,7 @@ public class MPG3FileItem extends FileItem {
         if (mmlRepresentation != null)
             return mmlRepresentation;
 
-        MML mmlRepresentation = super.getMMLRepresentation();
+        mmlRepresentation = super.getMMLRepresentation();
 
         patchFunction2(mmlRepresentation, getFile());
         return mmlRepresentation;
