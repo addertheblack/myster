@@ -18,9 +18,9 @@ import com.myster.net.MysterAddress;
  * TODO put in transaction protocol docs here.
  */
 public class TransactionManager implements TransactionSender {
-    TransactionTransportImplementation impl;
+    private TransactionTransportImplementation impl;
 
-    static TransactionManager singleton;
+    private static TransactionManager singleton;
 
     /**
      * Creates a TransactionManager which also has a TransactionManager
@@ -292,6 +292,7 @@ public class TransactionManager implements TransactionSender {
             fireEvents(uniqueid, null);
         }
 
+        //STRUCT
         private static class ListenerRecord { //NOT immutable
             public final long timeStamp;
 

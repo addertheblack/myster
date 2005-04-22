@@ -77,7 +77,7 @@ public class DatagramProtocolManager {
             synchronized (DatagramProtocolManager.class) {
                 if (impl == null) {
                     //Load Transport Manager...
-                    socket = new AsyncDatagramSocket(6669);
+                    socket = new AsyncDatagramSocket(com.myster.Myster.DEFAULT_PORT);
                     impl = new GenericTransportManager(socket); //magic number
                     // bad.
                 }

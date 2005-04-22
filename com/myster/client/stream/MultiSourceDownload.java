@@ -106,7 +106,7 @@ public class MultiSourceDownload implements Runnable, Controller {
         this.chunkSize = (int) partialFile.getBlockSize();
         this.partialFile = partialFile;
 
-        System.out.println("Block Size : " + partialFile.getBlockSize()
+        MultiSourceUtilities.debug("Block Size : " + partialFile.getBlockSize()
                 + " First un-downloaded block "
                 + partialFile.getFirstUndownloadedBlock());
         this.fileProgress = partialFile.getFirstUndownloadedBlock()
@@ -213,7 +213,7 @@ public class MultiSourceDownload implements Runnable, Controller {
         long readLength = (fileLength - fileProgress > multiBlockSize ? multiBlockSize
                 : fileLength - fileProgress);
 
-        System.out.println("Main Thread -> Adding Work Segment " + fileProgress
+        MultiSourceUtilities.debug("Main Thread -> Adding Work Segment " + fileProgress
                 + " " + readLength);
         WorkSegment workSegment = new WorkSegment((readLength == 0 ? 0
                 : fileProgress), readLength); // generate an end signal.
@@ -750,7 +750,7 @@ class InternalSegmentDownloader extends MysterThread implements
     }
 
     private static void debug(String string) {
-        System.out.println(string);
+        MultiSourceUtilities.debug(string);
     }
 
     /**

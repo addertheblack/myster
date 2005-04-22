@@ -9,8 +9,6 @@ import com.myster.hash.FileHash;
 import com.myster.mml.RobustMML;
 import com.myster.search.MysterFileStub;
 
-//import Myster;
-
 public class MultiSourceUtilities {
 
     private static final String EXTENSION = ".i";

@@ -280,11 +280,11 @@ public class FileTypeList extends MysterThread {
                 rtn.addElement(filename);
 
             if (rtn.size() > MAX_RESULTS)
-                break; //new feature AT
+                break;
         }
 
         String[] rtnStr = new String[rtn.size()];
-        rtn.copyInto(rtnStr); //sweet... AT
+        rtn.copyInto(rtnStr);
         return rtnStr;
     }
 
@@ -651,7 +651,10 @@ public class FileTypeList extends MysterThread {
      *            to be the basis of this FileItem.
      * @return FileItem created from file.
      */
-    protected static FileItem createFileItem(File file) {
+    private static final MysterType MPG3 = new MysterType("MPG3");
+    protected FileItem createFileItem(File file) {
+        if (MPG3.equals(type))
+            return new MPG3FileItem(file);
         return new FileItem(file);
     }
 

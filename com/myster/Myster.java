@@ -281,9 +281,8 @@ public class Myster {
         }
     } //Utils, globals etc.. //These variables are System wide variables //
 
-    // that
-    //dictate how long things are or what port were's on or whatever...
-    public static final int DEFAULT_PORT = 6669; //Default port.
+    
+    public static final int DEFAULT_PORT = 6669; //Default port. Changing this now works
 
     public static final String SPEEDPATH = "Globals/speed/";
 

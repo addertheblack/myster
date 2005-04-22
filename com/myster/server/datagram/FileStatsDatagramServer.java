@@ -54,11 +54,6 @@ public class FileStatsDatagramServer extends TransactionProtocol {
                 mml = fileItem.getMMLRepresentation();
             }
 
-            if (type.equals("MPG3"))
-                com.myster.server.stream.FileInfoLister.patchFunction2(mml,
-                        FileTypeListManager.getInstance().getFile(type,
-                                filename));
-
             out.writeUTF(mml.toString());
 
             sendTransaction(new Transaction(transaction, byteOutputStream

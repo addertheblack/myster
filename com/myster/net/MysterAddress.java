@@ -20,6 +20,8 @@ public class MysterAddress {
     private InetAddress fullAddress;
 
     private int port;
+    
+    private static final int DEFAULT_PORT = 6669;
 
     /**
      * Builds a MysterAddress based on this String. The string should be of format : ip:port. If the
@@ -31,7 +33,7 @@ public class MysterAddress {
         // a runtime
         // error.
         String ip = s;
-        int port = com.myster.Myster.DEFAULT_PORT;
+        int port = DEFAULT_PORT;
 
         if (s.indexOf(":") != -1) {
             String portstr = s.substring(s.indexOf(":") + 1);
@@ -51,7 +53,7 @@ public class MysterAddress {
      * Myster's default port (usually 6669).
      */
     public MysterAddress(InetAddress i) {
-        init(i, com.myster.Myster.DEFAULT_PORT);
+        init(i, DEFAULT_PORT);
     }
 
     /**
@@ -98,7 +100,7 @@ public class MysterAddress {
     }
 
     public String toString() {
-        return (port != com.myster.Myster.DEFAULT_PORT ? getIP() + ":" + port : getIP());
+        return (port != DEFAULT_PORT ? getIP() + ":" + port : getIP());
     }
 
     public boolean equals(Object aa) {
