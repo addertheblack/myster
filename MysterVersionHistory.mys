@@ -1088,6 +1088,15 @@ Work on DEV 8:
 		-> Used the TimerThread to get rid of a thread used when the tracker window was open.
 		-> Optimized Multi-Column-List resizing code.
 		-> Made it so that the Tracker window is updated more frequently.
+		-> Wrote code so that MCList no uses a JTable implementation. Woohoo.
+		-> Made some things that I thought use the event thread actually use the event thread.
+		-> Fixed a bunch of compatability issues with MACSOS 1.4.X..
+		-> Made it so that ID3 tag information is cached (less odd pausing and disk activity).
+		-> Made it so the File manager (in the preferences) now indexes files in the background (no more freezing the 
+				GUI when clicking apply!!).
+	  	-> Fixed up the DEFAULT_PORT variable so changing that actually changes the port without causing Myster to
+	  			behave badly (maybe a user preference soon?).
+	  	-> The hash manager now takes up less process time thanx to limiting the number of events it sends.
 		
 (Red List)
 to do:
