@@ -1100,8 +1100,9 @@ Work on DEV 8:
 	  	-> Multisource downloads now automatically adjust their download window depending on the speed of the server. (FASTER DOWNLOADS!)
 	  	-> Did a whole lot of work on the search engine (MUCH faster searching!)
 	  	-> Fixed a bunch of looonnngg standing bugs in the p2p window.
+	  	-> Made it so that UDP transactions (connection sections) show up in the server stats.
+	  	-> Gave a message that queue is full on MSDownload queue is full. (but Myster doesn't show it :( )
+	  	-> Made it so that the server disconnects bad downloads faster.
 		
 (Red List)
 to do:
-	Make it so that people over the queue limit get some sort of banner telling them they are over the queue limit.
-	Fix it so that UDP sections show up in server stats.
