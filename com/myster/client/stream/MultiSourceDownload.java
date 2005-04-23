@@ -28,43 +28,43 @@ import com.myster.util.MysterThread;
  */
 
 public class MultiSourceDownload implements Runnable, Controller {
-    final MSPartialFile partialFile;
+    private final MSPartialFile partialFile;
 
-    final MysterFileStub stub; //starter stub (contains first address and
+    private final MysterFileStub stub; //starter stub (contains first address and
                                // filename and type)
 
-    final FileHash hash; //should be final but can't be...
+    private final FileHash hash; //should be final but can't be...
 
-    final long fileLength; //should be final but can't be...
+    private final long fileLength; //should be final but can't be...
 
-    final HashSearchListener listener;
+    private final HashSearchListener listener;
 
-    final Hashtable downloaders;
+    private final Hashtable downloaders;
 
     //File theFile; //file downloading to!
-    RandomAccessFile randomAccessFile; //file downloading to!
+    private RandomAccessFile randomAccessFile; //file downloading to!
 
-    final int chunkSize;
+    private final int chunkSize;
 
-    final long initialOffset; //how much was downloaded in a previous session
+    private final long initialOffset; //how much was downloaded in a previous session
 
-    long fileProgress = 0; //for work segments
+    private long fileProgress = 0; //for work segments
 
-    long bytesWrittenOut = 0; //to know how much of the file has been
+    private long bytesWrittenOut = 0; //to know how much of the file has been
                               // downloaded.
 
-    Stack unfinishedSegments = new Stack(); //it's a stack 'cause it doens't
+    private Stack unfinishedSegments = new Stack(); //it's a stack 'cause it doens't
 
     //matter what data structure so long
     //as add and remove are O(C).
 
-    EventDispatcher dispatcher = new SyncEventDispatcher();
+    private EventDispatcher dispatcher = new SyncEventDispatcher();
 
-    boolean isCancelled = false;
+    private boolean isCancelled = false;
 
-    boolean endFlag = false; //this is set to true to tell MSSource to stop.
+    private boolean endFlag = false; //this is set to true to tell MSSource to stop.
 
-    boolean isDead = false; //is set to true if cleanUp() has been called
+    private boolean isDead = false; //is set to true if cleanUp() has been called
 
     public static final int DEFAULT_CHUNK_SIZE = 2 * 1024;
 

@@ -6,8 +6,27 @@
 
 package com.myster.server.event;
 
-public interface ConnectionManagerListener {
-    public void sectionEventConnect(ConnectionManagerEvent e);
+import com.general.events.EventListener;
+import com.general.events.GenericEvent;
 
-    public void sectionEventDisconnect(ConnectionManagerEvent e);
+public class ConnectionManagerListener extends EventListener {
+    public void fireEvent(GenericEvent e) {
+        switch (e.getID()) {
+        case ConnectionManagerEvent.SECTIONCONNECT:
+            sectionEventConnect((ConnectionManagerEvent) e);
+            break;
+        case ConnectionManagerEvent.SECTIONDISCONNECT:
+            sectionEventDisconnect((ConnectionManagerEvent) e);
+            break;
+        default:
+            err();
+        }
+
+    }
+
+    public void sectionEventConnect(ConnectionManagerEvent e) {
+    }
+
+    public void sectionEventDisconnect(ConnectionManagerEvent e) {
+    }
 }

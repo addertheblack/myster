@@ -20,7 +20,7 @@ import com.general.util.BlockingQueue;
 import com.myster.net.MysterAddress;
 import com.myster.server.event.ConnectionManagerEvent;
 import com.myster.server.event.OperatorEvent;
-import com.myster.server.event.ServerEventManager;
+import com.myster.server.event.ServerEventDispatcher;
 import com.myster.transferqueue.TransferQueue;
 import com.myster.util.MysterThread;
 
@@ -46,7 +46,7 @@ import com.myster.util.MysterThread;
 public class ConnectionManager extends MysterThread {
     private Socket socket;
 
-    private ServerEventManager eventSender;
+    private ServerEventDispatcher eventSender;
 
     private BlockingQueue socketQueue;
 
@@ -72,7 +72,7 @@ public class ConnectionManager extends MysterThread {
      *            a Hashtable of connection section integers to
      *            ConnectionSection objects
      */
-    protected ConnectionManager(BlockingQueue socketQueue, ServerEventManager eventSender,
+    protected ConnectionManager(BlockingQueue socketQueue, ServerEventDispatcher eventSender,
             TransferQueue transferQueue, Hashtable connectionSections) {
         super("Server Thread " + (++threadCounter));
 

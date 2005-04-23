@@ -1,7 +1,6 @@
 /*
  * 
- * Title: Myster Open Source Author: Andrew Trumper Description: Generic Myster
- * Code
+ * Title: Myster Open Source Author: Andrew Trumper Description: Generic Myster Code
  * 
  * This code is under GPL
  * 
@@ -33,8 +32,7 @@ public class RequestSearchThread extends ServerThread {
     }
 
     /**
-     * Protocal: Send 35 Send Type (4 bytes) get Set of strings of names of
-     * files that match.
+     * Protocal: Send 35 Send Type (4 bytes) get Set of strings of names of files that match.
      */
 
     public void section(ConnectionContext c) throws IOException {
@@ -52,21 +50,18 @@ public class RequestSearchThread extends ServerThread {
 
         String[] stringarray;
 
-        stringarray = FileTypeListManager.getInstance().getDirList(
-                new MysterType(type), searchstring);
+        stringarray = FileTypeListManager.getInstance().getDirList(new MysterType(type),
+                searchstring);
 
-        dispatcher.fireEvent(new ServerSearchEvent(ServerSearchEvent.REQUESTED,
-                new MysterAddress(c.socket.getInetAddress()), NUMBER,
-                searchstring, new String(type), null));
+        dispatcher.fireEvent(new ServerSearchEvent(ServerSearchEvent.REQUESTED, new MysterAddress(
+                c.socket.getInetAddress()), NUMBER, searchstring, new MysterType(type), null));
 
         if (stringarray != null) {
+            dispatcher.fireEvent(new ServerSearchEvent(ServerSearchEvent.RESULTS,
+                    new MysterAddress(c.socket.getInetAddress()), NUMBER, searchstring, new MysterType(
+                            type), stringarray));
             for (int j = 0; j < stringarray.length; j++) {
                 out.writeUTF(stringarray[j]);
-
-                dispatcher.fireEvent(new ServerSearchEvent(
-                        ServerSearchEvent.RESULT, new MysterAddress(c.socket
-                                .getInetAddress()), NUMBER, searchstring,
-                        new String(type), stringarray[j]));
 
             }
         }

@@ -20,18 +20,15 @@ import java.net.ServerSocket;
 import java.net.Socket;
 
 import javax.swing.UIManager;
+import javax.swing.UnsupportedLookAndFeelException;
 
 import com.general.util.AnswerDialog;
 import com.general.util.Util;
 import com.myster.bandwidth.BandwidthManager;
-import com.myster.client.datagram.PongTransport;
-import com.myster.client.datagram.UDPPingClient;
 import com.myster.filemanager.FileTypeListManager;
-import com.myster.net.DatagramProtocolManager;
 import com.myster.pref.Preferences;
 import com.myster.search.ui.SearchWindow;
 import com.myster.server.ServerFacade;
-import com.myster.server.datagram.PingTransport;
 import com.myster.server.ui.ServerStatsWindow;
 import com.myster.tracker.IPListManagerSingleton;
 import com.myster.util.I18n;
@@ -61,11 +58,20 @@ public class Myster {
          * }).start();
          */
 
-        if (!ON_LINUX) {
-            try {
-                UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
-            } catch (Exception e) {
-            }
+        try {
+            UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
+        } catch (ClassNotFoundException e) {
+            // TODO Auto-generated catch block
+            e.printStackTrace();
+        } catch (InstantiationException e) {
+            // TODO Auto-generated catch block
+            e.printStackTrace();
+        } catch (IllegalAccessException e) {
+            // TODO Auto-generated catch block
+            e.printStackTrace();
+        } catch (UnsupportedLookAndFeelException e) {
+            // TODO Auto-generated catch block
+            e.printStackTrace();
         }
 
         System.out.println("java.vm.specification.version:"
@@ -104,7 +110,7 @@ public class Myster {
                     progress.setTitle(I18n.tr("Loading Myster..."));
                     progress.pack();
                     com.general.util.Util.centerFrame(progress, 0, -50);
-                    progress.setVisible(true);
+                    //progress.setVisible(true);
                 }
             });
 
@@ -147,28 +153,9 @@ public class Myster {
 
             Util.invokeAndWait(new Runnable() {
                 public void run() {
-                    progress.setText(I18n.tr("Loading UDP Operator..."));
+                    progress.setText(I18n.tr("Loading Server Components..."));
                     progress.setValue(10);
-                    try {
-                        PongTransport ponger = new PongTransport();
-                        UDPPingClient.setPonger(ponger);
-                        DatagramProtocolManager.addTransport(ponger);
-                        DatagramProtocolManager.addTransport(new PingTransport());
-                    } catch (Exception ex) {
-                        ex.printStackTrace();
-                        com.general.util.AnswerDialog
-                                .simpleAlert("Myster's UDP sub-system could not initialize. "
-                                        + "This means Myster will probably not work correctly. "
-                                        + "Here is the official error:\n\n" + ex);
-                    }
-
-                    //UDP Server INIT
-                    com.myster.server.datagram.TopTenDatagramServer.init();
-                    com.myster.server.datagram.TypeDatagramServer.init();
-                    com.myster.server.datagram.SearchDatagramServer.init();
-                    com.myster.server.datagram.ServerStatsDatagramServer.init();
-                    com.myster.server.datagram.FileStatsDatagramServer.init();
-                    com.myster.server.datagram.SearchHashDatagramServer.init();
+                    ServerFacade.init();
                 }
             });
 
@@ -183,18 +170,6 @@ public class Myster {
                     progress.setValue(18);
                 }
             });
-
-            Thread.sleep(1);
-
-            Util.invokeLater(new Runnable() {
-                public void run() {
-                    progress.setText(I18n.tr("Loading Server Fascade..."));
-                    progress.setValue(25);
-
-                }
-            });
-
-            ServerFacade.assertServer();
 
             Util.invokeLater(new Runnable() {
                 public void run() {
@@ -227,13 +202,12 @@ public class Myster {
                     } catch (Exception ex) {
                     }
 
-                    com.myster.hash.ui.HashPreferences.init(); //meep
+                    com.myster.hash.ui.HashPreferences.init(); //no opp
 
                     com.myster.type.ui.TypeManagerPreferencesGUI.init();
 
                 }
             });
-            com.myster.hash.HashManager.start();
 
             Thread.sleep(1);
 
@@ -274,6 +248,8 @@ public class Myster {
                 }
             });
 
+            com.myster.hash.HashManager.start();
+            ServerFacade.assertServer();
             IPListManagerSingleton.getIPListManager();
             FileTypeListManager.getInstance();
         } catch (InterruptedException ex) {
@@ -281,7 +257,6 @@ public class Myster {
         }
     } //Utils, globals etc.. //These variables are System wide variables //
 
-    
     public static final int DEFAULT_PORT = 6669; //Default port. Changing this now works
 
     public static final String SPEEDPATH = "Globals/speed/";

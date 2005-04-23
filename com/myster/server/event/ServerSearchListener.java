@@ -16,7 +16,7 @@ public abstract class ServerSearchListener extends EventListener { //check
         case ServerSearchEvent.REQUESTED:
             searchRequested((ServerSearchEvent) e);
             break;
-        case ServerSearchEvent.RESULT:
+        case ServerSearchEvent.RESULTS:
             searchResult((ServerSearchEvent) e);
             break;
         default:

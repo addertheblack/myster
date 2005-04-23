@@ -12,15 +12,27 @@ public class ConnectionManagerEvent extends ServerEvent {
 
     public static final int SECTIONDISCONNECT = 1;
 
-    Object object;
+    private Object object;
+    
+    private boolean isDatagram = false;
 
     public ConnectionManagerEvent(int id, MysterAddress ip, int section,
             Object d) {
+        this(id, ip, section, d, false);
+    }
+    
+    public ConnectionManagerEvent(int id, MysterAddress ip, int section,
+            Object d, boolean isDatagram) {
         super(id, ip, section);
         object = d;
+        this.isDatagram = isDatagram;
     }
 
     public Object getSectionObject() {
         return object;
+    }
+    
+    public boolean isDatagram() {
+        return isDatagram;
     }
 }

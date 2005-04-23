@@ -36,9 +36,7 @@ public class MessageManager {
     public static void init() {
         prefPanel = new MessagePreferencesPanel();
         Preferences.getInstance().addPanel(prefPanel);
-        TransactionManager
-                .addTransactionProtocol(new InstantMessageTransport());
-
+        TransactionManager.addTransactionProtocol(new InstantMessageTransport());
     }
 
     public static void sendInstantMessage(MysterAddress address, String msg) {
@@ -49,51 +47,48 @@ public class MessageManager {
         sendInstantMessage(message.address, message.message, message.quote);
     }
 
-    public static void sendInstantMessage(MysterAddress address, String msg,
-            String reply) {
-        TransactionSocket tsocket = new TransactionSocket(
-                InstantMessageTransport.transportNumber);
+    public static void sendInstantMessage(MysterAddress address, String msg, String reply) {
+        TransactionSocket tsocket = new TransactionSocket(InstantMessageTransport.transportNumber);
 
-        tsocket.sendTransaction(new MessagePacket(generateID(), address, msg,
-                reply), new TransactionListener() {
-            public void transactionReply(TransactionEvent e) {
-                System.out.println("Message reply.");
+        tsocket.sendTransaction(new MessagePacket(generateID(), address, msg, reply),
+                new TransactionListener() {
+                    public void transactionReply(TransactionEvent e) {
+                        System.out.println("Message reply.");
 
-                Transaction transaction = e.getTransaction();
+                        Transaction transaction = e.getTransaction();
 
-                if (transaction.isError()) {
-                    if (transaction.getErrorCode() == Transaction.TRANSACTION_TYPE_UNKNOWN) {
-                        simpleAlert("Client doesn't know how to receive messages.");
-                    } else {
-                        simpleAlert("Some sort of unknown error occured.");
-                    }
-                } else {
-                    try {
-                        MessagePacket msgPacket = new MessagePacket(transaction);
-                        if (msgPacket.getErrorCode() != 0) {
-                            if (msgPacket.getErrorCode() == 1) {
-                                simpleAlert("Client is refusing messages."
-                                        + "\n\nClient says -> "
-                                        + msgPacket.getErrorString());
+                        if (transaction.isError()) {
+                            if (transaction.getErrorCode() == Transaction.TRANSACTION_TYPE_UNKNOWN) {
+                                simpleAlert("Client doesn't know how to receive messages.");
                             } else {
-                                simpleAlert("Client got the message, with error code "
-                                        + msgPacket.getErrorCode()
-                                        + "\n\n"
-                                        + msgPacket.getErrorString());
+                                simpleAlert("Some sort of unknown error occured.");
                             }
                         } else {
-                            //simpleAlert("Message was sent successfully...");
+                            try {
+                                MessagePacket msgPacket = new MessagePacket(transaction);
+                                if (msgPacket.getErrorCode() != 0) {
+                                    if (msgPacket.getErrorCode() == 1) {
+                                        simpleAlert("Client is refusing messages."
+                                                + "\n\nClient says -> "
+                                                + msgPacket.getErrorString());
+                                    } else {
+                                        simpleAlert("Client got the message, with error code "
+                                                + msgPacket.getErrorCode() + "\n\n"
+                                                + msgPacket.getErrorString());
+                                    }
+                                } else {
+                                    //simpleAlert("Message was sent successfully...");
+                                }
+                            } catch (BadPacketException ex) {
+                                simpleAlert("Remote host returned a bad packet.");
+                            }
                         }
-                    } catch (BadPacketException ex) {
-                        simpleAlert("Remote host returned a bad packet.");
                     }
-                }
-            }
 
-            public void transactionTimout(TransactionEvent e) {
-                simpleAlert("Message was not received. There does not appear to be anyone at that address.");
-            }
-        });
+                    public void transactionTimout(TransactionEvent e) {
+                        simpleAlert("Message was not received. There does not appear to be anyone at that address.");
+                    }
+                });
     }
 
     //public static boolean sendInstantMessageBlocking(...) {
@@ -108,11 +103,10 @@ public class MessageManager {
         if (isRefusingMessages())
             return false;
 
-        final String message = msg.getAddress().toString() + " sent: \n\n"
-                + msg.getMessage();
+        final String message = msg.getAddress().toString() + " sent: \n\n" + msg.getMessage();
 
-        (new MessageWindow(new InstantMessage(msg.getAddress(), msg
-                .getMessage(), msg.getReply()))).show();
+        (new MessageWindow(new InstantMessage(msg.getAddress(), msg.getMessage(), msg.getReply())))
+                .show();
 
         java.awt.Toolkit.getDefaultToolkit().beep();
 
@@ -193,13 +187,13 @@ public class MessageManager {
             String text = denyMessageText.getText();
             if (text.equals("") || text.length() > 255)
                 text = REFUSAL_MESSAGE_DEFAULT; //MML can't take "", 255 is
-                                                // arbitrairy limit, real limit
-                                                // is about 60k
+            // arbitrairy limit, real limit
+            // is about 60k
             denyMessageText.setText(text);
             mml.put(MML_REFUSE_MESSAGE, text);
 
-            mml.put(MML_REFUSE_FLAG,
-                    (refuseMessages.getState() ? TRUE_AS_STRING
+            mml
+                    .put(MML_REFUSE_FLAG, (refuseMessages.getState() ? TRUE_AS_STRING
                             : FALSE_AS_STRING));
 
             Preferences.getInstance().put(PREFS_MESSAGING_KEY, mml);
@@ -229,18 +223,16 @@ public class MessageManager {
         }//gets the key structure for the place in the pref panel
 
         public boolean isRefusingMessages() {
-            return getPreferencesMML().get(MML_REFUSE_FLAG, FALSE_AS_STRING)
-                    .equals(TRUE_AS_STRING);
+            return getPreferencesMML().get(MML_REFUSE_FLAG, FALSE_AS_STRING).equals(TRUE_AS_STRING);
         }
 
         public String getRefusingMessage() {
-            return getPreferencesMML().get(MML_REFUSE_MESSAGE,
-                    REFUSAL_MESSAGE_DEFAULT);
+            return getPreferencesMML().get(MML_REFUSE_MESSAGE, REFUSAL_MESSAGE_DEFAULT);
         }
 
         private PreferencesMML getPreferencesMML() {
-            return new PreferencesMML(Preferences.getInstance().getAsMML(
-                    PREFS_MESSAGING_KEY, new PreferencesMML()));
+            return new PreferencesMML(Preferences.getInstance().getAsMML(PREFS_MESSAGING_KEY,
+                    new PreferencesMML()));
         }
     }
 }
@@ -256,15 +248,14 @@ class InstantMessageTransport extends TransactionProtocol {
         return transportNumber;
     }
 
-    public synchronized void transactionReceived(Transaction transaction)
+    public synchronized void transactionReceived(Transaction transaction, Object transactionObject)
             throws BadPacketException {
         MessagePacket msg = new MessagePacket(transaction);
 
         ReceivedMessage receivedMessage = new ReceivedMessage(msg);
         if (isOld(receivedMessage)) {
-            sendTransaction(new Transaction(transaction, (new MessagePacket(
-                    transaction.getAddress(), 0, "")).getData(),
-                    Transaction.NO_ERROR));
+            sendTransaction(new Transaction(transaction, (new MessagePacket(transaction
+                    .getAddress(), 0, "")).getData(), Transaction.NO_ERROR));
             return; //if it's one we've seen before ignore it.
         }
 
@@ -272,13 +263,11 @@ class InstantMessageTransport extends TransactionProtocol {
 
         //below is where the event system would go.
         if (MessageManager.messageReceived(msg)) {
-            sendTransaction(new Transaction(transaction, (new MessagePacket(
-                    transaction.getAddress(), 0, "")).getData(),
-                    Transaction.NO_ERROR));
+            sendTransaction(new Transaction(transaction, (new MessagePacket(transaction
+                    .getAddress(), 0, "")).getData(), Transaction.NO_ERROR));
         } else {
-            sendTransaction(new Transaction(transaction, (new MessagePacket(
-                    transaction.getAddress(), 1, MessageManager
-                            .getRefusingMessage())).getData(),
+            sendTransaction(new Transaction(transaction, (new MessagePacket(transaction
+                    .getAddress(), 1, MessageManager.getRefusingMessage())).getData(),
                     Transaction.NO_ERROR));
         }
 
@@ -287,8 +276,7 @@ class InstantMessageTransport extends TransactionProtocol {
 
     private void trashOld() { //gets rid of old messages.
         while (recentlyReceivedMessages.getHead() != null) {
-            ReceivedMessage recentMessage = (ReceivedMessage) (recentlyReceivedMessages
-                    .getHead());
+            ReceivedMessage recentMessage = (ReceivedMessage) (recentlyReceivedMessages.getHead());
             if (recentMessage.getTimeStamp() > (System.currentTimeMillis() - EXPIRE_TIME))
                 return;
 
@@ -430,14 +418,12 @@ class MessagePacket implements DataPacket { //Is Immutable
 
             msg = mml.get(MSG);
             reply = mml.get(REPLY);
-            from = (mml.get(FROM) == null ? transaction.getAddress().toString()
-                    : mml.get(FROM));
+            from = (mml.get(FROM) == null ? transaction.getAddress().toString() : mml.get(FROM));
             String idAsString = mml.get(ID_KEY);
 
             //errors
             if (msg == null)
-                throw new BadPacketException(
-                        "No message in this message packet.");
+                throw new BadPacketException("No message in this message packet.");
 
             try {
                 id = Integer.parseInt(idAsString);
@@ -458,8 +444,7 @@ class MessagePacket implements DataPacket { //Is Immutable
                 throw new BadPacketException("Error code is NaN.");
             }
 
-            replyErrMsg = (mml.get(REPLY_ERR_STRING) == null ? "" : mml
-                    .get(REPLY_ERR_STRING));
+            replyErrMsg = (mml.get(REPLY_ERR_STRING) == null ? "" : mml.get(REPLY_ERR_STRING));
 
             this.msg = null;
             this.from = null;
@@ -542,7 +527,7 @@ class MessagePacket implements DataPacket { //Is Immutable
 
     public byte[] getBytes() {
         return getData(); //warning.. does not access getHeader!!!!!! (is not
-                          // nessesairy at this writting)
+        // nessesairy at this writting)
     }
 }
 

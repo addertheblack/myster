@@ -18,7 +18,7 @@ import java.util.Hashtable;
 
 import com.general.util.DoubleBlockingQueue;
 import com.general.util.Timer;
-import com.myster.server.event.ServerEventManager;
+import com.myster.server.event.ServerEventDispatcher;
 import com.myster.transferqueue.TransferQueue;
 import com.myster.util.MysterThread;
 
@@ -34,7 +34,7 @@ import com.myster.util.MysterThread;
 public class Operator extends MysterThread {
     private ServerSocket serverSocket;
 
-    private ServerEventManager eventSender = new ServerEventManager();
+    private ServerEventDispatcher eventDispatcher;
 
     private ConnectionManager[] connectionManagers;
 
@@ -44,9 +44,11 @@ public class Operator extends MysterThread {
 
     private Hashtable connectionSections = new Hashtable();
 
-    protected Operator(TransferQueue d, int threads) {
+    protected Operator(TransferQueue d, int threads, ServerEventDispatcher eventDispatcher) {
         super("Server Operator");
 
+        this.eventDispatcher = eventDispatcher;
+        
         transferQueue = d;
 
         socketQueue = new DoubleBlockingQueue(0); //comunications channel
@@ -56,7 +58,7 @@ public class Operator extends MysterThread {
         connectionManagers = new ConnectionManager[threads];
         for (int i = 0; i < connectionManagers.length; i++) {
             connectionManagers[i] = new ConnectionManager(socketQueue,
-                    eventSender, transferQueue, connectionSections);
+                    eventDispatcher, transferQueue, connectionSections);
         }
     }
 
@@ -98,10 +100,6 @@ public class Operator extends MysterThread {
                 }
             }
         } while (true);
-    }
-
-    public ServerEventManager getDispatcher() {
-        return eventSender;
     }
 
     public void addConnectionSection(ConnectionSection section) {

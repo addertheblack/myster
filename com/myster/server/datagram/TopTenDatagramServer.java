@@ -19,20 +19,11 @@ public class TopTenDatagramServer extends TransactionProtocol {
 
     public static final int TOP_TEN_TRANSACTION_CODE = com.myster.client.datagram.TopTenDatagramClient.TOP_TEN_TRANSACTION_CODE;
 
-    static boolean alreadyInit = false;
-
-    public synchronized static void init() {
-        if (alreadyInit)
-            return; //should not be init twice
-
-        TransactionManager.addTransactionProtocol(new TopTenDatagramServer());
-    }
-
     public int getTransactionCode() {
         return TOP_TEN_TRANSACTION_CODE;
     }
 
-    public void transactionReceived(Transaction transaction) throws BadPacketException {
+    public void transactionReceived(Transaction transaction, Object transactionObject) throws BadPacketException {
         try {
             IPListManagerSingleton.getIPListManager().addIP(transaction.getAddress());
 

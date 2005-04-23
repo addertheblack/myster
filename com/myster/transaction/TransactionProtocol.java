@@ -11,6 +11,10 @@ public abstract class TransactionProtocol {
     public abstract int getTransactionCode(); //returns the transaction code of
 
     // the transaction protocol.
+    
+    public Object getTransactionObject() {
+        return null;
+    }
 
     /**
      * This routine is so the transport manager can set the mechanism through
@@ -48,5 +52,5 @@ public abstract class TransactionProtocol {
      * @throws BadPacketException
      *             feel free to throw one if the packet is formated badly.
      */
-    public abstract void transactionReceived(Transaction transaction) throws BadPacketException;
+    public abstract void transactionReceived(Transaction transaction, Object transactionObject) throws BadPacketException;
 }

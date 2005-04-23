@@ -54,9 +54,6 @@ public class MultiSourceSender extends ServerThread {
 
         try {
             download.download(context.socket);
-        } catch (IOException ex) {
-            //panic time
-            ex.printStackTrace();
         } finally {
             download.endBlock();
         }
@@ -175,6 +172,7 @@ public class MultiSourceSender extends ServerThread {
                         }
                     });
                 } catch (MaxQueueLimitException ex) {
+                    sendQueuePosition(socket.out, transferQueue.getMaxQueueLength()+1, "Too busy to accept downloads right now..");
                     throw new IOException("Over the queue limit, disconnecting..");
                 }
             } catch (IOException ex) {

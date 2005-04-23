@@ -92,7 +92,6 @@ public class CrawlerThread extends MysterThread {
                             addresses = com.myster.client.datagram.StandardDatagramSuite
                                     .getTopServers(currentIp, searchType);
 
-                            System.out.println("We got a UDP top ten!");
                         } catch (IOException ex) {
                             if (endFlag) {
                                 cleanUp();
@@ -109,8 +108,6 @@ public class CrawlerThread extends MysterThread {
                                 addresses[i] = new MysterAddress(
                                         (String) (ipList.elementAt(i)));
 
-                            System.out
-                                    .println("We got a TCP top ten! -> " + ex);
                         }
 
                         if (endFlag) {

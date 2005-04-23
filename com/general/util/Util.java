@@ -189,6 +189,8 @@ public class Util { //This code was taken from an Apple Sample Code package,
                     public void run() {
                         try {
                             super.run();
+                        } catch (Exception ex) {
+                            ex.printStackTrace();
                         } finally {
                             sem.signal();
                         }

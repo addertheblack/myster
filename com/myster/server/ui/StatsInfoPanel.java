@@ -25,7 +25,7 @@ import com.myster.server.event.OperatorListener;
 import com.myster.server.event.ServerDownloadDispatcher;
 import com.myster.server.event.ServerDownloadEvent;
 import com.myster.server.event.ServerDownloadListener;
-import com.myster.server.event.ServerEventManager;
+import com.myster.server.event.ServerEventDispatcher;
 import com.myster.server.event.ServerSearchDispatcher;
 import com.myster.server.event.ServerSearchEvent;
 import com.myster.server.event.ServerSearchListener;
@@ -93,7 +93,7 @@ public class StatsInfoPanel extends Panel {
 
     Label uptime;
 
-    ServerEventManager server;
+    ServerEventDispatcher server;
 
     SearchPerHour searches = null;
 
@@ -108,16 +108,16 @@ public class StatsInfoPanel extends Panel {
 
         server.addOperatorListener(new OperatorListener() {
             public void pingEvent(OperatorEvent e) {
-                numberOfPings.increment();
+                numberOfPings.increment(false);
             }
 
             public void disconnectEvent(OperatorEvent e) {
-                currentConnections.decrement();
+                currentConnections.decrement(false);
             }
 
             public void connectEvent(OperatorEvent e) {
-                currentConnections.increment();
-                numberOfConnections.increment();
+                currentConnections.increment(false);
+                numberOfConnections.increment(false);
             }
         });
 
@@ -296,33 +296,33 @@ public class StatsInfoPanel extends Panel {
 
     }
 
-    private class ConnectionHandler implements ConnectionManagerListener {
+    private class ConnectionHandler extends ConnectionManagerListener {
         public void sectionEventConnect(ConnectionManagerEvent e) {
-
+            boolean isUdp = e.isDatagram();
             switch (e.getSection()) {
             case RequestSearchThread.NUMBER:
-                numsearch.increment();
+                numsearch.increment(isUdp);
                 searches.addSearch(e.getTimeStamp());
                 ((ServerSearchDispatcher) (e.getSectionObject()))
                         .addServerSearchListener(new SearchHandler());
                 break;
             case FileSenderThread.NUMBER:
             case MultiSourceSender.SECTION_NUMBER:
-                numofld.increment();
+                numofld.increment(isUdp);
                 ((ServerDownloadDispatcher) (e.getSectionObject()))
                         .addServerDownloadListener(new DownloadHandler());
                 break;
             case IPLister.NUMBER:
-                numofTT.increment();
+                numofTT.increment(isUdp);
                 break;
             case HandshakeThread.NUMBER:
-                numofSSR.increment();
+                numofSSR.increment(isUdp);
                 break;
             case FileInfoLister.NUMBER:
-                numofFI.increment();
+                numofFI.increment(isUdp);
                 break;
             case FileByHash.NUMBER:
-                numberOfHashSearches.increment();
+                numberOfHashSearches.increment(isUdp);
                 break;
             }
 
@@ -358,7 +358,7 @@ public class StatsInfoPanel extends Panel {
         }
 
         public void searchResult(ServerSearchEvent e) {
-            numMaches.increment();
+            numMaches.setValue(e.getResults().length+numMaches.getValue());
         }
     }
 
@@ -372,7 +372,7 @@ public class StatsInfoPanel extends Panel {
         }
 
         public void run() {
-            searchperhour.setValue(calculateSearchesPerHour());
+            searchperhour.setValue(calculateSearchesPerHour(), false);
             uptime.setText(com.myster.Myster.getUptimeAsString(System
                     .currentTimeMillis()
                     - com.myster.Myster.getLaunchedTime()));

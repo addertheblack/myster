@@ -30,7 +30,7 @@ import com.myster.server.ServerFacade;
 import com.myster.server.event.ConnectionManagerEvent;
 import com.myster.server.event.ConnectionManagerListener;
 import com.myster.server.event.ServerDownloadDispatcher;
-import com.myster.server.event.ServerEventManager;
+import com.myster.server.event.ServerEventDispatcher;
 import com.myster.server.stream.FileSenderThread;
 
 
@@ -40,7 +40,7 @@ public class DownloadInfoPanel extends Panel {
 
     Button disconnect, browse, clearAll, message;
 
-    ServerEventManager server;
+    ServerEventDispatcher server;
 
     ConnectionHandler chandler;
 
@@ -157,7 +157,7 @@ public class DownloadInfoPanel extends Panel {
         message.setEnabled(enable);
     }
 
-    private class ConnectionHandler implements ConnectionManagerListener {
+    private class ConnectionHandler extends ConnectionManagerListener {
 
         public void sectionEventConnect(ConnectionManagerEvent e) {
             if ((e.getSection() == FileSenderThread.NUMBER)

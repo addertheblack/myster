@@ -10,10 +10,12 @@ import com.myster.net.DataPacket;
 import com.myster.net.DatagramProtocolManager;
 import com.myster.net.DatagramTransport;
 import com.myster.net.MysterAddress;
+import com.myster.server.event.ConnectionManagerEvent;
+import com.myster.server.event.ServerEventDispatcher;
 
 /**
- * The TransactionManager is responsible for dealing with lower level details
- * involved with implementing the Myster simple datagram "transaction" protocol.
+ * The TransactionManager is responsible for dealing with lower level details involved with
+ * implementing the Myster simple datagram "transaction" protocol.
  * 
  * TODO put in transaction protocol docs here.
  */
@@ -23,11 +25,13 @@ public class TransactionManager implements TransactionSender {
     private static TransactionManager singleton;
 
     /**
-     * Creates a TransactionManager which also has a TransactionManager
-     * implementation (which is supposed to actually do the work).
+     * Creates a TransactionManager which also has a TransactionManager implementation (which is
+     * supposed to actually do the work).
+     * 
+     * @param dispatcher
      */
-    private TransactionManager() {
-        impl = new TransactionTransportImplementation();
+    private TransactionManager(ServerEventDispatcher dispatcher) {
+        impl = new TransactionTransportImplementation(dispatcher);
         try {
             DatagramProtocolManager.addTransport(impl);
         } catch (Exception ex) {
@@ -40,11 +44,16 @@ public class TransactionManager implements TransactionSender {
      * 
      * @return the TransactionManager implementation.
      */
-    private static synchronized TransactionManager load() {
-        if (singleton == null) {
-            singleton = new TransactionManager();
-            //do some registering...
-        }
+    public static synchronized void init(ServerEventDispatcher dispatcher) {
+        if (singleton != null)
+            throw new IllegalStateException("Don't init me twice!");
+
+        singleton = new TransactionManager(dispatcher);
+    }
+    
+    public static synchronized TransactionManager load() {
+        if (singleton==null)
+            throw new IllegalStateException("You need to init me first!");
         return singleton;
     }
 
@@ -60,8 +69,8 @@ public class TransactionManager implements TransactionSender {
     }
 
     /**
-     * Responsible for sending a transaction and notifying the listener if there
-     * is any reply or timeout etc..
+     * Responsible for sending a transaction and notifying the listener if there is any reply or
+     * timeout etc..
      * <p>
      * This function is for use by TransactionSocket only.
      * 
@@ -69,15 +78,14 @@ public class TransactionManager implements TransactionSender {
      * 
      * 
      * @param data
-     *            DataPacket to send (protocol information is added to the
-     *            information in this packet)
+     *            DataPacket to send (protocol information is added to the information in this
+     *            packet)
      * @param transactionCode
      *            of the remote datagram connection section to activate
      * @param listener
      *            to be notified upon events to do with this transaction
-     * @return integer based ID to make references to this outstanding
-     *         transaction. The id is no longer valid after the transaciton has
-     *         responded
+     * @return integer based ID to make references to this outstanding transaction. The id is no
+     *         longer valid after the transaciton has responded
      */
     static int sendTransaction(DataPacket data, int transactionCode, TransactionListener listener) {
         return load().impl.sendTransaction(data, transactionCode, listener);
@@ -86,11 +94,10 @@ public class TransactionManager implements TransactionSender {
     /**
      * Cancels the outstanding transaction referenced by this id.
      * <p>
-     * There's actually not much point in cancelling a transaction since the
-     * same result can be obtained by ignoring the response of the server. The
-     * only difference is cancelling the transaction means Myster can free up
-     * the resources occupied by the transaction as well as not bother sending
-     * additional follow-up packets, which are usually sent if there is no
+     * There's actually not much point in cancelling a transaction since the same result can be
+     * obtained by ignoring the response of the server. The only difference is cancelling the
+     * transaction means Myster can free up the resources occupied by the transaction as well as not
+     * bother sending additional follow-up packets, which are usually sent if there is no
      * acknowlegement packet received.
      * <p>
      * This function is to be used only by TransactionSocket
@@ -106,8 +113,8 @@ public class TransactionManager implements TransactionSender {
     }
 
     /**
-     * Adds a TransactionProtocol (server side). A TransactionProtocol is a
-     * server side event listener for a specific transaction connection section.
+     * Adds a TransactionProtocol (server side). A TransactionProtocol is a server side event
+     * listener for a specific transaction connection section.
      * <p>
      * 
      * @see TransactionProtocol
@@ -134,10 +141,9 @@ public class TransactionManager implements TransactionSender {
     }
 
     /**
-     * This class implements the DatagramTransport which means it implements a
-     * listener for all datagram packets with the its
-     * TRANSACTION_PROTOCOL_NUMBER. This also means all outgoing packets need to
-     * go through this object as this is the interface provided by
+     * This class implements the DatagramTransport which means it implements a listener for all
+     * datagram packets with the its TRANSACTION_PROTOCOL_NUMBER. This also means all outgoing
+     * packets need to go through this object as this is the interface provided by
      * DatagramProtocolManager.
      * 
      * @see DatagramProtocolManager
@@ -146,6 +152,15 @@ public class TransactionManager implements TransactionSender {
         private final Hashtable serverProtocols = new Hashtable();
 
         private final Hashtable outstandingTransactions = new Hashtable();
+
+        private final ServerEventDispatcher dispatcher;
+
+        /**
+         * @param dispatcher
+         */
+        public TransactionTransportImplementation(ServerEventDispatcher dispatcher) {
+            this.dispatcher = dispatcher;
+        }
 
         public short getTransportCode() {
             return Transaction.TRANSACTION_PROTOCOL_NUMBER;
@@ -172,8 +187,11 @@ public class TransactionManager implements TransactionSender {
 
                     return;
                 }
-
-                protocol.transactionReceived(transaction); //fun...
+                Object transactionObject = protocol.getTransactionObject();
+                dispatcher.fireCEvent(new ConnectionManagerEvent(
+                        ConnectionManagerEvent.SECTIONCONNECT, transaction.getAddress(),
+                        transaction.getTransactionCode(), transactionObject, true));
+                protocol.transactionReceived(transaction, transactionObject); //fun...
             }
         }
 
@@ -193,9 +211,9 @@ public class TransactionManager implements TransactionSender {
         }
 
         /**
-         * Cancels the transaction pointed to by this internal id. This routine
-         * blocks until the event is cancelled but sends the cancelled event
-         * asynchronously to the transaction listeners.
+         * Cancels the transaction pointed to by this internal id. This routine blocks until the
+         * event is cancelled but sends the cancelled event asynchronously to the transaction
+         * listeners.
          * 
          * 
          * @param uniqueId
@@ -211,17 +229,15 @@ public class TransactionManager implements TransactionSender {
             record.timer.cancleTimer();
 
             /*
-             * Events should be on the event thread. We can't use the standard
-             * fireEvents routine in this object because the routine assumes
-             * that it's called on the event thread. We also couldn't just
-             * bundle up the code here in a runnable and send it to the event
-             * thread because those runnable are done asynchronously and we need
-             * to return if the transaction was cancelled,
+             * Events should be on the event thread. We can't use the standard fireEvents routine in
+             * this object because the routine assumes that it's called on the event thread. We also
+             * couldn't just bundle up the code here in a runnable and send it to the event thread
+             * because those runnable are done asynchronously and we need to return if the
+             * transaction was cancelled,
              * 
-             * We could do it in a synchronous call to the event thread.. but
-             * that could cause confusing deadlocks (and harder to write code).
-             * There's also no reason for it when we can cancel the event THEN
-             * asynchronously update all listeners. It's a feature.
+             * We could do it in a synchronous call to the event thread.. but that could cause
+             * confusing deadlocks (and harder to write code). There's also no reason for it when we
+             * can cancel the event THEN asynchronously update all listeners. It's a feature.
              */
             Util.invokeLater(new Runnable() {
                 public void run() {
@@ -250,8 +266,7 @@ public class TransactionManager implements TransactionSender {
         }
 
         /*
-         * Not all events are sent through here. Cancelled events aren't sent
-         * here.
+         * Not all events are sent through here. Cancelled events aren't sent here.
          */
         private void fireEvents(int uniqueid, Transaction transaction) {
             ListenerRecord record = ((ListenerRecord) (outstandingTransactions.remove(new Integer(
@@ -270,8 +285,7 @@ public class TransactionManager implements TransactionSender {
 
             record.listener.fireEvent(new TransactionEvent(
                     (transaction == null ? TransactionEvent.TIMEOUT : TransactionEvent.REPLY),
-                    System.currentTimeMillis() - record.timeStamp, record.address,
-                    transaction));
+                    System.currentTimeMillis() - record.timeStamp, record.address, transaction));
         }
 
         int idCounter = 0; //used to generate unique ids.

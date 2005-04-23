@@ -607,7 +607,7 @@ class MCListSelectionModel implements ListSelectionModel {
 
     private MCListItemInterface anchorValue;
 
-    private int leadSelectionIndex;
+    private MCListItemInterface leadSelectionValue;
 
     private EventListenerList listenerList = new EventListenerList();
 
@@ -745,7 +745,7 @@ class MCListSelectionModel implements ListSelectionModel {
      * @see javax.swing.ListSelectionModel#getAnchorSelectionIndex()
      */
     public int getAnchorSelectionIndex() {
-        return tableModel.indexOf(anchorValue);
+        return anchorValue == null ? -1 : tableModel.indexOf(anchorValue);
     }
 
     /*
@@ -754,7 +754,10 @@ class MCListSelectionModel implements ListSelectionModel {
      * @see javax.swing.ListSelectionModel#setAnchorSelectionIndex(int)
      */
     public void setAnchorSelectionIndex(int index) {
-        anchorValue = tableModel.getRow(index);
+        if (index < 0)
+            anchorValue = null;
+        else
+            anchorValue = tableModel.getRow(index);
     }
 
     /*
@@ -763,7 +766,7 @@ class MCListSelectionModel implements ListSelectionModel {
      * @see javax.swing.ListSelectionModel#getLeadSelectionIndex()
      */
     public int getLeadSelectionIndex() {
-        return leadSelectionIndex;
+        return leadSelectionValue == null ? -1 : tableModel.indexOf(leadSelectionValue);
     }
 
     /*
@@ -772,7 +775,10 @@ class MCListSelectionModel implements ListSelectionModel {
      * @see javax.swing.ListSelectionModel#setLeadSelectionIndex(int)
      */
     public void setLeadSelectionIndex(int index) {
-        leadSelectionIndex = index;
+        if (index < 0)
+            leadSelectionValue = null;
+        else
+            leadSelectionValue = tableModel.getRow(index);
     }
 
     /*
