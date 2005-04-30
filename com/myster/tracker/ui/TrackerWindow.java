@@ -19,12 +19,12 @@ import com.general.mclist.Sortable;
 import com.general.mclist.SortableLong;
 import com.general.mclist.SortableString;
 import com.general.util.TimerThread;
+import com.myster.client.ui.OpenConnectionHandler;
 import com.myster.tracker.IPListManager;
 import com.myster.tracker.IPListManagerSingleton;
 import com.myster.tracker.MysterServer;
 import com.myster.type.MysterType;
 import com.myster.ui.MysterFrame;
-import com.myster.util.OpenConnectionHandler;
 import com.myster.util.TypeChoice;
 
 public class TrackerWindow extends MysterFrame {

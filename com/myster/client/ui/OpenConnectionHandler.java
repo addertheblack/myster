@@ -1,8 +1,7 @@
-package com.myster.util;
+package com.myster.client.ui;
 
 import com.general.mclist.MCListEvent;
 import com.general.mclist.MCListEventAdapter;
-import com.myster.client.ui.ClientWindow;
 
 public class OpenConnectionHandler extends MCListEventAdapter {
 

@@ -12,6 +12,7 @@ import java.io.InterruptedIOException;
 import java.net.DatagramPacket;
 import java.net.DatagramSocket;
 
+import com.general.util.AnswerDialog;
 import com.general.util.LinkedList;
 import com.general.util.Util;
 
@@ -125,7 +126,7 @@ public final class AsyncDatagramSocket {
                         // sub-system was acting up. It has been restarted
                         // successfully. If this message appears frequently, ");
                     } catch (Exception ex) {
-                        com.general.util.AnswerDialog
+                        AnswerDialog
                                 .simpleAlert("The UDP sub-system crashed and could not be re-started. Consider restarting the computer. Myster can not work properly without a UDP sub-system.");
                         end();
                     }

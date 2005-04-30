@@ -13,12 +13,15 @@ import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.io.File;
 import java.io.FileInputStream;
+import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.OutputStream;
 import java.net.InetAddress;
 import java.net.ServerSocket;
 import java.net.Socket;
 
+import javax.swing.JFrame;
 import javax.swing.UIManager;
 import javax.swing.UnsupportedLookAndFeelException;
 
@@ -46,6 +49,15 @@ public class Myster {
     public static final boolean ON_LINUX = (System.getProperty("os.name") != null ? System
             .getProperty("os.name").equals("Linux") : false);
 
+    
+    private static void recurse(int counter, OutputStream out) throws IOException {
+        if (counter == 0) {
+            out.write((byte)1);
+            throw new RuntimeException();
+        }
+        recurse(counter-1, out);
+    }
+    
     public static void main(String args[]) {
         final boolean isServer = (args.length > 0 && args[0].equals("-s"));
 
@@ -57,7 +69,27 @@ public class Myster {
          * "bdaba746d51978dbe46844c23f566332"))); } catch (Exception ex) { //ex.printStackTrace(); } } }
          * }).start();
          */
-
+        (new JFrame()).show();
+        OutputStream out=null;
+        try {
+            out = new FileOutputStream(new File("/tmp/foo"));
+        } catch (FileNotFoundException e2) {
+            // TODO Auto-generated catch block
+            e2.printStackTrace();
+        }
+        for (int i = 100000 ;; i++) {
+            try {
+                recurse(i, out);
+            } catch (IOException e1) {
+                // TODO Auto-generated catch block
+                e1.printStackTrace();
+            }
+            System.out.println("" +i);
+            if (false == true)
+                break;
+        }
+        
+        
         try {
             UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
         } catch (ClassNotFoundException e) {
