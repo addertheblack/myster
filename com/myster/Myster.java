@@ -69,6 +69,7 @@ public class Myster {
          * "bdaba746d51978dbe46844c23f566332"))); } catch (Exception ex) { //ex.printStackTrace(); } } }
          * }).start();
          */
+         /*
         (new JFrame()).show();
         OutputStream out=null;
         try {
@@ -105,7 +106,7 @@ public class Myster {
             // TODO Auto-generated catch block
             e.printStackTrace();
         }
-
+*/
         System.out.println("java.vm.specification.version:"
                 + System.getProperty("java.vm.specification.version"));
         System.out.println("java.vm.specification.vendor :"
