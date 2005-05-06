@@ -10,7 +10,6 @@ import com.myster.hash.FileHash;
 import com.myster.hash.SimpleFileHash;
 import com.myster.net.BadPacketException;
 import com.myster.transaction.Transaction;
-import com.myster.transaction.TransactionManager;
 import com.myster.transaction.TransactionProtocol;
 import com.myster.type.MysterType;
 

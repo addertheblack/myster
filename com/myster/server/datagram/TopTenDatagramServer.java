@@ -10,7 +10,6 @@ import com.myster.net.BadPacketException;
 import com.myster.tracker.IPListManagerSingleton;
 import com.myster.tracker.MysterServer;
 import com.myster.transaction.Transaction;
-import com.myster.transaction.TransactionManager;
 import com.myster.transaction.TransactionProtocol;
 import com.myster.type.MysterType;
 

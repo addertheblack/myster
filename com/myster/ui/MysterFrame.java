@@ -11,6 +11,7 @@ import java.awt.event.WindowListener;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 
+import com.myster.MysterGlobals;
 import com.myster.menubar.MysterMenuBar;
 import com.myster.menubar.event.MenuBarListener;
 
@@ -38,7 +39,7 @@ public class MysterFrame extends Frame {
     }
 
     public void setTitle(String windowName) {
-        super.setTitle(com.myster.Myster.ON_LINUX ? windowName + " - Myster" : windowName);
+        super.setTitle(MysterGlobals.ON_LINUX ? windowName + " - Myster" : windowName);
         WindowManager.updateMenu();
     }
 

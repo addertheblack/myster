@@ -11,8 +11,6 @@ import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.net.URL;
 
-//import Myster;
-
 public class Util { //This code was taken from an Apple Sample Code package,
 
     public static Image loadImage(String filename, Component watcher) {
@@ -239,4 +237,48 @@ public class Util { //This code was taken from an Apple Sample Code package,
      * *************************** CRAMMING STUFF ON THE EVENT THREAD SUB SYSTEM
      * END*********************
      */
+    
+    
+    /////////////// time \\\\\\\\\\\
+    private static final int MINUTE = 1000 * 60;
+
+    private static final int HOUR = MINUTE * 60;
+
+    private static final int DAY = HOUR * 24;
+
+    private static final int WEEK = DAY * 7;
+    /**
+     * Returns the uptime as a pre-formated string
+     */
+    public static String getLongAsTime(long number) {
+        if (number == -1)
+            return "-";
+        if (number == -2)
+            return "N/A";
+        if (number < 0)
+            return "Err";
+    
+        long numberTemp = number; //number comes from super.
+    
+        long weeks = numberTemp / WEEK;
+        numberTemp %= WEEK;
+    
+        long days = numberTemp / DAY;
+        numberTemp %= DAY;
+    
+        long hours = numberTemp / HOUR;
+        numberTemp %= HOUR;
+    
+        long minutes = numberTemp / MINUTE;
+        numberTemp %= MINUTE;
+    
+        //return h:MM
+        //Ddays, h:MM
+        //Wweeks
+        //Wweeks Ddays
+        return (weeks != 0 ? weeks + "weeks " : "") + (days != 0 ? days + "days " : "")
+                + (weeks == 0 ? hours + ":" : "")
+                + (weeks == 0 ? (minutes < 10 ? "0" + minutes : minutes + "") : "");
+    
+    }
 }

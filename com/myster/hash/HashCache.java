@@ -16,7 +16,8 @@ import java.util.Enumeration;
 import java.util.Hashtable;
 import java.util.Vector;
 
-import com.myster.Myster;
+import com.general.util.Util;
+import com.myster.MysterGlobals;
 
 /**
  * This class is yet another manager. In this case, this manager should only be
@@ -116,9 +117,9 @@ public abstract class HashCache {
 class DefaultHashCache extends HashCache {
     private Hashtable hashtable = new Hashtable();
 
-    private static final File hashFile = new File(Myster.getCurrentDirectory(), "HashCache");
+    private static final File hashFile = new File(MysterGlobals.getCurrentDirectory(), "HashCache");
 
-    private static final File hashBackupFile = new File(Myster.getCurrentDirectory(),
+    private static final File hashBackupFile = new File(MysterGlobals.getCurrentDirectory(),
             "HashCache.backup");
 
     private static final String VERSION = "1";

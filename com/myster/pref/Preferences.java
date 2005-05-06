@@ -21,7 +21,7 @@ import java.io.ObjectOutputStream;
 import java.util.Hashtable;
 
 import com.general.util.Semaphore;
-import com.myster.Myster;
+import com.myster.MysterGlobals;
 import com.myster.mml.MML;
 import com.myster.pref.ui.PreferencesDialogBox;
 import com.myster.pref.ui.PreferencesPanel;
@@ -39,8 +39,6 @@ import com.myster.util.MysterThread;
  * "/IPLists/ <Type>/ <Name of IP>/" This name or IP should be identical to the one stored above..
  *  
  */
-
-//USES THE SINGLETON DESIGN PATTERN!!!! READ UP ON IT!
 public class Preferences {
     private Hashtable data;
 
@@ -48,9 +46,9 @@ public class Preferences {
 
     private static Preferences pref;
 
-    private final File preferenceFile = new File(Myster.getCurrentDirectory(), "mysterprefs.mml");
+    private final File preferenceFile = new File(MysterGlobals.getCurrentDirectory(), "mysterprefs.mml");
 
-    private final File preferenceBackupFile = new File(Myster.getCurrentDirectory(),
+    private final File preferenceBackupFile = new File(MysterGlobals.getCurrentDirectory(),
             "mysterprefs.mml.backup");
 
     public static final int DEBUG = 1;

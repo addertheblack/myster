@@ -385,7 +385,7 @@ public class TrackerWindow extends MysterFrame {
             }
 
             public String toString() {
-                return com.myster.Myster.getUptimeAsString(number);
+                return com.general.util.Util.getLongAsTime(number);
             }
         }
     }

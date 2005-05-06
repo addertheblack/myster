@@ -7,7 +7,6 @@ import java.io.IOException;
 import com.myster.filemanager.FileTypeListManager;
 import com.myster.net.BadPacketException;
 import com.myster.transaction.Transaction;
-import com.myster.transaction.TransactionManager;
 import com.myster.transaction.TransactionProtocol;
 import com.myster.type.MysterType;
 

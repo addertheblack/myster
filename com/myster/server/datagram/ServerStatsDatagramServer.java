@@ -6,7 +6,6 @@ import java.io.IOException;
 
 import com.myster.net.BadPacketException;
 import com.myster.transaction.Transaction;
-import com.myster.transaction.TransactionManager;
 import com.myster.transaction.TransactionProtocol;
 
 public class ServerStatsDatagramServer extends TransactionProtocol {

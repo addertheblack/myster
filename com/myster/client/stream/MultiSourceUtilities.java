@@ -136,7 +136,7 @@ public class MultiSourceUtilities {
      * downloads are downloaded.
      */
     public static File getIncomingDirectory() throws IOException {
-        File file = new File(com.myster.Myster.getCurrentDirectory(),
+        File file = new File(com.myster.MysterGlobals.getCurrentDirectory(),
                 "Incoming"); //! This will only ever return null;
 
         if ((file.exists()) && (file.isDirectory()))

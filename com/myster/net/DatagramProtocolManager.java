@@ -118,7 +118,7 @@ public class DatagramProtocolManager {
             if (dsocket == null) {
                 if (System.currentTimeMillis() - lastErrorTime > 5 * 60 * 100) {
                     try {
-                        dsocket = new AsyncDatagramSocket(com.myster.Myster.DEFAULT_PORT);
+                        dsocket = new AsyncDatagramSocket(com.myster.MysterGlobals.DEFAULT_PORT);
                         dsocket.setPortListener(this);
                     } catch (IOException ex) {
                         System.out.println("The datagram socket could not be created ->> ");

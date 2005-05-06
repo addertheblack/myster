@@ -41,8 +41,6 @@ public class TransactionManager implements TransactionSender {
 
     /**
      * Singleton lazy init loader. Don't call this from the outside.
-     * 
-     * @return the TransactionManager implementation.
      */
     public static synchronized void init(ServerEventDispatcher dispatcher) {
         if (singleton != null)

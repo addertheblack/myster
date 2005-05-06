@@ -47,9 +47,6 @@ public class CountLabel extends Label {
         setText(streamValue + (datagramValue != 0 ? "/" + datagramValue : ""));
     }
 
-    /**
-     * @param b
-     */
     public void decrement(boolean isUdp) {
         if (isUdp)
             --datagramValue;

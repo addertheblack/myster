@@ -24,7 +24,8 @@ import java.util.Vector;
 import com.general.thread.CallListener;
 import com.general.thread.CancellableCallable;
 import com.general.thread.Future;
-import com.myster.Myster;
+import com.general.util.Util;
+import com.myster.MysterGlobals;
 import com.myster.hash.FileHash;
 import com.myster.mml.MML;
 import com.myster.mml.MMLException;
@@ -610,7 +611,7 @@ public class FileTypeList extends MysterThread {
      * used by getDefaultDirectoryPath();
      */
     private synchronized File getDefaultDirectory() {
-        File empty = new File(Myster.getCurrentDirectory(), type + " Downloads");
+        File empty = new File(MysterGlobals.getCurrentDirectory(), type + " Downloads");
         int counter = 1;
         do {
             if (empty.exists()) {
@@ -644,6 +645,7 @@ public class FileTypeList extends MysterThread {
         return (local_prefs.get(PATH_PREF) != null);
     }
 
+    private static final MysterType MPG3 = new MysterType("MPG3");
     /**
      * Creates a FileItem from a file. Sub classes should over-ride this.
      * 
@@ -651,7 +653,6 @@ public class FileTypeList extends MysterThread {
      *            to be the basis of this FileItem.
      * @return FileItem created from file.
      */
-    private static final MysterType MPG3 = new MysterType("MPG3");
     protected FileItem createFileItem(File file) {
         if (MPG3.equals(type))
             return new MPG3FileItem(file);

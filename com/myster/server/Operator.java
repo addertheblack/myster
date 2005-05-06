@@ -34,8 +34,6 @@ import com.myster.util.MysterThread;
 public class Operator extends MysterThread {
     private ServerSocket serverSocket;
 
-    private ServerEventDispatcher eventDispatcher;
-
     private ConnectionManager[] connectionManagers;
 
     private DoubleBlockingQueue socketQueue; //Communcation CHANNEL.
@@ -47,8 +45,6 @@ public class Operator extends MysterThread {
     protected Operator(TransferQueue d, int threads, ServerEventDispatcher eventDispatcher) {
         super("Server Operator");
 
-        this.eventDispatcher = eventDispatcher;
-        
         transferQueue = d;
 
         socketQueue = new DoubleBlockingQueue(0); //comunications channel
@@ -117,7 +113,7 @@ public class Operator extends MysterThread {
                     } catch (IOException ex) {
                     }
 
-                serverSocket = new ServerSocket(com.myster.Myster.DEFAULT_PORT,
+                serverSocket = new ServerSocket(com.myster.MysterGlobals.DEFAULT_PORT,
                         5); //bigger buffer
                 break;
             } catch (IOException ex) {
