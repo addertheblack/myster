@@ -1103,6 +1103,7 @@ Work on DEV 8:
 	  	-> Made it so that UDP transactions (connection sections) show up in the server stats.
 	  	-> Gave a message that queue is full on MSDownload queue is full. (but Myster doesn't show it :( )
 	  	-> Made it so that the server disconnects bad downloads faster.
+	  	-> Removed dependencies of other classes on Myster.java.. Created MysterGlobals and "application" singleton classes.
 		
 (Red List)
 to do:
