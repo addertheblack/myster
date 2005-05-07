@@ -2,6 +2,7 @@ package com.myster;
 
 import java.io.File;
 
+import com.general.application.ApplicationSingleton;
 import com.myster.pref.Preferences;
 
 /**
@@ -23,6 +24,8 @@ public class MysterGlobals {
 
     private static final File WORKING_DIRECTORY = new File(System.getProperty("user.dir"));
 
+    public static ApplicationSingleton appSigleton;
+    
     /**
      * Instead of calling System.exit() directly to quit, call this routine. It makes sure cleanup
      * is done.
@@ -34,6 +37,8 @@ public class MysterGlobals {
     public static void quit() {
         Preferences.getInstance().flush(); //flushes prefs to disk.
         System.out.println("Byeeeee.");
+        if (appSigleton!=null)
+            appSigleton.close();
         System.exit(0);
     }
 

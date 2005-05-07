@@ -258,7 +258,7 @@ public class MCListHeader extends Panel {
      */
     public int getColumnWidth(int i) {
         return (numberOfColumns == 1 ? ((ScrollPane)callback.getPane()).getViewportSize().width
-                - (2 * AWTMCList.PADDING) : getPreferredColumnWidth(i));
+                - (2 * AWTMCList.PADDING) -  AWTMCList.INTERNAL_PADDING : getPreferredColumnWidth(i));
     }
 
     private int getPreferredColumnWidth(int i) {

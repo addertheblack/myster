@@ -1,8 +1,8 @@
 /*
  * Main.java
  * 
- * Title: Server Stats Window Test App Author: Andrew Trumper Description: An
- * app to test the server stats window
+ * Title: Server Stats Window Test App Author: Andrew Trumper Description: An app to test the server
+ * stats window
  */
 
 package com.myster.server.ui;
@@ -32,8 +32,6 @@ import com.myster.server.event.ConnectionManagerListener;
 import com.myster.server.event.ServerDownloadDispatcher;
 import com.myster.server.event.ServerEventDispatcher;
 import com.myster.server.stream.FileSenderThread;
-
-
 
 public class DownloadInfoPanel extends Panel {
     MCList list;
@@ -95,11 +93,9 @@ public class DownloadInfoPanel extends Panel {
                 int[] array = list.getSelectedIndexes();
                 for (int i = 0; i < array.length; i++) {
                     try {
-                        MessageWindow window = new MessageWindow(
-                                new com.myster.net.MysterAddress(
-                                        (((DownloadMCListItem) (list
-                                                .getMCListItem(array[i]))))
-                                                .getAddress()));
+                        MessageWindow window = new MessageWindow(new com.myster.net.MysterAddress(
+                                (((DownloadMCListItem) (list.getMCListItem(array[i]))))
+                                        .getAddress()));
                         window.setVisible(true);
                     } catch (java.net.UnknownHostException ex) {
 
@@ -162,8 +158,7 @@ public class DownloadInfoPanel extends Panel {
         public void sectionEventConnect(ConnectionManagerEvent e) {
             if ((e.getSection() == FileSenderThread.NUMBER)
                     || (e.getSection() == com.myster.server.stream.MultiSourceSender.SECTION_NUMBER)) {
-                ServerDownloadDispatcher d = (ServerDownloadDispatcher) e
-                        .getSectionObject();
+                ServerDownloadDispatcher d = (ServerDownloadDispatcher) e.getSectionObject();
                 DownloadMCListItem i = new DownloadMCListItem(d);
                 list.addItem(i);
                 i.setUser(e.getAddress() == null ? "?" : "" + e.getAddress());
@@ -171,30 +166,47 @@ public class DownloadInfoPanel extends Panel {
         }
 
         public void sectionEventDisconnect(ConnectionManagerEvent e) {
-            //	if (e.getSection()==FileSenderThread.NUMBER) {
-            //		DownloadMCListItem
-            // d=itemlist.getDownloadMCListItem(((ServerDownloadDispatcher)(e.getDispatcher())));
-            //		itemlist.removeElement(d);
-            //		d.done();
-            //	}
+            if (e.getSection() == FileSenderThread.NUMBER
+                    || (e.getSection() == com.myster.server.stream.MultiSourceSender.SECTION_NUMBER)) {
+                ServerDownloadDispatcher d = (ServerDownloadDispatcher) e.getSectionObject();
+                int index = getIndexOfDispatcher(d);
+                if (index == -1) {
+                    System.out.println("Couldn't find this dispatcher.. weird..");
+                    return;
+                }
+                DownloadMCListItem downloadMCListItem = (DownloadMCListItem) list
+                        .getMCListItem(index);
+                if (downloadMCListItem.isTrivialDownload()) {
+                    list.removeItem(downloadMCListItem);
+                }
+            }
+        }
+
+        private int getIndexOfDispatcher(ServerDownloadDispatcher dispatcher) {
+            for (int i = 0; i < list.length(); i++) {
+                if (list.getItem(i) == dispatcher)
+                    return i;
+            }
+            return -1;
         }
 
         public void disconnectSelected() {
             int[] array = list.getSelectedIndexes();
             for (int i = 0; i < array.length; i++) {
-                ((DownloadMCListItem) (list.getMCListItem(array[i])))
-                        .disconnectClient(); //isn't this a great line or what?
+                ((DownloadMCListItem) (list.getMCListItem(array[i]))).disconnectClient(); //isn't
+                // this a
+                // great
+                // line or
+                // what?
             }
         }
 
         public void newConnectWindow() {
             int[] array = list.getSelectedIndexes();
             for (int i = 0; i < array.length; i++) {
-                (new ClientWindow(
-                        ""
-                                + (((DownloadMCListItem) (list
-                                        .getMCListItem(array[i]))))
-                                        .getAddress())).show();
+                (new ClientWindow(""
+                        + (((DownloadMCListItem) (list.getMCListItem(array[i])))).getAddress()))
+                        .show();
             }
         }
 
@@ -212,8 +224,7 @@ public class DownloadInfoPanel extends Panel {
             }
         }
 
-        public class DownloadStatsMCListEventHandler implements
-                MCListEventListener {
+        public class DownloadStatsMCListEventHandler implements MCListEventListener {
             public void doubleClick(MCListEvent e) {
                 newConnectWindow();
             }

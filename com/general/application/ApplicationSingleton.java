@@ -146,6 +146,8 @@ public class ApplicationSingleton {
 
     //public static int password=-1;
     private void newSelf(File file, ApplicationSingletonListener listener) throws IOException {
+        if (file.exists())
+            file.delete();
         DataOutputStream out = new DataOutputStream(new FileOutputStream(file));
         Math.random();
         Math.random();

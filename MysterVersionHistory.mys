@@ -1,8 +1,9 @@
 //!Internal! version history from Dev6 onward
-//© Andrew Trumper 2001-2003
+//© Andrew Trumper 2001-2005
 
 //NOTE TO READERS:
 //THIS DOCUMENT IS MENT FOR INTERNAL USE ONLY
+//ie: don't smear it on your skin.. 
 
 Work on DEV 6:
 
@@ -1103,6 +1104,9 @@ Work on DEV 8:
 	  	-> Made it so that UDP transactions (connection sections) show up in the server stats.
 	  	-> Gave a message that queue is full on MSDownload queue is full. (but Myster doesn't show it :( )
 	  	-> Made it so that the server disconnects bad downloads faster.
+	  	-> Made it so that downloaders that were kicked 'cause they were leechers don't show up on the server stats.
+	  			In fact all "done" downloads that never sent data won;t show up.
+	    -> Tweaked the startup time a little (but removed error dialogs and things.. naughty me)...
 	  	-> Removed dependencies of other classes on Myster.java.. Created MysterGlobals and "application" singleton classes.
 		
 (Red List)

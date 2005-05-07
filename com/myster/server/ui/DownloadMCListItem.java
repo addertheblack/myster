@@ -1,8 +1,8 @@
 /*
  * Main.java
  * 
- * Title: Server Stats Window Test App Author: Andrew Trumper Description: An
- * app to test the server stats window
+ * Title: Server Stats Window Test App Author: Andrew Trumper Description: An app to test the server
+ * stats window
  */
 
 package com.myster.server.ui;
@@ -18,31 +18,33 @@ import com.myster.server.event.ServerDownloadEvent;
 import com.myster.server.event.ServerDownloadListener;
 
 public class DownloadMCListItem extends MCListItemInterface {
-    ServerDownloadDispatcher dispatcher;
+    private ServerDownloadDispatcher dispatcher;
 
-    DownloadInfo info;
+    private DownloadInfo info;
 
-    String user = "??";
+    private String user = "??";
 
-    int status = LIMBO;
+    private int status = LIMBO;
 
-    int queuePosition = 0;
+    private int queuePosition = 0;
 
-    boolean endFlag;
+    private boolean endFlag;
 
-    public final static int LIMBO = 0;
+    private final static int LIMBO = 0;
 
-    public final static int QUEUED = 1;
+    private final static int QUEUED = 1;
 
-    public final static int TRANSFERING = 3;
+    private final static int TRANSFERING = 3;
 
-    public final static int OVER = 4;
+    private final static int DONE_NO_ERROR = 4;
 
-    SortableString doneUser, doneFileName;
+    private final static int ABORTED = 5;
 
-    SortableByte doneSize, doneProgress;
+    private SortableString doneUser, doneFileName;
 
-    SortableRate doneRate;
+    private SortableByte doneSize, doneProgress;
+
+    private SortableRate doneRate;
 
     public DownloadMCListItem(ServerDownloadDispatcher d) {
         dispatcher = d;
@@ -60,7 +62,7 @@ public class DownloadMCListItem extends MCListItemInterface {
     }
 
     public synchronized Sortable getValueOfColumn(int i) {
-        if (status == OVER) {
+        if (isDone()) {
             switch (i) {
             case 0:
                 return doneUser;
@@ -134,14 +136,17 @@ public class DownloadMCListItem extends MCListItemInterface {
     }
 
     private synchronized void done() { //needs to be synchronized with
-                                       // getValueColumn.
-        if (status == OVER)
+        // getValueColumn.
+        if (isDone())
             return;
-        setStatus(OVER);
+        if (info.getFileSize() == info.getAmountDownloaded()) {
+            setStatus(DONE_NO_ERROR);
+        } else {
+            setStatus(ABORTED);
+        }
         doneUser = new SortableString(user);
         doneFileName = new SortableString(info.getFileName());
-        doneRate = new SortableRate(info.getFileSize() == info
-                .getAmountDownloaded() ? SortableRate.DONE
+        doneRate = new SortableRate(status == DONE_NO_ERROR ? SortableRate.DONE
                 : SortableRate.ABORTED);
         doneSize = new SortableByte(info.getFileSize());
         doneProgress = new SortableByte(info.getAmountDownloaded());
@@ -155,8 +160,28 @@ public class DownloadMCListItem extends MCListItemInterface {
         }
     }
 
+    /**
+     * Returns true if the download has finished.
+     * 
+     * @return true if the download has finished (ie: we won't send any more data). isDone() returns
+     *         true even if the connection was aborted prematurely.
+     */
     public boolean isDone() {
-        return (status == OVER);
+        return (status == DONE_NO_ERROR) || (status == ABORTED);
+    }
+
+    /**
+     * Returns whether or not the user downloaded any data during this download. This is used to
+     * indicate if the download was aborted before the setup was finished: usually because the user
+     * was a leech.
+     * 
+     * @return true if the download represented by this object's has a status of OVER and is
+     *         considered DONE and has not transfered any file data. Returns false otherwise.
+     */
+    public synchronized boolean isTrivialDownload() {
+        if (status != DONE_NO_ERROR)
+            return false;
+        return ((Long) doneProgress.getValue()).longValue() == 0;
     }
 
     private class DownloadEventHandler extends ServerDownloadListener {
