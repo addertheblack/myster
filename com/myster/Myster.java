@@ -16,8 +16,8 @@ import java.lang.reflect.Method;
 
 import com.general.application.ApplicationSingleton;
 import com.general.application.ApplicationSingletonListener;
-import com.general.util.AnswerDialog;
 import com.general.util.Util;
+import com.myster.application.MysterGlobals;
 import com.myster.bandwidth.BandwidthManager;
 import com.myster.filemanager.FileTypeListManager;
 import com.myster.pref.Preferences;
@@ -26,7 +26,6 @@ import com.myster.server.ServerFacade;
 import com.myster.server.ui.ServerStatsWindow;
 import com.myster.tracker.IPListManagerSingleton;
 import com.myster.util.I18n;
-import com.myster.util.ProgressWindow;
 
 public class Myster {
     private static final String LOCK_FILE_NAME = ".lockFile";

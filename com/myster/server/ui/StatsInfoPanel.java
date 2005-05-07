@@ -375,7 +375,7 @@ public class StatsInfoPanel extends Panel {
             searchperhour.setValue(calculateSearchesPerHour(), false);
             uptime.setText(com.general.util.Util.getLongAsTime(System
                     .currentTimeMillis()
-                    - com.myster.MysterGlobals.getLaunchedTime()));
+                    - com.myster.application.MysterGlobals.getLaunchedTime()));
             if (!flag)
                 return;
             Timer timer = new Timer(this, 5000);

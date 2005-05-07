@@ -352,7 +352,7 @@ class DefaultTypeDescriptionList extends TypeDescriptionList {
 
         try {
             return new TypeDescription(new MysterType(type
-                    .getBytes(com.myster.MysterGlobals.DEFAULT_ENCODING)),
+                    .getBytes(com.myster.application.MysterGlobals.DEFAULT_ENCODING)),
                     description, extensions, isArchived, isEnable);
         } catch (Exception ex) {
             throw new com.general.util.UnexpectedException(ex);

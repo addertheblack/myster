@@ -37,7 +37,7 @@ public class HandshakeThread extends ServerThread {
             Preferences prefs;
             prefs = Preferences.getInstance();
 
-            String tempstring = prefs.query(com.myster.MysterGlobals.SPEEDPATH);
+            String tempstring = prefs.query(com.myster.application.MysterGlobals.SPEEDPATH);
             if (!(tempstring.equals(""))) {
                 mml.put("/Speed", tempstring);
             }
@@ -46,7 +46,7 @@ public class HandshakeThread extends ServerThread {
 
             mml.put("/Myster Version", "1.0");
 
-            tempstring = prefs.query(com.myster.MysterGlobals.ADDRESSPATH);
+            tempstring = prefs.query(com.myster.application.MysterGlobals.ADDRESSPATH);
             if (!(tempstring.equals(""))) { //If there is no value for the
                                             // address it doesn't send this
                                             // info.
@@ -64,7 +64,7 @@ public class HandshakeThread extends ServerThread {
             }
 
             mml.put("/uptime", ""
-                    + (System.currentTimeMillis() - com.myster.MysterGlobals
+                    + (System.currentTimeMillis() - com.myster.application.MysterGlobals
                             .getLaunchedTime()));
 
             return mml;

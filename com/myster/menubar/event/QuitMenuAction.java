@@ -17,7 +17,7 @@ import java.awt.event.ActionListener;
 public class QuitMenuAction implements ActionListener {
 
     public void actionPerformed(ActionEvent e) {
-        com.myster.MysterGlobals.quit();//System.exit(0);
+        com.myster.application.MysterGlobals.quit();//System.exit(0);
     }
 
 }

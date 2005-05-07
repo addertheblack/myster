@@ -11,7 +11,7 @@ import java.awt.event.WindowListener;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 
-import com.myster.MysterGlobals;
+import com.myster.application.MysterGlobals;
 import com.myster.menubar.MysterMenuBar;
 import com.myster.menubar.event.MenuBarListener;
 

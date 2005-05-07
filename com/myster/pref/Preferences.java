@@ -21,7 +21,7 @@ import java.io.ObjectOutputStream;
 import java.util.Hashtable;
 
 import com.general.util.Semaphore;
-import com.myster.MysterGlobals;
+import com.myster.application.MysterGlobals;
 import com.myster.mml.MML;
 import com.myster.pref.ui.PreferencesDialogBox;
 import com.myster.pref.ui.PreferencesPanel;

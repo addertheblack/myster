@@ -113,7 +113,7 @@ public class Operator extends MysterThread {
                     } catch (IOException ex) {
                     }
 
-                serverSocket = new ServerSocket(com.myster.MysterGlobals.DEFAULT_PORT,
+                serverSocket = new ServerSocket(com.myster.application.MysterGlobals.DEFAULT_PORT,
                         5); //bigger buffer
                 break;
             } catch (IOException ex) {

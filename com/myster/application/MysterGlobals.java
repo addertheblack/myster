@@ -1,4 +1,4 @@
-package com.myster;
+package com.myster.application;
 
 import java.io.File;
 

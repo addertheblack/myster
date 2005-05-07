@@ -25,7 +25,7 @@ import com.general.thread.CallListener;
 import com.general.thread.CancellableCallable;
 import com.general.thread.Future;
 import com.general.util.Util;
-import com.myster.MysterGlobals;
+import com.myster.application.MysterGlobals;
 import com.myster.hash.FileHash;
 import com.myster.mml.MML;
 import com.myster.mml.MMLException;

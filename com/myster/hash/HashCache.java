@@ -17,7 +17,7 @@ import java.util.Hashtable;
 import java.util.Vector;
 
 import com.general.util.Util;
-import com.myster.MysterGlobals;
+import com.myster.application.MysterGlobals;
 
 /**
  * This class is yet another manager. In this case, this manager should only be
