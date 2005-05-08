@@ -3,6 +3,7 @@ package com.myster.filemanager;
 import helliker.id3.ID3v2FormatException;
 import helliker.id3.ID3v2Frames;
 import helliker.id3.ID3v2Tag;
+import helliker.id3.MP3File;
 
 import java.io.File;
 
@@ -34,28 +35,37 @@ public class MPG3FileItem extends FileItem {
 
     //ugh.. for Mp3 stuff
     public static void patchFunction2(MML mml, File file) {
-        ID3v2Tag tag = null;
+        MP3File mp3File = null;
         try {
-            tag = new ID3v2Tag(file, 0);
+            mp3File = new MP3File(file);
         } catch (Exception ex) {
-            patchFunction(mml, file);
             return;
         }
 
+        if (file.getName().endsWith(".mp3")) {
+            mml.put("/BitRate", "" + (mp3File.getBitRate()*1000));
+            mml.put("/Hz", "" + mp3File.getSampleRate());
+        }
+
         try {
-            String temp = tag.getFrameDataString(ID3v2Frames.TITLE);
+            String temp = mp3File.getTitle();
             if (temp != null && !temp.equals("")) {
                 mml.put("/ID3Name", temp);
+            } else {
+                temp = mp3File.getTrackString();
+                if (temp != null && !temp.equals("")) {
+                    mml.put("/ID3Name", temp);
+                }
             }
         } catch (ID3v2FormatException ex) {
         }
 
         try {
-            String temp = tag.getFrameDataString(ID3v2Frames.COMPOSER);
+            String temp = mp3File.getComposer();
             if (temp != null && !temp.equals("")) {
                 mml.put("/Artist", temp);
             } else {
-                temp = tag.getFrameDataString(ID3v2Frames.LEAD_PERFORMERS);
+                temp = mp3File.getArtist();
                 if (temp != null && !temp.equals("")) {
                     mml.put("/Artist", temp);
                 }
@@ -64,47 +74,45 @@ public class MPG3FileItem extends FileItem {
         }
 
         try {
-            String temp = tag.getFrameDataString(ID3v2Frames.ALBUM);
+            String temp = mp3File.getAlbum();
             if (temp != null && !temp.equals("")) {
                 mml.put("/Album", temp);
             }
         } catch (ID3v2FormatException ex) {
         }
-
         // System.out.println(""+tag);
-
     }
 
-    // ugh.. mp3 stuff
-    private static void patchFunction(MML mml, File file) {
-        MP3Header head = null;
-        try {
-            head = new MP3Header(file);
-        } catch (Exception ex) {
-            return;
-        }
-
-        mml.put("/BitRate", "" + head.getBitRate());
-        mml.put("/Hz", "" + head.getSamplingRate());
-
-        String temp = head.getMP3Name();
-        if (temp != null) {
-            mml.put("/ID3Name", temp);
-        } else {
-            patchFunction2(mml, file);
-            return;
-        }
-
-        temp = head.getArtist();
-        if (temp != null) {
-            mml.put("/Artist", temp);
-        }
-
-        temp = head.getAlbum();
-        if (temp != null) {
-            mml.put("/Album", temp);
-        }
-
-        head = null; //go get 'em GC...
-    }
+//    // ugh.. mp3 stuff
+//    private static void patchFunction(MML mml, File file) {
+//        MP3Header head = null;
+//        try {
+//            head = new MP3Header(file);
+//        } catch (Exception ex) {
+//            return;
+//        }
+//
+//        mml.put("/BitRate", "" + head.getBitRate());
+//        mml.put("/Hz", "" + head.getSamplingRate());
+//
+//        String temp = head.getMP3Name();
+//        if (temp != null) {
+//            mml.put("/ID3Name", temp);
+//        } else {
+//            patchFunction2(mml, file);
+//            return;
+//        }
+//
+//        temp = head.getArtist();
+//        if (temp != null) {
+//            mml.put("/Artist", temp);
+//        }
+//
+//        temp = head.getAlbum();
+//        if (temp != null) {
+//            mml.put("/Album", temp);
+//        }
+//
+//        head = null; //go get 'em GC...
+//    }
 }
