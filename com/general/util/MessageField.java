@@ -10,15 +10,15 @@
 
 package com.general.util;
 
-import java.awt.TextField;
+import java.awt.Label;
 
-public class MessageField extends TextField {
+public class MessageField extends Label {
 
     public MessageField(String s) {
-        super(s);
+        say(s);
     }
 
     public void say(String s) {
-        setText(s);
+        setText("Status: " + s);
     }
 }

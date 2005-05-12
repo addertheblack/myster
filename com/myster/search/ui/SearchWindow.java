@@ -107,7 +107,6 @@ public class SearchWindow extends MysterFrame implements SearchResultListener, S
         fileList.getPane().setSize(XDEFAULT, YDEFAULT);
 
         msg = new MessageField("Idle...");
-        msg.setEditable(false);
 
         addComponent(textEntry, 0, 0, 1, 1, 0, 0, GridBagConstraints.HORIZONTAL);
         addComponent(choice, 0, 1, 1, 1, 0, 0, GridBagConstraints.HORIZONTAL);

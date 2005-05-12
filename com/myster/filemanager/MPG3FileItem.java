@@ -1,14 +1,11 @@
 package com.myster.filemanager;
 
 import helliker.id3.ID3v2FormatException;
-import helliker.id3.ID3v2Frames;
-import helliker.id3.ID3v2Tag;
 import helliker.id3.MP3File;
 
 import java.io.File;
 
 import com.myster.mml.MML;
-import com.myster.util.MP3Header;
 
 /**
  * This class implements the different data needed by the MPG3 files.

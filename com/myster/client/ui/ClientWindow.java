@@ -149,7 +149,6 @@ public class ClientWindow extends MysterFrame implements Sayable {
         //fileList.setColumnWidth(0, 300);
 
         msg = new MessageField("Idle...");
-        msg.setEditable(false);
         msg.setSize(XDEFAULT, GYDEFAULT);
 
         instant = new Button("Instant Message");
