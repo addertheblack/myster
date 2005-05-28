@@ -16,6 +16,7 @@ import java.lang.reflect.Method;
 
 import com.general.application.ApplicationSingleton;
 import com.general.application.ApplicationSingletonListener;
+import com.general.util.AnswerDialog;
 import com.general.util.Util;
 import com.myster.application.MysterGlobals;
 import com.myster.bandwidth.BandwidthManager;
@@ -117,10 +118,14 @@ public class Myster {
         MysterGlobals.appSigleton = applicationSingleton;
             final long startTime = System.currentTimeMillis();
         try {
-            if (!applicationSingleton.start())
+            if (!applicationSingleton.start()) 
                 return;
         } catch (IOException e) {
             e.printStackTrace();
+            AnswerDialog
+            .simpleAlert( 
+                    "Can't start Myster because there's another version of Myster already running. Here's a more technical explanation: \n\n" +
+                    e);
             return;
         }
 
@@ -159,18 +164,16 @@ public class Myster {
 
                     try {
                         if (com.myster.type.TypeDescriptionList.getDefault().getEnabledTypes().length <= 0) {
-//                            AnswerDialog
-//                                    .simpleAlert(
-//                                            progress,
-//                                            "There are not enabled types. This screws up Myster. Please make sure"
-//                                                    + " the typedescriptionlist.mml is in the right place and correctly"
-//                                                    + " formated.");
+                            AnswerDialog
+                                    .simpleAlert( 
+                                            "There are not enabled types. This screws up Myster. Please make sure"
+                                                    + " the typedescriptionlist.mml is in the right place and correctly"
+                                                    + " formated.");
                             MysterGlobals.quit();
                             return; //not reached
                         }
                     } catch (Exception ex) {
-//                        AnswerDialog.simpleAlert(progress,
-//                                "Could not load the Type Description List: \n\n" + ex);
+                        AnswerDialog.simpleAlert( "Could not load the Type Description List: \n\n" + ex);
                         MysterGlobals.quit();
                         return; //not reached
                     }
