@@ -24,7 +24,7 @@ public class CountLabel extends Label {
 
     public void setValue(int i, boolean isUdp) {
         if (isUdp)
-            datagramValue = i;
+            streamValue = i;
         else
             streamValue = i;
         setUpdateLabel();
@@ -37,7 +37,7 @@ public class CountLabel extends Label {
 
     public void increment(boolean isUdp) {
         if (isUdp)
-            ++datagramValue;
+            ++streamValue;
         else
             ++streamValue;
         setUpdateLabel();
@@ -49,7 +49,7 @@ public class CountLabel extends Label {
 
     public void decrement(boolean isUdp) {
         if (isUdp)
-            --datagramValue;
+            --streamValue;
         else
             --streamValue;
         setUpdateLabel();
