@@ -1109,6 +1109,7 @@ Work on DEV 8:
 	  			In fact all "done" downloads that never sent data won;t show up.
 	    -> Tweaked the startup time a little (but removed error dialogs and things.. naughty me)...
 	  	-> Removed dependencies of other classes on Myster.java.. Created MysterGlobals and "application" singleton classes.
+	  	-> Fixed none 1.1 compatible places to use reflection (hopefully this will actually work!).
 		
 (Red List)
 to do:
