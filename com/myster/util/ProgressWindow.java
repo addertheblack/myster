@@ -14,6 +14,7 @@ import java.awt.event.MouseListener;
 import java.util.Vector;
 
 import com.general.util.ProgressBar;
+import com.general.util.Util;
 import com.myster.ui.MysterFrame;
 
 public class ProgressWindow extends MysterFrame {
@@ -80,6 +81,9 @@ public class ProgressWindow extends MysterFrame {
         int xSize = X_SIZE + insets.right + insets.left;
         int ySize = AD_HEIGHT + (Y_SIZE * progressPanels.size()) + insets.top + insets.bottom;
         int counter = 0;
+        if (Util.isEventDispatchThread()) {
+            setSize(xSize, ySize);
+        }
         while ((getSize().width != xSize) || (getSize().height != ySize)) {
             setSize(xSize, ySize);
             try {
@@ -370,7 +374,7 @@ public class ProgressWindow extends MysterFrame {
 
         public synchronized void setBarColor(Color color) {
             progressBar.setForeground(color);
-            progressBar.repaint();
+//            progressBar.repaint();
         }
 
         public synchronized Color getBarColor() {

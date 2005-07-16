@@ -87,19 +87,24 @@ public class FileProgressWindow extends ProgressWindow {
         overFlag = true;
     }
 
-    private String calculateRate(int bar) {
+    public synchronized int getRate(int bar) {
         if (getValue(bar) < getMin(bar) || getValue(bar) > getMax(bar))
-            return "";
+            return -1;
 
-        return formatRate(((Long) barStartTime.elementAt(bar)).longValue(), getValue(bar)
-                - ((Long) previouslyDownloaded.elementAt(bar)).longValue() - getMin(bar));
-        
+        long startTime = ((Long) barStartTime.elementAt(bar)).longValue();
+        long timeDelta = (System.currentTimeMillis() - startTime);
+        if (timeDelta < 1*1000)
+            return -1;
+        long value = getValue(bar) - ((Long) previouslyDownloaded.elementAt(bar)).longValue()
+                - getMin(bar);
+        long int_temp = (timeDelta / 1000);
+
+        return (int) (int_temp <= 0 ? -1 : value / int_temp);
     }
 
-    private long rateCalc(long startTime, long value) {
-        long int_temp = ((System.currentTimeMillis() - startTime) / 1000);
+    private String calculateRate(int bar) {
+        return formatRate(getRate(bar));
 
-        return (int_temp <= 0 ? 0 : value / int_temp);
     }
 
     public synchronized void setURL(String urlString) {
@@ -112,13 +117,12 @@ public class FileProgressWindow extends ProgressWindow {
         }
     }
 
-    private String formatRate(long startTime, long value) {
-        long temp = rateCalc(startTime, value);
-        if (temp == 0) {
+    private String formatRate(long value) {
+        if (value <= 0) {
             return "";
         }
 
-        return Util.getStringFromBytes(temp) + "/s";
+        return Util.getStringFromBytes(value) + "/s";
     }
 
     private class RateTimer implements Runnable {

@@ -13,16 +13,36 @@ public class MultiSourceEvent extends GenericEvent {
     public static final int DONE_DOWNLOAD = 3; //is called when download has
                                                // ended AND file has finished
 
-    MultiSourceDownload msDownload;
+    private long length;
 
-    public MultiSourceEvent(int id, MultiSourceDownload msDownload) {
+    private boolean cancelled;
+
+    private long progress;
+
+    private long initialOffset;
+
+    MultiSourceEvent(int id, long initialOffset, long progress, long length, boolean cancelled) {
         super(id);
-
-        this.msDownload = msDownload;
+        this.length = length;
+        this.cancelled = cancelled;
+        this.progress = progress;
+        this.initialOffset = initialOffset;
     }
 
-    public MultiSourceDownload getMultiSourceDownload() {
-        return msDownload;
+    public long getInitialOffset() {
+        return initialOffset;
+    }
+    
+    public long getProgress() {
+        return progress;
+    }
+
+    public boolean isCancelled() {
+        return cancelled;
+    }
+    
+    public long getLength() {
+        return length;
     }
 }
 

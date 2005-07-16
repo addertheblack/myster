@@ -11,6 +11,10 @@ import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.net.URL;
 
+import com.general.thread.CallListener;
+import com.general.thread.CancellableCallable;
+import com.general.thread.Future;
+
 public class Util { //This code was taken from an Apple Sample Code package,
 
     public static Image loadImage(String filename, Component watcher) {
@@ -159,6 +163,69 @@ public class Util { //This code was taken from an Apple Sample Code package,
 
         Toolkit.getDefaultToolkit().getSystemEventQueue().postEvent(
                 new SpecialEvent(runnable, listener));
+    }
+    
+    public static Future invokeAsynchronously(final CancellableCallable callable, CallListener listener ) {
+        CallableFutureGlue glueBall = new CallableFutureGlue(callable, listener);
+        invokeLater(glueBall);
+        return glueBall;
+    }
+    
+    private static class CallableFutureGlue implements Future, Runnable {
+        CancellableCallable callable;
+        CallListener listener;
+        private boolean cancelled;
+        private boolean done;
+        
+        private CallableFutureGlue(CancellableCallable callable, CallListener listener) {
+            this.callable = callable;
+            this.listener = listener;
+        }
+        
+        public void run() {
+            try {
+                Object result = callable.call();
+                if (doCancel())
+                    return;
+                listener.handleResult(result);
+            } catch (Exception ex) {
+                if (doCancel())
+                    return;
+                listener.handleException(ex);
+            } finally {
+                listener.handleFinally();
+            }
+        }
+        
+        private synchronized boolean doCancel() {
+            if (isCancelled())
+                return true;
+            done = true;
+            listener.handleCancel();
+            return false;
+        }
+        
+        public synchronized boolean cancel() {
+            if (done || cancelled)
+                return false;
+            cancelled = true;
+            callable.cancel();
+            return true;
+        }
+
+        public boolean cancel(boolean mayInterruptIfRunning) {
+            //can't interrupt since task is on event thread!
+            return cancel();
+        }
+
+        public synchronized boolean isCancelled() {
+            return cancelled;
+        }
+
+        public synchronized boolean isDone() {
+            return done;
+        }
+        
     }
 
     public static boolean isEventDispatchThread() {

@@ -279,7 +279,7 @@ class MysterIP {
         return ip.equals(mysterIp.ip);
     }
 
-    protected MML toMML() {
+    MML toMML() {
         try {
             MML workingmml = new MML();
 

@@ -1,5 +1,6 @@
 package com.myster.client.stream;
 
+import java.awt.Color;
 import java.io.File;
 import java.io.IOException;
 import java.util.Hashtable;
@@ -24,8 +25,8 @@ public class MSDownloadHandler extends MSDownloadListener {
 
     private int segmentCounter = 0;
 
-    public MSDownloadHandler(FileProgressWindow progress,
-            File fileBeingDownloadedTo, MSPartialFile partialFile) {
+    public MSDownloadHandler(FileProgressWindow progress, File fileBeingDownloadedTo,
+            MSPartialFile partialFile) {
         this.progress = progress;
 
         macBarCounter = 1; // the first bar is used for overall progress
@@ -40,21 +41,19 @@ public class MSDownloadHandler extends MSDownloadListener {
 
     public void startDownload(MultiSourceEvent event) {
         progress.setText("Looking for first source...");
-        progress.startBlock(0, 0, event.getMultiSourceDownload().getLength());
-        progress.setPreviouslyDownloaded(event.getMultiSourceDownload()
-                .getInitialOffset(), FileProgressWindow.BAR_1);
-        progress.setValue(event.getMultiSourceDownload().getInitialOffset());
+        progress.startBlock(0, 0, event.getLength());
+        progress.setPreviouslyDownloaded(event.getInitialOffset(), FileProgressWindow.BAR_1);
+        progress.setValue(event.getInitialOffset());
     }
 
     int counter = 0;
 
     public void progress(MultiSourceEvent event) {
-        progress.setValue(event.getMultiSourceDownload().getProgress());
+        progress.setValue(event.getProgress());
 
         if (--counter % 10 == 0)
             progress.setText("Transfered: "
-                    + com.general.util.Util.getStringFromBytes(event
-                            .getMultiSourceDownload().getProgress()));
+                    + com.general.util.Util.getStringFromBytes(event.getProgress()));
     }
 
     public void startSegmentDownloader(MSSegmentEvent event) {
@@ -63,8 +62,8 @@ public class MSDownloadHandler extends MSDownloadListener {
 
         ++segmentCounter;
 
-        SegmentDownloaderHandler handler = new SegmentDownloaderHandler(
-                progressBannerManager, progress, getAppropriateBarNumber());
+        SegmentDownloaderHandler handler = new SegmentDownloaderHandler(progressBannerManager,
+                progress, getAppropriateBarNumber());
 
         segmentListeners.put(event.getSegmentDownloader(), handler);
 
@@ -90,7 +89,7 @@ public class MSDownloadHandler extends MSDownloadListener {
     public void endDownload(MultiSourceEvent event) {
         progress.setText("Download Stopped");
 
-        if (event.getMultiSourceDownload().isCancelled()) {
+        if (event.isCancelled()) {
             partialFile.done();
             fileBeingDownloadedTo.delete();
         }
@@ -98,12 +97,12 @@ public class MSDownloadHandler extends MSDownloadListener {
 
     public void doneDownload(MultiSourceEvent event) {
         progress.setText("Download Finished");
+        progress.setValue(progress.getMax());
         progress.done();
         progress.setProgressBarNumber(1);
 
         try {
-            if (!MultiSourceUtilities.moveFileToFinalDestination(
-                    fileBeingDownloadedTo, progress))
+            if (!MultiSourceUtilities.moveFileToFinalDestination(fileBeingDownloadedTo, progress))
                 throw new IOException("");
         } catch (IOException ex) {
             com.general.util.AnswerDialog.simpleAlert(progress,
@@ -122,25 +121,23 @@ public class MSDownloadHandler extends MSDownloadListener {
         if (freeBars.size() == 0) {
             progress.setProgressBarNumber(macBarCounter + 1);
 
-            final int MAX_STEP = 5;
-            int i = macBarCounter - 1;
-
-            i = ((i / MAX_STEP) % 2 == 0 ? i % MAX_STEP : MAX_STEP
-                    - (i % MAX_STEP) - 1);
-
-            progress.setBarColor(new java.awt.Color(0, (MAX_STEP - i)
-                    * (255 / MAX_STEP), 150), macBarCounter);
+//            final int MAX_STEP = 5;
+//            int i = macBarCounter - 1;
+//
+//            i = ((i / MAX_STEP) % 2 == 0 ? i % MAX_STEP : MAX_STEP - (i % MAX_STEP) - 1);
+//
+//            progress.setBarColor(new java.awt.Color(0, (MAX_STEP - i) * (255 / MAX_STEP), 150),
+//                    macBarCounter);
 
             return macBarCounter++;
         }
 
         //this blob of code figures out which of the freebars to re-use
         int minimum = ((Integer) (freeBars.elementAt(0))).intValue(); //no
-                                                                      // templates
+        // templates
         int min_index = 0;
         for (int i = 0; i < freeBars.size(); i++) {
-            int temp_int = ((Integer) (freeBars.elementAt(i))).intValue(); //no
-                                                                           // autoboxing
+            int temp_int = ((Integer) (freeBars.elementAt(i))).intValue(); //no autoboxing
 
             if (temp_int < minimum) {
                 minimum = temp_int;
@@ -151,7 +148,7 @@ public class MSDownloadHandler extends MSDownloadListener {
         int temp_int = ((Integer) (freeBars.elementAt(min_index))).intValue();
 
         freeBars.removeElementAt(min_index); //remove element doens't return
-                                             // what it's removing
+        // what it's removing
 
         return temp_int;
     }
@@ -171,8 +168,9 @@ class SegmentDownloaderHandler extends SegmentDownloaderListener {
 
     final ProgressBannerManager progressBannerManager;
 
-    public SegmentDownloaderHandler(
-            ProgressBannerManager progressBannerManager,
+    private static final int MAX_SPEED = 1 * 1024 * 1024;
+
+    public SegmentDownloaderHandler(ProgressBannerManager progressBannerManager,
             FileProgressWindow progress, int bar) {
         this.bar = bar;
         this.progress = progress;
@@ -188,21 +186,39 @@ class SegmentDownloaderHandler extends SegmentDownloaderListener {
     }
 
     public void queued(SegmentDownloaderEvent e) {
-    	progress.setValue(-1, bar);
-        progress.setText("You are in queue position " + e.getQueuePosition(),
-                bar);
+        progress.setValue(-1, bar);
+        progress.setText("You are in queue position " + e.getQueuePosition(), bar);
     }
 
     public void startSegment(SegmentDownloaderEvent e) {
         progress.startBlock(bar, e.getOffset(), e.getOffset() + e.getLength());
         //progress.setPreviouslyDownloaded(e.getOffset(), bar);
         progress.setValue(e.getOffset(), bar);
-        progress.setText("Downloading from "
-                + e.getMysterFileStub().getMysterAddress(), bar);
+        updateBarColor();
+        progress.setText("Downloading from " + e.getMysterFileStub().getMysterAddress(), bar);
+    }
+
+    private void updateBarColor() {
+        long rate = Math.min(MAX_SPEED, progress.getRate(bar));
+        if (rate<=0)
+            return;
+        int offset = (int) (2048 * (Math.log(rate) / Math.log(MAX_SPEED)));
+//        System.out.println("for a thingy of " + rate + " offset was "+ offset);
+        int catagory = (offset / 256) - 4;
+        offset = (offset == 2048 ? 255 : offset % 256 );
+        if (catagory < 1)
+            progress.setBarColor(new Color(0, 255, 255), bar);
+        else if (catagory < 2)
+            progress.setBarColor(new Color(0, 255 - offset, 255), bar);
+        else if (catagory < 3)
+            progress.setBarColor(new Color(offset, 0, 255 - offset), bar);
+        else
+            progress.setBarColor(new Color(255, offset, 0), bar);
     }
 
     public void downloadedBlock(SegmentDownloaderEvent e) {
         progress.setValue(e.getProgress() + e.getOffset(), bar);
+        updateBarColor();
     }
 
     public void endSegment(SegmentDownloaderEvent e) {
@@ -235,7 +251,7 @@ class SegmentDownloaderHandler extends SegmentDownloaderListener {
 
             break;
         case 'u': //URLs are UTF-8 but java's UTF decoder needs the length in
-                  // the first two bytes
+            // the first two bytes
             byte[] temp_buffer = e.getCopyOfData();
 
             if (temp_buffer.length > (0xFFFF))
@@ -300,7 +316,7 @@ class ProgressBannerManager implements Runnable {
 
     public synchronized void addNewBannerToQueue(Banner banner) {
         if (!queue.contains(banner)) { //NOTE THAT WE DO NOT CHECK IN
-                                       // OLDBANNERS! THIS IS ON PURPOSE!
+            // OLDBANNERS! THIS IS ON PURPOSE!
             queue.addToTail(banner);
         }
 
@@ -327,7 +343,7 @@ class ProgressBannerManager implements Runnable {
         if (banner != null) {
             if (!oldBanners.contains(banner))
                 oldBanners.addElement(banner); //if unique image then add to
-                                               // banners
+            // banners
         } else {
             banner = oldBanners.getNextBanner();
         }
@@ -343,8 +359,7 @@ class ProgressBannerManager implements Runnable {
         if ((isEndFlag) || (!progress.isVisible()))
             return;
 
-        com.general.util.Timer timer = new com.general.util.Timer(this,
-                TIME_TO_WAIT);
+        com.general.util.Timer timer = new com.general.util.Timer(this, TIME_TO_WAIT);
     }
 
     public void end() {
