@@ -202,18 +202,21 @@ class SegmentDownloaderHandler extends SegmentDownloaderListener {
         long rate = Math.min(MAX_SPEED, progress.getRate(bar));
         if (rate<=0)
             return;
-        int offset = (int) (2048 * (Math.log(rate) / Math.log(MAX_SPEED)));
+        int offset = (int) (512 * (Math.log(rate) / Math.log(MAX_SPEED))) - 256;
+        offset = Math.min(255,offset);
 //        System.out.println("for a thingy of " + rate + " offset was "+ offset);
-        int catagory = (offset / 256) - 4;
-        offset = (offset == 2048 ? 255 : offset % 256 );
-        if (catagory < 1)
-            progress.setBarColor(new Color(0, 255, 255), bar);
-        else if (catagory < 2)
-            progress.setBarColor(new Color(0, 255 - offset, 255), bar);
-        else if (catagory < 3)
-            progress.setBarColor(new Color(offset, 0, 255 - offset), bar);
-        else
-            progress.setBarColor(new Color(255, offset, 0), bar);
+        if (offset > 0)
+            progress.setBarColor(new Color(Math.min(255, 511 - offset*2), Math.min(255,offset*2), 0), bar);
+//        int catagory = (offset / 256) - 4;
+//        offset = (offset == 2048 ? 255 : offset % 256 );
+//        if (catagory < 1)
+//            progress.setBarColor(new Color(0, 255, 255), bar);
+//        else if (catagory < 2)
+//            progress.setBarColor(new Color(0, 255 - offset, 255), bar);
+//        else if (catagory < 3)
+//            progress.setBarColor(new Color(offset, 0, 255 - offset), bar);
+//        else
+//            progress.setBarColor(new Color(255, offset, 0), bar);
     }
 
     public void downloadedBlock(SegmentDownloaderEvent e) {
