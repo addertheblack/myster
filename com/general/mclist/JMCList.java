@@ -657,8 +657,8 @@ class MCListSelectionModel implements ListSelectionModel {
      */
     public void setSelectionInterval(int index0, int index1) {
         clearSelection();
-        privateAddSelectionInterval(index0, index1);
-        setAnchorSelectionIndex(index0);
+        modifySelectionInterval(index0, index1, true);
+        fireValueChanged();
     }
 
     /*
@@ -672,15 +672,25 @@ class MCListSelectionModel implements ListSelectionModel {
         } else if (selectionMode == ListSelectionModel.SINGLE_INTERVAL_SELECTION) {
             setSelectionInterval(index0, index1);
         } else {
-            privateAddSelectionInterval(index0, index1);
+            modifySelectionInterval(index0, index1, true);
         }
     }
 
-    private void privateAddSelectionInterval(int index0, int index1) {
-        for (int i = index0; i <= index1; i++) {
-            tableModel.getRow(i).setSelected(true);
+    private void modifySelectionInterval(int index0, int index1, boolean selectRows) {
+        if (index0 > index1) {
+            modifyRowRange(index1, index0, selectRows);
+        } else {
+            modifyRowRange(index0, index1, selectRows);
         }
+        setAnchorSelectionIndex(index0);
+        setLeadSelectionIndex(index1);
         fireValueChanged(index0, index1);
+    }
+
+    private void modifyRowRange(int index0, int index1, boolean selection) {
+        for (int i = index0; i <= index1; i++) {
+            tableModel.getRow(i).setSelected(selection);
+        }
     }
 
     /*
@@ -689,10 +699,7 @@ class MCListSelectionModel implements ListSelectionModel {
      * @see javax.swing.ListSelectionModel#removeSelectionInterval(int, int)
      */
     public void removeSelectionInterval(int index0, int index1) {
-        for (int i = index0; i <= index1; i++) {
-            tableModel.getRow(i).setSelected(false);
-        }
-        fireValueChanged(index0, index1);
+        modifySelectionInterval(index0, index1, false);
     }
 
     /**
@@ -805,7 +812,8 @@ class MCListSelectionModel implements ListSelectionModel {
     /*
      * (non-Javadoc)
      * 
-     * @see javax.swing.ListSelectionModel#insertIndexInterval(int, int, boolean)
+     * @see javax.swing.ListSelectionModel#insertIndexInterval(int, int,
+     *      boolean)
      */
     public void insertIndexInterval(int index, int length, boolean before) {
         //fireValueChanged();

@@ -91,51 +91,57 @@ public class MultiSourceHashSearch implements MysterSearchClientSection {
 
     // asserts that the crawler is running (ie: only "starts" the crawler if one
     // is not already running)
-    private synchronized static void startCrawler(MysterType type) {
+    private synchronized static void startCrawler(final MysterType type) {
         BatchedType batchedType = getBatchForType(type);
 
         if (batchedType.crawler != null)
             return;
 
-        IPQueue ipQueue = new IPQueue();
-
-        com.myster.tracker.MysterServer[] iparray = com.myster.tracker.IPListManagerSingleton
-                .getIPListManager().getTop(type, 50);
-
-        String[] startingIps = com.myster.tracker.IPListManagerSingleton
-                .getIPListManager().getOnRamps();
-
-        int counter = 0;
-        for (int i = 0; (i < iparray.length) && (iparray[i] != null); i++) {
-            ipQueue.addIP(iparray[i].getAddress());
-            counter++;
-        }
-
-        if (counter < 3) {
-            for (int i = 0; i < startingIps.length; i++) {
-                try {
-                    ipQueue.addIP(new MysterAddress(startingIps[i]));
-                } catch (IOException ex) {
-                    ex.printStackTrace();
-                }
-            }
-        }
+        final IPQueue ipQueue = new IPQueue();
 
         batchedType.crawler = new CrawlerThread(new MultiSourceHashSearch(), //note..
-                                                                             // will
-                                                                             // not
-                                                                             // restart
-                                                                             // when
-                                                                             // crawl
-                                                                             // is
-                                                                             // done
+                // will
+                // not
+                // restart
+                // when
+                // crawl
+                // is
+                // done
                 type, ipQueue, new com.myster.util.Sayable() {
                     public void say(String string) {
                         MultiSourceUtilities.debug("Hash Search -> " + string);
                     }
                 });
+        new Thread() {
+            public void run() {
+                com.myster.tracker.MysterServer[] iparray = com.myster.tracker.IPListManagerSingleton
+                        .getIPListManager().getTop(type, 50);
 
-        batchedType.crawler.start();
+                String[] startingIps = com.myster.tracker.IPListManagerSingleton.getIPListManager()
+                        .getOnRamps();
+
+                int counter = 0;
+                for (int i = 0; (i < iparray.length) && (iparray[i] != null); i++) {
+                    ipQueue.addIP(iparray[i].getAddress());
+                    counter++;
+                }
+
+                if (counter < 3) {
+                    for (int i = 0; i < startingIps.length; i++) {
+                        try {
+                            ipQueue.addIP(new MysterAddress(startingIps[i]));
+                        } catch (IOException ex) {
+                            ex.printStackTrace();
+                        }
+                    }
+                }
+                synchronized (MultiSourceHashSearch.class) {
+                    BatchedType batchedType = getBatchForType(type);
+                    if (batchedType.crawler!=null)
+                        batchedType.crawler.start();
+                }
+            }
+        }.start();
     }
 
     private static class SearchEntry {
@@ -173,15 +179,15 @@ public class MultiSourceHashSearch implements MysterSearchClientSection {
         // lalalala...
     }
 
-    public void search(MysterSocket socket, MysterAddress address,
-            MysterType type) throws IOException {
+    public void search(MysterSocket socket, MysterAddress address, MysterType type)
+            throws IOException {
         MultiSourceUtilities.debug("Hash Search -> Searching " + address);
 
         SearchEntry[] searchEntries = getSearchEntries(type);
 
         for (int i = 0; i < searchEntries.length; i++) {
-            searchEntries[i].listener.fireEvent(new HashSearchEvent(
-                    HashSearchEvent.START_SEARCH, null));
+            searchEntries[i].listener.fireEvent(new HashSearchEvent(HashSearchEvent.START_SEARCH,
+                    null));
         }
 
         try {
@@ -193,18 +199,15 @@ public class MultiSourceHashSearch implements MysterSearchClientSection {
             for (int i = 0; i < searchEntries.length; i++) {
                 SearchEntry searchEntry = searchEntries[i];
 
-                MultiSourceUtilities.debug("HashSearch -> Searching has "
-                        + searchEntry.hash);
+                MultiSourceUtilities.debug("HashSearch -> Searching has " + searchEntry.hash);
 
-                String fileName = StandardSuite.getFileFromHash(socket, type,
-                        searchEntry.hash);
+                String fileName = StandardSuite.getFileFromHash(socket, type, searchEntry.hash);
 
                 if (!fileName.equals("")) {
-                    MultiSourceUtilities.debug("HASH SEARCH FOUND FILE -> "
-                            + fileName);
+                    MultiSourceUtilities.debug("HASH SEARCH FOUND FILE -> " + fileName);
                     searchEntry.listener.fireEvent(new HashSearchEvent(
-                            HashSearchEvent.SEARCH_RESULT, new MysterFileStub(
-                                    address, type, fileName)));
+                            HashSearchEvent.SEARCH_RESULT, new MysterFileStub(address, type,
+                                    fileName)));
                 }
             }
         } catch (UnknownProtocolException ex) {
@@ -213,8 +216,8 @@ public class MultiSourceHashSearch implements MysterSearchClientSection {
         }
 
         for (int i = 0; i < searchEntries.length; i++) {
-            searchEntries[i].listener.fireEvent(new HashSearchEvent(
-                    HashSearchEvent.END_SEARCH, null));
+            searchEntries[i].listener.fireEvent(new HashSearchEvent(HashSearchEvent.END_SEARCH,
+                    null));
         }
     }
 
@@ -235,24 +238,22 @@ public class MultiSourceHashSearch implements MysterSearchClientSection {
     }
 
     public void searchedAll(final MysterType type) {
-        MultiSourceUtilities
-                .debug("Hash Search -> Crawler has crawled the whole network!");
-        com.general.util.Timer timer = new com.general.util.Timer(
-                new Runnable() {
-                    public void run() {
-                        synchronized (MultiSourceHashSearch.class) { //sigh..
-                                                                     // this is
-                                                                     // to fix a
-                                                                     // dumb
-                                                                     // race
-                                                                     // condition
-                                                                     // that can
-                                                                     // happen
-                            if (!endFlag) {
-                                restartCrawler(type);
-                            }
-                        }
+        MultiSourceUtilities.debug("Hash Search -> Crawler has crawled the whole network!");
+        com.general.util.Timer timer = new com.general.util.Timer(new Runnable() {
+            public void run() {
+                synchronized (MultiSourceHashSearch.class) { //sigh..
+                    // this is
+                    // to fix a
+                    // dumb
+                    // race
+                    // condition
+                    // that can
+                    // happen
+                    if (!endFlag) {
+                        restartCrawler(type);
                     }
-                }, TIME_BETWEEN_CRAWLS);
+                }
+            }
+        }, TIME_BETWEEN_CRAWLS);
     }
 }
