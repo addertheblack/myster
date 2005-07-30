@@ -136,9 +136,9 @@ public class MultiSourceHashSearch implements MysterSearchClientSection {
                     }
                 }
                 synchronized (MultiSourceHashSearch.class) {
-                    BatchedType batchedType = getBatchForType(type);
-                    if (batchedType.crawler!=null)
-                        batchedType.crawler.start();
+                    BatchedType batch = getBatchForType(type);
+                    if (batch.crawler!=null)
+                        batch.crawler.start();
                 }
             }
         }.start();
