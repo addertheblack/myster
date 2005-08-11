@@ -198,10 +198,6 @@ public class MysterSocketPool implements Executor {
                             listener.handleResult(result);
                         }
                     });
-                } catch (final InterruptedException ex) {
-                    //interrupted exception
-                    //We skip this 'cause we don't want to bother clients with
-                    //stupid interrupted exceptions!
                 } catch (final Exception ex) {
                     if (doCancelled(future)) {
                         continue;
