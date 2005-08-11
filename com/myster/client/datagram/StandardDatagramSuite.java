@@ -137,7 +137,11 @@ public class StandardDatagramSuite {
                     }
 
                     public void transactionCancelled(TransactionEvent event) {
-                        listener.handleFinally();
+                        try {
+                            listener.handleCancel();
+                        } finally {
+                            listener.handleFinally();
+                        }
                     }
                 });
 
@@ -146,12 +150,13 @@ public class StandardDatagramSuite {
         // operation.
         return new UdpFuture(tsocket);
     }
-
+    
+    // Will return the result of the async operation or null.
     private static Object makeBlocking(final BlockingListener passable) throws IOException {
         final Semaphore sem = new Semaphore(0);
-        final BlockingResult blockingResult = new BlockingResult();
+        final Object[] resultOrException = new Object[1];
 
-        //This stuff below might look weird but there's a danger of a datarace
+        //This stuff below might look weird but there's a danger of a data race
         // so I want to
         //make sure all my data uses a common monitor.
         //(Actually, I think there is still a data race)
@@ -161,15 +166,15 @@ public class StandardDatagramSuite {
             }
 
             public void handleResult(Object result) {
-                blockingResult.setData(result);
+                resultOrException[0] = result;
             }
 
             public void handleException(Exception ex) {
                 if (!(ex instanceof IOException))
                     throw new IllegalStateException("Exception " + ex
-                            + " is not an IOException. Some sort of error has occured.");
+                            + " is not an IOException. Some sort of error has occurred.");
 
-                blockingResult.setException((IOException) ex);
+                resultOrException[0] = ex;
             }
 
             public void handleFinally() {
@@ -184,14 +189,13 @@ public class StandardDatagramSuite {
             throw new IOException("Interrupted Thread Wait..");
         }
 
-        if (blockingResult.getData() == null) {
-            if (blockingResult.getException() == null)//can happen on thread interrupt or
-                // cancelled.
-                return null;
-            throw blockingResult.getException();
+        // resultOrExecption maybe null at this point (if handleCancel() was called or
+        // the code threw an exception (like InterruptedException!). Play it safe.
+        if (resultOrException[0] instanceof IOException) {
+            throw (IOException) resultOrException[0];
         }
 
-        return blockingResult.getData();
+        return resultOrException[0];
     }
 
     private static class BlockingListener {
@@ -206,28 +210,6 @@ public class StandardDatagramSuite {
 
         public void get(CallListener listener) throws IOException {
             doSection(address, impl, listener);
-        }
-    }
-
-    private static class BlockingResult {
-        private Object data;
-
-        private IOException exception; //at 0 by default
-
-        public synchronized void setData(Object data) {
-            this.data = data;
-        }
-
-        public synchronized Object getData() {
-            return data;
-        }
-
-        public synchronized IOException getException() {
-            return exception;
-        }
-
-        public synchronized void setException(IOException exception) {
-            this.exception = exception;
         }
     }
 
@@ -251,10 +233,6 @@ public class StandardDatagramSuite {
         }
 
         public boolean isDone() {
-            throw new RuntimeException("Operation not supported - lazy programmer Exception.");
-        }
-
-        public void setDone() {
             throw new RuntimeException("Operation not supported - lazy programmer Exception.");
         }
     }

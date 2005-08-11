@@ -31,7 +31,7 @@ import com.myster.util.MysterThread;
  * hook up queued message to something.
  *  
  */
-public class MultiSourceDownload implements Runnable, Controller {
+public class MultiSourceDownload implements Runnable {
     private final MSPartialFile partialFile;
 
     // starter stub (contains first address and
@@ -51,25 +51,35 @@ public class MultiSourceDownload implements Runnable, Controller {
 
     private final int chunkSize;
 
-    private final long initialOffset; //how much was downloaded in a previous session
+    private final long initialOffset; //how much was downloaded in a previous
+
+    // session
 
     private long fileProgress = 0; //for work segments
 
-    private long bytesWrittenOut = 0; //to know how much of the file has been downloaded.
+    private long bytesWrittenOut = 0; //to know how much of the file has been
 
-    private Stack unfinishedSegments = new Stack(); //it's a stack 'cause it doens't
+    // downloaded.
 
-    //matter what data structure so long
+    //  it's a stack 'cause it
+    // doens't matter what data structure so long
     //as add and remove are O(C).
+    private Stack unfinishedSegments = new Stack();
 
     private EventDispatcher dispatcher = new SyncEventDispatcher();
+    
+    private Controller controller = new ControllerImpl(); //is self
 
     //this is true when the user has asked that the download be cancelled.
     private boolean isCancelled = false;
 
-    private boolean endFlag = false; //this is set to true to tell MSSource to stop.
+    private boolean endFlag = false; //this is set to true to tell MSSource to
 
-    private boolean isDead = false; //is set to true if cleanUp() has been called
+    // stop.
+
+    private boolean isDead = false; //is set to true if cleanUp() has been
+
+    // called
 
     public static final int DEFAULT_CHUNK_SIZE = 2 * 1024;
 
@@ -142,7 +152,7 @@ public class MultiSourceDownload implements Runnable, Controller {
         if (stub.getMysterAddress() == null)
             return; //cheap hack
 
-        final InternalSegmentDownloader downloader = new InternalSegmentDownloader(this, stub,
+        final InternalSegmentDownloader downloader = new InternalSegmentDownloader(controller, stub,
                 chunkSize);
 
         if (downloaders.get(downloader) != null)
@@ -151,8 +161,9 @@ public class MultiSourceDownload implements Runnable, Controller {
         downloaders.put(downloader, downloader);
 
         /*
-         * We don't care what the result is.. We ALWAYS start the download. If the downloader has
-         * been cancelled it will simply start and then stop right away.
+         * We don't care what the result is.. We ALWAYS start the download. If
+         * the downloader has been cancelled it will simply start and then stop
+         * right away.
          */
         CallListener listener = new CallAdapter() {
             public void handleFinally() {
@@ -173,14 +184,16 @@ public class MultiSourceDownload implements Runnable, Controller {
             public void cancel() {
             }
         };
-        Util.invokeAsynchronously(callable, listener); // We don't care about the Future.. (lol)
+        Util.invokeAsynchronously(callable, listener); // We don't care about
+        // the Future.. (lol)
     }
 
     /**
-     * If a segment download has received word that it is now queued it double checks back with this
-     * routine to see if it should bother continuing the download.
+     * If a segment download has received word that it is now queued it double
+     * checks back with this routine to see if it should bother continuing the
+     * download.
      */
-    public synchronized boolean isOkToQueue() {
+    private synchronized boolean isOkToQueue() {
         Enumeration enum = downloaders.elements();
 
         while (enum.hasMoreElements()) {
@@ -196,7 +209,7 @@ public class MultiSourceDownload implements Runnable, Controller {
 
     //removes a download but doesn't stop a download. (so this should be called
     // by downloads that have ended completely.
-    public synchronized boolean removeDownload(SegmentDownloader downloader) {
+    private synchronized boolean removeDownload(SegmentDownloader downloader) {
         boolean result = (downloaders.remove(downloader) != null);
 
         fireEventAsycronously(new MSSegmentEvent(MSSegmentEvent.END_SEGMENT, downloader),
@@ -208,10 +221,11 @@ public class MultiSourceDownload implements Runnable, Controller {
     }
 
     /**
-     * call this everytime you think you might have done something that has stopped the download
-     * (ie: everytime a download has been removed or the download has been canceled.) The routines
-     * checks to see if the download and all helper thread have stopped and if it has it calls the
-     * final cleanup routine
+     * call this everytime you think you might have done something that has
+     * stopped the download (ie: everytime a download has been removed or the
+     * download has been canceled.) The routines checks to see if the download
+     * and all helper thread have stopped and if it has it calls the final
+     * cleanup routine
      */
     private synchronized boolean endCheckAndCleanup() {
         if ((endFlag | isDone()) & (downloaders.size() == 0)) {
@@ -223,7 +237,7 @@ public class MultiSourceDownload implements Runnable, Controller {
         return false;
     }
 
-    public synchronized WorkSegment getNextWorkSegment(int requestedBlockSize) {
+    private synchronized WorkSegment getNextWorkSegment(int requestedBlockSize) {
         if (unfinishedSegments.size() > 0)
             return ((WorkSegment) unfinishedSegments.pop()).recycled(true);
 
@@ -245,13 +259,13 @@ public class MultiSourceDownload implements Runnable, Controller {
         return workSegment;
     }
 
-    public synchronized void receiveExtraSegments(WorkSegment[] workSegments) {
+    private synchronized void receiveExtraSegments(WorkSegment[] workSegments) {
         for (int i = 0; i < workSegments.length; i++) {
             unfinishedSegments.push(workSegments[i]);
         }
     }
 
-    public synchronized void receiveDataBlock(DataBlock dataBlock) {
+    private synchronized void receiveDataBlock(DataBlock dataBlock) {
         try {
             randomAccessFile.seek(dataBlock.offset);
 
@@ -259,7 +273,8 @@ public class MultiSourceDownload implements Runnable, Controller {
 
             bytesWrittenOut += dataBlock.bytes.length;
 
-            // ON really fast downloads we don't want to overload the event thread with trivial
+            // ON really fast downloads we don't want to overload the event
+            // thread with trivial
             // events
             if (System.currentTimeMillis() - lastProgress > MIN_TIME_BETWEEN_EVENTS) {
                 lastProgress = System.currentTimeMillis();
@@ -274,26 +289,28 @@ public class MultiSourceDownload implements Runnable, Controller {
             //}
         } catch (IOException ex) {
             ex.printStackTrace();
-            flagToEnd();// humm.. maybe the user should be notified of this problem?
-            //TODO add some sort of notification about these kinds of error here.
+            flagToEnd();// humm.. maybe the user should be notified of this
+            // problem?
+            //TODO add some sort of notification about these kinds of error
+            // here.
         }
     }
 
-    public synchronized long getProgress() {
-        return bytesWrittenOut;
-    }
-
-    public synchronized long getLength() {
-        return fileLength;
-    }
-
-    public MysterFileStub getStub() {
-        return stub;
-    }
-
-    public long getInitialOffset() {
-        return initialOffset;
-    }
+//    public synchronized long getProgress() {
+//        return bytesWrittenOut;
+//    }
+//
+//    public synchronized long getLength() {
+//        return fileLength;
+//    }
+//
+//    public MysterFileStub getStub() {
+//        return stub;
+//    }
+//
+//    public long getInitialOffset() {
+//        return initialOffset;
+//    }
 
     public synchronized boolean isDead() {
         return isDead;
@@ -409,6 +426,52 @@ public class MultiSourceDownload implements Runnable, Controller {
         }
     }
 
+    private class ControllerImpl implements Controller {
+        /*
+         * (non-Javadoc)
+         * 
+         * @see com.myster.client.stream.Controller#getNextWorkSegment(int)
+         */
+        public WorkSegment getNextWorkSegment(int requestedSize) {
+            return MultiSourceDownload.this.getNextWorkSegment(requestedSize);
+        }
+
+        /*
+         * (non-Javadoc)
+         * 
+         * @see com.myster.client.stream.Controller#receiveExtraSegments(com.myster.client.stream.WorkSegment[])
+         */
+        public void receiveExtraSegments(WorkSegment[] workSegments) {
+            MultiSourceDownload.this.receiveExtraSegments(workSegments);
+        }
+
+        /*
+         * (non-Javadoc)
+         * 
+         * @see com.myster.client.stream.Controller#receiveDataBlock(com.myster.client.stream.DataBlock)
+         */
+        public void receiveDataBlock(DataBlock dataBlock) {
+            MultiSourceDownload.this.receiveDataBlock(dataBlock);
+        }
+
+        /*
+         * (non-Javadoc)
+         * 
+         * @see com.myster.client.stream.Controller#removeDownload(com.myster.client.stream.SegmentDownloader)
+         */
+        public boolean removeDownload(SegmentDownloader downloader) {
+            return MultiSourceDownload.this.removeDownload(downloader);
+        }
+
+        /*
+         * (non-Javadoc)
+         * 
+         * @see com.myster.client.stream.Controller#isOkToQueue()
+         */
+        public boolean isOkToQueue() {
+            return MultiSourceDownload.this.isOkToQueue();
+        }
+    }
 }
 
 class InternalSegmentDownloader extends MysterThread implements SegmentDownloader {
@@ -679,7 +742,10 @@ class InternalSegmentDownloader extends MysterThread implements SegmentDownloade
     private static int IDEAL_BLOCK_TIME = 60 * 1000;
 
     private int calculateNextBlockSize(long length, long timeTakenToDownloadSegment) {
-        int maxLength = (int) (Math.min(length, Integer.MAX_VALUE / 2) * 2); //get the max packet
+        int maxLength = (int) (Math.min(length, Integer.MAX_VALUE / 2) * 2); //get
+        // the
+        // max
+        // packet
         // length accounting
         // for int overflow.
         return (int) Math.min(maxLength, (IDEAL_BLOCK_TIME * length) / timeTakenToDownloadSegment);
@@ -792,8 +858,9 @@ class InternalSegmentDownloader extends MysterThread implements SegmentDownloade
         /**
          * Returns the remaining part of this work segment as a WorkSegment;
          * 
-         * This call returns a stupid no-op work segment if it's done. Call "isDone" to make sure
-         * the segment hasen't been finished before using this method.
+         * This call returns a stupid no-op work segment if it's done. Call
+         * "isDone" to make sure the segment hasen't been finished before using
+         * this method.
          */
         public WorkSegment getRemainingWorkSegment() {
             return new WorkSegment(workSegment.startOffset + progress, workSegment.length
@@ -850,15 +917,15 @@ final class WorkSegment {
 }
 
 interface Controller {
-    public WorkSegment getNextWorkSegment(int requestedSize);
+    WorkSegment getNextWorkSegment(int requestedSize);
 
-    public void receiveExtraSegments(WorkSegment[] workSegments);
+    void receiveExtraSegments(WorkSegment[] workSegments);
 
-    public void receiveDataBlock(DataBlock dataBlock);
+    void receiveDataBlock(DataBlock dataBlock);
 
-    public boolean removeDownload(SegmentDownloader downloader);
+    boolean removeDownload(SegmentDownloader downloader);
 
-    public boolean isOkToQueue(); //returns false if it's not ok to queue.
+    boolean isOkToQueue(); //returns false if it's not ok to queue.
 }
 
 class NullCallListener implements CallListener {

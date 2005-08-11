@@ -5,7 +5,7 @@
 package com.general.thread;
 
 /**
- * The Future object is a mechanism to allow client code to control or comunicate with a task
+ * The Future object is a mechanism to allow client code to control or communicate with a task
  * executing asynchronously.
  * 
  * @see com.general.thread.CancellableCallable

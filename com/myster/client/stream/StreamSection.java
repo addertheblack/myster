@@ -7,10 +7,10 @@ import com.myster.net.MysterAddress;
 import com.myster.net.MysterSocket;
 import com.myster.net.MysterSocketFactory;
 
-
 /**
- * Use this class if you want to do a streamed connection but don't want to do it in the standard way allowed by
- * by the convenience methods in StandardSuite. This class 
+ * Use this class if you want to do a streamed connection but don't want to do
+ * it in the standard way allowed by by the convenience methods in
+ * StandardSuite.
  */
 public abstract class StreamSection implements CancellableCallable {
     protected MysterAddress address;
@@ -40,7 +40,8 @@ public abstract class StreamSection implements CancellableCallable {
     }
 
     /**
-     * An over-ridden version of call() takes care of creating/destroying the stream for you.
+     * An over-ridden version of call() takes care of creating/destroying the
+     * stream for you.
      * 
      * @throws IOException
      */

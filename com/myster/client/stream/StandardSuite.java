@@ -40,7 +40,7 @@ public class StandardSuite {
             final String searchString, final CallListener listener) {
         return MysterSocketPool.getInstance().execute(new StreamSection(ip) {
             protected Object doSection() throws IOException {
-                return getSearch(ip, searchType, searchString);
+                return getSearch(socket, searchType, searchString);
             }
         }, listener);
     }
@@ -161,7 +161,7 @@ public class StandardSuite {
     public static Future getServerStats(final MysterAddress ip, final CallListener listener) {
         return MysterSocketPool.getInstance().execute(new StreamSection(ip) {
             protected Object doSection() throws IOException {
-                return getServerStats(ip);
+                return getServerStats(socket);
             }
         }, listener);
     }

@@ -16,7 +16,6 @@ import java.util.Enumeration;
 import java.util.Hashtable;
 import java.util.Vector;
 
-import com.general.util.Util;
 import com.myster.application.MysterGlobals;
 
 /**

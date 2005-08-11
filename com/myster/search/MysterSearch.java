@@ -565,14 +565,14 @@ public class MysterSearch {
         }
 
         /**
-         * Removed the Future form the lis tof futures.
+         * Removed the Future form the list of futures.
          */
         public void handleFinally() {
             removeFuture(future);
         }
 
         /**
-         * This methd should be called to assign a Future object to this object.
+         * This method should be called to assign a Future object to this object.
          * 
          * @param future
          */
