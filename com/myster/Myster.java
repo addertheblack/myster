@@ -9,6 +9,7 @@
 
 package com.myster;
 
+import java.awt.Frame;
 import java.io.File;
 import java.io.IOException;
 import java.lang.reflect.InvocationTargetException;
@@ -69,13 +70,15 @@ public class Myster {
         System.out.println("java.vm.vendor               :" + System.getProperty("java.vm.vendor"));
         System.out.println("java.vm.name                 :" + System.getProperty("java.vm.name"));
 
-//        final long startTime = System.currentTimeMillis();
+        //        final long startTime = System.currentTimeMillis();
         try {
             Class uiClass = Class.forName("javax.swing.UIManager");
-            Method setLookAndFeel = uiClass.getMethod("setLookAndFeel", new Class[]{String.class});
-            Method getSystemLookAndFeelClassName = uiClass.getMethod("getSystemLookAndFeelClassName", new Class[]{});
+            Method setLookAndFeel = uiClass.getMethod("setLookAndFeel",
+                    new Class[] { String.class });
+            Method getSystemLookAndFeelClassName = uiClass.getMethod(
+                    "getSystemLookAndFeelClassName", new Class[] {});
             String lookAndFeelName = (String) getSystemLookAndFeelClassName.invoke(null, null);
-            setLookAndFeel.invoke(null, new Object[]{lookAndFeelName});
+            setLookAndFeel.invoke(null, new Object[] { lookAndFeelName });
         } catch (ClassNotFoundException e1) {
             e1.printStackTrace();
         } catch (SecurityException e) {
@@ -89,18 +92,18 @@ public class Myster {
         } catch (InvocationTargetException e) {
             e.printStackTrace();
         }
-        
-//        try {
-//            UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
-//        } catch (ClassNotFoundException e) {
-//            e.printStackTrace();
-//        } catch (InstantiationException e) {
-//            e.printStackTrace();
-//        } catch (IllegalAccessException e) {
-//            e.printStackTrace();
-//        } catch (UnsupportedLookAndFeelException e) {
-//            e.printStackTrace();
-//        }
+
+        //        try {
+        //            UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
+        //        } catch (ClassNotFoundException e) {
+        //            e.printStackTrace();
+        //        } catch (InstantiationException e) {
+        //            e.printStackTrace();
+        //        } catch (IllegalAccessException e) {
+        //            e.printStackTrace();
+        //        } catch (UnsupportedLookAndFeelException e) {
+        //            e.printStackTrace();
+        //        }
         ApplicationSingletonListener applicationSingletonListener = new ApplicationSingletonListener() {
             public void requestLaunch(String[] args) {
                 SearchWindow search = new SearchWindow();
@@ -116,16 +119,22 @@ public class Myster {
                 .getCurrentDirectory(), LOCK_FILE_NAME), 10457, applicationSingletonListener, args);
 
         MysterGlobals.appSigleton = applicationSingleton;
-            final long startTime = System.currentTimeMillis();
+        final long startTime = System.currentTimeMillis();
         try {
-            if (!applicationSingleton.start()) 
+            if (!applicationSingleton.start())
                 return;
         } catch (IOException e) {
             e.printStackTrace();
+            Frame parent = AnswerDialog.getCenteredFrame(); //Work around for dispose bug
             AnswerDialog
-            .simpleAlert( 
-                    "Can't start Myster because there's another version of Myster already running. Here's a more technical explanation: \n\n" +
-                    e);
+                    .simpleAlert(parent,
+                            "There seems to be another copy of Myster already running but I couldn't"
+                            + " contact it. If you're sharing the computer with other people, one of them"
+                            + " might be running Myster already or it might be that that Myster was not"
+                            + " started from the same place the previous copy was started. Restarting the "
+                            + " computer will make sure that the other Myster client gets quit. ");
+            parent.dispose(); //if this isn't here Myster won't quit.
+            applicationSingleton.close();
             return;
         }
 
@@ -139,41 +148,41 @@ public class Myster {
         System.out.println("MAIN THREAD: Starting loader Thread..");
 
         try {
-//            final com.myster.util.ProgressWindow[] tempArray = new ProgressWindow[1];
+            //            final com.myster.util.ProgressWindow[] tempArray = new ProgressWindow[1];
 
             Util.initInvoke();
 
-//            Util.invokeAndWait(new Runnable() {
-//
-//                public void run() {
-//                    tempArray[0] = new com.myster.util.ProgressWindow();
-//                    ProgressWindow progress = tempArray[0];
-//                    progress.setMenuBarEnabled(false);
-//                    progress.setTitle(I18n.tr("Loading Myster..."));
-//                    progress.pack();
-//                    com.general.util.Util.centerFrame(progress, 0, -50);
-//                    //progress.setVisible(true);
-//                }
-//            });
+            //            Util.invokeAndWait(new Runnable() {
+            //
+            //                public void run() {
+            //                    tempArray[0] = new com.myster.util.ProgressWindow();
+            //                    ProgressWindow progress = tempArray[0];
+            //                    progress.setMenuBarEnabled(false);
+            //                    progress.setTitle(I18n.tr("Loading Myster..."));
+            //                    progress.pack();
+            //                    com.general.util.Util.centerFrame(progress, 0, -50);
+            //                    //progress.setVisible(true);
+            //                }
+            //            });
 
-//            Thread.sleep(1); //for redrawing progress on MacOS X
+            //            Thread.sleep(1); //for redrawing progress on MacOS X
 
-//            final com.myster.util.ProgressWindow progress = tempArray[0];
+            //            final com.myster.util.ProgressWindow progress = tempArray[0];
             Util.invokeAndWait(new Runnable() {
                 public void run() {
 
                     try {
                         if (com.myster.type.TypeDescriptionList.getDefault().getEnabledTypes().length <= 0) {
                             AnswerDialog
-                                    .simpleAlert( 
-                                            "There are not enabled types. This screws up Myster. Please make sure"
-                                                    + " the typedescriptionlist.mml is in the right place and correctly"
-                                                    + " formated.");
+                                    .simpleAlert("There are not enabled types. This screws up Myster. Please make sure"
+                                            + " the typedescriptionlist.mml is in the right place and correctly"
+                                            + " formated.");
                             MysterGlobals.quit();
                             return; //not reached
                         }
                     } catch (Exception ex) {
-                        AnswerDialog.simpleAlert( "Could not load the Type Description List: \n\n" + ex);
+                        AnswerDialog.simpleAlert("Could not load the Type Description List: \n\n"
+                                + ex);
                         MysterGlobals.quit();
                         return; //not reached
                     }
@@ -185,57 +194,57 @@ public class Myster {
                     }
 
                     com.myster.hash.ui.HashManagerGUI.init();
-//                }
-//            });
-//
-////            Thread.sleep(1);
-//
-//            Util.invokeLater(new Runnable() {
-//                public void run() {
-//                    progress.setText(I18n.tr("Loading Server Components..."));
-//                    progress.setValue(10);
+                    //                }
+                    //            });
+                    //
+                    //// Thread.sleep(1);
+                    //
+                    //            Util.invokeLater(new Runnable() {
+                    //                public void run() {
+                    //                    progress.setText(I18n.tr("Loading Server Components..."));
+                    //                    progress.setValue(10);
                     ServerFacade.init();
-//                }
-//            });
-//
-////            Thread.sleep(1);
-//
-//            Util.invokeLater(new Runnable() {
-//                public void run() {
-//                    progress.setText(I18n.tr("Loading Server Stats Window... %1%%", "" + 15));
-//                    progress.setValue(15);
+                    //                }
+                    //            });
+                    //
+                    //// Thread.sleep(1);
+                    //
+                    //            Util.invokeLater(new Runnable() {
+                    //                public void run() {
+                    //                    progress.setText(I18n.tr("Loading Server Stats Window... %1%%", "" + 15));
+                    //                    progress.setValue(15);
                     ServerStatsWindow.getInstance().pack();
-//                    progress.setText(I18n.tr("Loading Server Stats Window... %1%%", "" + 18));
-//                    progress.setValue(18);
-//                }
-//            });
-//
-//            Util.invokeLater(new Runnable() {
-//                public void run() {
-//                    progress.setText(I18n.tr("Loading Instant Messaging..."));
-//                    progress.setValue(72);
+                    //                    progress.setText(I18n.tr("Loading Server Stats Window... %1%%", "" + 18));
+                    //                    progress.setValue(18);
+                    //                }
+                    //            });
+                    //
+                    //            Util.invokeLater(new Runnable() {
+                    //                public void run() {
+                    //                    progress.setText(I18n.tr("Loading Instant Messaging..."));
+                    //                    progress.setValue(72);
                     com.myster.message.MessageManager.init();
-//                }
-//            });
-//
-////            Thread.sleep(1);
-//
-//            Util.invokeLater(new Runnable() {
-//                public void run() {
-//                    progress.setText(I18n.tr(I18n.tr("Loading WindowManager...")));
-//                    progress.setValue(78);
+                    //                }
+                    //            });
+                    //
+                    //// Thread.sleep(1);
+                    //
+                    //            Util.invokeLater(new Runnable() {
+                    //                public void run() {
+                    //                    progress.setText(I18n.tr(I18n.tr("Loading WindowManager...")));
+                    //                    progress.setValue(78);
                     com.myster.ui.WindowManager.init();
 
                     Preferences.getInstance().addPanel(BandwidthManager.getPrefsPanel());
-//                }
-//            });
-//
-////            Thread.sleep(1);
-//
-//            Util.invokeLater(new Runnable() {
-//                public void run() {
-//                    progress.setText(I18n.tr("Loading Plugins..."));
-//                    progress.setValue(80);
+                    //                }
+                    //            });
+                    //
+                    //// Thread.sleep(1);
+                    //
+                    //            Util.invokeLater(new Runnable() {
+                    //                public void run() {
+                    //                    progress.setText(I18n.tr("Loading Plugins..."));
+                    //                    progress.setValue(80);
                     try {
                         (new com.myster.plugin.PluginLoader(new File("plugins"))).loadPlugins();
                     } catch (Exception ex) {
@@ -248,19 +257,19 @@ public class Myster {
                 }
             });
 
-//            Thread.sleep(1);
+            //            Thread.sleep(1);
 
-//            Util.invokeAndWait(new Runnable() {
-//                public void run() {
-//                    progress.setVisible(false);
-//                }
-//            });
+            //            Util.invokeAndWait(new Runnable() {
+            //                public void run() {
+            //                    progress.setVisible(false);
+            //                }
+            //            });
 
-            System.out.println("-------->>"+(System.currentTimeMillis() - startTime));
+            System.out.println("-------->>" + (System.currentTimeMillis() - startTime));
             if (isServer) {
             } else {
 
-//                Thread.sleep(1);
+                //                Thread.sleep(1);
 
                 Util.invokeAndWait(new Runnable() {
                     public void run() {

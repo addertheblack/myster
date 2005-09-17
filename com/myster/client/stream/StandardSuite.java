@@ -177,8 +177,8 @@ public class StandardSuite {
     }
 
     /**
-     * downloadFile downloads a file by starting up a MultiSourceDownload or
-     * Regular old style download whichever is appropriate.
+     * downloadFile downloads a file by starting up a MultiSourceDownload or Regular old style
+     * download whichever is appropriate.
      * <p>
      * THIS ROUTINE IS ASYNCHRONOUS!
      */
@@ -282,9 +282,10 @@ public class StandardSuite {
                     if (endFlag)
                         return;
 
-                    final MSPartialFile partialFile = MSPartialFile.create(stub.getName(), stub
-                            .getType(), MultiSourceDownload.DEFAULT_CHUNK_SIZE,
-                            new FileHash[] { hash }, MultiSourceUtilities.getLengthFromStats(mml));
+                    final MSPartialFile partialFile = MSPartialFile.create(stub.getName(), theFile
+                            .getParentFile(), stub.getType(),
+                            MultiSourceDownload.DEFAULT_CHUNK_SIZE, new FileHash[] { hash },
+                            MultiSourceUtilities.getLengthFromStats(mml));
 
                     msDownload = new MultiSourceDownload(stub, hash, MultiSourceUtilities
                             .getLengthFromStats(mml), new MSDownloadHandler(progress, theFile,

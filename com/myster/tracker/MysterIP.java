@@ -248,7 +248,6 @@ class MysterIP {
     /**
      * The ever famous toString() method!!! You can't go from string to new Myster IP easily!!!
      */
-
     public String toString() {
         toUpdateOrNotToUpdate();
 

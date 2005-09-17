@@ -170,7 +170,8 @@ public class ApplicationSingleton {
      */
     public void close() {
         lockFile.delete();
-        server.end();
+        if (server != null) 
+            server.end();
     }
 
 }

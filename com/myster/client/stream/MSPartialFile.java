@@ -1,8 +1,8 @@
 package com.myster.client.stream;
 
 /**
- * This class is here to encapsulate all the information related to a Myster
- * multi source download resumable download block file.
+ * This class is here to encapsulate all the information related to a Myster multi source download
+ * resumable download block file.
  *  
  */
 
@@ -27,11 +27,10 @@ public class MSPartialFile {
          * try { MSPartialFile file = new MSPartialFile("Testing");
          * 
          * 
-         * System.out.println("Starting..."); for (int i = 0; i < 409600; i++) {
-         * //file.setBit(i); System.out.print(""+file.getBit(i)); }
+         * System.out.println("Starting..."); for (int i = 0; i < 409600; i++) { //file.setBit(i);
+         * System.out.print(""+file.getBit(i)); }
          * 
-         * System.out.println("Finished..."); } catch (IOException ex) {
-         * ex.printStackTrace(); }
+         * System.out.println("Finished..."); } catch (IOException ex) { ex.printStackTrace(); }
          */
     }
 
@@ -51,10 +50,10 @@ public class MSPartialFile {
             throw new IOException("MML Meta data was badly formed. This file is corrupt.");
         }
 
-        return new MSPartialFile(file, maskFile, new PartialFileHeader(mml));
+        return new MSPartialFile(file, maskFile, new PartialFileHeader(mml, (int) maskFile.getFilePointer()));
     }
 
-    public static MSPartialFile create(String filename, MysterType type, int blockSize,
+    public static MSPartialFile create(String filename, File path, MysterType type, int blockSize,
             FileHash[] hashes, long fileLength) throws IOException {
         File fileReference = new File(MultiSourceUtilities.getIncomingDirectory(), filename
                 + FILE_ENDING);
@@ -62,11 +61,11 @@ public class MSPartialFile {
         if (fileReference.exists()) {
             if (!fileReference.delete())
                 throw new IOException(
-                        "Cannot create a partial downloa dfile, there's a file in the way.");
+                        "Cannot create a partial download file, there's a file in the way.");
         }
 
         RandomAccessFile maskFile = new RandomAccessFile(fileReference, "rw");
-        PartialFileHeader header = new PartialFileHeader(filename, type, blockSize, hashes,
+        PartialFileHeader header = new PartialFileHeader(filename, path, type, blockSize, hashes,
                 fileLength);
 
         maskFile.write(header.toBytes());
@@ -131,25 +130,19 @@ public class MSPartialFile {
         final String pathToType = com.myster.filemanager.FileTypeListManager.getInstance()
                 .getPathFromType(partialFile.getType());
         final FileProgressWindow progress = showProgres(partialFile.getFilename());
-        boolean shortCircuitFlag = false;
-        File dir = null, file = null;
+        String incompleteFilename = partialFile.getFilename() + ".i";
+        File dir = partialFile.getPath();
+        File file = new File(dir, incompleteFilename);
 
-        if (pathToType == null) {
-            shortCircuitFlag = true; //Without this a null
-            // pointer
-            // error
-            // shall occur
-        } else {
+        //Humm, path to file does not exist.. check inside download folder.
+        if (!file.exists()) {
             dir = new File(pathToType);
-            file = new File(dir, partialFile.getFilename() + ".i");
+            file = new File(dir, incompleteFilename);
         }
         System.out.println("GMResuming:" + file);
 
         for (int loopCounter = 0; (loopCounter < 3)
-                && (shortCircuitFlag || (!dir.exists()) || dir.isFile() || (!file.exists()) || (!file
-                        .isFile())); loopCounter++) {
-            shortCircuitFlag = false;
-
+                && ((!dir.exists()) || (!dir.isDirectory()) || (!file.exists()) || (!file.isFile())); loopCounter++) {
             final String DIALOG_PROMPT = "Where is the file " + partialFile.getFilename() + "?";
 
             final java.awt.FileDialog dialog = new java.awt.FileDialog(progress, DIALOG_PROMPT,
@@ -177,7 +170,6 @@ public class MSPartialFile {
 
                 fileIsNotTheSameDialog.answer();
                 if (fileIsNotTheSameDialog.getIt().equals(NO_ANSWER)) {
-                    shortCircuitFlag = true;
                     continue;
                 } else if (fileIsNotTheSameDialog.getIt().equals(CANCEL_ANSWER)) {
                     userCancelled(progress, partialFile); //always
@@ -271,6 +263,13 @@ public class MSPartialFile {
 
     public long getFileLength() {
         return header.getFileLength();
+    }
+
+    /**
+     * @return the directory the file was last seen in or the current directory.
+     */
+    private File getPath() {
+        return header.getPath();
     }
 
     public long getFirstUndownloadedBlock() throws IOException {
@@ -370,22 +369,40 @@ public class MSPartialFile {
     }
 
     private static class PartialFileHeader {
-        String filename;
+        static final String FILENAME_PATH = "/Filename";
 
-        MysterType type;
+        static final String BLOCK_SIZE_PATH = "/Block Size Path";
 
-        long blockSize;
+        static final String HASHES_PATH = "/Hashes/";
 
-        FileHash[] hashes;
+        static final String TYPE = "/Type";
 
-        long fileLength;
+        static final String FILE_LENGTH = "/File Length";
 
-        PartialFileHeader(RobustMML mml) throws IOException {
+        static final String PATH = "/File Path";
+
+        private String filename;
+
+        private MysterType type;
+
+        private long blockSize;
+
+        private FileHash[] hashes;
+
+        private long fileLength;
+
+        private File path;
+        
+        private int offset;
+
+        PartialFileHeader(RobustMML mml, int offset) throws IOException {
+            this.offset = offset;
             try {
                 filename = mml.get(FILENAME_PATH);
                 String string_blockSize = mml.get(BLOCK_SIZE_PATH);
                 String string_length = mml.get(FILE_LENGTH);
                 String string_type = mml.get(TYPE);
+                String string_path = mml.get(PATH);
 
                 assertNotNull(filename); //throws IOException on null
                 assertNotNull(string_blockSize);
@@ -396,30 +413,21 @@ public class MSPartialFile {
                 hashes = getHashesFromHeader(mml, HASHES_PATH);
                 fileLength = Long.parseLong(string_length);
                 type = new MysterType(Integer.parseInt(string_type));
+                path = new File(string_path == null ? "" : string_path);
             } catch (NumberFormatException ex) {
                 throw new IOException("" + ex);
             }
         }
 
-        //private FileHash getHashesfromHeader(RobustMML mml) throws
-        // IOException {
-        //	Stringp[] listOfEntries = mml.list(HASHES_PATH);
-
-        //	assertNotNull(listOfEntries);
-        //}
-
-        private void assertNotNull(Object o) throws IOException {
-            if (o == null)
-                throw new IOException("Unexpect null object");
-        }
-
-        PartialFileHeader(String filename, MysterType type, long blockSize, FileHash[] hashes,
-                long fileLength) {
+        PartialFileHeader(String filename, File path, MysterType type, long blockSize,
+                FileHash[] hashes, long fileLength) {
             this.filename = filename;
             this.type = type;
             this.blockSize = blockSize;
             this.hashes = hashes;
             this.fileLength = fileLength;
+            this.path = path;
+            this.offset = toBytes().length;
         }
 
         public long getBlockSize() {
@@ -428,6 +436,10 @@ public class MSPartialFile {
 
         public String getFilename() {
             return filename;
+        }
+
+        public File getPath() {
+            return path;
         }
 
         public MysterType getType() {
@@ -448,6 +460,11 @@ public class MSPartialFile {
             return temp_hashes;
         }
 
+        private void assertNotNull(Object o) throws IOException {
+            if (o == null)
+                throw new IOException("Unexpect null object");
+        }
+
         /**
          * Gets the requested hash type. If it doesn't exist it returns null.
          */
@@ -463,16 +480,6 @@ public class MSPartialFile {
             return null;// !
         }
 
-        static final String FILENAME_PATH = "/Filename";
-
-        static final String BLOCK_SIZE_PATH = "/Block Size Path";
-
-        static final String HASHES_PATH = "/Hashes/";
-
-        static final String TYPE = "/Type";
-
-        static final String FILE_LENGTH = "/File Length";
-
         public com.myster.mml.MML toMML() {
             RobustMML mml = new RobustMML();
 
@@ -480,6 +487,7 @@ public class MSPartialFile {
             mml.put(BLOCK_SIZE_PATH, "" + blockSize);
             mml.put(FILE_LENGTH, "" + fileLength);
             mml.put(TYPE, "" + type.getAsInt()); //! is encoded as an int
+            mml.put(PATH, "" + path.getAbsolutePath());
             // instead of a string because
             // the string encoding is not
             // exactly equivalent
@@ -504,7 +512,7 @@ public class MSPartialFile {
         }
 
         public int getOffset() {
-            return toBytes().length;
+            return offset;
         }
     }
 

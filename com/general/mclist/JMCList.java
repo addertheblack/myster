@@ -417,7 +417,7 @@ public class JMCList extends JTable implements MCList {
 
                 frame.getContentPane().add(list.getPane());
 
-                frame.show();
+                frame.setVisible(true);
             }
         });
         //

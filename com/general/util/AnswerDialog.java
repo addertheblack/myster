@@ -2,6 +2,7 @@ package com.general.util;
 
 import java.awt.Button;
 import java.awt.Color;
+import java.awt.Container;
 import java.awt.Dialog;
 import java.awt.Dimension;
 import java.awt.FontMetrics;
@@ -10,32 +11,33 @@ import java.awt.Graphics;
 import java.awt.Insets;
 import java.awt.Point;
 import java.awt.Toolkit;
+import java.awt.Window;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.util.Vector;
 
 public class AnswerDialog extends Dialog {
-    Button[] buttons;
+    private Button[] buttons;
 
-    String it; //just like hypercard :-)
+    private String it; //just like hypercard :-)
 
-    Vector message = new Vector(10, 40);
+    private Vector message = new Vector(10, 40);
 
-    int height;
+    private int height;
 
-    int ascent;
+    private int ascent;
 
-    FontMetrics metrics;
+    private FontMetrics metrics;
 
-    Insets insets;
+    private Insets insets;
 
     private final static int BUTTONY = 30;
 
     private final static int BUTTONX = 100;
 
-    Frame parent;
+    private Frame parent;
 
-    String thestring;
+    private String thestring;
 
     public AnswerDialog(Frame f, String q, String[] b) {
         super(f, "Alert!", true);
@@ -175,6 +177,7 @@ public class AnswerDialog extends Dialog {
 
             it = b.getLabel();
             dispose();
+            Container container = getParent();
         }
 
     }
