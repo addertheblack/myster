@@ -1110,6 +1110,9 @@ Work on DEV 8:
 	    -> Tweaked the startup time a little (but removed error dialogs and things.. naughty me)...
 	  	-> Removed dependencies of other classes on Myster.java.. Created MysterGlobals and "application" singleton classes.
 	  	-> Fixed none 1.1 compatible places to use reflection (hopefully this will actually work!).
+	  	-> Made Multi-source downlaod code more robust. Myster will now look in the current download directory as well as the 
+	  			original path the user downloaded the file to. (It still doesn't remeber the path when the user
+	  			manually tells myster where the file is... To do so would require re-writting the .p file.)
 		
 (Red List)
 to do:
