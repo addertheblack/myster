@@ -50,7 +50,24 @@ public class JMCList extends JTable implements MCList {
         setShowHorizontalLines(false);
         setShowVerticalLines(false);
 
-        setSelectionModel(new MCListSelectionModel(getMCTableModel()));
+        ListSelectionListener internalSelectionListener = new ListSelectionListener() {
+            public void valueChanged(ListSelectionEvent e) {
+                if (listeners == null)
+                    return;
+                for (Iterator iterator = listeners.iterator(); iterator.hasNext();) {
+                    MCListEventListener handler = (MCListEventListener) iterator.next();
+                    if (e.getFirstIndex() >= length())
+                        return;
+                    if (getMCListItem(e.getFirstIndex()).isSelected()) {
+                        handler.selectItem(new MCListEvent(JMCList.this));
+                    } else {
+                        handler.unselectItem(new MCListEvent(JMCList.this));
+                    }
+                }
+            }
+        };
+        
+        setSelectionModel(new MCListSelectionModel(getMCTableModel(), internalSelectionListener));
 
         setColumnSelectionAllowed(false);
         getTableHeader().setReorderingAllowed(false);
@@ -82,25 +99,6 @@ public class JMCList extends JTable implements MCList {
                     }
                 }
             }
-        });
-
-        getSelectionModel().addListSelectionListener(new ListSelectionListener() {
-
-            public void valueChanged(ListSelectionEvent e) {
-                if (listeners == null)
-                    return;
-                for (Iterator iterator = listeners.iterator(); iterator.hasNext();) {
-                    MCListEventListener handler = (MCListEventListener) iterator.next();
-                    if (e.getFirstIndex() >= length())
-                        return;
-                    if (getMCListItem(e.getFirstIndex()).isSelected()) {
-                        handler.selectItem(new MCListEvent(JMCList.this));
-                    } else {
-                        handler.unselectItem(new MCListEvent(JMCList.this));
-                    }
-                }
-            }
-
         });
 
         setNumberOfColumns(numberOfColumns);
@@ -615,8 +613,12 @@ class MCListSelectionModel implements ListSelectionModel {
 
     private int selectionMode;
 
-    MCListSelectionModel(MCListTableModel tableModel) {
+    //Is used by the MCList to generate its specific events
+    private ListSelectionListener internalSelectionListener;
+
+    MCListSelectionModel(MCListTableModel tableModel, ListSelectionListener internalSelectionListener) {
         this.tableModel = tableModel;
+        this.internalSelectionListener = internalSelectionListener;
     }
 
     /**
@@ -625,6 +627,7 @@ class MCListSelectionModel implements ListSelectionModel {
     public void toggle(int i) {
         tableModel.getRow(i).setSelected(!tableModel.getRow(i).isSelected());
         fireValueChanged(i, i, valueIsAdjusting);
+        internalSelectionListener.valueChanged(new ListSelectionEvent(this, i, i, valueIsAdjusting));
     }
 
     /**
@@ -657,6 +660,9 @@ class MCListSelectionModel implements ListSelectionModel {
      */
     public void setSelectionInterval(int index0, int index1) {
         clearSelection();
+        if (selectionMode == ListSelectionModel.SINGLE_SELECTION) {
+            index0 = index1;
+        }
         modifySelectionInterval(index0, index1, true);
         fireValueChanged();
     }
@@ -667,9 +673,8 @@ class MCListSelectionModel implements ListSelectionModel {
      * @see javax.swing.ListSelectionModel#addSelectionInterval(int, int)
      */
     public void addSelectionInterval(int index0, int index1) {
-        if (selectionMode == ListSelectionModel.SINGLE_SELECTION) {
-            setSelectionInterval(index1, index1);
-        } else if (selectionMode == ListSelectionModel.SINGLE_INTERVAL_SELECTION) {
+        if (selectionMode == ListSelectionModel.SINGLE_SELECTION
+                || selectionMode == ListSelectionModel.SINGLE_INTERVAL_SELECTION) {
             setSelectionInterval(index0, index1);
         } else {
             modifySelectionInterval(index0, index1, true);
@@ -691,6 +696,7 @@ class MCListSelectionModel implements ListSelectionModel {
         for (int i = index0; i <= index1; i++) {
             tableModel.getRow(i).setSelected(selection);
         }
+        internalSelectionListener.valueChanged(new ListSelectionEvent(this, index0, index1, valueIsAdjusting));
     }
 
     /*
@@ -795,6 +801,9 @@ class MCListSelectionModel implements ListSelectionModel {
      */
     public void clearSelection() {
         for (int i = 0; i < tableModel.getRowCount(); i++) {
+            if (tableModel.getRow(i).isSelected()) {
+                internalSelectionListener.valueChanged(new ListSelectionEvent(this, i, i, valueIsAdjusting));
+            }
             tableModel.getRow(i).setSelected(false);
         }
         fireValueChanged();
@@ -852,7 +861,15 @@ class MCListSelectionModel implements ListSelectionModel {
      * @see javax.swing.ListSelectionModel#setSelectionMode(int)
      */
     public void setSelectionMode(int selectionMode) {
-        this.selectionMode = selectionMode;
+        switch (selectionMode) {
+        case SINGLE_SELECTION:
+        case SINGLE_INTERVAL_SELECTION:
+        case MULTIPLE_INTERVAL_SELECTION:
+            this.selectionMode = selectionMode;
+            break;
+        default:
+            throw new IllegalArgumentException("invalid selectionMode");
+        }
     }
 
     /*
