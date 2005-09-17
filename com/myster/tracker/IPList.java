@@ -28,11 +28,11 @@ import com.myster.pref.Preferences;
 import com.myster.type.MysterType;
 
 class IPList {
-    MysterServer[] array = new MysterServer[IPListManager.LISTSIZE];
+    private MysterServer[] array = new MysterServer[IPListManager.LISTSIZE];
 
-    MysterType type;
+    private MysterType type;
 
-    String mypath;
+    private String mypath;
 
     private static final String PATH = "/IPLists/";
 
