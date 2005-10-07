@@ -10,10 +10,13 @@
 
 package com.myster;
 
+import java.awt.Frame;
 import java.io.File;
 import java.io.IOException;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
+
+import javax.swing.JFrame;
 
 import com.general.application.ApplicationSingleton;
 import com.general.application.ApplicationSingletonListener;
@@ -100,9 +103,16 @@ public class Myster {
                 return;
         } catch (IOException e) {
             e.printStackTrace();
+            Frame parent = AnswerDialog.getCenteredFrame();
             AnswerDialog
-                    .simpleAlert("Can't start Myster because there's another version of Myster already running. Here's a more technical explanation: \n\n"
-                            + e);
+                    .simpleAlert(parent,
+                            "There seems to be another copy of Myster already running but I couldn't"
+                            + " contact it. If you're sharing the computer with other people, one of them"
+                            + " might be running Myster already or it might be that that Myster was not"
+                            + " started from the same place the previous copy was started. Restarting the "
+                            + " computer will make sure that the other Myster client gets quit.");
+            parent.dispose(); //if this isn't here Myster won't quit.
+            applicationSingleton.close();
             return;
         }
 
