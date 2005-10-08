@@ -13,7 +13,7 @@ public class ProgressBar extends Panel {
 
     public final static int DEFAULT_X_SIZE = 440;
 
-    private volatile long min; //valatile for threading
+    private volatile long min; //volatile for threading
 
     private volatile long max;
 
@@ -26,6 +26,12 @@ public class ProgressBar extends Panel {
     private Image im;
 
     private volatile Timer updaterTimer;
+
+    /**
+     * Mac OS X 1.4.2 VM blinks when setting the foreground color.. so
+     * re-implement it here.. Stupid JVM
+     */
+    private Color hackForMacOSX = Color.blue;
 
     private final Runnable timerCode = new Runnable() {
         public void run() {
@@ -132,13 +138,11 @@ public class ProgressBar extends Panel {
         }
     }
 
-    private Color hackForMacOSX = Color.blue;
     public void setForeground(Color color) {
         hackForMacOSX = color;
     }
-    
-    public Color getForeground()
-    {
+
+    public Color getForeground() {
         return hackForMacOSX;
     }
 

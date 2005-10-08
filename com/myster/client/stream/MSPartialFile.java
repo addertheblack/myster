@@ -62,7 +62,7 @@ public class MSPartialFile {
         if (fileReference.exists()) {
             if (!fileReference.delete())
                 throw new IOException(
-                        "Cannot create a partial download file, there's a file in the way and I can't delete it!");
+                        "There's a file (" + fileReference + ") in the way and I can't delete it!");
         }
         
         RandomAccessFile maskFile;

@@ -281,8 +281,6 @@ public class StandardSuite {
                 
                 if (!tryMultiSourceDownload(stub, progress, mml, theFile))
                     throw new IOException("Toss and catch");
-
-                msDownload.start();
             } catch (IOException ex) {
                 ex.printStackTrace();
 
@@ -327,7 +325,7 @@ public class StandardSuite {
             msDownload = new MultiSourceDownload(new RandomAccessFile(theFile, "rw"),
                     new MSDownloadHandler(progress, theFile, partialFile), partialFile);
             msDownload.setInitialServers(new MysterFileStub[] { stub });
-
+            msDownload.start();
             return true;
         }
 
