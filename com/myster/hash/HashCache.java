@@ -173,7 +173,7 @@ class DefaultHashCache extends HashCache {
                 }
             }
         } catch (EOFException ex) {
-            //nothing
+            // nothing
         } catch (IOException ex) {
             ex.printStackTrace();
         } catch (Exception ex) {
@@ -240,12 +240,13 @@ class DefaultHashCache extends HashCache {
 
         try {
             if (hashBackupFile.exists())
-                hashBackupFile.delete(); //on the mac the next line tosses an
+                hashBackupFile.delete(); // on the mac the next line tosses
+                                            // an
             // excption if file already exists.
 
             OutputStream basic_out = new FileOutputStream(hashBackupFile);
 
-            DataOutputStream dout = new DataOutputStream(basic_out); //this
+            DataOutputStream dout = new DataOutputStream(basic_out); // this
             // line
             // actually
             // ADDS
@@ -257,10 +258,10 @@ class DefaultHashCache extends HashCache {
 
             out = new ObjectOutputStream(dout);
 
-            Enumeration enum = hashtable.elements();
+            Enumeration enumeration = hashtable.elements();
 
-            while (enum.hasMoreElements()) {
-                CachedFileHashEntry entry = (CachedFileHashEntry) (enum.nextElement());
+            while (enumeration.hasMoreElements()) {
+                CachedFileHashEntry entry = (CachedFileHashEntry) (enumeration.nextElement());
 
                 entry.save(out);
             }
@@ -286,17 +287,12 @@ class DefaultHashCache extends HashCache {
     }
 }
 
-//Immutable
+// Immutable
 /**
  * Represents a cached FileHash entry.
  */
 class CachedFileHashEntry implements Serializable {
-    //public static CachedFileHashEntry newCachedFileHashEntry(InputStream in)
-    // throws IOException {
-    //	
-    //}
-
-    File file; //here only for it's path
+    File file; // here only for it's path
 
     long lastModifiedDate;
 

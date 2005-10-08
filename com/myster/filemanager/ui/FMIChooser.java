@@ -189,9 +189,9 @@ public class FMIChooser extends PreferencesPanel {
     }
 
     public void save() {
-        Enumeration enum = hash.elements();
-        while (enum.hasMoreElements()) {
-            SettingsStruct s = (SettingsStruct) (enum.nextElement());
+        Enumeration enumeration = hash.elements();
+        while (enumeration.hasMoreElements()) {
+            SettingsStruct s = (SettingsStruct) (enumeration.nextElement());
             manager.setPathFromType(s.type, s.path);
             manager.setShared(s.type, s.shared);
         }

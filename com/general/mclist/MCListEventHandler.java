@@ -252,9 +252,6 @@ public class MCListEventHandler implements MouseListener, MouseMotionListener, K
 
     //Key listeners
     public void keyPressed(KeyEvent e) {
-        int selectedIndex = callback.getSelectedIndex();
-        int indexToSelect;
-
         switch (e.getKeyCode()) {
         case KeyEvent.VK_UP:
             arrowKeySelect(DIRECTION_UP);

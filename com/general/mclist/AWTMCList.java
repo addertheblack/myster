@@ -136,7 +136,6 @@ public class AWTMCList extends Panel implements MCList {
 
     //Important for canvas
     public synchronized Dimension getPreferredSize() {
-        RowStats rowstats = header.getRowStats();
         int ysize = list.size() * rowTheme.getHeight(PADDING, INTERNAL_PADDING) - 1 + header.getHeight();
         int xsize = header.getPreferredSize().width;
         return new Dimension(xsize, ysize);
