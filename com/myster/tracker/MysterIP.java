@@ -477,6 +477,10 @@ class MysterIP {
                 //nothing.
             }
         }
+
+        public void end() {
+            throw new RuntimeException( "This function is not implemented" );
+        }
     }
 
     private static class MassiveProblemException extends Exception {

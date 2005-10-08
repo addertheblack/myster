@@ -26,12 +26,12 @@ public class ProgressBar extends Panel {
     private Image im;
 
     private volatile Timer updaterTimer;
-    
-    private final Runnable timerCode =  new Runnable() {
-                public void run() {
-                    timerCode();
-                }
-            };
+
+    private final Runnable timerCode = new Runnable() {
+        public void run() {
+            timerCode();
+        }
+    };
 
     public ProgressBar() {
         this(0, 100);
@@ -47,7 +47,7 @@ public class ProgressBar extends Panel {
     }
 
     private void init() {
-    	setBackground(Color.white);
+        setBackground(Color.white);
         doubleBufferSize = getSize(); //! important
 
         addComponentListener(new ComponentAdapter() {
@@ -78,45 +78,44 @@ public class ProgressBar extends Panel {
 
     public final synchronized boolean isValueOutOfBounds() { //inline
         //return true;
-    	return (value < min || value > max);
+        return (value < min || value > max);
     }
 
     private synchronized void timerCode() {
-    	updaterTimer = null;
-    	repaint();
-		runTimerIfAppropriate();
+        updaterTimer = null;
+        repaint();
+        runTimerIfAppropriate();
     }
-    
+
     private synchronized void stopTimer() {
-    	updaterTimer = null;
+        updaterTimer = null;
     }
-    
+
     private synchronized void assertTimer() {
-    	if (updaterTimer==null)
-    		updaterTimer = new Timer(timerCode, 75);
+        if (updaterTimer == null)
+            updaterTimer = new Timer(timerCode, 75);
     }
-    
+
     private synchronized void runTimerIfAppropriate() {
-        if (isShowing() ){//&& isValueOutOfBounds()) {
+        if (isShowing()) {//&& isValueOutOfBounds()) {
             assertTimer();
         } else {
-        	stopTimer();
+            stopTimer();
         }
     }
 
     public void paint(Graphics g) {
-		runTimerIfAppropriate();
-        
-		Dimension size = getSize();
+        runTimerIfAppropriate();
+
+        Dimension size = getSize();
         if (false && max <= min) {
             g.setColor(getBackground());
             g.fillRect(0, 0, size.width, size.height);
         } else if (isValueOutOfBounds()) {
-            double percent = Math
-                    .sin((((double) System.currentTimeMillis() / (double) 70))
-                            / (2 * Math.PI));
+            double percent = Math.sin((((double) System.currentTimeMillis() / (double) 70))
+                    / (2 * Math.PI));
             percent = (percent + 1) / 2;
-            int gray = (int) ( (255) * percent);
+            int gray = (int) ((255) * percent);
             g.setColor(new Color(gray, gray, gray));
             g.fillRect(0, 0, size.width, size.height);
         } else {
@@ -131,6 +130,16 @@ public class ProgressBar extends Panel {
             g.setColor(Color.black);
             g.drawRect(0, 0, size.width - 1, size.height - 1);
         }
+    }
+
+    private Color hackForMacOSX = Color.blue;
+    public void setForeground(Color color) {
+        hackForMacOSX = color;
+    }
+    
+    public Color getForeground()
+    {
+        return hackForMacOSX;
     }
 
     private int getXSize(int maxWidth) {
@@ -191,7 +200,7 @@ public class ProgressBar extends Panel {
             lastValue = temp_xsize;
         }
 
-		runTimerIfAppropriate();
+        runTimerIfAppropriate();
         //repaint();
     }
 }

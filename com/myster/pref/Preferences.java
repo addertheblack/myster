@@ -370,5 +370,12 @@ public class Preferences {
                 sem.signalx();
             }
         }
+
+        /* (non-Javadoc)
+         * @see com.myster.util.MysterThread#end()
+         */
+        public void end() {
+            throw new RuntimeException( "This function is not implemented." );
+        }
     }
 }

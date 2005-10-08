@@ -2,9 +2,12 @@ package com.myster.client.stream;
 
 import java.awt.Frame;
 import java.io.File;
+import java.io.FileNotFoundException;
 import java.io.IOException;
+import java.io.RandomAccessFile;
 
 import com.general.util.AnswerDialog;
+import com.myster.filemanager.FileTypeListManager;
 import com.myster.hash.FileHash;
 import com.myster.mml.RobustMML;
 import com.myster.search.MysterFileStub;
@@ -13,65 +16,78 @@ public class MultiSourceUtilities {
 
     private static final String EXTENSION = ".i";
 
-    public static File getFileToDownloadTo(MysterFileStub stub,
-            Frame parentFrame) {
-        /*
-         * 
-         * File incomingDirectory = getIncomingDirectory();
-         * 
-         * return new
-         * File(incomingDirectory.getPath()+File.separator+stub.getName()+EXTENSION);
-         */
+    private static final String OK_BUTTON = "OK", CANCEL_BUTTON = "Cancel",
+            WRITE_OVER = "Write-Over", RENAME = "Rename";
 
-        File directory = new File(com.myster.filemanager.FileTypeListManager
-                .getInstance().getPathFromType(stub.getType())); //throws a null pointer exception on invalid type.
-        File file = new File(directory.getPath() + File.separator
-                + stub.getName() + EXTENSION);
+    public static File getFileToDownloadTo(MysterFileStub stub, Frame parentFrame) {
+        String directoryString = FileTypeListManager.getInstance().getPathFromType(stub.getType());
+        File directory = (directoryString == null ? askUserForANewFile(stub.getName()) : new File(
+                directoryString));
+        File file = new File(directory.getPath(), stub.getName() + EXTENSION);
 
         if (!directory.isDirectory()) {
             file = askUserForANewFile(stub.getName());
-
-            if (file == null)
-                return null;//throw new IOException("User Cancelled");
         }
 
-        while (file.exists()) {
-            final String CANCEL_BUTTON = "Cancel", WRITE_OVER = "Write-Over", RENAME = "Rename";
-
-            String answer = (new AnswerDialog(parentFrame,
-                    "A file by the name of " + file.getName()
-                            + " already exists. What do you want to do.",
-                    new String[] { CANCEL_BUTTON, WRITE_OVER })).answer();
-            if (answer.equals(CANCEL_BUTTON)) {
-                return null;//throw new IOException("User Canceled.");
-            } else if (answer.equals(WRITE_OVER)) {
-                if (!file.delete()) {
-                    AnswerDialog.simpleAlert(parentFrame,
-                            "Could not delete the file.");
-                    return null;///throw new IOException("Could not delete file");
+        while (true) {
+            if (file == null) {
+                return null;
+            } else if (file.exists()) {
+                String answer = (new AnswerDialog(parentFrame, "A file by the name of "
+                        + file.getName() + " already exists. What do you want to do.",
+                        new String[] { CANCEL_BUTTON, WRITE_OVER })).answer();
+                if (answer.equals(CANCEL_BUTTON)) {
+                    return null;
+                } else if (answer.equals(WRITE_OVER)) {
+                    if (!file.delete()) {
+                        AnswerDialog.simpleAlert(parentFrame, "Could not delete the file.");
+                        return null;
+                    }
+                } else if (answer.equals(RENAME)) {
+                    // if file is null, will be cancelled next loop
+                    file = askUserForANewFile(stub.getName());
                 }
-            } else if (answer.equals(RENAME)) {
-                file = askUserForANewFile(stub.getName());
-
-                if (file == null)
-                    return null;//throw new IOException("User Cancelled");
+            } else if (!isWritable(file)) {
+                String answer = (new AnswerDialog(parentFrame,
+                        "Cannot write to this directory, it appears to be read-only.",
+                        new String[] { CANCEL_BUTTON, OK_BUTTON })).answer();
+                if (answer.equals(CANCEL_BUTTON)) {
+                    return null;
+                } else {
+                    file = askUserForANewFile(stub.getName());
+                }
+            } else {
+                break;
             }
         }
 
         return file;
     }
 
-    public static boolean moveFileToFinalDestination(final File sourceFile,
-            Frame parentFrame) throws IOException {
+    public static boolean isWritable(File file) {
+        boolean fileExsts = file.exists();
+
+        try {
+            RandomAccessFile randomAccessFile = new RandomAccessFile(file, "rw");
+        } catch (FileNotFoundException ex) {
+            return false;
+        }
+        if (!fileExsts && file.exists())
+            file.delete();
+
+        return true;
+    }
+
+    public static boolean moveFileToFinalDestination(final File sourceFile, Frame parentFrame)
+            throws IOException {
 
         final String FILE_ENDING = ".i";
 
         File theFile = sourceFile; //!
 
         if (!theFile.getName().endsWith(FILE_ENDING)) {
-            AnswerDialog.simpleAlert(parentFrame, "Could not rename file \""
-                    + theFile.getName() + "\" because it does not end with "
-                    + FILE_ENDING + ".");
+            AnswerDialog.simpleAlert(parentFrame, "Could not rename file \"" + theFile.getName()
+                    + "\" because it does not end with " + FILE_ENDING + ".");
             return true; //don't display an error, I've already done it
         }
 
@@ -80,18 +96,16 @@ public class MultiSourceUtilities {
                 - (FILE_ENDING.length()))); //-2 is for .i
 
         if (someFile.exists()) {
-            AnswerDialog.simpleAlert(parentFrame,
-                    "Could not rename file from \"" + theFile.getName()
-                            + "\" to \"" + someFile.getName()
-                            + "\" because a file by that name already exists.");
+            AnswerDialog.simpleAlert(parentFrame, "Could not rename file from \""
+                    + theFile.getName() + "\" to \"" + someFile.getName()
+                    + "\" because a file by that name already exists.");
             return true;
         }
 
         if (!theFile.renameTo(someFile)) {
-            AnswerDialog.simpleAlert(parentFrame,
-                    "Could not rename file from \"" + theFile.getName()
-                            + "\" to \"" + someFile.getName()
-                            + "\" because an unspecified error occured.");
+            AnswerDialog.simpleAlert(parentFrame, "Could not rename file from \""
+                    + theFile.getName() + "\" to \"" + someFile.getName()
+                    + "\" because an unspecified error occured.");
             return true;
         }
         return true;
@@ -136,8 +150,13 @@ public class MultiSourceUtilities {
      * downloads are downloaded.
      */
     public static File getIncomingDirectory() throws IOException {
-        File file = new File(com.myster.application.MysterGlobals.getCurrentDirectory(),
-                "Incoming"); //! This will only ever return null;
+        File file = new File(com.myster.application.MysterGlobals.getCurrentDirectory(), "Incoming"); //!
+        // This
+        // will
+        // only
+        // ever
+        // return
+        // null;
 
         if ((file.exists()) && (file.isDirectory()))
             return file;
@@ -147,14 +166,13 @@ public class MultiSourceUtilities {
             return file;
         } else {
             throw new IOException(
-                    "Could not make an incomming directory because there is a file in the way.");
+                    "Could not make an incoming directory because there is a file in the way.");
         }
     }
 
     private static File askUserForANewFile(String name) {
-        java.awt.FileDialog dialog = new java.awt.FileDialog(
-                com.general.util.AnswerDialog.getCenteredFrame(),
-                "What do you want to save the file as?",
+        java.awt.FileDialog dialog = new java.awt.FileDialog(com.general.util.AnswerDialog
+                .getCenteredFrame(), "What do you want to save the file as?",
                 java.awt.FileDialog.SAVE);
         dialog.setFile(name);
         dialog.setDirectory(name);
@@ -166,15 +184,14 @@ public class MultiSourceUtilities {
         if (dialog.getFile() == null)
             return null; //canceled.
 
-        return new File(dialog.getDirectory() + File.separator
-                + dialog.getFile() + EXTENSION);
+        return new File(dialog.getDirectory() + File.separator + dialog.getFile() + EXTENSION);
     }
 
     public static FileHash getHashFromStats(RobustMML mml) throws IOException {
         String hashString = mml.get("/hash/" + com.myster.hash.HashManager.MD5);
 
         if (hashString == null)
-            throw new IOException("Stats MML does not contain the wanted info.");
+            return null;
 
         try {
             return com.myster.hash.SimpleFileHash.buildFromHexString(
@@ -222,20 +239,22 @@ public class MultiSourceUtilities {
         //System.out.println(string);
     }
 
-    
     private static final String STOP_DOWNLOAD = "Kill";
+
     private static final String CANCEL = "Don't Kill";
+
     /**
      * Asks the user to confirm stopping this download.
      * 
      * @return
      */
     public static boolean confirmCancel(Frame progress, MultiSourceDownload download) {
-    	if (download.isDone()) return true;
-    	
+        if (download.isDone())
+            return true;
+
         final String choice = AnswerDialog.simpleAlert(progress,
-                "Are you sure you want to kill this download?", new String[] {
-                STOP_DOWNLOAD, CANCEL });
+                "Are you sure you want to kill this download?", new String[] { STOP_DOWNLOAD,
+                        CANCEL });
         return (choice.equals(STOP_DOWNLOAD));
     }
 }

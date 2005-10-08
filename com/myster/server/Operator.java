@@ -48,19 +48,19 @@ public class Operator extends MysterThread {
         transferQueue = d;
 
         socketQueue = new DoubleBlockingQueue(0); //comunications channel
-                                                  // between operator and
-                                                  // section threads.
+        // between operator and
+        // section threads.
 
         connectionManagers = new ConnectionManager[threads];
         for (int i = 0; i < connectionManagers.length; i++) {
-            connectionManagers[i] = new ConnectionManager(socketQueue,
-                    eventDispatcher, transferQueue, connectionSections);
+            connectionManagers[i] = new ConnectionManager(socketQueue, eventDispatcher,
+                    transferQueue, connectionSections);
         }
     }
 
     public void run() {
         setPriority(MAX_PRIORITY); //to minimize the time it takes to make a
-                                   // connection.
+        // connection.
 
         refreshServerSocket(); //creates the sever socket.
 
@@ -84,10 +84,10 @@ public class Operator extends MysterThread {
                 } catch (Exception exp) {
                 }
                 synchronized (this) { //synchronized in case the socket is
-                                      // being re-set.
+                    // being re-set.
                     try {
                         sleep(100); //sometimes the OS will crash in such a way
-                                    // that it supplies an
+                        // that it supplies an
                         //infinite number of brokens sockets.
                         //This is here so that the system remains responsive
                         // during that time.
@@ -99,8 +99,7 @@ public class Operator extends MysterThread {
     }
 
     public void addConnectionSection(ConnectionSection section) {
-        connectionSections
-                .put(new Integer(section.getSectionNumber()), section);
+        connectionSections.put(new Integer(section.getSectionNumber()), section);
     }
 
     //Creates or recreates a new server socket.
@@ -138,5 +137,14 @@ public class Operator extends MysterThread {
                 refreshServerSocket();
             }
         }, 10 * 60 * 1000); //ms -> seconds -> minutes 10 minutes.
+    }
+
+    /*
+     * (non-Javadoc)
+     * 
+     * @see com.myster.util.MysterThread#end()
+     */
+    public void end() {
+        throw new RuntimeException("Not implemented");
     }
 }

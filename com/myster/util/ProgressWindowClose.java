@@ -13,7 +13,7 @@ package com.myster.util;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
 
-import com.general.util.SafeThread;
+import com.general.thread.SafeThread;
 
 public class ProgressWindowClose extends WindowAdapter {
     SafeThread t;

@@ -8,7 +8,7 @@
  * Copyright Andrew Trumper 2000-2001
  */
 
-package com.general.util;
+package com.general.thread;
 
 /**
  * This class over-rides thread and adds some different, basic functionality that is missing from a

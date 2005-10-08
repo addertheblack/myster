@@ -11,7 +11,7 @@ import java.net.InetAddress;
 import java.net.ServerSocket;
 import java.net.Socket;
 
-import com.general.util.SafeThread;
+import com.general.thread.SafeThread;
 import com.general.util.Util;
 
 /**

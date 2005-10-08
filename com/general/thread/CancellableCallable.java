@@ -14,7 +14,7 @@ package com.general.thread;
  * @see com.general.thread.Executor
  * @see com.general.thread.Future
  */
-public interface CancellableCallable {
+public interface CancellableCallable extends Cancellable {
     /**
      * Should be over-ridden by classes wanting to implement a function to be used asynchronously.
      * 
@@ -24,7 +24,7 @@ public interface CancellableCallable {
     public Object call() throws Exception;
 
     /**
-     * This function is called by Exectures by way of Futures to signal this task to stop Execution
+     * This function is called by Executors by way of Futures to signal this task to stop Execution
      * as soon as possible.
      */
     public void cancel();

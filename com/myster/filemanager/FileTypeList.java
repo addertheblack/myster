@@ -31,9 +31,8 @@ import com.myster.mml.MMLException;
 import com.myster.pref.Preferences;
 import com.myster.type.MysterType;
 import com.myster.util.MysterExecutor;
-import com.myster.util.MysterThread;
 
-public class FileTypeList extends MysterThread {
+public class FileTypeList {
     private Vector filelist; //List of java.io.FileItem objects that are
 
     // shared.

@@ -21,11 +21,13 @@ import java.io.UnsupportedEncodingException;
  * This is because most character encodings use 8 bits per character so to
  * convert a string to a MysterType you just need to convert using 7 bit (1 bit
  * extended) ascii. (cleared high bit)
+ * <p>
+ * Is immutable!
  * 
  * @author Andrew Trumper
  *  
  */
-public class MysterType {
+public final class MysterType {
     public static final int TYPE_LENGTH = 4;
 
     final byte[] type;
@@ -57,13 +59,10 @@ public class MysterType {
     }
 
     public boolean equals(Object o) {
-        MysterType mysterType;
-
-        try {
-            mysterType = (MysterType) o;
-        } catch (ClassCastException ex) {
+        if (!(o instanceof MysterType)) {
             return false;
         }
+        MysterType mysterType = (MysterType) o;
 
         for (int i = 0; i < type.length; i++) {
             if (type[i] != mysterType.type[i])
@@ -108,7 +107,6 @@ public class MysterType {
      * 
      * @return an array of 4 bytes representing this type.
      */
-
     public byte[] getBytes() {
         return (byte[]) type.clone();
     }

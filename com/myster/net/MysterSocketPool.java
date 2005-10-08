@@ -4,8 +4,8 @@ import com.general.thread.CallListener;
 import com.general.thread.CancellableCallable;
 import com.general.thread.Executor;
 import com.general.thread.Future;
+import com.general.thread.SafeThread;
 import com.general.util.BlockingQueue;
-import com.general.util.SafeThread;
 import com.general.util.Util;
 
 /**

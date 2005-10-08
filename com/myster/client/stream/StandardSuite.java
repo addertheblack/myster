@@ -8,6 +8,7 @@ import java.util.Vector;
 
 import com.general.thread.CallListener;
 import com.general.thread.Future;
+import com.general.util.AnswerDialog;
 import com.general.util.Util;
 import com.myster.hash.FileHash;
 import com.myster.mml.MMLException;
@@ -177,8 +178,8 @@ public class StandardSuite {
     }
 
     /**
-     * downloadFile downloads a file by starting up a MultiSourceDownload or Regular old style
-     * download whichever is appropriate.
+     * downloadFile downloads a file by starting up a MultiSourceDownload or
+     * Regular old style download whichever is appropriate.
      * <p>
      * THIS ROUTINE IS ASYNCHRONOUS!
      */
@@ -269,30 +270,19 @@ public class StandardSuite {
                 if (endFlag)
                     return;
 
-                FileHash hash = MultiSourceUtilities.getHashFromStats(mml);
-
                 final File theFile = MultiSourceUtilities.getFileToDownloadTo(stub, progress);
-
                 if (theFile == null) {
-                    progressSetTextThreadSafe(progress, "User canceled...");
+                    progressSetTextThreadSafe(progress, "User cancelled...");
                     return;
                 }
+                if (endFlag)
+                    return;
 
-                synchronized (StandardSuite.DownloadThread.this) {
-                    if (endFlag)
-                        return;
+                
+                if (!tryMultiSourceDownload(stub, progress, mml, theFile))
+                    throw new IOException("Toss and catch");
 
-                    final MSPartialFile partialFile = MSPartialFile.create(stub.getName(), theFile
-                            .getParentFile(), stub.getType(),
-                            MultiSourceDownload.DEFAULT_CHUNK_SIZE, new FileHash[] { hash },
-                            MultiSourceUtilities.getLengthFromStats(mml));
-
-                    msDownload = new MultiSourceDownload(stub, hash, MultiSourceUtilities
-                            .getLengthFromStats(mml), new MSDownloadHandler(progress, theFile,
-                            partialFile), new RandomAccessFile(theFile, "rw"), partialFile);
-                }
-
-                msDownload.run();
+                msDownload.start();
             } catch (IOException ex) {
                 ex.printStackTrace();
 
@@ -312,6 +302,33 @@ public class StandardSuite {
                             "Could not download file by either method...");
                 }
             }
+        }
+
+        private synchronized boolean tryMultiSourceDownload(final MysterFileStub stub,
+                final FileProgressWindow progress, RobustMML mml, final File theFile)
+                throws IOException {
+            FileHash hash = MultiSourceUtilities.getHashFromStats(mml);
+            if (hash == null)
+                return false;
+
+            long fileLengthFromStats = MultiSourceUtilities.getLengthFromStats(mml);
+            MSPartialFile partialFile;
+            try {
+                partialFile = MSPartialFile.create(stub.getName(), theFile.getParentFile(), stub
+                        .getType(), MultiSourceDownload.DEFAULT_CHUNK_SIZE,
+                        new FileHash[] { hash }, fileLengthFromStats);
+            } catch (IOException ex) {
+                AnswerDialog.simpleAlert(progress, "I can't create a partial file because of: \n\n"
+                        + ex.getMessage()
+                        + "\n\nIf I can't make this partial file I can't use multi-source download.");
+                throw ex;
+            }
+
+            msDownload = new MultiSourceDownload(new RandomAccessFile(theFile, "rw"),
+                    new MSDownloadHandler(progress, theFile, partialFile), partialFile);
+            msDownload.setInitialServers(new MysterFileStub[] { stub });
+
+            return true;
         }
 
         private void progressSetTextThreadSafe(final FileProgressWindow progress,

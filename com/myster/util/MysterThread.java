@@ -10,7 +10,8 @@
 
 package com.myster.util;
 
-import com.general.util.SafeThread;
+import com.general.thread.SafeThread;
+
 
 /**
  * This class is the subclass of all threads created by Myster. The class is basically identical to
@@ -31,8 +32,6 @@ public abstract class MysterThread extends SafeThread {
         setPriority(Thread.MIN_PRIORITY);
     }
 
-    public void end() {
-        stop();
-    }
+    public abstract void end();
 
 }

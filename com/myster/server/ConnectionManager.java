@@ -98,7 +98,7 @@ public class ConnectionManager extends MysterThread {
 
     /**
      * Does the actual work in this object.
-     *
+     *  
      */
     private void doConnection() {
         try {
@@ -190,7 +190,6 @@ public class ConnectionManager extends MysterThread {
                 remoteAddress, d.getSectionNumber(), o));
     }
 
-    
     /**
      * Used to turn a REALLY long line of code into a smaller long line of code.
      * 
@@ -225,6 +224,15 @@ public class ConnectionManager extends MysterThread {
             socket.close();
         } catch (Exception ex) {
         }
+    }
+
+    /*
+     * (non-Javadoc)
+     * 
+     * @see com.myster.util.MysterThread#end()
+     */
+    public void end() {
+        throw new RuntimeException("This function is not implemented");
     }
 
 }

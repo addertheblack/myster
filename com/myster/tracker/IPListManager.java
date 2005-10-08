@@ -27,13 +27,15 @@ import com.myster.type.TypeDescriptionList;
 import com.myster.util.MysterThread;
 
 /**
- * This class is the interface to Myster's tracker. Every single interraction with the tracker
- * module inside Myster currently goes through here. The tracker is the part of Myster that keeps
- * track of the list of servers that Myster knows about. Bascially it maintains the list of the top
- * XXX number of servers on the network for a given file type. All the servers kept by the tracker
- * have associated misc. statistics about themselves kept. These statistics are kept current n a
- * best effort basis. These statistics are used to generate a "rank". This "rank" determines if the
- * server is to be kept about in memory on one of the server lists.
+ * This class is the interface to Myster's tracker. Every single interaction
+ * with the tracker module inside Myster currently goes through here. The
+ * tracker is the part of Myster that keeps track of the list of servers that
+ * Myster knows about. Basically it maintains the list of the top XXX number of
+ * servers on the network for a given file type. All the servers kept by the
+ * tracker have associated misc. statistics about themselves kept. These
+ * statistics are kept current n a best effort basis. These statistics are used
+ * to generate a "rank". This "rank" determines if the server is to be kept
+ * about in memory on one of the server lists.
  * <p>
  * To access this object from Myster code use the singleton :
  * com.myster.tracker.IPListManagerSingleton
@@ -77,10 +79,11 @@ public class IPListManager { //aka tracker
     private Callback pingEventListener = new Callback();
 
     /**
-     * This routine is used to suggest an ip for the tracker to add to its server lists. The
-     * suggested ip will not show up on the tracker's lists until it has had its statistics queried.
-     * This can take a while. THIS ROUTINE IS NONE BLOCKING so the caller doens't have to worry
-     * about a lengthy delay while the server is queried for its statistics.
+     * This routine is used to suggest an ip for the tracker to add to its
+     * server lists. The suggested ip will not show up on the tracker's lists
+     * until it has had its statistics queried. This can take a while. THIS
+     * ROUTINE IS NONE BLOCKING so the caller doens't have to worry about a
+     * lengthy delay while the server is queried for its statistics.
      * 
      * @param ip
      *            The MysterAddress of the server you want to add.
@@ -88,7 +91,7 @@ public class IPListManager { //aka tracker
     public void addIP(MysterAddress ip) {
         try {
             com.myster.client.datagram.UDPPingClient.ping(ip, pingEventListener); //temporary..
-                                                                                  // should be
+            // should be
             // inside tracker...
         } catch (IOException ex) {
             ex.printStackTrace();
@@ -107,12 +110,12 @@ public class IPListManager { //aka tracker
 
             //Error conditions first.
             if (mysterServer != null) {
-                addIPBlocking(mysterServer); //if not truely new then don't
+                addIPBlocking(mysterServer); //if not truly new then don't
                 // make a new thread.
             } else if (blockingQueue.length() > 100) {
                 System.out.println("->   !!!!!!!!!!!!!!!!!!!!!!AddIP queue is at Max length.");
             } else {
-                blockingQueue.add(ip); //if it's truely new then make a new
+                blockingQueue.add(ip); //if it's truly new then make a new
                 // thread to passively add the ip
             }
         }
@@ -129,15 +132,16 @@ public class IPListManager { //aka tracker
     }
 
     /**
-     * Returns a list of Myster servers ordered by rank. Returns only server currently thought to be
-     * available (up). If there are not enough UP Servers or whatever, the rest of the array is
-     * filled with null!
+     * Returns a list of Myster servers ordered by rank. Returns only server
+     * currently thought to be available (up). If there are not enough UP
+     * Servers or whatever, the rest of the array is filled with null!
      * 
      * @param type
      *            to return servers for
      * @param x
      *            number of servers to try and return
-     * @return an array of MysterServer objects ordered by rank and possibly containing nulls.
+     * @return an array of MysterServer objects ordered by rank and possibly
+     *         containing nulls.
      */
     public synchronized MysterServer[] getTop(MysterType type, int x) {
         IPList iplist;
@@ -149,40 +153,41 @@ public class IPListManager { //aka tracker
     }
 
     /**
-     * Asks the cache if it knows of this MysterServer and gets stats if it does else returns null.
-     * Does not do any io. Returns quickly.
+     * Asks the cache if it knows of this MysterServer and gets stats if it does
+     * else returns null. Does not do any io. Returns quickly.
      * 
      * @param address
-     * @return Myster server at that address or null if the tracker doesn't have any record of a
-     *         server at that address
+     * @return Myster server at that address or null if the tracker doesn't have
+     *         any record of a server at that address
      */
     public synchronized MysterServer getQuickServerStats(MysterAddress address) { //returns
         return MysterIPPool.getInstance().getMysterIPLevelOne(address);
     }
 
     /**
-     * Gets MysterServer from cache if it is available else creates in with an IO operation else
-     * throws IOException is server is down.
+     * Gets MysterServer from cache if it is available else creates in with an
+     * IO operation else throws IOException is server is down.
      * <p>
-     * This routine does an io operation if the server is not found in the cache - that is it tries
-     * to connect to the specified address and download the stats if the server stats aren't already
-     * known.
+     * This routine does an io operation if the server is not found in the cache -
+     * that is it tries to connect to the specified address and download the
+     * stats if the server stats aren't already known.
      * 
      * @param address
      * @return The MysterServer object for this address.
      * @throws IOException
      */
     public synchronized MysterServer getServerStats(MysterAddress address) throws IOException { //might
-                                                                                                // block
-                                                                                                // for
-                                                                                                // a
-                                                                                                // long
-                                                                                                // time.
+        // block
+        // for
+        // a
+        // long
+        // time.
         return MysterIPPool.getInstance().getMysterServer(address);
     }
 
     /**
-     * Returns vector of ALL MysterAddress object in order of rank for that type.
+     * Returns vector of ALL MysterAddress object in order of rank for that
+     * type.
      * 
      * @param type
      * @return Vector of MysterAddresses in the order of rank.
@@ -196,11 +201,11 @@ public class IPListManager { //aka tracker
     }
 
     /**
-     * Returns an array of string objects representing a set of servers tthat could be available for
-     * bootstrapping onto the Myster network.
+     * Returns an array of string objects representing a set of servers that
+     * could be available for bootstrapping onto the Myster network.
      * 
-     * @return an array of string objects representing internet addresses (ip:port or domain
-     *         name:port format)
+     * @return an array of string objects representing internet addresses
+     *         (ip:port or domain name:port format)
      */
     public String[] getOnRamps() {
         String[] temp = new String[lastresort.length];
@@ -214,8 +219,9 @@ public class IPListManager { //aka tracker
     }
 
     /**
-     * This routine is here so that the ADDIP Thread can add an com.myster to all lists and the
-     * ADDIP Function can add an ip assuming that the IP exists already.
+     * This routine is here so that the ADDIP Thread can add an com.myster to
+     * all lists and the ADDIP Function can add an ip assuming that the IP
+     * exists already.
      * 
      * @param ip
      *            to add
@@ -229,8 +235,8 @@ public class IPListManager { //aka tracker
     }
 
     /**
-     * This function looks returns a IPList for the type passed if such a list exists. If no such
-     * list exists it returns null.
+     * This function looks returns a IPList for the type passed if such a list
+     * exists. If no such list exists it returns null.
      * 
      * @param type
      *            of list to fetch
@@ -266,7 +272,8 @@ public class IPListManager { //aka tracker
      * Returns the index in the list of IPLists for the type passed.
      * 
      * @param type
-     * @return the index in the list array for this type or -1 if there is not list for this type.
+     * @return the index in the list array for this type or -1 if there is not
+     *         list for this type.
      */
     private synchronized int getIndex(MysterType type) {
         for (int i = 0; i < tdlist.length; i++) {
@@ -277,8 +284,8 @@ public class IPListManager { //aka tracker
     }
 
     /**
-     * Returns an IPList for the type in the tdlist variable for that index. This is a stupid
-     * routine.
+     * Returns an IPList for the type in the tdlist variable for that index.
+     * This is a stupid routine.
      * 
      * @param index
      * @return
@@ -288,10 +295,11 @@ public class IPListManager { //aka tracker
     }
 
     /**
-     * What follows is basically the tracker as stated in the DOCS . Currently Myster polls the
-     * i-net.. it should only crawl when something is triggered... Like when a search is done..
-     * ideally, the IPs discovered during a crawl should be fed back to the "tracker" portion. The
-     * downside is servers do no crawling.. (bad)
+     * What follows is basically the tracker as stated in the DOCS . Currently
+     * Myster polls the i-net.. it should only crawl when something is
+     * triggered... Like when a search is done.. ideally, the IPs discovered
+     * during a crawl should be fed back to the "tracker" portion. The downside
+     * is servers do no crawling.. (bad)
      * 
      * @author Andrew Trumper
      */
@@ -308,7 +316,7 @@ public class IPListManager { //aka tracker
         public void run() {
 
             System.out.println("Starting walker thread");
-            setPriority(Thread.MIN_PRIORITY); //slightly better than a deamon
+            setPriority(Thread.MIN_PRIORITY); //slightly better than a daemon
             // thread.
             RInt rcounter = new RInt(tdlist.length - 1);
             try {
@@ -320,7 +328,7 @@ public class IPListManager { //aka tracker
                 sleep(10 * 60 * 1000);
             } catch (InterruptedException ex) {
             } //wait 10 minutes for the list to calm down
-            //if this trick is omited, the list spends ages sorting through a
+            //if this trick is omitted, the list spends ages sorting through a
             // load of ips that aren't up.
             while (true) {
                 System.out.println("CRAWLER THREAD: Starting new automatic crawl for new IPS");
@@ -378,13 +386,22 @@ public class IPListManager { //aka tracker
 
         }
 
+        /*
+         * (non-Javadoc)
+         * 
+         * @see com.myster.util.MysterThread#end()
+         */
+        public void end() {
+            throw new RuntimeException("Not implemented.");
+        }
+
     }
 
     private static volatile int counter = 0;
 
     /**
-     * This is a thread object representing the thread(s) that do the io required to add IPAddresses
-     * to the tracker in a non-blocking manner.
+     * This is a thread object representing the thread(s) that do the io
+     * required to add IPAddresses to the tracker in a non-blocking manner.
      * 
      * @author Andrew Trumper
      */
@@ -423,6 +440,15 @@ public class IPListManager { //aka tracker
                 }
             }
             //Statement not reached (until quiting)
+        }
+
+        /*
+         * (non-Javadoc)
+         * 
+         * @see com.myster.util.MysterThread#end()
+         */
+        public void end() {
+            throw new RuntimeException("Not implemented.");
         }
     }
 }

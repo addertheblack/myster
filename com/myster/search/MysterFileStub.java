@@ -5,7 +5,7 @@
  * 
  * This code is under GPL
  * 
- * Copyright Andrew Trumper 2000-2001
+ * Copyright Andrew Trumper 2000-2005
  */
 
 package com.myster.search;
@@ -13,12 +13,15 @@ package com.myster.search;
 import com.myster.net.MysterAddress;
 import com.myster.type.MysterType;
 
-public class MysterFileStub {
-    MysterAddress ip;
+/**
+ * Represents a file on the Myster network. Is immutable.
+ */
+public final class MysterFileStub {
+    private final MysterAddress ip;
 
-    MysterType type;
+    private final MysterType type;
 
-    String name;
+    private final String name;
 
     public MysterFileStub(MysterAddress ip, MysterType type, String name) {
         this.ip = ip;
@@ -43,7 +46,7 @@ public class MysterFileStub {
     }
 
     public String toString() {
-        return ip + " -> " + type + " -> " + name;
+        return "Myster File Stub: " + ip + " -> " + type + " -> " + name;
     }
 }
 

@@ -1,8 +1,8 @@
 package com.myster.client.stream;
 
 /**
- * This class is here to encapsulate all the information related to a Myster multi source download
- * resumable download block file.
+ * This class is here to encapsulate all the information related to a Myster
+ * multi source download resumable download block file.
  *  
  */
 
@@ -27,10 +27,11 @@ public class MSPartialFile {
          * try { MSPartialFile file = new MSPartialFile("Testing");
          * 
          * 
-         * System.out.println("Starting..."); for (int i = 0; i < 409600; i++) { //file.setBit(i);
-         * System.out.print(""+file.getBit(i)); }
+         * System.out.println("Starting..."); for (int i = 0; i < 409600; i++) {
+         * //file.setBit(i); System.out.print(""+file.getBit(i)); }
          * 
-         * System.out.println("Finished..."); } catch (IOException ex) { ex.printStackTrace(); }
+         * System.out.println("Finished..."); } catch (IOException ex) {
+         * ex.printStackTrace(); }
          */
     }
 
@@ -50,21 +51,27 @@ public class MSPartialFile {
             throw new IOException("MML Meta data was badly formed. This file is corrupt.");
         }
 
-        return new MSPartialFile(file, maskFile, new PartialFileHeader(mml, (int) maskFile.getFilePointer()));
+        return new MSPartialFile(file, maskFile, new PartialFileHeader(mml, (int) maskFile
+                .getFilePointer()));
     }
 
     public static MSPartialFile create(String filename, File path, MysterType type, int blockSize,
             FileHash[] hashes, long fileLength) throws IOException {
-        File fileReference = new File(MultiSourceUtilities.getIncomingDirectory(), filename
-                + FILE_ENDING);
+        File fileReference = new File(MultiSourceUtilities.getIncomingDirectory(), filename + FILE_ENDING);
 
         if (fileReference.exists()) {
             if (!fileReference.delete())
                 throw new IOException(
-                        "Cannot create a partial download file, there's a file in the way.");
+                        "Cannot create a partial download file, there's a file in the way and I can't delete it!");
         }
-
-        RandomAccessFile maskFile = new RandomAccessFile(fileReference, "rw");
+        
+        RandomAccessFile maskFile;
+        
+        try {
+            maskFile = new RandomAccessFile(fileReference, "rw");
+        } catch (IOException ex) {
+            throw new IOException("File \"" + fileReference + "\" appears to be read only.");
+        }
         PartialFileHeader header = new PartialFileHeader(filename, path, type, blockSize, hashes,
                 fileLength);
 
@@ -202,7 +209,7 @@ public class MSPartialFile {
                 progress.hide();
             }
         });
-        download.run();
+        download.start();
     }
 
     private static class UserCanceledException extends IOException {
@@ -392,7 +399,7 @@ public class MSPartialFile {
         private long fileLength;
 
         private File path;
-        
+
         private int offset;
 
         PartialFileHeader(RobustMML mml, int offset) throws IOException {

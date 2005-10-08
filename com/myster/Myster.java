@@ -16,8 +16,6 @@ import java.io.IOException;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 
-import javax.swing.JFrame;
-
 import com.general.application.ApplicationSingleton;
 import com.general.application.ApplicationSingletonListener;
 import com.general.util.AnswerDialog;
