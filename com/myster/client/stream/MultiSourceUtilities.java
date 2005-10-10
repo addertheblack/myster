@@ -67,11 +67,11 @@ public class MultiSourceUtilities {
     public static boolean isWritable(File file) {
         boolean fileExsts = file.exists();
 
-        try {
-            RandomAccessFile randomAccessFile = new RandomAccessFile(file, "rw");
-        } catch (FileNotFoundException ex) {
-            return false;
-        }
+        //try {
+        //    RandomAccessFile randomAccessFile = new RandomAccessFile(file, "rw");
+        //} catch (FileNotFoundException ex) {
+        //    return false;
+        //}
         if (!fileExsts && file.exists())
             file.delete();
 

@@ -111,6 +111,7 @@ public class Myster {
                             + " computer will make sure that the other Myster client gets quit.");
             parent.dispose(); //if this isn't here Myster won't quit.
             applicationSingleton.close();
+            System.exit(0);
             return;
         }
 
