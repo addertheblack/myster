@@ -312,7 +312,7 @@ public class StandardSuite {
             long fileLengthFromStats = MultiSourceUtilities.getLengthFromStats(mml);
             MSPartialFile partialFile;
             try {
-                partialFile = MSPartialFile.create(stub.getName(), theFile.getParentFile(), stub
+                partialFile = MSPartialFile.create(stub.getName(), new File( theFile.getParent() ), stub
                         .getType(), MultiSourceDownload.DEFAULT_CHUNK_SIZE,
                         new FileHash[] { hash }, fileLengthFromStats);
             } catch (IOException ex) {
