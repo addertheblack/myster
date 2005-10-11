@@ -64,7 +64,7 @@ public class FileItem {
     }
 
     public String getName() {
-        return file.getName();
+        return FileTypeList.mergePunctuation(file.getName());
     }
 
     public String getFullPath() {
