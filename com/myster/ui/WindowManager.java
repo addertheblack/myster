@@ -69,9 +69,9 @@ public class WindowManager {
                         new OtherWindowHandler(frame)));
             }
 
-            Enumeration enum = windowMenuHash.elements();
-            while (enum.hasMoreElements()) {
-                fixMenu((Menu) enum.nextElement());
+            Enumeration enumeration = windowMenuHash.elements();
+            while (enumeration.hasMoreElements()) {
+                fixMenu((Menu) enumeration.nextElement());
             }
         }
     }

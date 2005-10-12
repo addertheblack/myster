@@ -6,6 +6,7 @@ import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.io.IOException;
 
+import com.myster.filemanager.FileTypeList;
 import com.myster.hash.FileHash;
 import com.myster.net.StandardDatagramClientImpl;
 import com.myster.transaction.Transaction;
@@ -35,8 +36,8 @@ public class SearchHashDatagramClient implements StandardDatagramClientImpl {
     //returns String
     public Object getObjectFromTransaction(Transaction transaction)
             throws IOException {
-        return (new DataInputStream(new ByteArrayInputStream(transaction
-                .getData()))).readUTF();
+        return FileTypeList.mergePunctuation((new DataInputStream(new ByteArrayInputStream(transaction
+                .getData()))).readUTF());
     }
 
     //returns String

@@ -18,7 +18,6 @@
 package com.myster.filemanager;
 
 import java.io.File;
-import java.util.Locale;
 import java.util.Vector;
 
 import com.general.thread.CallListener;
@@ -215,25 +214,25 @@ public class FileTypeList {
      * 
      * Matching ALGORYTHM IS: -Fill this in.-
      * 
-     * @param queryStr
+     * @param queryString
      *            string
      * @return a list of files maching the query string
      */
-    public synchronized String[] getFileListAsStrings(String queryStr) {
-        if (queryStr.equals(""))
+    public synchronized String[] getFileListAsStrings(String queryString) {
+        if (queryString.equals(""))
             return getFileListAsStrings(); //not limited by MAX_RESULTS
 
         assertFileList();
 
-        Vector rtn = new Vector(MAX_RESULTS);
+        Vector results = new Vector(MAX_RESULTS);
 
         Vector keywords = new Vector(20, 10);
-        StringBuffer t = new StringBuffer(" ");
+        StringBuffer stringBuffer = new StringBuffer(" ");
 
-        boolean inWord = false;
+//        boolean inWord = false;
         boolean aggregate = false;
 
-        queryStr = mergePunctuation(queryStr);
+        queryString = mergePunctuation(queryString);
 
         // Split queryStr into keywords at the whitespaces into keywords
         //    (Anything !Character.isLetterOrDigit() is considered whitespace)
@@ -241,50 +240,50 @@ public class FileTypeList {
         // beginning-of-word matches.
 
         //TOKENIZZZZEE!!
-        for (int i = 0; i < queryStr.length(); i++) {
-            char c = queryStr.charAt(i);
+        for (int i = 0; i < queryString.length(); i++) {
+            char c = queryString.charAt(i);
             if (c == '\"') {
-                if (t.charAt(t.length() - 1) != ' ')
-                    t.append(' ');
-                if (t.length() > 1) {
-                    keywords.addElement(t.toString());
-                    t = new StringBuffer(" ");
+                if (stringBuffer.charAt(stringBuffer.length() - 1) != ' ')
+                    stringBuffer.append(' ');
+                if (stringBuffer.length() > 1) {
+                    keywords.addElement(stringBuffer.toString());
+                    stringBuffer = new StringBuffer(" ");
                 }
                 aggregate = !aggregate;
             } else if (Character.isLetterOrDigit(c)) {
-                t.append(Character.toLowerCase(c));
+                stringBuffer.append(Character.toLowerCase(c));
             } else {
                 // if (t.charAt(t.length()-1) != ' ') t.append(' '); //
                 // uncomment to match full words only.
                 // for now it matches any begining of words.
-                if (t.length() > 1 && !aggregate) {
-                    keywords.addElement(t.toString());
-                    t = new StringBuffer(" ");
-                } else if (t.charAt(t.length() - 1) != ' ')
-                    t.append(' ');
+                if (stringBuffer.length() > 1 && !aggregate) {
+                    keywords.addElement(stringBuffer.toString());
+                    stringBuffer = new StringBuffer(" ");
+                } else if (stringBuffer.charAt(stringBuffer.length() - 1) != ' ')
+                    stringBuffer.append(' ');
             }
         }
-        if (t.length() > 1)
-            keywords.addElement(t.toString());
+        if (stringBuffer.length() > 1)
+            keywords.addElement(stringBuffer.toString());
 
         //MATCHER
-        for (int iFile = 0; iFile < filelist.size(); iFile++) {
-            FileItem file = (FileItem) filelist.elementAt(iFile);
+        for (int i = 0; i < filelist.size(); i++) {
+            FileItem file = (FileItem) filelist.elementAt(i);
             String filename = mergePunctuation(file.getFile().getName());
 
             // Filter out sequential whitespace
             String simplified = simplify(filename);
 
             if (isMatch(keywords, simplified))
-                rtn.addElement(filename);
+                results.addElement(filename);
 
-            if (rtn.size() > MAX_RESULTS)
+            if (results.size() > MAX_RESULTS)
                 break;
         }
 
-        String[] rtnStr = new String[rtn.size()];
-        rtn.copyInto(rtnStr);
-        return rtnStr;
+        String[] resultArray = new String[results.size()];
+        results.copyInto(resultArray);
+        return resultArray;
     }
 
     /**
@@ -371,7 +370,6 @@ public class FileTypeList {
      * will not be visible until the directory being passed has been indexed. In
      * the mean time, the file list will maintain its old list.
      * 
-     * @param s,
      *            the new root dir path.
      */
     public void setPath(String s) { //notice no error if path is nonsence!
@@ -392,9 +390,9 @@ public class FileTypeList {
         // info
     }
 
-    private synchronized void setFileList(Vector fileList) {
+    private synchronized void setFileList(Vector filelist) {
         resetIndexingVariables();
-        filelist = fileList;
+        this.filelist = filelist;
         assertFileList();
     }
 
@@ -669,7 +667,7 @@ public class FileTypeList {
      * @return String with punctuation merged
      */
     public static String mergePunctuation(String text) {
-        if (Locale.getDefault().getDisplayLanguage().equals(Locale.JAPANESE.getDisplayLanguage())) {
+//        if (Locale.getDefault().getDisplayLanguage().equals(Locale.JAPANESE.getDisplayLanguage())) {
             if (text.length() <= 1)
                 return text;
             StringBuffer buffer = new StringBuffer(text.length());
@@ -691,9 +689,9 @@ public class FileTypeList {
             }
             buffer.append(pre);
             return buffer.toString();
-        } else {
-            return text;
-        }
+//        } else {
+//            return text;
+//        }
     }
 
 }

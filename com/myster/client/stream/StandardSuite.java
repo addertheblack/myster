@@ -10,6 +10,7 @@ import com.general.thread.CallListener;
 import com.general.thread.Future;
 import com.general.util.AnswerDialog;
 import com.general.util.Util;
+import com.myster.filemanager.FileTypeList;
 import com.myster.hash.FileHash;
 import com.myster.mml.MMLException;
 import com.myster.mml.RobustMML;
@@ -46,7 +47,7 @@ public class StandardSuite {
         }, listener);
     }
 
-    //Vector of strings
+    // Vector of strings
     public static Vector getSearch(MysterSocket socket, MysterType searchType, String searchString)
             throws IOException {
         Vector searchResults = new Vector();
@@ -78,7 +79,7 @@ public class StandardSuite {
             throws IOException {
         Vector ipList = new Vector();
 
-        socket.out.writeInt(10); //Get top ten the 10 is the command code...
+        socket.out.writeInt(10); // Get top ten the 10 is the command code...
         // not the length of the list!
 
         checkProtocol(socket.in);
@@ -145,7 +146,7 @@ public class StandardSuite {
     }
 
     public static RobustMML getServerStats(MysterSocket socket) throws IOException {
-        socket.setSoTimeout(90000); //? Probably important in some way or
+        socket.setSoTimeout(90000); // ? Probably important in some way or
         // other.
 
         socket.out.writeInt(101);
@@ -167,7 +168,7 @@ public class StandardSuite {
         }, listener);
     }
 
-    public static RobustMML getServerStats(MysterAddress ip) throws IOException { //should
+    public static RobustMML getServerStats(MysterAddress ip) throws IOException { // should
         MysterSocket socket = null;
         try {
             socket = MysterSocketFactory.makeStreamConnection(ip);
@@ -243,7 +244,7 @@ public class StandardSuite {
             try {
                 downloadFile(socket, stub, progressArray[0]);
             } catch (IOException ex) {
-                //..
+                // ..
             } finally {
                 disconnectWithoutException(socket);
             }
@@ -278,7 +279,6 @@ public class StandardSuite {
                 if (endFlag)
                     return;
 
-                
                 if (!tryMultiSourceDownload(stub, progress, mml, theFile))
                     throw new IOException("Toss and catch");
             } catch (IOException ex) {
@@ -312,13 +312,16 @@ public class StandardSuite {
             long fileLengthFromStats = MultiSourceUtilities.getLengthFromStats(mml);
             MSPartialFile partialFile;
             try {
-                partialFile = MSPartialFile.create(stub.getName(), new File( theFile.getParent() ), stub
-                        .getType(), MultiSourceDownload.DEFAULT_CHUNK_SIZE,
+                partialFile = MSPartialFile.create(stub.getName(), new File(theFile.getParent()),
+                        stub.getType(), MultiSourceDownload.DEFAULT_CHUNK_SIZE,
                         new FileHash[] { hash }, fileLengthFromStats);
             } catch (IOException ex) {
-                AnswerDialog.simpleAlert(progress, "I can't create a partial file because of: \n\n"
-                        + ex.getMessage()
-                        + "\n\nIf I can't make this partial file I can't use multi-source download.");
+                AnswerDialog
+                        .simpleAlert(
+                                progress,
+                                "I can't create a partial file because of: \n\n"
+                                        + ex.getMessage()
+                                        + "\n\nIf I can't make this partial file I can't use multi-source download.");
                 throw ex;
             }
 
@@ -357,9 +360,9 @@ public class StandardSuite {
         public void end() {
             flagToEnd();
 
-            //try {
-            //	join();
-            //} catch (InterruptedException ex) {}
+            // try {
+            // join();
+            // } catch (InterruptedException ex) {}
         }
     }
 
@@ -379,7 +382,7 @@ public class StandardSuite {
 
         checkProtocol(socket.in);
 
-        socket.out.writeInt(stub.getType().getAsInt()); //this protocol sucks
+        socket.out.writeInt(stub.getType().getAsInt()); // this protocol sucks
         socket.out.writeUTF(stub.getName());
 
         try {
@@ -410,7 +413,7 @@ public class StandardSuite {
         return getFileFromHash(socket, type, new FileHash[] { hash });
     }
 
-    //Returns "" if file is not found or name of file if file is found.
+    // Returns "" if file is not found or name of file if file is found.
     public static String getFileFromHash(MysterSocket socket, MysterType type, FileHash[] hashes)
             throws IOException {
         socket.out.writeInt(150);
@@ -431,11 +434,11 @@ public class StandardSuite {
 
         socket.out.writeUTF("");
 
-        return socket.in.readUTF();
+        return FileTypeList.mergePunctuation(socket.in.readUTF());
     }
 
     public static void checkProtocol(DataInputStream in) throws IOException,
-            UnknownProtocolException { //this should have its own exception
+            UnknownProtocolException { // this should have its own exception
         // type
         int err = in.read();
 
@@ -448,14 +451,37 @@ public class StandardSuite {
     }
 
     public static void disconnect(MysterSocket socket) throws IOException {
-        //try {
+        // try {
         socket.out.writeInt(2);
         socket.in.read();
-        //} catch (IOException ex) {}
+        // } catch (IOException ex) {}
 
         try {
             socket.close();
         } catch (Exception ex) {
+        }
+    }
+
+    public static String[] getFileList(MysterSocket socket, MysterType type) throws IOException {
+        socket.out.writeInt(78);
+        checkProtocol(socket.in);
+
+        socket.out.writeInt(type.getAsInt());
+
+        String[] fileList = new String[socket.in.readInt()];
+        for (int i = 0; i < fileList.length; i++) {
+            fileList[i] = socket.in.readUTF();
+        }
+        return fileList;
+    }
+    
+    public static String[] getFileList(MysterAddress address, MysterType type) throws IOException {
+        MysterSocket socket = null;
+        try {
+            socket = MysterSocketFactory.makeStreamConnection(address);
+            return getFileList(socket, type);
+        } finally {
+            disconnectWithoutException(socket);
         }
     }
 

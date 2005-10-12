@@ -204,12 +204,12 @@ class MysterIPPool {
         if (hashtable.size() <= GC_UPPER_LIMIT)
             return;
 
-        Enumeration enum = hashtable.keys(); //ugh.. This syntax SUCKS!
+        Enumeration enumeration = hashtable.keys(); //ugh.. This syntax SUCKS!
         Vector keysToDelete = new Vector(100, 100);
 
         //Collect worthless....
-        while (enum.hasMoreElements()) {
-            MysterAddress workingKey = (MysterAddress) (enum.nextElement());
+        while (enumeration.hasMoreElements()) {
+            MysterAddress workingKey = (MysterAddress) (enumeration.nextElement());
 
             MysterIP mysterip = (MysterIP) (hashtable.get(workingKey));
 
@@ -252,12 +252,12 @@ class MysterIPPool {
     private synchronized void save() {
         MML mml = new MML(); //make a new file system.
 
-        Enumeration enum = hashtable.elements(); //ugh.. This syntax SUCKS!
+        Enumeration enumeration = hashtable.elements(); //ugh.. This syntax SUCKS!
 
         //Collect worthless....
         int i = 0;
-        while (enum.hasMoreElements()) {
-            MysterIP mysterip = (MysterIP) (enum.nextElement());
+        while (enumeration.hasMoreElements()) {
+            MysterIP mysterip = (MysterIP) (enumeration.nextElement());
 
             if (mysterip.getMysterCount() > 0) {
                 mml.put("/" + i, mysterip.toMML().toString()); //write the

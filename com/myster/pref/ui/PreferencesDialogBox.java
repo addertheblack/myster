@@ -242,17 +242,17 @@ public class PreferencesDialogBox extends MysterFrame { //protected...!
 
         //Tells *panels* to save changes
         public synchronized void save() {
-            Enumeration enum = hash.elements();
-            while (enum.hasMoreElements()) {
-                ((PreferencesPanel) (enum.nextElement())).save();
+            Enumeration enumeration = hash.elements();
+            while (enumeration.hasMoreElements()) {
+                ((PreferencesPanel) (enumeration.nextElement())).save();
             }
         }
 
         //Tells *panels* to refresh
         public synchronized void restore() {
-            Enumeration enum = hash.elements();
-            while (enum.hasMoreElements()) {
-                ((PreferencesPanel) (enum.nextElement())).reset();
+            Enumeration enumeration = hash.elements();
+            while (enumeration.hasMoreElements()) {
+                ((PreferencesPanel) (enumeration.nextElement())).reset();
             }
         }
 

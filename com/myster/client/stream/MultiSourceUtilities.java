@@ -2,9 +2,7 @@ package com.myster.client.stream;
 
 import java.awt.Frame;
 import java.io.File;
-import java.io.FileNotFoundException;
 import java.io.IOException;
-import java.io.RandomAccessFile;
 
 import com.general.util.AnswerDialog;
 import com.myster.filemanager.FileTypeListManager;
@@ -95,6 +93,9 @@ public class MultiSourceUtilities {
         File someFile = someFile = new File(path.substring(0, path.length()
                 - (FILE_ENDING.length()))); //-2 is for .i
 
+        if (someFile.exists())
+            someFile.delete();
+        
         if (someFile.exists()) {
             AnswerDialog.simpleAlert(parentFrame, "Could not rename file from \""
                     + theFile.getName() + "\" to \"" + someFile.getName()
