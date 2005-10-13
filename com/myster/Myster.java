@@ -68,7 +68,7 @@ public class Myster {
         } catch (InvocationTargetException e) {
             e.printStackTrace();
         }
-
+        
         //        try {
         //            UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
         //        } catch (ClassNotFoundException e) {
