@@ -16,9 +16,9 @@ import com.myster.menubar.MysterMenuItemFactory;
 import com.myster.menubar.event.NullAction;
 
 /**
- * This class is responsible for managing the number and order of all Myster windows. Unfortunately
- * it has become overgrown and is now also managing the "Windows" menu. It also is way too coupled
- * with MysterFrame.
+ * This class is responsible for managing the number and order of all Myster
+ * windows. Unfortunately it has become overgrown and is now also managing the
+ * "Windows" menu. It also is way too coupled with MysterFrame.
  */
 public class WindowManager {
     private static Hashtable windowMenuHash = new Hashtable();
@@ -37,7 +37,7 @@ public class WindowManager {
                 windows.addElement(frame);
                 windowMenuHash.put(frame, (new MysterMenuFactory("Windows", finalMenu))
                         .makeMenu(frame));
-                //Timer t=new Timer(doUpdateClass, 1);//might cause deadlocks.
+                // Timer t=new Timer(doUpdateClass, 1);//might cause deadlocks.
                 updateMenu();
             }
         }
@@ -48,10 +48,13 @@ public class WindowManager {
         boolean yep = windows.removeElement(frame);
         windowMenuHash.remove(frame);
         if (yep) {
-            //Timer t=new Timer(doUpdateClass, 1); //might cause deadlocks.
+            // Timer t=new Timer(doUpdateClass, 1); //might cause deadlocks.
             updateMenu();
             if (windows.size() == 0) {
-                MysterGlobals.quit();
+                //TODO: Fix this hack.
+                if (MysterGlobals.ON_LINUX) { //hack hack hack!
+                    MysterGlobals.quit();
+                }
             }
         }
     }
@@ -66,7 +69,8 @@ public class WindowManager {
                 finalMenu.addElement(menuItems.elementAt(i));
             }
 
-            finalMenu.addElement(new MysterMenuItemFactory()); //is a seperator
+            finalMenu.addElement(new MysterMenuItemFactory()); // is a
+            // seperator
 
             for (int i = 0; i < windows.size(); i++) {
                 MysterFrame frame = ((MysterFrame) (windows.elementAt(i)));
@@ -97,11 +101,12 @@ public class WindowManager {
         Menu menu = (Menu) windowMenuHash.get(frame);
         if (menu == null) {
             return new Menu("Windows");
-            //throw new IllegalStateException("This frame has no windows menu! " +
+            // throw new IllegalStateException("This frame has no windows menu!
+            // " +
             // frame.getTitle());
-            //menu = (new MysterMenuFactory("Windows",
+            // menu = (new MysterMenuFactory("Windows",
             // finalMenu)).makeMenu(frame);
-            //windowMenuHash.put(frame, menu);
+            // windowMenuHash.put(frame, menu);
         }
         return menu;
     }
@@ -118,7 +123,7 @@ public class WindowManager {
 
     public static void init() {
         if (isInited)
-            return; //complain
+            return; // complain
 
         isInited = true;
 
@@ -145,7 +150,8 @@ public class WindowManager {
 
             synchronized (windows) {
                 if (windows.size() <= 0)
-                    return; //(could happen if none-tracked window is frontmost)
+                    return; // (could happen if none-tracked window is
+                // frontmost)
 
                 int index = windows.indexOf(getFrontMostWindow());
 
