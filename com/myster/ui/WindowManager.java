@@ -9,25 +9,27 @@ import java.util.Enumeration;
 import java.util.Hashtable;
 import java.util.Vector;
 
+import com.myster.application.MysterGlobals;
 import com.myster.menubar.MysterMenuBar;
 import com.myster.menubar.MysterMenuFactory;
 import com.myster.menubar.MysterMenuItemFactory;
 import com.myster.menubar.event.NullAction;
 
+/**
+ * This class is responsible for managing the number and order of all Myster windows. Unfortunately
+ * it has become overgrown and is now also managing the "Windows" menu. It also is way too coupled
+ * with MysterFrame.
+ */
 public class WindowManager {
-    static Vector windows = new Vector();
+    private static Hashtable windowMenuHash = new Hashtable();
 
-    static MysterFrame frontMost;
+    private static Vector windows = new Vector();
 
-    static Vector menuItems;
+    private static MysterFrame frontMost;
 
-    static Vector finalMenu;
+    private static Vector menuItems;
 
-    static Runnable doUpdateClass = new Runnable() {
-        public void run() {
-            updateMenu();
-        }
-    };
+    private static Vector finalMenu;
 
     protected static void addWindow(MysterFrame frame) {
         synchronized (windows) {
@@ -48,6 +50,9 @@ public class WindowManager {
         if (yep) {
             //Timer t=new Timer(doUpdateClass, 1); //might cause deadlocks.
             updateMenu();
+            if (windows.size() == 0) {
+                MysterGlobals.quit();
+            }
         }
     }
 
@@ -88,13 +93,12 @@ public class WindowManager {
         }
     }
 
-    private static Hashtable windowMenuHash = new Hashtable();
-
     private static Menu getCorrectWindowsMenu(Frame frame) {
         Menu menu = (Menu) windowMenuHash.get(frame);
         if (menu == null) {
             return new Menu("Windows");
-            //throw new IllegalStateException("This frame has no windows menu! " + frame.getTitle());
+            //throw new IllegalStateException("This frame has no windows menu! " +
+            // frame.getTitle());
             //menu = (new MysterMenuFactory("Windows",
             // finalMenu)).makeMenu(frame);
             //windowMenuHash.put(frame, menu);

@@ -189,9 +189,9 @@ public class Myster {
                         com.myster.client.ui.ClientWindow.initWindowLocations();
                         ServerStatsWindow.initWindowLocations();
                         com.myster.tracker.ui.TrackerWindow.initWindowLocations();
-                        SearchWindow.initWindowLocations();
                         com.myster.hash.ui.HashManagerGUI.initGui();
                         Preferences.initGui();
+                        SearchWindow.initWindowLocations();
                     }
                 });
             }
