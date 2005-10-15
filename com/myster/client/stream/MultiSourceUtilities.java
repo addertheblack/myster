@@ -92,9 +92,6 @@ public class MultiSourceUtilities {
         String path = theFile.getAbsolutePath();
         File someFile = someFile = new File(path.substring(0, path.length()
                 - (FILE_ENDING.length()))); //-2 is for .i
-
-        if (someFile.exists())
-            someFile.delete();
         
         if (someFile.exists()) {
             AnswerDialog.simpleAlert(parentFrame, "Could not rename file from \""

@@ -35,7 +35,7 @@ public class MPG3FileItem extends FileItem {
         MP3File mp3File = null;
         try {
             mp3File = new MP3File(file);
-        } catch (Exception ex) {
+        } catch (Throwable ex) {
             return;
         }
 

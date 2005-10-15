@@ -34,8 +34,6 @@ public class Myster {
     private static final String LOCK_FILE_NAME = ".lockFile";
 
     public static void main(String[] args) {
-    		System.setProperty( "apple.awt.window.position.forceSafeCreation", "false");
-		System.setProperty( "apple.awt.window.position.forceSafeProgrammaticPositioning", "false");
         final boolean isServer = (args.length > 0 && args[0].equals("-s"));
 
         System.out.println("java.vm.specification.version:"

@@ -112,7 +112,7 @@ public class MultiSourceHashSearch implements MysterSearchClientSection {
                         MultiSourceUtilities.debug("Hash Search -> " + string);
                     }
                 });
-        new Thread() {
+        new Thread() { //need a thread here because the DNS lookup might take a long time.
             public void run() {
                 com.myster.tracker.MysterServer[] iparray = com.myster.tracker.IPListManagerSingleton
                         .getIPListManager().getTop(type, 50);
