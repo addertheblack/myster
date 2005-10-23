@@ -1082,7 +1082,7 @@ Work on DEV 8:
 		-> Made the MCList look a bit different: column rows appears to be longer...
 		-> Made starting searching faster by not starting any threads when starting a search.
 		-> Made Myster startup faster.
-	
+
 	Work on DEV 21.3
 		2005/01/01
 		-> Made a TimerThread class to make doing periodic tasks easyer.
@@ -1113,6 +1113,9 @@ Work on DEV 8:
 	  	-> Made Multi-source downlaod code more robust. Myster will now look in the current download directory as well as the 
 	  			original path the user downloaded the file to. (It still doesn't remeber the path when the user
 	  			manually tells myster where the file is... To do so would require re-writting the .p file.)
+	  	-> Fixed a bug where multi-source download wouldn't start a download because of un-merged puctuation
+	  	-> Rewrote the multi-source download error code - so that more errors are reported properly and better
+	  			appropriate corrective action is taken.
 		
 (Red List)
 to do:
