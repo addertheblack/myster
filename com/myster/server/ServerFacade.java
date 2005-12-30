@@ -5,8 +5,11 @@ import java.awt.Dimension;
 import java.awt.GridLayout;
 import java.awt.Label;
 import java.awt.TextField;
+import java.util.Hashtable;
 import java.util.StringTokenizer;
 
+import com.general.util.DoubleBlockingQueue;
+import com.myster.application.MysterGlobals;
 import com.myster.client.datagram.PongTransport;
 import com.myster.client.datagram.UDPPingClient;
 import com.myster.net.DatagramProtocolManager;
@@ -24,31 +27,50 @@ import com.myster.transaction.TransactionManager;
 import com.myster.transferqueue.TransferQueue;
 
 public class ServerFacade {
-    private static Operator opp;
+    private static Operator[] operators;
 
     private static boolean b = true;
 
-    private static TransferQueue downloadQueue;
-    
+    private static TransferQueue transferQueue;
+
     private static ServerEventDispatcher serverDispatcher = new ServerEventDispatcher();
 
+    private static DoubleBlockingQueue connectionQueue;
+
+    private static ConnectionManager[] connectionManagers;
+
+    private static Hashtable connectionSections = new Hashtable();
+
     /**
-     * call this if you code assumes the server is actively running or you wish to start the server.
-     * This routine should not be called by the user, only the system startup thread.
+     * call this if you code assumes the server is actively running or you wish
+     * to start the server. This routine should not be called by the user, only
+     * the system startup thread.
      */
     public static synchronized void assertServer() {
         if (b) {
-            opp.start();
             b = false;
+            for (int i = 0; i < operators.length; i++) {
+                operators[i].start();
+            }
+            
+            connectionManagers = new ConnectionManager[getServerThreads()];
+            for (int i = 0; i < connectionManagers.length; i++) {
+                connectionManagers[i] = new ConnectionManager(connectionQueue, serverDispatcher,
+                        transferQueue, connectionSections);
+                connectionManagers[i].start();
+            }
         }
     }
 
     public static void init() {
-        BannersManager.init(); //init banners stuff..
+        BannersManager.init(); // init banners stuff..
 
-        downloadQueue = new ServerQueue();
-        downloadQueue.setMaxQueueLength(20);
-        opp = new Operator(downloadQueue, getServerThreads(), getServerDispatcher());
+        transferQueue = new ServerQueue();
+        transferQueue.setMaxQueueLength(20);
+        connectionQueue = new DoubleBlockingQueue(0);
+        operators = new Operator[2];
+        operators[0] = new Operator(connectionQueue, MysterGlobals.DEFAULT_PORT);
+        operators[1] = new Operator(connectionQueue, 80);
         Preferences.getInstance().addPanel(new PrefPanel());
         addStandardStreamConnectionSections();
         TransactionManager.init(getServerDispatcher());
@@ -57,7 +79,7 @@ public class ServerFacade {
     }
 
     /**
-     *  
+     * 
      */
     private static void initDatagramTransports() {
         PongTransport ponger = new PongTransport();
@@ -67,7 +89,7 @@ public class ServerFacade {
     }
 
     /**
-     *  
+     * 
      */
     private static void addStandardDatagramTransactions() {
         TransactionManager.addTransactionProtocol(new TopTenDatagramServer());
@@ -79,7 +101,8 @@ public class ServerFacade {
     }
 
     /**
-     * Gets the server event dispatcher. Useful if you want your module to listen for SERVER events.
+     * Gets the server event dispatcher. Useful if you want your module to
+     * listen for SERVER events.
      */
     public static ServerEventDispatcher getServerDispatcher() {
         return serverDispatcher;
@@ -98,7 +121,7 @@ public class ServerFacade {
     }
 
     public static void addConnectionSection(ConnectionSection section) {
-        opp.addConnectionSection(section);
+        connectionSections.put(new Integer(section.getSectionNumber()), section);
     }
 
     private static String serverThreadKey = "MysterTCPServerThreads/";
@@ -106,11 +129,11 @@ public class ServerFacade {
     private static int getServerThreads() {
         String info = Preferences.getInstance().get(serverThreadKey);
         if (info == null)
-            info = "35"; //default value;
+            info = "35"; // default value;
         try {
             return Integer.parseInt(info);
         } catch (NumberFormatException ex) {
-            return 35; //should *NEVER* happen.
+            return 35; // should *NEVER* happen.
         }
     }
 
@@ -119,24 +142,24 @@ public class ServerFacade {
     }
 
     private static void addStandardStreamConnectionSections() {
-        opp.addConnectionSection(new com.myster.server.stream.IPLister());
-        opp.addConnectionSection(new com.myster.server.stream.RequestDirThread());
-        opp.addConnectionSection(new com.myster.server.stream.FileSenderThread());
-        opp.addConnectionSection(new com.myster.server.stream.FileTypeLister());
-        opp.addConnectionSection(new com.myster.server.stream.RequestSearchThread());
-        opp.addConnectionSection(new com.myster.server.stream.HandshakeThread());
-        opp.addConnectionSection(new com.myster.server.stream.FileInfoLister());
-        opp.addConnectionSection(new com.myster.server.stream.FileByHash());
-        opp.addConnectionSection(new com.myster.server.stream.MultiSourceSender());
-        opp.addConnectionSection(new com.myster.server.stream.FileTypeListerII());
+        addConnectionSection(new com.myster.server.stream.IPLister());
+        addConnectionSection(new com.myster.server.stream.RequestDirThread());
+        addConnectionSection(new com.myster.server.stream.FileSenderThread());
+        addConnectionSection(new com.myster.server.stream.FileTypeLister());
+        addConnectionSection(new com.myster.server.stream.RequestSearchThread());
+        addConnectionSection(new com.myster.server.stream.HandshakeThread());
+        addConnectionSection(new com.myster.server.stream.FileInfoLister());
+        addConnectionSection(new com.myster.server.stream.FileByHash());
+        addConnectionSection(new com.myster.server.stream.MultiSourceSender());
+        addConnectionSection(new com.myster.server.stream.FileTypeListerII());
     }
 
     private static void setDownloadSpots(int spots) {
-        downloadQueue.setDownloadSpots(spots);
+        transferQueue.setDownloadSpots(spots);
     }
 
     private static int getDownloadSpots() {
-        return downloadQueue.getDownloadSpots();
+        return transferQueue.getDownloadSpots();
     }
 
     private static class PrefPanel extends PreferencesPanel {
@@ -159,7 +182,7 @@ public class ServerFacade {
         private final com.myster.server.stream.FileSenderThread.FreeLoaderPref leech;
 
         public PrefPanel() {
-            //setBackground(Color.red);
+            // setBackground(Color.red);
             setLayout(new GridLayout(5, 2, 5, 5));
 
             openSlotLabel = new Label("Download Spots:");

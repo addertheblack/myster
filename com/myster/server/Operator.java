@@ -14,12 +14,9 @@ package com.myster.server;
 import java.io.IOException;
 import java.net.ServerSocket;
 import java.net.Socket;
-import java.util.Hashtable;
 
 import com.general.util.DoubleBlockingQueue;
 import com.general.util.Timer;
-import com.myster.server.event.ServerEventDispatcher;
-import com.myster.transferqueue.TransferQueue;
 import com.myster.util.MysterThread;
 
 /**
@@ -34,39 +31,24 @@ import com.myster.util.MysterThread;
 public class Operator extends MysterThread {
     private ServerSocket serverSocket;
 
-    private ConnectionManager[] connectionManagers;
-
     private DoubleBlockingQueue socketQueue; //Communcation CHANNEL.
 
-    private TransferQueue transferQueue;
+    private int port;
 
-    private Hashtable connectionSections = new Hashtable();
-
-    protected Operator(TransferQueue d, int threads, ServerEventDispatcher eventDispatcher) {
+    protected Operator(DoubleBlockingQueue socketQueue, int port) {
         super("Server Operator");
 
-        transferQueue = d;
-
-        socketQueue = new DoubleBlockingQueue(0); //comunications channel
+        this.socketQueue = socketQueue; //comunications channel
         // between operator and
         // section threads.
-
-        connectionManagers = new ConnectionManager[threads];
-        for (int i = 0; i < connectionManagers.length; i++) {
-            connectionManagers[i] = new ConnectionManager(socketQueue, eventDispatcher,
-                    transferQueue, connectionSections);
-        }
+        this.port = port;
     }
-
+        
     public void run() {
         setPriority(MAX_PRIORITY); //to minimize the time it takes to make a
         // connection.
 
         refreshServerSocket(); //creates the sever socket.
-
-        for (int i = 0; i < connectionManagers.length; i++) {
-            connectionManagers[i].start();
-        }
 
         resetSocketTimer();
 
@@ -97,11 +79,6 @@ public class Operator extends MysterThread {
             }
         } while (true);
     }
-
-    public void addConnectionSection(ConnectionSection section) {
-        connectionSections.put(new Integer(section.getSectionNumber()), section);
-    }
-
     //Creates or recreates a new server socket.
     private synchronized void refreshServerSocket() {
         for (;;) {
@@ -112,7 +89,7 @@ public class Operator extends MysterThread {
                     } catch (IOException ex) {
                     }
 
-                serverSocket = new ServerSocket(com.myster.application.MysterGlobals.DEFAULT_PORT,
+                serverSocket = new ServerSocket(port,
                         5); //bigger buffer
                 break;
             } catch (IOException ex) {
