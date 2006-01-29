@@ -48,7 +48,7 @@ public class IPListManager { //aka tracker
     public static final int LISTSIZE = 100; //Size of any given list..
 
     private static final String[] lastresort = { "bigmacs.homeip.net", "mysternetworks.homeip.net",
-            "mysternetworks.dyndns.org", "emaline.homeip.net", "myster.homeip.net" };
+            "mysternetworks.dyndns.org", "myster.homeip.net" };
 
     private IPList[] list;
 

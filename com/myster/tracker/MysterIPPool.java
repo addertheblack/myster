@@ -32,16 +32,16 @@ import com.myster.pref.Preferences;
  */
 
 class MysterIPPool {
-    Hashtable hashtable; //I have a grand imagination!
+    private Hashtable hashtable; //I have a grand imagination!
 
-    static final String pref_key = "Tracker.MysterIPPool"; //This is where
+    private static final String pref_key = "Tracker.MysterIPPool"; //This is where
                                                            // MysterIPPools
                                                            // stores all it's
                                                            // IPs..
 
-    static MysterIPPool instance; //Part of the singleton desing pattern.
+    private static MysterIPPool instance; //Part of the singleton desing pattern.
 
-    Preferences prefs; //So I don't have to call preferences.getInstance() all
+    private Preferences prefs; //So I don't have to call preferences.getInstance() all
                        // the time.
 
     private static final int GC_UPPER_LIMIT = 100; //Number before gc turns

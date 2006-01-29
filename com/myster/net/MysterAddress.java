@@ -20,22 +20,22 @@ public class MysterAddress {
     private InetAddress fullAddress;
 
     private int port;
-    
+
     private static final int DEFAULT_PORT = 6669;
 
     /**
      * Builds a MysterAddress based on this String. The string should be of format : ip:port. If the
      * host name is invalid or the string is badly formated an UnknownHostException is thrown.
+     * <p>
+     * WARNING: MAY BLOCK ON IO (DNS) FOR A LOOONNNNNGGG TIME!
      * 
      * @see java.net.UnknownHostException
      */
-    public MysterAddress(String s) throws UnknownHostException { //should throw
-        // a runtime
-        // error.
+    public MysterAddress(String s) throws UnknownHostException {
         String ip = s;
         int port = DEFAULT_PORT;
 
-        if (s.indexOf(":") != -1) {
+        if (s.lastIndexOf(":") != -1) {
             String portstr = s.substring(s.indexOf(":") + 1);
             try {
                 port = Integer.parseInt(portstr); //need some checks here.
@@ -46,6 +46,21 @@ public class MysterAddress {
         }
 
         init(InetAddress.getByName(ip), port);
+    }
+
+    /**
+     * Will build a MysterAddress from a string without doing any io. The restriction is you cannot
+     * pass a hostname. Only a valid ip address! NOTE: toString() of this object will create such a
+     * string.
+     * 
+     * @param ipAndPort
+     * @return @throws
+     *         UnknownHostException
+     */
+    public static MysterAddress createMysterAddress(String ipAndPort) throws UnknownHostException {
+        if (ipAndPort.charAt(0) != '[' && !Character.isDigit(ipAndPort.charAt(0)))
+            throw new UnknownHostException("String is not an ip address");
+        return new MysterAddress(ipAndPort);
     }
 
     /**
@@ -86,7 +101,7 @@ public class MysterAddress {
      * 
      * @return the address in InetAddres format
      */
-    public InetAddress getInetAddress() {//throws UnknownHostException {
+    public InetAddress getInetAddress() {
         return fullAddress;
     }
 
@@ -104,7 +119,8 @@ public class MysterAddress {
     }
 
     public boolean equals(Object aa) {
-        if (!(aa instanceof MysterAddress)) return false;
+        if (!(aa instanceof MysterAddress))
+            return false;
         MysterAddress a = (MysterAddress) aa;
         if (fullAddress.equals(a.fullAddress) && (port == a.port))
             return true;

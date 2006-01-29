@@ -21,10 +21,10 @@ import com.myster.type.MysterType;
 
 public class StandardDatagramSuite {
 
-    public static MysterAddress[] getTopServers(final MysterAddress ip, final MysterType type)
+    public static String[] getTopServers(final MysterAddress ip, final MysterType type)
             throws IOException {
 
-        return (MysterAddress[]) (makeBlocking(new BlockingListener(ip, new TopTenDatagramClient(
+        return (String[]) (makeBlocking(new BlockingListener(ip, new TopTenDatagramClient(
                 type))));
     }
 

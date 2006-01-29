@@ -3,6 +3,7 @@ package com.myster.client.datagram;
 import java.io.ByteArrayInputStream;
 import java.io.DataInputStream;
 import java.io.IOException;
+import java.net.UnknownHostException;
 import java.util.Vector;
 
 import com.myster.net.MysterAddress;
@@ -36,9 +37,9 @@ public class TopTenDatagramClient implements StandardDatagramClientImpl {
             strings.addElement(nextString);
         }
 
-        MysterAddress[] addresses = new MysterAddress[strings.size()];
+        String[] addresses = new String[strings.size()];
         for (int i = 0; i < strings.size(); i++) {
-            addresses[i] = new MysterAddress((String) strings.elementAt(i));
+            addresses[i] = (String) strings.elementAt(i);
         }
 
         return addresses;

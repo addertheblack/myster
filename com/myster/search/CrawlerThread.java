@@ -1,7 +1,6 @@
 /*
  * 
- * Title: Myster Open Source Author: Andrew Trumper Description: Generic Myster
- * Code
+ * Title: Myster Open Source Author: Andrew Trumper Description: Generic Myster Code
  * 
  * This code is under GPL
  * 
@@ -11,6 +10,7 @@
 package com.myster.search;
 
 import java.io.IOException;
+import java.net.UnknownHostException;
 import java.util.Vector;
 
 import com.myster.client.stream.StandardSuite;
@@ -22,6 +22,10 @@ import com.myster.type.MysterType;
 import com.myster.util.MysterThread;
 import com.myster.util.Sayable;
 
+/**
+ * Does a crawl of the network calling "search" on the MysterSearchClientSection as it finds new ips
+ * to crawl.
+ */
 public class CrawlerThread extends MysterThread {
     MysterType searchType;
 
@@ -37,8 +41,8 @@ public class CrawlerThread extends MysterThread {
 
     public final int DEPTH = 20;
 
-    public CrawlerThread(MysterSearchClientSection searcher, MysterType type,
-            IPQueue iplist, Sayable msg) {
+    public CrawlerThread(MysterSearchClientSection searcher, MysterType type, IPQueue iplist,
+            Sayable msg) {
         super("Crawler Thread " + type);
         this.ipQueue = iplist;
         this.searchType = type;
@@ -47,9 +51,8 @@ public class CrawlerThread extends MysterThread {
     }
 
     /**
-     * The thread does a top ten then searchs.. It only does a top ten on the
-     * first few IPs, so we don't Do an insane flood.. This routine is
-     * responsible for most of the search.
+     * The thread does a top ten then searchs.. It only does a top ten on the first few IPs, so we
+     * don't Do an insane flood.. This routine is responsible for most of the search.
      */
 
     public void run() {
@@ -59,15 +62,15 @@ public class CrawlerThread extends MysterThread {
 
         try {
 
-            for (MysterAddress currentIp = ipQueue.getNextIP(); currentIp != null
-                    || counter == 0; currentIp = ipQueue.getNextIP()) {
+            for (MysterAddress currentIp = ipQueue.getNextIP(); currentIp != null || counter == 0; currentIp = ipQueue
+                    .getNextIP()) {
                 try {
 
                     counter++;
                     if (currentIp == null) {
                         try {
                             sleep(10 * 1000); //wait 10 seconds for more ips to
-                                              // come in.
+                            // come in.
                             continue;
                         } catch (InterruptedException ex) {
                             continue;
@@ -87,26 +90,32 @@ public class CrawlerThread extends MysterThread {
                     }
 
                     if (counter < DEPTH) {
-                        MysterAddress[] addresses;
+                        Vector addresses = new Vector();
                         try {
-                            addresses = com.myster.client.datagram.StandardDatagramSuite
+                            String[] ipList = com.myster.client.datagram.StandardDatagramSuite
                                     .getTopServers(currentIp, searchType);
-
+                            for (int i = 0; i < ipList.length; i++) {
+                                try {
+                                    addresses.add(new MysterAddress(ipList[i]));
+                                } catch (UnknownHostException ignore) {
+                                }
+                            }
                         } catch (IOException ex) {
                             if (endFlag) {
                                 cleanUp();
                                 return;
                             }
 
-                            socket = MysterSocketFactory
-                                    .makeStreamConnection(currentIp);
-                            Vector ipList = StandardSuite.getTopServers(socket,
-                                    searchType);
+                            socket = MysterSocketFactory.makeStreamConnection(currentIp);
+                            Vector ipList = StandardSuite.getTopServers(socket, searchType);
 
-                            addresses = new MysterAddress[ipList.size()];
-                            for (int i = 0; i < addresses.length; i++)
-                                addresses[i] = new MysterAddress(
-                                        (String) (ipList.elementAt(i)));
+                            for (int i = 0; i < ipList.size(); i++) {
+                                try {
+                                    addresses
+                                            .add(new MysterAddress((String) (ipList.elementAt(i))));
+                                } catch (UnknownHostException ignore) {
+                                }
+                            }
 
                         }
 
@@ -115,10 +124,10 @@ public class CrawlerThread extends MysterThread {
                             return;
                         }
 
-                        for (int i = 0; i < addresses.length; i++) {
-                            ipQueue.addIP(addresses[i]);
-                            IPListManagerSingleton.getIPListManager().addIP(
-                                    addresses[i]);
+                        for (int i = 0; i < addresses.size(); i++) {
+                            MysterAddress mysterAddress = (MysterAddress) addresses.get(i);
+                            ipQueue.addIP(mysterAddress);
+                            IPListManagerSingleton.getIPListManager().addIP(mysterAddress);
                         }
                     }
 
@@ -128,8 +137,7 @@ public class CrawlerThread extends MysterThread {
                     }
 
                     if (socket == null)
-                        socket = MysterSocketFactory
-                                .makeStreamConnection(currentIp);
+                        socket = MysterSocketFactory.makeStreamConnection(currentIp);
                     searcher.search(socket, currentIp, searchType);
 
                     StandardSuite.disconnectWithoutException(socket);
@@ -142,8 +150,7 @@ public class CrawlerThread extends MysterThread {
                     }
                 }
 
-                msg.say("Searched " + ipQueue.getIndexNumber()
-                        + " Myster servers.");
+                msg.say("Searched " + ipQueue.getIndexNumber() + " Myster servers.");
 
             }
 
@@ -180,8 +187,7 @@ public class CrawlerThread extends MysterThread {
         try {
             socket.close();
         } catch (Exception ex) {
-            System.out
-                    .println("Crawler thread was not happy about being asked to close.");
+            System.out.println("Crawler thread was not happy about being asked to close.");
         }
 
         interrupt();

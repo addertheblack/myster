@@ -330,6 +330,7 @@ class HeaderPanel extends Panel {
         addComponent(addressField, 1, 2, 1, 1, 1, 1);
     }
 
+    //TODO: Should not be called on Event Thread
     public MysterAddress getAddress() throws UnknownHostException {
         return (addressField.isEditable() ? new MysterAddress(addressField
                 .getText()) : address);

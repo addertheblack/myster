@@ -1,7 +1,6 @@
 /*
  * 
- * Title: Myster Open Source Author: Andrew Trumper Description: Generic Myster
- * Code
+ * Title: Myster Open Source Author: Andrew Trumper Description: Generic Myster Code
  * 
  * This code is under GPL
  * 
@@ -68,7 +67,7 @@ public class Myster {
         } catch (InvocationTargetException e) {
             e.printStackTrace();
         }
-        
+
         //        try {
         //            UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
         //        } catch (ClassNotFoundException e) {
@@ -102,13 +101,15 @@ public class Myster {
         } catch (IOException e) {
             e.printStackTrace();
             Frame parent = AnswerDialog.getCenteredFrame();
+
             AnswerDialog
-                    .simpleAlert(parent,
+                    .simpleAlert(
+                            parent,
                             "There seems to be another copy of Myster already running but I couldn't"
-                            + " contact it. If you're sharing the computer with other people, one of them"
-                            + " might be running Myster already or it might be that that Myster was not"
-                            + " started from the same place the previous copy was started. Restarting the "
-                            + " computer will make sure that the other Myster client gets quit.");
+                                    + " contact it. If you're sharing the computer with other people, one of them"
+                                    + " might be running Myster already or it might be that that Myster was not"
+                                    + " started from the same place the previous copy was started. Restarting the "
+                                    + " computer will make sure that the other Myster client gets quit.");
             parent.dispose(); //if this isn't here Myster won't quit.
             applicationSingleton.close();
             System.exit(0);
@@ -116,11 +117,6 @@ public class Myster {
         }
 
         I18n.init();
-
-        //if (true == true)
-        //    return;
-
-        //start();????????
 
         System.out.println("MAIN THREAD: Starting loader Thread..");
 
@@ -215,5 +211,4 @@ public class Myster {
             ex.printStackTrace(); //never reached.
         }
     } //Utils, globals etc.. //These variables are System wide variables //
-
 }

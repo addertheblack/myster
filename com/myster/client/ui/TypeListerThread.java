@@ -41,8 +41,10 @@ public class TypeListerThread extends MysterThread {
 
             if (endFlag)
                 return;
+            MysterAddress mysterAddress = new MysterAddress(ip);
+            container.refreshIP(mysterAddress);
             com.myster.type.MysterType[] types = com.myster.client.datagram.StandardDatagramSuite
-                    .getTypes(new MysterAddress(ip));
+                    .getTypes(mysterAddress);
             if (endFlag)
                 return;
 

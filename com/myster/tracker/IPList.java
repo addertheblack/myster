@@ -10,9 +10,8 @@
  */
 
 /**
- * The IP list is a list of com.myster objects. The idea behind it is that the
- * data type ie: Tree or linked list of array can be changed without affecting
- * the rest of the program.
+ * The IP list is a list of com.myster objects. The idea behind it is that the data type ie: Tree or
+ * linked list of array can be changed without affecting the rest of the program.
  * 
  * 
  *  
@@ -37,10 +36,9 @@ class IPList {
     private static final String PATH = "/IPLists/";
 
     /**
-     * Takes as an argument a list of strings.. These strings are the
-     * .toString() product of com.myster objects.
+     * Takes as an argument a list of strings.. These strings are the .toString() product of
+     * com.myster objects.
      */
-
     protected IPList(MysterType type) {
         String list[];
         mypath = PATH + type;
@@ -57,25 +55,22 @@ class IPList {
             try {
                 MysterServer temp = null;
                 String workingip = ips.nextToken();
-                if (MysterIPPool.getInstance().existsInPool(
-                        new MysterAddress(workingip))) {
+                if (MysterIPPool.getInstance().existsInPool(new MysterAddress(workingip))) {
                     try {
                         temp = MysterIPPool.getInstance().getMysterServer(
                                 new MysterAddress(workingip));
                     } catch (Exception ex) {
                     }
-                }//if IP doens't exist in the pool, remove it form the list!
+                }//if IP doens't exist in the pool, remove it from the list!
                 if (temp == null) {
-                    System.out.println("Found a list bubble: " + workingip
-                            + ". Repairing.");
+                    System.out.println("Found a list bubble: " + workingip + ". Repairing.");
                     continue;
                 }
 
                 array[j] = temp;
                 j++;
             } catch (Exception ex) {
-                System.out
-                        .println("Failed to add an IP to an IP list: " + type);
+                System.out.println("Failed to add an IP to an IP list: " + type);
             }
         }
 
@@ -85,15 +80,12 @@ class IPList {
     }
 
     /**
-     * Returns a String array of lenght the requested number of entries. Note:
-     * It's possible for the list to have fewer entrie than requested.. IN that
-     * case the rest of the array will be null.
+     * Returns a String array of length the requested number of entries. Note: It's possible for the
+     * list to have fewer entries than requested.. IN that case the rest of the array will be null.
      * 
-     * This function will not return any items from the list that aren't
-     * currently "up" ie: That cannot be connected to because they are down or
-     * the user isn't connected to the internet.
+     * This function will not return any items from the list that aren't currently "up" ie: That
+     * cannot be connected to because they are down or the user isn't connected to the internet.
      */
-
     public synchronized MysterServer[] getTop(int x) {
         MysterServer[] temp = new MysterServer[x];
 
@@ -123,9 +115,7 @@ class IPList {
 
     /**
      * This function adds an IP to the IP List.
-     *  
      */
-
     protected synchronized void addIP(MysterServer ip) {
         insertionSort(ip);
     }
@@ -180,11 +170,9 @@ class IPList {
     }
 
     /**
-     * insertionSort adds an IP to the list.. the list currently uses an array
-     * and insert into the list using insertion sort. It also checks to make
-     * sure the same place isn't put in twice.
+     * insertionSort adds an IP to the list.. the list currently uses an array and insert into the
+     * list using insertion sort. It also checks to make sure the same place isn't put in twice.
      */
-
     private synchronized void insertionSort(MysterServer ip) {
         if (ip == null)
             return;
@@ -231,8 +219,7 @@ class IPList {
         for (int i = 1; i < array.length; i++) {
             if (array[i] == null)
                 break;
-            for (int j = i; j > 0
-                    && (array[j].getRank(type) > array[j - 1].getRank(type)); j--) {
+            for (int j = i; j > 0 && (array[j].getRank(type) > array[j - 1].getRank(type)); j--) {
                 swap(array, j, j - 1);
             }
         }

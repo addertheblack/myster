@@ -10,25 +10,36 @@ import com.myster.net.MysterAddress;
 import com.myster.net.MysterSocket;
 import com.myster.type.MysterType;
 
-public class StandardMysterSearch implements MysterSearchClientSection {
-    final String searchString;
+/**
+ * This call is responsible for containing the piece of code that does TCP based searches and
+ * returns the result to the SearchResultListener. This object is built so that it can be re-used
+ * for as many searches as needed; you don't need to create a new object for each search so long as
+ * the type and search string are the same. Calling "FlagToEnd()" will request this object "abort".
+ * After flagToEnd() is called you are guaranteed that no more results will be reported, however,
+ * threads running the code might take some time to return.
+ * <p>
+ *  Should probably be renamed for "StandardMysterSearch" to something that does not imply it
+ * contains the entire Myster searcher code.
+ * 
+ * @see MysterSearch
+ */
+public class StandardMysterSearch {
+    private final String searchString;
 
-    final SearchResultListener listener;
+    private final SearchResultListener listener;
 
-    volatile boolean endFlag = false;
+    private volatile boolean endFlag = false;
 
-    public StandardMysterSearch(String searchString, SearchResultListener listener) {
+    private MysterType type;
+
+    public StandardMysterSearch(String searchString, MysterType type, SearchResultListener listener) {
         this.searchString = searchString;
         this.listener = listener;
+        this.type = type;
     }
 
-    public void start() {
-        //listener.startSearch(); (This is already taken care of by the root.
-        // All we have to do is add search results.)
-    }
-
-    public void search(MysterSocket socket, MysterAddress address, MysterType type)
-            throws IOException {
+    
+    public void search(MysterSocket socket, MysterAddress address) throws IOException {
         if (endFlag)
             throw new DisconnectException();
 
@@ -45,12 +56,13 @@ public class StandardMysterSearch implements MysterSearchClientSection {
                 searchArray[i] = new MysterSearchResult(new MysterFileStub(address, type,
                         (String) (searchResults.elementAt(i))));
             }
-            
+
             try {
                 Util.invokeAndWait(new Runnable() {
                     public void run() {
                         synchronized (StandardMysterSearch.this) {
-                            if (endFlag) return;
+                            if (endFlag)
+                                return;
                             listener.addSearchResults(searchArray);
                         }
                     }
@@ -65,19 +77,18 @@ public class StandardMysterSearch implements MysterSearchClientSection {
 
             }
 
-            dealWithFileStats(socket, type, searchArray, listener);
+            dealWithFileStats(socket, searchArray);
 
             if (endFlag)
                 throw new DisconnectException(); //FileInfoGetter
         }
     }
 
-    public void endSearch(MysterType type) {
-    }
-
-    public void searchedAll(MysterType type) {
-    }
-
+    /**
+     * Request that no more search results or stats be updated and that any threads that try to call
+     * the two methods of this object return as quickly as possible.
+     *  
+     */
     public synchronized void flagToEnd() {
         if (endFlag)
             return;
@@ -86,28 +97,18 @@ public class StandardMysterSearch implements MysterSearchClientSection {
 
     /**
      * When passed a socket, type and Vector of search results (String) as well as a listener, this
-     * routine will update the search result sin the listener with the meta data found from the
+     * routine will update the search results in the listener with the meta data found from the
      * remote server.
-     * 
-     * This is not part of the crawlable interface, but who cares. I need it and it's a nice
-     * routine.
-     * 
      * 
      * @param socket
      *            socket to ask for File information on.
-     * @param type
-     *            type of of files the search results are for.
      * @param mysterSearchResults
      *            vector of strings, search results...
-     * @param listener
-     *            the mysterSearchResults listener. This routine only UPDATE the information, does
-     *            not put the vector of search results into the listener.
      * @throws IOException
      *             (also a Disconnect exception) throws this exception on IO errors an if the search
      *             object is told to die (die die die!).
      */
-    public void dealWithFileStats(MysterSocket socket, MysterType type,
-            MysterSearchResult[] mysterSearchResults, SearchResultListener listener)
+    public void dealWithFileStats(MysterSocket socket, MysterSearchResult[] mysterSearchResults)
             throws IOException {
         //This is a speed hack.
         int pointer = 0;

@@ -20,7 +20,6 @@ import java.awt.Rectangle;
 import java.awt.TextField;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-import java.net.UnknownHostException;
 
 import com.general.mclist.GenericMCListItem;
 import com.general.mclist.MCList;
@@ -33,6 +32,7 @@ import com.general.util.AnswerDialog;
 import com.general.util.KeyValue;
 import com.general.util.MessageField;
 import com.general.util.StandardWindowBehavior;
+import com.general.util.Util;
 import com.myster.net.MysterAddress;
 import com.myster.tracker.IPListManagerSingleton;
 import com.myster.tracker.MysterServer;
@@ -252,17 +252,16 @@ public class ClientWindow extends MysterFrame implements Sayable {
         fileList.addItem(items);
     }
 
-    public void refreshIP() {
-        currentip = IP.getText();
-        MysterServer server = null;
-        try {
-            server = IPListManagerSingleton.getIPListManager().getQuickServerStats(
-                    new MysterAddress(currentip));
-        } catch (UnknownHostException e) {
-        }
+    public void refreshIP(final MysterAddress address) {
+        Util.invokeLater(new Runnable() {
+            public void run() {
+                MysterServer server = IPListManagerSingleton.getIPListManager()
+                        .getQuickServerStats(address);
 
-        setTitle(CLIENT_WINDOW_TITLE_PREFIX + "to \""
-                + (server == null ? currentip : server.getServerIdentity()) + "\"");
+                setTitle(CLIENT_WINDOW_TITLE_PREFIX + "to \""
+                        + (server == null ? currentip : server.getServerIdentity()) + "\"");
+            }
+        });
     }
 
     //To be in an interface??
@@ -325,7 +324,7 @@ public class ClientWindow extends MysterFrame implements Sayable {
 
     public void startConnect() {
         stopConnect();
-        refreshIP();
+        currentip = IP.getText();
         connectToThread = new TypeListerThread(this);
         connectToThread.start();
     }
