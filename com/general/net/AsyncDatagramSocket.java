@@ -1,7 +1,7 @@
 package com.general.net;
 
 /**
- * This Socket can be used if you want to recieve packets via an event and not
+ * This Socket can be used if you want to receive packets via an event and not
  * have your main thread blocked on the socket.
  * 
  * This socket needs to be closed or it will leak threads and other resources...

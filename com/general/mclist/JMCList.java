@@ -8,6 +8,11 @@ import java.awt.Graphics;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.lang.reflect.InvocationTargetException;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Vector;
 
 import javax.swing.JFrame;
 import javax.swing.JPanel;
@@ -22,9 +27,6 @@ import javax.swing.table.AbstractTableModel;
 import javax.swing.table.JTableHeader;
 import javax.swing.table.TableCellRenderer;
 
-import com.sun.java.util.collections.Iterator;
-import com.sun.java.util.collections.List;
-import com.sun.java.util.collections.Vector;
 
 /**
  */
@@ -487,8 +489,8 @@ class MCListTableModel extends AbstractTableModel {
             return;
         }
 
-        com.sun.java.util.collections.Collections.sort(rowValues,
-                new com.sun.java.util.collections.Comparator() {
+        Collections.sort(rowValues,
+                new Comparator() {
                     public int compare(Object a, Object b) {
                         Sortable sa = ((MCListItemInterface) a).getValueOfColumn(sortByIndex);
                         Sortable sb = ((MCListItemInterface) b).getValueOfColumn(sortByIndex);

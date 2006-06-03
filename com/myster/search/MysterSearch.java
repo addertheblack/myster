@@ -14,6 +14,9 @@ package com.myster.search;
 
 import java.io.IOException;
 import java.net.UnknownHostException;
+import java.util.HashSet;
+import java.util.Iterator;
+import java.util.Set;
 import java.util.Vector;
 
 import com.general.thread.CallListener;
@@ -29,9 +32,6 @@ import com.myster.tracker.IPListManagerSingleton;
 import com.myster.tracker.MysterServer;
 import com.myster.type.MysterType;
 import com.myster.util.Sayable;
-import com.sun.java.util.collections.HashSet;
-import com.sun.java.util.collections.Iterator;
-import com.sun.java.util.collections.Set;
 
 /**
  * Implements the Myster search algorithm using the protocol stack in StandardSuite and
@@ -116,7 +116,7 @@ public class MysterSearch {
         msg.say("SEARCH: Starting Search..");
 
         /*
-         * Since we are using the event thread to synchronize we need ot put all code that touches
+         * Since we are using the event thread to synchronized we need to put all code that touches
          * state onto the event thread. (We don't know which thread is calling us!)
          */
         Util.invokeLater(new Runnable() {

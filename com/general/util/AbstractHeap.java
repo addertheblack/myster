@@ -1,8 +1,8 @@
 package com.general.util;
 
-import com.sun.java.util.collections.AbstractCollection;
-import com.sun.java.util.collections.Iterator;
-import com.sun.java.util.collections.NoSuchElementException;
+import java.util.AbstractCollection;
+import java.util.Iterator;
+import java.util.NoSuchElementException;
 
 abstract public class AbstractHeap extends AbstractCollection implements Heap {
     protected int size_;

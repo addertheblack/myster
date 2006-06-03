@@ -1,5 +1,7 @@
 package com.sun.java.util.collections;
 
+import java.util.NoSuchElementException;
+
 /**
  */
 public interface Queue {

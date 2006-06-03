@@ -9,8 +9,9 @@
 
 package com.general.mclist;
 
-import com.sun.java.util.collections.Comparator;
-import com.sun.java.util.collections.Vector;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.Vector;
 
 public class MCListVector {
     private Vector vector; //"no dog food for Vector tonight" -- Paraphrase of
@@ -46,7 +47,7 @@ public class MCListVector {
         if (sortby == -1)
             return;
 
-        com.sun.java.util.collections.Collections.sort(vector,
+        Collections.sort(vector,
                 new Comparator() {
                     public int compare(Object a, Object b) {
                         Sortable sa = ((MCListItemInterface) a)
@@ -60,12 +61,6 @@ public class MCListVector {
                         int cmp = (sa.isLessThan(sb) ? -1 : 1);
                         return (lessthan ? cmp : -cmp);
                     }
-
-                    //Find bugs is complaining about this line. Why is it here?
-                    // The code below is the
-                    // default implementation provided by Object class
-                    //public boolean equals(Object other) { return this ==
-                    // other; }
                 });
     }
 

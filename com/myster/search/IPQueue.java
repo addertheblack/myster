@@ -10,8 +10,9 @@
 
 package com.myster.search;
 
+import java.util.NoSuchElementException;
+
 import com.myster.net.MysterAddress;
-import com.sun.java.util.collections.NoSuchElementException;
 import com.sun.java.util.collections.Queue;
 
 public class IPQueue implements Queue {
