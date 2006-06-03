@@ -13,17 +13,19 @@ import java.awt.Insets;
 import java.awt.Label;
 import java.awt.LayoutManager;
 import java.awt.Panel;
-import java.awt.TextArea;
 import java.awt.TextField;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.ComponentAdapter;
 import java.awt.event.ComponentEvent;
-import java.awt.event.TextEvent;
-import java.awt.event.TextListener;
+import java.awt.event.KeyEvent;
+import java.awt.event.KeyListener;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
 import java.net.UnknownHostException;
+
+import javax.swing.JScrollPane;
+import javax.swing.JTextArea;
 
 import com.myster.net.MysterAddress;
 import com.myster.tracker.IPListManagerSingleton;
@@ -63,8 +65,8 @@ public class MessageWindow extends MysterFrame {
         this(NEW_MESSAGE, "", null, null);
     }
 
-    private MessageWindow(final boolean type, final String message,
-            final String quote, final MysterAddress address) {
+    private MessageWindow(final boolean type, final String message, final String quote,
+            final MysterAddress address) {
         setSize(320, 400);
 
         //Do interface setup:
@@ -97,10 +99,16 @@ public class MessageWindow extends MysterFrame {
             messageArea = new MessageTextArea(type, message, "Message: ");
             addComponent(messageArea, 4, 1, 1, 1, 10, 1);
 
-            messageArea.addTextListener(new TextListener() {
-                public void textValueChanged(TextEvent e) {
-                    setSendMessageAllowed(((TextArea) (e.getSource()))
-                            .getText());
+            messageArea.addKeyListener(new KeyListener() {
+                public void keyTyped(KeyEvent e) {
+                    setSendMessageAllowed(((JTextArea) (e.getSource())).getText());
+                }
+
+                public void keyPressed(KeyEvent e) {
+                }
+
+                public void keyReleased(KeyEvent e) {
+                    setSendMessageAllowed(((JTextArea) (e.getSource())).getText());
                 }
             });
 
@@ -137,8 +145,8 @@ public class MessageWindow extends MysterFrame {
     }
 
     //This works on mainPanel and not the window itself!
-    private void addComponent(Component c, int row, int column, int width,
-            int height, int weightx, int weighty) {
+    private void addComponent(Component c, int row, int column, int width, int height, int weightx,
+            int weighty) {
         gbconstrains.gridx = column;
         gbconstrains.gridy = row;
 
@@ -164,7 +172,7 @@ public class MessageWindow extends MysterFrame {
 
     private void setSendMessageAllowed(String text) {
         bar.setAcceptEnable(!(text.equals(""))); //this is why doing OO GUIs
-                                                 // sucks.. Delegations..
+        // sucks.. Delegations..
     }
 
     private class MessageWindowButtonBar extends Panel {
@@ -181,9 +189,7 @@ public class MessageWindow extends MysterFrame {
         public MessageWindowButtonBar(final boolean type) {
             setLayout(new MyLayoutManager());
 
-            accept = new Button(
-                    type == MessageWindow.NEW_MESSAGE ? "Send Message"
-                            : "Reply");
+            accept = new Button(type == MessageWindow.NEW_MESSAGE ? "Send Message" : "Reply");
             accept.setSize(X_BUTTON_SIZE, Y_BUTTON_SIZE);
             if (type == NEW_MESSAGE) {
                 accept.addActionListener(new ActionListener() {
@@ -193,10 +199,8 @@ public class MessageWindow extends MysterFrame {
                             return; //err (this should not be possible)
 
                         try {
-                            MessageManager
-                                    .sendInstantMessage(new InstantMessage(
-                                            header.getAddress(), getMessage(),
-                                            getQuote()));
+                            MessageManager.sendInstantMessage(new InstantMessage(header
+                                    .getAddress(), getMessage(), getQuote()));
                             closeThisWindow();
                         } catch (UnknownHostException ex) {
                             System.out
@@ -211,10 +215,9 @@ public class MessageWindow extends MysterFrame {
                 accept.addActionListener(new ActionListener() {
                     public void actionPerformed(ActionEvent e) {
                         try {
-                            MessageWindow messageWindow = new MessageWindow(
-                                    header.getAddress(), getMessage());
-                            messageWindow.setBounds(MessageWindow.this
-                                    .getBounds());
+                            MessageWindow messageWindow = new MessageWindow(header.getAddress(),
+                                    getMessage());
+                            messageWindow.setBounds(MessageWindow.this.getBounds());
                             messageWindow.setVisible(true);
                             closeThisWindow();
                         } catch (UnknownHostException ex) {
@@ -226,8 +229,7 @@ public class MessageWindow extends MysterFrame {
             }
             add(accept);
 
-            cancel = new Button(type == MessageWindow.NEW_MESSAGE ? "Cancel"
-                    : "OK");
+            cancel = new Button(type == MessageWindow.NEW_MESSAGE ? "Cancel" : "OK");
             cancel.setSize(X_BUTTON_SIZE, Y_BUTTON_SIZE);
             cancel.addActionListener(new ActionListener() {
                 public void actionPerformed(ActionEvent e) {
@@ -238,13 +240,11 @@ public class MessageWindow extends MysterFrame {
         }
 
         public Dimension getMinimumSize() {
-            return new Dimension(3 * PADDING + 2 * X_BUTTON_SIZE, Y_BUTTON_SIZE
-                    + 2 * PADDING);
+            return new Dimension(3 * PADDING + 2 * X_BUTTON_SIZE, Y_BUTTON_SIZE + 2 * PADDING);
         }
 
         public Dimension getPreferredSize() {
-            return new Dimension(3 * PADDING + 2 * X_BUTTON_SIZE, Y_BUTTON_SIZE
-                    + 2 * PADDING);
+            return new Dimension(3 * PADDING + 2 * X_BUTTON_SIZE, Y_BUTTON_SIZE + 2 * PADDING);
         }
 
         public void setAcceptEnable(boolean isEnabled) {
@@ -257,10 +257,8 @@ public class MessageWindow extends MysterFrame {
             }
 
             public void layoutContainer(Container c) {
-                accept.setLocation(getSize().width - X_BUTTON_SIZE - PADDING,
-                        PADDING);
-                cancel.setLocation(getSize().width - 2 * X_BUTTON_SIZE - 2
-                        * PADDING, PADDING);
+                accept.setLocation(getSize().width - X_BUTTON_SIZE - PADDING, PADDING);
+                cancel.setLocation(getSize().width - 2 * X_BUTTON_SIZE - 2 * PADDING, PADDING);
             }
 
             public Dimension minimumLayoutSize(Container c) {
@@ -300,8 +298,7 @@ class HeaderPanel extends Panel {
 
         this.address = address;
 
-        toFrom = new Label(type == MessageWindow.NEW_MESSAGE ? "To: "
-                : "From: ");
+        toFrom = new Label(type == MessageWindow.NEW_MESSAGE ? "To: " : "From: ");
         addComponent(toFrom, 1, 1, 1, 1, 0, 1);
 
         addressField = new TextField(40);
@@ -309,18 +306,16 @@ class HeaderPanel extends Panel {
         if (address == null) {
 
         } else {
-            MysterServer server = IPListManagerSingleton.getIPListManager()
-                    .getQuickServerStats(address);
+            MysterServer server = IPListManagerSingleton.getIPListManager().getQuickServerStats(
+                    address);
 
             String serverName;
 
             if (server == null) {
                 serverName = address.toString();
             } else {
-                serverName = (server.getServerIdentity().equals(
-                        address.toString()) ? address.toString() : server
-                        .getServerIdentity()
-                        + " (" + address.toString() + ")");
+                serverName = (server.getServerIdentity().equals(address.toString()) ? address
+                        .toString() : server.getServerIdentity() + " (" + address.toString() + ")");
             }
 
             addressField.setText(serverName);
@@ -332,13 +327,12 @@ class HeaderPanel extends Panel {
 
     //TODO: Should not be called on Event Thread
     public MysterAddress getAddress() throws UnknownHostException {
-        return (addressField.isEditable() ? new MysterAddress(addressField
-                .getText()) : address);
+        return (addressField.isEditable() ? new MysterAddress(addressField.getText()) : address);
     }
 
     //This works on mainPanel and not the window itself!
-    private void addComponent(Component c, int row, int column, int width,
-            int height, int weightx, int weighty) {
+    private void addComponent(Component c, int row, int column, int width, int height, int weightx,
+            int weighty) {
         gbconstrains.gridx = column;
         gbconstrains.gridy = row;
 
@@ -356,16 +350,24 @@ class HeaderPanel extends Panel {
 }
 
 class MessageTextArea extends Panel {
-    public TextArea area;
+    private JTextArea area;
 
     public MessageTextArea(boolean editable, String text, String labelText) {
         setLayout(new BorderLayout());
 
-        area = new TextArea("", 10, 10, TextArea.SCROLLBARS_VERTICAL_ONLY);
+        area = new JTextArea("");
         area.setSize(400, 400);
+        area.setWrapStyleWord(true);
+        area.setAutoscrolls(true);
+        area.setLineWrap(true);
         area.setEditable(editable);
         area.setText(text);
-        add(area, "Center");
+
+        JScrollPane scrollPane = new JScrollPane(JScrollPane.VERTICAL_SCROLLBAR_ALWAYS,
+                JScrollPane.HORIZONTAL_SCROLLBAR_NEVER);
+        scrollPane.getViewport().add(area);
+        scrollPane.setDoubleBuffered(true);
+        add(scrollPane, "Center");
 
         Label message = new Label(labelText);
         add(message, "North");
@@ -384,8 +386,8 @@ class MessageTextArea extends Panel {
         area.requestFocus();
     }
 
-    public void addTextListener(TextListener l) {
-        area.addTextListener(l);
+    public void addKeyListener(KeyListener l) {
+        area.addKeyListener(l);
     }
 }
 
