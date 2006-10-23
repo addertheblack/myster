@@ -10,9 +10,10 @@ package com.myster.server.ui;
 import java.awt.Color;
 import java.awt.FontMetrics;
 import java.awt.Graphics;
-import java.awt.Image;
-import java.awt.Label;
-import java.awt.Panel;
+
+import javax.swing.JLabel;
+import javax.swing.JPanel;
+import javax.swing.JScrollPane;
 
 import com.general.util.LinkedList;
 import com.general.util.Timer;
@@ -37,65 +38,65 @@ import com.myster.server.stream.IPLister;
 import com.myster.server.stream.MultiSourceSender;
 import com.myster.server.stream.RequestSearchThread;
 
-public class StatsInfoPanel extends Panel {
-    Label numsearchlabel, listoflastten;
+public class StatsInfoPanel extends JPanel {
+    private JLabel numsearchlabel, listoflastten;
 
-    CountLabel numsearch;
+    private CountLabel numsearch;
 
-    Label searchperhourlabel;
+    private JLabel searchperhourlabel;
 
-    CountLabel searchperhour;
+    private CountLabel searchperhour;
 
-    XItemList lastten;
+    private XItemList lastten;
 
-    Label numofdllabel;
+    private JLabel numofdllabel;
 
-    CountLabel numofld;
+    private CountLabel numofld;
 
-    Label numofSSRLabel;
+    private JLabel numofSSRLabel;
 
-    CountLabel numofSSR; //server stats
+    private CountLabel numofSSR; // server stats
 
-    Label numofTTLabel;
+    private JLabel numofTTLabel;
 
-    CountLabel numofTT; //top ten
+    private CountLabel numofTT; // top ten
 
-    Label numofFILabel;
+    private JLabel numofFILabel;
 
-    CountLabel numofFI; //files shared
+    private CountLabel numofFI; // files shared
 
-    Label numMatchesLabel;
+    private JLabel numMatchesLabel;
 
-    CountLabel numMaches;
+    private CountLabel numMaches;
 
-    Label transferedLabel;
+    private JLabel transferedLabel;
 
-    ByteCounter transfered;
+    private ByteCounter transfered;
 
     //
-    Label numberOfHashSearchesLabel;
+    private JLabel numberOfHashSearchesLabel;
 
-    CountLabel numberOfHashSearches;
+    private CountLabel numberOfHashSearches;
 
-    Label numberOfConnectionsLabel;
+    private JLabel numberOfConnectionsLabel;
 
-    CountLabel numberOfConnections;
+    private CountLabel numberOfConnections;
 
-    Label currentConnectionsLabel;
+    private JLabel currentConnectionsLabel;
 
-    CountLabel currentConnections;
+    private CountLabel currentConnections;
 
-    Label numberOfPingsLabel;
+    private JLabel numberOfPingsLabel;
 
-    CountLabel numberOfPings;
+    private CountLabel numberOfPings;
 
-    Label uptimeLabel;
+    private JLabel uptimeLabel;
 
-    Label uptime;
+    private JLabel uptime;
 
-    ServerEventDispatcher server;
+    private ServerEventDispatcher server;
 
-    SearchPerHour searches = null;
+    private SearchPerHour searches = null;
 
     public StatsInfoPanel() {
 
@@ -103,7 +104,7 @@ public class StatsInfoPanel extends Panel {
         server = ServerFacade.getServerDispatcher();
         server.addConnectionManagerListener(new ConnectionHandler());
 
-        //Load stuff
+        // Load stuff
         init();
 
         server.addOperatorListener(new OperatorListener() {
@@ -127,7 +128,7 @@ public class StatsInfoPanel extends Panel {
 
     private void init() {
         setLayout(null);
-        numsearchlabel = new Label("Number of Searches:");
+        numsearchlabel = new JLabel("Number of Searches:");
         numsearchlabel.setSize(150, 25);
         numsearchlabel.setLocation(20, 30);
         add(numsearchlabel);
@@ -137,18 +138,19 @@ public class StatsInfoPanel extends Panel {
         numsearch.setLocation(200, 30);
         add(numsearch);
 
-        listoflastten = new Label("Last Ten Search Strings");
+        listoflastten = new JLabel("Last Ten Search Strings");
         listoflastten.setSize(250, 25);
         listoflastten.setLocation(300, 30);
         add(listoflastten);
 
         lastten = new XItemList(10);
-        lastten.setLocation(300, 60);
-        add(lastten);
-        lastten.setSize(300 - 20, 100);
-        //lastten.runTester();
+        JScrollPane scrollpane = new JScrollPane(lastten);
+        scrollpane.setLocation(300, 60);
+        add(scrollpane);
+        scrollpane.setSize(300 - 20, 100);
+        // lastten.runTester();
 
-        searchperhourlabel = new Label("Searches in the last hour:");
+        searchperhourlabel = new JLabel("Searches in the last hour:");
         searchperhourlabel.setSize(150, 25);
         searchperhourlabel.setLocation(20, 60);
         add(searchperhourlabel);
@@ -158,7 +160,7 @@ public class StatsInfoPanel extends Panel {
         searchperhour.setLocation(200, 60);
         add(searchperhour);
 
-        numMatchesLabel = new Label("Search Matches:");
+        numMatchesLabel = new JLabel("Search Matches:");
         numMatchesLabel.setSize(150, 25);
         numMatchesLabel.setLocation(20, 90);
         add(numMatchesLabel);
@@ -168,7 +170,7 @@ public class StatsInfoPanel extends Panel {
         numMaches.setLocation(200, 90);
         add(numMaches);
 
-        numofdllabel = new Label("Number Of Downloads:");
+        numofdllabel = new JLabel("Number Of Downloads:");
         numofdllabel.setSize(150, 25);
         numofdllabel.setLocation(20, 200);
         add(numofdllabel);
@@ -178,7 +180,7 @@ public class StatsInfoPanel extends Panel {
         numofld.setLocation(200, 200);
         add(numofld);
 
-        numofTTLabel = new Label("Top Ten Requests:");
+        numofTTLabel = new JLabel("Top Ten Requests:");
         numofTTLabel.setSize(175, 25);
         numofTTLabel.setLocation(20, 230);
         add(numofTTLabel);
@@ -188,7 +190,7 @@ public class StatsInfoPanel extends Panel {
         numofTT.setLocation(200, 230);
         add(numofTT);
 
-        numofFILabel = new Label("File Info Requests:");
+        numofFILabel = new JLabel("File Info Requests:");
         numofFILabel.setSize(175, 25);
         numofFILabel.setLocation(20, 260);
         add(numofFILabel);
@@ -198,7 +200,7 @@ public class StatsInfoPanel extends Panel {
         numofFI.setLocation(200, 260);
         add(numofFI);
 
-        numofSSRLabel = new Label("Server Stats Requests:");
+        numofSSRLabel = new JLabel("Server Stats Requests:");
         numofSSRLabel.setSize(175, 25);
         numofSSRLabel.setLocation(20, 290);
         add(numofSSRLabel);
@@ -208,7 +210,7 @@ public class StatsInfoPanel extends Panel {
         numofSSR.setLocation(200, 290);
         add(numofSSR);
 
-        transferedLabel = new Label("Amount Transfered:");
+        transferedLabel = new JLabel("Amount Transfered:");
         transferedLabel.setSize(175, 25);
         transferedLabel.setLocation(20, 320);
         add(transferedLabel);
@@ -219,7 +221,7 @@ public class StatsInfoPanel extends Panel {
         transfered.setLocation(200, 320);
         add(transfered);
 
-        numberOfHashSearchesLabel = new Label("Hash Look Ups:");
+        numberOfHashSearchesLabel = new JLabel("Hash Look Ups:");
         numberOfHashSearchesLabel.setSize(175, 25);
         numberOfHashSearchesLabel.setLocation(300, 200);
         add(numberOfHashSearchesLabel);
@@ -229,7 +231,7 @@ public class StatsInfoPanel extends Panel {
         numberOfHashSearches.setLocation(500, 200);
         add(numberOfHashSearches);
 
-        numberOfConnectionsLabel = new Label("Number Of Connections:");
+        numberOfConnectionsLabel = new JLabel("Number Of Connections:");
         numberOfConnectionsLabel.setSize(175, 25);
         numberOfConnectionsLabel.setLocation(300, 230);
         add(numberOfConnectionsLabel);
@@ -239,7 +241,7 @@ public class StatsInfoPanel extends Panel {
         numberOfConnections.setLocation(500, 230);
         add(numberOfConnections);
 
-        currentConnectionsLabel = new Label("Current Connections:");
+        currentConnectionsLabel = new JLabel("Current Connections:");
         currentConnectionsLabel.setSize(175, 25);
         currentConnectionsLabel.setLocation(300, 260);
         add(currentConnectionsLabel);
@@ -249,7 +251,7 @@ public class StatsInfoPanel extends Panel {
         currentConnections.setLocation(500, 260);
         add(currentConnections);
 
-        numberOfPingsLabel = new Label("Connections With No Requests:");
+        numberOfPingsLabel = new JLabel("Connections With No Requests:");
         numberOfPingsLabel.setSize(175, 25);
         numberOfPingsLabel.setLocation(300, 290);
         add(numberOfPingsLabel);
@@ -259,29 +261,21 @@ public class StatsInfoPanel extends Panel {
         numberOfPings.setLocation(500, 290);
         add(numberOfPings);
 
-        uptimeLabel = new Label("Uptime:");
+        uptimeLabel = new JLabel("Uptime:");
         uptimeLabel.setSize(175, 25);
         uptimeLabel.setLocation(300, 320);
         add(uptimeLabel);
 
-        uptime = new Label("0");
+        uptime = new JLabel("0");
         uptime.setSize(100, 25);
         uptime.setLocation(500, 320);
         add(uptime);
     }
 
-    private Image doubleBuffer; //adds double buffering
 
-    public void update(Graphics g) {
-        if (doubleBuffer == null) {
-            doubleBuffer = createImage(600, 400);
-        }
-        Graphics graphics = doubleBuffer.getGraphics();
-        paint(graphics);
-        g.drawImage(doubleBuffer, 0, 0, this);
-    }
-
-    public void paint(Graphics g) {
+    public void paintComponent(Graphics g) {
+        super.paintComponent(g);
+        
         FontMetrics metrics = getFontMetrics(getFont());
 
         String msg1 = "Search Stats";
@@ -293,7 +287,6 @@ public class StatsInfoPanel extends Panel {
 
         g.setColor(getForeground());
         g.drawString(msg1, 20, 15);
-
     }
 
     private class ConnectionHandler extends ConnectionManagerListener {
@@ -325,25 +318,6 @@ public class StatsInfoPanel extends Panel {
                 numberOfHashSearches.increment(isUdp);
                 break;
             }
-
-            /*
-             * if (e.getSection()==RequestSearchThread.NUMBER) {
-             * numsearch.increment(); searches.addSearch(e.getTimeStamp());
-             * ((ServerSearchDispatcher)(e.getSectionObject())).addServerSearchListener(new
-             * SearchHandler()); } else if
-             * ((e.getSection()==FileSenderThread.NUMBER) ||
-             * (e.getSection()==com.myster.server.stream.MultiSourceSender.SECTION_NUMBER)) {
-             * numofld.increment();
-             * ((ServerDownloadDispatcher)(e.getSectionObject())).addServerDownloadListener(new
-             * DownloadHandler()); } else if (e.getSection()==IPLister.NUMBER) {
-             * numofTT.increment(); } else if
-             * (e.getSection()==HandshakeThread.NUMBER) { numofSSR.increment(); }
-             * else if (e.getSection()==FileInfoLister.NUMBER) {
-             * numofFI.increment(); } else if
-             * (e.getSection()==FileByHash.NUMBER) {
-             * numberOfHashSearches.increment(); }
-             */
-
         }
 
         public void sectionEventDisconnect(ConnectionManagerEvent e) {
@@ -358,7 +332,7 @@ public class StatsInfoPanel extends Panel {
         }
 
         public void searchResult(ServerSearchEvent e) {
-            numMaches.setValue(e.getResults().length+numMaches.getValue());
+            numMaches.setValue(e.getResults().length + numMaches.getValue());
         }
     }
 
@@ -373,19 +347,18 @@ public class StatsInfoPanel extends Panel {
 
         public void run() {
             searchperhour.setValue(calculateSearchesPerHour(), false);
-            uptime.setText(com.general.util.Util.getLongAsTime(System
-                    .currentTimeMillis()
+            uptime.setText(com.general.util.Util.getLongAsTime(System.currentTimeMillis()
                     - com.myster.application.MysterGlobals.getLaunchedTime()));
             if (!flag)
                 return;
-            Timer timer = new Timer(this, 5000);
+            new Timer(this, 5000);
         }
 
         public int calculateSearchesPerHour() {
             if (list.getTail() == null)
                 return 0;
-            while (1000 * 60 * 60 < (System.currentTimeMillis() - ((Long) (list
-                    .getTail())).longValue())) {
+            while (1000 * 60 * 60 < (System.currentTimeMillis() - ((Long) (list.getTail()))
+                    .longValue())) {
                 list.removeFromTail();
                 if (list.getTail() == null)
                     return 0;
@@ -409,7 +382,7 @@ public class StatsInfoPanel extends Panel {
         }
     }
 
-    private static class ByteCounter extends Label {
+    private static class ByteCounter extends JLabel {
         long value = 0;
 
         public long getValue() {

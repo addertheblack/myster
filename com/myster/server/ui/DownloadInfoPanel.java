@@ -7,16 +7,19 @@
 
 package com.myster.server.ui;
 
-import java.awt.Button;
 import java.awt.Color;
 import java.awt.Container;
-import java.awt.Dimension;
+import java.awt.FlowLayout;
 import java.awt.Graphics;
-import java.awt.GridLayout;
+import java.awt.GridBagConstraints;
+import java.awt.GridBagLayout;
 import java.awt.Image;
-import java.awt.Panel;
+import java.awt.Insets;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+
+import javax.swing.JButton;
+import javax.swing.JPanel;
 
 import com.general.mclist.MCList;
 import com.general.mclist.MCListEvent;
@@ -33,14 +36,14 @@ import com.myster.server.event.ServerDownloadDispatcher;
 import com.myster.server.event.ServerEventDispatcher;
 import com.myster.server.stream.FileSenderThread;
 
-public class DownloadInfoPanel extends Panel {
-    MCList list;
+public class DownloadInfoPanel extends JPanel {
+    private MCList list;
 
-    Button disconnect, browse, clearAll, message;
+    private JButton disconnect, browse, clearAll, message;
 
-    ServerEventDispatcher server;
+    private ServerEventDispatcher server;
 
-    ConnectionHandler chandler;
+    private ConnectionHandler chandler;
 
     public DownloadInfoPanel() {
         setBackground(new Color(240, 240, 240));
@@ -51,7 +54,18 @@ public class DownloadInfoPanel extends Panel {
     }
 
     public void inited() {
-        setLayout(null);
+        setLayout(new GridBagLayout());
+        
+        Insets insets = new Insets( 2,2,2,2 );
+        
+        GridBagConstraints constraints = new GridBagConstraints();
+        constraints.gridwidth = 1;
+        constraints.gridheight = 1;
+        constraints.fill = GridBagConstraints.BOTH;
+        constraints.weightx = 1;
+        constraints.weighty = 1;
+        constraints.insets = insets;
+        
 
         list = MCListFactory.buildMCList(6, false, this);
 
@@ -60,7 +74,7 @@ public class DownloadInfoPanel extends Panel {
         p.setSize(590, 300);
         p.setLocation(5, 10);
 
-        add(p);
+        add(p, constraints);
 
         list.setNumberOfColumns(5);
 
@@ -82,11 +96,11 @@ public class DownloadInfoPanel extends Panel {
 
         ButtonPanel panel = new ButtonPanel();
 
-        browse = new Button("Browse Files");
+        browse = new JButton("Browse Files");
         panel.add(browse);
         browse.addActionListener(chandler.new ConnectHandler());
 
-        message = new Button("Instant Message");
+        message = new JButton("Instant Message");
         panel.add(message);
         message.addActionListener(new ActionListener() {
             public void actionPerformed(ActionEvent e) {
@@ -105,11 +119,11 @@ public class DownloadInfoPanel extends Panel {
             }
         });
 
-        disconnect = new Button("Disconnect User");
+        disconnect = new JButton("Disconnect User");
         panel.add(disconnect);
         disconnect.addActionListener(chandler.new DisconnectHandler());
 
-        clearAll = new Button("Clear All Done");
+        clearAll = new JButton("Clear All Done");
         clearAll.setSize(175, 25);
         clearAll.setLocation(10, 315);
         panel.add(clearAll);
@@ -126,9 +140,17 @@ public class DownloadInfoPanel extends Panel {
 
         });
 
-        panel.setSize(590, 25);
-        panel.setLocation(5, 317);
-        add(panel);
+        constraints = new GridBagConstraints();
+        constraints.gridx = 0;
+        constraints.gridy = 1;
+        constraints.gridwidth = 1;
+        constraints.gridheight = 1;
+        constraints.insets = insets;
+        constraints.weightx = 1;
+        constraints.fill = GridBagConstraints.HORIZONTAL;
+//        panel.setSize(590, 25);
+//        panel.setLocation(5, 317);
+        add(panel, constraints);
         panel.doLayout();
 
         Timer timer = new Timer(new RepaintLoop(), 10000);
@@ -247,13 +269,9 @@ public class DownloadInfoPanel extends Panel {
         }
     }
 
-    private static class ButtonPanel extends Panel {
+    private static class ButtonPanel extends JPanel {
         public ButtonPanel() {
-            setLayout(new GridLayout(1, 4, 7, 7));
-        }
-
-        public Dimension getPreferedSize() {
-            return getLayout().preferredLayoutSize(this);
+            setLayout(new FlowLayout( FlowLayout.LEFT));//new GridLayout(1, 4, 7, 7));
         }
     }
 }

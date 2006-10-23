@@ -10,17 +10,18 @@
 
 package com.myster.util;
 
-import java.awt.Choice;
+import javax.swing.JComboBox;
 
 import com.myster.type.MysterType;
 import com.myster.type.TypeDescription;
 import com.myster.type.TypeDescriptionList;
 
-public class TypeChoice extends Choice {
+public class TypeChoice extends JComboBox {
     TypeDescription[] types;
 
     public TypeChoice() {
         addItemsToChoice();
+        setEditable(false);
     }
 
     public MysterType getType() {
@@ -34,7 +35,7 @@ public class TypeChoice extends Choice {
     private void addItemsToChoice() {
         types = TypeDescriptionList.getDefault().getEnabledTypes();
         for (int i = 0; i < types.length; i++) {
-            add(types[i].getDescription() + " (" + types[i].getType() + ")");
+            addItem(types[i].getDescription() + " (" + types[i].getType() + ")");
         }
     }
 }

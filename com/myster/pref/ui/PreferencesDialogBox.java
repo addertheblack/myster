@@ -11,26 +11,33 @@
 
 package com.myster.pref.ui;
 
-import java.awt.Button;
 import java.awt.Color;
 import java.awt.Dimension;
 import java.awt.Font;
 import java.awt.Graphics;
 import java.awt.Insets;
-import java.awt.Label;
-import java.awt.List;
-import java.awt.Panel;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.ComponentEvent;
 import java.awt.event.ComponentListener;
-import java.awt.event.ItemEvent;
-import java.awt.event.ItemListener;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
 import java.util.Enumeration;
 import java.util.Hashtable;
+import java.util.Iterator;
 
+import javax.swing.DefaultListModel;
+import javax.swing.JButton;
+import javax.swing.JLabel;
+import javax.swing.JList;
+import javax.swing.JPanel;
+import javax.swing.JScrollPane;
+import javax.swing.event.ListSelectionEvent;
+import javax.swing.event.ListSelectionListener;
+
+import com.general.util.Util;
+
+import com.myster.filemanager.ui.FMIChooser;
 import com.myster.ui.MysterFrame;
 
 /**
@@ -114,7 +121,8 @@ public class PreferencesDialogBox extends MysterFrame { //protected...!
     public void addPanel(PreferencesPanel p) {
         p.addFrame(this);
         mypanel.addPanel(p);
-
+        invalidate();
+        validate();
     }
 
     //Removes a panel, duh.
@@ -123,47 +131,48 @@ public class PreferencesDialogBox extends MysterFrame { //protected...!
         mypanel.removePanel(key);
     }
 
-    private class MainPanel extends Panel {
-        List list;
+    private class MainPanel extends JPanel {
+        private JList list;
 
-        Button save;
+        private JButton save;
 
-        Button revert;
+        private JButton revert;
 
-        Button apply;
+        private JButton apply;
 
-        Hashtable hash = new Hashtable();
+        private Hashtable hash = new Hashtable();
+        private JPanel showerPanel;
 
-        Panel lastPanel;
+        private JLabel header;
 
-        Panel showerPanel;
-
-        Label header;
+        private DefaultListModel listModel;
 
         public MainPanel() {
             setLayout(null);
             //setBackground(new Color(255,255,0));
 
-            list = new List();
-            list.setSize(150 - 5 - 5, YDEFAULT - 50 - 5);
-            list.setLocation(5, 5);
-            list.addItemListener(new ItemListener() {
-                public void itemStateChanged(ItemEvent e) {
-                    if (e.getStateChange() == ItemEvent.SELECTED) {
-                        synchronized (MainPanel.this) {
-                            PreferencesPanel panel = (PreferencesPanel) (hash.get(list
-                                    .getSelectedItem()));
-                            if (panel == null) {
-                                removePanel(list.getSelectedItem());
-                            }
-                            showPanel(panel);
-                        }
+            list = new JList();
+            listModel = new DefaultListModel();
+            list.setModel(listModel);
+            JScrollPane listScrollPane = new JScrollPane(list);
+            listScrollPane.setSize(150 - 5 - 5, YDEFAULT - 50 - 5);
+            listScrollPane.setLocation(5, 5);
+            list.getSelectionModel().addListSelectionListener(new ListSelectionListener() {
+                public void valueChanged(ListSelectionEvent e) {
+                    if (e.getValueIsAdjusting())
+                        return;
+                    PreferencesPanel panel = (PreferencesPanel) (hash.get(list
+                            .getSelectedValue()));
+                    if (panel == null) {
+                        removePanel((String) list.getSelectedValue());
                     }
+                    showPanel(panel);
+                    
                 }
             });
-            add(list);
+            add(listScrollPane);
 
-            apply = new Button("Apply");
+            apply = new JButton("Apply");
             apply.setSize(100, 30);
             apply.setLocation(XDEFAULT - 5 - 100, YDEFAULT - 30 - 7);
             apply.addActionListener(new ActionListener() {
@@ -173,7 +182,7 @@ public class PreferencesDialogBox extends MysterFrame { //protected...!
             });
             add(apply);
 
-            save = new Button("OK");
+            save = new JButton("OK");
             save.setSize(100, 30);
             save.setLocation(XDEFAULT - 100 - 5 - 5 - 100 - 5 - 100 - 5, YDEFAULT - 30 - 7);
             save.addActionListener(new ActionListener() {
@@ -184,7 +193,7 @@ public class PreferencesDialogBox extends MysterFrame { //protected...!
             });
             add(save);
 
-            revert = new Button("Cancel");
+            revert = new JButton("Cancel");
             revert.setSize(100, 30);
             revert.setLocation(XDEFAULT - 100 - 5 - 5 - 100 - 5, YDEFAULT - 30 - 7);
             revert.addActionListener(new ActionListener() {
@@ -195,13 +204,13 @@ public class PreferencesDialogBox extends MysterFrame { //protected...!
             });
             add(revert);
 
-            showerPanel = new Panel();
+            showerPanel = new JPanel();
             showerPanel.setLayout(null);
             showerPanel.setSize(PreferencesPanel.STD_XSIZE, PreferencesPanel.STD_YSIZE);
             showerPanel.setLocation(150, 50);
             add(showerPanel);
 
-            header = new Label("");
+            header = new JLabel("");
             header.setLocation(150, 5);
             header.setSize(PreferencesPanel.STD_XSIZE - 5, 40);
             header.setBackground(new Color(225, 225, 225));
@@ -210,38 +219,42 @@ public class PreferencesDialogBox extends MysterFrame { //protected...!
             setResizable(false);
 
             setSize(XDEFAULT, YDEFAULT);
+//            setDoubleBuffered(true);
         }
 
         //Hide the currently showing panel and shows the new one.
-        public synchronized void showPanel(PreferencesPanel p) {
-            if (lastPanel != null) {
-                lastPanel.setVisible(false);
+        public void showPanel(PreferencesPanel p) {
+            for (Iterator iter = hash.values().iterator(); iter.hasNext();) {
+                PreferencesPanel preferencesPanel = (PreferencesPanel) iter.next();
+                preferencesPanel.setVisible(false);
             }
             p.setVisible(true);
-            lastPanel = p;
             header.setText(p.getKey());
         }
 
         //Sets the selection in the List to the correct value.
-        public synchronized void selectKey(String panelString) {
-            for (int i = 0; i < list.getItemCount(); i++) {
-                if (list.getItem(i).equals(panelString)) {
-                    list.select(i);
+        public void selectKey(String panelString) {
+            for (int i = 0; i < list.getModel().getSize(); i++) {
+                if (list.getModel().getElementAt(i).equals(panelString)) {
+                    list.getSelectionModel().setSelectionInterval(i, i);
                     break;
                 }
             }
             showPanel((PreferencesPanel) (hash.get(panelString)));
         }
 
-        //Draw the seperator line.
-        public void paint(Graphics g) {
+        // Draw the seperator line.
+        public void paintComponent(Graphics g) {
+            super.paintComponent(g);
             g.setColor(new Color(150, 150, 150));
             g.drawLine(10, YDEFAULT - 45, XDEFAULT - 20, YDEFAULT - 45);
-            header.setFont(new Font(getFont().getName(), Font.BOLD, 24));
+            if (header.getFont().getSize() != 24) {
+                header.setFont(new Font(getFont().getName(), Font.BOLD, 24));
+            }
         }
 
-        //Tells *panels* to save changes
-        public synchronized void save() {
+        // Tells *panels* to save changes
+        public  void save() {
             Enumeration enumeration = hash.elements();
             while (enumeration.hasMoreElements()) {
                 ((PreferencesPanel) (enumeration.nextElement())).save();
@@ -249,7 +262,7 @@ public class PreferencesDialogBox extends MysterFrame { //protected...!
         }
 
         //Tells *panels* to refresh
-        public synchronized void restore() {
+        public void restore() {
             Enumeration enumeration = hash.elements();
             while (enumeration.hasMoreElements()) {
                 ((PreferencesPanel) (enumeration.nextElement())).reset();
@@ -259,11 +272,12 @@ public class PreferencesDialogBox extends MysterFrame { //protected...!
         //Adds a panel, duh.
         //Responsible for encapsulation all book-keeping required for adding a
         // panel.
-        public synchronized void addPanel(PreferencesPanel p) {
+        public void addPanel(PreferencesPanel p) {
+            if (!Util.isEventDispatchThread())
+                throw new IllegalStateException("Component not used o the event thread.");
             if (hash.get(p.getKey()) == null) {
-                list.add(p.getKey());
+                listModel.addElement(p.getKey());
                 hash.put(p.getKey(), p);
-                p.setVisible(true);
                 p.setLocation(0, 0);
                 p.setSize(p.getPreferredSize());
                 showerPanel.add(p);
@@ -275,16 +289,16 @@ public class PreferencesDialogBox extends MysterFrame { //protected...!
 
         //Removes a panel, duh.
         //see above.
-        public synchronized void removePanel(String type) {
+        public  void removePanel(String type) {
             if (hash.get(type) != null) {
-                list.remove(type);
+                listModel.removeElement(type);
 
                 PreferencesPanel pp_temp = (PreferencesPanel) (hash.get(type));
                 if (pp_temp != null)
                     showerPanel.remove(pp_temp);
                 hash.remove(type);
-                if (list.getItemCount() != 0) {
-                    list.select(0);
+                if (list.getModel().getSize() != 0) {
+                    list.getSelectionModel().setSelectionInterval(0, 0);
                 }
             }
         }

@@ -2,13 +2,13 @@ package com.general.util;
 
 import java.awt.AWTEvent;
 import java.awt.Component;
+import java.awt.EventQueue;
 import java.awt.Frame;
 import java.awt.Image;
 import java.awt.MediaTracker;
 import java.awt.Toolkit;
 import java.awt.event.ComponentEvent;
 import java.lang.reflect.InvocationTargetException;
-import java.lang.reflect.Method;
 import java.net.URL;
 
 import com.general.thread.CallListener;
@@ -135,22 +135,6 @@ public class Util { //This code was taken from an Apple Sample Code package,
      * *************************** CRAMMING STUFF ON THE EVENT THREAD SUB SYSTEM START
      * *********************
      */
-    private static Component listener = new SpecialComponent();
-
-    private static Thread eventThread = null;
-
-    public static void initInvoke() {
-        try {
-            invokeAndWait(new Runnable() {
-                public void run() {
-                    eventThread = Thread.currentThread();
-                }
-            });
-        } catch (InterruptedException e) {
-            // TODO Auto-generated catch block
-            e.printStackTrace();
-        }
-    }
 
     /**
      * runs the current runnable on the event thread.
@@ -159,10 +143,7 @@ public class Util { //This code was taken from an Apple Sample Code package,
      *            code to run on event thread.
      */
     public static void invokeLater(final Runnable runnable) {
-        //EventQueue.invokeLater(runnable);
-
-        Toolkit.getDefaultToolkit().getSystemEventQueue().postEvent(
-                new SpecialEvent(runnable, listener));
+        EventQueue.invokeLater(runnable);
     }
     
     public static Future invokeAsynchronously(final CancellableCallable callable, CallListener listener ) {
@@ -229,40 +210,30 @@ public class Util { //This code was taken from an Apple Sample Code package,
     }
 
     public static boolean isEventDispatchThread() {
-        try {
-            Class swingUtilities = Class.forName("javax.swing.SwingUtilities");
-            Method isEventDispatchThread = swingUtilities.getMethod("isEventDispatchThread",
-                    new Class[] {});
-            Boolean result = (Boolean) isEventDispatchThread.invoke(null, new Object[] {});
-            return result.booleanValue();
-        } catch (ClassNotFoundException ignore) {
-        } catch (SecurityException ignore) {
-        } catch (NoSuchMethodException ignore) {
-        } catch (IllegalArgumentException e) {
-        } catch (IllegalAccessException e) {
-        } catch (InvocationTargetException e) {
-        }
-        return Thread.currentThread() == eventThread;
+        return EventQueue.isDispatchThread();
+//        try {
+//            Class swingUtilities = Class.forName("javax.swing.SwingUtilities");
+//            Method isEventDispatchThread = swingUtilities.getMethod("isEventDispatchThread",
+//                    new Class[] {});
+//            Boolean result = (Boolean) isEventDispatchThread.invoke(null, new Object[] {});
+//            return result.booleanValue();
+//        } catch (ClassNotFoundException ignore) {
+//        } catch (SecurityException ignore) {
+//        } catch (NoSuchMethodException ignore) {
+//        } catch (IllegalArgumentException e) {
+//        } catch (IllegalAccessException e) {
+//        } catch (InvocationTargetException e) {
+//        }
+//        return Thread.currentThread() == eventThread;
 
     }
 
     public static void invokeAndWait(final Runnable runnable) throws InterruptedException {
-        final Semaphore sem = new Semaphore(0);
-
-        Toolkit.getDefaultToolkit().getSystemEventQueue().postEvent(
-                new SpecialEvent(runnable, listener) {
-                    public void run() {
-                        try {
-                            super.run();
-                        } catch (Exception ex) {
-                            ex.printStackTrace();
-                        } finally {
-                            sem.signal();
-                        }
-                    }
-                });
-
-        sem.getLock();
+        try {
+            EventQueue.invokeAndWait(runnable);
+        } catch (InvocationTargetException e) {
+            e.printStackTrace(); //?
+        }
     }
 
     /*

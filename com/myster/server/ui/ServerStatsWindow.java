@@ -8,12 +8,13 @@
 package com.myster.server.ui;
 
 import java.awt.Dimension;
-import java.awt.Panel;
 import java.awt.Rectangle;
 import java.awt.event.ComponentAdapter;
 import java.awt.event.ComponentEvent;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
+
+import javax.swing.JPanel;
 
 import com.general.tab.TabEvent;
 import com.general.tab.TabListener;
@@ -184,11 +185,11 @@ public class ServerStatsWindow extends MysterFrame implements Sayable {
     private static class TabHandler implements TabListener {
         int tabNumber;
 
-        Panel panel;
+        JPanel panel;
 
-        public TabHandler(int i, Panel p) {
+        public TabHandler(int i, JPanel downloadPanel) {
             tabNumber = i;
-            panel = p;
+            panel = downloadPanel;
         }
 
         public void tabAction(TabEvent e) {

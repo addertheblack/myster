@@ -122,8 +122,6 @@ public class Myster {
 
         try {
 
-            Util.initInvoke();
-
             Util.invokeAndWait(new Runnable() {
                 public void run() {
 

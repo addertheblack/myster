@@ -12,11 +12,12 @@
 
 package com.myster.search.ui;
 
-import java.awt.Button;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 
-public class SearchButtonEvent implements ActionListener {
+import javax.swing.JButton;
+
+public class SearchButtonHandler implements ActionListener {
     private final SearchWindow searchWindow;
 
     /**
@@ -24,7 +25,7 @@ public class SearchButtonEvent implements ActionListener {
      * which File type is selected. <b>It asks the window... </b>.. Not to
      * mention the search string
      */
-    public SearchButtonEvent(final SearchWindow searchWindow, final Button searchButton) {
+    public SearchButtonHandler(final SearchWindow searchWindow, final JButton searchButton) {
         this.searchWindow = searchWindow;
     }
 
@@ -33,7 +34,7 @@ public class SearchButtonEvent implements ActionListener {
      * search button.
      */
     public void actionPerformed(final ActionEvent event) {
-        final Button searchButton = (Button) event.getSource();
+        final JButton searchButton = (JButton) event.getSource();
 
         if (!searchButton.isEnabled())
             return;

@@ -10,9 +10,9 @@
 
 package com.general.util;
 
-import java.awt.Label;
+import javax.swing.JLabel;
 
-public class MessageField extends Label {
+public class MessageField extends JLabel {
 
     public MessageField(String s) {
         say(s);

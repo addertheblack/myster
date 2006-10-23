@@ -7,16 +7,17 @@
 
 package com.myster.server.ui;
 
-import java.awt.List;
+import javax.swing.DefaultListModel;
+import javax.swing.JList;
 
-public class XItemList extends List {
-    int maxItems = 0;
-
-    int itemCounter = 0;
+public class XItemList extends JList {
+    private DefaultListModel model = new DefaultListModel();
+    private int maxItems = 0;
 
     public XItemList(int max) {
-        super(max + 1);
+        super();
         maxItems = max;
+        setModel( model);
     }
 
     public void add(String s) {
@@ -25,14 +26,9 @@ public class XItemList extends List {
 
     public synchronized void addItem(String s) { //two threads in here at once
                                                  // would suck.
-        if (itemCounter < maxItems) {
-            add(s, 0);
-            itemCounter++;
-        } else {
-            remove(maxItems - 1);
-            add(s, 0);
-
+        model.addElement(s);
+        if (model.size() >= maxItems) {
+            model.removeElementAt(0);
         }
     }
-
 }

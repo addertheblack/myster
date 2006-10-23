@@ -10,16 +10,17 @@
 
 package com.myster.client.ui;
 
-import java.awt.Button;
 import java.awt.Color;
 import java.awt.Component;
 import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
 import java.awt.Insets;
 import java.awt.Rectangle;
-import java.awt.TextField;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+
+import javax.swing.JButton;
+import javax.swing.JTextField;
 
 import com.general.mclist.GenericMCListItem;
 import com.general.mclist.MCList;
@@ -62,9 +63,9 @@ public class ClientWindow extends MysterFrame implements Sayable {
 
     private GridBagConstraints gbconstrains;
 
-    private Button connect;
+    private JButton connect;
 
-    private TextField IP;
+    private JTextField IP;
 
     private MCList fileTypeList;
 
@@ -74,7 +75,7 @@ public class ClientWindow extends MysterFrame implements Sayable {
 
     private String currentip;
 
-    private Button instant;
+    private JButton instant;
 
     private MessageField msg;
 
@@ -133,10 +134,10 @@ public class ClientWindow extends MysterFrame implements Sayable {
         pane = new FileInfoPane();
         pane.setSize(XDEFAULT / 3, YDEFAULT - 40);
 
-        connect = new Button("Connect");
+        connect = new JButton("Connect");
         connect.setSize(SBXDEFAULT, GYDEFAULT);
 
-        IP = new TextField("Enter an IP here");
+        IP = new JTextField("Enter an IP here");
         IP.setEditable(true);
 
         fileTypeList = MCListFactory.buildMCList(1, true, this);
@@ -151,7 +152,7 @@ public class ClientWindow extends MysterFrame implements Sayable {
         msg = new MessageField("Idle...");
         msg.setSize(XDEFAULT, GYDEFAULT);
 
-        instant = new Button("Instant Message");
+        instant = new JButton("Instant Message");
         instant.addActionListener(new ActionListener() {
             public void actionPerformed(ActionEvent e) {
                 try {

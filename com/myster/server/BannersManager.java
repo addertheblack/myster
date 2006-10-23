@@ -8,8 +8,11 @@ import java.io.File;
 import java.util.Hashtable;
 import java.util.Vector;
 
+import javax.swing.JTextArea;
+
 import com.general.util.AskDialog;
-import com.general.util.MessagePanel;
+
+import com.myster.application.MysterGlobals;
 import com.myster.pref.Preferences;
 import com.myster.pref.PreferencesMML;
 import com.myster.pref.ui.PreferencesPanel;
@@ -31,9 +34,10 @@ public class BannersManager {
 
     private static final String IMAGE_DIRECTORY = "Images";
 
-    private static boolean prefsHasChangedFlag = true; //to get manager to
-                                                       // initally read the
-                                                       // prefs
+    private static boolean prefsHasChangedFlag = true; // to get manager to
+
+    // initally read the
+    // prefs
 
     private static Hashtable imageNamesToUrls = new Hashtable();
 
@@ -55,11 +59,15 @@ public class BannersManager {
         if (currentIndex > imageNames.length - 1)
             currentIndex = 0;
 
-        return imageNames[currentIndex++]; //it's post increment
+        return imageNames[currentIndex++]; // it's post increment
+    }
+
+    public static synchronized File getImagesDirectory() {
+        return new File(MysterGlobals.getCurrentDirectory(), IMAGE_DIRECTORY);
     }
 
     public static synchronized File getFileFromImageName(String imageName) {
-        return new File(IMAGE_DIRECTORY + File.separator + imageName);
+        return new File(getImagesDirectory(), imageName);
     }
 
     public static synchronized String getURLFromImageName(String imageName) {
@@ -73,8 +81,8 @@ public class BannersManager {
     }
 
     private static synchronized Hashtable getPrefsAsHash() {
-        PreferencesMML mmlPrefs = new PreferencesMML(Preferences.getInstance()
-                .getAsMML(KEY_IN_PREFS, new PreferencesMML()).copyMML());
+        PreferencesMML mmlPrefs = new PreferencesMML(Preferences.getInstance().getAsMML(
+                KEY_IN_PREFS, new PreferencesMML()).copyMML());
 
         mmlPrefs.setTrace(true);
 
@@ -87,11 +95,10 @@ public class BannersManager {
 
                 String imageName = mmlPrefs.get(PATH_TO_URLS + subFolder + "/"
                         + PARTIAL_PATH_TO_IMAGES);
-                String url = mmlPrefs.get(PATH_TO_URLS + subFolder + "/"
-                        + PARTIAL_PATH_TO_URLS);
+                String url = mmlPrefs.get(PATH_TO_URLS + subFolder + "/" + PARTIAL_PATH_TO_URLS);
 
                 if (imageName == null | url == null)
-                    continue; //notice how I am using | here and not ||
+                    continue; // notice how I am using | here and not ||
 
                 hashtable.put(imageName, url);
             }
@@ -100,23 +107,23 @@ public class BannersManager {
         return hashtable;
     }
 
-    private static synchronized void setPrefsMML(PreferencesMML mml) { //is a
-                                                                       // string
-                                                                       // ->
-                                                                       // String
-                                                                       // hash
-                                                                       // of
-                                                                       // imageNames
-                                                                       // to
-                                                                       // URLs
-                                                                       // (strongly
-                                                                       // typed
-                                                                       // language
-                                                                       // be
-                                                                       // damned!)
+    private static synchronized void setPrefsMML(PreferencesMML mml) { // is a
+        // string
+        // ->
+        // String
+        // hash
+        // of
+        // imageNames
+        // to
+        // URLs
+        // (strongly
+        // typed
+        // language
+        // be
+        // damned!)
         Preferences.getInstance().put(KEY_IN_PREFS, mml);
-        prefsHaveChanged(); //signal that this object should be re-inited from
-                            // prefs.
+        prefsHaveChanged(); // signal that this object should be re-inited from
+        // prefs.
     }
 
     private static synchronized void updateEverything() {
@@ -130,7 +137,7 @@ public class BannersManager {
     }
 
     public static synchronized String[] getImageNameList() {
-        File imagesFolder = new File(IMAGE_DIRECTORY);
+        File imagesFolder = getImagesDirectory();
 
         if (imagesFolder.exists() && imagesFolder.isDirectory()) {
             String[] files = imagesFolder.list();
@@ -153,20 +160,20 @@ public class BannersManager {
 
             return filteredFileList;
         } else {
-            return null; //error
+            return null; // error
         }
     }
 
-    private static synchronized boolean isAnImageName(String imageName) { //code
-                                                                          // reuse
-        return (imageName.toLowerCase().endsWith(".jpg") || imageName
-                .toLowerCase().endsWith(".gif"));
+    private static synchronized boolean isAnImageName(String imageName) { // code
+        // reuse
+        return (imageName.toLowerCase().endsWith(".jpg") || imageName.toLowerCase()
+                .endsWith(".gif"));
     }
 
     private static class BannersPreferences extends PreferencesPanel {
         private List list;
 
-        private MessagePanel msg;
+        private JTextArea msg;
 
         private Button refreshButton;
 
@@ -183,22 +190,28 @@ public class BannersManager {
 
             setLayout(null);
 
-            msg = new MessagePanel(
-                    "This panel allows you to associate a web page with a banner image "
-                            + "so that people can click on a banner link and be directed to a "
-                            + "web page of your choice. This is usefull if you have a web site "
-                            + "you would like to tell people about. Double click on a image below to "
-                            + "associate it with a web address"); //mental
-                                                                  // note, put
-                                                                  // in I18n
+            msg = new JTextArea(); // mental
+            // note, put
+            // in I18n
+            msg
+                    .setText("This panel allows you to associate a web page with a banner images to " +
+                            "be sent to people who download files from you. Any images in \""
+                            + getImagesDirectory().getAbsolutePath()
+                            + "\" will appear below. Images of any dimension other than 468 X 60 " +
+                                    "pixels will be squished to fit. Double click"
+                            + " on a image below to " + "associate it with a web address");
+            msg.setWrapStyleWord(true);
+            msg.setLineWrap(true);
+            msg.setEditable(false);
+            msg.setBackground(getBackground());
             msg.setLocation(PADDING, PADDING);
-            msg.setSize(STD_XSIZE - 2 * PADDING, STD_YSIZE - 4 * PADDING
-                    - LIST_YSIZE - BUTTON_YSIZE);
+            msg.setSize(STD_XSIZE - 2 * PADDING, STD_YSIZE - 4 * PADDING - LIST_YSIZE
+                    - BUTTON_YSIZE);
             add(msg);
 
             refreshButton = new Button(com.myster.util.I18n.tr("Refresh"));
-            refreshButton.setLocation(PADDING, STD_YSIZE - LIST_YSIZE - PADDING
-                    - PADDING - BUTTON_YSIZE);
+            refreshButton.setLocation(PADDING, STD_YSIZE - LIST_YSIZE - PADDING - PADDING
+                    - BUTTON_YSIZE);
             refreshButton.setSize(150, BUTTON_YSIZE);
             refreshButton.addActionListener(new ActionListener() {
                 public void actionPerformed(ActionEvent e) {
@@ -216,14 +229,13 @@ public class BannersManager {
                 public void actionPerformed(ActionEvent e) {
                     synchronized (this) {
                         if (System.currentTimeMillis() - lastDoubleClick < 1000)
-                            return; //work around for stupid fucking bug in
-                                    // MacOS MRJ 1.3.X
+                            return; // work around for stupid fucking bug in
+                        // MacOS MRJ 1.3.X
 
                         lastDoubleClick = System.currentTimeMillis();
                     }
 
-                    String currentURL = (String) hashtable.get(e
-                            .getActionCommand());
+                    String currentURL = (String) hashtable.get(e.getActionCommand());
 
                     if (currentURL == null)
                         currentURL = "";
@@ -237,7 +249,7 @@ public class BannersManager {
                     String answerString = askDialog.ask();
 
                     if (answerString == null)
-                        return; //box has been canceled.
+                        return; // box has been canceled.
 
                     hashtable.put(e.getActionCommand(), answerString);
                 }
@@ -254,13 +266,12 @@ public class BannersManager {
                 String url = (String) hashtable.get(list.getItem(i));
 
                 if (url == null || url.equals(""))
-                    continue; //Don't bother saving this one, skip to the next
-                              // one.
+                    continue; // Don't bother saving this one, skip to the
+                // next
+                // one.
 
-                mmlPrefs.put(PATH_TO_URLS + i + "/" + PARTIAL_PATH_TO_IMAGES,
-                        list.getItem(i));
-                mmlPrefs
-                        .put(PATH_TO_URLS + i + "/" + PARTIAL_PATH_TO_URLS, url);
+                mmlPrefs.put(PATH_TO_URLS + i + "/" + PARTIAL_PATH_TO_IMAGES, list.getItem(i));
+                mmlPrefs.put(PATH_TO_URLS + i + "/" + PARTIAL_PATH_TO_URLS, url);
             }
 
             setPrefsMML(mmlPrefs);
@@ -290,4 +301,3 @@ public class BannersManager {
         }
     }
 }
-

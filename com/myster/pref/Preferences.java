@@ -21,6 +21,8 @@ import java.io.ObjectOutputStream;
 import java.util.Hashtable;
 
 import com.general.util.Semaphore;
+import com.general.util.Util;
+
 import com.myster.application.MysterGlobals;
 import com.myster.mml.MML;
 import com.myster.pref.ui.PreferencesDialogBox;
@@ -62,6 +64,9 @@ public class Preferences {
         savethread = new SaveThread();
         savethread.start();
         prefsWindow = new PreferencesDialogBox();
+        if ( !Util.isEventDispatchThread() )
+            throw new IllegalStateException("Not on event thread!");
+        prefsWindow.pack();
     }
 
     static final String WINDOW_KEEPER_KEY = "MysterPrefsGUI";
@@ -91,11 +96,11 @@ public class Preferences {
         return pref;
     }
 
-    public static synchronized void initGui() {
+    public static void initGui() {
         windowKeeper.addFrame(pref.prefsWindow);
     }
 
-    public synchronized void setGUI(boolean b) {
+    public void setGUI(boolean b) {
         if (b) {
             prefsWindow.show();
             prefsWindow.toFrontAndUnminimize();

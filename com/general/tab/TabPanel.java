@@ -10,12 +10,13 @@ package com.general.tab;
 import java.awt.Color;
 import java.awt.Graphics;
 import java.awt.Image;
-import java.awt.Panel;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.util.Vector;
 
-public class TabPanel extends Panel {
+import javax.swing.JPanel;
+
+public class TabPanel extends JPanel {
     TabVector tabs;
 
     ListenerVector tabListeners;
@@ -80,7 +81,8 @@ public class TabPanel extends Panel {
         return tabs.getTabClicked(x);
     }
 
-    public void paint(Graphics g) {
+    public void paintComponent(Graphics g) {
+        super.paintComponent(g);
         //Display background
 
         if (backgroundImage == null) {
@@ -92,14 +94,11 @@ public class TabPanel extends Panel {
             gr.drawString("<Missing Image>", 5, 25);
         }
         g.drawImage(backgroundImage, 0, 0, this);
-        //g.setColor(Color.white);
-        //g.fillRect(0,0,600,50);
         g.setColor(Color.black);
         g.drawLine(getMaxLength(), getSize().height - 1, getSize().width - 1,
                 getSize().height - 1);
 
         tabs.paint(g);
-
     }
 
     public void setOverlap(int i) {

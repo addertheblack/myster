@@ -4,6 +4,8 @@ import java.awt.Frame;
 import java.awt.LayoutManager;
 import java.awt.Panel;
 
+import javax.swing.JPanel;
+
 /**
  * All modules wishing to make use of the preferences GUI should extend from
  * this abstract class. Standard Panel size is STD_XSIZE by STD_YSIZE. This is
@@ -18,7 +20,7 @@ import java.awt.Panel;
  * the settings apply only on restart.
  */
 
-public abstract class PreferencesPanel extends Panel {
+public abstract class PreferencesPanel extends JPanel {
     public static final int STD_XSIZE = 450;
 
     public static final int STD_YSIZE = 300;

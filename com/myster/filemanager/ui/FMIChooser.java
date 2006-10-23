@@ -11,15 +11,11 @@
 
 package com.myster.filemanager.ui;
 
-import java.awt.Button;
-import java.awt.Checkbox;
 import java.awt.Color;
 import java.awt.Dimension;
 import java.awt.FileDialog;
 import java.awt.Frame;
 import java.awt.Graphics;
-import java.awt.Label;
-import java.awt.List;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.ItemEvent;
@@ -27,7 +23,15 @@ import java.awt.event.ItemListener;
 import java.util.Enumeration;
 import java.util.Hashtable;
 
+import javax.swing.DefaultListModel;
+import javax.swing.JButton;
+import javax.swing.JCheckBox;
+import javax.swing.JLabel;
+import javax.swing.JList;
+import javax.swing.JScrollPane;
+
 import com.general.util.Timer;
+
 import com.myster.filemanager.FileTypeListManager;
 import com.myster.pref.ui.PreferencesPanel;
 import com.myster.type.MysterType;
@@ -40,27 +44,27 @@ import com.myster.util.TypeChoice;
  */
 
 public class FMIChooser extends PreferencesPanel {
-    boolean inited = false;
-
     private String path;
 
     private FileTypeListManager manager;
 
     private TypeChoice choice;
 
-    private Checkbox checkbox;
+    private JCheckBox checkbox;
 
-    private Button button;
+    private JButton button;
 
-    private Label pathLabel;
+    private JLabel pathLabel;
 
-    private Label folderl, filelistl;
+    private JLabel folderl, filelistl;
 
-    private List flist;
+    private JList fList;
 
-    private Button setAllButton;
+    private JButton setAllButton;
 
     private Hashtable hash = new Hashtable();
+
+    private DefaultListModel fListModel;
 
     private static final int XPAD = 10;
 
@@ -71,8 +75,6 @@ public class FMIChooser extends PreferencesPanel {
     public FMIChooser(FileTypeListManager manager) {
         this.manager = manager;
         setLayout(null);
-        //if (inited==true) System.exit(0);
-        inited = true;
 
         choice = new TypeChoice();
         choice.setLocation(5, 4);
@@ -85,7 +87,7 @@ public class FMIChooser extends PreferencesPanel {
         });
         add(choice);
 
-        setAllButton = new Button("Set all paths to this path");
+        setAllButton = new JButton("Set all paths to this path");
         setAllButton.setLocation(STD_XSIZE - XPAD - SAB, 4);
         setAllButton.setSize(SAB, 20);
         setAllButton.addActionListener(new ActionListener() {
@@ -113,18 +115,18 @@ public class FMIChooser extends PreferencesPanel {
 
         path = manager.getPathFromType(choice.getType());
 
-        checkbox = new Checkbox("Share this type", manager.isShared(choice.getType()));
+        checkbox = new JCheckBox("Share this type", manager.isShared(choice.getType()));
         checkbox.setLocation(10, 55);
         checkbox.setSize(150, 25);
         checkbox.addItemListener(new ItemListener() {
             public void itemStateChanged(ItemEvent e) {
                 hash.put(choice.getType(), new SettingsStruct(choice.getType(), path, checkbox
-                        .getState()));
+                        .isSelected()));
             }
         });
         add(checkbox);
 
-        button = new Button("Set Folder");
+        button = new JButton("Set Folder");
         button.setLocation(STD_XSIZE - 100 - XPAD, 55);
         button.setSize(100, 25);
         button.addActionListener(new ActionListener() {
@@ -142,18 +144,18 @@ public class FMIChooser extends PreferencesPanel {
                 path = p;
                 setPathLabel(path);
                 hash.put(choice.getType(), new SettingsStruct(choice.getType(), path, checkbox
-                        .getState()));
+                        .isSelected()));
             }
 
         });
         add(button);
 
-        folderl = new Label("Shared Folder:");
+        folderl = new JLabel("Shared Folder:");
         folderl.setLocation(10, 85);
         folderl.setSize(100, 20);
         add(folderl);
 
-        pathLabel = new Label(); //dependency
+        pathLabel = new JLabel(); //dependency
         // on
         // choice
         // being
@@ -165,15 +167,19 @@ public class FMIChooser extends PreferencesPanel {
         setPathLabel(manager.getPathFromType(choice.getType()));
         add(pathLabel);
 
-        filelistl = new Label("Shared Files (click \"Apply\" to see changes) :");
+        filelistl = new JLabel("Shared Files (click \"Apply\" to see changes) :");
         filelistl.setLocation(10, 110);
         filelistl.setSize(STD_XSIZE - 2 * XPAD, 20);
         add(filelistl);
 
-        flist = new List();
-        flist.setLocation(10, 135);
-        flist.setSize(STD_XSIZE - 2 * XPAD, STD_YSIZE - 150);
-        add(flist);
+        fList = new JList();
+        fListModel = new DefaultListModel();
+        fList.setModel(fListModel);
+        JScrollPane fListScrollPane = new JScrollPane(fList);
+        fListScrollPane.setHorizontalScrollBarPolicy(JScrollPane.HORIZONTAL_SCROLLBAR_NEVER);
+        fListScrollPane.setLocation(10, 135);
+        fListScrollPane.setSize(STD_XSIZE - 2 * XPAD, STD_YSIZE - 150);
+        add(fListScrollPane);
 
         repaint();
         reset();
@@ -220,7 +226,7 @@ public class FMIChooser extends PreferencesPanel {
 
     public void loadStateFromPrefs() {
         path = manager.getPathFromType(choice.getType());
-        checkbox.setState(manager.isShared(choice.getType()));
+        checkbox.setSelected(manager.isShared(choice.getType()));
     }
 
     public String getKey() {
@@ -231,7 +237,11 @@ public class FMIChooser extends PreferencesPanel {
         return new Dimension(STD_XSIZE, STD_YSIZE);
     }
 
-    public void paint(Graphics g) {
+    public void paintComponent(Graphics g) {
+//        g.setColor(getBackground());
+//        Rectangle rectangle = g.getClipBounds();
+//        g.fillRect(rectangle.x, rectangle.y, rectangle.width, rectangle.height);
+        super.paintComponent(g);
         g.setColor(new Color(150, 150, 150));
         g.drawRect(5, 35, STD_XSIZE - 10, STD_YSIZE - 40);
         g.setColor(getBackground());
@@ -244,7 +254,7 @@ public class FMIChooser extends PreferencesPanel {
         SettingsStruct ss = (SettingsStruct) (hash.get(choice.getType()));
         if (ss != null) {
             path = ss.path;
-            checkbox.setState(ss.shared);
+            checkbox.setSelected(ss.shared);
         } else {
             loadStateFromPrefs(); //if the state hasen't been changed then load
             // form prefs.
@@ -254,9 +264,9 @@ public class FMIChooser extends PreferencesPanel {
         String[] s = manager.getDirList(choice.getType());
         boolean isShared = manager.isShared(choice.getType());
 
-        flist.removeAll();
+        fListModel.removeAllElements();
         if (manager.getFileTypeList(choice.getType()).isIndexing()) {
-            flist.add("<Indexing files...>");
+            fListModel.addElement("<Indexing files...>");
             pokeTimer();
             return;
         } else {
@@ -268,15 +278,15 @@ public class FMIChooser extends PreferencesPanel {
 
         if (s != null) {
             if (!isShared) {
-                flist.add("<no files are being shared, sharing is disabled>");
+                fListModel.addElement("<no files are being shared, sharing is disabled>");
             } else if (s.length == 0) {
-                flist.add("<no files are being shared, there's no relevant files in this folder>");
+                fListModel.addElement("<no files are being shared, there's no relevant files in this folder>");
             } else {
-                if (s.length > 150) {
-                    flist.add("<You are sharing " + s.length + " files (too many to list)>");
+                if (s.length > 350) {
+                    fListModel.addElement("<You are sharing " + s.length + " files (too many to list)>");
                 } else {
                     for (int i = 0; i < s.length; i++) {
-                        flist.add(s[i]);
+                        fListModel.addElement(s[i]);
                     }
                 }
             }

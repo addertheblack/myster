@@ -9,7 +9,6 @@
 
 package com.myster.search.ui;
 
-import java.awt.Button;
 import java.awt.Color;
 import java.awt.Component;
 import java.awt.Dimension;
@@ -17,11 +16,13 @@ import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
 import java.awt.Insets;
 import java.awt.Rectangle;
-import java.awt.TextField;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
+
+import javax.swing.JButton;
+import javax.swing.JTextField;
 
 import com.general.mclist.MCList;
 import com.general.mclist.MCListEvent;
@@ -44,11 +45,11 @@ public class SearchWindow extends MysterFrame implements SearchResultListener, S
 
     private GridBagConstraints gbconstrains;
 
-    private Button searchButton;
+    private JButton searchButton;
 
     private MCList fileList;
 
-    private TextField textEntry;
+    private JTextField textEntry;
 
     private TypeChoice choice;
 
@@ -82,23 +83,20 @@ public class SearchWindow extends MysterFrame implements SearchResultListener, S
         gbconstrains.ipadx = 1;
         gbconstrains.ipady = 1;
 
-        searchButton = new Button("Search") {
+        searchButton = new JButton("Search") {
             public Dimension getPreferredSize() {
                 return new Dimension(Math.max(75, super.getPreferredSize().width), super
-                        .getPreferredSize().height); //hack to stop the button
-                // label from causing
-                // layout oddities.
+                        .getPreferredSize().height);
             }
 
             public Dimension getMinimumSize() {
-                return new Dimension(Math.max(75, super.getMinimumSize().width), super
-                        .getMinimumSize().height);
+                return getPreferredSize();
             }
         };
 
         searchButton.setSize(50, 25);
 
-        textEntry = new TextField("", 40);
+        textEntry = new JTextField("", 1);
         textEntry.setEditable(true);
 
         choice = new TypeChoice();
@@ -108,7 +106,7 @@ public class SearchWindow extends MysterFrame implements SearchResultListener, S
 
         msg = new MessageField("Idle...");
 
-        addComponent(textEntry, 0, 0, 1, 1, 0, 0, GridBagConstraints.HORIZONTAL);
+        addComponent(textEntry, 0, 0, 1, 1, 1, 0, GridBagConstraints.HORIZONTAL);
         addComponent(choice, 0, 1, 1, 1, 0, 0, GridBagConstraints.HORIZONTAL);
         addComponent(searchButton, 0, 2, 1, 1, 0, 0, GridBagConstraints.HORIZONTAL);
         addComponent(fileList.getPane(), 1, 0, 4, 1, 1, 1, GridBagConstraints.BOTH);
@@ -117,7 +115,7 @@ public class SearchWindow extends MysterFrame implements SearchResultListener, S
         setResizable(true);
         setSize(XDEFAULT, YDEFAULT);
 
-        SearchButtonEvent searchButtonHandler = new SearchButtonEvent(this, searchButton);
+        SearchButtonHandler searchButtonHandler = new SearchButtonHandler(this, searchButton);
         searchButton.addActionListener(searchButtonHandler);
 
         textEntry.addActionListener(new ActionListener() {
@@ -194,7 +192,7 @@ public class SearchWindow extends MysterFrame implements SearchResultListener, S
     }
 
     public void searchStart() {
-        searchButton.setLabel("Stop");
+        searchButton.setText("Stop");
         msg.say("Clearing File List...");
         fileList.clearAll();
         recolumnize();
@@ -203,7 +201,7 @@ public class SearchWindow extends MysterFrame implements SearchResultListener, S
     public void searchOver() {
         msg.say("Search done. " + fileList.length() + " file" + (fileList.length() == 0 ? "" : "s")
                 + " found...");
-        searchButton.setLabel("Search");
+        searchButton.setText("Search");
     }
 
     void startSearch() {

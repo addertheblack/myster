@@ -7,9 +7,9 @@
 
 package com.myster.server.ui;
 
-import java.awt.Label;
+import javax.swing.JLabel;
 
-public class CountLabel extends Label {
+public class CountLabel extends JLabel {
     volatile int streamValue = 0;
 
     volatile int datagramValue = 0;

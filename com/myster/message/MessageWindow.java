@@ -1,17 +1,15 @@
 package com.myster.message;
 
 import java.awt.BorderLayout;
-import java.awt.Button;
 import java.awt.Color;
 import java.awt.Component;
-import java.awt.Container;
 import java.awt.Dimension;
+import java.awt.FlowLayout;
 import java.awt.Graphics;
 import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
 import java.awt.Insets;
 import java.awt.Label;
-import java.awt.LayoutManager;
 import java.awt.Panel;
 import java.awt.TextField;
 import java.awt.event.ActionEvent;
@@ -24,6 +22,7 @@ import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
 import java.net.UnknownHostException;
 
+import javax.swing.JButton;
 import javax.swing.JScrollPane;
 import javax.swing.JTextArea;
 
@@ -176,9 +175,9 @@ public class MessageWindow extends MysterFrame {
     }
 
     private class MessageWindowButtonBar extends Panel {
-        Button accept; //can be reply or send
+        private JButton accept; //can be reply or send
 
-        Button cancel; //can be dismiss or cancel
+        private JButton cancel; //can be dismiss or cancel
 
         private static final int X_BUTTON_SIZE = 100;
 
@@ -187,9 +186,9 @@ public class MessageWindow extends MysterFrame {
         private static final int PADDING = 5;
 
         public MessageWindowButtonBar(final boolean type) {
-            setLayout(new MyLayoutManager());
+            setLayout(new FlowLayout(FlowLayout.RIGHT));
 
-            accept = new Button(type == MessageWindow.NEW_MESSAGE ? "Send Message" : "Reply");
+            accept = new JButton(type == MessageWindow.NEW_MESSAGE ? "Send Message" : "Reply");
             accept.setSize(X_BUTTON_SIZE, Y_BUTTON_SIZE);
             if (type == NEW_MESSAGE) {
                 accept.addActionListener(new ActionListener() {
@@ -204,7 +203,7 @@ public class MessageWindow extends MysterFrame {
                             closeThisWindow();
                         } catch (UnknownHostException ex) {
                             System.out
-                                    .println("Could nto send message 'cause the address is invalid.");
+                                    .println("Could not send message 'cause the address is invalid.");
                             com.general.util.AnswerDialog
                                     .simpleAlert(MessageWindow.this,
                                             "Could not send this message because the address is not valid.");
@@ -229,7 +228,7 @@ public class MessageWindow extends MysterFrame {
             }
             add(accept);
 
-            cancel = new Button(type == MessageWindow.NEW_MESSAGE ? "Cancel" : "OK");
+            cancel = new JButton(type == MessageWindow.NEW_MESSAGE ? "Cancel" : "OK");
             cancel.setSize(X_BUTTON_SIZE, Y_BUTTON_SIZE);
             cancel.addActionListener(new ActionListener() {
                 public void actionPerformed(ActionEvent e) {
@@ -252,26 +251,26 @@ public class MessageWindow extends MysterFrame {
         }
 
         //MyLayoutManager Basically dsoes nothing
-        private class MyLayoutManager implements LayoutManager {
-            public void addLayoutComponent(String s, Component c) {
-            }
-
-            public void layoutContainer(Container c) {
-                accept.setLocation(getSize().width - X_BUTTON_SIZE - PADDING, PADDING);
-                cancel.setLocation(getSize().width - 2 * X_BUTTON_SIZE - 2 * PADDING, PADDING);
-            }
-
-            public Dimension minimumLayoutSize(Container c) {
-                return new Dimension(1, 1);
-            }
-
-            public Dimension preferredLayoutSize(Container c) {
-                return new Dimension(1, 1);
-            }
-
-            public void removeLayoutComponent(Component c) {
-            }
-        }
+//        private class MyLayoutManager implements LayoutManager {
+//            public void addLayoutComponent(String s, Component c) {
+//            }
+//
+//            public void layoutContainer(Container c) {
+//                accept.setLocation(getSize().width - X_BUTTON_SIZE - PADDING, PADDING);
+//                cancel.setLocation(getSize().width - 2 * X_BUTTON_SIZE - 2 * PADDING, PADDING);
+//            }
+//
+//            public Dimension minimumLayoutSize(Container c) {
+//                return new Dimension(1, 1);
+//            }
+//
+//            public Dimension preferredLayoutSize(Container c) {
+//                return new Dimension(1, 1);
+//            }
+//
+//            public void removeLayoutComponent(Component c) {
+//            }
+//        }
     }
 
 }

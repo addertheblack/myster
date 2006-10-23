@@ -25,6 +25,8 @@ package com.myster.filemanager;
 import java.io.File;
 import java.util.Vector;
 
+import com.general.util.Util;
+
 import com.myster.filemanager.ui.FMIChooser;
 import com.myster.hash.FileHash;
 import com.myster.pref.Preferences;
@@ -61,8 +63,11 @@ public class FileTypeListManager {
      */
     private FileTypeListManager() {
         initFileTypeListManager();
-
-        Preferences.getInstance().addPanel(new FMIChooser(this));
+        Util.invokeLater(new Runnable() {
+            public void run() {
+                Preferences.getInstance().addPanel(new FMIChooser(FileTypeListManager.this));
+            }
+        });
     }
 
     /*
