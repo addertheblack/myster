@@ -279,9 +279,6 @@ public class JMCList extends JTable implements MCList {
         return getMCListSelectionModel().getSelectedIndexes();
     }
 
-    /**
-     * @return
-     */
     private MCListSelectionModel getMCListSelectionModel() {
         return (MCListSelectionModel) getSelectionModel();
     }
@@ -461,9 +458,6 @@ class MCListTableModel extends AbstractTableModel {
         columnNames.setElementAt(columnName, columnIndex);
     }
 
-    /**
-     * @return
-     */
     public int getSortByIndex() {
         return sortByIndex;
     }
@@ -592,10 +586,6 @@ class MCListTableModel extends AbstractTableModel {
         return (MCListItemInterface) rowValues.elementAt(index);
     }
 
-    /**
-     * @param item
-     * @return
-     */
     public int indexOf(MCListItemInterface item) {
         return rowValues.indexOf(item);
     }
@@ -632,9 +622,6 @@ class MCListSelectionModel implements ListSelectionModel {
         internalSelectionListener.valueChanged(new ListSelectionEvent(this, i, i, valueIsAdjusting));
     }
 
-    /**
-     * @return
-     */
     public int[] getSelectedIndexes() {
         Vector vector = new Vector(tableModel.getRowCount());
 
