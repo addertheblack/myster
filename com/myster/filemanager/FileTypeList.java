@@ -32,29 +32,29 @@ import com.myster.type.MysterType;
 import com.myster.util.MysterExecutor;
 
 public class FileTypeList {
-    private Vector filelist; //List of java.io.FileItem objects that are
+    private Vector filelist; // List of java.io.FileItem objects that are
 
     // shared.
 
-    private MysterType type; //Myster type represented by this List.
+    private MysterType type; // Myster type represented by this List.
 
-    private String rootdir; //The root directory for this list.
+    private String rootdir; // The root directory for this list.
 
-    //private boolean isShared //This variable is accessed directly in the
+    // private boolean isShared //This variable is accessed directly in the
     // preferences data structure! Use isShared() to access!
     private MML local_prefs;
 
     private String pref_key;
 
-    private static final String ACTIVE_PREF = "/ActPref"; //Active.. sub dir
+    private static final String ACTIVE_PREF = "/ActPref"; // Active.. sub dir
 
     // (active flag)
 
-    private static final String PATH_PREF = "/PathPref"; //path pref sub dir.
+    private static final String PATH_PREF = "/PathPref"; // path pref sub dir.
 
     private static final String PREF_KEY = "FileManager.FileTypeList";
 
-    public static final int MAX_RESULTS = 100; //maximum number of results
+    public static final int MAX_RESULTS = 100; // maximum number of results
 
     // returnable (doesn't limit ""
     // queries)
@@ -64,14 +64,13 @@ public class FileTypeList {
     // indexing...
 
     /**
-     * Creates a new FileTypeList. This shouldn't be called by anybody but the
-     * FileItem Manager.
+     * Creates a new FileTypeList. This shouldn't be called by anybody but the FileItem Manager.
      * 
      * @param type
      *            is the Myster FileItem type to be represented by this object.
      * @param path
-     *            is the root path IN THE PREFERENCES that this FileItem List
-     *            should store it's preferences.
+     *            is the root path IN THE PREFERENCES that this FileItem List should store it's
+     *            preferences.
      */
     public FileTypeList(MysterType type, String path) {
         this.type = type;
@@ -87,33 +86,30 @@ public class FileTypeList {
     }
 
     /**
-     * returns the isShared flag. If isShared returns true, the list will share
-     * files if any are available. If isShared returns false, the list will not
-     * show any files shared even if there are file available. Think of it as a
-     * sort of sharing over-ride.
+     * returns the isShared flag. If isShared returns true, the list will share files if any are
+     * available. If isShared returns false, the list will not show any files shared even if there
+     * are file available. Think of it as a sort of sharing over-ride.
      * 
-     * @return <code>true</code> is the FileItem List is sharing files;
-     *         <code>false</code> is the file list is not sharing files. There
-     *         might be any files shared even if this function returns true. If
-     *         this function returns false it is guarenteed that no files are
-     *         being shared.
+     * @return <code>true</code> is the FileItem List is sharing files; <code>false</code> is
+     *         the file list is not sharing files. There might be any files shared even if this
+     *         function returns true. If this function returns false it is guarenteed that no files
+     *         are being shared.
      */
     public synchronized boolean isShared() {
         String s = local_prefs.get(ACTIVE_PREF);
         if (s == null) {
-            //init this
+            // init this
             local_prefs.put(ACTIVE_PREF, "true");
             savePrefs();
             s = local_prefs.get(ACTIVE_PREF);
         }
 
-        return (s.equals("true")); //if s == 1 then return true.
+        return (s.equals("true")); // if s == 1 then return true.
     }
 
     /**
-     * Some lists may be temporarily out of date while they perform and
-     * expensive "indexing" operation. call this method to find out if this list
-     * is in the middle of indexing...
+     * Some lists may be temporarily out of date while they perform and expensive "indexing"
+     * operation. call this method to find out if this list is in the middle of indexing...
      * 
      * @return true if this file list has an update pending.
      */
@@ -122,12 +118,11 @@ public class FileTypeList {
     }
 
     /**
-     * Sets the isShared flag. If isShared is set to true, the list will share
-     * files if any are available. If isShared is set to false, the list will
-     * not show any files shared even if there are file available. Think of it
-     * as a sort of sharing over-ride. The effects of this function will not be
-     * visible until the directory being pointed to has been indexed. In the
-     * mean time, the file list will be empty.
+     * Sets the isShared flag. If isShared is set to true, the list will share files if any are
+     * available. If isShared is set to false, the list will not show any files shared even if there
+     * are file available. Think of it as a sort of sharing over-ride. The effects of this function
+     * will not be visible until the directory being pointed to has been indexed. In the mean time,
+     * the file list will be empty.
      * 
      * @param b
      *            if b is false, no files will be shared.
@@ -144,18 +139,16 @@ public class FileTypeList {
      * @return the Myster Type associated with this object.
      */
     public MysterType getType() {
-        return type; //note: no assertFileList(); file list ins't needed so
+        return type; // note: no assertFileList(); file list ins't needed so
         // don't load it.
     }
 
     /**
-     * Gets rootdirectory associated with this object as saved in the
-     * preferences. Does not return rootdir variable since th rootdir variable
-     * only has the root directory of the files save in the vector list of the
-     * files.
+     * Gets rootdirectory associated with this object as saved in the preferences. Does not return
+     * rootdir variable since th rootdir variable only has the root directory of the files save in
+     * the vector list of the files.
      * 
-     * @return the root directory associated with this object as saved in the
-     *         preferences.
+     * @return the root directory associated with this object as saved in the preferences.
      */
     public synchronized String getPath() {
         if (!hasSetPath()) {
@@ -165,13 +158,12 @@ public class FileTypeList {
     }
 
     /**
-     * Returns a list of all shared files. If getShared is false, no filesa are
-     * returned.
+     * Returns a list of all shared files. If getShared is false, no filesa are returned.
      * 
      * @return an array of all the shared files
      */
     public synchronized String[] getFileListAsStrings() {
-        assertFileList(); //This must be called before working with filelist or
+        assertFileList(); // This must be called before working with filelist or
         // rootdir internal variables.
 
         String[] workingarray = new String[filelist.size()];
@@ -183,13 +175,12 @@ public class FileTypeList {
     }
 
     /**
-     * Returns a list of all shared files. If getShared is false, no filesa are
-     * returned.
+     * Returns a list of all shared files. If getShared is false, no filesa are returned.
      * 
      * @return an array of all the shared file with the hashes
      */
     public synchronized FileItem getFileFromHash(FileHash hash) {
-        assertFileList(); //This must be called before working with filelist or
+        assertFileList(); // This must be called before working with filelist or
         // rootdir internal variables.
 
         for (int i = 0; i < filelist.size(); i++) {
@@ -220,7 +211,7 @@ public class FileTypeList {
      */
     public synchronized String[] getFileListAsStrings(String queryString) {
         if (queryString.equals(""))
-            return getFileListAsStrings(); //not limited by MAX_RESULTS
+            return getFileListAsStrings(); // not limited by MAX_RESULTS
 
         assertFileList();
 
@@ -229,17 +220,17 @@ public class FileTypeList {
         Vector keywords = new Vector(20, 10);
         StringBuffer stringBuffer = new StringBuffer(" ");
 
-//        boolean inWord = false;
+        // boolean inWord = false;
         boolean aggregate = false;
 
         queryString = mergePunctuation(queryString);
 
         // Split queryStr into keywords at the whitespaces into keywords
-        //    (Anything !Character.isLetterOrDigit() is considered whitespace)
+        // (Anything !Character.isLetterOrDigit() is considered whitespace)
         // Keeping a space as the first character of each keyword forces
         // beginning-of-word matches.
 
-        //TOKENIZZZZEE!!
+        // TOKENIZZZZEE!!
         for (int i = 0; i < queryString.length(); i++) {
             char c = queryString.charAt(i);
             if (c == '\"') {
@@ -266,7 +257,7 @@ public class FileTypeList {
         if (stringBuffer.length() > 1)
             keywords.addElement(stringBuffer.toString());
 
-        //MATCHER
+        // MATCHER
         for (int i = 0; i < filelist.size(); i++) {
             FileItem file = (FileItem) filelist.elementAt(i);
             String filename = mergePunctuation(file.getFile().getName());
@@ -296,7 +287,7 @@ public class FileTypeList {
      * @param simplified
      *            string to match against.
      * @return the java.io.FileItem object corresponding the the query.
-     *  
+     * 
      */
     private static boolean isMatch(Vector keywords, String simplified) {
         for (int iKeyword = 0; iKeyword < keywords.size(); iKeyword++) {
@@ -310,15 +301,15 @@ public class FileTypeList {
     /**
      * Private function used by String[] getFileListAsStrings(String queryStr)
      * 
-     * replaces all non letter or digit characters (like: !@#$%^&*()) with
-     * spaces to simplify matching
+     * replaces all non letter or digit characters (like: !@#$%^&*()) with spaces to simplify
+     * matching
      * 
      * @param filename
      *            filename to simplify
      * @return the simplified string.
      */
     private static String simplify(String filename) {
-        StringBuffer simplified = new StringBuffer(255); //pre-allocate some
+        StringBuffer simplified = new StringBuffer(255); // pre-allocate some
         // space to the string
         // buffer!
 
@@ -335,15 +326,15 @@ public class FileTypeList {
     }
 
     /**
-     * rarray a java.io.FileItem object from a file name. NOTE: There is a
-     * direct mapping between file names and java.io.FileItem objects.
+     * rarray a java.io.FileItem object from a file name. NOTE: There is a direct mapping between
+     * file names and java.io.FileItem objects.
      * 
      * @param query
      *            the name of a file to get the File for.
      * @return the java.io.FileItem object corresponding the the query.
      */
     public synchronized FileItem getFileItemFromString(String query) {
-        assertFileList(); //This must be called before working with filelist or
+        assertFileList(); // This must be called before working with filelist or
         // rootdir internal variables.
 
         for (int i = 0; i < filelist.size(); i++) {
@@ -351,7 +342,7 @@ public class FileTypeList {
                     .equals(query))
                 return (FileItem) (filelist.elementAt(i));
         }
-        return null; //err, file not found.
+        return null; // err, file not found.
     }
 
     /**
@@ -360,33 +351,33 @@ public class FileTypeList {
      * @return the number of files. Returns 0 if getShared() is false.
      */
     public synchronized int getNumOfFiles() {
-        assertFileList(); //This must be called before working with filelist or
+        assertFileList(); // This must be called before working with filelist or
         // rootdir internal variables.
         return filelist.size();
     }
 
     /**
-     * Sets the root directory in the preferences. The effects of this function
-     * will not be visible until the directory being passed has been indexed. In
-     * the mean time, the file list will maintain its old list.
+     * Sets the root directory in the preferences. The effects of this function will not be visible
+     * until the directory being passed has been indexed. In the mean time, the file list will
+     * maintain its old list.
      * 
-     *            the new root dir path.
+     * the new root dir path.
      */
-    public void setPath(String s) { //notice no error if path is nonsence!
+    public void setPath(String s) { // notice no error if path is nonsence!
         if (s == null) {
             local_prefs.remove(PATH_PREF);
         } else {
-            local_prefs.put(PATH_PREF, mergePunctuation(s)); //Change info
+            local_prefs.put(PATH_PREF, mergePunctuation(s)); // Change info
         }
 
         savePrefs();
         assertFileList();
-        //notice not root=pref value or anything.. This omition needed to clue
+        // notice not root=pref value or anything.. This omition needed to clue
         // assertFileList to rebuild.
     }
 
     private synchronized void savePrefs() {
-        Preferences.getInstance().put(pref_key, local_prefs.toString()); //Change
+        Preferences.getInstance().put(pref_key, local_prefs.toString()); // Change
         // info
     }
 
@@ -402,26 +393,25 @@ public class FileTypeList {
     }
 
     /**
-     * This function makes sure the the filelist and rootdir variables are up to
-     * date. The general design of this object is that things should not happen
-     * until they need to. That is, files should not be indexed if there's no
-     * one waiting on the index. This function does all the checks and calls
-     * nessesairy to make sure filelist and rootdir contain the most up-to-date
-     * values. This funcion is also responsible for clearing the filelist
-     * variable when the list has been shared or un-shared. As a general rule it
-     * should be called before accessing the filelist or rootdir variables.
-     *  
+     * This function makes sure the the filelist and rootdir variables are up to date. The general
+     * design of this object is that things should not happen until they need to. That is, files
+     * should not be indexed if there's no one waiting on the index. This function does all the
+     * checks and calls nessesairy to make sure filelist and rootdir contain the most up-to-date
+     * values. This funcion is also responsible for clearing the filelist variable when the list has
+     * been shared or un-shared. As a general rule it should be called before accessing the filelist
+     * or rootdir variables.
+     * 
      */
     private synchronized void assertFileList() {
         if (filelist == null) {
             filelist = new Vector(1, 1);
         }
-        if (!isShared()) { //if file list is not shared make sure list has
+        if (!isShared()) { // if file list is not shared make sure list has
             // length = 0 then continue.
             if (filelist.size() != 0) {
                 filelist = new Vector(1, 1);
             }
-            timeoflastupdate = 0; //never updated (we just buggered up the
+            timeoflastupdate = 0; // never updated (we just buggered up the
             // list, you see...)
 
             if (indexingFuture != null) {
@@ -431,19 +421,19 @@ public class FileTypeList {
             return;
         }
 
-        //We need to check to see if the user has changed the directory for
+        // We need to check to see if the user has changed the directory for
         // this type.
-        //load the dir for this type
+        // load the dir for this type
         String workingdir = getPath();
 
         /*
-         * If the directory need indexing or the user has changed the directory
-         * to index from, this part of the code will start a new indexing task
-         * off.. assuming there's not one already running..
+         * If the directory need indexing or the user has changed the directory to index from, this
+         * part of the code will start a new indexing task off.. assuming there's not one already
+         * running..
          */
         if (indexingFuture == null && (isOld() || !rootdir.equals(workingdir))) {
-            rootdir = workingdir; //in case the dir for this type has changed.
-            indexingFuture = MysterExecutor.getInstance().execute(new FileListIndexCall(),
+            rootdir = workingdir; // in case the dir for this type has changed.
+            indexingFuture = MysterExecutor.getInstance().execute(new FileListIndexCall(type, new File(rootdir)),
                     new FileListCallListener());
         }
     }
@@ -456,7 +446,7 @@ public class FileTypeList {
          * @see com.general.thread.CallListener#handleCancel()
          */
         public void handleCancel() {
-            //nothing
+            // nothing
         }
 
         /*
@@ -488,8 +478,17 @@ public class FileTypeList {
 
     }
 
-    private class FileListIndexCall implements CancellableCallable {
+    public static class FileListIndexCall implements CancellableCallable {
         private boolean endFlag = false;
+
+        private MysterType type;
+
+        private File rootDir;
+
+        public FileListIndexCall(MysterType type, File rootFile) {
+            this.type = type;
+            this.rootDir = rootFile;
+        }
 
         /*
          * (non-Javadoc)
@@ -497,38 +496,35 @@ public class FileTypeList {
          * @see com.general.thread.CancellableCallable#call()
          */
         public Object call() throws Exception {
-            return indexFiles(type, rootdir);
+            return indexFiles(type, rootDir);
         }
 
         /**
-         * an internal procedure used to do the setup of file indexing. This
-         * function is only called in one place at this writting.
+         * an internal procedure used to do the setup of file indexing. This function is only called
+         * in one place at this writting.
          */
-        private Vector indexFiles(MysterType type, String rootdir) {
-            Vector temp = new Vector(10000, 10000); //Preallocates a whole lot
+        private Vector indexFiles(MysterType type, File rootdir) {
+            Vector temp = new Vector(10000, 10000); // Preallocates a whole lot
             // of
             // space
-            File dir = new File(rootdir);
-            if (dir.exists() && dir.isDirectory())
-                indexDir(type, dir, temp, 5); //Indexes root dir into temp with
+            if (rootdir.exists() && rootdir.isDirectory())
+                indexDir(type, rootdir, temp, 5); // Indexes root dir into temp with
             // 5 levels
             // deep.
-            temp.trimToSize(); //save some space
+            temp.trimToSize(); // save some space
             return temp;
         }
 
         /**
-         * an internal proceedure used to do the actual file indexing. This
-         * function is called recursively for each sub directories up to
-         * telomere levels
+         * an internal proceedure used to do the actual file indexing. This function is called
+         * recursively for each sub directories up to telomere levels
          * 
          * @param file
          *            is the directory to index
          * @param filelist
          *            is the data structure to save the indexed filename to.
          * @param telomere
-         *            is a recusion counter. The function will recurse a maximum
-         *            of telomere times
+         *            is a recusion counter. The function will recurse a maximum of telomere times
          */
         private void indexDir(MysterType type, File file, Vector filelist, int telomere) {
             telomere--;
@@ -552,10 +548,10 @@ public class FileTypeList {
                     } else {
                         if (FileFilter.isCorrectType(type, temp)) {
                             FileItem fileItem = createFileItem(temp);
-                            if (!filelist.contains(fileItem)) {//Don't add a
-                                                               // file to the
-                                                               // list if it's
-                                                               // already there
+                            if (!filelist.contains(fileItem)) {// Don't add a
+                                // file to the
+                                // list if it's
+                                // already there
                                 filelist.addElement(fileItem);
                             }
                         }
@@ -573,27 +569,38 @@ public class FileTypeList {
             endFlag = true;
         }
 
+        /**
+         * Creates a FileItem from a file. Sub classes should over-ride this.
+         * 
+         * @param file
+         *            to be the basis of this FileItem.
+         * @return FileItem created from file.
+         */
+        private FileItem createFileItem(File file) {
+            if (MPG3.equals(type))
+                return new MPG3FileItem(file);
+            return new FileItem(file);
+        }
     }
 
     /**
-     * Returns true of the FileItem List is out of date. This function is called
-     * by assertFileList and should oly be called by assertFileList
+     * Returns true of the FileItem List is out of date. This function is called by assertFileList
+     * and should oly be called by assertFileList
      */
-    long timeoflastupdate = 0; //globalish Needed to make sure the list is not
+    long timeoflastupdate = 0; // globalish Needed to make sure the list is not
 
     // too old.
 
-    //NOTE: The user could also change the DIR to force and update... He could
+    // NOTE: The user could also change the DIR to force and update... He could
     // also re-start Myster.
     private synchronized boolean isOld() {
         if (System.currentTimeMillis() - timeoflastupdate > (1000 * 60 * 60))
-            return true; //If list is older than 1 hour...
+            return true; // If list is older than 1 hour...
         return false;
     }
 
     /**
-     * Determines what path should be used as the root path. Should only be used
-     * by getPath();
+     * Determines what path should be used as the root path. Should only be used by getPath();
      */
     private String getDefaultDirectoryPath() {
         String s = getDefaultDirectory().getAbsolutePath();
@@ -603,8 +610,8 @@ public class FileTypeList {
     }
 
     /*
-     * Suggests a default root directory in the fileing system. Should only be
-     * used by getDefaultDirectoryPath();
+     * Suggests a default root directory in the fileing system. Should only be used by
+     * getDefaultDirectoryPath();
      */
     private synchronized File getDefaultDirectory() {
         File empty = new File(MysterGlobals.getCurrentDirectory(), type + " Downloads");
@@ -612,15 +619,15 @@ public class FileTypeList {
         do {
             if (empty.exists()) {
                 if (empty.isDirectory())
-                    return empty; //here is where the routine should go most of
+                    return empty; // here is where the routine should go most of
                 // the time.
                 else {
                     empty = new File(type + " Downloads" + counter);
                     counter++;
-                    //if (counter>1000) System.exit(0);//bam!
+                    // if (counter>1000) System.exit(0);//bam!
                 }
             } else {
-                break; //if file doesn't exist go make a dir.
+                break; // if file doesn't exist go make a dir.
             }
         } while (true);
 
@@ -631,34 +638,20 @@ public class FileTypeList {
     }
 
     /**
-     * Returns true if the path has been initialized, returns false if it
-     * hasen't.
+     * Returns true if the path has been initialized, returns false if it hasen't.
      * 
-     * @return <code>false</code> if the path in the preferences has been
-     *         initialized. true otherwise.
+     * @return <code>false</code> if the path in the preferences has been initialized. true
+     *         otherwise.
      */
     private boolean hasSetPath() {
         return (local_prefs.get(PATH_PREF) != null);
     }
 
     private static final MysterType MPG3 = new MysterType("MPG3");
-    /**
-     * Creates a FileItem from a file. Sub classes should over-ride this.
-     * 
-     * @param file
-     *            to be the basis of this FileItem.
-     * @return FileItem created from file.
-     */
-    protected FileItem createFileItem(File file) {
-        if (MPG3.equals(type))
-            return new MPG3FileItem(file);
-        return new FileItem(file);
-    }
 
     /**
-     * This function Merges Japaneese punctuation into a form that displays and
-     * matches in JAVA This function should be called whenever the name or path
-     * of a file is read.
+     * This function Merges Japaneese punctuation into a form that displays and matches in JAVA This
+     * function should be called whenever the name or path of a file is read.
      * 
      * (code submited by heavy_baby@yahoo.co.jp)
      * 
@@ -667,31 +660,32 @@ public class FileTypeList {
      * @return String with punctuation merged
      */
     public static String mergePunctuation(String text) {
-//        if (Locale.getDefault().getDisplayLanguage().equals(Locale.JAPANESE.getDisplayLanguage())) {
-            if (text.length() <= 1)
-                return text;
-            StringBuffer buffer = new StringBuffer(text.length());
-            char pre = text.charAt(0);
-            for (int i = 1; i < text.length(); i++) {
-                char ch = text.charAt(i);
-                if (ch == '\u3099') {
-                    if (pre == '\u30a6') {
-                        pre = '\u30f4';
-                    } else {
-                        pre = (char) (pre + 1);
-                    }
-                } else if (ch == '\u309a') {
-                    pre = (char) (pre + 2);
+        // if
+        // (Locale.getDefault().getDisplayLanguage().equals(Locale.JAPANESE.getDisplayLanguage())) {
+        if (text.length() <= 1)
+            return text;
+        StringBuffer buffer = new StringBuffer(text.length());
+        char pre = text.charAt(0);
+        for (int i = 1; i < text.length(); i++) {
+            char ch = text.charAt(i);
+            if (ch == '\u3099') {
+                if (pre == '\u30a6') {
+                    pre = '\u30f4';
                 } else {
-                    buffer.append(pre);
-                    pre = ch;
+                    pre = (char) (pre + 1);
                 }
+            } else if (ch == '\u309a') {
+                pre = (char) (pre + 2);
+            } else {
+                buffer.append(pre);
+                pre = ch;
             }
-            buffer.append(pre);
-            return buffer.toString();
-//        } else {
-//            return text;
-//        }
+        }
+        buffer.append(pre);
+        return buffer.toString();
+        // } else {
+        // return text;
+        // }
     }
 
 }

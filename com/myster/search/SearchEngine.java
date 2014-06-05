@@ -26,7 +26,7 @@ public class SearchEngine extends MysterThread {
 
     public SearchEngine(SearchWindow w) {
         window = w;
-        msearch = new MysterSearch(window, window, window.getType(), window.getSearchString());
+        msearch = new MysterSearch(window, window, window.getMysterType(), window.getSearchString());
     }
 
     public void run() {

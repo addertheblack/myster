@@ -18,6 +18,8 @@ public class StandardWindowBehavior extends WindowAdapter {
     public void windowClosing(WindowEvent e) {
         e.getWindow().setVisible(false);
         e.getWindow().dispose();
+        if ( !(e.getWindow() instanceof Frame))
+            return;
         ((Frame)e.getWindow()).setMenuBar(null);
         ((Frame)e.getWindow()).removeAll();
     }

@@ -40,7 +40,7 @@ class IPList {
      * com.myster objects.
      */
     protected IPList(MysterType type) {
-        String list[];
+        String[] list;
         mypath = PATH + type;
 
         if (!Preferences.getInstance().containsKey(mypath)) {
