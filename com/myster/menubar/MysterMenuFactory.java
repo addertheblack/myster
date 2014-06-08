@@ -6,9 +6,9 @@ import java.util.Vector;
 import javax.swing.JMenu;
 
 public class MysterMenuFactory {
-    Vector mysterMenuItemFactories;
+    private Vector mysterMenuItemFactories;
 
-    String name;
+    private String name;
 
     public MysterMenuFactory(String name, Vector mysterMenuItemFactories) {
         this.name = name;

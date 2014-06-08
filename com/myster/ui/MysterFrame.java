@@ -1,5 +1,6 @@
 package com.myster.ui;
 
+import java.awt.Color;
 import java.awt.Frame;
 import java.awt.Image;
 import java.awt.Point;
@@ -27,8 +28,6 @@ public class MysterFrame extends JFrame {
     private boolean menuBarEnabled = true;
 
     public MysterFrame() {
-        super();//explicit good
-
         initEvents();
     }
 
