@@ -20,9 +20,9 @@ public class SearchHashDatagramClient implements StandardDatagramClientImpl {
                                                                 // get file type
                                                                 // list.
 
-    MysterType type;
+    private MysterType type;
 
-    FileHash[] hashes;
+    private FileHash[] hashes;
 
     public SearchHashDatagramClient(MysterType type, FileHash hash) {
         this(type, new FileHash[] { hash });

@@ -1,21 +1,15 @@
 package com.general.util;
 
 /**
- * 
  * Is a classic timer object.. Similar in functionality to the javascript
  * setTimer method.
  * 
  * NOTE: This is a loose timer. Events are dispatched whenever they can be after
- * the minimum time.
+ * the minimum time has elapsed..
  * 
  * NOTE2: Events are now dispatched on the event thread.
- * 
- * has elapsed.
- * 
- * 
  *  
  */
-
 public class Timer implements Comparable { //almost but not quite immutable.
     private final Runnable runnable;
 
@@ -111,7 +105,6 @@ public class Timer implements Comparable { //almost but not quite immutable.
     }
 
     private static void timerLoop() {
-
         for (;;) {
             Timer timer = null;
             synchronized (timers) {
