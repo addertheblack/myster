@@ -29,19 +29,19 @@ public class AskDialog extends Dialog {
 
     Insets insets;
 
-    private final static int XPAD = 5;
+    private static final int XPAD = 5;
 
-    private final static int YPAD = 5;
+    private static final int YPAD = 5;
 
-    private final static int XSIZE = 400;
+    private static final int XSIZE = 400;
 
-    private final static int BUTTONY = 30;
+    private static final int BUTTONY = 30;
 
-    private final static int BUTTONX = 100;
+    private static final int BUTTONX = 100;
 
-    private final static int MSIZEX = XSIZE - XPAD - XPAD;
+    private static final int MSIZEX = XSIZE - XPAD - XPAD;
 
-    private final static int MSIZEY = 35;
+    private static final int MSIZEY = 35;
 
     Frame parent;
 

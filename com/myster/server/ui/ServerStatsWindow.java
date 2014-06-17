@@ -14,6 +14,7 @@ import java.awt.event.ComponentEvent;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
 
+import javax.swing.JMenuBar;
 import javax.swing.JPanel;
 
 import com.general.tab.TabEvent;
@@ -23,21 +24,19 @@ import com.myster.ui.MysterFrame;
 import com.myster.util.Sayable;
 
 public class ServerStatsWindow extends MysterFrame implements Sayable {
-    TabPanel tab;
+    private TabPanel tab;
 
-    DownloadInfoPanel downloadPanel;
+    private DownloadInfoPanel downloadPanel;
 
-    StatsInfoPanel statsinfopanel;
+    private StatsInfoPanel statsinfopanel;
 
-    //GraphInfoPanel graphinfopanel;
-
-    public final static int XSIZE = 600;
+    public static final int XSIZE = 600;
 
     public static final int YSIZE = 400;
 
-    public final static int TABYSIZE = 50;
+    public static final int TABYSIZE = 50;
 
-    private static ServerStatsWindow singleton;//=new ServerStatsWindow();
+    private static ServerStatsWindow singleton;
 
     private static com.myster.ui.WindowLocationKeeper keeper;//=new
                                                              // com.myster.ui.WindowLocationKeeper("Server
@@ -89,7 +88,7 @@ public class ServerStatsWindow extends MysterFrame implements Sayable {
                     initSelf();
                 }
                 setSize(XSIZE + getInsets().right + getInsets().left, YSIZE
-                        + getInsets().top + getInsets().bottom);
+                        + getInsets().top + getInsets().bottom + getJMenuBar().getSize().height);
             }
 
         });
@@ -112,15 +111,15 @@ public class ServerStatsWindow extends MysterFrame implements Sayable {
         if (inited)
             return; //this should NEVER happen
         inited = true;
+        
 
-        //pack();
-        setSize(XSIZE + 50, YSIZE + 50);
+//        pack();
         setLayout(null);
-        setSize(XSIZE + getInsets().right + getInsets().left, YSIZE
-                + getInsets().top + getInsets().bottom);
+//        setSize(XSIZE + getInsets().right + getInsets().left, YSIZE
+//                + getInsets().top + getInsets().bottom + getJMenuBar().getSize().height);
 
         //tab=new TabPanel();
-        tab.setLocation(getInsets().right, getInsets().top);
+        tab.setLocation(0, 0);
         tab.setSize(XSIZE, TABYSIZE);
 
         /*
@@ -145,8 +144,7 @@ public class ServerStatsWindow extends MysterFrame implements Sayable {
         add(tab);
 
         //downloadPanel=new DownloadInfoPanel();
-        downloadPanel.setLocation(0 + getInsets().right, TABYSIZE
-                + getInsets().top);
+        downloadPanel.setLocation(0, TABYSIZE);
         tab.addTabListener(new TabHandler(0, downloadPanel));
         downloadPanel.setSize(XSIZE, YSIZE - TABYSIZE);
         add(downloadPanel);
@@ -154,8 +152,7 @@ public class ServerStatsWindow extends MysterFrame implements Sayable {
         downloadPanel.inited();
 
         //statsinfopanel=new StatsInfoPanel();
-        statsinfopanel.setLocation(0 + getInsets().right, TABYSIZE
-                + getInsets().top);
+        statsinfopanel.setLocation(0, TABYSIZE);
         statsinfopanel.setSize(XSIZE, YSIZE - TABYSIZE);
         add(statsinfopanel);
         statsinfopanel.setVisible(false);
@@ -183,9 +180,9 @@ public class ServerStatsWindow extends MysterFrame implements Sayable {
     }
 
     private static class TabHandler implements TabListener {
-        int tabNumber;
+        private int tabNumber;
 
-        JPanel panel;
+        private JPanel panel;
 
         public TabHandler(int i, JPanel downloadPanel) {
             tabNumber = i;

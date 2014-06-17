@@ -71,6 +71,10 @@ public class FileItem {
         return file.getAbsolutePath();
     }
 
+    public int hashCode() {
+        return file.hashCode();
+    }
+    
     public boolean equals(Object o) {
         try {
             FileItem item = (FileItem) o;

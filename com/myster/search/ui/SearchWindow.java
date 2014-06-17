@@ -223,7 +223,7 @@ public class SearchWindow extends MysterFrame implements SearchResultListener, S
     }
 
     public void recolumnize() {
-        metaDateHandler = ClientInfoFactoryUtilities.getHandler(getType());
+        metaDateHandler = ClientInfoFactoryUtilities.getHandler(getMysterType());
         int max = metaDateHandler.getNumberOfColumns();
         fileList.setNumberOfColumns(max);
 
@@ -252,7 +252,7 @@ public class SearchWindow extends MysterFrame implements SearchResultListener, S
         return textEntry.getText();
     }
 
-    public MysterType getType() {
+    public MysterType getMysterType() {
         return choice.getType();
     }
 

@@ -1,13 +1,14 @@
 package com.myster.ui;
 
 import java.awt.Frame;
-import java.awt.Menu;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.KeyEvent;
 import java.util.Enumeration;
 import java.util.Hashtable;
 import java.util.Vector;
+
+import javax.swing.JMenu;
 
 import com.myster.application.MysterGlobals;
 import com.myster.menubar.MysterMenuBar;
@@ -80,12 +81,12 @@ public class WindowManager {
 
             Enumeration enumeration = windowMenuHash.elements();
             while (enumeration.hasMoreElements()) {
-                fixMenu((Menu) enumeration.nextElement());
+                fixMenu((JMenu) enumeration.nextElement());
             }
         }
     }
 
-    private static void fixMenu(Menu menu) {
+    private static void fixMenu(JMenu menu) {
         for (int i = menu.getItemCount(); i > 3; i--) {
             menu.remove(i - 1);
         }
@@ -97,10 +98,10 @@ public class WindowManager {
         }
     }
 
-    private static Menu getCorrectWindowsMenu(Frame frame) {
-        Menu menu = (Menu) windowMenuHash.get(frame);
+    private static JMenu getCorrectWindowsMenu(Frame frame) {
+        JMenu menu = (JMenu) windowMenuHash.get(frame);
         if (menu == null) {
-            return new Menu("Windows");
+            return new JMenu("Windows");
             // throw new IllegalStateException("This frame has no windows menu!
             // " +
             // frame.getTitle());
@@ -137,7 +138,7 @@ public class WindowManager {
         finalMenu = new Vector();
 
         MysterMenuBar.addMenu(new MysterMenuFactory("Windows", finalMenu) {
-            public Menu makeMenu(Frame frame) {
+            public JMenu makeMenu(Frame frame) {
                 return getCorrectWindowsMenu(frame);
             }
         });

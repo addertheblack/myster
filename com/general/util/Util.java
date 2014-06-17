@@ -211,21 +211,6 @@ public class Util { //This code was taken from an Apple Sample Code package,
 
     public static boolean isEventDispatchThread() {
         return EventQueue.isDispatchThread();
-//        try {
-//            Class swingUtilities = Class.forName("javax.swing.SwingUtilities");
-//            Method isEventDispatchThread = swingUtilities.getMethod("isEventDispatchThread",
-//                    new Class[] {});
-//            Boolean result = (Boolean) isEventDispatchThread.invoke(null, new Object[] {});
-//            return result.booleanValue();
-//        } catch (ClassNotFoundException ignore) {
-//        } catch (SecurityException ignore) {
-//        } catch (NoSuchMethodException ignore) {
-//        } catch (IllegalArgumentException e) {
-//        } catch (IllegalAccessException e) {
-//        } catch (InvocationTargetException e) {
-//        }
-//        return Thread.currentThread() == eventThread;
-
     }
 
     public static void invokeAndWait(final Runnable runnable) throws InterruptedException {
@@ -235,46 +220,6 @@ public class Util { //This code was taken from an Apple Sample Code package,
             e.printStackTrace(); //?
         }
     }
-
-    /*
-     * We can use this event to put our runnable object into.
-     */
-    private static class SpecialEvent extends ComponentEvent {
-        private final Runnable runnable;
-
-        public SpecialEvent(Runnable runnable, Component source) {
-            super(source, ComponentEvent.COMPONENT_FIRST);
-            this.runnable = runnable;
-        }
-
-        public void run() {
-            final long startTime = System.currentTimeMillis();
-            runnable.run();
-            if (System.currentTimeMillis() - startTime > 500) {
-                System.out.println("This runnable took : "+(System.currentTimeMillis() - startTime)+" : "+runnable);
-            }
-        }
-    }
-
-    static volatile int counter = 0;
-
-    private static class SpecialComponent extends Component {
-        public SpecialComponent() {
-            enableEvents(ComponentEvent.COMPONENT_EVENT_MASK);
-        }
-
-        protected void processEvent(AWTEvent e) {
-            ((SpecialEvent) e).run();
-        }
-
-        protected AWTEvent coalesceEvents(AWTEvent existingEvent, AWTEvent newEvent) {
-            return null; //don't delete my freaking events!
-        }
-    }
-    /**
-     * *************************** CRAMMING STUFF ON THE EVENT THREAD SUB SYSTEM
-     * END*********************
-     */
     
     
     /////////////// time \\\\\\\\\\\

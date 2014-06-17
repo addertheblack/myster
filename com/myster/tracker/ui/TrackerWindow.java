@@ -157,8 +157,7 @@ public class TrackerWindow extends MysterFrame {
     /**
      * Returns the selected type.
      */
-
-    public synchronized MysterType getType() {
+    public synchronized MysterType getMysterType() {
         return choice.getType();
     }
 
@@ -173,11 +172,11 @@ public class TrackerWindow extends MysterFrame {
         list.clearAll();
         itemsinlist = new Vector(IPListManager.LISTSIZE);
         IPListManager manager = IPListManagerSingleton.getIPListManager();
-        Vector vector = manager.getAll(getType());
+        Vector vector = manager.getAll(getMysterType());
         TrackerMCListItem[] m = new TrackerMCListItem[vector.size()];
 
         for (int i = 0; i < vector.size(); i++) {
-            m[i] = new TrackerMCListItem((MysterServer) (vector.elementAt(i)), getType());
+            m[i] = new TrackerMCListItem((MysterServer) (vector.elementAt(i)), getMysterType());
             itemsinlist.addElement(m[i]);
         }
         list.addItem(m);

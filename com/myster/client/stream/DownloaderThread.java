@@ -11,7 +11,7 @@
 
 // REQUIRES AN ITERATION:
 // RED LIST:
-// Assumes that closing the file is not nessesairy <-
+// Assumes that closing the file is not necessary <-
 // Is too closely coupled with ProgressWindow (should send events)
 package com.myster.client.stream;
 
@@ -42,25 +42,25 @@ import com.myster.util.ProgressWindowClose;
  */
 
 public class DownloaderThread extends SafeThread {
-    MysterFileStub file;
+    private MysterFileStub file;
 
-    long bytessent = 0;
+    private long bytesSent = 0;
 
-    DataInputStream in;
+    private DataInputStream in;
 
-    DataOutputStream out;
+    private DataOutputStream out;
 
-    FileProgressWindow progress;
+    private FileProgressWindow progress;
 
-    RandomAccessFile o = null; //implements DataOutput Interface
+    private RandomAccessFile o = null; //implements DataOutput Interface
 
-    final MysterSocket socket;
+    private final MysterSocket socket;
 
-    File finalFile;
+    private File finalFile;
 
-    File fileToWriteTo;
+    private File fileToWriteTo;
 
-    static final int BUFFERSIZE = 2024; //I like turnips
+    private static final int BUFFERSIZE = 2024;
 
     //String downloadpath;
     long amountToSkip = 0;
@@ -271,7 +271,7 @@ public class DownloaderThread extends SafeThread {
             char code;
 
             try {
-                while (bytessent != filesize) {
+                while (bytesSent != filesize) {
                     if (in.readInt() != 6669) {
                         progress.setText(
                                 "Error.I didn't receive my sync Int; this is quite impossible.",
@@ -292,7 +292,7 @@ public class DownloaderThread extends SafeThread {
                         break;
                     case 'd':
                         length = in.readLong();
-                        if (bytessent == 0)
+                        if (bytesSent == 0)
                             progress.startBlock(FileProgressWindow.BAR_1, 0, filesize
                                     + amountToSkip); //fixes queuing
                         // bug for the d/l
@@ -300,7 +300,7 @@ public class DownloaderThread extends SafeThread {
                         //System.out.println("Getting data packet of size
                         // "+length);
                         progress.setText("Getting data packet of size " + length
-                                + ". I have gotten " + bytessent + " bytes so far",
+                                + ". I have gotten " + bytesSent + " bytes so far",
                                 FileProgressWindow.BAR_1);
                         receiveDataPacket(progress, o, length);
                         break;
@@ -358,7 +358,7 @@ public class DownloaderThread extends SafeThread {
                         finalFile.getPath(),
                         finalFile.getName(),
                         "There was an error renaming this file. Please enter a new name "
-                                + "that is lss than 31 characters. WARNING: pressing cancel now might make the file disapear.");
+                                + "that is less than 31 characters. WARNING: pressing cancel now might make the file disapear.");
                 if (pathinfo == null) {
                     (new AnswerDialog(progress, "Error renaming intermediate .i file.\n"
                             + fileToWriteTo + " -> " + finalFile)).answer();
@@ -478,10 +478,10 @@ public class DownloaderThread extends SafeThread {
             return -1;
         }
 
-        bytessent += size;
-        progress.setText("Transfered: " + Util.getStringFromBytes(bytessent),
+        bytesSent += size;
+        progress.setText("Transfered: " + Util.getStringFromBytes(bytesSent),
                 FileProgressWindow.BAR_1);
-        progress.setValue(bytessent + amountToSkip, FileProgressWindow.BAR_1);
+        progress.setValue(bytesSent + amountToSkip, FileProgressWindow.BAR_1);
         return size;
     }
 

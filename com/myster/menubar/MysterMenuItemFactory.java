@@ -4,6 +4,10 @@ import java.awt.Frame;
 import java.awt.MenuItem;
 import java.awt.MenuShortcut;
 import java.awt.event.ActionListener;
+import java.awt.event.InputEvent;
+
+import javax.swing.JMenuItem;
+import javax.swing.KeyStroke;
 
 public class MysterMenuItemFactory {
     private ActionListener action;
@@ -40,14 +44,11 @@ public class MysterMenuItemFactory {
         this.useShift = useShift;
     }
 
-    public MenuItem makeMenuItem(Frame frame) {
-        MenuItem menuItem;
-
+    public JMenuItem makeMenuItem(Frame frame) {
+        JMenuItem menuItem = new JMenuItem(com.myster.util.I18n.tr(name));
         if (shortcut != -1) {
-            menuItem = new MenuItem(com.myster.util.I18n.tr(name),
-                    new MenuShortcut(shortcut, useShift));
-        } else {
-            menuItem = new MenuItem(com.myster.util.I18n.tr(name));
+            int shiftMask = useShift ? InputEvent.SHIFT_DOWN_MASK : 0;
+            menuItem.setAccelerator(KeyStroke.getKeyStroke(shortcut, InputEvent.CTRL_DOWN_MASK|shiftMask));
         }
 
         if (action != null) {

@@ -25,9 +25,9 @@ import com.myster.search.MysterFileStub;
 import com.myster.util.MysterThread;
 
 public class FileInfoListerThread extends MysterThread {
-    ClientWindow w;
+    private ClientWindow w;
 
-    MysterSocket socket = null;
+    private MysterSocket socket = null;
     
     public FileInfoListerThread(ClientWindow w) {
         this.w = w;

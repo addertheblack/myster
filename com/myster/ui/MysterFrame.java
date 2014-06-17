@@ -1,8 +1,8 @@
 package com.myster.ui;
 
+import java.awt.Color;
 import java.awt.Frame;
 import java.awt.Image;
-import java.awt.MenuBar;
 import java.awt.Point;
 import java.awt.event.ComponentEvent;
 import java.awt.event.ComponentListener;
@@ -11,22 +11,23 @@ import java.awt.event.WindowListener;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 
+import javax.swing.JFrame;
+import javax.swing.JMenuBar;
+
 import com.myster.application.MysterGlobals;
 import com.myster.menubar.MysterMenuBar;
 import com.myster.menubar.event.MenuBarListener;
 
-public class MysterFrame extends Frame {
-    static int xStart = 5;
+public class MysterFrame extends JFrame {
+    private static int xStart = 5;
 
-    static int yStart = 5;
+    private static int yStart = 5;
 
-    MenuBarListener menuListener;
+    private MenuBarListener menuListener;
 
     private boolean menuBarEnabled = true;
 
     public MysterFrame() {
-        super();//explicit good
-
         initEvents();
     }
 
@@ -154,7 +155,7 @@ public class MysterFrame extends Frame {
 
     private void enableMenuBar() {
         MysterMenuBar.addMenuListener(menuListener);
-        setMenuBar(MysterMenuBar.getFactory().makeMenuBar(MysterFrame.this));
+        setJMenuBar(MysterMenuBar.getFactory().makeMenuBar(MysterFrame.this));
     }
 
     public boolean isMenuBarEnabled() {
@@ -168,7 +169,8 @@ public class MysterFrame extends Frame {
         try {
             Method method = Frame.class.getMethod("setState", new Class[] { Integer.TYPE });
 
-            method.invoke(this, new Object[] { new Integer(0) }); // 0 == normal.. Cannot use constant becaus eit doens't exist in 1.1
+            // 0 == normal.. Cannot use constant because it doens't exist in 1.1
+            method.invoke(this, new Object[] { new Integer(0) });
         } catch (SecurityException ex) {
             //ex.printStackTrace();
         } catch (NoSuchMethodException ex) {
@@ -184,11 +186,11 @@ public class MysterFrame extends Frame {
         toFront();
     }
 
-    private void setNewMenuBar(MenuBar newMenuBar) {
-        MenuBar oldMenuBar = getMenuBar();
+    private void setNewMenuBar(JMenuBar newMenuBar) {
+        JMenuBar oldMenuBar = getJMenuBar();
 
         if (oldMenuBar == null) {
-            setMenuBar(newMenuBar);
+            setJMenuBar(newMenuBar);
         } else {
             System.out.println("Swapped menus");
             int maxOldMenus = oldMenuBar.getMenuCount();

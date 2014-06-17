@@ -1,23 +1,22 @@
 package com.myster.menubar;
 
 import java.awt.Frame;
-import java.awt.MenuBar;
-import java.util.Vector;
+import java.util.List;
+
+import javax.swing.JMenuBar;
 
 public class MysterMenuBarFactory {
-    Vector mysterMenuFactories;
+    private List<MysterMenuFactory> mysterMenuFactories;
 
-    public MysterMenuBarFactory(Vector mysterMenuFactories) {
+    public MysterMenuBarFactory(List<MysterMenuFactory> mysterMenuFactories) {
         this.mysterMenuFactories = mysterMenuFactories;
     }
 
-    public MenuBar makeMenuBar(Frame frame) {
-        MenuBar menuBar = new MenuBar();
+    public JMenuBar makeMenuBar(Frame frame) {
+        JMenuBar menuBar = new JMenuBar();
 
         for (int i = 0; i < mysterMenuFactories.size(); i++) {
-            menuBar
-                    .add(((MysterMenuFactory) (mysterMenuFactories.elementAt(i)))
-                            .makeMenu(frame));
+            menuBar.add(mysterMenuFactories.get(i).makeMenu(frame));
         }
 
         return menuBar;
