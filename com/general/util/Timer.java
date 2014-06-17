@@ -3,12 +3,11 @@ package com.general.util;
 import java.util.TimerTask;
 
 /**
- * 
  * Is a classic timer object.. Similar in functionality to the javascript
  * setTimer method.
  * 
  * NOTE: This is a loose timer. Events are dispatched whenever they can be after
- * the minimum time.
+ * the minimum time has elapsed..
  * 
  * NOTE2: Events are now dispatched on the event thread.
  * 
