@@ -33,7 +33,7 @@ public class Timer {
      * Time to wait is relative to the current time ad is in millis.
      */
 
-	public Timer(final Runnable thingToRun, final long timeToWait,
+	public Timer(final Runnable thingToRun, long timeToWait,
 			final boolean runAsThread) {
 		
 		timeToWait = (timeToWait <= 0 ? 1 : timeToWait); // assert positive.
