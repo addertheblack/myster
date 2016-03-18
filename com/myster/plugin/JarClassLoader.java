@@ -51,10 +51,9 @@ public class JarClassLoader extends ClassLoader {
         return entries;
     }
 
-    private byte[] loadClassData(String name) throws ClassNotFoundException {
+    private byte[] loadClassData(String p_name) throws ClassNotFoundException {
         try {
-            name = name.replace('.', '/');
-            name = name + ".class";
+            String  name = p_name.replace('.', '/') + ".class";
             ZipEntry entry = zip.getEntry(name);
             InputStream in = zip.getInputStream(entry);
             long size = entry.getSize();
@@ -62,12 +61,13 @@ public class JarClassLoader extends ClassLoader {
                 System.out.println("This file is broken");
                 throw new ClassNotFoundException("Fuck");
             }
-            DataInputStream dataIn = new DataInputStream(in);
-
-            byte[] b = new byte[(int) size];
-            dataIn.readFully(b);
-            return b;
-        } catch (Exception ex) {
+            
+            try (DataInputStream dataIn = new DataInputStream(in)) {
+                byte[] b = new byte[(int) size];
+                dataIn.readFully(b);
+                return b;
+            }
+        } catch (IOException ex) {
             throw new ClassNotFoundException("I hate shit.");
         }
     }

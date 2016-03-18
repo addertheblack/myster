@@ -292,22 +292,23 @@ public class MP3Header {
         }
     }
 
-    private static String trimMe(String s) {
-        int index = s.indexOf("\0");
+    private static String trimMe(String p_toTrim) {
+        String workingString = p_toTrim;
+        int index = workingString.indexOf("\0");
         if (index == 0)
             return null;
         else if (index != -1)
-            s = s.substring(0, index);
+            workingString = workingString.substring(0, index);
 
-        for (int i = s.length(); i > 1; i--) {
-            if (s.charAt(i - 1) != ' ') {
-                s = s.substring(0, i);
-                if (i == 1 && s.charAt(0) == ' ')
-                    s = null;
+        for (int i = workingString.length(); i > 1; i--) {
+            if (workingString.charAt(i - 1) != ' ') {
+                workingString = workingString.substring(0, i);
+                if (i == 1 && workingString.charAt(0) == ' ')
+                    workingString = null;
                 break;
             }
         }
-        return s;
+        return workingString;
     }
 
     /**

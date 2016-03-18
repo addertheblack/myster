@@ -650,9 +650,10 @@ class MCListSelectionModel implements ListSelectionModel {
     public void setSelectionInterval(int index0, int index1) {
         clearSelection();
         if (selectionMode == ListSelectionModel.SINGLE_SELECTION) {
-            index0 = index1;
+            modifySelectionInterval(index0, index1, true);
+        } else {
+            modifySelectionInterval(index1, index1, true);
         }
-        modifySelectionInterval(index0, index1, true);
         fireValueChanged();
     }
 

@@ -515,29 +515,27 @@ public class MML implements Serializable {
 
     protected static String getNextName(String workingString) throws MMLPathException { //
         if (workingString.length() == 0)
-            throw new MMLPathException("Bad path Exception 1");
+            throw new MMLPathException("Can't get name from empty string.");
         if (workingString.length() == 1) {
             if (workingString.charAt(0) == '/')
                 return "";
             else
-                throw new MMLPathException("Bad path Exception 2");
+                throw new MMLPathException( "\"" + workingString + "\" Must start with a '/'");
         }
 
-        workingString = workingString.substring(1);
-        int index = workingString.indexOf("/");
+        String restOfString = workingString.substring(1);
+        int index = restOfString.indexOf("/");
         if (index == -1)
-            return workingString;
+            return restOfString;
         if (index == 0)
             return "";
-        return workingString.substring(0, index);
+        return restOfString.substring(0, index);
     }
 
+    /**
+     * @return null if no more items
+     */
     protected static String getNextTrimmedPath(String workingString) throws MMLPathException { //returns
-        // null
-        // if
-        // no
-        // more
-        // items
         if (workingString.length() == 0)
             return null;
         if (workingString.length() == 1) {
@@ -547,8 +545,8 @@ public class MML implements Serializable {
                 throw new MMLPathException("Bad path Exception 3");
         }
 
-        workingString = workingString.substring(1); //chop off the first bit.
-        int index = workingString.indexOf("/");
+        String workingStringWithoutFirstCharacter = workingString.substring(1); //chop off the first bit.
+        int index = workingStringWithoutFirstCharacter.indexOf("/");
         if (index == -1)
             return null;
         if (index == 0) {
@@ -557,7 +555,7 @@ public class MML implements Serializable {
             //else return getNextTrimmedPath(workingString.substring(1,
             // workingString.length()));
         }
-        return workingString.substring(index, workingString.length());
+        return workingStringWithoutFirstCharacter.substring(index, workingStringWithoutFirstCharacter.length());
     }
 
     protected static PathVector parsePath(String path) throws MMLPathException {
@@ -571,11 +569,13 @@ public class MML implements Serializable {
             throw new DoubleSlashException(path);
 
         PathVector vector = new PathVector(10, 50);
+        String currentPath = path;
         do {
-            String activeToken = getNextName(path);
+            String activeToken = getNextName(currentPath);
             vector.addElement(activeToken);
-            path = getNextTrimmedPath(path);
-        } while (path != null);
+            currentPath = getNextTrimmedPath(currentPath);
+        } while (currentPath != null);
+        
         return vector;
     }
 

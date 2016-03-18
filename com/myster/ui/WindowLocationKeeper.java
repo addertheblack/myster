@@ -121,10 +121,10 @@ public class WindowLocationKeeper {
         return (rect.x > 0 && rect.y > 0 && (rect.x + 50) < screenBorders.width && rect.y + 50 < screenBorders.height);
     }
 
-    public static synchronized Rectangle[] getLastLocs(String key) {
+    public static synchronized Rectangle[] getLastLocs(String p_key) {
         init();
-        //System.out.println(oldPrefs.toString());
-        key = "/" + key + "/";
+        
+        String key = "/" + p_key + "/";
 
         Vector keyList = oldPrefs.list(key);
 

@@ -59,12 +59,12 @@ public class ClientMPG3HandleObject extends ClientGenericHandleObject {
             if (index < numOfColumns) {
                 return super.getValueOfColumn(index);
             } else {
-                index -= numOfColumns;
-                switch (index) {
+                int newIndex = index - numOfColumns;
+                switch (newIndex) {
                 case 0:
                     try {
                         return new SortableBit(Long.parseLong(result
-                                .getMetaData(keyarray[index]))); //Lines like
+                                .getMetaData(keyarray[newIndex]))); //Lines like
                                                                  // this are the
                                                                  // only reasone
                                                                  // I write
@@ -76,7 +76,7 @@ public class ClientMPG3HandleObject extends ClientGenericHandleObject {
                 case 1:
                     try {
                         return new SortableHz(Long.parseLong(result
-                                .getMetaData(keyarray[index]))); //Lines like
+                                .getMetaData(keyarray[newIndex]))); //Lines like
                                                                  // this are the
                                                                  // only reasone
                                                                  // I write
@@ -87,7 +87,7 @@ public class ClientMPG3HandleObject extends ClientGenericHandleObject {
                 case 2: //no break statement so it falls through (cool, eh?)
                 case 3: //no break statement so it falls through
                 case 4:
-                    String s_temp = result.getMetaData(keyarray[index]);
+                    String s_temp = result.getMetaData(keyarray[newIndex]);
                     return new SortableString(s_temp == null ? "-" : s_temp);
 
                 default:

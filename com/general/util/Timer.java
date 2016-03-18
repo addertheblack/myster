@@ -35,9 +35,6 @@ public class Timer {
 
 	public Timer(final Runnable thingToRun, long timeToWait,
 			final boolean runAsThread) {
-		
-		timeToWait = (timeToWait <= 0 ? 1 : timeToWait); // assert positive.
-
         task = new TimerTask() {
 			@Override
 			public void run() {
@@ -49,7 +46,7 @@ public class Timer {
 			}
         };
         
-        timer.schedule(task, timeToWait);
+        timer.schedule(task, Math.max(1, timeToWait));
     }
 
     public void cancelTimer() {

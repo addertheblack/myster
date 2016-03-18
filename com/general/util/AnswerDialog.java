@@ -38,20 +38,20 @@ public class AnswerDialog extends Dialog {
 
     private String thestring;
 
-    public AnswerDialog(Frame f, String q, String[] b) {
+    public AnswerDialog(Frame f, String q, String ... b) {
         super(f, "Alert!", true);
         thestring = q;
         parent = f;
         pack();
         insets = getInsets();
 
+        String[] buttons = b.clone();
         if (b.length == 0) {
-            b = new String[1];
-            b[0] = "Ok";
+            buttons = new String[]{ "Ok" };
         }
 
         initComponents(b);
-
+        
         setResizable(false);
     }
 

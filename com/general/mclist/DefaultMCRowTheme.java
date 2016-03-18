@@ -119,16 +119,27 @@ public class DefaultMCRowTheme implements MCRowThemeInterface {
             hozoffset += padding + rowStats.getWidthOfColumn(i) + (2 * internalPadding);
         }
     }
-    
-    private void paintRow(Graphics g, int hozoffset, int end, int padding, int internalPadding, int yOffset, int height) {
+
+    private static void paintRow(Graphics g,
+                                 int hozoffset,
+                                 int end,
+                                 int padding,
+                                 int internalPadding,
+                                 int yOffset,
+                                 int height) {
         int doubleInternalPadding = 2 * internalPadding;
         int width = end - hozoffset - padding;
-        g.fillRect(padding + hozoffset, yOffset, width + doubleInternalPadding, height + doubleInternalPadding);
+        g.fillRect(padding + hozoffset,
+                   yOffset,
+                   width + doubleInternalPadding,
+                   height + doubleInternalPadding);
     }
 
-    public String makeFit(String s, int size) {
+    public String makeFit(String p_toMakeFit, int size) {
         if (!component.isVisible())
-            return s;
+            return p_toMakeFit;
+        
+        String workingString = p_toMakeFit;
 
         if (tempfont == null) {
             tempfont = component.getFontMetrics(component.getFont()); //uses
@@ -140,22 +151,22 @@ public class DefaultMCRowTheme implements MCRowThemeInterface {
         }
 
         if (filterNonEnglish) {
-            char[] array = s.toCharArray();
+            char[] array = workingString.toCharArray();
             for (int i = 0; i < array.length; i++) {
                 if (128 < array[i]) {
                     array[i] = '?';
                 }
             }
-            s = new String(array);
+            workingString = new String(array);
         }
 
         int i = 0;
-        if (tempfont.stringWidth(s) > size - 8) {
-            for (i = s.length(); ((tempfont.stringWidth(s.substring(0, i)
+        if (tempfont.stringWidth(workingString) > size - 8) {
+            for (i = workingString.length(); ((tempfont.stringWidth(workingString.substring(0, i)
                     + "...") > size - 8) && i > 0); i--)
                 ;
-            return s.substring(0, i) + "...";
+            return workingString.substring(0, i) + "...";
         }
-        return s;
+        return workingString;
     }
 }

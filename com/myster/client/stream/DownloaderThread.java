@@ -386,7 +386,7 @@ public class DownloaderThread extends SafeThread {
         }
     }
 
-    private static String[] askUser(ProgressWindow progress, String dp, String theFileName, String a) {
+    private static String[] askUser(ProgressWindow progress, String dp, String initialFileName, String a) {
         String ask = (a == null ? "What do you want to call this file?" : a);
 
         String[] s = new String[2];
@@ -394,17 +394,16 @@ public class DownloaderThread extends SafeThread {
         dialog.setSize(400, 300);
 
         dialog.setDirectory(dp);
-        dialog.setFile(theFileName);
+        dialog.setFile(initialFileName);
         dialog.show();
         String temppath = dialog.getDirectory();
-        theFileName = dialog.getFile();
-        if (theFileName == null) {
+        String chosenFileName = dialog.getFile();
+        if (chosenFileName == null) {
             progress.setText("User Cancelled", FileProgressWindow.BAR_1);
             return null;
         }
-        dp = temppath;
-        s[0] = dp;
-        s[1] = theFileName;
+        s[0] = temppath;
+        s[1] = chosenFileName;
 
         return s;
     }

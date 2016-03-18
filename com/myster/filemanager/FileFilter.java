@@ -70,8 +70,8 @@ class FileFilter {
         return false;
     }
     
-    private static boolean isArchive(String fileName) {
-        fileName = fileName.toLowerCase();
+    private static boolean isArchive(String p_fileName) {
+        String fileName = p_fileName.toLowerCase();
         return fileName.startsWith(".zip") || fileName.startsWith(".gz") || fileName.startsWith(".gzip");
     }
 }

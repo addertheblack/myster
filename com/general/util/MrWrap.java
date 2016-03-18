@@ -15,21 +15,15 @@ import java.util.StringTokenizer;
 import java.util.Vector;
 
 public class MrWrap {
+    private final Vector lines;
 
-    /**
-     * Wicky
-     */
-
-    Vector lines = new Vector(10, 100);
-
-    int counter = 0;
+    private int counter = 0;
 
     public MrWrap(String s, int x, FontMetrics m) {
         lines = wrap(s, x, m); //Yummy.
     }
 
-    public static Vector wrap(String string, final int x, FontMetrics metrics) { //thread
-                                                                                 // safe.
+    public static Vector wrap(String string, final int x, FontMetrics metrics) {
         Vector lines = new Vector(100, 100);
 
         StringTokenizer tokens = new StringTokenizer(string, " ", true);
@@ -63,24 +57,24 @@ public class MrWrap {
     }
 
     public static String doReturns(String working, Vector lines) {
-        if (working.indexOf("\n") != -1) { //put returns in for \ns
-            int first = 0;
-            int last = 0;
-            String tempstring;
-            do {
-                last = working.indexOf("\n", first);
-                if (last < 0) { //if no more \n then break; (or if last==-1!)
-                    break;
-                }
-                tempstring = working.substring(first, last);
-                lines.addElement(tempstring);
-                first = last + 1;
-            } while (true);
-            working = working.substring(first, working.length()); //fixes
-                                                                  // things up
-                                                                  // here.
+        if (working.indexOf("\n") == -1) {
+            return working;
         }
-        return working;
+
+        // put returns in for \ns
+        int first = 0;
+        int last = 0;
+        String tempstring;
+        do {
+            last = working.indexOf("\n", first);
+            if (last < 0) { // if no more \n then break; (or if last==-1!)
+                break;
+            }
+            tempstring = working.substring(first, last);
+            lines.addElement(tempstring);
+            first = last + 1;
+        } while (true);
+        return working.substring(first, working.length());
     }
 
     public synchronized boolean hasMoreElements() { //is thread safe

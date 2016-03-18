@@ -188,8 +188,8 @@ public class AWTMCList extends Panel implements MCList {
         //g.fillRect(0,0,y2-y1,x2-x1);
         if (list.size() == 0)
             return;
-        y1 += header.getHeight(); //why bother over drawing like this?
-        int c1 = getClicked(1, y1);
+        int correctedy1 = y1 + header.getHeight(); //why bother over drawing like this?
+        int c1 = getClicked(1, correctedy1);
         int c2 = getClicked(1, y2);
         if (c2 == -1)
             c2 = list.size() - 1;
@@ -197,7 +197,7 @@ public class AWTMCList extends Panel implements MCList {
             c2 = -1; //If c1=-1 the means the scroll pane is outside any
         // visible area so draw nothing.
 
-        int offsetcounter = getYFromClicked(c1) - y1; //rounding routine (get
+        int offsetcounter = getYFromClicked(c1) - correctedy1; //rounding routine (get
         // the offset properly.
         // Gtes initial offset.
 
@@ -250,9 +250,9 @@ public class AWTMCList extends Panel implements MCList {
     }
 
     synchronized int getClicked(int x, int y) {
-        y -= 0; //hahahahhaha
-        y -= header.getHeight();
-        int temp = y / rowTheme.getHeight(PADDING, INTERNAL_PADDING);
+        //No joking around
+        int correctedY = y -header.getHeight();
+        int temp = correctedY / rowTheme.getHeight(PADDING, INTERNAL_PADDING);
         if (temp < list.size())
             return temp;
         return -1;

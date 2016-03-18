@@ -169,9 +169,8 @@ public class BandwidthManager {
             }
         }
 
-        public synchronized int setOutgoingMax(int max) {
-            if (max < 2)
-                max = 2;
+        public synchronized int setOutgoingMax(int p_max) {
+            int max = Math.max(2, p_max);
 
             prefMML.put(OUTGOING_MAX, "" + max);
             Preferences.getInstance().put(KEY_IN_PREFS, prefMML);
@@ -180,9 +179,8 @@ public class BandwidthManager {
             return max;
         }
 
-        public synchronized int setIncommingMax(int max) {
-            if (max < 2)
-                max = 2;
+        public synchronized int setIncommingMax(int p_max) {
+            int max = Math.max(2, p_max);
 
             prefMML.put(INCOMMING_MAX, "" + max);
             Preferences.getInstance().put(KEY_IN_PREFS, prefMML);

@@ -223,7 +223,7 @@ public class FileTypeList {
         // boolean inWord = false;
         boolean aggregate = false;
 
-        queryString = mergePunctuation(queryString);
+        String mergedQueryString = mergePunctuation(queryString);
 
         // Split queryStr into keywords at the whitespaces into keywords
         // (Anything !Character.isLetterOrDigit() is considered whitespace)
@@ -231,11 +231,12 @@ public class FileTypeList {
         // beginning-of-word matches.
 
         // TOKENIZZZZEE!!
-        for (int i = 0; i < queryString.length(); i++) {
-            char c = queryString.charAt(i);
+        for (int i = 0; i < mergedQueryString.length(); i++) {
+            char c = mergedQueryString.charAt(i);
             if (c == '\"') {
-                if (stringBuffer.charAt(stringBuffer.length() - 1) != ' ')
+                if (stringBuffer.charAt(stringBuffer.length() - 1) != ' ') {
                     stringBuffer.append(' ');
+                }
                 if (stringBuffer.length() > 1) {
                     keywords.addElement(stringBuffer.toString());
                     stringBuffer = new StringBuffer(" ");
@@ -254,8 +255,9 @@ public class FileTypeList {
                     stringBuffer.append(' ');
             }
         }
-        if (stringBuffer.length() > 1)
+        if (stringBuffer.length() > 1) {
             keywords.addElement(stringBuffer.toString());
+        }
 
         // MATCHER
         for (int i = 0; i < filelist.size(); i++) {
@@ -526,8 +528,8 @@ public class FileTypeList {
          * @param telomere
          *            is a recusion counter. The function will recurse a maximum of telomere times
          */
-        private void indexDir(MysterType type, File file, Vector filelist, int telomere) {
-            telomere--;
+        private void indexDir(MysterType type, File file, Vector filelist, int p_telomere) {
+            int telomere = p_telomere - 1;
             if (telomere < 0)
                 return;
             if (!file.isDirectory() || !file.exists()) {

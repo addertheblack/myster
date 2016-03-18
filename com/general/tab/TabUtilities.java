@@ -18,13 +18,13 @@ import java.awt.image.PixelGrabber;
 import com.general.util.Util;
 
 public class TabUtilities {
-    public static Image makeImage(int stringwidth, Component c,
+    public static Image makeImage(int p_stringWidth, Component c,
             String middleName) {
         int xsize = 0;
         int ysize = 0;
 
         boolean isCustom = false;
-        if (stringwidth == -1)
+        if (p_stringWidth == -1)
             isCustom = true;
 
         Image left = loadLeft(c);
@@ -43,15 +43,16 @@ public class TabUtilities {
 
         ysize = middle.getHeight(c);
 
+        int stringWidth = p_stringWidth;
         if (isCustom)
-            stringwidth = middle.getWidth(c);
+            stringWidth = middle.getWidth(c);
 
         if (!isCustom) {
             xsize += left.getWidth(c);
             xsize += right.getWidth(c);
         }
 
-        xsize += stringwidth;
+        xsize += stringWidth;
 
         Image workingImage = c.createImage(xsize, ysize);
 
@@ -59,9 +60,8 @@ public class TabUtilities {
 
         if (!isCustom) {
             g.drawImage(left, 0, 0, c);
-            int borders = left.getWidth(c) + right.getWidth(c);
 
-            for (int i = 0; i + middle.getWidth(c) < stringwidth; i += middle
+            for (int i = 0; i + middle.getWidth(c) < stringWidth; i += middle
                     .getWidth(c)) {
                 g.drawImage(middle, left.getWidth(c) + i, 0, c);
             }
@@ -73,22 +73,25 @@ public class TabUtilities {
             g.drawImage(middle, 0, 0, c);
         }
 
-        // Make Transparent
+        workingImage = makeTransparent(c, workingImage);
 
-        int[] array = getPixels(workingImage, 0, 0, workingImage.getWidth(c),
-                workingImage.getHeight(c));
+        return workingImage;
+    }
+
+    private static Image makeTransparent(Component c, Image workingImage) {
+        int[] array =
+                getPixels(workingImage, 0, 0, workingImage.getWidth(c), workingImage.getHeight(c));
 
         for (int i = 0; i < array.length; i++) {
             array[i] = makeWhiteTransparent(array[i]);
         }
 
-        MemoryImageSource source = new MemoryImageSource(workingImage
-                .getWidth(c), workingImage.getHeight(c), array, 0, workingImage
-                .getWidth(c));
-        workingImage = c.createImage(source);
-        //..
-
-        return workingImage;
+        MemoryImageSource source = new MemoryImageSource(workingImage.getWidth(c),
+                                                         workingImage.getHeight(c),
+                                                         array,
+                                                         0,
+                                                         workingImage.getWidth(c));
+        return c.createImage(source);
     }
 
     public static Image makeImage(int stringwidth, Component c) {

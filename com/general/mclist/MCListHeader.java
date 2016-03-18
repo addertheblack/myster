@@ -197,9 +197,7 @@ public class MCListHeader extends Panel {
 
     public void setColumnWidth(int index, int size) {
         if (index > -1 && index < getNumberOfColumns() && size > -1) {
-            if (size < MIN_COLUMN_WIDTH)
-                size = MIN_COLUMN_WIDTH;
-            columnWidthArray[index] = size;
+            columnWidthArray[index] = Math.max(size, MIN_COLUMN_WIDTH);
             repaint();
         }
     }
