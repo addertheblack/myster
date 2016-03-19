@@ -47,17 +47,14 @@ import com.myster.ui.MysterFrame;
  * be called from the outside.
  */
 
-public class PreferencesDialogBox extends MysterFrame { //protected...!
-    Insets insets;
+public class PreferencesDialogBox extends MysterFrame {
+    private Insets insets;
 
-    final int XDEFAULT = 600;
+    private static final int XDEFAULT = 600;
 
-    final int YDEFAULT = 400;
+    private static final int YDEFAULT = 400;
 
-    String[] choices = { "14.4", "28.8", "33.6", "56k", "64", "128", "ADSL", "Cable modem", "T1",
-            "T3", "40Mbits/sec +" };
-
-    MainPanel mypanel;
+    private final MainPanel mypanel;
 
     /**
      * Builds a new Preferences Dialog
@@ -92,7 +89,7 @@ public class PreferencesDialogBox extends MysterFrame { //protected...!
 
             public void componentShown(ComponentEvent e) {
                 mypanel.restore();
-                assertSize();
+                pack();
             }
 
             public void componentHidden(ComponentEvent e) {
@@ -100,19 +97,6 @@ public class PreferencesDialogBox extends MysterFrame { //protected...!
             }
 
         });
-
-        assertSize();
-    }
-
-    //Makes sure that the dialog is the correct size with the insets. This is a
-    // work around for multiple java bugs.
-    private void assertSize() {
-        insets = getInsets();
-        if (getSize().width != XDEFAULT + insets.right + insets.left
-                || getSize().height != YDEFAULT + insets.top + insets.bottom) {
-            setSize(XDEFAULT + insets.right + insets.left, YDEFAULT + insets.top + insets.bottom);
-            doLayout();//fucking java bug
-        }
     }
 
     //Adds a panel, duh.

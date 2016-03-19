@@ -205,11 +205,11 @@ public class FMIChooser extends PreferencesPanel {
     }
 
     private static class SettingsStruct {
-        String path;
+        public final String path;
 
-        boolean shared;
+        public final boolean shared;
 
-        MysterType type;
+        public final MysterType type;
 
         public SettingsStruct(MysterType type, String path, boolean shared) {
             this.type = type;
@@ -319,7 +319,7 @@ public class FMIChooser extends PreferencesPanel {
      * under numberOfChars characters and removes characters from the middle and
      * adding "..."
      */
-    private String TIM(String input, int numberOfChars) {
+    private static String TIM(String input, int numberOfChars) {
         if (input.length() <= numberOfChars)
             return input;
         if (input.length() < 2)

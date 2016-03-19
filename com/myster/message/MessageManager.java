@@ -1,8 +1,5 @@
 package com.myster.message;
 
-import java.awt.Checkbox;
-import java.awt.Label;
-import java.awt.TextField;
 import java.awt.event.ItemEvent;
 import java.awt.event.ItemListener;
 import java.io.ByteArrayInputStream;
@@ -10,6 +7,10 @@ import java.io.ByteArrayOutputStream;
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.io.IOException;
+
+import javax.swing.JCheckBox;
+import javax.swing.JLabel;
+import javax.swing.JTextField;
 
 import com.general.util.AnswerDialog;
 import com.general.util.LinkedList;
@@ -137,11 +138,11 @@ public class MessageManager {
     }
 
     private static class MessagePreferencesPanel extends PreferencesPanel {
-        Checkbox refuseMessages;
+        private final JCheckBox refuseMessages;
 
-        Label denyMessageLabel;
+        private final JLabel denyMessageLabel;
 
-        TextField denyMessageText;
+        private final JTextField denyMessageText;
 
         private static final String PREFS_MESSAGING_KEY = "Myster Instant Messaging";
 
@@ -158,7 +159,7 @@ public class MessageManager {
         public MessagePreferencesPanel() {
             setLayout(null);
 
-            refuseMessages = new Checkbox("Refuse Messages");
+            refuseMessages = new JCheckBox("Refuse Messages");
             refuseMessages.setSize(150, 25);
             refuseMessages.setLocation(10, 25);
             refuseMessages.addItemListener(new ItemListener() {
@@ -168,12 +169,12 @@ public class MessageManager {
             });
             add(refuseMessages);
 
-            denyMessageLabel = new Label("Refusal Message:");
+            denyMessageLabel = new JLabel("Refusal Message:");
             denyMessageLabel.setSize(150, 25);
             denyMessageLabel.setLocation(20, 50);
             add(denyMessageLabel);
 
-            denyMessageText = new TextField(REFUSAL_MESSAGE_DEFAULT);
+            denyMessageText = new JTextField(REFUSAL_MESSAGE_DEFAULT);
             denyMessageText.setSize(400, 25);
             denyMessageText.setLocation(25, 75);
             add(denyMessageText);
@@ -193,7 +194,7 @@ public class MessageManager {
             mml.put(MML_REFUSE_MESSAGE, text);
 
             mml
-                    .put(MML_REFUSE_FLAG, (refuseMessages.getState() ? TRUE_AS_STRING
+                    .put(MML_REFUSE_FLAG, (refuseMessages.isSelected() ? TRUE_AS_STRING
                             : FALSE_AS_STRING));
 
             Preferences.getInstance().put(PREFS_MESSAGING_KEY, mml);
@@ -203,13 +204,13 @@ public class MessageManager {
         public void reset() {
             denyMessageText.setText(getRefusingMessage());
 
-            refuseMessages.setState(isRefusingMessages());
+            refuseMessages.setSelected(isRefusingMessages());
 
             updateEnabled(); //cheese
         }
 
         private void updateEnabled() {
-            if (refuseMessages.getState()) {
+            if (refuseMessages.isSelected()) {
                 denyMessageLabel.setEnabled(true);
                 denyMessageText.setEnabled(true);
             } else {

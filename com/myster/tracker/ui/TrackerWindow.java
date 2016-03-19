@@ -36,9 +36,9 @@ public class TrackerWindow extends MysterFrame {
 
     private TypeChoice choice;
 
-    GridBagLayout gblayout;
+    private GridBagLayout gblayout;
 
-    GridBagConstraints gbconstrains;
+    private GridBagConstraints gbconstrains;
 
     private static com.myster.ui.WindowLocationKeeper keeper = new com.myster.ui.WindowLocationKeeper(
             "Tracker");

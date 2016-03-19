@@ -1,33 +1,36 @@
 package com.general.util;
 
-import java.awt.Button;
 import java.awt.Color;
-import java.awt.Dialog;
 import java.awt.Dimension;
 import java.awt.FontMetrics;
 import java.awt.Frame;
 import java.awt.Graphics;
 import java.awt.Insets;
 import java.awt.Point;
-import java.awt.TextField;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.util.Vector;
 
-public class AskDialog extends Dialog {
-    Button[] buttons;
+import javax.swing.JButton;
+import javax.swing.JDialog;
+import javax.swing.JTextField;
 
-    String it; //just like hypercard :-)
+public class AskDialog extends JDialog {
+    private JButton[] buttons;
 
-    Vector message = new Vector(10, 10);
+    private String it; //just like hypercard :-)
 
-    TextField messagebox;
+    private final Vector message = new Vector(10, 10);
 
-    int height;
+    private JTextField messagebox;
 
-    FontMetrics metrics;
+    private int height;
 
-    Insets insets;
+    private FontMetrics metrics;
+
+    private Insets insets;
+    
+    private String msg;
 
     private static final int XPAD = 5;
 
@@ -43,9 +46,9 @@ public class AskDialog extends Dialog {
 
     private static final int MSIZEY = 35;
 
-    Frame parent;
+    private final Frame parent;
 
-    String question, sample;
+    private final String question, sample;
 
     public AskDialog(Frame f, String q, String s) {
         super(f, "Ask!", true);
@@ -70,13 +73,13 @@ public class AskDialog extends Dialog {
         setSize(getPreferredSize());
         setLayout(null);
 
-        messagebox = new TextField(sample);
+        messagebox = new JTextField(sample);
         messagebox.setSize(MSIZEX, MSIZEY);
         messagebox.setLocation(XPAD + insets.left, message.size() * height
                 + YPAD + insets.top + 10);
         add(messagebox);
 
-        buttons = new Button[] { new Button("Cancel"), new Button("Ok") };
+        buttons = new JButton[] { new JButton("Cancel"), new JButton("Ok") };
 
         for (int i = 0; i < buttons.length; i++) {
             buttons[i].addActionListener(new ActionHandler());
@@ -123,8 +126,6 @@ public class AskDialog extends Dialog {
 
     }
 
-    String msg;
-
     public String ask() {
         show();
         return msg;
@@ -149,7 +150,7 @@ public class AskDialog extends Dialog {
         }
 
         public void actionPerformed(ActionEvent e) {
-            Button b = ((Button) (e.getSource()));
+            JButton b = ((JButton) (e.getSource()));
 
             it = b.getLabel();
             if (it.equals("Ok"))

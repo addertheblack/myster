@@ -1,9 +1,7 @@
 package com.general.util;
 
-import java.awt.Button;
 import java.awt.Color;
 import java.awt.Container;
-import java.awt.Dialog;
 import java.awt.Dimension;
 import java.awt.FontMetrics;
 import java.awt.Frame;
@@ -15,8 +13,11 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.util.Vector;
 
-public class AnswerDialog extends Dialog {
-    private Button[] buttons;
+import javax.swing.JButton;
+import javax.swing.JDialog;
+
+public class AnswerDialog extends JDialog {
+    private JButton[] buttons;
 
     private String it; //just like hypercard :-)
 
@@ -104,10 +105,10 @@ public class AnswerDialog extends Dialog {
         setSize(400 + insets.right + insets.left, message.size() * height
                 + ascent + 5 + BUTTONY + 20 + insets.top + insets.bottom);
 
-        buttons = new Button[length];
+        buttons = new JButton[length];
 
         for (int i = 0; i < length; i++) {
-            buttons[i] = new Button(b[i]);
+            buttons[i] = new JButton(b[i]);
             buttons[i].addActionListener(new ActionHandler());
             buttons[i].setSize(BUTTONX, BUTTONY);
             buttons[i].setLocation(getSize().width - (120 * i + 20) - BUTTONX,
@@ -172,7 +173,7 @@ public class AnswerDialog extends Dialog {
         }
 
         public void actionPerformed(ActionEvent e) {
-            Button b = ((Button) (e.getSource()));
+            JButton b = ((JButton) (e.getSource()));
 
             it = b.getLabel();
             dispose();

@@ -7,11 +7,12 @@ import java.awt.FontMetrics;
 import java.awt.Graphics;
 import java.awt.Image;
 import java.awt.Insets;
-import java.awt.Label;
 import java.awt.MediaTracker;
-import java.awt.Panel;
 import java.awt.event.MouseListener;
 import java.util.Vector;
+
+import javax.swing.JLabel;
+import javax.swing.JPanel;
 
 import com.general.util.ProgressBar;
 import com.general.util.Util;
@@ -28,9 +29,9 @@ public class ProgressWindow extends MysterFrame {
 
     public static final int Y_TEXT_OFFSET = 5; // y offset of text
 
-    Vector progressPanels;
+    private final Vector progressPanels = new Vector(10, 10);;
 
-    protected AdPanel adPanel;
+    protected final AdPanel adPanel = new AdPanel();
 
     public ProgressWindow() {
         commonInit();
@@ -45,11 +46,7 @@ public class ProgressWindow extends MysterFrame {
     private void commonInit() {
         setLayout(new FlowLayout(FlowLayout.CENTER, 0, 0));
 
-        adPanel = new AdPanel();
         add(adPanel);
-
-        progressPanels = new Vector(10, 10);
-
         addProgressPanel();
 
         setResizable(false);
@@ -301,18 +298,18 @@ public class ProgressWindow extends MysterFrame {
         adPanel.addMouseListener(l);
     }
 
-    private static class ProgressPanel extends DoubleBufferPanel {
+    private static class ProgressPanel extends JPanel {
         public static final int PROGRESS_X_OFFSET = 10;
 
         public static final int PROGRESS_Y_OFFSET = 25;
 
         public static final int ADDITIONAL_X_SIZE = 50;
 
-        ProgressBar progressBar;
+        private final ProgressBar progressBar;
 
-        Label textLabel;
+        private final JLabel textLabel;
 
-        Label additionalLabel;
+        private final JLabel additionalLabel;
 
         public ProgressPanel() {
             setLayout(null);
@@ -323,12 +320,12 @@ public class ProgressWindow extends MysterFrame {
             progressBar.setForeground(Color.blue);
             add(progressBar);
 
-            textLabel = new Label();
+            textLabel = new JLabel();
             textLabel.setLocation(X_TEXT_OFFSET, Y_TEXT_OFFSET);
             textLabel.setSize(X_SIZE - X_TEXT_OFFSET - ADDITIONAL_X_SIZE, 20);
             add(textLabel);
 
-            additionalLabel = new Label();
+            additionalLabel = new JLabel();
             additionalLabel.setLocation(X_SIZE - ADDITIONAL_X_SIZE, Y_TEXT_OFFSET);
             additionalLabel.setSize(ADDITIONAL_X_SIZE, 20);
             add(additionalLabel);
@@ -382,7 +379,7 @@ public class ProgressWindow extends MysterFrame {
         }
     }
 
-    protected static class AdPanel extends DoubleBufferPanel {
+    protected static class AdPanel extends JPanel {
         Image ad;
 
         String labelText = "";
@@ -391,7 +388,7 @@ public class ProgressWindow extends MysterFrame {
             ad = im;
         }
 
-        public void paint(Graphics g) {
+        public void paintComponent(Graphics g) {
             if (ad == null)
                 return;
 
@@ -431,24 +428,4 @@ public class ProgressWindow extends MysterFrame {
         }
     }
 
-    private static class DoubleBufferPanel extends Panel {
-        public DoubleBufferPanel() {
-        }
-
-        Dimension currentBufferSize;
-
-        Image im; //double buffer
-
-        public void update(Graphics g) {
-            if ((im == null) || (!currentBufferSize.equals(getSize()))) {
-                currentBufferSize = getSize();
-
-                im = createImage(currentBufferSize.width, currentBufferSize.height);
-            }
-
-            paint(im.getGraphics());
-
-            g.drawImage(im, 0, 0, this);
-        }
-    }
 }

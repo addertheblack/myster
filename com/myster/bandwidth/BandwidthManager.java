@@ -1,12 +1,13 @@
 package com.myster.bandwidth;
 
-import java.awt.Checkbox;
-import java.awt.Label;
-import java.awt.Panel;
-import java.awt.TextField;
 import java.awt.event.ItemEvent;
 import java.awt.event.ItemListener;
 import java.util.Vector;
+
+import javax.swing.JCheckBox;
+import javax.swing.JLabel;
+import javax.swing.JPanel;
+import javax.swing.JTextField;
 
 import com.general.util.MessagePanel;
 import com.myster.mml.RobustMML;
@@ -280,27 +281,27 @@ class BandwithPrefsPanel extends PreferencesPanel {
 
     public static final int STD_YSIZE = 300;
 
-    Panel explanationPanel = new MessagePanel(
+    private final JPanel explanationPanel = new MessagePanel(
             "Using the bandwidth preference pannel you can set the maximum rate "
                     + "at which Myster will send and recieve data. This setting is useful "
                     + "if you want to run a Myster server while using the internet, but find "
                     + "that it slows down your internet connection.");
 
-    Checkbox enableOutgoing;
+    private final JCheckBox enableOutgoing;
 
-    Checkbox enableIncomming;
+    private final JCheckBox enableIncomming;
 
-    Label outgoingSpeedLabel;
+    private final JLabel outgoingSpeedLabel;
 
-    Label incommingSpeedLabel;
+    private final JLabel incommingSpeedLabel;
 
-    TextField incommingBytesField;
+    private final JTextField incommingBytesField;
 
-    TextField outgoingBytesField;
+    private final JTextField outgoingBytesField;
 
-    Label outgoingUnitsLabel;
+    private final JLabel outgoingUnitsLabel;
 
-    Label incommingUnitsLabel;
+    private final JLabel incommingUnitsLabel;
 
     public BandwithPrefsPanel() {
         setLayout(null);
@@ -311,7 +312,7 @@ class BandwithPrefsPanel extends PreferencesPanel {
         int nextOff = STD_YSIZE / 3;
         nextOff += 10;
 
-        enableOutgoing = new Checkbox("Enable Outgoing Throttling");
+        enableOutgoing = new JCheckBox("Enable Outgoing Throttling");
         enableOutgoing.setLocation(10, nextOff);
         enableOutgoing.setSize(200, 20);
         enableOutgoing.addItemListener(new ItemListener() {
@@ -328,24 +329,24 @@ class BandwithPrefsPanel extends PreferencesPanel {
 
         nextOff += 25;
 
-        outgoingSpeedLabel = new Label("Limit speed to: ");
+        outgoingSpeedLabel = new JLabel("Limit speed to: ");
         outgoingSpeedLabel.setLocation(15, nextOff);
         outgoingSpeedLabel.setSize(150, 20);
         add(outgoingSpeedLabel);
 
-        outgoingBytesField = new TextField("10");
+        outgoingBytesField = new JTextField("10");
         outgoingBytesField.setLocation(15 + 150, nextOff);
         outgoingBytesField.setSize(50, 20);
         add(outgoingBytesField);
 
-        outgoingUnitsLabel = new Label("Kilo BYTES / second");
+        outgoingUnitsLabel = new JLabel("Kilo BYTES / second");
         outgoingUnitsLabel.setLocation(15 + 50 + 150, nextOff);
         outgoingUnitsLabel.setSize(200, 20);
         add(outgoingUnitsLabel);
 
         nextOff += 40;
 
-        enableIncomming = new Checkbox("Enable Incomming Throttling");
+        enableIncomming = new JCheckBox("Enable Incomming Throttling");
         enableIncomming.setLocation(10, nextOff);
         enableIncomming.setSize(200, 20);
         enableIncomming.addItemListener(new ItemListener() {
@@ -363,19 +364,19 @@ class BandwithPrefsPanel extends PreferencesPanel {
 
         nextOff += 25;
 
-        incommingSpeedLabel = new Label("Limit speed to: ");
+        incommingSpeedLabel = new JLabel("Limit speed to: ");
         incommingSpeedLabel.setLocation(15, nextOff);
         incommingSpeedLabel.setSize(150, 20);
         incommingSpeedLabel.setEnabled(false);
         add(incommingSpeedLabel);
 
-        incommingBytesField = new TextField("10");
+        incommingBytesField = new JTextField("10");
         incommingBytesField.setLocation(15 + 150, nextOff);
         incommingBytesField.setSize(50, 20);
         incommingBytesField.setEnabled(false);
         add(incommingBytesField);
 
-        incommingUnitsLabel = new Label("Kilo BYTES / second");
+        incommingUnitsLabel = new JLabel("Kilo BYTES / second");
         incommingUnitsLabel.setLocation(15 + 50 + 150, nextOff);
         incommingUnitsLabel.setSize(200, 20);
         incommingUnitsLabel.setEnabled(false);
@@ -383,14 +384,14 @@ class BandwithPrefsPanel extends PreferencesPanel {
     }
 
     public void save() { //save changes
-        BandwidthManager.setOutgoingEnabled(enableOutgoing.getState());
+        BandwidthManager.setOutgoingEnabled(enableOutgoing.isSelected());
         try {
             BandwidthManager.setOutgoingMax(Integer.parseInt(outgoingBytesField
                     .getText()));
         } catch (NumberFormatException ex) {
         }
 
-        BandwidthManager.setIncommingEnabled(enableIncomming.getState());
+        BandwidthManager.setIncommingEnabled(enableIncomming.isSelected());
         try {
             BandwidthManager.setIncommingMax(Integer
                     .parseInt(incommingBytesField.getText()));
@@ -415,7 +416,7 @@ class BandwithPrefsPanel extends PreferencesPanel {
     }
 
     private void setOutgoingEnable(boolean bool) {
-        enableOutgoing.setState(bool);
+        enableOutgoing.setSelected(bool);
 
         outgoingSpeedLabel.setEnabled(bool);
         outgoingBytesField.setEnabled(bool);
@@ -423,7 +424,7 @@ class BandwithPrefsPanel extends PreferencesPanel {
     }
 
     private void setIncommingEnable(boolean bool) {
-        enableIncomming.setState(bool);
+        enableIncomming.setSelected(bool);
 
         incommingSpeedLabel.setEnabled(bool);
         incommingBytesField.setEnabled(bool);

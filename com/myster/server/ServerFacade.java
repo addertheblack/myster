@@ -1,12 +1,13 @@
 package com.myster.server;
 
-import java.awt.Choice;
 import java.awt.Dimension;
 import java.awt.GridLayout;
-import java.awt.Label;
-import java.awt.TextField;
 import java.util.Hashtable;
 import java.util.StringTokenizer;
+
+import javax.swing.JComboBox;
+import javax.swing.JLabel;
+import javax.swing.JTextField;
 
 import com.general.util.DoubleBlockingQueue;
 import com.myster.application.MysterGlobals;
@@ -163,21 +164,21 @@ public class ServerFacade {
     }
 
     private static class PrefPanel extends PreferencesPanel {
-        private final TextField serverIdentityField;
+        private final JTextField serverIdentityField;
 
-        private final Label serverIdentityLabel;
+        private final JLabel serverIdentityLabel;
 
-        private final Choice openSlotChoice;
+        private final JComboBox<String> openSlotChoice;
 
-        private final Label openSlotLabel;
+        private final JLabel openSlotLabel;
 
-        private final Choice serverThreadsChoice;
+        private final JComboBox<String> serverThreadsChoice;
 
-        private final Label serverThreadsLabel;
+        private final JLabel serverThreadsLabel;
 
-        private final Label spacerLabel;
+        private final JLabel spacerLabel;
 
-        private final Label explanation;
+        private final JLabel explanation;
 
         private final com.myster.server.stream.FileSenderThread.FreeLoaderPref leech;
 
@@ -185,39 +186,39 @@ public class ServerFacade {
             // setBackground(Color.red);
             setLayout(new GridLayout(5, 2, 5, 5));
 
-            openSlotLabel = new Label("Download Spots:");
+            openSlotLabel = new JLabel("Download Spots:");
             add(openSlotLabel);
 
-            openSlotChoice = new Choice();
+            openSlotChoice = new JComboBox<String>();
             for (int i = 2; i <= 10; i++) {
-                openSlotChoice.add("" + i);
+                openSlotChoice.addItem("" + i);
             }
             add(openSlotChoice);
 
-            serverThreadsLabel = new Label("Server Threads: * (expert setting)");
+            serverThreadsLabel = new JLabel("Server Threads: * (expert setting)");
             add(serverThreadsLabel);
 
-            serverThreadsChoice = new Choice();
-            serverThreadsChoice.add("" + 35);
-            serverThreadsChoice.add("" + 40);
-            serverThreadsChoice.add("" + 60);
-            serverThreadsChoice.add("" + 80);
-            serverThreadsChoice.add("" + 120);
+            serverThreadsChoice = new JComboBox<String>();
+            serverThreadsChoice.addItem("" + 35);
+            serverThreadsChoice.addItem("" + 40);
+            serverThreadsChoice.addItem("" + 60);
+            serverThreadsChoice.addItem("" + 80);
+            serverThreadsChoice.addItem("" + 120);
             add(serverThreadsChoice);
 
-            serverIdentityLabel = new Label("Server Identity:");
+            serverIdentityLabel = new JLabel("Server Identity:");
             add(serverIdentityLabel);
 
-            serverIdentityField = new TextField();
+            serverIdentityField = new JTextField();
             add(serverIdentityField);
 
-            spacerLabel = new Label();
+            spacerLabel = new JLabel();
             add(spacerLabel);
 
             leech = com.myster.server.stream.FileSenderThread.getPrefPanel();
             add(leech);
 
-            explanation = new Label("          * requires restart");
+            explanation = new JLabel("          * requires restart");
             add(explanation);
 
             reset();
@@ -233,16 +234,18 @@ public class ServerFacade {
 
         public void save() {
             ServerFacade.setIdentity(serverIdentityField.getText());
-            ServerFacade.setDownloadSpots(Integer.parseInt(openSlotChoice.getSelectedItem()));
-            setServerThreads(Integer.parseInt((new StringTokenizer(serverThreadsChoice
-                    .getSelectedItem(), " ")).nextToken()));
+            ServerFacade
+                    .setDownloadSpots(Integer.parseInt((String) openSlotChoice.getSelectedItem()));
+            setServerThreads(Integer
+                    .parseInt((new StringTokenizer((String) serverThreadsChoice.getSelectedItem(),
+                                                   " ")).nextToken()));
             leech.save();
         }
 
         public void reset() {
             serverIdentityField.setText(ServerFacade.getIdentity());
-            openSlotChoice.select("" + ServerFacade.getDownloadSpots());
-            serverThreadsChoice.select("" + getServerThreads());
+            openSlotChoice.setSelectedItem("" + ServerFacade.getDownloadSpots());
+            serverThreadsChoice.setSelectedItem("" + getServerThreads());
             leech.reset();
         }
 

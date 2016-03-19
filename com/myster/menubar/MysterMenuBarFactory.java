@@ -1,8 +1,8 @@
 package com.myster.menubar;
 
-import java.awt.Frame;
 import java.util.List;
 
+import javax.swing.JFrame;
 import javax.swing.JMenuBar;
 
 public class MysterMenuBarFactory {
@@ -12,7 +12,7 @@ public class MysterMenuBarFactory {
         this.mysterMenuFactories = mysterMenuFactories;
     }
 
-    public JMenuBar makeMenuBar(Frame frame) {
+    public JMenuBar makeMenuBar(JFrame frame) {
         JMenuBar menuBar = new JMenuBar();
 
         for (int i = 0; i < mysterMenuFactories.size(); i++) {

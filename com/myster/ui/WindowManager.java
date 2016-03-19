@@ -1,13 +1,17 @@
 package com.myster.ui;
 
+import java.awt.EventQueue;
 import java.awt.Frame;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.KeyEvent;
-import java.util.Enumeration;
-import java.util.Hashtable;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 import java.util.Vector;
 
+import javax.swing.JFrame;
 import javax.swing.JMenu;
 
 import com.myster.application.MysterGlobals;
@@ -22,9 +26,9 @@ import com.myster.menubar.event.NullAction;
  * "Windows" menu. It also is way too coupled with MysterFrame.
  */
 public class WindowManager {
-    private static Hashtable windowMenuHash = new Hashtable();
+    private static final Map<MysterFrame, JMenu> windowMenuHash = new HashMap<>();
 
-    private static Vector windows = new Vector();
+    private static final List<MysterFrame> windows = new ArrayList<>();
 
     private static MysterFrame frontMost;
 
@@ -35,7 +39,7 @@ public class WindowManager {
     protected static void addWindow(MysterFrame frame) {
         synchronized (windows) {
             if (!windows.contains(frame)) {
-                windows.addElement(frame);
+                windows.add(frame);
                 windowMenuHash.put(frame, (new MysterMenuFactory("Windows", finalMenu))
                         .makeMenu(frame));
                 // Timer t=new Timer(doUpdateClass, 1);//might cause deadlocks.
@@ -46,7 +50,7 @@ public class WindowManager {
     }
 
     static void removeWindow(MysterFrame frame) {
-        boolean yep = windows.removeElement(frame);
+        boolean yep = windows.remove(frame);
         windowMenuHash.remove(frame);
         if (yep) {
             // Timer t=new Timer(doUpdateClass, 1); //might cause deadlocks.
@@ -73,15 +77,13 @@ public class WindowManager {
             finalMenu.addElement(new MysterMenuItemFactory()); // is a
             // seperator
 
-            for (int i = 0; i < windows.size(); i++) {
-                MysterFrame frame = ((MysterFrame) (windows.elementAt(i)));
+            for (MysterFrame frame : windows) {
                 finalMenu.addElement(new MysterMenuItemFactory(frame.getTitle(),
-                        new OtherWindowHandler(frame)));
+                                                               new OtherWindowHandler(frame)));
             }
-
-            Enumeration enumeration = windowMenuHash.elements();
-            while (enumeration.hasMoreElements()) {
-                fixMenu((JMenu) enumeration.nextElement());
+            
+            for (JMenu menu : windowMenuHash.values()) {
+                fixMenu(menu);
             }
         }
     }
@@ -91,15 +93,14 @@ public class WindowManager {
             menu.remove(i - 1);
         }
 
-        for (int i = 0; i < windows.size(); i++) {
-            MysterFrame frame = ((MysterFrame) (windows.elementAt(i)));
-            menu.add((new MysterMenuItemFactory(frame.getTitle(), new OtherWindowHandler(frame)))
-                    .makeMenuItem(frame));
+        for (MysterFrame frame : windows) {
+            new MysterMenuItemFactory(frame.getTitle(), new OtherWindowHandler(frame))
+                    .makeMenuItem(frame, menu);
         }
     }
 
     private static JMenu getCorrectWindowsMenu(Frame frame) {
-        JMenu menu = (JMenu) windowMenuHash.get(frame);
+        JMenu menu = windowMenuHash.get(frame);
         if (menu == null) {
             return new JMenu("Windows");
             // throw new IllegalStateException("This frame has no windows menu!
@@ -138,7 +139,8 @@ public class WindowManager {
         finalMenu = new Vector();
 
         MysterMenuBar.addMenu(new MysterMenuFactory("Windows", finalMenu) {
-            public JMenu makeMenu(Frame frame) {
+            @Override
+            public JMenu makeMenu(JFrame frame) {
                 return getCorrectWindowsMenu(frame);
             }
         });
@@ -147,7 +149,7 @@ public class WindowManager {
 
     private static class CycleWindowsHandler implements ActionListener {
         public void actionPerformed(ActionEvent e) {
-            Vector windows = WindowManager.windows;
+            List<MysterFrame> windows = WindowManager.windows;
 
             synchronized (windows) {
                 if (windows.size() <= 0)
@@ -168,7 +170,7 @@ public class WindowManager {
                         index = 0;
                     }
 
-                    frame = (MysterFrame) windows.elementAt(index);
+                    frame = windows.get(index);
                     if (counter > windows.size()) {
                         throw new IllegalStateException(
                                 "No MysterFrames with menu bars exist and yet we have been asked to do a window cycle!");
@@ -182,19 +184,19 @@ public class WindowManager {
 
     private static class StackWindowsHandler implements ActionListener {
         public void actionPerformed(ActionEvent e) {
-            Vector windows = WindowManager.windows;
+            List<MysterFrame> windows = WindowManager.windows;
 
             final int MOD = 7;
 
             synchronized (windows) {
                 for (int i = 0; i < windows.size(); i++) {
-                    ((MysterFrame) (windows.elementAt(i))).setLocation(new java.awt.Point(
+                    (windows.get(i)).setLocation(new java.awt.Point(
                             ((i % MOD) * 20) + 10, (i % MOD) * 20 + ((i / MOD) * 20) + 10
-                                    + ((MysterFrame) (windows.elementAt(i))).getInsets().top));
+                                    + (windows.get(i)).getInsets().top));
                 }
 
-                for (int i = 0; i < windows.size(); i++) {
-                    ((MysterFrame) (windows.elementAt(i))).toFront();
+                for (MysterFrame mysterFrame : windows) {
+                    mysterFrame.toFront();
                 }
             }
         }

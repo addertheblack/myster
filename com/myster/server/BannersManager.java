@@ -1,17 +1,19 @@
 package com.myster.server;
 
-import java.awt.Button;
-import java.awt.List;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.awt.event.MouseAdapter;
+import java.awt.event.MouseEvent;
 import java.io.File;
 import java.util.Hashtable;
 import java.util.Vector;
 
+import javax.swing.DefaultListModel;
+import javax.swing.JButton;
+import javax.swing.JList;
 import javax.swing.JTextArea;
 
 import com.general.util.AskDialog;
-
 import com.myster.application.MysterGlobals;
 import com.myster.pref.Preferences;
 import com.myster.pref.PreferencesMML;
@@ -171,11 +173,11 @@ public class BannersManager {
     }
 
     private static class BannersPreferences extends PreferencesPanel {
-        private List list;
+        private JList list;
 
         private JTextArea msg;
 
-        private Button refreshButton;
+        private JButton refreshButton;
 
         private Hashtable hashtable = new Hashtable();
 
@@ -209,7 +211,7 @@ public class BannersManager {
                     - BUTTON_YSIZE);
             add(msg);
 
-            refreshButton = new Button(com.myster.util.I18n.tr("Refresh"));
+            refreshButton = new JButton(com.myster.util.I18n.tr("Refresh"));
             refreshButton.setLocation(PADDING, STD_YSIZE - LIST_YSIZE - PADDING - PADDING
                     - BUTTON_YSIZE);
             refreshButton.setSize(150, BUTTON_YSIZE);
@@ -220,38 +222,31 @@ public class BannersManager {
             });
             add(refreshButton);
 
-            list = new List();
+            list = new JList<String>();
             list.setLocation(PADDING, STD_YSIZE - LIST_YSIZE - PADDING);
             list.setSize(STD_XSIZE - 2 * PADDING, LIST_YSIZE);
-            list.addActionListener(new ActionListener() {
-                long lastDoubleClick = 0;
-
-                public void actionPerformed(ActionEvent e) {
-                    synchronized (this) {
-                        if (System.currentTimeMillis() - lastDoubleClick < 1000)
-                            return; // work around for stupid fucking bug in
-                        // MacOS MRJ 1.3.X
-
-                        lastDoubleClick = System.currentTimeMillis();
+            list.addMouseListener(new MouseAdapter() {
+                public void mouseClicked(MouseEvent e) {
+                    if (e.getClickCount() != 2) {
+                        return;
                     }
 
-                    String currentURL = (String) hashtable.get(e.getActionCommand());
+                    String currentURL = (String) hashtable.get(list.getSelectedValue());
 
                     if (currentURL == null)
                         currentURL = "";
 
-                    AskDialog askDialog = new AskDialog(
-                            BannersPreferences.this.getFrame(),
-                            com.myster.util.I18n
-                                    .tr("What URL would you like to link to this image?\n(Leave it blank to remove the url completely)"),
-                            currentURL);
+                    AskDialog askDialog = new AskDialog(BannersPreferences.this.getFrame(),
+                                                        com.myster.util.I18n
+                                                                .tr("What URL would you like to link to this image?\n(Leave it blank to remove the url completely)"),
+                                                        currentURL);
 
                     String answerString = askDialog.ask();
 
                     if (answerString == null)
                         return; // box has been canceled.
 
-                    hashtable.put(e.getActionCommand(), answerString);
+                    hashtable.put(list.getSelectedValue(), answerString);
                 }
             });
             add(list);
@@ -262,15 +257,15 @@ public class BannersManager {
 
             mmlPrefs.setTrace(true);
 
-            for (int i = 0; i < list.getItemCount(); i++) {
-                String url = (String) hashtable.get(list.getItem(i));
+            for (int i = 0; i < list.getModel().getSize(); i++) {
+                String url = (String) hashtable.get(list.getModel().getElementAt(i));
 
                 if (url == null || url.equals(""))
                     continue; // Don't bother saving this one, skip to the
                 // next
                 // one.
 
-                mmlPrefs.put(PATH_TO_URLS + i + "/" + PARTIAL_PATH_TO_IMAGES, list.getItem(i));
+                mmlPrefs.put(PATH_TO_URLS + i + "/" + PARTIAL_PATH_TO_IMAGES, (String)list.getModel().getElementAt(i));
                 mmlPrefs.put(PATH_TO_URLS + i + "/" + PARTIAL_PATH_TO_URLS, url);
             }
 
@@ -284,16 +279,14 @@ public class BannersManager {
         }
 
         private void refreshImagesList() {
-            list.removeAll();
-
             String[] directoryListing = getImageNameList();
-
-            if (directoryListing == null)
+            if ( directoryListing == null)
                 return;
-
-            for (int i = 0; i < directoryListing.length; i++) {
-                list.add(directoryListing[i]);
+            DefaultListModel<String> model = new DefaultListModel<>();
+            for (String string : directoryListing) {
+                model.addElement(string);
             }
+            list.setModel(model);
         }
 
         public String getKey() {

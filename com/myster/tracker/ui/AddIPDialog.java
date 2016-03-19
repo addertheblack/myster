@@ -11,16 +11,17 @@
 
 package com.myster.tracker.ui;
 
-import java.awt.Button;
 import java.awt.Component;
-import java.awt.Dialog;
 import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
-import java.awt.Label;
-import java.awt.TextField;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.net.UnknownHostException;
+
+import javax.swing.JButton;
+import javax.swing.JDialog;
+import javax.swing.JLabel;
+import javax.swing.JTextField;
 
 import com.myster.net.MysterAddress;
 import com.myster.tracker.IPListManagerSingleton;
@@ -30,22 +31,22 @@ import com.myster.tracker.IPListManagerSingleton;
  *  
  */
 
-public class AddIPDialog extends Dialog {
-    GridBagLayout gblayout;
+public class AddIPDialog extends JDialog {
+    private final GridBagLayout gblayout;
 
-    GridBagConstraints gbconstrains;
+    private final GridBagConstraints gbconstrains;
 
-    Label speed;
+    private final JLabel speed;
 
-    Label explanation;
+    private final JLabel explanation;
 
-    TextField textentry;
+    private final JTextField textentry;
 
-    Button ok;
+    private final JButton ok;
 
-    final int XDEFAULT = 300;
+    private final int XDEFAULT = 300;
 
-    final int YDEFAULT = 100;
+    private final int YDEFAULT = 100;
 
     String choices[] = { "14.4", "28.8", "33.6", "56k", "IDSN 1 channel",
             "IDSN 2 channel", "ADSL", "Cable modem",
@@ -62,18 +63,18 @@ public class AddIPDialog extends Dialog {
         gbconstrains.ipadx = 1;
         gbconstrains.ipady = 1;
 
-        speed = new Label("IP to add to IP lists?");
+        speed = new JLabel("IP to add to IP lists?");
 
-        textentry = new TextField("Enter an IP here");
+        textentry = new JTextField("Enter an IP here");
 
         //explanation=new Label("The IP will be added to your IP list if it's a
         // suitably good Myster Server. This option is best used when using
         // Myster for the first few times. It Can be used to add a entry point
         // to the Myster network to your IP list. It can also be used on an
         // intranet to add a server to be searched in a peer-to-peer fashion.");
-        explanation = new Label("The IP will be added to your IP list");
+        explanation = new JLabel("The IP will be added to your IP list");
 
-        ok = new Button("OK");
+        ok = new JButton("OK");
 
         setBounds(0, 0, XDEFAULT, YDEFAULT);
 

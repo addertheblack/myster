@@ -4,11 +4,12 @@ import java.awt.Color;
 import java.awt.Dimension;
 import java.awt.Graphics;
 import java.awt.Image;
-import java.awt.Panel;
 import java.awt.event.ComponentAdapter;
 import java.awt.event.ComponentEvent;
 
-public class ProgressBar extends Panel {
+import javax.swing.JPanel;
+
+public class ProgressBar extends JPanel {
     public final static int DEFAULT_Y_SIZE = 10;
 
     public final static int DEFAULT_X_SIZE = 440;
@@ -132,7 +133,7 @@ public class ProgressBar extends Panel {
             g.fillRect(0, 0, getXSize(size.width), size.height);
         }
 
-        if (getBorder()) {
+        if (hasBorder) {
             g.setColor(Color.black);
             g.drawRect(0, 0, size.width - 1, size.height - 1);
         }
@@ -160,13 +161,9 @@ public class ProgressBar extends Panel {
         return new Dimension(100, DEFAULT_Y_SIZE);
     }
 
-    public synchronized void setBorder(boolean hasBorder) {
+    public synchronized void setBorderVisible(boolean hasBorder) {
         this.hasBorder = hasBorder;
         repaint();
-    }
-
-    public boolean getBorder() {
-        return hasBorder;
     }
 
     public synchronized void setMin(long min) {

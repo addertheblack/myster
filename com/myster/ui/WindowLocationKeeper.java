@@ -1,7 +1,6 @@
 package com.myster.ui;
 
 import java.awt.Component;
-import java.awt.Frame;
 import java.awt.Rectangle;
 import java.awt.Toolkit;
 import java.awt.event.ComponentEvent;
@@ -11,6 +10,8 @@ import java.awt.event.WindowEvent;
 import java.util.NoSuchElementException;
 import java.util.StringTokenizer;
 import java.util.Vector;
+
+import javax.swing.JFrame;
 
 import com.myster.pref.Preferences;
 import com.myster.pref.PreferencesMML;
@@ -45,7 +46,7 @@ public class WindowLocationKeeper {
      * Adds a Frame object to be *tracked*. If the frame is visible it's
      * location is automatically stored in the prefs else it won't be.
      */
-    public void addFrame(Frame frame) {
+    public void addFrame(JFrame frame) {
         final int privateID = counter++;
 
         if (frame.isVisible()) {

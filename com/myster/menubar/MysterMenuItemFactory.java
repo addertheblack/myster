@@ -1,11 +1,10 @@
 package com.myster.menubar;
 
-import java.awt.Frame;
-import java.awt.MenuItem;
-import java.awt.MenuShortcut;
 import java.awt.event.ActionListener;
 import java.awt.event.InputEvent;
 
+import javax.swing.JFrame;
+import javax.swing.JMenu;
 import javax.swing.JMenuItem;
 import javax.swing.KeyStroke;
 
@@ -44,7 +43,12 @@ public class MysterMenuItemFactory {
         this.useShift = useShift;
     }
 
-    public JMenuItem makeMenuItem(Frame frame) {
+    public void makeMenuItem(JFrame frame, JMenu menu) {
+        if ("-".equals(name)) {
+            menu.addSeparator();
+            return;
+        }
+        
         JMenuItem menuItem = new JMenuItem(com.myster.util.I18n.tr(name));
         if (shortcut != -1) {
             int shiftMask = useShift ? InputEvent.SHIFT_DOWN_MASK : 0;
@@ -57,7 +61,8 @@ public class MysterMenuItemFactory {
 
         menuItem.setEnabled(!isDisabled);
 
-        return menuItem;
+        menu.add(menuItem);
+        return;
     }
 
     public void setEnabled(boolean b) {

@@ -3,23 +3,24 @@ package com.general.util;
 import java.awt.Color;
 import java.awt.FontMetrics;
 import java.awt.Graphics;
-import java.awt.Panel;
 import java.util.Vector;
+
+import javax.swing.JPanel;
 
 /**
  * An awt base Label like component that does text wrapping.
  */
 
-public class MessagePanel extends Panel {
-    int height;
+public class MessagePanel extends JPanel {
+    private int height;
 
-    int ascent;
+    private int ascent;
 
-    FontMetrics metrics;
+    private FontMetrics metrics;
 
-    String message;
+    private final String message;
 
-    Vector messageVector = new Vector(20);
+    private final Vector messageVector = new Vector(20);
 
     public MessagePanel(String message) {
         this.message = message;

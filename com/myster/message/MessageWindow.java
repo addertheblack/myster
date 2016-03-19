@@ -9,9 +9,7 @@ import java.awt.Graphics;
 import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
 import java.awt.Insets;
-import java.awt.Label;
 import java.awt.Panel;
-import java.awt.TextField;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.ComponentAdapter;
@@ -23,8 +21,11 @@ import java.awt.event.WindowEvent;
 import java.net.UnknownHostException;
 
 import javax.swing.JButton;
+import javax.swing.JLabel;
+import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import javax.swing.JTextArea;
+import javax.swing.JTextField;
 
 import com.myster.net.MysterAddress;
 import com.myster.tracker.IPListManagerSingleton;
@@ -32,7 +33,7 @@ import com.myster.tracker.MysterServer;
 import com.myster.ui.MysterFrame;
 
 public class MessageWindow extends MysterFrame {
-    private Panel mainPanel;
+    private JPanel mainPanel;
 
     private HeaderPanel header;
 
@@ -76,7 +77,7 @@ public class MessageWindow extends MysterFrame {
         gbconstrains.ipady = 1;
         gbconstrains.insets = new Insets(5, 5, 5, 5);
 
-        mainPanel = new Panel();
+        mainPanel = new JPanel();
         mainPanel.setBackground(new Color(240, 240, 240));
         mainPanel.setLayout(gblayout);
 
@@ -275,16 +276,16 @@ public class MessageWindow extends MysterFrame {
 
 }
 
-class HeaderPanel extends Panel {
-    TextField addressField;
+class HeaderPanel extends JPanel {
+    private final JTextField addressField;
 
-    Label toFrom;
+    private final JLabel toFrom;
 
-    private GridBagLayout gblayout;
+    private final GridBagLayout gblayout;
 
-    private GridBagConstraints gbconstrains;
+    private final GridBagConstraints gbconstrains;
 
-    MysterAddress address;
+    private final MysterAddress address;
 
     public HeaderPanel(MysterAddress address, final boolean type) {
         //Do interface setup:
@@ -297,10 +298,10 @@ class HeaderPanel extends Panel {
 
         this.address = address;
 
-        toFrom = new Label(type == MessageWindow.NEW_MESSAGE ? "To: " : "From: ");
+        toFrom = new JLabel(type == MessageWindow.NEW_MESSAGE ? "To: " : "From: ");
         addComponent(toFrom, 1, 1, 1, 1, 0, 1);
 
-        addressField = new TextField(40);
+        addressField = new JTextField(40);
 
         if (address == null) {
 
@@ -344,11 +345,10 @@ class HeaderPanel extends Panel {
         gblayout.setConstraints(c, gbconstrains);
 
         add(c);
-
     }
 }
 
-class MessageTextArea extends Panel {
+class MessageTextArea extends JPanel {
     private JTextArea area;
 
     public MessageTextArea(boolean editable, String text, String labelText) {
@@ -368,7 +368,7 @@ class MessageTextArea extends Panel {
         scrollPane.setDoubleBuffered(true);
         add(scrollPane, "Center");
 
-        Label message = new Label(labelText);
+        JLabel message = new JLabel(labelText);
         add(message, "North");
     }
 
@@ -390,7 +390,7 @@ class MessageTextArea extends Panel {
     }
 }
 
-class SeperatorLine extends Panel {
+class SeperatorLine extends JPanel {
     public static final int X_MIN = 1;
 
     public static final int Y_MIN = 1;

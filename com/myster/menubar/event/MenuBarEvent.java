@@ -1,7 +1,6 @@
 package com.myster.menubar.event;
 
-import java.awt.Frame;
-
+import javax.swing.JFrame;
 import javax.swing.JMenuBar;
 
 import com.general.events.GenericEvent;
@@ -29,7 +28,7 @@ public class MenuBarEvent extends GenericEvent {
      *            to tailor the event for.
      * @return the menubar.
      */
-    public JMenuBar makeNewMenuBar(Frame frame) {
+    public JMenuBar makeNewMenuBar(JFrame frame) {
         return factory.makeMenuBar(frame);
     }
 
