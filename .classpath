@@ -1,7 +1,21 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <classpath>
-	<classpathentry excluding="MysterBuild.jar|bin/|classes/" kind="src" path=""/>
+	<classpathentry excluding="MysterBuild.jar|bin/|classes/|lib/jid3lib-0.5.4-src/" kind="src" path=""/>
 	<classpathentry kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER"/>
-	<classpathentry kind="lib" path="lib/hellikerID3v2.jar"/>
+	<classpathentry kind="lib" path="lib/aelfred-1.2.jar"/>
+	<classpathentry kind="lib" path="lib/cling-core-2.1.0-sources.jar"/>
+	<classpathentry kind="lib" path="lib/cling-core-2.1.0.jar"/>
+	<classpathentry kind="lib" path="lib/cling-support-2.1.0-sources.jar"/>
+	<classpathentry kind="lib" path="lib/cling-support-2.1.0.jar"/>
+	<classpathentry kind="lib" path="lib/emma_ant.jar"/>
+	<classpathentry kind="lib" path="lib/emma.jar"/>
+	<classpathentry kind="lib" path="lib/jaxp-1.2.jar"/>
+	<classpathentry kind="lib" path="lib/jdom-1.0b8.jar"/>
+	<classpathentry kind="lib" path="lib/jid3lib-0.5.4.jar" sourcepath="lib/jid3lib-0.5.4-src"/>
+	<classpathentry kind="lib" path="lib/jsch-0.1.25.jar"/>
+	<classpathentry kind="lib" path="lib/log4j-1.2.6.jar"/>
+	<classpathentry kind="lib" path="lib/oro-2.0.6.jar"/>
+	<classpathentry kind="lib" path="lib/sax-2.0.1.jar"/>
+	<classpathentry kind="lib" path="lib/seamless-http-1.1.1.jar"/>
 	<classpathentry kind="output" path="classes"/>
 </classpath>
