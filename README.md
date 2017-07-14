@@ -16,3 +16,14 @@ In theory Myster allows you to build you own p2p network. Essentially you'd crea
 and you'd have some sort of access control on top of that so you can decide who joins. There are a few things that need to be 
 changed to get it to work but if anyone is interrested in making it a possibility I'm fine with explaining how to do it and 
 contributing what meager time I can to the effort.
+
+There's an eclipse project setup already.
+
+The ant build might not work correctly due to code rot but it should build a self contained, runnable jar. So you can just 
+
+"java -jar XXX.jar"
+
+Myster without worrying about stuff like classpaths or library dependencies.
+
+The project setup is simple is silly. The code is in com and the jar dependencies are in lib. 
+Really the source should be in a source folder and the whole thing should use Maven but meh. Hey.. if anyone wants to submit a patch with that.. it would be great. :-)
