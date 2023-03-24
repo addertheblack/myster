@@ -14,6 +14,19 @@ import java.io.File;
 import java.io.IOException;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
+import java.net.InetAddress;
+import java.net.NetworkInterface;
+import java.net.SocketException;
+import java.net.UnknownHostException;
+import java.util.ArrayList;
+import java.util.Enumeration;
+import java.util.List;
+
+import org.fourthline.cling.UpnpService;
+import org.fourthline.cling.UpnpServiceImpl;
+import org.fourthline.cling.model.types.UnsignedIntegerFourBytes;
+import org.fourthline.cling.support.igd.PortMappingListener;
+import org.fourthline.cling.support.model.PortMapping;
 
 import com.general.application.ApplicationSingleton;
 import com.general.application.ApplicationSingletonListener;
@@ -208,5 +221,78 @@ public class Myster {
         } catch (InterruptedException ex) {
             ex.printStackTrace(); //never reached.
         }
-    } //Utils, globals etc.. //These variables are System wide variables //
+
+        // ugh
+
+        printoutAllNetworkInterfaces();
+        printoutAllIpAddresses();
+        setupUpnp();
+    } // Utils, globals etc.. //These variables are System wide variables //
+
+    private static UpnpService setupUpnp() {
+        try {
+            InetAddress inetAddress = InetAddress.getLocalHost();
+            List<PortMapping> portMappings = new ArrayList<>();
+            PortMapping e = new PortMapping(MysterGlobals.DEFAULT_PORT,
+                                            "" + inetAddress.getHostAddress(),
+                                            PortMapping.Protocol.TCP,
+                                            "My Port Mapping TCP");
+            e.setLeaseDurationSeconds(new UnsignedIntegerFourBytes(100));
+            portMappings.add(e);
+            PortMapping e2 = new PortMapping(MysterGlobals.DEFAULT_PORT,
+                                             "" + inetAddress.getHostAddress(),
+                                             PortMapping.Protocol.UDP,
+                                             "Mooo");
+            e2.setLeaseDurationSeconds(new UnsignedIntegerFourBytes(100));
+            portMappings.add(e2);
+
+            UpnpService upnpService = new UpnpServiceImpl(new PortMappingListener(portMappings
+                    .toArray(new PortMapping[0])));
+
+            upnpService.getControlPoint().search();
+            return upnpService;
+        } catch (UnknownHostException exception) {
+            System.out.println("Could nto setup upnp because could not get local host: "
+                    + exception.getMessage());
+            return null;
+        }
+    }
+
+    private static void printoutAllNetworkInterfaces() {
+        try {
+            System.out.println("Full list of Network Interfaces:");
+            for (Enumeration<NetworkInterface> en = NetworkInterface.getNetworkInterfaces(); en
+                    .hasMoreElements();) {
+                NetworkInterface intf = en.nextElement();
+                System.out.println("    " + intf.getName() + " " + intf.getDisplayName());
+                for (Enumeration<InetAddress> enumIpAddr = intf.getInetAddresses(); enumIpAddr
+                        .hasMoreElements();) {
+                    InetAddress nextAddress = enumIpAddr.nextElement();
+                    System.out.println("        " + nextAddress.toString());
+                }
+            }
+        } catch (SocketException e) {
+            System.out.println(" (error retrieving network interface list)");
+        }
+    }
+
+    private static void printoutAllIpAddresses() {
+        List<InetAddress> networkAddresses = new ArrayList<>();
+        try {
+            InetAddress localhost = InetAddress.getLocalHost();
+            System.out.println("IP Addr for local host: " + localhost.getHostAddress());
+            // Just in case this host has multiple IP addresses....
+            InetAddress[] allMyIps = InetAddress.getAllByName(localhost.getCanonicalHostName());
+            if (allMyIps != null && allMyIps.length > 1) {
+                System.out.println(" Full list of IP addresses:");
+                for (int i = 0; i < allMyIps.length; i++) {
+                    System.out.println("    " + allMyIps[i].getHostAddress());
+                    if (networkAddresses.isEmpty())
+                        networkAddresses.add(allMyIps[i]);
+                }
+            }
+        } catch (UnknownHostException e) {
+            System.out.println(" (error retrieving server host name)");
+        }
+    }
 }

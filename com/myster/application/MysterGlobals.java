@@ -3,6 +3,7 @@ package com.myster.application;
 import java.io.File;
 
 import com.general.application.ApplicationSingleton;
+import com.myster.UpnpManager;
 import com.myster.pref.Preferences;
 
 /**
@@ -39,6 +40,7 @@ public class MysterGlobals {
         System.out.println("Byeeeee.");
         if (appSigleton!=null)
             appSigleton.close();
+        UpnpManager.shutdown();
         System.exit(0);
     }
 

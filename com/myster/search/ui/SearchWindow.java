@@ -23,6 +23,7 @@ import java.awt.event.WindowEvent;
 
 import javax.swing.JButton;
 import javax.swing.JTextField;
+import javax.swing.Timer;
 
 import com.general.mclist.MCList;
 import com.general.mclist.MCListEvent;

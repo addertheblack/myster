@@ -2,7 +2,11 @@ package com.myster.server;
 
 import java.awt.Dimension;
 import java.awt.GridLayout;
+import java.net.InetAddress;
+import java.net.UnknownHostException;
+import java.util.ArrayList;
 import java.util.Hashtable;
+import java.util.List;
 import java.util.StringTokenizer;
 
 import javax.swing.JComboBox;
@@ -10,6 +14,8 @@ import javax.swing.JLabel;
 import javax.swing.JTextField;
 
 import com.general.util.DoubleBlockingQueue;
+import com.myster.UpnpManager;
+import com.myster.UpnpManager.HostAddress;
 import com.myster.application.MysterGlobals;
 import com.myster.client.datagram.PongTransport;
 import com.myster.client.datagram.UDPPingClient;
@@ -77,6 +83,21 @@ public class ServerFacade {
         TransactionManager.init(getServerDispatcher());
         initDatagramTransports();
         addStandardDatagramTransactions();
+        
+        InetAddress localHost = null;
+        try {
+            localHost = InetAddress.getLocalHost();
+        } catch (UnknownHostException exception) {
+            System.out.println("Could not punch upnp hole because localhost could not be found.");
+            return;
+        }
+        
+        List<HostAddress> hostAddresses = new ArrayList<>();
+        for (Operator operator : operators) {
+            hostAddresses.add(new HostAddress(localHost, operator.getPort()));
+        }
+        
+        UpnpManager.initMapping(hostAddresses.toArray(new HostAddress[0]));
     }
 
     /**

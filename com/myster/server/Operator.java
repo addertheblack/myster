@@ -33,7 +33,7 @@ public class Operator extends MysterThread {
 
     private DoubleBlockingQueue socketQueue; //Communcation CHANNEL.
 
-    private int port;
+    private final int port;
 
     protected Operator(DoubleBlockingQueue socketQueue, int port) {
         super("Server Operator");
@@ -89,7 +89,7 @@ public class Operator extends MysterThread {
                     } catch (IOException ex) {
                     }
 
-                serverSocket = new ServerSocket(port,
+                serverSocket = new ServerSocket(getPort(),
                         5); //bigger buffer
                 break;
             } catch (IOException ex) {
@@ -123,5 +123,9 @@ public class Operator extends MysterThread {
      */
     public void end() {
         throw new RuntimeException("Not implemented");
+    }
+
+    public int getPort() {
+        return port;
     }
 }
