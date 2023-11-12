@@ -7,7 +7,7 @@ import java.io.DataOutputStream;
 import java.io.IOException;
 
 import com.myster.net.BadPacketException;
-import com.myster.tracker.IPListManagerSingleton;
+import com.myster.tracker.IPListManager;
 import com.myster.tracker.MysterServer;
 import com.myster.transaction.Transaction;
 import com.myster.transaction.TransactionProtocol;
@@ -18,15 +18,21 @@ public class TopTenDatagramServer extends TransactionProtocol {
 
     public static final int TOP_TEN_TRANSACTION_CODE = com.myster.client.datagram.TopTenDatagramClient.TOP_TEN_TRANSACTION_CODE;
 
+    private final IPListManager ipListManager;
+
+    public TopTenDatagramServer(IPListManager ipListManager) {
+        this.ipListManager = ipListManager;
+    }
+
     public int getTransactionCode() {
         return TOP_TEN_TRANSACTION_CODE;
     }
 
     public void transactionReceived(Transaction transaction, Object transactionObject) throws BadPacketException {
         try {
-            IPListManagerSingleton.getIPListManager().addIP(transaction.getAddress());
+            ipListManager.addIP(transaction.getAddress());
 
-            MysterServer[] topTenServers = IPListManagerSingleton.getIPListManager().getTop(
+            MysterServer[] topTenServers = ipListManager.getTop(
                     getTypeFromTransaction(transaction), NUMBER_OF_SERVERS_TO_RETURN);
 
             String[] topTenStrings = (topTenServers == null ? new String[0]
@@ -43,7 +49,7 @@ public class TopTenDatagramServer extends TransactionProtocol {
         }
     }
 
-    private int countServersReturned(MysterServer[] servers) {
+    private static int countServersReturned(MysterServer[] servers) {
         for (int i = 0; i < servers.length; i++) {
             if (servers[i] == null) {
                 return i;
@@ -53,7 +59,7 @@ public class TopTenDatagramServer extends TransactionProtocol {
         return servers.length;
     }
 
-    public byte[] getBytesFromStrings(String[] addressesAsStrings) throws IOException {
+    public static byte[] getBytesFromStrings(String[] addressesAsStrings) throws IOException {
         ByteArrayOutputStream byteOutputStream = new ByteArrayOutputStream();
         DataOutputStream out = new DataOutputStream(byteOutputStream);
 
@@ -66,7 +72,7 @@ public class TopTenDatagramServer extends TransactionProtocol {
         return byteOutputStream.toByteArray();
     }
 
-    private MysterType getTypeFromTransaction(Transaction transaction) throws IOException {
+    private static MysterType getTypeFromTransaction(Transaction transaction) throws IOException {
         byte[] bytes = transaction.getData();
 
         if (bytes.length != 4)

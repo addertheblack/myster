@@ -6,7 +6,6 @@ import com.general.mclist.SortableByte;
 import com.general.mclist.SortableString;
 import com.myster.net.MysterAddress;
 import com.myster.search.SearchResult;
-import com.myster.tracker.IPListManagerSingleton;
 import com.myster.tracker.MysterServer;
 
 public class ClientGenericHandleObject implements ClientHandleObject {
@@ -53,10 +52,9 @@ public class ClientGenericHandleObject implements ClientHandleObject {
         public GenericSearchItem(SearchResult s) {
             result = s;
 
-            MysterAddress hostAsAddress = result.getHostAddress();
-            String hostAsString = hostAsAddress.toString();
-            MysterServer server = IPListManagerSingleton.getIPListManager()
-                    .getQuickServerStats(hostAsAddress);
+//                    .getQuickServerStats(hostAsAddress);
+            MysterServer server = result.getServer();
+            
             serverString = new SortableString(server == null ? "N/A" : server
                     .getServerIdentity());
             //The Three lines above can be combined into one really long line.

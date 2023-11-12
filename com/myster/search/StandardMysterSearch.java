@@ -8,6 +8,7 @@ import com.myster.mml.RobustMML;
 import com.myster.net.DisconnectException;
 import com.myster.net.MysterAddress;
 import com.myster.net.MysterSocket;
+import com.myster.tracker.IPListManager;
 import com.myster.type.MysterType;
 
 /**
@@ -25,17 +26,20 @@ import com.myster.type.MysterType;
  */
 public class StandardMysterSearch {
     private final String searchString;
-
     private final SearchResultListener listener;
+    private final MysterType type;
+    private final IPListManager manager;
 
     private volatile boolean endFlag = false;
 
-    private MysterType type;
-
-    public StandardMysterSearch(String searchString, MysterType type, SearchResultListener listener) {
+    public StandardMysterSearch(String searchString,
+                                MysterType type,
+                                SearchResultListener listener,
+                                IPListManager manager) {
         this.searchString = searchString;
         this.listener = listener;
         this.type = type;
+        this.manager = manager;
     }
 
     
@@ -54,7 +58,7 @@ public class StandardMysterSearch {
 
             for (int i = 0; i < searchArray.length; i++) {
                 searchArray[i] = new MysterSearchResult(new MysterFileStub(address, type,
-                        (String) (searchResults.elementAt(i))));
+                        (String) (searchResults.elementAt(i))),  manager::getQuickServerStats);
             }
 
             try {

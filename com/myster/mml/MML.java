@@ -2,7 +2,8 @@ package com.myster.mml;
 
 import java.io.IOException;
 import java.io.Serializable;
-import java.util.Vector;
+import java.util.ArrayList;
+import java.util.List;
 
 public class MML implements Serializable {
     static final long serialVersionUID = 2684806215154059903L;
@@ -135,7 +136,7 @@ public class MML implements Serializable {
      *            to list
      * @return list of keys at that path.
      */
-    public synchronized Vector list(String path) {
+    public synchronized List<String> list(String path) {
         return getTagListing(startNode, path);
     }
 
@@ -252,7 +253,7 @@ public class MML implements Serializable {
             if (workingTag.equals("")) {
                 if (!(node instanceof Branch))
                     throw new LeafAsABranchException("?");
-                return (Branch) node; //..!
+                return node; //..!
             } else {
                 Node tempnode = Link.getNode(((Branch) node).head, workingTag);
                 if (tempnode == null)
@@ -295,8 +296,8 @@ public class MML implements Serializable {
         return (Leaf) getNode(b, path);
     }
 
-    protected static Vector getTagListing(Branch b, String path) {
-        Vector vector = new Vector(10, 1000);
+    protected static List<String> getTagListing(Branch b, String path) {
+        List<String> list = new ArrayList<>();
 
         Branch branchToList;
         try {
@@ -308,10 +309,9 @@ public class MML implements Serializable {
         if (branchToList == null)
             return null; //bad path
 
-        Link.list(branchToList.head, vector);
+        Link.list(branchToList.head, list);
 
-        vector.trimToSize();
-        return vector;
+        return list;
     }
 
     protected static void put(Branch root, String path, String value)
@@ -398,7 +398,6 @@ public class MML implements Serializable {
 
         if (Link.getNode(branch.head, toAdd.tag) != null)
             throw new NodeAlreadyExistsException(toAdd.tag + " at " + path);
-        ;
 
         Link.addLink(branch.head, new Link(toAdd));
     }
@@ -568,30 +567,26 @@ public class MML implements Serializable {
         if (path.indexOf("//") != -1)
             throw new DoubleSlashException(path);
 
-        PathVector vector = new PathVector(10, 50);
+        PathVector vector = new PathVector();
         String currentPath = path;
         do {
             String activeToken = getNextName(currentPath);
-            vector.addElement(activeToken);
+            vector.add(activeToken);
             currentPath = getNextTrimmedPath(currentPath);
         } while (currentPath != null);
         
         return vector;
     }
 
-    private static class PathVector extends Vector {
+    private static class PathVector<T> extends ArrayList<T> {
         static final long serialVersionUID = -1768617897371815823L;
-
-        public PathVector(int i, int j) {
-            super(i, j);
-        }
 
         public boolean hasMore(int i) {
             return (i < size() - 1);
         }
 
         public String getToken(int i) {
-            return (String) (elementAt(i));
+            return (String) (get(i));
         }
 
         public boolean isLeafPath() {
@@ -614,10 +609,9 @@ public class MML implements Serializable {
         for (int i = s.indexOf("<"); i != -1; i = s.indexOf("<", i)) {
             String tag = s.substring(i + 1, s.indexOf(">", i));
 
-            int last2 = lastBalenced(s, i);//=s.indexOf("</"+tag+">", i);
-            int last = s.indexOf("</" + tag + ">", last2);
-            if (last != last2)
-                System.out.println("MML Error: " + last + " != " + last2 + " in " + s);
+            int last = lastBalenced(s, i);//=s.indexOf("</"+tag+">", i);
+            if (!s.startsWith("</" + tag + ">", last) && !s.startsWith("</>", last))
+                throw new MMLException("MML Error: end tag name is wrong for " + tag);
 
             Link mylink = new Link();
             //System.out.println(s.substring(s.indexOf(">",i)+1, last));
@@ -684,14 +678,14 @@ public class MML implements Serializable {
                 temp = temp + makeString(iterator.next.value);
             }
             if (branch.tag != null)
-                temp = temp + "</" + branch.tag + ">";
+                temp = temp + "</>";
         } else if (node instanceof Leaf) {
             Leaf leaf = (Leaf) node;
             if (leaf.tag != null)
                 temp = temp + "<" + leaf.tag + ">";
             temp = temp + cleanString(leaf.value);
             if (leaf.tag != null)
-                temp = temp + "</" + leaf.tag + ">";
+                temp = temp + "</>";
         } else {
             System.out.println("Impossible");
         }
@@ -717,8 +711,12 @@ public class MML implements Serializable {
             }
         }
 
-        public boolean equals(Branch b) {
-            return b.tag.equals(tag);
+        public boolean equals(Object o) {
+            if (o instanceof Branch) {
+                return ((Branch)o).tag.equals(tag);
+            }
+            
+            return false;
         }
     }
 
@@ -733,12 +731,12 @@ public class MML implements Serializable {
         }
 
         private synchronized void writeObject(java.io.ObjectOutputStream objectOutputStream) throws IOException {
-            Vector vector = new Vector(100,100);
+            List<Node> vector = new ArrayList<>();
             Link.listNodes(head, vector);
             
-            objectOutputStream.writeObject(new Integer(vector.size()));
+            objectOutputStream.writeObject( vector.size());
             for (int i = 0; i < vector.size(); i++) {
-                Node node = (Node)vector.elementAt(i);
+                Node node = vector.get(i);
                 
                 objectOutputStream.writeObject(node);
             }
@@ -803,7 +801,7 @@ public class MML implements Serializable {
         public static void addLink(Link head, Link link) {
             Link iterator;
             for (iterator = head; iterator.next != null; iterator = iterator.next)
-                ;
+                ; // empty
             iterator.next = link;
         }
 
@@ -823,17 +821,17 @@ public class MML implements Serializable {
             }
         }
 
-        public static void list(Link head, Vector collection) { //ha ha ha ha
+        public static void list(Link head, List<String> collection) { //ha ha ha ha
             // ho ho ho..
             // collection
             // eh?
             for (Link iterator = head; iterator.next != null; iterator = iterator.next)
-                collection.addElement(iterator.next.value.tag);
+                collection.add(iterator.next.value.tag);
         }
         
-        public static void listNodes(Link head, Vector collection) {
+        public static void listNodes(Link head, List<Node> collection) {
             for (Link iterator = head; iterator.next != null; iterator = iterator.next)
-                collection.addElement(iterator.next.value);
+                collection.add(iterator.next.value);
         }
     }
 

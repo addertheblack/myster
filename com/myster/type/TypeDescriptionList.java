@@ -3,7 +3,9 @@ package com.myster.type;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.ArrayList;
 import java.util.Hashtable;
+import java.util.List;
 import java.util.Vector;
 
 import com.general.events.EventDispatcher;
@@ -95,11 +97,11 @@ class DefaultTypeDescriptionList extends TypeDescriptionList {
     //values stored in the prefs only the values that were true as of
     //the beginning of the last execution.
     //See code for how to get back the dynamic behavior... (comments actually)
-    TypeDescriptionElement[] types;
+    private final TypeDescriptionElement[] types;
 
-    TypeDescriptionElement[] workingTypes;
+    private final TypeDescriptionElement[] workingTypes;
 
-    EventDispatcher dispatcher;
+    private final EventDispatcher dispatcher;
 
     public DefaultTypeDescriptionList() {
         TypeDescriptionElement[] oldTypes;
@@ -148,11 +150,11 @@ class DefaultTypeDescriptionList extends TypeDescriptionList {
 
         Hashtable hash = new Hashtable();
 
-        Vector list = mml.list("/");
+        List<String> list = mml.list("/");
 
         for (int i = 0; i < list.size(); i++) {
-            hash.put(mml.get("/" + list.elementAt(i).toString() + TYPE_KEY),
-                    mml.get("/" + list.elementAt(i).toString() + TYPE_ENABLED));
+            hash.put(mml.get("/" + list.get(i).toString() + TYPE_KEY),
+                    mml.get("/" + list.get(i).toString() + TYPE_ENABLED));
         }
 
         return hash;
@@ -286,10 +288,10 @@ class DefaultTypeDescriptionList extends TypeDescriptionList {
 
             final String LIST = "/List/";
 
-            Vector typeList = mml.list(LIST);
+            List<String> typeList = mml.list(LIST);
             for (int i = 0; i < typeList.size(); i++) {
                 TypeDescription typeDescription = getTypeDescriptionAtPath(mml,
-                        LIST + (String) (typeList.elementAt(i)) + "/");
+                        LIST + (String) (typeList.get(i)) + "/");
 
                 if (typeDescription != null)
                     vector.addElement(typeDescription);
@@ -318,7 +320,7 @@ class DefaultTypeDescriptionList extends TypeDescriptionList {
 
         String type = mml.get(path + TYPE);
         String description = mml.get(path + DESCRIPTION);
-        Vector extensionsDirList = mml.list(path + EXTENSIONS);
+        List<String> extensionsDirList = mml.list(path + EXTENSIONS);
         String archived = mml.get(path + ARCHIVED);
         String enabled = mml.get(path + ENABLED_BY_DEFAULT);
 
@@ -333,20 +335,20 @@ class DefaultTypeDescriptionList extends TypeDescriptionList {
 
         String[] extensions = new String[0];
         if (extensionsDirList != null) {
-            Vector recovered = new Vector(10, 10);
+            List<String> recovered = new ArrayList<String>();
             String extensionsPath = path + EXTENSIONS;
 
             for (int i = 0; i < extensionsDirList.size(); i++) {
                 String extension = mml.get(extensionsPath
-                        + (String) (extensionsDirList.elementAt(i)));
+                        + (extensionsDirList.get(i)));
                 if (extension != null) {
-                    recovered.addElement(extension);
+                    recovered.add(extension);
                 }
             }
 
             extensions = new String[recovered.size()];
             for (int i = 0; i < extensions.length; i++) {
-                extensions[i] = (String) recovered.elementAt(i);
+                extensions[i] = recovered.get(i);
             }
         }
 

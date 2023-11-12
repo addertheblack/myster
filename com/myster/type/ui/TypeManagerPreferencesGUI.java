@@ -11,7 +11,6 @@ import com.general.mclist.Sortable;
 import com.general.mclist.SortableBoolean;
 import com.general.mclist.SortableString;
 import com.general.util.MessagePanel;
-import com.myster.pref.Preferences;
 import com.myster.pref.ui.PreferencesPanel;
 import com.myster.type.MysterType;
 import com.myster.type.TypeDescription;
@@ -19,18 +18,11 @@ import com.myster.type.TypeDescriptionList;
 
 /**
  * The TypeManagerPreferencesGUI represents the Type Enable/Disable preferences panel.
- * 
- * @author Andrew Trumper
  */
 
 public class TypeManagerPreferencesGUI extends PreferencesPanel {
-    public static void init() {
-        Preferences.getInstance().addPanel(new TypeManagerPreferencesGUI());
-    }
-
-    private MCList mcList;
-
-    private MessagePanel message;
+    private final MCList mcList;
+    private final MessagePanel message;
 
     private static final int HEADER_Y = 100;
 
@@ -82,9 +74,11 @@ public class TypeManagerPreferencesGUI extends PreferencesPanel {
             }
 
             public void selectItem(MCListEvent e) {
+                // nothing
             }
 
             public void unselectItem(MCListEvent e) {
+                // nothing
             }
         });
 

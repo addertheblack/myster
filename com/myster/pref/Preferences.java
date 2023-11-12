@@ -11,7 +11,6 @@
 
 package com.myster.pref;
 
-import java.awt.Rectangle;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
@@ -21,12 +20,9 @@ import java.io.ObjectOutputStream;
 import java.util.Hashtable;
 
 import com.general.util.Semaphore;
-import com.general.util.Util;
 
 import com.myster.application.MysterGlobals;
 import com.myster.mml.MML;
-import com.myster.pref.ui.PreferencesDialogBox;
-import com.myster.pref.ui.PreferencesPanel;
 import com.myster.util.MysterThread;
 
 /**
@@ -43,8 +39,6 @@ import com.myster.util.MysterThread;
  */
 public class Preferences {
     private Hashtable data;
-
-    private PreferencesDialogBox prefsWindow;
 
     private static Preferences pref;
 
@@ -63,24 +57,9 @@ public class Preferences {
         loadFile();
         savethread = new SaveThread();
         savethread.start();
-        prefsWindow = new PreferencesDialogBox();
-        if ( !Util.isEventDispatchThread() )
-            throw new IllegalStateException("Not on event thread!");
-        prefsWindow.pack();
+
     }
 
-    static final String WINDOW_KEEPER_KEY = "MysterPrefsGUI";
-
-    static com.myster.ui.WindowLocationKeeper windowKeeper = new com.myster.ui.WindowLocationKeeper(
-            WINDOW_KEEPER_KEY);
-
-    public static void initWindowLocations() {
-        Rectangle[] rect = com.myster.ui.WindowLocationKeeper.getLastLocs(WINDOW_KEEPER_KEY);
-        if (rect.length > 0) {
-            getInstance().prefsWindow.setBounds(rect[0]);
-            getInstance().setGUI(true);
-        }
-    }
 
     /**
      * Needed in order to get an instance of the preference object. This is included Since their
@@ -96,36 +75,10 @@ public class Preferences {
         return pref;
     }
 
-    public static void initGui() {
-        windowKeeper.addFrame(pref.prefsWindow);
-    }
-
-    public void setGUI(boolean b) {
-        if (b) {
-            prefsWindow.show();
-            prefsWindow.toFrontAndUnminimize();
-        } else {
-            prefsWindow.hide();
-        }
-    }
-
-    /**
-     * Adds a preferences panel to the preferences GUI under the type and subType. Hierarchical
-     * prefs are not supported at this time.
-     * 
-     * Pluggin writers are asked to avoid messing with other module's pref panels.
-     * 
-     * @param panel
-     */
-    public void addPanel(PreferencesPanel panel) {
-        prefsWindow.addPanel(panel);
-    }
-
     /**
      * Gets the value for a path. returns null if path not initilized or invalid.
      * 
      * @param key
-     * @return
      */
     public synchronized String get(String key) {
         return (String) (data.get(key));
@@ -136,7 +89,6 @@ public class Preferences {
      * 
      * @param key
      * @param defaultValue
-     * @return
      */
     public synchronized String get(String key, String defaultValue) {
         String temp = (String) (data.get(key));
@@ -148,7 +100,6 @@ public class Preferences {
      * Gets the value for a path. Returns "" if path not initilized or invalid.
      * 
      * @param key
-     * @return
      */
     public synchronized String query(String key) {
         String temp = (String) (data.get(key));
@@ -171,7 +122,6 @@ public class Preferences {
      * Deletes that path and all sub paths.
      * 
      * @param key
-     * @return
      */
     public synchronized String remove(String key) {
         String s_temp = (String) (data.remove(key));
@@ -244,6 +194,7 @@ public class Preferences {
             try {
                 in.close();
             } catch (Exception ex) {
+                // do nothing
             }
         }
     }
@@ -266,8 +217,6 @@ public class Preferences {
      * @return true if was successfully saved.
      */
     private boolean saveFile(int flag) {
-        String stringToSave;
-
         writeToDisk.waitx(); //SEM BLOCK START!
 
         try {
@@ -362,6 +311,7 @@ public class Preferences {
                     try {
                         sleep(SAVETIME);
                     } catch (Exception ex) {
+                        // do nothing
                     }
                 } else {
                     System.out.println("FUNDEMENTAL ASSUMPTION VIOLATED IN SAVE THREAD");

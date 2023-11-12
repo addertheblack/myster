@@ -14,6 +14,7 @@ package com.myster.tracker;
 
 import java.io.IOException;
 import java.net.UnknownHostException;
+import java.util.List;
 import java.util.Vector;
 
 import com.general.util.BlockingQueue;
@@ -106,20 +107,24 @@ class MysterIP {
     MysterIP(String ip) throws Exception {
         if (ip.equals("127.0.0.1"))
             throw new Exception("IP is local host.");
-        MysterAddress t = new MysterAddress(ip); //to see if address is valid.
+        MysterAddress t = new MysterAddress(ip); // to see if address is valid.
         createNewMysterIP(ip, 1, 50, 50, 1, 1, "", null, -1);
         if (!MysterIP.internalRefreshAll(this))
             throw new Exception("Failed to created new Myster IP");
-        //System.out.println("A New MysterIP Object = "+getAddress());
+        // System.out.println("A New MysterIP Object = "+getAddress());
     }
 
     MysterIP(MML mml) {
-        createNewMysterIP(mml.get(IP), Double.valueOf(mml.get(SPEED)).doubleValue(), Integer
-                .valueOf(mml.get(TIMEUP)).intValue(),
-                Integer.valueOf(mml.get(TIMEDOWN)).intValue(), Integer.valueOf(
-                        mml.get(NUMBEROFHITS)).intValue(), Long.valueOf(mml.get(TIMESINCEUPDATE))
-                        .longValue(), mml.get(NUMBEROFFILES), mml.get(SERVERIDENTITY), (mml
-                        .get(UPTIME) == null ? -1 : Long.valueOf(mml.get(UPTIME)).longValue()));
+        createNewMysterIP(mml.get(IP),
+                          Double.valueOf(mml.get(SPEED)).doubleValue(),
+                          Integer.valueOf(mml.get(TIMEUP)).intValue(),
+                          Integer.valueOf(mml.get(TIMEDOWN)).intValue(),
+                          Integer.valueOf(mml.get(NUMBEROFHITS)).intValue(),
+                          Long.valueOf(mml.get(TIMESINCEUPDATE)).longValue(),
+                          mml.get(NUMBEROFFILES),
+                          mml.get(SERVERIDENTITY),
+                          (mml.get(UPTIME) == null ? -1
+                                  : Long.valueOf(mml.get(UPTIME)).longValue()));
     }
 
     private void createNewMysterIP(String i, double s, int tu, int td, int h, long t, String nof,
@@ -413,17 +418,17 @@ class MysterIP {
 
             synchronized (mysterip) {
                 NumOfFiles table = new NumOfFiles();
-                Vector dirList = mml.list("/numberOfFiles/");
+                List<String> dirList = mml.list("/numberOfFiles/");
 
                 try {
                     if (dirList != null) {
                         for (int i = 0; i < dirList.size(); i++) {
                             String s_temp = mml.get("/numberOfFiles/"
-                                    + (String) (dirList.elementAt(i)));
+                                    + dirList.get(i));
                             if (s_temp == null)
                                 continue; //<- weird err.
 
-                            table.put("/" + (String) (dirList.elementAt(i)), s_temp);//<-WARNING
+                            table.put("/" + dirList.get(i), s_temp);//<-WARNING
                             // could
                             // be a
                             // number

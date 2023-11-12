@@ -1,17 +1,23 @@
 package com.myster.search;
 
+import java.util.List;
 import java.util.Vector;
 
 import com.myster.mml.RobustMML;
 import com.myster.net.MysterAddress;
+import com.myster.search.ui.ServerStatsFromCache;
+import com.myster.tracker.MysterServer;
 
 public class MysterSearchResult implements SearchResult {
-    RobustMML mml;
+    private RobustMML mml;
 
-    MysterFileStub stub;
+    private final MysterFileStub stub;
+    
+    private final ServerStatsFromCache cache;
 
-    public MysterSearchResult(MysterFileStub stub) {
+    public MysterSearchResult(MysterFileStub stub, ServerStatsFromCache cache) {
         this.stub = stub;
+        this.cache = cache;
     }
 
     public void setMML(RobustMML m) {
@@ -39,12 +45,12 @@ public class MysterSearchResult implements SearchResult {
         if (mml == null)
             return new String[] {};
 
-        Vector items = mml.list("/");
+        List<String> items = mml.list("/");
 
         Vector v_temp = new Vector(items.size());
 
         for (int i = 0; i < items.size(); i++) {
-            String s_temp = (String) (items.elementAt(i));
+            String s_temp = (items.get(i));
             if (mml.isAFile("/" + s_temp)) {
                 v_temp.addElement("/" + s_temp);
             }
@@ -67,5 +73,10 @@ public class MysterSearchResult implements SearchResult {
     //gets the host address
     public MysterAddress getHostAddress() {
         return stub.getMysterAddress();
+    }
+
+    @Override
+    public MysterServer getServer() {
+        return cache.get(getHostAddress());
     }
 }

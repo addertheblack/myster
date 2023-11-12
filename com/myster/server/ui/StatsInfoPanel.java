@@ -18,15 +18,14 @@ import javax.swing.JScrollPane;
 import com.general.util.LinkedList;
 import com.general.util.Timer;
 import com.general.util.Util;
-import com.myster.server.ServerFacade;
 import com.myster.server.event.ConnectionManagerEvent;
 import com.myster.server.event.ConnectionManagerListener;
 import com.myster.server.event.OperatorEvent;
 import com.myster.server.event.OperatorListener;
+import com.myster.server.event.ServerContext;
 import com.myster.server.event.ServerDownloadDispatcher;
 import com.myster.server.event.ServerDownloadEvent;
 import com.myster.server.event.ServerDownloadListener;
-import com.myster.server.event.ServerEventDispatcher;
 import com.myster.server.event.ServerSearchDispatcher;
 import com.myster.server.event.ServerSearchEvent;
 import com.myster.server.event.ServerSearchListener;
@@ -94,20 +93,17 @@ public class StatsInfoPanel extends JPanel {
 
     private JLabel uptime;
 
-    private ServerEventDispatcher server;
-
     private SearchPerHour searches = null;
 
-    public StatsInfoPanel() {
+    public StatsInfoPanel(ServerContext context) {
 
         setBackground(new Color(240, 240, 240));
-        server = ServerFacade.getServerDispatcher();
-        server.addConnectionManagerListener(new ConnectionHandler());
+        context.addConnectionManagerListener(new ConnectionHandler());
 
         // Load stuff
         init();
 
-        server.addOperatorListener(new OperatorListener() {
+        context.addOperatorListener(new OperatorListener() {
             public void pingEvent(OperatorEvent e) {
                 numberOfPings.increment(false);
             }

@@ -24,7 +24,7 @@ import javax.swing.JLabel;
 import javax.swing.JTextField;
 
 import com.myster.net.MysterAddress;
-import com.myster.tracker.IPListManagerSingleton;
+import com.myster.tracker.IPListManager;
 
 /**
  * Implements the addIP dialog box.
@@ -52,9 +52,13 @@ public class AddIPDialog extends JDialog {
             "IDSN 2 channel", "ADSL", "Cable modem",
             "DSL (You have an \"ADSL\", trust me)", "T1", "T3", "40Mbits/sec +" };
 
-    public AddIPDialog() {
-        super(com.myster.ui.WindowManager.getFrontMostWindow(), "Add IP", true);
+    private final IPListManager ipListManager;
 
+    public AddIPDialog(IPListManager ipListManager) {
+        super(com.myster.ui.WindowManager.getFrontMostWindow(), "Add IP", true);
+        
+        this.ipListManager = ipListManager;
+        
         //Do interface setup:
         gblayout = new GridBagLayout();
         setLayout(gblayout);
@@ -114,7 +118,7 @@ public class AddIPDialog extends JDialog {
      */
     public void doAction() {
         try {
-            IPListManagerSingleton.getIPListManager().addIP(
+            ipListManager.addIP(
                     new MysterAddress(textentry.getText()));
         } catch (UnknownHostException ex) {
             System.out.println("The \"Name\" : " + textentry.getText()

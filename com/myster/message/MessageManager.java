@@ -1,19 +1,16 @@
 package com.myster.message;
 
-import java.awt.event.ItemEvent;
-import java.awt.event.ItemListener;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.io.IOException;
-
-import javax.swing.JCheckBox;
-import javax.swing.JLabel;
-import javax.swing.JTextField;
+import java.util.ArrayDeque;
+import java.util.Optional;
+import java.util.Queue;
 
 import com.general.util.AnswerDialog;
-import com.general.util.LinkedList;
+import com.general.util.Util;
 import com.myster.mml.MMLException;
 import com.myster.mml.RobustMML;
 import com.myster.net.BadPacketException;
@@ -21,7 +18,7 @@ import com.myster.net.DataPacket;
 import com.myster.net.MysterAddress;
 import com.myster.pref.Preferences;
 import com.myster.pref.PreferencesMML;
-import com.myster.pref.ui.PreferencesPanel;
+import com.myster.tracker.IPListManager;
 import com.myster.transaction.Transaction;
 import com.myster.transaction.TransactionEvent;
 import com.myster.transaction.TransactionListener;
@@ -30,14 +27,16 @@ import com.myster.transaction.TransactionProtocol;
 import com.myster.transaction.TransactionSocket;
 
 public class MessageManager {
-    //public final static int TRANSACTION_CODE;
+    private static Preferences preferences;
 
-    private static MessagePreferencesPanel prefPanel;
+    private static IPListManager ipListManager;
 
-    public static void init() {
-        prefPanel = new MessagePreferencesPanel();
-        Preferences.getInstance().addPanel(prefPanel);
-        TransactionManager.addTransactionProtocol(new InstantMessageTransport());
+    
+    
+    public static void init(IPListManager ipListManager, Preferences preferences) {
+        MessageManager.ipListManager = ipListManager;
+        MessageManager.preferences = preferences;
+        TransactionManager.addTransactionProtocol(new InstantMessageTransport(preferences));
     }
 
     public static void sendInstantMessage(MysterAddress address, String msg) {
@@ -49,7 +48,7 @@ public class MessageManager {
     }
 
     public static void sendInstantMessage(MysterAddress address, String msg, String reply) {
-        TransactionSocket tsocket = new TransactionSocket(InstantMessageTransport.transportNumber);
+        TransactionSocket tsocket = new TransactionSocket(InstantMessageTransport.TRANSPORT_NUMBER);
 
         tsocket.sendTransaction(new MessagePacket(generateID(), address, msg, reply),
                 new TransactionListener() {
@@ -101,12 +100,10 @@ public class MessageManager {
     //}
 
     protected static boolean messageReceived(MessagePacket msg) {
-        if (isRefusingMessages())
+        if (isRefusingMessages(preferences))
             return false;
 
-        final String message = msg.getAddress().toString() + " sent: \n\n" + msg.getMessage();
-
-        (new MessageWindow(new InstantMessage(msg.getAddress(), msg.getMessage(), msg.getReply())))
+        (new MessageWindow(new InstantMessage(msg.getAddress(), msg.getMessage(), msg.getReply()), ipListManager::getQuickServerStats))
                 .show();
 
         java.awt.Toolkit.getDefaultToolkit().beep();
@@ -115,11 +112,9 @@ public class MessageManager {
     }
 
     private static void simpleAlert(final String message) {
-        (new Thread() {
-            public void run() {
-                AnswerDialog.simpleAlert(message);
-            }
-        }).start();
+        Util.invokeLater(() -> {
+            AnswerDialog.simpleAlert(message);
+        });
     }
 
     private static int counter = 1;
@@ -129,124 +124,54 @@ public class MessageManager {
     }
 
     ////////////// PREFs \\\\\\\\\\
-    protected static boolean isRefusingMessages() {
-        return prefPanel.isRefusingMessages();
+    private static final String PREFS_MESSAGING_KEY = "Myster Instant Messaging";
+    private static final String MML_REFUSE_FLAG = "/Refusing";
+    private static final String MML_REFUSE_MESSAGE = "/Refusing Messages";
+    private static final String REFUSAL_MESSAGE_DEFAULT = "Not accepting messages at this time.";
+    private static final String TRUE_AS_STRING = "TRUE";
+    private static final String FALSE_AS_STRING = "FALSE";
+    
+    public static boolean isRefusingMessages(Preferences p) {
+        return getPreferencesMML(p).get(MML_REFUSE_FLAG, FALSE_AS_STRING).equals(TRUE_AS_STRING);
     }
 
-    protected static String getRefusingMessage() {
-        return prefPanel.getRefusingMessage();
+    public static String getRefusingMessage(Preferences p) {
+        return getPreferencesMML(p).get(MML_REFUSE_MESSAGE, REFUSAL_MESSAGE_DEFAULT);
     }
 
-    private static class MessagePreferencesPanel extends PreferencesPanel {
-        private final JCheckBox refuseMessages;
+    public static void setPrefs(Preferences p, Optional<String> text, boolean refuseMessages) {
+        RobustMML mml = new RobustMML();
+        mml.put(MML_REFUSE_MESSAGE, text.orElse(REFUSAL_MESSAGE_DEFAULT));
 
-        private final JLabel denyMessageLabel;
+        mml.put(MML_REFUSE_FLAG, (refuseMessages ? TRUE_AS_STRING : FALSE_AS_STRING));
 
-        private final JTextField denyMessageText;
+        p.put(PREFS_MESSAGING_KEY, mml);
+    }
 
-        private static final String PREFS_MESSAGING_KEY = "Myster Instant Messaging";
-
-        private static final String MML_REFUSE_FLAG = "/Refusing";
-
-        private static final String MML_REFUSE_MESSAGE = "/Refusing Messages";
-
-        private static final String REFUSAL_MESSAGE_DEFAULT = "Not accepting messages at this time.";
-
-        private static final String TRUE_AS_STRING = "TRUE";
-
-        private static final String FALSE_AS_STRING = "FALSE";
-
-        public MessagePreferencesPanel() {
-            setLayout(null);
-
-            refuseMessages = new JCheckBox("Refuse Messages");
-            refuseMessages.setSize(150, 25);
-            refuseMessages.setLocation(10, 25);
-            refuseMessages.addItemListener(new ItemListener() {
-                public void itemStateChanged(ItemEvent e) {
-                    updateEnabled();
-                }
-            });
-            add(refuseMessages);
-
-            denyMessageLabel = new JLabel("Refusal Message:");
-            denyMessageLabel.setSize(150, 25);
-            denyMessageLabel.setLocation(20, 50);
-            add(denyMessageLabel);
-
-            denyMessageText = new JTextField(REFUSAL_MESSAGE_DEFAULT);
-            denyMessageText.setSize(400, 25);
-            denyMessageText.setLocation(25, 75);
-            add(denyMessageText);
-
-            setSize(STD_XSIZE, STD_YSIZE);
-        }
-
-        public void save() {
-            PreferencesMML mml = new PreferencesMML();
-
-            String text = denyMessageText.getText();
-            if (text.equals("") || text.length() > 255)
-                text = REFUSAL_MESSAGE_DEFAULT; //MML can't take "", 255 is
-            // arbitrairy limit, real limit
-            // is about 60k
-            denyMessageText.setText(text);
-            mml.put(MML_REFUSE_MESSAGE, text);
-
-            mml
-                    .put(MML_REFUSE_FLAG, (refuseMessages.isSelected() ? TRUE_AS_STRING
-                            : FALSE_AS_STRING));
-
-            Preferences.getInstance().put(PREFS_MESSAGING_KEY, mml);
-        }
-
-        //discard changes and reset values to their defaults.
-        public void reset() {
-            denyMessageText.setText(getRefusingMessage());
-
-            refuseMessages.setSelected(isRefusingMessages());
-
-            updateEnabled(); //cheese
-        }
-
-        private void updateEnabled() {
-            if (refuseMessages.isSelected()) {
-                denyMessageLabel.setEnabled(true);
-                denyMessageText.setEnabled(true);
-            } else {
-                denyMessageLabel.setEnabled(false);
-                denyMessageText.setEnabled(false);
-            }
-        }
-
-        public String getKey() {
-            return "Messages";
-        }//gets the key structure for the place in the pref panel
-
-        public boolean isRefusingMessages() {
-            return getPreferencesMML().get(MML_REFUSE_FLAG, FALSE_AS_STRING).equals(TRUE_AS_STRING);
-        }
-
-        public String getRefusingMessage() {
-            return getPreferencesMML().get(MML_REFUSE_MESSAGE, REFUSAL_MESSAGE_DEFAULT);
-        }
-
-        private PreferencesMML getPreferencesMML() {
-            return new PreferencesMML(Preferences.getInstance().getAsMML(PREFS_MESSAGING_KEY,
-                    new PreferencesMML()));
-        }
+    private static PreferencesMML getPreferencesMML(Preferences p) {
+        return new PreferencesMML(p.getAsMML(PREFS_MESSAGING_KEY,
+                new PreferencesMML()));
     }
 }
 
+
+
 class InstantMessageTransport extends TransactionProtocol {
-    static final long EXPIRE_TIME = 60 * 60 * 1000; //1 hour.. (wow!)
+    private static final long EXPIRE_TIME = 60 * 60 * 1000; //1 hour.. (wow!)
 
-    static final int transportNumber = 1111;
+    // package protected on purpose
+    static final int TRANSPORT_NUMBER = 1111;
 
-    LinkedList recentlyReceivedMessages = new LinkedList();
+    private final Queue<ReceivedMessage> recentlyReceivedMessages = new ArrayDeque<>();
 
+    private final Preferences preferences;
+
+    public InstantMessageTransport(Preferences preferences) {
+        this.preferences = preferences;
+    }
+    
     public int getTransactionCode() {
-        return transportNumber;
+        return TRANSPORT_NUMBER;
     }
 
     public synchronized void transactionReceived(Transaction transaction, Object transactionObject)
@@ -260,7 +185,7 @@ class InstantMessageTransport extends TransactionProtocol {
             return; //if it's one we've seen before ignore it.
         }
 
-        recentlyReceivedMessages.addToTail(receivedMessage);
+        recentlyReceivedMessages.add(receivedMessage);
 
         //below is where the event system would go.
         if (MessageManager.messageReceived(msg)) {
@@ -268,7 +193,7 @@ class InstantMessageTransport extends TransactionProtocol {
                     .getAddress(), 0, "")).getData(), Transaction.NO_ERROR));
         } else {
             sendTransaction(new Transaction(transaction, (new MessagePacket(transaction
-                    .getAddress(), 1, MessageManager.getRefusingMessage())).getData(),
+                    .getAddress(), 1, MessageManager.getRefusingMessage(preferences))).getData(),
                     Transaction.NO_ERROR));
         }
 
@@ -276,12 +201,12 @@ class InstantMessageTransport extends TransactionProtocol {
     }
 
     private void trashOld() { //gets rid of old messages.
-        while (recentlyReceivedMessages.getHead() != null) {
-            ReceivedMessage recentMessage = (ReceivedMessage) (recentlyReceivedMessages.getHead());
+        while (recentlyReceivedMessages.peek() != null) {
+            var recentMessage = (recentlyReceivedMessages.peek());
             if (recentMessage.getTimeStamp() > (System.currentTimeMillis() - EXPIRE_TIME))
                 return;
 
-            recentlyReceivedMessages.removeFromHead();
+            recentlyReceivedMessages.poll();
         }
     }
 
@@ -513,13 +438,14 @@ class MessagePacket implements DataPacket { //Is Immutable
         try {
             out.writeUTF(mml.toString());
         } catch (IOException ex) {
+            // nothing
         }
 
         return byteStream.toByteArray();
     }
 
     public byte[] getData() { //is slow.
-        return (byte[]) (data.clone());
+        return (data.clone());
     }
 
     public byte[] getHeader() {
@@ -528,7 +454,7 @@ class MessagePacket implements DataPacket { //Is Immutable
 
     public byte[] getBytes() {
         return getData(); //warning.. does not access getHeader!!!!!! (is not
-        // nessesairy at this writting)
+        // necessary at this writing)
     }
 }
 

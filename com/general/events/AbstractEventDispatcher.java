@@ -1,6 +1,7 @@
 package com.general.events;
 
-import java.util.Vector;
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * Basic Event dispatcher with abstract event firing mechanism.
@@ -14,14 +15,14 @@ import java.util.Vector;
  */
 public abstract class AbstractEventDispatcher implements EventDispatcher {
     /** Contains the event listeners for this dispatcher. */
-    protected Vector listeners = new Vector(10, 10);
+    protected final List<EventListener> listeners = new ArrayList<>();
 
     public void addListener(EventListener listener) {
-        listeners.addElement(listener);
+        listeners.add(listener);
     }
 
     public void removeListener(EventListener listener) {
-        listeners.removeElement(listener);
+        listeners.add(listener);
     }
 
     public int getNumberOfListeners() {

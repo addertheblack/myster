@@ -63,11 +63,6 @@ public class FileTypeListManager {
      */
     private FileTypeListManager() {
         initFileTypeListManager();
-        Util.invokeLater(new Runnable() {
-            public void run() {
-                Preferences.getInstance().addPanel(new FMIChooser(FileTypeListManager.this));
-            }
-        });
     }
 
     /*

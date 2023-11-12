@@ -1,6 +1,7 @@
 package com.myster.search;
 
 import com.myster.net.MysterAddress;
+import com.myster.tracker.MysterServer;
 
 public interface SearchResult {
 
@@ -21,4 +22,6 @@ public interface SearchResult {
 
     //gets the host address
     public MysterAddress getHostAddress();
+    
+    public MysterServer getServer();
 }

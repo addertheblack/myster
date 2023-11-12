@@ -6,12 +6,18 @@ import java.io.IOException;
 
 import com.myster.net.MysterAddress;
 import com.myster.server.ConnectionContext;
-import com.myster.tracker.IPListManagerSingleton;
+import com.myster.tracker.IPListManager;
 import com.myster.tracker.MysterServer;
 import com.myster.type.MysterType;
 
 public class IPLister extends ServerThread {
     public static final int NUMBER = 10;
+    
+    private final IPListManager ipListManager;
+
+    public IPLister(IPListManager ipListManager) {
+        this.ipListManager = ipListManager;
+    }
 
     public int getSectionNumber() {
         return NUMBER;
@@ -32,10 +38,10 @@ public class IPLister extends ServerThread {
         byte[] type = new byte[4];
         in.readFully(type);
 
-        IPListManagerSingleton.getIPListManager().addIP(
+        ipListManager.addIP(
                 new MysterAddress(context.socket.getInetAddress()));
 
-        topten = IPListManagerSingleton.getIPListManager().getTop(
+        topten = ipListManager.getTop(
                 new MysterType(type), 100);
         if (topten != null) {
             for (int i = 0; i < topten.length; i++) {

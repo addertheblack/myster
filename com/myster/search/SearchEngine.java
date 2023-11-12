@@ -12,6 +12,7 @@
 package com.myster.search;
 
 import com.myster.search.ui.SearchWindow;
+import com.myster.tracker.IPListManager;
 import com.myster.util.MysterThread;
 
 
@@ -20,17 +21,17 @@ import com.myster.util.MysterThread;
  * Myster searches but could be modified to search using multiple different protocols.
  */
 public class SearchEngine extends MysterThread {
-    SearchWindow window;
+    private final SearchWindow window;
 
-    MysterSearch msearch;
+    private final MysterSearch mysterSearch;
 
-    public SearchEngine(SearchWindow w) {
+    public SearchEngine(SearchWindow w, IPListManager manager) {
         window = w;
-        msearch = new MysterSearch(window, window, window.getMysterType(), window.getSearchString());
+        mysterSearch = new MysterSearch(window, window, window.getMysterType(), window.getSearchString(), manager);
     }
 
     public void run() {
-        msearch.run();
+        mysterSearch.run();
     }
 
     public void end() {
@@ -43,6 +44,6 @@ public class SearchEngine extends MysterThread {
     }
     
     public void flagToEnd() {
-        msearch.flagToEnd();
+        mysterSearch.flagToEnd();
     }
 }

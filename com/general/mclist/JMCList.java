@@ -8,6 +8,7 @@ import java.awt.Graphics;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.lang.reflect.InvocationTargetException;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.Iterator;
@@ -20,6 +21,7 @@ import javax.swing.JScrollPane;
 import javax.swing.JTable;
 import javax.swing.ListSelectionModel;
 import javax.swing.SwingUtilities;
+import javax.swing.WindowConstants;
 import javax.swing.event.EventListenerList;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
@@ -27,25 +29,16 @@ import javax.swing.table.AbstractTableModel;
 import javax.swing.table.JTableHeader;
 import javax.swing.table.TableCellRenderer;
 
-
-/**
- */
 public class JMCList extends JTable implements MCList {
-
-    private JScrollPane scrollPane;
-
-    private List listeners;
+    private final JScrollPane scrollPane;
+    private final List listeners;
 
     public JMCList() {
         this(1, true);
     }
 
-    /**
-     * @param numberOfColumns
-     * @param singleselect
-     */
     public JMCList(int numberOfColumns, boolean singleselect) {
-        listeners = new Vector();
+        listeners = new ArrayList<>();
         setModel(new MCListTableModel());
         scrollPane = new JScrollPane(this);
         scrollPane.setDoubleBuffered(true);
@@ -398,7 +391,7 @@ public class JMCList extends JTable implements MCList {
             public void run() {
                 JFrame frame = new JFrame("Testing...");
 
-                frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+                frame.setDefaultCloseOperation(WindowConstants.EXIT_ON_CLOSE);
 
                 list.setNumberOfColumns(5);
                 list.setColumnName(0, "First Column");
@@ -623,16 +616,16 @@ class MCListSelectionModel implements ListSelectionModel {
     }
 
     public int[] getSelectedIndexes() {
-        Vector vector = new Vector(tableModel.getRowCount());
+        List<Integer> list = new ArrayList<>(tableModel.getRowCount());
 
         for (int i = 0; i < tableModel.getRowCount(); i++) {
             if (tableModel.getRow(i).isSelected())
-                vector.add(new Integer(i));
+                list.add(i);
         }
 
-        int[] indexes = new int[vector.size()];
-        for (int i = 0; i < vector.size(); i++) {
-            indexes[i] = ((Integer) vector.elementAt(i)).intValue();
+        int[] indexes = new int[list.size()];
+        for (int i = 0; i < list.size(); i++) {
+            indexes[i] = list.get(i);
         }
 
         return indexes;

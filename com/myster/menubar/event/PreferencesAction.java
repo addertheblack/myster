@@ -14,11 +14,19 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 
 import com.myster.pref.Preferences;
+import com.myster.ui.PreferencesGui;
 
 public class PreferencesAction implements ActionListener {
+    private final PreferencesGui prefGui;
+    
+    public PreferencesAction(PreferencesGui prefGui) {
+        if (prefGui == null)
+            throw new NullPointerException("prefGui is null");
+        this.prefGui = prefGui;
+    }
 
     public void actionPerformed(ActionEvent e) {
-        Preferences.getInstance().setGUI(true);
+        prefGui.setGUI(true);
     }
 
 }

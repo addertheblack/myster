@@ -1,6 +1,6 @@
 package com.general.events;
 
-import java.util.Vector;
+import java.util.List;
 
 import com.general.util.LinkedList;
 
@@ -23,12 +23,12 @@ public class SyncEventDispatcher extends AbstractEventDispatcher {
             isDispatching = true;
         }
 
-        Vector listeners = this.listeners;
-        //synchronized (listeners) { //should not be necessary since no one
+        List<EventListener> listeners = this.listeners;
+        // synchronized (listeners) { //should not be necessary since no one
         // should be adding while dispatching.
         for (int i = 0; i < listeners.size(); i++) {
             try {
-                ((EventListener) (listeners.elementAt(i))).fireEvent(e);
+                listeners.get(i).fireEvent(e);
             } catch (Exception ex) {
                 ex.printStackTrace();
                 //we don't want all events to not be delivered just because one
@@ -55,7 +55,7 @@ public class SyncEventDispatcher extends AbstractEventDispatcher {
             return;
         }
 
-        listeners.addElement(listener);
+        listeners.add(listener);
     }
 
     /*
@@ -68,7 +68,7 @@ public class SyncEventDispatcher extends AbstractEventDispatcher {
             return;
         }
 
-        listeners.removeElement(listener);
+        listeners.remove(listener);
     }
 
     public synchronized int getListenerCount() {

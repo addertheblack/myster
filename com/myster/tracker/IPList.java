@@ -19,28 +19,35 @@
 
 package com.myster.tracker;
 
+import java.net.UnknownHostException;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.Iterator;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
 import java.util.StringTokenizer;
-import java.util.Vector;
 
 import com.myster.net.MysterAddress;
 import com.myster.pref.Preferences;
 import com.myster.type.MysterType;
 
 class IPList {
-    private MysterServer[] array = new MysterServer[IPListManager.LISTSIZE];
-
-    private MysterType type;
-
-    private String mypath;
-
+    public static final int LISTSIZE = 100; //Size of any given list..
     private static final String PATH = "/IPLists/";
+    
+    private final Map<MysterAddress, MysterServer> mapOfServers = new LinkedHashMap<>();
+    private final MysterType type;
+    private final String mypath;
+    
+    private MysterServer worstRank = null;
+    private long worstTime = 0;
 
     /**
      * Takes as an argument a list of strings.. These strings are the .toString() product of
      * com.myster objects.
      */
-    protected IPList(MysterType type) {
-        String[] list;
+    protected IPList(MysterType type, MysterIPPool pool) {
         mypath = PATH + type;
 
         if (!Preferences.getInstance().containsKey(mypath)) {
@@ -50,16 +57,16 @@ class IPList {
         String s = Preferences.getInstance().get(mypath);
         StringTokenizer ips = new StringTokenizer(s);
         int max = ips.countTokens();
-        int j = 0;
         for (int i = 0; i < max; i++) {
             try {
                 MysterServer temp = null;
                 String workingip = ips.nextToken();
-                if (MysterIPPool.getInstance().existsInPool(new MysterAddress(workingip))) {
+                if (pool.existsInPool(new MysterAddress(workingip))) {
                     try {
-                        temp = MysterIPPool.getInstance().getMysterServer(
+                        temp = pool.getMysterServer(
                                 new MysterAddress(workingip));
-                    } catch (Exception ex) {
+                    } catch (UnknownHostException ex) {
+                        // do nothing
                     }
                 }//if IP doens't exist in the pool, remove it from the list!
                 if (temp == null) {
@@ -67,8 +74,7 @@ class IPList {
                     continue;
                 }
 
-                array[j] = temp;
-                j++;
+                mapOfServers.put(temp.getAddress(), temp);
             } catch (Exception ex) {
                 System.out.println("Failed to add an IP to an IP list: " + type);
             }
@@ -93,10 +99,15 @@ class IPList {
         //io.writeIPList(getAsArray());
 
         int counter = 0;
-        for (int i = 0; i < array.length && counter < x && array[i] != null; i++) {
-            if (array[i].getStatus() && (!array[i].isUntried())) {
-                temp[counter] = array[i];
+        
+        for (MysterServer value : mapOfServers.values()) {
+            if (value.getStatus() && (!value.isUntried())) {
+                temp[counter] = value;
                 counter++;
+            }
+            
+            if (counter >= temp.length) {
+                return temp;
             }
         }
         return temp;
@@ -105,12 +116,8 @@ class IPList {
     /**
      * Returns vector of MysterAddress.
      */
-    public synchronized Vector getAll() {
-        Vector list = new Vector(IPListManager.LISTSIZE);
-        for (int i = 0; i < array.length && array[i] != null; i++) {
-            list.addElement(array[i]);
-        }
-        return list;
+    public synchronized List<MysterServer> getAll() {
+        return new ArrayList<>(mapOfServers.values());
     }
 
     /**
@@ -124,33 +131,15 @@ class IPList {
         return type;
     }
 
-    private synchronized void swap(MysterServer[] array, int i, int j) {
-        MysterServer temp;
-        temp = array[i];
-        array[i] = array[j];
-        array[j] = temp;
-    }
-
     private synchronized void removeCrap() {
-        for (int i = 0; i < array.length; i++) {
-            for (int j = i + 1; j < array.length && array[j] != null; j++) {
-                if (array[i].getAddress().equals(array[j].getAddress()))
-                    removeItem(j);
+        Iterator<Map.Entry<MysterAddress, MysterServer>> iterator = mapOfServers.entrySet().iterator();
+        while (iterator.hasNext()) {
+            Map.Entry<MysterAddress, MysterServer> entry = iterator.next();
+            if (entry.getKey().getIP().equals("127.0.0.1")) {
+                iterator.remove();
             }
         }
 
-        for (int i = 0; i < array.length && array[i] != null; i++) {
-            if (array[i].getAddress().getIP().equals("127.0.0.1"))
-                removeItem(i);
-        }
-
-    }
-
-    private synchronized void removeItem(int index) {
-        for (int i = index + 1; i < array.length; i++) {
-            swap(array, i - 1, i);
-        }
-        array[array.length - 1] = null;
     }
 
     /**
@@ -159,11 +148,9 @@ class IPList {
     private synchronized void save() {
         removeCrap();
 
-        StringBuffer buffer = new StringBuffer(40000); //Give lots of space!
-        for (int i = 0; i < array.length; i++) {
-            if (array[i] == null)
-                break;
-            buffer.append("" + array[i].getAddress() + " ");
+        StringBuffer buffer = new StringBuffer();  
+        for (MysterAddress a: mapOfServers.keySet()) {
+            buffer.append("" + a + " ");
         }
 
         Preferences.getInstance().put(mypath, buffer.toString());
@@ -176,52 +163,54 @@ class IPList {
     private synchronized void insertionSort(MysterServer ip) {
         if (ip == null)
             return;
-
-        //System.out.println("Asking list "+type+" if it would like ip
-        // "+ip.getName());
-        //LOOKS FOR A FREE SPACE IN THE LIST AND INSERTS IN THE LIST IF IT
-        // FINDS ONE...
-        for (int i = 0; i < array.length; i++) {
-            if (array[i] == null) {
-                array[i] = ip;
-                //System.out.println("Adding com.myster "+ip.getName()+" to
-                // list "+type);
-                sort(); //ya gotta sort...
-                save(); //Saves the new IP.
-                return;
-            }
-            if (array[i].getAddress().equals(ip.getAddress())) {
-                //System.out.println("List "+type+" already contains
-                // "+ip.getName());
-                return;
-            }
-        }
-
-        //THIS CODE IS KICK ASS.. IT ONLY SORTS IF THE RANK OF THE LAST ITEM IS
-        // LESS THAN IT'S RANK!
-        //System.out.println("Old IP: "+array[array.length-1].getRank(type)+"
-        // vs new IP: "+ip.getRank(type));
-        //System.out.println("Old IP: "+array[array.length-1].getIP()+" vs new
-        // IP: "+ip.getIP());
-        if (array[array.length - 1].getRank(type) < ip.getRank(type)) {
-            //System.out.println("Adding com.myster "+ip.getAddress()+" to full
-            // list "+type);
-            array[array.length - 1] = ip;
-            sort();
-            save(); //Saves the new IP.
+        if (mapOfServers.containsKey(ip.getAddress())) {
             return;
         }
-        //System.out.println("List "+type+" refused "+ip.getName()+" ranked
-        // "+(ip.getRank(type)*100));
+        
+        // cache expired
+        // we need this because rank changes in the background.
+        // so we count 30 secs before we stop trusting it
+        if (System.currentTimeMillis() - worstTime > 30000) {
+            worstRank = null;
+        }
+        
+        // to avoid punishing re-sorts
+        if(worstRank != null && mapOfServers.size() >= LISTSIZE && worstRank.getRank(type) > ip.getRank(type)) {
+            return;
+        }
+        
+        mapOfServers.put(ip.getAddress(), ip);
+        sort();
+        save();
     }
 
     private synchronized void sort() {
-        for (int i = 1; i < array.length; i++) {
-            if (array[i] == null)
-                break;
-            for (int j = i; j > 0 && (array[j].getRank(type) > array[j - 1].getRank(type)); j--) {
-                swap(array, j, j - 1);
+        List<MysterServer> servers = new ArrayList<>(mapOfServers.values());
+        
+        
+        
+        // Take a snapshot of the ranks before sorting.
+        // getRank() is not stable across invocations. 
+        Map<MysterServer, Double> rankSnapshot = new HashMap<>();
+        for (MysterServer server : servers) {
+            rankSnapshot.put(server, server.getRank(type) * 10);
+        }
+
+        // Sort based on the snapshot values..
+        servers.sort((a, b) -> {
+            return Integer.compare((int)(double)rankSnapshot.get(a), (int)(double)rankSnapshot.get(b));
+        });
+        
+        mapOfServers.clear();
+        for (MysterServer s: servers) {
+            if (mapOfServers.size() >= LISTSIZE) {
+                return;
             }
+            mapOfServers.put(s.getAddress(), s);
+            
+            
+            worstRank = s;
+            worstTime = System.currentTimeMillis();
         }
     }
 

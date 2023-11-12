@@ -115,10 +115,7 @@ public class ProgressBar extends JPanel {
         runTimerIfAppropriate();
 
         Dimension size = getSize();
-        if (false && max <= min) {
-            g.setColor(getBackground());
-            g.fillRect(0, 0, size.width, size.height);
-        } else if (isValueOutOfBounds()) {
+        if (isValueOutOfBounds()) {
             double percent = Math.sin((((double) System.currentTimeMillis() / (double) 70))
                     / (2 * Math.PI));
             percent = (percent + 1) / 2;

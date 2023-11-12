@@ -1,11 +1,6 @@
 package com.myster.mml;
 
-/**
- * Rubust MML differs from regular MML in that it NEVER throws a runtime
- * Exception. Usefull if you don't trust the MML object. (RobustMML still throws
- * an exception on creation if the MML text (data) is invalid).
- */
-import java.util.Vector;
+import java.util.List;
 
 public class RobustMML extends MML {
     static final long serialVersionUID = -7600641043262045615L;
@@ -115,7 +110,7 @@ public class RobustMML extends MML {
     /**
      * gets a listing at path. If path is bad returns null.
      */
-    public Vector list(String path) {
+    public List<String> list(String path) {
         try {
             return super.list(path);
         } catch (MMLPathException ex) {

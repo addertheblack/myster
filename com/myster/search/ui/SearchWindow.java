@@ -23,7 +23,6 @@ import java.awt.event.WindowEvent;
 
 import javax.swing.JButton;
 import javax.swing.JTextField;
-import javax.swing.Timer;
 
 import com.general.mclist.MCList;
 import com.general.mclist.MCListEvent;
@@ -35,6 +34,7 @@ import com.general.util.StandardWindowBehavior;
 import com.myster.search.SearchEngine;
 import com.myster.search.SearchResult;
 import com.myster.search.SearchResultListener;
+import com.myster.tracker.IPListManager;
 import com.myster.type.MysterType;
 import com.myster.ui.MysterFrame;
 import com.myster.ui.WindowLocationKeeper;
@@ -155,6 +155,12 @@ public class SearchWindow extends MysterFrame implements SearchResultListener, S
         pack();
     }
     
+    public static IPListManager manager;
+    
+    public static void init(IPListManager manager) {
+        SearchWindow.manager = manager;
+    }
+    
     public static void initWindowLocations() {
         Rectangle[] rectangles = WindowLocationKeeper.getLastLocs(PREF_LOCATION_KEY);
 
@@ -209,7 +215,7 @@ public class SearchWindow extends MysterFrame implements SearchResultListener, S
         if (searchEngine != null) {
             stopSearch();
         }
-        searchEngine = new SearchEngine(this);
+        searchEngine = new SearchEngine(this, manager);
         searchEngine.run();
         setTitle("Search for \"" + getSearchString() + "\"");
     }
@@ -257,14 +263,9 @@ public class SearchWindow extends MysterFrame implements SearchResultListener, S
         return choice.getType();
     }
 
-    public void downloadFile(Object s) {
+    public static void downloadFile(Object s) {
         ((SearchResult) (s)).download();
     }
-
-    /*
-     * public void openAClientWindow(String s) { ClientWindow w=new
-     * ClientWindow(bucket.getValue(s).getIP()); }
-     */
 
     public void say(String s) {
         //System.out.println(s);

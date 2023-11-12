@@ -56,7 +56,7 @@ public class TransactionManager implements TransactionSender {
     }
 
     /**
-     * Sends a transaction back. Ment for use by TransactionProtol (serve side).
+     * Sends a transaction back. Meant for use by TransactionProtol (serve side).
      * 
      * @param packet
      *            to send
@@ -126,21 +126,21 @@ public class TransactionManager implements TransactionSender {
         return load().impl.addTransactionProtocol(protocol);
     }
 
-    /**
-     * Removes this protocol from active duty. Does not invalidate the sender.
-     * 
-     * @param protocol
-     *            object to remove.
-     * @return the same TransactionProtocol object..
-     */
-    public static TransactionProtocol removeTransactionProtocol(TransactionProtocol protocol) { //For
-        // server
-        return load().impl.removeTransactionProtocol(protocol);
-    }
+//    /**
+//     * Removes this protocol from active duty. Does not invalidate the sender.
+//     * 
+//     * @param protocol
+//     *            object to remove.
+//     * @return the same TransactionProtocol object..
+//     */
+//    public static TransactionProtocol removeTransactionProtocol(TransactionProtocol protocol) { //For
+//        // server
+//        return load().impl.removeTransactionProtocol(protocol);
+//    }
 
     /**
      * This class implements the DatagramTransport which means it implements a listener for all
-     * datagram packets with the its TRANSACTION_PROTOCOL_NUMBER. This also means all outgoing
+     * datagram packets with a TRANSACTION_PROTOCOL_NUMBER. This also means all outgoing
      * packets need to go through this object as this is the interface provided by
      * DatagramProtocolManager.
      * 
@@ -172,7 +172,7 @@ public class TransactionManager implements TransactionSender {
                 fireEvents(transaction.getConnectionNumber(), transaction);
             } else {
                 TransactionProtocol protocol = (TransactionProtocol) (serverProtocols
-                        .get(new Integer(transaction.getTransactionCode())));
+                        .get(transaction.getTransactionCode()));
 
                 if (protocol == null) {
                     System.out.println("No Transaction protocol registered under type: "
@@ -200,7 +200,7 @@ public class TransactionManager implements TransactionSender {
             Transaction transaction = new Transaction(packet.getAddress(), transactionCode,
                     uniqueid, packet.getData());
 
-            outstandingTransactions.put(new Integer(uniqueid), new ListenerRecord(packet
+            outstandingTransactions.put(uniqueid, new ListenerRecord(packet
                     .getAddress(), uniqueid, listener, new TimeoutTimer(uniqueid, transaction)));
 
             sendPacket(transaction.toImmutableDatagramPacket());
@@ -219,7 +219,7 @@ public class TransactionManager implements TransactionSender {
          */
         public boolean cancelTransaction(int uniqueId) {
             final ListenerRecord record = (ListenerRecord) outstandingTransactions
-                    .remove(new Integer(uniqueId));
+                    .remove(uniqueId);
 
             if (record == null)
                 return false;
@@ -253,22 +253,22 @@ public class TransactionManager implements TransactionSender {
 
         public TransactionProtocol addTransactionProtocol(TransactionProtocol protocol) { //For
             // server
-            return (TransactionProtocol) (serverProtocols.put(new Integer(protocol
-                    .getTransactionCode()), protocol));
+            return (TransactionProtocol) (serverProtocols.put(protocol
+                    .getTransactionCode(), protocol));
         }
 
         public TransactionProtocol removeTransactionProtocol(TransactionProtocol protocol) { //For
             // server
-            return (TransactionProtocol) (serverProtocols.remove(new Integer(protocol
-                    .getTransactionCode())));
+            return (TransactionProtocol) (serverProtocols.remove(protocol
+                    .getTransactionCode()));
         }
 
         /*
          * Not all events are sent through here. Cancelled events aren't sent here.
          */
         private void fireEvents(int uniqueid, Transaction transaction) {
-            ListenerRecord record = ((ListenerRecord) (outstandingTransactions.remove(new Integer(
-                    uniqueid))));
+            ListenerRecord record = ((ListenerRecord) (outstandingTransactions.remove(
+                    uniqueid)));
 
             if (record == null)
                 return; //minor err

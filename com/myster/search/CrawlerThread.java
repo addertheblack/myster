@@ -12,12 +12,12 @@ package com.myster.search;
 import java.io.IOException;
 import java.net.UnknownHostException;
 import java.util.Vector;
+import java.util.function.Consumer;
 
 import com.myster.client.stream.StandardSuite;
 import com.myster.net.MysterAddress;
 import com.myster.net.MysterSocket;
 import com.myster.net.MysterSocketFactory;
-import com.myster.tracker.IPListManagerSingleton;
 import com.myster.type.MysterType;
 import com.myster.util.MysterThread;
 import com.myster.util.Sayable;
@@ -27,23 +27,21 @@ import com.myster.util.Sayable;
  * to crawl.
  */
 public class CrawlerThread extends MysterThread {
-    MysterType searchType;
+    public static final int DEPTH = 20;
+    
+    private final Consumer<MysterAddress> addIp;
+    private final MysterType searchType;
+    private final IPQueue ipQueue;
+    private final MysterSearchClientSection searcher;
+    private final Sayable msg;
 
-    IPQueue ipQueue;
-
-    MysterSearchClientSection searcher;
-
-    MysterSocket socket;
-
-    Sayable msg;
-
-    boolean endFlag = false;
-
-    public final int DEPTH = 20;
+    private MysterSocket socket;
+    private boolean endFlag = false;
 
     public CrawlerThread(MysterSearchClientSection searcher, MysterType type, IPQueue iplist,
-            Sayable msg) {
+            Sayable msg, Consumer<MysterAddress> addIp) {
         super("Crawler Thread " + type);
+        this.addIp = addIp;
         this.ipQueue = iplist;
         this.searchType = type;
         this.msg = msg;
@@ -98,6 +96,7 @@ public class CrawlerThread extends MysterThread {
                                 try {
                                     addresses.add(new MysterAddress(ipList[i]));
                                 } catch (UnknownHostException ignore) {
+                                    // nothing
                                 }
                             }
                         } catch (IOException ex) {
@@ -114,6 +113,7 @@ public class CrawlerThread extends MysterThread {
                                     addresses
                                             .add(new MysterAddress((String) (ipList.elementAt(i))));
                                 } catch (UnknownHostException ignore) {
+                                    // ignore
                                 }
                             }
 
@@ -127,7 +127,7 @@ public class CrawlerThread extends MysterThread {
                         for (int i = 0; i < addresses.size(); i++) {
                             MysterAddress mysterAddress = (MysterAddress) addresses.get(i);
                             ipQueue.addIP(mysterAddress);
-                            IPListManagerSingleton.getIPListManager().addIP(mysterAddress);
+                            addIp.accept(mysterAddress);
                         }
                     }
 
@@ -146,6 +146,8 @@ public class CrawlerThread extends MysterThread {
                         try {
                             socket.close();
                         } catch (IOException exp) {
+                            // nothing
+                            
                         }
                     }
                 }
@@ -166,7 +168,7 @@ public class CrawlerThread extends MysterThread {
         try {
             socket.close();
         } catch (Exception ex) {
-
+            // nothing
         }
     }
 
@@ -176,6 +178,7 @@ public class CrawlerThread extends MysterThread {
         try {
             join();
         } catch (InterruptedException ex) {
+            // nothing
         }
     }
 

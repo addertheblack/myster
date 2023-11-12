@@ -12,6 +12,8 @@ package com.myster.type;
 
 import java.io.UnsupportedEncodingException;
 
+import com.general.util.UnexpectedError;
+
 /**
  * This class represents a MysterType. In Myster a MysterType is a 32 bit (4
  * byte) value representing a class of related files. Myster groups files by
@@ -25,7 +27,7 @@ import java.io.UnsupportedEncodingException;
  * Is immutable!
  * 
  * @author Andrew Trumper
- *  
+ * 
  */
 public final class MysterType {
     public static final int TYPE_LENGTH = 4;
@@ -36,7 +38,7 @@ public final class MysterType {
         if (type.length != TYPE_LENGTH)
             throw new MysterTypeException("Not a Myster Type");
 
-        this.type = (byte[]) type.clone();
+        this.type = type.clone();
     }
 
     /**
@@ -50,7 +52,15 @@ public final class MysterType {
      *            string to try and convert to a Myster Type.
      */
     public MysterType(String type) {
-        this(type.getBytes());
+        this(convertToBytes(type));
+    }
+
+    private static byte[] convertToBytes(String type) {
+        try {
+            return type.getBytes("cp1252");
+        } catch (UnsupportedEncodingException ex) {
+            throw new UnexpectedError("cp1252 is not supported chracter encoding");
+        }
     }
 
     public MysterType(int type) {
@@ -108,7 +118,7 @@ public final class MysterType {
      * @return an array of 4 bytes representing this type.
      */
     public byte[] getBytes() {
-        return (byte[]) type.clone();
+        return type.clone();
     }
 
     public String toString() {

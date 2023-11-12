@@ -14,12 +14,12 @@ import java.awt.event.ComponentEvent;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
 
-import javax.swing.JMenuBar;
 import javax.swing.JPanel;
 
 import com.general.tab.TabEvent;
 import com.general.tab.TabListener;
 import com.general.tab.TabPanel;
+import com.myster.server.event.ServerContext;
 import com.myster.ui.MysterFrame;
 import com.myster.util.Sayable;
 
@@ -42,6 +42,12 @@ public class ServerStatsWindow extends MysterFrame implements Sayable {
                                                              // com.myster.ui.WindowLocationKeeper("Server
                                                              // Stats");
 
+    private static ServerContext context;
+
+    public static void init(ServerContext context) {
+        ServerStatsWindow.context = context;
+    }
+    
     public synchronized static ServerStatsWindow getInstance() {
         if (singleton == null) {
             singleton = new ServerStatsWindow();
@@ -77,9 +83,9 @@ public class ServerStatsWindow extends MysterFrame implements Sayable {
 
         tab = new TabPanel();
 
-        downloadPanel = new DownloadInfoPanel();
+        downloadPanel = new DownloadInfoPanel(context);
 
-        statsinfopanel = new StatsInfoPanel();
+        statsinfopanel = new StatsInfoPanel(context);
 
         //init();if (true==true) return;
         addComponentListener(new ComponentAdapter() {
@@ -167,15 +173,12 @@ public class ServerStatsWindow extends MysterFrame implements Sayable {
          * graphinfopanel.setVisible(false); tab.addTabListener(new
          * TabHandler(2, graphinfopanel));
          */
-
         addWindowListener(new CloseBox());
-        //hide();
     }
 
     private class CloseBox extends WindowAdapter {
-
         public void windowClosing(WindowEvent e) {
-            hide();
+            setVisible(false);
         }
     }
 

@@ -35,7 +35,7 @@ import com.general.util.MessageField;
 import com.general.util.StandardWindowBehavior;
 import com.general.util.Util;
 import com.myster.net.MysterAddress;
-import com.myster.tracker.IPListManagerSingleton;
+import com.myster.tracker.IPListManager;
 import com.myster.tracker.MysterServer;
 import com.myster.type.MysterType;
 import com.myster.ui.MysterFrame;
@@ -58,6 +58,8 @@ public class ClientWindow extends MysterFrame implements Sayable {
     private static final String CLIENT_WINDOW_TITLE_PREFIX = "Direct Connection ";
     
     private static WindowLocationKeeper keeper;
+    
+    private static IPListManager ipListManager;
     
     private GridBagLayout gblayout;
 
@@ -85,6 +87,10 @@ public class ClientWindow extends MysterFrame implements Sayable {
 
     private FileInfoListerThread fileInfoListerThread;
 
+    public static void init(IPListManager ipListManager) {
+        ClientWindow.ipListManager = ipListManager;
+    }
+    
     public static void initWindowLocations() {
         Rectangle[] rectangles = com.myster.ui.WindowLocationKeeper.getLastLocs(WINDOW_KEEPER_KEY);
 
@@ -256,8 +262,7 @@ public class ClientWindow extends MysterFrame implements Sayable {
     public void refreshIP(final MysterAddress address) {
         Util.invokeLater(new Runnable() {
             public void run() {
-                MysterServer server = IPListManagerSingleton.getIPListManager()
-                        .getQuickServerStats(address);
+                MysterServer server = ipListManager.getQuickServerStats(address);
 
                 setTitle(CLIENT_WINDOW_TITLE_PREFIX + "to \""
                         + (server == null ? currentip : server.getServerIdentity()) + "\"");

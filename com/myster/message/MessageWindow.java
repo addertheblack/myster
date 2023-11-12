@@ -26,9 +26,10 @@ import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import javax.swing.JTextArea;
 import javax.swing.JTextField;
+import javax.swing.ScrollPaneConstants;
 
 import com.myster.net.MysterAddress;
-import com.myster.tracker.IPListManagerSingleton;
+import com.myster.search.ui.ServerStatsFromCache;
 import com.myster.tracker.MysterServer;
 import com.myster.ui.MysterFrame;
 
@@ -45,28 +46,32 @@ public class MessageWindow extends MysterFrame {
 
     MessageTextArea quoteArea, messageArea;
 
+    private final ServerStatsFromCache getServer;
+
     public static final boolean NEW_MESSAGE = true;
 
     public static final boolean FROM_SOMEONE_ELSE = false;
 
-    public MessageWindow(InstantMessage message) {
-        this(FROM_SOMEONE_ELSE, message.message, message.quote, message.address);
+    public MessageWindow(InstantMessage message, ServerStatsFromCache getServer) {
+        this(FROM_SOMEONE_ELSE, message.message, message.quote, message.address, getServer);
     }
 
-    public MessageWindow(MysterAddress address, String quote) {
-        this(NEW_MESSAGE, "", quote, address);
+    public MessageWindow(MysterAddress address, String quote, ServerStatsFromCache getServer) {
+        this(NEW_MESSAGE, "", quote, address, getServer);
     }
 
     public MessageWindow(MysterAddress address) {
-        this(NEW_MESSAGE, "", null, address);
+        this(NEW_MESSAGE, "", null, address, (a) -> null);
     }
 
     public MessageWindow() {
-        this(NEW_MESSAGE, "", null, null);
+        this(NEW_MESSAGE, "", null, null, (a) -> null);
     }
 
     private MessageWindow(final boolean type, final String message, final String quote,
-            final MysterAddress address) {
+            final MysterAddress address, ServerStatsFromCache getServer) {
+        this.getServer = getServer;
+        
         setSize(320, 400);
 
         //Do interface setup:
@@ -81,7 +86,7 @@ public class MessageWindow extends MysterFrame {
         mainPanel.setBackground(new Color(240, 240, 240));
         mainPanel.setLayout(gblayout);
 
-        header = new HeaderPanel(address, type);
+        header = new HeaderPanel(address, type, getServer);
         addComponent(header, 1, 1, 1, 1, 10, 0);
 
         bar = new MessageWindowButtonBar(type);
@@ -105,6 +110,7 @@ public class MessageWindow extends MysterFrame {
                 }
 
                 public void keyPressed(KeyEvent e) {
+                    // nothing
                 }
 
                 public void keyReleased(KeyEvent e) {
@@ -215,8 +221,8 @@ public class MessageWindow extends MysterFrame {
                 accept.addActionListener(new ActionListener() {
                     public void actionPerformed(ActionEvent e) {
                         try {
-                            MessageWindow messageWindow = new MessageWindow(header.getAddress(),
-                                    getMessage());
+                            MessageWindow messageWindow =
+                                    new MessageWindow(header.getAddress(), getMessage(), getServer);
                             messageWindow.setBounds(MessageWindow.this.getBounds());
                             messageWindow.setVisible(true);
                             closeThisWindow();
@@ -287,7 +293,7 @@ class HeaderPanel extends JPanel {
 
     private final MysterAddress address;
 
-    public HeaderPanel(MysterAddress address, final boolean type) {
+    public HeaderPanel(MysterAddress address, final boolean type, ServerStatsFromCache getServer) {
         //Do interface setup:
         gblayout = new GridBagLayout();
         gbconstrains = new GridBagConstraints();
@@ -303,11 +309,8 @@ class HeaderPanel extends JPanel {
 
         addressField = new JTextField(40);
 
-        if (address == null) {
-
-        } else {
-            MysterServer server = IPListManagerSingleton.getIPListManager().getQuickServerStats(
-                    address);
+        if (address != null) {
+            MysterServer server = getServer.get(address);
 
             String serverName;
 
@@ -325,7 +328,7 @@ class HeaderPanel extends JPanel {
         addComponent(addressField, 1, 2, 1, 1, 1, 1);
     }
 
-    //TODO: Should not be called on Event Thread
+    // TODO: Should not be called on Event Thread
     public MysterAddress getAddress() throws UnknownHostException {
         return (addressField.isEditable() ? new MysterAddress(addressField.getText()) : address);
     }
@@ -362,8 +365,8 @@ class MessageTextArea extends JPanel {
         area.setEditable(editable);
         area.setText(text);
 
-        JScrollPane scrollPane = new JScrollPane(JScrollPane.VERTICAL_SCROLLBAR_ALWAYS,
-                JScrollPane.HORIZONTAL_SCROLLBAR_NEVER);
+        JScrollPane scrollPane = new JScrollPane(ScrollPaneConstants.VERTICAL_SCROLLBAR_ALWAYS,
+                                                 ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);
         scrollPane.getViewport().add(area);
         scrollPane.setDoubleBuffered(true);
         add(scrollPane, "Center");

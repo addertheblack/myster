@@ -20,25 +20,19 @@ public class MCListHeader extends Panel {
     private AWTMCList callback;
 
     private static final int HEIGHT = 17;
-
+    private static final int CLICK_LATITUDE = 5;
+    private static final int MIN_COLUMN_WIDTH = 15;
     private static final boolean USE_ROLL_OVER = true;
 
     //Book Keeping
     private int numberOfColumns;
-
     private String[] columnarray;
-
     private int[] columnWidthArray; // A value of -1 means value should default
 
     // to width of header string.
 
     private int sortby = 0;
-
     private int mouseOverColumn = -1;
-
-    private static final int CLICK_LATITUDE = 5;
-
-    private static final int MIN_COLUMN_WIDTH = 15;
 
     public MCListHeader(AWTMCList c, int numberOfColumns) {
         callback = c;

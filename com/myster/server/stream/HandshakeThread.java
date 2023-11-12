@@ -11,27 +11,33 @@ package com.myster.server.stream;
  */
 
 import java.io.IOException;
+import java.util.function.Supplier;
 
 import com.myster.filemanager.FileTypeListManager;
 import com.myster.mml.MML;
 import com.myster.pref.Preferences;
 import com.myster.server.ConnectionContext;
-import com.myster.server.ServerFacade;
 import com.myster.type.MysterType;
 
 public class HandshakeThread extends ServerThread {
     public static final int NUMBER = 101;
+    
+    private final Supplier<String> getIdentity;
 
+    public HandshakeThread(Supplier<String> getIdentity) {
+        this.getIdentity = getIdentity;
+    }
+    
     public int getSectionNumber() {
         return NUMBER;
     }
 
     public void section(ConnectionContext context) throws IOException {
-        context.socket.out.writeUTF("" + getMMLToSend());
+        context.socket.out.writeUTF("" + getMMLToSend(getIdentity.get()));
     }
 
     //Returns an MML that would be send as a string via a Handshake.
-    public static MML getMMLToSend() {
+    public static MML getMMLToSend(String identity) {
         try {
             MML mml = new MML();
             Preferences prefs;
@@ -56,7 +62,7 @@ public class HandshakeThread extends ServerThread {
 
             getNumberOfFilesMML(mml); //Adds the number of files data.
 
-            String ident = ServerFacade.getIdentity();
+            String ident = identity;
             if (ident != null) {
                 if (!ident.equals("")) {
                     mml.put("/ServerIdentity", ident);

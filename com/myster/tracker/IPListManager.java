@@ -12,6 +12,7 @@ package com.myster.tracker;
 
 import java.io.IOException;
 import java.net.UnknownHostException;
+import java.util.List;
 import java.util.Vector;
 
 import com.general.util.BlockingQueue;
@@ -45,20 +46,21 @@ import com.myster.util.MysterThread;
  * @author Andrew Trumper
  */
 public class IPListManager { //aka tracker
-    public static final int LISTSIZE = 100; //Size of any given list..
-
     private static final String[] lastresort = { "bigmacs.homeip.net", "mysternetworks.homeip.net",
             "mysternetworks.dyndns.org", "myster.homeip.net" };
 
-    private IPList[] list;
+    private final IPList[] list;
 
-    private TypeDescription[] tdlist;
+    private final TypeDescription[] tdlist;
 
-    private BlockingQueue blockingQueue = new BlockingQueue();
+    private final BlockingQueue blockingQueue = new BlockingQueue();
 
-    private AddIP[] adderWorkers = new AddIP[2];
+    private final AddIP[] adderWorkers = new AddIP[2];
+    
+    private final MysterIPPool pool;
 
-    IPListManager() {
+    public IPListManager(MysterIPPool pool) {
+        this.pool = pool;
         blockingQueue.setRejectDuplicates(true);
 
         tdlist = TypeDescriptionList.getDefault().getEnabledTypes();
@@ -103,7 +105,6 @@ public class IPListManager { //aka tracker
             if (e.isTimeout())
                 return; //dead ip.
             MysterAddress ip = e.getAddress();
-            MysterIPPool pool = MysterIPPool.getInstance();
             MysterServer mysterServer;
 
             mysterServer = pool.getMysterIPLevelOne(ip);
@@ -161,28 +162,7 @@ public class IPListManager { //aka tracker
      *         any record of a server at that address
      */
     public synchronized MysterServer getQuickServerStats(MysterAddress address) { //returns
-        return MysterIPPool.getInstance().getMysterIPLevelOne(address);
-    }
-
-    /**
-     * Gets MysterServer from cache if it is available else creates in with an
-     * IO operation else throws IOException is server is down.
-     * <p>
-     * This routine does an io operation if the server is not found in the cache -
-     * that is it tries to connect to the specified address and download the
-     * stats if the server stats aren't already known.
-     * 
-     * @param address
-     * @return The MysterServer object for this address.
-     * @throws IOException
-     */
-    public synchronized MysterServer getServerStats(MysterAddress address) throws IOException { //might
-        // block
-        // for
-        // a
-        // long
-        // time.
-        return MysterIPPool.getInstance().getMysterServer(address);
+        return pool.getMysterIPLevelOne(address);
     }
 
     /**
@@ -192,7 +172,7 @@ public class IPListManager { //aka tracker
      * @param type
      * @return Vector of MysterAddresses in the order of rank.
      */
-    public synchronized Vector getAll(MysterType type) {
+    public synchronized List<MysterServer> getAll(MysterType type) {
         IPList iplist;
         iplist = getListFromType(type);
         if (iplist == null)
@@ -207,7 +187,7 @@ public class IPListManager { //aka tracker
      * @return an array of string objects representing internet addresses
      *         (ip:port or domain name:port format)
      */
-    public String[] getOnRamps() {
+    public static String[] getOnRamps() {
         String[] temp = new String[lastresort.length];
         System.arraycopy(lastresort, 0, temp, 0, lastresort.length);
         return temp;
@@ -291,7 +271,7 @@ public class IPListManager { //aka tracker
      * @return
      */
     private synchronized IPList createNewList(int index) {
-        return (new IPList(tdlist[index].getType()));
+        return new IPList(tdlist[index].getType(), pool);
     }
 
     /**
@@ -423,7 +403,7 @@ public class IPListManager { //aka tracker
 
                     MysterServer mysterserver = null;
                     try {
-                        mysterserver = MysterIPPool.getInstance().getMysterServer(ip);
+                        mysterserver = pool.getMysterServer(ip);
                         if (mysterserver == null)
                             continue;
                     } catch (IOException ex) {

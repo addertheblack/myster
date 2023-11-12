@@ -12,7 +12,11 @@
 package com.myster.menubar;
 
 import java.awt.MenuBar;
+import java.util.List;
 import java.util.Vector;
+
+import javax.swing.JFrame;
+import javax.swing.JMenuBar;
 
 import com.general.events.AsyncEventThreadDispatcher;
 import com.general.events.EventDispatcher;
@@ -27,6 +31,8 @@ import com.myster.menubar.event.PreferencesAction;
 import com.myster.menubar.event.QuitMenuAction;
 import com.myster.menubar.event.StatsWindowAction;
 import com.myster.menubar.event.TrackerWindowAction;
+import com.myster.tracker.IPListManager;
+import com.myster.ui.PreferencesGui;
 
 /**
  * Is the global Myster MenuBar. NOTE: On the macintosh it's important to have a
@@ -49,6 +55,20 @@ public class MysterMenuBar extends MenuBar {
 
     private static MysterMenuFactory pluginMenuFactory;
 
+    private static IPListManager manager;
+
+    private static PreferencesGui prefGui;
+    
+    private static boolean inited = false;
+
+    public static void init(IPListManager manager, PreferencesGui prefGui) {
+        MysterMenuBar.manager = manager;
+        MysterMenuBar.prefGui = prefGui;
+        inited = true;
+        
+        updateMenuBars();
+    }
+    
     /**
      * Creates a factory which can be used to build identical menubars for
      * different frames..
@@ -58,32 +78,36 @@ public class MysterMenuBar extends MenuBar {
      * @return the Menubar factory.
      */
     public static MysterMenuBarFactory getFactory() {
-        if (impl == null) {
+        if (inited && impl == null) {
             file = new Vector();
             edit = new Vector();
             special = new Vector();
 
-            //File menu items
+            // File menu items
 
-            file.addElement(new MysterMenuItemFactory("New Search", new NewSearchWindowAction(),
-                    java.awt.event.KeyEvent.VK_N));
+            file.addElement(new MysterMenuItemFactory("New Search",
+                                                      new NewSearchWindowAction(),
+                                                      java.awt.event.KeyEvent.VK_N));
             file.addElement(new MysterMenuItemFactory("New Peer-to-Peer Connection",
-                    new NewClientWindowAction(), java.awt.event.KeyEvent.VK_N, true));
+                                                      new NewClientWindowAction(),
+                                                      java.awt.event.KeyEvent.VK_N,
+                                                      true));
             file.addElement(new MysterMenuItemFactory("New Instant Message",
-                    new java.awt.event.ActionListener() {
-                        public void actionPerformed(java.awt.event.ActionEvent e) {
-                            com.myster.message.MessageWindow window = new com.myster.message.MessageWindow();
-                            window.setVisible(true);
-                        }
-                    }));
-            file.addElement(new MysterMenuItemFactory("Close Window", new CloseWindowAction(),
-                    java.awt.event.KeyEvent.VK_W));
+                                                      (java.awt.event.ActionEvent e) -> {
+                                                          com.myster.message.MessageWindow window =
+                                                                  new com.myster.message.MessageWindow();
+                                                          window.setVisible(true);
+                                                      }));
+            file.addElement(new MysterMenuItemFactory("Close Window",
+                                                      new CloseWindowAction(),
+                                                      java.awt.event.KeyEvent.VK_W));
             file.addElement(new MysterMenuItemFactory("-", NULL));
 
-            file.addElement(new MysterMenuItemFactory("Quit", new QuitMenuAction(),
-                    java.awt.event.KeyEvent.VK_Q));
+            file.addElement(new MysterMenuItemFactory("Quit",
+                                                      new QuitMenuAction(),
+                                                      java.awt.event.KeyEvent.VK_Q));
 
-            //Edit menu items
+            // Edit menu items
             edit.addElement(new MysterMenuItemFactory("Undo", NULL));
             edit.addElement(new MysterMenuItemFactory("-", NULL));
             edit.addElement(new MysterMenuItemFactory("Cut", NULL));
@@ -93,23 +117,27 @@ public class MysterMenuBar extends MenuBar {
             edit.addElement(new MysterMenuItemFactory("-", NULL));
             edit.addElement(new MysterMenuItemFactory("Select All", NULL));
             edit.addElement(new MysterMenuItemFactory("-", NULL));
-            edit.addElement(new MysterMenuItemFactory("Preferences", new PreferencesAction(),
-                    java.awt.event.KeyEvent.VK_SEMICOLON));
+            edit.addElement(new MysterMenuItemFactory("Preferences",
+                                                      new PreferencesAction(MysterMenuBar.prefGui),
+                                                      java.awt.event.KeyEvent.VK_SEMICOLON));
 
-            //Disable all Edit menu commands
+            // Disable all Edit menu commands
             for (int i = 0; i < edit.size() - 1; i++) {
                 ((MysterMenuItemFactory) (edit.elementAt(i))).setEnabled(false);
             }
 
-            //Myster menu items
-            special.addElement(new MysterMenuItemFactory("Add IP", new AddIPMenuAction()));
+            // Myster menu items
+            special.addElement(new MysterMenuItemFactory("Add IP", new AddIPMenuAction(manager)));
             special.addElement(new MysterMenuItemFactory("Show Server Stats",
-                    new StatsWindowAction(), java.awt.event.KeyEvent.VK_S, true));
-            special.addElement(new MysterMenuItemFactory("Show Tracker", new TrackerWindowAction(),
-                    java.awt.event.KeyEvent.VK_T));
+                                                         new StatsWindowAction(),
+                                                         java.awt.event.KeyEvent.VK_S,
+                                                         true));
+            special.addElement(new MysterMenuItemFactory("Show Tracker",
+                                                         new TrackerWindowAction(),
+                                                         java.awt.event.KeyEvent.VK_T));
             special.addElement(com.myster.hash.ui.HashManagerGUI.getMenuItem());
 
-            //Myster plugins Menu
+            // Myster plugins Menu
             plugins = new Vector();
             pluginMenuFactory = new MysterMenuFactory("Plugins", plugins);
 
@@ -117,12 +145,37 @@ public class MysterMenuBar extends MenuBar {
             menuBar.addElement(new MysterMenuFactory("File", file));
             menuBar.addElement(new MysterMenuFactory("Edit", edit));
             menuBar.addElement(new MysterMenuFactory("Special", special));
-            //plugins menu is not added here.
+            // plugins menu is not added here.
 
-            impl = new MysterMenuBarFactory(menuBar);
+            impl = new DefaultMysterMenuBarFactory(menuBar);
+        } else if (!inited ){
+            return new MysterMenuBarFactory() {
+                // nothing to do
+            };
         }
 
         return impl;
+    }
+    public static class DefaultMysterMenuBarFactory implements MysterMenuBarFactory {
+        private List<MysterMenuFactory> mysterMenuFactories;
+
+        public DefaultMysterMenuBarFactory(List<MysterMenuFactory> mysterMenuFactories) {
+            this.mysterMenuFactories = mysterMenuFactories;
+        }
+
+        public JMenuBar makeMenuBar(JFrame frame) {
+            JMenuBar menuBar = new JMenuBar();
+
+            for (int i = 0; i < mysterMenuFactories.size(); i++) {
+                menuBar.add(mysterMenuFactories.get(i).makeMenu(frame));
+            }
+
+            return menuBar;
+        }
+
+        public int getMenuCount() {
+            return mysterMenuFactories.size();
+        }
     }
 
     /**

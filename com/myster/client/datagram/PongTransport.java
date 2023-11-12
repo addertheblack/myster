@@ -76,10 +76,8 @@ public class PongTransport extends DatagramTransport {
      * 
      * @param param_address
      * @param listener
-     * @throws IOException
      */
-    public void ping(MysterAddress param_address, PingEventListener listener)
-            throws IOException { //DANGER DEADLOCKS!
+    public void ping(MysterAddress param_address, PingEventListener listener) { //DANGER DEADLOCKS!
         synchronized (requests) {
             PongItemStruct pongItemStruct = (PongItemStruct) requests
                     .get(param_address);

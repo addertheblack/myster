@@ -14,9 +14,13 @@ public class PingTransport extends DatagramTransport {
         return transportNumber;
     }
 
+    @SuppressWarnings("unused")
+    @Override
     public void packetReceived(ImmutableDatagramPacket immutablePacket)
             throws BadPacketException {
-        PingPacket packet = new PingPacket(immutablePacket);
+        // We want the side effect of making sure this is a PING packet
+        // The transport matcher only matches 'P' and 'I'
+        new PingPacket(immutablePacket);
 
         sendPacket(PongPacket.getImmutablePacket(new MysterAddress(
                 immutablePacket.getAddress(), immutablePacket.getPort())));

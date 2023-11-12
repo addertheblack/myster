@@ -33,28 +33,34 @@ public class ServerEventDispatcher {
 
     }
 
-    public void addConnectionManagerListener(ConnectionManagerListener l) {
-        connectionlisteners.addListener(l);
+    public ServerContext getServerContext() {
+        return new ServerContextImpl();
     }
 
-    public void removeConnectionManagerListener(ConnectionManagerListener l) {
-        connectionlisteners.removeListener(l);
+    private class ServerContextImpl  implements ServerContext {
+        public void addConnectionManagerListener(ConnectionManagerListener l) {
+            connectionlisteners.addListener(l);
+        }
+
+        public void removeConnectionManagerListener(ConnectionManagerListener l) {
+            connectionlisteners.removeListener(l);
+        }
+
+        public void addOperatorListener(OperatorListener l) {
+            operatorDispatcher.addListener(l);
+        }
+
+        public void removeOperatorListener(OperatorListener l) {
+            operatorDispatcher.removeListener(l);
+        }
     }
 
-    public void addOperatorListener(OperatorListener l) {
-        operatorDispatcher.addListener(l);
-    }
-
-    public void removeOperatorListener(OperatorListener l) {
-        operatorDispatcher.removeListener(l);
-    }
-
-    //whatever events
+    // whatever events
     public void fireCEvent(final ConnectionManagerEvent e) {
-        connectionlisteners.fireEvent( e );
+        connectionlisteners.fireEvent(e);
     }
 
-    public void fireOEvent(final OperatorEvent event) { //should be private but
+    public void fireOEvent(final OperatorEvent event) { // should be private but
         operatorDispatcher.fireEvent(event);
     }
 

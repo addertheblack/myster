@@ -5,7 +5,8 @@ package com.myster.net;
  */
 
 import java.io.IOException;
-import java.util.Hashtable;
+import java.util.HashMap;
+import java.util.Map;
 
 import com.general.net.AsyncDatagramListener;
 import com.general.net.AsyncDatagramSocket;
@@ -24,18 +25,16 @@ import com.general.net.ImmutableDatagramPacket;
  * @see DatagramTransport
  */
 public class DatagramProtocolManager {
-    private static boolean calledAlreadyFlag = false;
-
     private static GenericTransportManager impl;
 
-    /**
-     * Call this to "load" the manager.
-     */
-    public static synchronized void load() throws IOException {
-        if (calledAlreadyFlag)
-            return; // sould throw some sort of exception
-        getImpl(); //getImpl will load the thing..
-    }
+//    /**
+//     * Call this to "load" the manager.
+//     */
+//    public static synchronized void load() throws IOException {
+//        if (calledAlreadyFlag)
+//            return; // sould throw some sort of exception
+//        getImpl(); //getImpl will load the thing..
+//    }
 
     /**
      * Adds transport to port 6669 on all addresses.
@@ -53,16 +52,16 @@ public class DatagramProtocolManager {
         return getImpl().addTransport(transport);
     }
 
-    /**
-     * Removes transport from port 6669 on all addresses.
-     * 
-     * @param transport
-     *            to remove
-     * @return success (will fail if protocol was not registered)
-     */
-    public static DatagramTransport removeTranport(DatagramTransport transport) {
-        return getImpl().removeTransport(transport);
-    }
+//    /**
+//     * Removes transport from port 6669 on all addresses.
+//     * 
+//     * @param transport
+//     *            to remove
+//     * @return success (will fail if protocol was not registered)
+//     */
+//    public static DatagramTransport removeTranport(DatagramTransport transport) {
+//        return getImpl().removeTransport(transport);
+//    }
 
     private synchronized static GenericTransportManager getImpl() { //Transport
         if (impl == null) {
@@ -77,15 +76,15 @@ public class DatagramProtocolManager {
      * This class is the implementation of the transport manager. Could be any class.
      */
     private static class GenericTransportManager implements DatagramSender, AsyncDatagramListener {
-        Hashtable transportProtocols = new Hashtable();
+        private final Map<Short, DatagramTransport> transportProtocols = new HashMap<>();
 
         AsyncDatagramSocket dsocket;
 
         public boolean addTransport(DatagramTransport t) {
-            if (transportProtocols.get(new Short(t.getTransportCode())) != null)
+            if (transportProtocols.get(t.getTransportCode()) != null)
                 return false; //could not add because it already exists.
 
-            transportProtocols.put(new Integer(t.getTransportCode()), t);
+            transportProtocols.put(t.getTransportCode(), t);
 
             t.setSender(this); //So the Transport has something to send packets
             // to.
@@ -93,15 +92,15 @@ public class DatagramProtocolManager {
             return true;
         }
 
-        public DatagramTransport removeTransport(DatagramTransport t) {
-            return (DatagramTransport) (transportProtocols
-                    .remove(new Integer(t.getTransportCode())));
-        }
+//        public DatagramTransport removeTransport(DatagramTransport t) {
+//            return (transportProtocols
+//                    .remove(t.getTransportCode()));
+//        }
 
         public void packetReceived(ImmutableDatagramPacket p) {
             try {
-                DatagramTransport t = (DatagramTransport) (transportProtocols.get(new Integer(
-                        getCodeFromPacket(p))));
+                DatagramTransport t =
+                        (transportProtocols.get(getCodeFromPacket(p)));
 
                 if (t != null) {
                     t.packetReceived(p);
@@ -130,13 +129,13 @@ public class DatagramProtocolManager {
                 dsocket.sendPacket(p);
         }
 
-        private static int getCodeFromPacket(ImmutableDatagramPacket p) throws IOException {
+        private static short getCodeFromPacket(ImmutableDatagramPacket p) throws IOException {
             byte[] data = p.getDataRange(0, 2);
 
             if (p.getSize() < 2)
                 throw new IOException();
 
-            int code = 0;
+            short code = 0;
             for (int i = 0; i < data.length; i++) {
                 code <<= 8; //inititally it shifts zeros...
                 code |= data[i] & 255; //oops sign extending bug was

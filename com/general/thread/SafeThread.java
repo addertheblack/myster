@@ -10,6 +10,8 @@
 
 package com.general.thread;
 
+import java.util.concurrent.CancellationException;
+
 /**
  * This class over-rides thread and adds some different, basic functionality that is missing from a
  * regular thread. Since the stop() method is deprecated we need a safe method to stop a thread.
@@ -51,6 +53,8 @@ public abstract class SafeThread extends Thread {
         try {
             join();
         } catch (InterruptedException ex) {
+            Thread.currentThread().interrupt();
+            throw new CancellationException();
         }//I hope this doens't come back and bite me. - it will... It has..
     }
 

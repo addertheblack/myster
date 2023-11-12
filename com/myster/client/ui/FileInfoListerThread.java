@@ -13,7 +13,7 @@ package com.myster.client.ui;
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.io.IOException;
-import java.util.Vector;
+import java.util.List;
 
 import com.general.util.KeyValue;
 import com.myster.client.stream.StandardSuite;
@@ -80,13 +80,13 @@ public class FileInfoListerThread extends MysterThread {
 
     private void listDir(RobustMML mml, KeyValue keyValue, String directory,
             String prefix) {
-        Vector dirList = mml.list(directory);
+        List<String> dirList = mml.list(directory);
 
         if (dirList == null)
             return;
 
         for (int i = 0; i < dirList.size(); i++) {
-            String name = (String) dirList.elementAt(i);
+            String name = dirList.get(i);
 
             if (name == null)
                 return;
@@ -97,7 +97,7 @@ public class FileInfoListerThread extends MysterThread {
                 keyValue.addValue(name, " ->");
                 listDir(mml, keyValue, newPath + "/", prefix + "  ");
             } else {
-                keyValue.addValue(prefix + ((String) dirList.elementAt(i)), mml
+                keyValue.addValue(prefix + (dirList.get(i)), mml
                         .get(newPath));
             }
         }

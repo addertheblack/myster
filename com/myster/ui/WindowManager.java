@@ -36,6 +36,34 @@ public class WindowManager {
 
     private static Vector finalMenu;
 
+    public static void init() {
+        synchronized (windows) {
+            if (isInited) {
+                throw new IllegalStateException("Tried to init WindowManager twice");
+            }
+            
+
+            isInited = true;
+
+            menuItems = new Vector();
+
+            menuItems.addElement(new MysterMenuItemFactory("Cycle Windows", new CycleWindowsHandler(),
+                    KeyEvent.VK_1));
+            menuItems.addElement(new MysterMenuItemFactory("Stack Windows", new StackWindowsHandler()));
+            menuItems.addElement(new MysterMenuItemFactory("-", new NullAction()));
+
+            finalMenu = new Vector();
+
+            MysterMenuBar.addMenu(new MysterMenuFactory("Windows", finalMenu) {
+                @Override
+                public JMenu makeMenu(JFrame frame) {
+                    return getCorrectWindowsMenu(frame);
+                }
+            });
+            updateMenu();
+        }
+    }
+    
     protected static void addWindow(MysterFrame frame) {
         synchronized (windows) {
             if (!windows.contains(frame)) {
@@ -66,7 +94,8 @@ public class WindowManager {
 
     public static void updateMenu() {
         synchronized (windows) {
-            init();
+            if (!isInited)
+                return;
 
             finalMenu = new Vector(windows.size() + menuItems.size());
 
@@ -122,30 +151,6 @@ public class WindowManager {
     }
 
     static boolean isInited;
-
-    public static void init() {
-        if (isInited)
-            return; // complain
-
-        isInited = true;
-
-        menuItems = new Vector();
-
-        menuItems.addElement(new MysterMenuItemFactory("Cycle Windows", new CycleWindowsHandler(),
-                KeyEvent.VK_1));
-        menuItems.addElement(new MysterMenuItemFactory("Stack Windows", new StackWindowsHandler()));
-        menuItems.addElement(new MysterMenuItemFactory("-", new NullAction()));
-
-        finalMenu = new Vector();
-
-        MysterMenuBar.addMenu(new MysterMenuFactory("Windows", finalMenu) {
-            @Override
-            public JMenu makeMenu(JFrame frame) {
-                return getCorrectWindowsMenu(frame);
-            }
-        });
-        updateMenu();
-    }
 
     private static class CycleWindowsHandler implements ActionListener {
         public void actionPerformed(ActionEvent e) {

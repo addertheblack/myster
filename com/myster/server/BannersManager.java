@@ -6,7 +6,7 @@ import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.io.File;
 import java.util.Hashtable;
-import java.util.Vector;
+import java.util.List;
 
 import javax.swing.DefaultListModel;
 import javax.swing.JButton;
@@ -47,10 +47,6 @@ public class BannersManager {
 
     private static int currentIndex = 0;
 
-    public static void init() {
-        Preferences.getInstance().addPanel(new BannersPreferences());
-    }
-
     public static synchronized String getNextImageName() {
         if (prefsHasChangedFlag)
             updateEverything();
@@ -88,12 +84,12 @@ public class BannersManager {
 
         mmlPrefs.setTrace(true);
 
-        Vector folders = mmlPrefs.list(PATH_TO_URLS);
+        List<String> folders = mmlPrefs.list(PATH_TO_URLS);
         Hashtable hashtable = new Hashtable();
 
         if (folders != null) {
             for (int i = 0; i < folders.size(); i++) {
-                String subFolder = (String) folders.elementAt(i);
+                String subFolder = (String) folders.get(i);
 
                 String imageName = mmlPrefs.get(PATH_TO_URLS + subFolder + "/"
                         + PARTIAL_PATH_TO_IMAGES);
@@ -172,7 +168,7 @@ public class BannersManager {
                 .endsWith(".gif"));
     }
 
-    private static class BannersPreferences extends PreferencesPanel {
+    public static class BannersPreferences extends PreferencesPanel {
         private JList list;
 
         private JTextArea msg;

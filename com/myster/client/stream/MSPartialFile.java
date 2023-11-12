@@ -12,6 +12,7 @@ import java.io.File;
 import java.io.FilenameFilter;
 import java.io.IOException;
 import java.io.RandomAccessFile;
+import java.util.List;
 
 import com.general.util.AnswerDialog;
 import com.myster.hash.FileHash;
@@ -543,7 +544,7 @@ public class MSPartialFile {
     }
 
     private static FileHash[] getHashesFromHeader(RobustMML mml, String path) throws IOException {
-        java.util.Vector itemsToDecode = mml.list(path);
+        List<String> itemsToDecode = mml.list(path);
         if (itemsToDecode == null)
             throwIOException("itemsToDecode is null");
 

@@ -1,50 +1,38 @@
 package com.myster.client.datagram;
 
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Optional;
 
-import com.general.util.Semaphore;
 import com.myster.net.MysterAddress;
 
-public class UDPPingClient extends Thread {
-    Semaphore sem = new Semaphore(0);
+public class UDPPingClient {
+    private static Optional<PongTransport> ponger = Optional.empty();
+    private static List<PingElement> backlog = new ArrayList<>();
 
-    String address;
-
-    boolean value = false;
-
-    public UDPPingClient(String s) {
-        address = s;
-    }
-
-    public void run() {
-        value = ping(address);
-        sem.signalx();
-    }
-
-    public boolean getValue() {
-        sem.waitx();
-        return value;
-    }
-
-    private static PongTransport ponger;
-
-    public static void setPonger(PongTransport p) {
-        ponger = p;
-    }
-
-    public static boolean ping(String s) {
-        try {
-            return ponger.ping(new MysterAddress(s));
-        } catch (Exception ex) {
-            ex.printStackTrace();
-            return false;
+    public synchronized static void setPonger(PongTransport p) {
+        if (ponger.isEmpty()) {
+            ponger = Optional.of(p);
+            
+            for (PingElement pingElement : backlog) {
+                ponger.get().ping(pingElement.address, pingElement.listener);
+            }
+        } else {
+            throw new IllegalStateException("UDPPingClient initialized twice.");
         }
     }
 
-    public static void ping(MysterAddress address, PingEventListener listener)
+    public synchronized static void ping(MysterAddress address, PingEventListener listener)
             throws IOException {
-        ponger.ping(address, listener);
+        ponger.ifPresentOrElse(ponger -> {
+            ponger.ping(address, listener);
+        }, () -> {
+            backlog.add(new PingElement(address, listener));
+        });
     }
+
+    private record PingElement(MysterAddress address, PingEventListener listener) {}
 
     /*
      * public static boolean ping(String s) { DatagramSocket dsocket=null; int

@@ -29,11 +29,10 @@ import com.general.mclist.MCListItemInterface;
 import com.general.util.Timer;
 import com.myster.client.ui.ClientWindow;
 import com.myster.message.MessageWindow;
-import com.myster.server.ServerFacade;
 import com.myster.server.event.ConnectionManagerEvent;
 import com.myster.server.event.ConnectionManagerListener;
+import com.myster.server.event.ServerContext;
 import com.myster.server.event.ServerDownloadDispatcher;
-import com.myster.server.event.ServerEventDispatcher;
 import com.myster.server.stream.FileSenderThread;
 
 public class DownloadInfoPanel extends JPanel {
@@ -41,16 +40,14 @@ public class DownloadInfoPanel extends JPanel {
 
     private JButton disconnect, browse, clearAll, message;
 
-    private ServerEventDispatcher server;
+    private ServerContext context;
 
-    private ConnectionHandler chandler;
+    private final ConnectionHandler chandler;
 
-    public DownloadInfoPanel() {
+    public DownloadInfoPanel(ServerContext context) {
         setBackground(new Color(240, 240, 240));
-        server = ServerFacade.getServerDispatcher();
-        //init();
+        this.context = context;
         chandler = new ConnectionHandler();
-        server.addConnectionManagerListener(chandler);
     }
 
     public void inited() {
@@ -156,6 +153,8 @@ public class DownloadInfoPanel extends JPanel {
         Timer timer = new Timer(new RepaintLoop(), 10000);
 
         buttonsEnable(list.isAnythingSelected());
+        
+        context.addConnectionManagerListener(chandler);
     }
 
     private Image doubleBuffer; //adds double buffering

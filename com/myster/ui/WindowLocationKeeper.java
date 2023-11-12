@@ -7,9 +7,9 @@ import java.awt.event.ComponentEvent;
 import java.awt.event.ComponentListener;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
+import java.util.List;
 import java.util.NoSuchElementException;
 import java.util.StringTokenizer;
-import java.util.Vector;
 
 import javax.swing.JFrame;
 
@@ -127,7 +127,7 @@ public class WindowLocationKeeper {
         
         String key = "/" + p_key + "/";
 
-        Vector keyList = oldPrefs.list(key);
+        List<String> keyList = oldPrefs.list(key);
 
         if (keyList == null)
             return new Rectangle[] {}; //aka Rectangle[0];
@@ -136,7 +136,7 @@ public class WindowLocationKeeper {
 
         for (int i = 0; i < keyList.size(); i++) {
             rectangles[i] = string2Rect(oldPrefs.get(key
-                    + (String) (keyList.elementAt(i)), "0,0,400,400"));
+                    + (keyList.get(i)), "0,0,400,400"));
             if (!fitsOnScreen(rectangles[i]))
                 rectangles[i].setLocation(50, 50);
             //System.out.println(key+(String)(keyList.elementAt(i)));

@@ -28,7 +28,7 @@ import com.myster.net.MysterAddress;
 import com.myster.net.MysterSocket;
 import com.myster.net.MysterSocketFactory;
 import com.myster.net.MysterSocketPool;
-import com.myster.tracker.IPListManagerSingleton;
+import com.myster.tracker.IPListManager;
 import com.myster.tracker.MysterServer;
 import com.myster.type.MysterType;
 import com.myster.util.Sayable;
@@ -56,13 +56,13 @@ import com.myster.util.Sayable;
  */
 public class MysterSearch {
     /** Contains the object to pass status messages to. */
-    private Sayable msg;
+    private final Sayable msg;
 
     /** Contains the type to search on. */
     private MysterType type;
 
     /** Contains the stream based searcher algorithm code. */
-    private StandardMysterSearch searcher;
+    private final StandardMysterSearch searcher;
 
     /**
      * Is set to true if some one has requested that this search be stopped.
@@ -82,7 +82,7 @@ public class MysterSearch {
     private String searchString;
 
     /** Contains the search result event listener for this search. */
-    private SearchResultListener listener;
+    private final SearchResultListener listener;
 
     /** Contains the number of servers that have been SUCCESSFULLY searched. */
     private volatile int serversSearched = 0;
@@ -92,15 +92,18 @@ public class MysterSearch {
      * represent outstanding asynchronous tasks. If this Set is empty then we're done since there's
      * nothing left pending.
      */
-    private Set outStandingFutures;
+    private final Set outStandingFutures;
+
+    private final IPListManager manager;
 
     public MysterSearch(SearchResultListener listener, Sayable msg, MysterType type,
-            String searchString) {
+            String searchString, IPListManager manager) {
         this.msg = msg;
-        this.searcher = new StandardMysterSearch(searchString, type, listener);
+        this.searcher = new StandardMysterSearch(searchString, type, listener, manager);
         this.type = type;
         this.searchString = searchString;
         this.listener = listener;
+        this.manager = manager;
 
         outStandingFutures = new HashSet();
     }
@@ -247,26 +250,23 @@ public class MysterSearch {
         if (endFlag)
             return;
 
-        ADD_TOP_TEN: {
-            CancellableCallableRemover remover = new UdpTopTen(ipQueue);
-            Future topTenFuture = StandardDatagramSuite.getTopServers(address, type, remover);
-            remover.setFuture(topTenFuture);
-            outStandingFutures.add(topTenFuture);
-        }
+        // ADD_TOP_TEN
+        CancellableCallableRemover removerTopTen = new UdpTopTen(ipQueue);
+        Future topTenFuture = StandardDatagramSuite.getTopServers(address, type, removerTopTen);
+        removerTopTen.setFuture(topTenFuture);
+        outStandingFutures.add(topTenFuture);
 
-        ADD_SEARCH: {
-            CancellableCallableRemover remover = new UdpSearch(address);
-            Future searchFuture = StandardDatagramSuite.getSearch(address, type, searchString,
-                    remover);
-            remover.setFuture(searchFuture);
-            outStandingFutures.add(searchFuture);
-        }
+        // ADD_SEARCH
+        CancellableCallableRemover removerSearch = new UdpSearch(address);
+        Future searchFuture = StandardDatagramSuite.getSearch(address, type, searchString, removerSearch);
+        removerSearch.setFuture(searchFuture);
+        outStandingFutures.add(searchFuture);
     }
 
     /**
-     * Starts off the process for dealing with file stats information for a list of files. Currently
-     * this is done using a streamed connection, however in future the datagram version could be
-     * used.
+     * Starts off the process for dealing with file stats information for a list
+     * of files. Currently this is done using a streamed connection, however in
+     * future the datagram version could be used.
      * 
      * @param address
      * @param mysterSearchResults
@@ -340,7 +340,7 @@ public class MysterSearch {
      * @return a primed IPQueue
      */
     private IPQueue createPrimedIpQueue() {
-        MysterServer[] iparray = IPListManagerSingleton.getIPListManager().getTop(type, 50);
+        MysterServer[] iparray = manager.getTop(type, 50);
 
         IPQueue queue = new IPQueue();
 
@@ -351,7 +351,7 @@ public class MysterSearch {
         }
 
         if (i <= 4) {
-            String[] lastresort = IPListManagerSingleton.getIPListManager().getOnRamps();
+            String[] lastresort = IPListManager.getOnRamps();
 
             for (int j = 0; j < lastresort.length; j++) {
                 addAddressToQueue(queue, lastresort[j]);
@@ -379,6 +379,7 @@ public class MysterSearch {
             }
 
             public void cancel() {
+                // nothing
             }
         };
 
@@ -470,7 +471,7 @@ public class MysterSearch {
 
             for (int i = 0; i < results.size(); i++) {
                 mysterSearchResults[i] = new MysterSearchResult(new MysterFileStub(address, type,
-                        (String) (results.elementAt(i))));
+                        (String) (results.elementAt(i))), manager::getQuickServerStats);
             }
 
             addResults(mysterSearchResults);
@@ -503,7 +504,7 @@ public class MysterSearch {
                 try {
                     MysterAddress mysterAddress = MysterAddress.createMysterAddress(addresses[i]);
                     ipQueue.addIP(mysterAddress);
-                    IPListManagerSingleton.getIPListManager().addIP(mysterAddress);
+                    manager.addIP(mysterAddress);
                 } catch (UnknownHostException exception) {
                     addAddressToQueue(ipQueue, addresses[i]);
                 }
@@ -566,6 +567,7 @@ public class MysterSearch {
             try {
                 socket.close();
             } catch (IOException ex) {
+                // nothing
             }
         }
     }
@@ -604,19 +606,22 @@ public class MysterSearch {
     }
 
     /**
-     * Simple listener that makes sure that the Future is removed from the list of futures
-     * maintained by this MysterSearch object.
+     * Simple listener that makes sure that the Future is removed from the list
+     * of futures maintained by this MysterSearch object.
      */
     private class CancellableCallableRemover implements CallListener {
         private Future future;
 
         public void handleCancel() {
+            // nothing
         }
 
         public void handleResult(Object result) {
+            // nothing
         }
 
         public void handleException(Exception ex) {
+            // nothing
         }
 
         /**

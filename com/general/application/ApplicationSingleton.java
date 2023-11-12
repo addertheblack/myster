@@ -44,11 +44,6 @@ public class ApplicationSingleton {
      * The lockFile is a directory and file name where this ApplicationSingleton should try and
      * write information that only the current user can write to. Doing this will insure that only
      * one user at a time can launch this app. The port should be a port knwon to both.
-     * 
-     * @param lockFile
-     * @param port
-     * @param listener
-     * @param args
      */
     public ApplicationSingleton(File lockFile, int port, ApplicationSingletonListener listener,
             String[] args) {
@@ -82,10 +77,8 @@ public class ApplicationSingleton {
     }
 
     private void connectToSelf(File file, String[] args) throws IOException {
-        DataInputStream in = null;
-
-        try {
-            in = new DataInputStream(new BufferedInputStream(new FileInputStream(file)));
+        try (DataInputStream in =
+                new DataInputStream(new BufferedInputStream(new FileInputStream(file)))) {
             int password = in.readInt();
             int port = in.readInt();
 
@@ -93,23 +86,13 @@ public class ApplicationSingleton {
                 throw new IOException("Garbage in lock file.");
 
             connectToSelf(password, args);
-        } finally {
-            try {
-                in.close();
-            } catch (Exception ex) {
-            }
         }
     }
 
     private void connectToSelf(int password, String[] args) throws IOException {
-        Socket socket = null;
-        DataOutputStream out = null;
-        DataInputStream in = null;
-
-        try {
-            socket = new Socket(InetAddress.getLocalHost(), port);
-            in = new DataInputStream(socket.getInputStream());
-            out = new DataOutputStream(socket.getOutputStream());
+        try (Socket socket = new Socket(InetAddress.getLocalHost(), port);
+                DataInputStream in = new DataInputStream(socket.getInputStream());
+                DataOutputStream out = new DataOutputStream(socket.getOutputStream())) {
 
             out.writeInt(password);
             sendArgs(out, args);
@@ -117,27 +100,13 @@ public class ApplicationSingleton {
             if (result == 1) {
                 return;
             } else {
-                throw new ApplicationSingletonException(
-                        "Other Myster Program wrote back error of type: " + result, result);
-            }
-
-        } finally {
-            try {
-                in.close();
-            } catch (Exception ex) {
-            }
-            try {
-                out.close();
-            } catch (Exception ex) {
-            }
-            try {
-                socket.close();
-            } catch (Exception ex) {
+                throw new ApplicationSingletonException("Other Myster Program wrote back error of type: "
+                        + result, result);
             }
         }
     }
 
-    private void sendArgs(DataOutputStream out, String[] args) throws IOException {
+    private static void sendArgs(DataOutputStream out, String[] args) throws IOException {
         out.writeInt(args.length);
         for (int i = 0; i < args.length; i++) {
             out.writeUTF(args[i]);
@@ -192,18 +161,14 @@ class ApplicationServer extends SafeThread {
 
     public void run() {
         try {
-            DataInputStream in;
-            DataOutputStream out;
-
             for (;;) {
                 if (endFlag)
                     return;
                 Socket socket = serverSocket.accept();
                 if (endFlag)
                     return;
-                try {
-                    in = new DataInputStream(socket.getInputStream());
-                    out = new DataOutputStream(socket.getOutputStream());
+                try (DataInputStream in = new DataInputStream(socket.getInputStream());
+                        DataOutputStream out = new DataOutputStream(socket.getOutputStream())) {
 
                     System.out.println("getting connection form self");
                     int password = in.readInt();

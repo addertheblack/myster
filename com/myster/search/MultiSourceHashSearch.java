@@ -10,6 +10,7 @@ import com.myster.client.stream.UnknownProtocolException;
 import com.myster.hash.FileHash;
 import com.myster.net.MysterAddress;
 import com.myster.net.MysterSocket;
+import com.myster.tracker.IPListManager;
 import com.myster.type.MysterType;
 
 public class MultiSourceHashSearch implements MysterSearchClientSection {
@@ -19,6 +20,12 @@ public class MultiSourceHashSearch implements MysterSearchClientSection {
 
     private static final Hashtable typeHashtable = new Hashtable();
 
+    private static IPListManager ipListManager;
+    
+    public static void init(IPListManager ipListManager) {
+        MultiSourceHashSearch.ipListManager = ipListManager;
+    }
+    
     private synchronized static Vector getEntriesForType(MysterType type) {
         return getBatchForType(type).entries;
     }
@@ -92,6 +99,9 @@ public class MultiSourceHashSearch implements MysterSearchClientSection {
     // asserts that the crawler is running (ie: only "starts" the crawler if one
     // is not already running)
     private synchronized static void startCrawler(final MysterType type) {
+        if (ipListManager==null)
+            throw new NullPointerException("ipListManager not inited");
+        
         BatchedType batchedType = getBatchForType(type);
 
         if (batchedType.crawler != null)
@@ -99,26 +109,18 @@ public class MultiSourceHashSearch implements MysterSearchClientSection {
 
         final IPQueue ipQueue = new IPQueue();
 
-        batchedType.crawler = new CrawlerThread(new MultiSourceHashSearch(), //note..
-                // will
-                // not
-                // restart
-                // when
-                // crawl
-                // is
-                // done
+        
+        batchedType.crawler = new CrawlerThread(new MultiSourceHashSearch(),
                 type, ipQueue, new com.myster.util.Sayable() {
                     public void say(String string) {
                         MultiSourceUtilities.debug("Hash Search -> " + string);
                     }
-                });
+                }, ipListManager::getQuickServerStats);
         new Thread() { //need a thread here because the DNS lookup might take a long time.
             public void run() {
-                com.myster.tracker.MysterServer[] iparray = com.myster.tracker.IPListManagerSingleton
-                        .getIPListManager().getTop(type, 50);
+                com.myster.tracker.MysterServer[] iparray = ipListManager.getTop(type, 50);
 
-                String[] startingIps = com.myster.tracker.IPListManagerSingleton.getIPListManager()
-                        .getOnRamps();
+                String[] startingIps = IPListManager.getOnRamps();
 
                 int counter = 0;
                 for (int i = 0; (i < iparray.length) && (iparray[i] != null); i++) {
