@@ -12,9 +12,10 @@ import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.io.OutputStream;
 import java.io.Serializable;
+import java.util.ArrayList;
 import java.util.Enumeration;
 import java.util.Hashtable;
-import java.util.Vector;
+import java.util.List;
 
 import com.myster.application.MysterGlobals;
 
@@ -155,6 +156,7 @@ class DefaultHashCache extends HashCache {
             try {
                 din.close();
             } catch (Exception ex) {
+                // nothing
             }
         }
     }
@@ -182,6 +184,7 @@ class DefaultHashCache extends HashCache {
             try {
                 in.close();
             } catch (Exception ex) {
+                // nothing
             }
         }
     }
@@ -281,6 +284,7 @@ class DefaultHashCache extends HashCache {
             try {
                 out.close();
             } catch (Exception ex) {
+                // nothing
             }
         }
 
@@ -313,7 +317,7 @@ class CachedFileHashEntry implements Serializable {
 
     /** Returns all known File Hashes for this file */
     public FileHash[] getHashes() {
-        return (FileHash[]) hashes.clone();
+        return hashes.clone();
     }
 
     /**
@@ -340,22 +344,19 @@ class CachedFileHashEntry implements Serializable {
      * over-ride that value with the new value.
      */
     public CachedFileHashEntry addHashes(FileHash[] sourceHashes) {
-        Vector v_temp = new Vector(sourceHashes.length + hashes.length);
+        List<FileHash> v_temp = new ArrayList<>(sourceHashes.length + hashes.length);
 
         for (int i = 0; i < sourceHashes.length; i++) {
-            v_temp.addElement(sourceHashes[i]);
+            v_temp.add(sourceHashes[i]);
         }
 
         for (int i = 0; i < hashes.length; i++) {
             if (!v_temp.contains(hashes[i])) {
-                v_temp.addElement(hashes[i]);
+                v_temp.add(hashes[i]);
             }
         }
 
-        FileHash[] newHashes = new FileHash[v_temp.size()];
-        v_temp.copyInto(newHashes);
-
-        return new CachedFileHashEntry(file, newHashes);
+        return new CachedFileHashEntry(file, v_temp.toArray(new FileHash[0]));
     }
 
     /**

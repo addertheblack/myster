@@ -4,8 +4,8 @@ import java.io.IOException;
 
 import com.myster.transaction.Transaction;
 
-public interface StandardDatagramClientImpl {
-    public Object getObjectFromTransaction(Transaction transaction)
+public interface StandardDatagramClientImpl<T> {
+    public T getObjectFromTransaction(Transaction transaction)
             throws IOException;
 
     public Object getNullObject();

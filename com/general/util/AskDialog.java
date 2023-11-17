@@ -9,7 +9,8 @@ import java.awt.Insets;
 import java.awt.Point;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-import java.util.Vector;
+import java.util.ArrayList;
+import java.util.List;
 
 import javax.swing.JButton;
 import javax.swing.JDialog;
@@ -17,37 +18,23 @@ import javax.swing.JTextField;
 
 public class AskDialog extends JDialog {
     private JButton[] buttons;
-
-    private String it; //just like hypercard :-)
-
-    private final Vector message = new Vector(10, 10);
-
+    private String it;
     private JTextField messagebox;
-
     private int height;
-
     private FontMetrics metrics;
-
     private Insets insets;
-    
     private String msg;
 
     private static final int XPAD = 5;
-
     private static final int YPAD = 5;
-
     private static final int XSIZE = 400;
-
     private static final int BUTTONY = 30;
-
     private static final int BUTTONX = 100;
-
     private static final int MSIZEX = XSIZE - XPAD - XPAD;
-
     private static final int MSIZEY = 35;
 
+    private final List<String> message = new ArrayList<>();
     private final Frame parent;
-
     private final String question, sample;
 
     public AskDialog(Frame f, String q, String s) {
@@ -105,9 +92,8 @@ public class AskDialog extends JDialog {
 
         MrWrap wrapper = new MrWrap(question, XSIZE - 2 * XPAD, metrics);
         for (int i = 0; i < wrapper.numberOfElements(); i++) {
-            message.addElement(wrapper.nextElement());
+            message.add(wrapper.nextElement());
         }
-
     }
 
     public Dimension getPreferredSize() {
@@ -120,14 +106,14 @@ public class AskDialog extends JDialog {
     public void paint(Graphics g) {
         g.setColor(Color.black);
         for (int i = 0; i < message.size(); i++) {
-            g.drawString(message.elementAt(i).toString(), XPAD + insets.left,
+            g.drawString(message.get(i).toString(), XPAD + insets.left,
                     YPAD + height * (i + 1) + insets.top);
         }
 
     }
 
     public String ask() {
-        show();
+        setVisible(true);
         return msg;
     }
 

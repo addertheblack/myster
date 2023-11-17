@@ -12,44 +12,52 @@ import java.awt.Graphics;
 import java.awt.Image;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
-import java.util.Vector;
+import java.util.ArrayList;
 
 import javax.swing.JPanel;
 
 public class TabPanel extends JPanel {
-    TabVector tabs;
-
-    ListenerVector tabListeners;
-
-    private Image backgroundImage;
-
     public static final int XSIZE = 600;
-
     public static final int YSIZE = 50;
+    
+    private final TabList tabs;
+    private final ListenerList tabListeners;
+    private final Image backgroundImage;
+
 
     public TabPanel() {
-        //setBackground(Color.red);
-        tabs = new TabVector(this);
-        tabListeners = new ListenerVector();
+        tabs = new TabList(this);
+        tabListeners = new ListenerList();
         addMouseListener(new MyHandler());
-        backgroundImage = (TabUtilities.loadBackground(this));
+        Image image = TabUtilities.loadBackground(this);
+        
+        if (image == null) {
+            backgroundImage = createImage(XSIZE, YSIZE);
+            Graphics gr = backgroundImage.getGraphics();
+            gr.setColor(Color.red);
+            gr.fillRect(0, 0, XSIZE, YSIZE);
+            gr.setColor(Color.black);
+            gr.drawString("<Missing Image>", 5, 25);
+        } else {
+            backgroundImage = image;
+        }
     }
 
-    ////////Tab creation routines:
+    //////// Tab creation routines:
 
-    //This orutine creates a tab with the generic middle graphic and uses the
-    // Stirng sent to it as a label.
+    // This routine creates a tab with the generic middle graphic and uses the
+    // String sent to it as a label.
     public void addTab(String s) {
         addTab(new Tab(s, this));
     }
 
-    //THis routine creates a tab with a special graphic (the String) and no
+    // This routine creates a tab with a special graphic (the String) and no
     // label.
     public void addCustomTab(String s) {
         addTab(new Tab(this, s));
     }
 
-    //Same thing but acts as a keeper for object.
+    // Same thing but acts as a keeper for object.
     public void addTab(String s, Object o) {
         addTab(new Tab(s, this));
     }
@@ -66,11 +74,11 @@ public class TabPanel extends JPanel {
     //}
 
     public void addTabListener(TabListener l) {
-        tabListeners.addElement(l);
+        tabListeners.add(l);
     }
 
     public void removeTabListener(TabListener l) {
-        tabListeners.removeElement(l);
+        tabListeners.remove(l);
     }
 
     public int getMaxLength() {
@@ -85,14 +93,6 @@ public class TabPanel extends JPanel {
         super.paintComponent(g);
         //Display background
 
-        if (backgroundImage == null) {
-            backgroundImage = createImage(XSIZE, YSIZE);
-            Graphics gr = backgroundImage.getGraphics();
-            gr.setColor(Color.red);
-            gr.fillRect(0, 0, XSIZE, YSIZE);
-            gr.setColor(Color.black);
-            gr.drawString("<Missing Image>", 5, 25);
-        }
         g.drawImage(backgroundImage, 0, 0, this);
         g.setColor(Color.black);
         g.drawLine(getMaxLength(), getSize().height - 1, getSize().width - 1,
@@ -124,20 +124,19 @@ public class TabPanel extends JPanel {
         g.drawImage(doubleBuffer, 0, 0, this);
     }
 
-    private class TabVector extends Vector {
+    private class TabList extends ArrayList<Tab> {
+        private final TabPanel parent;
+        
         public int overlap = 0;
+        public int lastselected = 0; //used by set selected.
 
-        int lastselected = 0; //used by set selected.
-
-        TabPanel parent;
-
-        public TabVector(TabPanel parent) {
+        public TabList(TabPanel parent) {
             this.parent = parent;
         }
 
         public synchronized void addTab(Tab b) {
             if (indexOf(b) == -1)
-                addElement(b);
+                add(b);
         }
 
         public synchronized void setSelect(int tabnum) {
@@ -163,16 +162,18 @@ public class TabPanel extends JPanel {
         //}
 
         public synchronized Tab getTab(int index) {
-            return (Tab) (elementAt(index));
+            return get(index);
         }
 
         public synchronized void paint(Graphics g) {
             Tab selectedtab = null;
             Tab workingtab;
 
-            int cwxloc = getMaxLength();//current working x location.. for
-                                        // graphics context transpose.
-            int selectedcwxloc = 0;//yippy.
+            // current working x location.. for
+            // graphics context transpose.
+            int cwxloc = getMaxLength();
+            
+            int selectedCwxloc = 0;
 
             for (int i = tabs.size() - 1; i >= 0; i--) {
                 workingtab = getTab(i);
@@ -182,15 +183,15 @@ public class TabPanel extends JPanel {
                 g.translate(-cwxloc, 0);
                 if (workingtab.isSelected()) {
                     selectedtab = workingtab;
-                    selectedcwxloc = cwxloc;
+                    selectedCwxloc = cwxloc;
                 }
                 cwxloc += overlap;
             }
 
-            g.translate(selectedcwxloc, 0);
+            g.translate(selectedCwxloc, 0);
             if (selectedtab != null)
                 selectedtab.paint(g);
-            g.translate(-selectedcwxloc, 0);
+            g.translate(-selectedCwxloc, 0);
         }
 
         public synchronized int getMaxLength() {
@@ -233,15 +234,14 @@ public class TabPanel extends JPanel {
         }
     }
 
-    private static class ListenerVector extends Vector {
-        public ListenerVector() {
-            super(10, 10);
+    private static class ListenerList extends ArrayList<TabListener> {
+        public ListenerList() {
+            super();
         }
 
         public synchronized void fireEvents(TabPanel p, int tabid) {
             for (int i = 0; i < size(); i++) {
-                ((TabListener) (elementAt(i)))
-                        .tabAction(new TabEvent(p, tabid));
+                get(i).tabAction(new TabEvent(p, tabid));
             }
         }
     }

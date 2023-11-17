@@ -89,7 +89,7 @@ public class BannersManager {
 
         if (folders != null) {
             for (int i = 0; i < folders.size(); i++) {
-                String subFolder = (String) folders.get(i);
+                String subFolder = folders.get(i);
 
                 String imageName = mmlPrefs.get(PATH_TO_URLS + subFolder + "/"
                         + PARTIAL_PATH_TO_IMAGES);

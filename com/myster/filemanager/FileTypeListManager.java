@@ -23,13 +23,10 @@
 package com.myster.filemanager;
 
 import java.io.File;
-import java.util.Vector;
+import java.util.ArrayList;
+import java.util.List;
 
-import com.general.util.Util;
-
-import com.myster.filemanager.ui.FMIChooser;
 import com.myster.hash.FileHash;
-import com.myster.pref.Preferences;
 import com.myster.type.MysterType;
 import com.myster.type.TypeDescription;
 import com.myster.type.TypeDescriptionList;
@@ -233,22 +230,18 @@ public class FileTypeListManager {
     public MysterType[] getFileTypeListing() {
         //This routine uses the old vector copied to an array trick, since the
         // number of shared Items is not known until later
-        //so the list is put into a vector intialy then copied to an array.
-        Vector workinglist = new Vector(filelist.length); //since the size of
+        //so the list is put into a vector initially then copied to an array.
+        List<MysterType> workinglist = new ArrayList<>(); //since the size of
         // the final vector
         // will always be <=
         // filelist.length.
 
         for (int i = 0; i < filelist.length; i++) {
             if (filelist[i].isShared())
-                workinglist.addElement(filelist[i].getType());
+                workinglist.add(filelist[i].getType());
         }
 
-        MysterType[] array = new MysterType[workinglist.size()];
-        for (int i = 0; i < array.length; i++) {
-            array[i] = ((MysterType) (workinglist.elementAt(i)));
-        }
-        return array;
+        return workinglist.toArray(new MysterType[0]);
     }
 
     /**

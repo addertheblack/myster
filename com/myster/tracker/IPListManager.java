@@ -13,7 +13,8 @@ package com.myster.tracker;
 import java.io.IOException;
 import java.net.UnknownHostException;
 import java.util.List;
-import java.util.Vector;
+
+import java.util.concurrent.CancellationException;
 
 import com.general.util.BlockingQueue;
 import com.general.util.RInt;
@@ -349,18 +350,20 @@ public class IPListManager { //aka tracker
                 try {
                     sleep(30 * 1000 * 60);
                 } catch (InterruptedException ex) {
+                    throw new CancellationException();
                 } //300 000ms = 5 mins.
                 rcounter.inc();
             }
         }
 
         private void addIPs(MysterAddress ip, IPQueue ipQueue, MysterType type) throws IOException {
-            Vector ipList = StandardSuite.getTopServers(ip, type);
+            List<String> ipList = StandardSuite.getTopServers(ip, type);
 
             for (int i = 0; i < ipList.size(); i++) {
                 try {
-                    ipQueue.addIP(new MysterAddress((String) (ipList.elementAt(i))));
+                    ipQueue.addIP(new MysterAddress((ipList.get(i))));
                 } catch (UnknownHostException ex) {
+                    // nothing
                 }
             }
 

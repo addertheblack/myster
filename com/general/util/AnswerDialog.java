@@ -1,7 +1,6 @@
 package com.general.util;
 
 import java.awt.Color;
-import java.awt.Container;
 import java.awt.Dimension;
 import java.awt.FontMetrics;
 import java.awt.Frame;
@@ -11,37 +10,30 @@ import java.awt.Point;
 import java.awt.Toolkit;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-import java.util.Vector;
+import java.util.ArrayList;
+import java.util.List;
 
 import javax.swing.JButton;
 import javax.swing.JDialog;
 
 public class AnswerDialog extends JDialog {
     private JButton[] buttons;
-
-    private String it; //just like hypercard :-)
-
-    private Vector message = new Vector(10, 40);
-
+    private String it; //just like HyperCard :-) You all know HyperCard, right?
     private int height;
-
     private int ascent;
-
     private FontMetrics metrics;
 
-    private Insets insets;
-
     private final static int BUTTONY = 30;
-
     private final static int BUTTONX = 100;
 
-    private Frame parent;
-
-    private String thestring;
+    private final List<String> messages = new ArrayList<>();
+    private final Insets insets;
+    private final Frame parent;
+    private final String theString;
 
     public AnswerDialog(Frame f, String q, String ... b) {
         super(f, "Alert!", true);
-        thestring = q;
+        theString = q;
         parent = f;
         pack();
         insets = getInsets();
@@ -51,7 +43,7 @@ public class AnswerDialog extends JDialog {
             buttons = new String[]{ "Ok" };
         }
 
-        initComponents(b);
+        initComponents(buttons);
         
         setResizable(false);
     }
@@ -101,8 +93,8 @@ public class AnswerDialog extends JDialog {
         else
             length = 3; //ha haaa!
 
-        doMessageSetup(thestring);
-        setSize(400 + insets.right + insets.left, message.size() * height
+        doMessageSetup(theString);
+        setSize(400 + insets.right + insets.left, messages.size() * height
                 + ascent + 5 + BUTTONY + 20 + insets.top + insets.bottom);
 
         buttons = new JButton[length];
@@ -132,7 +124,7 @@ public class AnswerDialog extends JDialog {
 
         MrWrap wrapper = new MrWrap(q, 380, metrics);
         for (int i = 0; i < wrapper.numberOfElements(); i++) {
-            message.addElement(wrapper.nextElement());
+            messages.add(wrapper.nextElement());
         }
 
         resetLocation();
@@ -152,14 +144,14 @@ public class AnswerDialog extends JDialog {
 
     public void paint(Graphics g) {
         g.setColor(Color.black);
-        for (int i = 0; i < message.size(); i++) {
-            g.drawString(message.elementAt(i).toString(), 10, 5 + height * (i)
+        for (int i = 0; i < messages.size(); i++) {
+            g.drawString(messages.get(i).toString(), 10, 5 + height * (i)
                     + ascent + insets.top);
         }
     }
 
     public String answer() {
-        show();
+        setVisible(false);
         return it;
     }
 
@@ -177,9 +169,6 @@ public class AnswerDialog extends JDialog {
 
             it = b.getLabel();
             dispose();
-            Container container = getParent();
         }
-
     }
-
 }

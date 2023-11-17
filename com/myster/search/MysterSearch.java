@@ -16,8 +16,8 @@ import java.io.IOException;
 import java.net.UnknownHostException;
 import java.util.HashSet;
 import java.util.Iterator;
+import java.util.List;
 import java.util.Set;
-import java.util.Vector;
 
 import com.general.thread.CallListener;
 import com.general.thread.CancellableCallable;
@@ -92,7 +92,7 @@ public class MysterSearch {
      * represent outstanding asynchronous tasks. If this Set is empty then we're done since there's
      * nothing left pending.
      */
-    private final Set outStandingFutures;
+    private final Set<Future> outStandingFutures;
 
     private final IPListManager manager;
 
@@ -444,7 +444,7 @@ public class MysterSearch {
         listener.addSearchResults(mysterSearchResults);
     }
 
-    private final class UdpSearch extends CancellableCallableRemover {
+    private final class UdpSearch extends CancellableCallableRemover<List<String>> {
         private final MysterAddress address;
 
         private UdpSearch(MysterAddress address) {
@@ -455,11 +455,9 @@ public class MysterSearch {
         /**
          * This is called if there was no error
          */
-        public void handleResult(Object result) {
+        public void handleResult(List<String> results) {
             if (endFlag)
                 return;
-
-            final Vector results = (Vector) result;
 
             ++serversSearched;
             msg.say("Searched " + serversSearched + " servers...");
@@ -471,7 +469,7 @@ public class MysterSearch {
 
             for (int i = 0; i < results.size(); i++) {
                 mysterSearchResults[i] = new MysterSearchResult(new MysterFileStub(address, type,
-                        (String) (results.elementAt(i))), manager::getQuickServerStats);
+                        results.get(i)), manager::getQuickServerStats);
             }
 
             addResults(mysterSearchResults);
@@ -609,14 +607,14 @@ public class MysterSearch {
      * Simple listener that makes sure that the Future is removed from the list
      * of futures maintained by this MysterSearch object.
      */
-    private class CancellableCallableRemover implements CallListener {
+    private class CancellableCallableRemover<T> implements CallListener<T> {
         private Future future;
 
         public void handleCancel() {
             // nothing
         }
 
-        public void handleResult(Object result) {
+        public void handleResult(T result) {
             // nothing
         }
 

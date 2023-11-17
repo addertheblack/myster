@@ -1,5 +1,9 @@
 package com.myster.net;
 
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
+
 import com.general.thread.CallListener;
 import com.general.thread.CancellableCallable;
 import com.general.thread.Executor;
@@ -14,7 +18,7 @@ import com.general.util.Util;
  * available sockets.
  * 
  * NOTE: The user of this pool should remember not to spam it. This class is not
- * responsible for prioritize requests. Well behaved clients should throttle
+ * responsible for prioritise requests. Well behaved clients should throttle
  * their own number of requests so as to not monopolize this resource.
  * 
  * @see com.general.thread.Executor
@@ -84,16 +88,16 @@ public class MysterSocketPool implements Executor {
      * InternalCallListener about when the task is "done" which it can then
      * allow listeners to do.
      */
-    private class InternalFuture implements Future {
-        private final CancellableCallable callable;
+    private class InternalFuture<T> implements Future<T> {
+        private final CancellableCallable<T>                            callable;
 
-        private final CallListener listener;
+        private final CallListener<T> listener;
 
         private boolean isDone = false;
 
         private boolean isCancelled = false;
 
-        private InternalFuture(final CancellableCallable callable, final CallListener listener) {
+        private InternalFuture(final CancellableCallable<T> callable, final CallListener<T> listener) {
             this.callable = callable;
             this.listener = listener;
         }
@@ -144,6 +148,17 @@ public class MysterSocketPool implements Executor {
 
         public CallListener getListener() {
             return listener;
+        }
+
+        @Override
+        public T get(long timeout, TimeUnit unit)
+                throws InterruptedException, ExecutionException, TimeoutException {
+            throw new IllegalStateException("Not implemented");
+        }
+
+        @Override
+        public T get() throws InterruptedException, ExecutionException {
+            throw new IllegalStateException("Not implemented");
         }
     }
 

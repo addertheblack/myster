@@ -14,23 +14,23 @@ import java.awt.Dimension;
 import java.awt.FontMetrics;
 import java.awt.Graphics;
 import java.awt.Rectangle;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Map.Entry;
 
 import javax.swing.JPanel;
 
-import com.general.util.KeyValue;
-
 public class FileInfoPane extends JPanel {
-    KeyValue keyvalue;
-
+    private static final int HOFFSET = 3;
     private static final int VOFFSET = 25;
 
-    private static final int HOFFSET = 3;
+    private Map<String, String> keyvalue;
 
     public FileInfoPane() {
-        keyvalue = new KeyValue();
+        keyvalue = new HashMap<String, String>();
     }
 
-    public void display(KeyValue k) {
+    public void display(Map<String, String> k) {
         keyvalue = k;
         repaint();
     }
@@ -43,8 +43,9 @@ public class FileInfoPane extends JPanel {
         FontMetrics metric = getFontMetrics(getFont());
         int vertical = metric.getHeight() + 3;
         g.setColor(Color.black);
-        for (int i = 0; i < keyvalue.length(); i++) {
-            if (((String) (keyvalue.keyAt(i))).equals("size")) { // hack to
+        int i = 0;
+        for (Entry<String, String> entry : keyvalue.entrySet()) {
+            if (entry.getKey().equals("size")) { // hack to
                 // show
                 // size as
                 // bytes string
@@ -52,31 +53,34 @@ public class FileInfoPane extends JPanel {
                 // XXXbytes or
                 // XXXMB
                 try {
-                    g.drawString(""
-                            + (String) (keyvalue.keyAt(i))
-                            + " : "
-                            + com.general.util.Util.getStringFromBytes(Long
-                                    .parseLong((String) keyvalue.valueAt(i))), HOFFSET, VOFFSET + i
-                            * vertical);
+                    g.drawString("" + entry.getKey() + " : "
+                            + com.general.util.Util
+                                    .getStringFromBytes(Long.parseLong(entry.getValue())),
+                                 HOFFSET,
+                                 VOFFSET + i * vertical);
                 } catch (NumberFormatException ex) {
-                    g.drawString("" + (String) (keyvalue.keyAt(i)) + " : "
-                            + (String) keyvalue.valueAt(i), HOFFSET, VOFFSET + i * vertical);
+                    g.drawString("" + entry.getKey() + " : " + entry.getValue(),
+                                 HOFFSET,
+                                 VOFFSET + i * vertical);
                 }
             } else {
-                g.drawString("" + (String) (keyvalue.keyAt(i)) + " : "
-                        + (String) keyvalue.valueAt(i), HOFFSET, VOFFSET + i * vertical);
+                g.drawString("" + entry.getKey() + " : " + entry.getValue(),
+                             HOFFSET,
+                             VOFFSET + i * vertical);
             }
+
+            i++;
         }
         // Util.getStringFromBytes(Long.valueOf((String)keyvalue.valueAt(i)).longValue())
 
     }
 
-    public KeyValue getData() {
+    public Map<String, String> getData() {
         return keyvalue;
     }
 
     public void clear() {
-        keyvalue = new KeyValue();
+        keyvalue.clear();
         repaint();
     }
 

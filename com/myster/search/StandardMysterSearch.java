@@ -1,7 +1,8 @@
 package com.myster.search;
 
 import java.io.IOException;
-import java.util.Vector;
+import java.util.List;
+
 
 import com.general.util.Util;
 import com.myster.mml.RobustMML;
@@ -47,7 +48,7 @@ public class StandardMysterSearch {
         if (endFlag)
             throw new DisconnectException();
 
-        Vector searchResults = com.myster.client.stream.StandardSuite.getSearch(socket, type,
+        List<String> searchResults = com.myster.client.stream.StandardSuite.getSearch(socket, type,
                 searchString);
 
         if (endFlag)
@@ -57,8 +58,11 @@ public class StandardMysterSearch {
             final MysterSearchResult[] searchArray = new MysterSearchResult[searchResults.size()];
 
             for (int i = 0; i < searchArray.length; i++) {
-                searchArray[i] = new MysterSearchResult(new MysterFileStub(address, type,
-                        (String) (searchResults.elementAt(i))),  manager::getQuickServerStats);
+                searchArray[i] = new MysterSearchResult(
+                                                        new MysterFileStub(address,
+                                                                           type,
+                                                                           searchResults.get(i)),
+                                                        manager::getQuickServerStats);
             }
 
             try {

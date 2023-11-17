@@ -4,6 +4,11 @@
  */
 package com.myster.util;
 
+import java.util.concurrent.CancellationException;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
+
 import com.general.thread.CallListener;
 import com.general.thread.CancellableCallable;
 import com.general.thread.Executor;
@@ -49,22 +54,44 @@ public class MysterExecutor implements Executor {
         return future;
     }
 
-    private static class ExecutableTask implements Future {
+    private static class ExecutableTask<T> implements Future<T> {
         private final CancellableCallable callable;
 
         private final CallListener listener;
 
         private boolean cancelled = false;
 
-        private boolean done = false;
+        private volatile boolean done = false;
+        private volatile T result;
+        private volatile Exception exception;
 
         public ExecutableTask(CancellableCallable callable, CallListener listener) {
             this.callable = callable;
             this.listener = listener;
         }
 
+        @Override
+        public T get() throws InterruptedException, ExecutionException {
+            while(!done) {
+                synchronized (this) {
+                    this.wait();
+                }
+            }
+            
+            if (cancelled) {
+                throw new CancellationException();
+            }
+            
+            if (exception != null) {
+               throw new ExecutionException(exception);
+            }
+            
+            return result;
+        }
+        
         public synchronized boolean cancel() {
             cancel(true);
+            
             return false;
         }
 
@@ -77,6 +104,8 @@ public class MysterExecutor implements Executor {
             callable.cancel();
 
             cancelled = true;
+            done = true;
+            
             return false;
         }
 
@@ -92,12 +121,26 @@ public class MysterExecutor implements Executor {
             return callable;
         }
 
-        public CallListener getListener() {
+        public CallListener<T> getListener() {
             return listener;
         }
 
-        public synchronized void signalDone() {
-            done = true;
+        public synchronized void signalDone(T result, Exception ex) {
+            if (done) {
+                throw new IllegalStateException("signalDone() called twice");
+            }
+            
+            this.result = result;
+            this.exception = ex;
+            this.done = true;
+            
+            notifyAll();
+        }
+
+        @Override
+        public T get(long timeout, TimeUnit unit)
+                throws InterruptedException, ExecutionException, TimeoutException {
+            throw new IllegalStateException("Not implemented yet");
         }
     }
 
@@ -115,28 +158,27 @@ public class MysterExecutor implements Executor {
 
                     try {
                         final Object result = executableTask.getCallable().call();
-                        executableTask.signalDone();
-                        if (executableTask.isCancelled())
-                            continue;
-                        Util.invokeAndWait(new Runnable() {
+                        Util.invokeLater(new Runnable() {
                             public void run() {
+                                if (executableTask.isCancelled()) {
+                                    handleCancel(executableTask.getListener());
+                                    return;
+                                }
+                                executableTask.signalDone(result, null);
                                 executableTask.getListener().handleResult(result);
+                                executableTask.getListener().handleFinally();
                             }
                         });
                     } catch (final Exception ex) {
-                        executableTask.signalDone();
-                        if (executableTask.isCancelled())
-                            continue;
-                        Util.invokeAndWait(new Runnable() {
+                        Util.invokeLater(new Runnable() {
                             public void run() {
+                                if (executableTask.isCancelled()) {
+                                    handleCancel(executableTask.getListener());
+                                    return;
+                                }
+                                
+                                executableTask.signalDone(null, ex);
                                 executableTask.getListener().handleException(ex);
-                            }
-                        });
-                    } finally {
-                        if (executableTask.isCancelled())
-                            handelCancel(executableTask.getListener());
-                        Util.invokeAndWait(new Runnable() {
-                            public void run() {
                                 executableTask.getListener().handleFinally();
                             }
                         });
@@ -146,13 +188,10 @@ public class MysterExecutor implements Executor {
                 }
             }
         }
-        
-        public void handelCancel(final CallListener listener) throws InterruptedException {
-            Util.invokeAndWait(new Runnable() {
-                public void run() {
-                    listener.handleFinally();
-                }
-            });
+
+        public static <T> void handleCancel(final CallListener<T> listener) {
+            listener.handleCancel();
+            listener.handleFinally();
         }
     }
 }

@@ -13,7 +13,6 @@ import java.util.Collections;
 import java.util.Comparator;
 import java.util.Iterator;
 import java.util.List;
-import java.util.Vector;
 
 import javax.swing.JFrame;
 import javax.swing.JPanel;
@@ -435,20 +434,19 @@ public class JMCList extends JTable implements MCList {
 }
 
 class MCListTableModel extends AbstractTableModel {
-    Vector columnNames = new Vector();
-
-    Vector rowValues = new Vector();
+    private final List<String> columnNames = new ArrayList<>();
+    private final List<MCListItemInterface> rowValues = new ArrayList<>();
 
     int sortByIndex = -1;
 
     private boolean lessThan = true;
 
     public String getColumnName(int column) {
-        return (String) columnNames.elementAt(column);
+        return columnNames.get(column);
     }
 
     public void setColumnName(int columnIndex, String columnName) {
-        columnNames.setElementAt(columnName, columnIndex);
+        columnNames.set(columnIndex, columnName);
     }
 
     public int getSortByIndex() {
@@ -495,7 +493,7 @@ class MCListTableModel extends AbstractTableModel {
      *  
      */
     public void clearAll() {
-        rowValues = new Vector();
+        rowValues.clear();
         fireTableRowsDeleted(0, rowValues.size());
     }
 
@@ -503,7 +501,7 @@ class MCListTableModel extends AbstractTableModel {
      * @param i
      */
     public void removeRow(int i) {
-        rowValues.removeElementAt(i);
+        rowValues.remove(i);
         fireTableRowsDeleted(i, i);
     }
 
@@ -521,13 +519,13 @@ class MCListTableModel extends AbstractTableModel {
      */
     public void removeRows(int[] indexes) {
         for (int i = rowValues.size(); i >= 0; i++) {
-            rowValues.removeElementAt(i);
+            rowValues.remove(i);
         }
         fireTableRowsDeleted(0, rowValues.size());
     }
 
     public void setColumnIdentifiers(String[] names) {
-        columnNames = new Vector(names.length);
+        columnNames.clear();
         for (int i = 0; i < names.length; i++) {
             columnNames.add(names[i]);
         }
@@ -576,7 +574,7 @@ class MCListTableModel extends AbstractTableModel {
     }
 
     MCListItemInterface getRow(int index) {
-        return (MCListItemInterface) rowValues.elementAt(index);
+        return rowValues.get(index);
     }
 
     public int indexOf(MCListItemInterface item) {
@@ -586,20 +584,18 @@ class MCListTableModel extends AbstractTableModel {
 }
 
 class MCListSelectionModel implements ListSelectionModel {
-    private MCListTableModel tableModel;
-
+    private final EventListenerList listenerList = new EventListenerList();
+    
+    private final MCListTableModel tableModel;
+    private final ListSelectionListener internalSelectionListener;
+    
     private MCListItemInterface anchorValue;
-
     private MCListItemInterface leadSelectionValue;
 
-    private EventListenerList listenerList = new EventListenerList();
-
     private boolean valueIsAdjusting;
-
     private int selectionMode;
 
     //Is used by the MCList to generate its specific events
-    private ListSelectionListener internalSelectionListener;
 
     MCListSelectionModel(MCListTableModel tableModel, ListSelectionListener internalSelectionListener) {
         this.tableModel = tableModel;

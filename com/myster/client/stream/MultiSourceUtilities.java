@@ -78,31 +78,28 @@ public class MultiSourceUtilities {
 
     public static boolean moveFileToFinalDestination(final File sourceFile, Frame parentFrame)
             throws IOException {
-
         final String FILE_ENDING = ".i";
 
-        File theFile = sourceFile; //!
-
-        if (!theFile.getName().endsWith(FILE_ENDING)) {
-            AnswerDialog.simpleAlert(parentFrame, "Could not rename file \"" + theFile.getName()
+        if (!sourceFile.getName().endsWith(FILE_ENDING)) {
+            AnswerDialog.simpleAlert(parentFrame, "Could not rename file \"" + sourceFile.getName()
                     + "\" because it does not end with " + FILE_ENDING + ".");
             return true; //don't display an error, I've already done it
         }
 
-        String path = theFile.getAbsolutePath();
-        File someFile = someFile = new File(path.substring(0, path.length()
-                - (FILE_ENDING.length()))); //-2 is for .i
+        String path = sourceFile.getAbsolutePath();
         
+        File someFile = new File(path.substring(0, path.length() - (FILE_ENDING.length())));
+
         if (someFile.exists()) {
             AnswerDialog.simpleAlert(parentFrame, "Could not rename file from \""
-                    + theFile.getName() + "\" to \"" + someFile.getName()
+                    + sourceFile.getName() + "\" to \"" + someFile.getName()
                     + "\" because a file by that name already exists.");
             return true;
         }
 
-        if (!theFile.renameTo(someFile)) {
+        if (!sourceFile.renameTo(someFile)) {
             AnswerDialog.simpleAlert(parentFrame, "Could not rename file from \""
-                    + theFile.getName() + "\" to \"" + someFile.getName()
+                    + sourceFile.getName() + "\" to \"" + someFile.getName()
                     + "\" because an unspecified error occured.");
             return true;
         }
@@ -141,7 +138,7 @@ public class MultiSourceUtilities {
     }
 
     /**
-     * Returns a file object containing te path that a multi-source object will
+     * Returns a file object containing the path that a multi-source object will
      * be downloaded to.
      * <p>
      * This routine is not stable as it is dependent on the way multi-source
@@ -182,7 +179,7 @@ public class MultiSourceUtilities {
         if (dialog.getFile() == null)
             return null; //canceled.
 
-        return new File(dialog.getDirectory() + File.separator + dialog.getFile() + EXTENSION);
+        return new File(directory + File.separator + dialog.getFile() + EXTENSION);
     }
 
     public static FileHash getHashFromStats(RobustMML mml) throws IOException {
@@ -234,7 +231,7 @@ public class MultiSourceUtilities {
      */
 
     public static void debug(String string) {
-        //System.out.println(string);
+//        System.out.println(string);
     }
 
     private static final String STOP_DOWNLOAD = "Kill";

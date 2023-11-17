@@ -7,11 +7,11 @@ import com.myster.net.DataPacket;
  * thread either.
  */
 public class TransactionSocket {
-    int protocolNumber;
+    private final int protocolNumber;
 
-    int uniqueIdFromTransactionManager;
+    private int uniqueIdFromTransactionManager;
 
-    boolean outstanding = false;
+    private boolean outstanding = false;
 
     public TransactionSocket(int protocolNumber) {
         this.protocolNumber = protocolNumber;

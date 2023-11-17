@@ -11,10 +11,13 @@ import java.io.DataInputStream;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
+import java.net.URI;
+import java.net.URISyntaxException;
 import java.net.URL;
+import java.util.ArrayList;
 import java.util.Enumeration;
 import java.util.Hashtable;
-import java.util.Vector;
+import java.util.List;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
 
@@ -40,13 +43,13 @@ public class JarClassLoader extends ClassLoader {
         }
     }
 
-    public Vector getEntries() {
-        Vector entries = new Vector(10, 10);
+    public List<String> getEntries() {
+        List<String> entries = new ArrayList<>();
         Enumeration t = zip.entries();
 
         while (t.hasMoreElements()) {
             ZipEntry entry = ((ZipEntry) (t.nextElement()));
-            entries.addElement(entry.getName());
+            entries.add(entry.getName());
         }
         return entries;
     }
@@ -101,9 +104,9 @@ public class JarClassLoader extends ClassLoader {
     public URL getResource(String name) {
         String pathName = "jar:file:" + zip.getName() + "!/" + name;
         try {
-            URL url = new URL(pathName);
+            URL url = new URI(pathName).toURL();
             return url;
-        } catch (java.net.MalformedURLException ex) {
+        } catch (java.net.MalformedURLException | URISyntaxException ex) {
             ex.printStackTrace();
             return null;
         }

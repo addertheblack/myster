@@ -10,12 +10,11 @@
 
 package com.myster.client.ui;
 
-import java.io.DataInputStream;
-import java.io.DataOutputStream;
 import java.io.IOException;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
-import com.general.util.KeyValue;
 import com.myster.client.stream.StandardSuite;
 import com.myster.mml.RobustMML;
 import com.myster.net.MysterAddress;
@@ -37,10 +36,9 @@ public class FileInfoListerThread extends MysterThread {
         try {
             Thread.sleep(500);
         } catch (InterruptedException ex) {
+            return;
         }
 
-        DataOutputStream out;
-        DataInputStream in;
         FileInfoListerThread msg = this;
 
         try {
@@ -59,8 +57,8 @@ public class FileInfoListerThread extends MysterThread {
 
             msg.say("Parsing file information...");
 
-            KeyValue keyvalue = new KeyValue();
-            keyvalue.addValue("File Name", w.getCurrentFile());
+            Map<String, String> keyvalue = new HashMap<String, String>();
+            keyvalue.put("File Name", w.getCurrentFile());
 
             listDir(mml, keyvalue, "/", "");
 
@@ -74,11 +72,12 @@ public class FileInfoListerThread extends MysterThread {
             try {
                 socket.close();
             } catch (Exception ex) {
+                // nothing
             }
         }
     }
 
-    private void listDir(RobustMML mml, KeyValue keyValue, String directory,
+    private void listDir(RobustMML mml, Map<String, String> keyValue, String directory,
             String prefix) {
         List<String> dirList = mml.list(directory);
 
@@ -94,16 +93,16 @@ public class FileInfoListerThread extends MysterThread {
             String newPath = directory + name;
 
             if (mml.isADirectory(newPath + "/")) {
-                keyValue.addValue(name, " ->");
+                keyValue.put(name, " ->");
                 listDir(mml, keyValue, newPath + "/", prefix + "  ");
             } else {
-                keyValue.addValue(prefix + (dirList.get(i)), mml
-                        .get(newPath));
+                keyValue.put(prefix + (dirList.get(i)), mml
+                .get(newPath));
             }
         }
     }
     
-    private synchronized void showFileStats(final KeyValue keyValue) {
+    private synchronized void showFileStats(final Map<String, String> keyValue) {
         if (endFlag)
             return;
         w.showFileStats(keyValue);
@@ -119,7 +118,11 @@ public class FileInfoListerThread extends MysterThread {
         endFlag = true;
         try {
            socket.close();
-        } catch (Exception ex){}
+        } catch (Exception ex){
+            // nothing
+        }
+        
+        
         interrupt();
     }
   
@@ -127,6 +130,10 @@ public class FileInfoListerThread extends MysterThread {
         flagToEnd();
         try {
             join();
-        } catch (InterruptedException ex) {}
+        } catch (InterruptedException ex) {
+            Thread.currentThread().interrupt();
+            
+            throw new IllegalStateException("Unexpected InterruptedException");
+        }
     }
 }

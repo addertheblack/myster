@@ -9,26 +9,23 @@
 
 package com.general.mclist;
 
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
-import java.util.Vector;
+import java.util.List;
 
-public class MCListVector {
-    private Vector vector; //"no dog food for Vector tonight" -- Paraphrase of
-                   // Futurama.
+public class MCListList {
+    public static final boolean ASENDING = true;
+    public static final boolean DESCENDING = false;
+    
+    private final List<MCListItemInterface> list;
 
     private int sortby = 0;
-
     private boolean lessthan = true;
-
     private boolean isSorted = true;
 
-    public static final boolean ASENDING = true;
-
-    public static final boolean DESCENDING = false;
-
-    MCListVector() {
-        vector = new Vector(100, 100);
+    MCListList() {
+        list = new ArrayList<>();
     }
 
     boolean isSorted() {
@@ -47,7 +44,7 @@ public class MCListVector {
         if (sortby == -1)
             return;
 
-        Collections.sort(vector,
+        Collections.sort(list,
                 new Comparator() {
                     public int compare(Object a, Object b) {
                         Sortable sa = ((MCListItemInterface) a)
@@ -82,24 +79,22 @@ public class MCListVector {
     }
 
     synchronized void addElement(MCListItemInterface[] o) {
-        vector.ensureCapacity(vector.size() + o.length + 1);//the +1 is for
-                                                            // kicks...
         for (int i = 0; i < o.length; i++)
-            vector.addElement(o[i]);
+            list.add(o[i]);
         if (isSorted)
             sort();
     }
 
     synchronized void removeElement(int index) {
-        vector.removeElementAt(index);
+        list.remove(index);
     }
 
     synchronized void removeElement(Object o) {
-        vector.removeElement(o);
+        list.remove(o);
     }
 
     synchronized MCListItemInterface getElement(int index) {
-        return (MCListItemInterface) (vector.elementAt(index));
+        return list.get(index);
     }
 
     synchronized void setSortBy(int i) {
@@ -108,11 +103,11 @@ public class MCListVector {
     }
 
     int size() {
-        return vector.size();
+        return list.size();
     }
 
     synchronized void removeAllElements() {
-        vector.removeAllElements();
+        list.clear();
     }
 
     synchronized void removeIndexes(int[] indexes) {
@@ -125,8 +120,7 @@ public class MCListVector {
         removeElements(objectsToRemove);
     }
 
-    synchronized void removeElements(
-            MCListItemInterface[] objectsToRemove) {
+    synchronized void removeElements(MCListItemInterface[] objectsToRemove) {
         for (int i = 0; i < objectsToRemove.length; i++) {
             removeElement(objectsToRemove[i]);
         }

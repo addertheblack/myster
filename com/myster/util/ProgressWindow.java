@@ -9,7 +9,8 @@ import java.awt.Image;
 import java.awt.Insets;
 import java.awt.MediaTracker;
 import java.awt.event.MouseListener;
-import java.util.Vector;
+import java.util.ArrayList;
+import java.util.List;
 
 import javax.swing.JLabel;
 import javax.swing.JPanel;
@@ -20,16 +21,12 @@ import com.myster.ui.MysterFrame;
 
 public class ProgressWindow extends MysterFrame {
     public static final int X_SIZE = 468;
-
     public static final int Y_SIZE = 50;
-
     public static final int AD_HEIGHT = 60;
-
     public static final int X_TEXT_OFFSET = 5; // x offset of text
-
     public static final int Y_TEXT_OFFSET = 5; // y offset of text
 
-    private final Vector progressPanels = new Vector(10, 10);;
+    private final List<ProgressPanel> progressPanels = new ArrayList<>();
 
     protected final AdPanel adPanel = new AdPanel();
 
@@ -86,6 +83,7 @@ public class ProgressWindow extends MysterFrame {
             try {
                 Thread.sleep(500);
             } catch (Exception ex) {
+                // nothing
             } //an attempt to stop crashing on resizing...
             counter++;
 
@@ -145,16 +143,16 @@ public class ProgressWindow extends MysterFrame {
     }
 
     private void removeProgressPanel(int index) {
-        remove((ProgressPanel) (progressPanels.elementAt(index)));
+        remove(progressPanels.get(index));
 
-        progressPanels.removeElementAt(index);
+        progressPanels.remove(index);
     }
 
     private void addProgressPanel() {
         ProgressPanel panel = new ProgressPanel();
 
         add(panel);
-        progressPanels.addElement(panel);
+        progressPanels.add(panel);
     }
 
     public synchronized void startBlock(int bar, long min, long max) {
@@ -215,7 +213,7 @@ public class ProgressWindow extends MysterFrame {
     private ProgressPanel getProgressPanel(int index) {
         checkBounds(index);
 
-        return (ProgressPanel) (progressPanels.elementAt(index));
+        return progressPanels.get(index);
     }
 
     //Standard progress suite
@@ -399,7 +397,6 @@ public class ProgressWindow extends MysterFrame {
 
                 FontMetrics metrics = getFontMetrics(getFont());
 
-                int descent = metrics.getDescent();
                 int ascent = metrics.getAscent();
                 int leading = metrics.getLeading();
                 int height = metrics.getHeight();

@@ -1,6 +1,7 @@
 package com.myster.client.stream;
 
 import java.io.IOException;
+import java.util.concurrent.CancellationException;
 
 import com.general.thread.CancellableCallable;
 import com.myster.net.MysterAddress;
@@ -12,10 +13,12 @@ import com.myster.net.MysterSocketFactory;
  * it in the standard way allowed by by the convenience methods in
  * StandardSuite.
  */
-public abstract class StreamSection implements CancellableCallable {
-    protected MysterAddress address;
+public abstract class StreamSection<T> implements CancellableCallable<T> {
+    protected final MysterAddress address;
 
-    protected MysterSocket socket = null;
+    protected volatile MysterSocket socket = null;
+    
+    protected volatile boolean cancelled = false;
 
     public StreamSection(MysterAddress address) {
         this.address = address;
@@ -26,9 +29,19 @@ public abstract class StreamSection implements CancellableCallable {
      * doSection() as we need to make sure the socket object is opened and
      * closed correctly.
      */
-    public final Object call() throws IOException {
+    public final T call() throws IOException {
+        if (cancelled) {
+            throw new CancellationException();
+        }
+        
         try {
             socket = MysterSocketFactory.makeStreamConnection(address);
+            
+            if (cancelled) {
+                throw new CancellationException();
+            }
+            
+            
             return doSection();
         } finally {
             try {
@@ -45,19 +58,22 @@ public abstract class StreamSection implements CancellableCallable {
      * 
      * @throws IOException
      */
-    protected abstract Object doSection() throws IOException;
+    protected abstract T doSection() throws IOException;
 
     /**
      * Closes the socket. Subclasses should call this method using super if they
      * over-ride this method.
      */
     public void cancel() {
+        cancelled = true;
+        
         if (socket == null)
             return;
 
         try {
             socket.close();
         } catch (IOException ex) {
+            // nothing
         }
     }
 }

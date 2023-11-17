@@ -42,33 +42,29 @@ import com.myster.util.Sayable;
 import com.myster.util.TypeChoice;
 
 public class SearchWindow extends MysterFrame implements SearchResultListener, Sayable {
-    private GridBagLayout gblayout;
+    private static final int XDEFAULT = 640;
 
-    private GridBagConstraints gbconstrains;
-
-    private JButton searchButton;
-
-    private MCList fileList;
-
-    private JTextField textEntry;
-
-    private TypeChoice choice;
-
-    private MessageField msg;
-
-    private ClientHandleObject metaDateHandler;
-
-    private SearchEngine searchEngine;
-
-    private final int XDEFAULT = 640;
-
-    private final int YDEFAULT = 400;
+    private static final int YDEFAULT = 400;
 
     private static final String PREF_LOCATION_KEY = "Search Window";
 
     private static WindowLocationKeeper keeper;
 
     private static int counter = 0;
+    
+    
+    private final GridBagLayout gblayout;
+    private final GridBagConstraints gbconstrains;
+
+    private final JButton searchButton;
+    private final MCList fileList;
+    private final JTextField textEntry;
+    private final TypeChoice choice;
+    private final MessageField msg;
+    
+    private SearchEngine searchEngine;
+    private ClientHandleObject metaDateHandler;
+
 
     public SearchWindow() {
         super("Search Window " + (++counter));

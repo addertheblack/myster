@@ -1,17 +1,16 @@
 package com.myster.menubar;
 
 import java.util.List;
-import java.util.Vector;
+
 
 import javax.swing.JFrame;
 import javax.swing.JMenu;
 
 public class MysterMenuFactory {
-    private List<MysterMenuItemFactory> mysterMenuItemFactories;
+    private final List<MysterMenuItemFactory> mysterMenuItemFactories;
+    private final String name;
 
-    private String name;
-
-    public MysterMenuFactory(String name, Vector<MysterMenuItemFactory> mysterMenuItemFactories) {
+    public MysterMenuFactory(String name, List<MysterMenuItemFactory> mysterMenuItemFactories) {
         this.name = name;
         this.mysterMenuItemFactories = mysterMenuItemFactories;
     }

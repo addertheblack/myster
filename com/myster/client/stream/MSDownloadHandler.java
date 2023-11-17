@@ -3,7 +3,9 @@ package com.myster.client.stream;
 import java.awt.Color;
 import java.io.File;
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.Hashtable;
+import java.util.List;
 import java.util.Vector;
 
 import com.myster.util.FileProgressWindow;
@@ -13,7 +15,7 @@ public class MSDownloadHandler extends MSDownloadListener {
 
     private int macBarCounter;
 
-    private Vector freeBars;
+    private List<Integer> freeBars;
 
     private Hashtable segmentListeners;
 
@@ -30,7 +32,7 @@ public class MSDownloadHandler extends MSDownloadListener {
         this.progress = progress;
 
         macBarCounter = 1; // the first bar is used for overall progress
-        freeBars = new Vector();
+        freeBars = new ArrayList<Integer>();
         segmentListeners = new Hashtable();
         this.fileBeingDownloadedTo = fileBeingDownloadedTo;
 
@@ -133,11 +135,11 @@ public class MSDownloadHandler extends MSDownloadListener {
         }
 
         //this blob of code figures out which of the freebars to re-use
-        int minimum = ((Integer) (freeBars.elementAt(0))).intValue(); //no
+        int minimum = freeBars.get(0).intValue(); //no
         // templates
         int min_index = 0;
         for (int i = 0; i < freeBars.size(); i++) {
-            int temp_int = ((Integer) (freeBars.elementAt(i))).intValue(); //no autoboxing
+            int temp_int = freeBars.get(i).intValue(); //no autoboxing
 
             if (temp_int < minimum) {
                 minimum = temp_int;
@@ -145,19 +147,15 @@ public class MSDownloadHandler extends MSDownloadListener {
             }
         }
 
-        int temp_int = ((Integer) (freeBars.elementAt(min_index))).intValue();
-
-        freeBars.removeElementAt(min_index); //remove element doens't return
-        // what it's removing
-
-        return temp_int;
+        // remove at index
+        return freeBars.remove(min_index); 
     }
 
     /**
      * returns a "bar" number to the re-distribution heap
      */
     private void returnBarNumber(int barNumber) {
-        freeBars.addElement(new Integer(barNumber));
+        freeBars.add(barNumber);
     }
 }
 
@@ -345,7 +343,7 @@ class ProgressBannerManager implements Runnable {
 
         if (banner != null) {
             if (!oldBanners.contains(banner))
-                oldBanners.addElement(banner); //if unique image then add to
+                oldBanners.add(banner); //if unique image then add to
             // banners
         } else {
             banner = oldBanners.getNextBanner();
@@ -370,10 +368,10 @@ class ProgressBannerManager implements Runnable {
     }
 }
 
-class RotatingVector extends Vector {
+class RotatingVector extends ArrayList<Banner> {
     int currentBanner = 0;
 
-    public synchronized Banner getNextBanner() {
+    public Banner getNextBanner() {
         if (size() < 1)
             return null;
 
@@ -381,7 +379,7 @@ class RotatingVector extends Vector {
             currentBanner = 0;
         }
 
-        return (Banner) (elementAt(currentBanner++)); // xxx++ is very handy
+        return get(currentBanner++); // xxx++ is very handy
     }
 }
 

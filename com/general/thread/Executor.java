@@ -33,10 +33,6 @@ public interface Executor {
      * <p>
      * Also note that the listener's routines are called on the event thread (unless otherwise
      * specified) for your convenience.
-     * 
-     * @param callable
-     * @param listener
-     * @return
      */
-    public Future execute(CancellableCallable callable, CallListener listener);
+    public <T> Future<T> execute(CancellableCallable<T> callable, CallListener<T> listener);
 }

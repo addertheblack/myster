@@ -4,7 +4,9 @@ import java.io.DataInputStream;
 import java.io.File;
 import java.io.IOException;
 import java.io.RandomAccessFile;
-import java.util.Vector;
+import java.util.ArrayList;
+import java.util.List;
+
 
 import com.general.thread.CallListener;
 import com.general.thread.Future;
@@ -27,7 +29,7 @@ import com.myster.util.FileProgressWindow;
  */
 public class StandardSuite {
 
-    public static Vector getSearch(MysterAddress ip, MysterType searchType, String searchString)
+    public static List<String> getSearch(MysterAddress ip, MysterType searchType, String searchString)
             throws IOException {
         MysterSocket socket = null;
         try {
@@ -38,19 +40,19 @@ public class StandardSuite {
         }
     }
 
-    public static Future getSearch(final MysterAddress ip, final MysterType searchType,
-            final String searchString, final CallListener listener) {
+    public static Future<List<String>> getSearch(final MysterAddress ip, final MysterType searchType,
+            final String searchString, final CallListener<List<String>> listener) {
         return MysterSocketPool.getInstance().execute(new StreamSection(ip) {
-            protected Object doSection() throws IOException {
+            protected List<String> doSection() throws IOException {
                 return getSearch(socket, searchType, searchString);
             }
         }, listener);
     }
 
     // Vector of strings
-    public static Vector getSearch(MysterSocket socket, MysterType searchType, String searchString)
+    public static List<String> getSearch(MysterSocket socket, MysterType searchType, String searchString)
             throws IOException {
-        Vector searchResults = new Vector();
+        List<String> searchResults = new ArrayList<>();
 
         socket.out.writeInt(35);
 
@@ -60,12 +62,12 @@ public class StandardSuite {
         socket.out.writeUTF(searchString);
 
         for (String temp = socket.in.readUTF(); !temp.equals(""); temp = socket.in.readUTF())
-            searchResults.addElement(temp);
+            searchResults.add(temp);
 
         return searchResults;
     }
 
-    public static Vector getTopServers(MysterAddress ip, MysterType searchType) throws IOException {
+    public static List<String> getTopServers(MysterAddress ip, MysterType searchType) throws IOException {
         MysterSocket socket = null;
         try {
             socket = MysterSocketFactory.makeStreamConnection(ip);
@@ -75,19 +77,19 @@ public class StandardSuite {
         }
     }
 
-    public static Vector getTopServers(MysterSocket socket, MysterType searchType)
+    public static List<String> getTopServers(MysterSocket socket, MysterType searchType)
             throws IOException {
-        Vector ipList = new Vector();
+        List<String> ipList = new ArrayList<String>();
 
         socket.out.writeInt(10); // Get top ten the 10 is the command code...
         // not the length of the list!
-
+        
         checkProtocol(socket.in);
-
+        
         socket.out.write(searchType.getBytes());
 
         for (String temp = socket.in.readUTF(); !temp.equals(""); temp = socket.in.readUTF()) {
-            ipList.addElement(temp);
+            ipList.add(temp);
         }
 
         return ipList;
@@ -122,8 +124,10 @@ public class StandardSuite {
         }
     }
 
+    
+    // TODO: die die die
     private static MysterType[] getTypesVersion1Protocol(MysterSocket socket) throws IOException {
-        Vector container = new Vector();
+        List<MysterType> container = new ArrayList<>();
 
         socket.out.writeInt(79);
 
@@ -131,7 +135,7 @@ public class StandardSuite {
 
         for (String temp = socket.in.readUTF(); !temp.equals(""); temp = socket.in.readUTF()) {
             try {
-                container.addElement(new MysterType(temp));
+                container.add(new MysterType(temp));
             } catch (com.myster.type.MysterTypeException ex) {
                 throw new ProtocolException("Server sent a malformed MysterType");
             }
@@ -139,7 +143,7 @@ public class StandardSuite {
 
         MysterType[] types = new MysterType[container.size()];
         for (int i = 0; i < types.length; i++) {
-            types[i] = (MysterType) container.elementAt(i);
+            types[i] = container.get(i);
         }
 
         return types;
@@ -160,9 +164,9 @@ public class StandardSuite {
         }
     }
 
-    public static Future getServerStats(final MysterAddress ip, final CallListener listener) {
+    public static Future<RobustMML> getServerStats(final MysterAddress ip, final CallListener listener) {
         return MysterSocketPool.getInstance().execute(new StreamSection(ip) {
-            protected Object doSection() throws IOException {
+            protected RobustMML doSection() throws IOException {
                 return getServerStats(socket);
             }
         }, listener);
@@ -229,7 +233,7 @@ public class StandardSuite {
 
                     StandardSuite.DownloadThread.this.flagToEnd();
 
-                    progressArray[0].hide();
+                    progressArray[0].setVisible(false);
                 }
             });
 
@@ -289,7 +293,7 @@ public class StandardSuite {
 
                     synchronized (StandardSuite.DownloadThread.this) {
                         if (endFlag)
-                            ;
+                            return;
 
                         secondDownload = new DownloaderThread(MysterSocketFactory
                                 .makeStreamConnection(stub.getMysterAddress()), stub, progress);
@@ -302,6 +306,7 @@ public class StandardSuite {
             }
         }
 
+        @SuppressWarnings("resource")
         private synchronized boolean tryMultiSourceDownload(final MysterFileStub stub,
                 final FileProgressWindow progress, RobustMML mml, final File theFile)
                 throws IOException {
@@ -329,11 +334,12 @@ public class StandardSuite {
                     new MSDownloadHandler(progress, theFile, partialFile), partialFile);
             msDownload.setInitialServers(new MysterFileStub[] { stub });
             msDownload.start();
+            
             return true;
         }
 
-        private void progressSetTextThreadSafe(final FileProgressWindow progress,
-                final String string) {
+        private static void progressSetTextThreadSafe(final FileProgressWindow progress,
+                                               final String string) {
             Util.invokeLater(new Runnable() {
                 public void run() {
                     progress.setText(string);
@@ -459,6 +465,7 @@ public class StandardSuite {
         try {
             socket.close();
         } catch (Exception ex) {
+            // nothing
         }
     }
 
@@ -490,11 +497,13 @@ public class StandardSuite {
             socket.out.writeInt(2);
             socket.in.read();
         } catch (Exception ex) {
+            // nothing
         }
 
         try {
             socket.close();
         } catch (Exception ex) {
+            // nothing
         }
     }
 

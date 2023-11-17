@@ -12,8 +12,8 @@
 package com.myster.menubar;
 
 import java.awt.MenuBar;
+import java.util.ArrayList;
 import java.util.List;
-import java.util.Vector;
 
 import javax.swing.JFrame;
 import javax.swing.JMenuBar;
@@ -51,7 +51,8 @@ public class MysterMenuBar extends MenuBar {
 
     private static MysterMenuBarFactory impl;
 
-    private static Vector file, edit, special, menuBar, plugins;
+    private static List<MysterMenuItemFactory> file, edit, special,  plugins;
+    private static List<MysterMenuFactory> menuBar;
 
     private static MysterMenuFactory pluginMenuFactory;
 
@@ -79,72 +80,72 @@ public class MysterMenuBar extends MenuBar {
      */
     public static MysterMenuBarFactory getFactory() {
         if (inited && impl == null) {
-            file = new Vector();
-            edit = new Vector();
-            special = new Vector();
+            file = new ArrayList<>();
+            edit = new ArrayList<>();
+            special = new ArrayList<>();
 
             // File menu items
 
-            file.addElement(new MysterMenuItemFactory("New Search",
+            file.add(new MysterMenuItemFactory("New Search",
                                                       new NewSearchWindowAction(),
                                                       java.awt.event.KeyEvent.VK_N));
-            file.addElement(new MysterMenuItemFactory("New Peer-to-Peer Connection",
+            file.add(new MysterMenuItemFactory("New Peer-to-Peer Connection",
                                                       new NewClientWindowAction(),
                                                       java.awt.event.KeyEvent.VK_N,
                                                       true));
-            file.addElement(new MysterMenuItemFactory("New Instant Message",
+            file.add(new MysterMenuItemFactory("New Instant Message",
                                                       (java.awt.event.ActionEvent e) -> {
                                                           com.myster.message.MessageWindow window =
                                                                   new com.myster.message.MessageWindow();
                                                           window.setVisible(true);
                                                       }));
-            file.addElement(new MysterMenuItemFactory("Close Window",
+            file.add(new MysterMenuItemFactory("Close Window",
                                                       new CloseWindowAction(),
                                                       java.awt.event.KeyEvent.VK_W));
-            file.addElement(new MysterMenuItemFactory("-", NULL));
+            file.add(new MysterMenuItemFactory("-", NULL));
 
-            file.addElement(new MysterMenuItemFactory("Quit",
+            file.add(new MysterMenuItemFactory("Quit",
                                                       new QuitMenuAction(),
                                                       java.awt.event.KeyEvent.VK_Q));
 
             // Edit menu items
-            edit.addElement(new MysterMenuItemFactory("Undo", NULL));
-            edit.addElement(new MysterMenuItemFactory("-", NULL));
-            edit.addElement(new MysterMenuItemFactory("Cut", NULL));
-            edit.addElement(new MysterMenuItemFactory("Copy (use command-c)", NULL));
-            edit.addElement(new MysterMenuItemFactory("Paste (use command-v)", NULL));
-            edit.addElement(new MysterMenuItemFactory("Clear", NULL));
-            edit.addElement(new MysterMenuItemFactory("-", NULL));
-            edit.addElement(new MysterMenuItemFactory("Select All", NULL));
-            edit.addElement(new MysterMenuItemFactory("-", NULL));
-            edit.addElement(new MysterMenuItemFactory("Preferences",
+            edit.add(new MysterMenuItemFactory("Undo", NULL));
+            edit.add(new MysterMenuItemFactory("-", NULL));
+            edit.add(new MysterMenuItemFactory("Cut", NULL));
+            edit.add(new MysterMenuItemFactory("Copy (use command-c)", NULL));
+            edit.add(new MysterMenuItemFactory("Paste (use command-v)", NULL));
+            edit.add(new MysterMenuItemFactory("Clear", NULL));
+            edit.add(new MysterMenuItemFactory("-", NULL));
+            edit.add(new MysterMenuItemFactory("Select All", NULL));
+            edit.add(new MysterMenuItemFactory("-", NULL));
+            edit.add(new MysterMenuItemFactory("Preferences",
                                                       new PreferencesAction(MysterMenuBar.prefGui),
                                                       java.awt.event.KeyEvent.VK_SEMICOLON));
 
             // Disable all Edit menu commands
             for (int i = 0; i < edit.size() - 1; i++) {
-                ((MysterMenuItemFactory) (edit.elementAt(i))).setEnabled(false);
+                edit.get(i).setEnabled(false);
             }
 
             // Myster menu items
-            special.addElement(new MysterMenuItemFactory("Add IP", new AddIPMenuAction(manager)));
-            special.addElement(new MysterMenuItemFactory("Show Server Stats",
+            special.add(new MysterMenuItemFactory("Add IP", new AddIPMenuAction(manager)));
+            special.add(new MysterMenuItemFactory("Show Server Stats",
                                                          new StatsWindowAction(),
                                                          java.awt.event.KeyEvent.VK_S,
                                                          true));
-            special.addElement(new MysterMenuItemFactory("Show Tracker",
+            special.add(new MysterMenuItemFactory("Show Tracker",
                                                          new TrackerWindowAction(),
                                                          java.awt.event.KeyEvent.VK_T));
-            special.addElement(com.myster.hash.ui.HashManagerGUI.getMenuItem());
+            special.add(com.myster.hash.ui.HashManagerGUI.getMenuItem());
 
             // Myster plugins Menu
-            plugins = new Vector();
+            plugins = new ArrayList<MysterMenuItemFactory>();
             pluginMenuFactory = new MysterMenuFactory("Plugins", plugins);
 
-            menuBar = new Vector();
-            menuBar.addElement(new MysterMenuFactory("File", file));
-            menuBar.addElement(new MysterMenuFactory("Edit", edit));
-            menuBar.addElement(new MysterMenuFactory("Special", special));
+            menuBar = new ArrayList<MysterMenuFactory>();
+            menuBar.add(new MysterMenuFactory("File", file));
+            menuBar.add(new MysterMenuFactory("Edit", edit));
+            menuBar.add(new MysterMenuFactory("Special", special));
             // plugins menu is not added here.
 
             impl = new DefaultMysterMenuBarFactory(menuBar);
@@ -212,8 +213,8 @@ public class MysterMenuBar extends MenuBar {
     public static boolean removeBuiltInMenu(String menuName) {
         getFactory(); //assert menu bar stuff is loaded.
         for (int i = 0; i < menuBar.size(); i++) {
-            if (((MysterMenuFactory) (menuBar.elementAt(i))).getName().equalsIgnoreCase(menuName)) {
-                menuBar.removeElementAt(i);
+            if (menuBar.get(i).getName().equalsIgnoreCase(menuName)) {
+                menuBar.remove(i);
                 updateMenuBars();
                 return true;
             }
@@ -245,17 +246,15 @@ public class MysterMenuBar extends MenuBar {
         return false;
     }
 
-    private static boolean removeMenuItem(Vector vector, String menuItem) { //ugh...
+    private static boolean removeMenuItem(List<MysterMenuItemFactory> list, String menuItem) { //ugh...
         getFactory(); //assert menu bar stuff is loaded.
 
-        for (int i = 0; i < vector.size(); i++) {
-            MysterMenuItemFactory item = (MysterMenuItemFactory) (vector.elementAt(i));
+        for (int i = 0; i < list.size(); i++) {
+            MysterMenuItemFactory item = list.get(i);
             if (item.getName().equalsIgnoreCase(menuItem)) {
-                vector.removeElementAt(i);
-                while ((vector.size() > 0)
-                        && (((MysterMenuItemFactory) (vector.elementAt(vector.size() - 1)))
-                                .getName().equals("-"))) {
-                    vector.removeElementAt(vector.size() - 1);
+                list.remove(i);
+                while ((list.size() > 0) && ((list.get(list.size() - 1)).getName().equals("-"))) {
+                    list.remove(list.size() - 1);
                 }
 
                 updateMenuBars();
@@ -286,7 +285,7 @@ public class MysterMenuBar extends MenuBar {
     public static void addMenu(MysterMenuFactory factory) {
         getFactory(); //assert menu bar stuff is loaded.
 
-        menuBar.addElement(factory);
+        menuBar.add(factory);
         updateMenuBars();
     }
 
@@ -299,7 +298,7 @@ public class MysterMenuBar extends MenuBar {
     public static boolean removeMenu(MysterMenuFactory factory) {
         getFactory(); //assert menu bar stuff is loaded.
 
-        boolean sucess = menuBar.removeElement(factory);
+        boolean sucess = menuBar.remove(factory);
         updateMenuBars();
         return sucess;
     }
@@ -315,9 +314,9 @@ public class MysterMenuBar extends MenuBar {
         getFactory(); //assert menu bar stuff is loaded.
 
         if (plugins.size() == 0) {
-            menuBar.addElement(pluginMenuFactory);
+            menuBar.add(pluginMenuFactory);
         }
-        plugins.addElement(menuItemfactory);
+        plugins.add(menuItemfactory);
         updateMenuBars();
     }
 
@@ -333,10 +332,10 @@ public class MysterMenuBar extends MenuBar {
 
         boolean success = false;
 
-        success = plugins.removeElement(menuItemfactory);
+        success = plugins.remove(menuItemfactory);
 
         if (plugins.size() == 0) {
-            menuBar.removeElement(pluginMenuFactory);
+            menuBar.remove(pluginMenuFactory);
         }
 
         updateMenuBars();

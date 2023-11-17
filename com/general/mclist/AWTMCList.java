@@ -36,7 +36,7 @@ public class AWTMCList extends Panel implements MCList {
     private MCRowThemeInterface rowTheme;
 
     //List Itself:
-    MCListVector list;
+    MCListList list;
 
     //I add Myself to the scroll pane so it can scroll me around! (yeah, I
     // know)
@@ -65,7 +65,7 @@ public class AWTMCList extends Panel implements MCList {
         eventhandler = new MCListEventHandler(this);
 
         singleselectboolean = singleselect;
-        list = new MCListVector();
+        list = new MCListList();
 
         pane = new MCListScrollPane(ScrollPane.SCROLLBARS_AS_NEEDED);
         setSize(1024, 1024);

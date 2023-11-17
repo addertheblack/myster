@@ -1,8 +1,11 @@
 package com.myster.search;
 
 import java.io.IOException;
-import java.util.Hashtable;
-import java.util.Vector;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 import com.myster.client.stream.MultiSourceUtilities;
 import com.myster.client.stream.StandardSuite;
@@ -18,7 +21,7 @@ public class MultiSourceHashSearch implements MysterSearchClientSection {
 
     private static final int TIME_BETWEEN_CRAWLS = 10 * 60 * 1000;
 
-    private static final Hashtable typeHashtable = new Hashtable();
+    private static final Map<MysterType, BatchedType> typeHashtable = new HashMap<>();
 
     private static IPListManager ipListManager;
     
@@ -26,12 +29,12 @@ public class MultiSourceHashSearch implements MysterSearchClientSection {
         MultiSourceHashSearch.ipListManager = ipListManager;
     }
     
-    private synchronized static Vector getEntriesForType(MysterType type) {
+    private synchronized static List<SearchEntry> getEntriesForType(MysterType type) {
         return getBatchForType(type).entries;
     }
 
     private synchronized static BatchedType getBatchForType(MysterType type) {
-        BatchedType batch = (BatchedType) typeHashtable.get(type);
+        BatchedType batch = typeHashtable.get(type);
 
         if (batch == null) {
             batch = new BatchedType();
@@ -44,9 +47,9 @@ public class MultiSourceHashSearch implements MysterSearchClientSection {
 
     public synchronized static void addHash(MysterType type, FileHash hash,
             HashSearchListener listener) {
-        Vector entriesVector = getEntriesForType(type);
+        List<SearchEntry> entriesVector = getEntriesForType(type);
 
-        entriesVector.addElement(new SearchEntry(hash, listener));
+        entriesVector.add(new SearchEntry(hash, listener));
 
         if ((entriesVector.size() == 1)) {
             startCrawler(type);
@@ -55,9 +58,9 @@ public class MultiSourceHashSearch implements MysterSearchClientSection {
 
     public synchronized static void removeHash(MysterType type, FileHash hash,
             HashSearchListener listener) {
-        Vector entriesVector = getEntriesForType(type);
+        List<SearchEntry> entriesVector = getEntriesForType(type);
 
-        entriesVector.removeElement(new SearchEntry(hash, listener));
+        entriesVector.remove(new SearchEntry(hash, listener));
 
         if (entriesVector.size() == 0) {
             stopCrawler(type);
@@ -65,15 +68,7 @@ public class MultiSourceHashSearch implements MysterSearchClientSection {
     }
 
     private synchronized static SearchEntry[] getSearchEntries(MysterType type) {
-        Vector entriesVector = getEntriesForType(type);
-
-        SearchEntry[] entries = new SearchEntry[entriesVector.size()];
-
-        for (int i = 0; i < entries.length; i++) {
-            entries[i] = (SearchEntry) entriesVector.elementAt(i);
-        }
-
-        return entries;
+        return getEntriesForType(type).toArray(new SearchEntry[0]);
     }
 
     // asserts that the crawler is stopping
@@ -170,7 +165,7 @@ public class MultiSourceHashSearch implements MysterSearchClientSection {
     }
 
     private static class BatchedType {
-        public final Vector entries = new Vector(10, 10);
+        public final List<SearchEntry> entries = new ArrayList<>();
 
         public CrawlerThread crawler;
     }
@@ -236,7 +231,7 @@ public class MultiSourceHashSearch implements MysterSearchClientSection {
     }
 
     public void end() {
-        //why is this here.. ?
+        // we never call this so I'm not going to bother implementing it
     }
 
     public void searchedAll(final MysterType type) {

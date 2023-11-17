@@ -8,7 +8,7 @@ import com.myster.net.StandardDatagramClientImpl;
 import com.myster.transaction.Transaction;
 import com.myster.type.MysterType;
 
-public class TypeDatagramClient implements StandardDatagramClientImpl {
+public class TypeDatagramClient implements StandardDatagramClientImpl<MysterType[]> {
     public static final int TYPE_TRANSACTION_CODE = 74; //There is no UDP
                                                         // version of the first
                                                         // version of get file
@@ -21,7 +21,7 @@ public class TypeDatagramClient implements StandardDatagramClientImpl {
     //		text encoding is different..
 
     //Returns MysterType[]
-    public Object getObjectFromTransaction(Transaction transaction)
+    public MysterType[] getObjectFromTransaction(Transaction transaction)
             throws IOException {
         DataInputStream in = new DataInputStream(new ByteArrayInputStream(
                 transaction.getData()));

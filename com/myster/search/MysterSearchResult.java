@@ -1,7 +1,8 @@
 package com.myster.search;
 
+import java.util.ArrayList;
 import java.util.List;
-import java.util.Vector;
+
 
 import com.myster.mml.RobustMML;
 import com.myster.net.MysterAddress;
@@ -47,19 +48,19 @@ public class MysterSearchResult implements SearchResult {
 
         List<String> items = mml.list("/");
 
-        Vector v_temp = new Vector(items.size());
+        List<String> v_temp = new ArrayList<>(items.size());
 
         for (int i = 0; i < items.size(); i++) {
             String s_temp = (items.get(i));
             if (mml.isAFile("/" + s_temp)) {
-                v_temp.addElement("/" + s_temp);
+                v_temp.add("/" + s_temp);
             }
         }
 
         String[] sa_temp = new String[v_temp.size()];
 
         for (int i = 0; i < v_temp.size(); i++) {
-            sa_temp[i] = (String) (v_temp.elementAt(i));
+            sa_temp[i] = v_temp.get(i);
         }
 
         return sa_temp;

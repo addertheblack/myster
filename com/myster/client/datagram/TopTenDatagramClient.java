@@ -3,15 +3,14 @@ package com.myster.client.datagram;
 import java.io.ByteArrayInputStream;
 import java.io.DataInputStream;
 import java.io.IOException;
-import java.net.UnknownHostException;
-import java.util.Vector;
+import java.util.ArrayList;
+import java.util.List;
 
-import com.myster.net.MysterAddress;
 import com.myster.net.StandardDatagramClientImpl;
 import com.myster.transaction.Transaction;
 import com.myster.type.MysterType;
 
-public class TopTenDatagramClient implements StandardDatagramClientImpl {
+public class TopTenDatagramClient implements StandardDatagramClientImpl<String[]> {
     public static final int TOP_TEN_TRANSACTION_CODE = 10;
 
     private final MysterType type;
@@ -21,25 +20,25 @@ public class TopTenDatagramClient implements StandardDatagramClientImpl {
     }
 
     // returns a MysterAddress[]
-    public Object getObjectFromTransaction(Transaction transaction)
+    public String[] getObjectFromTransaction(Transaction transaction)
             throws IOException {
 
         DataInputStream in = new DataInputStream(new ByteArrayInputStream(
                 transaction.getData()));
 
-        Vector strings = new Vector(100, 100);
+        List<String> strings = new ArrayList<>();
         for (;;) {
             String nextString = in.readUTF();
 
             if (nextString.equals(""))
                 break;
 
-            strings.addElement(nextString);
+            strings.add(nextString);
         }
 
         String[] addresses = new String[strings.size()];
         for (int i = 0; i < strings.size(); i++) {
-            addresses[i] = (String) strings.elementAt(i);
+            addresses[i] = strings.get(i);
         }
 
         return addresses;
@@ -47,7 +46,7 @@ public class TopTenDatagramClient implements StandardDatagramClientImpl {
 
     // returns a MysterAddress[]
     public Object getNullObject() {
-        return new MysterAddress[] {};
+        return new String[] {};
     }
 
     public int getCode() {

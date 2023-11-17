@@ -23,6 +23,7 @@ import com.general.util.Semaphore;
 
 import com.myster.application.MysterGlobals;
 import com.myster.mml.MML;
+import com.myster.mml.RobustMML;
 import com.myster.util.MysterThread;
 
 /**
@@ -112,8 +113,8 @@ public class Preferences {
         return (MML) (data.get(key));
     }
 
-    public synchronized PreferencesMML getAsMML(String key, PreferencesMML defaultMML) {
-        PreferencesMML mml = (PreferencesMML) (data.get(key));
+    public synchronized RobustMML getAsMML(String key, RobustMML defaultMML) {
+        RobustMML mml = (RobustMML) (data.get(key));
 
         return (mml == null ? defaultMML : mml);
     }

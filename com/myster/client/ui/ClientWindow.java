@@ -18,6 +18,7 @@ import java.awt.Insets;
 import java.awt.Rectangle;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.util.Map;
 
 import javax.swing.JButton;
 import javax.swing.JTextField;
@@ -30,7 +31,6 @@ import com.general.mclist.MCListFactory;
 import com.general.mclist.Sortable;
 import com.general.mclist.SortableString;
 import com.general.util.AnswerDialog;
-import com.general.util.KeyValue;
 import com.general.util.MessageField;
 import com.general.util.StandardWindowBehavior;
 import com.general.util.Util;
@@ -301,7 +301,7 @@ public class ClientWindow extends MysterFrame implements Sayable {
         return msg;
     }
 
-    public void showFileStats(KeyValue k) {
+    public void showFileStats(Map<String, String> k) {
         pane.display(k);
     }
 

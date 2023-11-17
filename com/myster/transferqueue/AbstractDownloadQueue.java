@@ -1,7 +1,8 @@
 package com.myster.transferqueue;
 
 import java.io.IOException;
-import java.util.Vector;
+import java.util.ArrayList;
+import java.util.List;
 
 import com.general.util.LinkedList;
 import com.myster.net.MysterAddress;
@@ -16,7 +17,7 @@ public abstract class AbstractDownloadQueue extends TransferQueue {
 
     private static final int WAIT_TIME = 30 * 1000; //30 secs
 
-    private Vector downloads = new Vector();
+    private List<DownloadTicket> downloads = new ArrayList<DownloadTicket>();
 
     private LinkedList downloadQueue = new LinkedList();
 
@@ -70,6 +71,7 @@ public abstract class AbstractDownloadQueue extends TransferQueue {
     }
 
     protected void saveDownloadSpotsInPrefs(int newSpots) {
+        // noting
     }
 
     public final int getMaxQueueLength() {
@@ -104,6 +106,7 @@ public abstract class AbstractDownloadQueue extends TransferQueue {
             try {
                 wait(WAIT_TIME); //wait on Lock
             } catch (InterruptedException ex) {
+                // nothing
             }
         }
 
@@ -113,7 +116,7 @@ public abstract class AbstractDownloadQueue extends TransferQueue {
         return new QueuedStats(getQueuePosition(ticket));
     }
 
-    private void doDownload(DownloadTicket ticket) throws IOException {
+    private static void doDownload(DownloadTicket ticket) throws IOException {
         ticket.getDownloader().download();
     }
 
@@ -126,7 +129,7 @@ public abstract class AbstractDownloadQueue extends TransferQueue {
             if (ticket == null)
                 break; //nothing waiting to download.
 
-            downloads.addElement(ticket);
+            downloads.add(ticket);
             ticket.setReadyToDownload();
 
             notifyAll();
@@ -152,8 +155,7 @@ public abstract class AbstractDownloadQueue extends TransferQueue {
 
     private synchronized boolean isAlreadyDownloading(MysterAddress address) {
         for (int i = 0; i < downloads.size(); i++) {
-            DownloadTicket otherTicket = (DownloadTicket) downloads
-                    .elementAt(i);
+            DownloadTicket otherTicket = downloads.get(i);
 
             if (otherTicket.getDownloader().getAddress().equals(address)) {
                 return true;
@@ -186,7 +188,7 @@ public abstract class AbstractDownloadQueue extends TransferQueue {
 
     private synchronized void unregisterDownload(DownloadTicket ticket) {
         downloadQueue.remove(ticket); //if exists removes
-        downloads.removeElement(ticket); //if exists removes
+        downloads.remove(ticket); //if exists removes
 
         updateQueue();
     }

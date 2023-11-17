@@ -2,7 +2,8 @@ package com.myster.bandwidth;
 
 import java.awt.event.ItemEvent;
 import java.awt.event.ItemListener;
-import java.util.Vector;
+import java.util.ArrayList;
+import java.util.List;
 
 import javax.swing.JCheckBox;
 import javax.swing.JLabel;
@@ -25,7 +26,7 @@ import com.myster.pref.ui.PreferencesPanel;
  */
 
 public class BandwidthManager {
-    static SomeStruct data = new SomeStruct();
+    private static SomeStruct data = new SomeStruct();
 
     /**
      * This function will pause your thread by the amount of time is would take
@@ -197,17 +198,17 @@ public class BandwidthManager {
  */
 
 class BlockedThread {
-    final double rate;
+    private final double rate;
 
-    final Vector threads;
+    private final List<BlockedThread> threads;
 
-    double bytesLeft;
+    private double bytesLeft;
 
-    Thread thread;
+    private Thread thread;
 
     private static volatile double WAIT_LATENCY = 100;
 
-    BlockedThread(int bytesLeft, Vector threads, double rate) {
+    BlockedThread(int bytesLeft, List<BlockedThread> threads, double rate) {
         this.bytesLeft = bytesLeft;
         thread = Thread.currentThread();
         this.threads = threads;
@@ -278,7 +279,6 @@ class BlockedThread {
 
 class BandwithPrefsPanel extends PreferencesPanel {
     public static final int STD_XSIZE = 450;
-
     public static final int STD_YSIZE = 300;
 
     private final JPanel explanationPanel = new MessagePanel(
@@ -288,19 +288,15 @@ class BandwithPrefsPanel extends PreferencesPanel {
                     + "that it slows down your internet connection.");
 
     private final JCheckBox enableOutgoing;
-
     private final JCheckBox enableIncomming;
 
     private final JLabel outgoingSpeedLabel;
-
     private final JLabel incommingSpeedLabel;
 
     private final JTextField incommingBytesField;
-
     private final JTextField outgoingBytesField;
 
     private final JLabel outgoingUnitsLabel;
-
     private final JLabel incommingUnitsLabel;
 
     public BandwithPrefsPanel() {
@@ -389,6 +385,7 @@ class BandwithPrefsPanel extends PreferencesPanel {
             BandwidthManager.setOutgoingMax(Integer.parseInt(outgoingBytesField
                     .getText()));
         } catch (NumberFormatException ex) {
+            // nothing
         }
 
         BandwidthManager.setIncommingEnabled(enableIncomming.isSelected());
@@ -396,6 +393,7 @@ class BandwithPrefsPanel extends PreferencesPanel {
             BandwidthManager.setIncommingMax(Integer
                     .parseInt(incommingBytesField.getText()));
         } catch (NumberFormatException ex) {
+            // nothing
         }
     }
 
@@ -433,13 +431,13 @@ class BandwithPrefsPanel extends PreferencesPanel {
 }
 
 class BandwidthImpl implements Bandwidth {
-    Vector transfers = new Vector(50);
+    List<BlockedThread> transfers = new ArrayList<>();
 
     double rate = 10;
 
     public synchronized void reSleepAll() {
         for (int i = 0; i < transfers.size(); i++) {
-            BlockedThread t = (BlockedThread) (transfers.elementAt(i));
+            BlockedThread t = transfers.get(i);
             t.reSleep();
         }
     }
@@ -450,14 +448,14 @@ class BandwidthImpl implements Bandwidth {
         BlockedThread b = new BlockedThread(maxBytes, transfers, rate);
 
         synchronized (this) {
-            transfers.addElement(b);
+            transfers.add(b);
             reSleepAll();
         }
 
         b.sleepNow();
 
         synchronized (this) {
-            transfers.removeElement(b);
+            transfers.remove(b);
             reSleepAll();
         }
         return maxBytes;

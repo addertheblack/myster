@@ -5,21 +5,21 @@ import java.io.ByteArrayOutputStream;
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.io.IOException;
-import java.util.Vector;
+import java.util.ArrayList;
+import java.util.List;
 
 import com.myster.net.StandardDatagramClientImpl;
 import com.myster.transaction.Transaction;
 import com.myster.type.MysterType;
 
-public class SearchDatagramClient implements StandardDatagramClientImpl {
+public class SearchDatagramClient implements StandardDatagramClientImpl<List<String>> {
     public static final int SEARCH_TRANSACTION_CODE = 35; //There is no UDP
                                                           // version of the
                                                           // first version of
                                                           // get file type list.
 
-    MysterType type;
-
-    String searchString;
+    private final MysterType type;
+    private final String searchString;
 
     public SearchDatagramClient(MysterType type, String searchString) {
         this.type = type;
@@ -33,12 +33,12 @@ public class SearchDatagramClient implements StandardDatagramClientImpl {
     //		text encoding is different..
 
     //returns Vector of Strings
-    public Object getObjectFromTransaction(Transaction transaction)
+    public List<String> getObjectFromTransaction(Transaction transaction)
             throws IOException {
         DataInputStream in = new DataInputStream(new ByteArrayInputStream(
                 transaction.getData()));
 
-        Vector searchResults = new Vector(100, 100);
+        List<String> searchResults = new ArrayList<>();
 
         for (;;) {
             String searchResult = in.readUTF();
@@ -46,7 +46,7 @@ public class SearchDatagramClient implements StandardDatagramClientImpl {
             if (searchResult.equals(""))
                 break;
 
-            searchResults.addElement(searchResult);
+            searchResults.add(searchResult);
         }
 
         return searchResults;
@@ -54,7 +54,7 @@ public class SearchDatagramClient implements StandardDatagramClientImpl {
 
     //returns Vector of Strings
     public Object getNullObject() {
-        return new Vector();
+        return new ArrayList<>();
     }
 
     public byte[] getDataForOutgoingPacket() {

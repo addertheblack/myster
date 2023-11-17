@@ -83,7 +83,7 @@ public class Myster {
                             uiClass.getMethod("setLookAndFeel", new Class[] { String.class });
                     Method getSystemLookAndFeelClassName =
                             uiClass.getMethod("getSystemLookAndFeelClassName", new Class[] {});
-                    String lookAndFeelName = (String) getSystemLookAndFeelClassName.invoke(null, null);
+                    String lookAndFeelName = (String) getSystemLookAndFeelClassName.invoke(null, new Object[0]);
                     setLookAndFeel.invoke(null, new Object[] { lookAndFeelName });
                 } catch (ClassNotFoundException e1) {
                     e1.printStackTrace();
@@ -103,17 +103,6 @@ public class Myster {
             throw new UnexpectedException(exception);
         }
 
-        //        try {
-        //            UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
-        //        } catch (ClassNotFoundException e) {
-        //            e.printStackTrace();
-        //        } catch (InstantiationException e) {
-        //            e.printStackTrace();
-        //        } catch (IllegalAccessException e) {
-        //            e.printStackTrace();
-        //        } catch (UnsupportedLookAndFeelException e) {
-        //            e.printStackTrace();
-        //        }
         ApplicationSingletonListener applicationSingletonListener = new ApplicationSingletonListener() {
             public void requestLaunch(String[] args) {
                 SearchWindow search = new SearchWindow();

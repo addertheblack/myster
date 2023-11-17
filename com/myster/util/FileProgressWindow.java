@@ -6,8 +6,10 @@ import java.awt.event.ComponentEvent;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.net.MalformedURLException;
-import java.net.URL;
-import java.util.Vector;
+import java.net.URI;
+import java.net.URISyntaxException;
+import java.util.ArrayList;
+import java.util.List;
 
 import com.general.util.Timer;
 import com.general.util.Util;
@@ -18,15 +20,15 @@ public class FileProgressWindow extends ProgressWindow {
 
     public static final int BAR_2 = 1;
 
-    RateTimer rateTimer;
+    private RateTimer rateTimer;
 
-    Vector barStartTime = new Vector(10, 10);
+    private final List<Long> barStartTime = new ArrayList<>();
 
-    Vector previouslyDownloaded = new Vector(10, 10);
+    private final List<Long> previouslyDownloaded = new ArrayList<>();
 
-    boolean overFlag = false;
+    private boolean overFlag = false;
 
-    String url;
+    private String url;
 
     public FileProgressWindow() {
         this("");
@@ -61,24 +63,22 @@ public class FileProgressWindow extends ProgressWindow {
         super.setProgressBarNumber(numberOfBars);
     }
 
-    private static void resizeVectorWithLongs(Vector vector, int newSize) {
-        int oldSize = vector.size();
-
-        vector.setSize(newSize);
-
+    private static void resizeVectorWithLongs(List<Long> list, int newSize) {
+        int oldSize = list.size();
+        
         if (newSize > oldSize) {
             for (int i = oldSize; i < newSize; i++) {
-                vector.setElementAt(new Long(0), i);
+                list.set( i, 0L);
             }
         }
     }
 
     public synchronized void setPreviouslyDownloaded(long someValue, int bar) {
-        previouslyDownloaded.setElementAt(new Long(someValue), bar);
+        previouslyDownloaded.set( bar, someValue);
     }
 
     public synchronized void startBlock(int bar, long min, long max) {
-        barStartTime.setElementAt(new Long(System.currentTimeMillis()), bar);
+        barStartTime.set( bar, System.currentTimeMillis());
 
         super.startBlock(bar, min, max);
     }
@@ -91,12 +91,11 @@ public class FileProgressWindow extends ProgressWindow {
         if (getValue(bar) < getMin(bar) || getValue(bar) > getMax(bar))
             return -1;
 
-        long startTime = ((Long) barStartTime.elementAt(bar)).longValue();
+        long startTime = barStartTime.get(bar);
         long timeDelta = (System.currentTimeMillis() - startTime);
-        if (timeDelta < 1*1000)
+        if (timeDelta < 1 * 1000)
             return -1;
-        long value = getValue(bar) - ((Long) previouslyDownloaded.elementAt(bar)).longValue()
-                - getMin(bar);
+        long value = getValue(bar) - previouslyDownloaded.get(bar) - getMin(bar);
         long int_temp = (timeDelta / 1000);
 
         return (int) (int_temp <= 0 ? -1 : value / int_temp);
@@ -117,7 +116,7 @@ public class FileProgressWindow extends ProgressWindow {
         }
     }
 
-    private String formatRate(long value) {
+    private static String formatRate(long value) {
         if (value <= 0) {
             return "";
         }
@@ -179,22 +178,19 @@ public class FileProgressWindow extends ProgressWindow {
                 if ((System.currentTimeMillis() - lastMouseReleaseTime > 500) && url != null
                         && (!url.equals(""))) {
                     try {
-                        WebLinkManager.openURL(new URL(url));
+                        WebLinkManager.openURL(new URI(url).toURL());
                     } catch (MalformedURLException ex) {
+                        ex.printStackTrace();
+                    } catch (URISyntaxException ex) {
                         ex.printStackTrace();
                     }
                 }
 
-                lastMouseReleaseTime = System.currentTimeMillis(); //so that
-                // double -
-                // triple
-                // clicks by
-                // spastic
-                // people
-                // don't
-                // generate
-                // multipe
-                // browsers
+                /*
+                 * so that double or triple clicks by spastic people don't
+                 * generate many browser windows
+                 */
+                lastMouseReleaseTime = System.currentTimeMillis();
             }
         }
     }

@@ -3,7 +3,8 @@ package com.general.util;
 import java.awt.Color;
 import java.awt.FontMetrics;
 import java.awt.Graphics;
-import java.util.Vector;
+import java.util.ArrayList;
+import java.util.List;
 
 import javax.swing.JPanel;
 
@@ -20,7 +21,7 @@ public class MessagePanel extends JPanel {
 
     private final String message;
 
-    private final Vector messageVector = new Vector(20);
+    private final List<String> messageVector = new ArrayList<>(20);
 
     public MessagePanel(String message) {
         this.message = message;
@@ -38,7 +39,7 @@ public class MessagePanel extends JPanel {
 
         MrWrap wrapper = new MrWrap(message, 380, metrics);
         for (int i = 0; i < wrapper.numberOfElements(); i++) {
-            messageVector.addElement(wrapper.nextElement());
+            messageVector.add(wrapper.nextElement());
         }
     }
 
@@ -47,7 +48,7 @@ public class MessagePanel extends JPanel {
             doMessageSetup();
         g.setColor(Color.black);
         for (int i = 0; i < messageVector.size(); i++) {
-            g.drawString(messageVector.elementAt(i).toString(), 10, 5 + height
+            g.drawString(messageVector.get(i).toString(), 10, 5 + height
                     * (i) + ascent);
         }
     }

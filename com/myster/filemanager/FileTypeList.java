@@ -18,7 +18,11 @@
 package com.myster.filemanager;
 
 import java.io.File;
-import java.util.Vector;
+import java.util.ArrayList;
+import java.util.LinkedHashSet;
+import java.util.List;
+import java.util.Set;
+
 
 import com.general.thread.CallListener;
 import com.general.thread.CancellableCallable;
@@ -32,7 +36,7 @@ import com.myster.type.MysterType;
 import com.myster.util.MysterExecutor;
 
 public class FileTypeList {
-    private Vector filelist; // List of java.io.FileItem objects that are
+    private List<FileItem> filelist; // List of java.io.FileItem objects that are
 
     // shared.
 
@@ -168,7 +172,7 @@ public class FileTypeList {
 
         String[] workingarray = new String[filelist.size()];
         for (int i = 0; i < filelist.size(); i++) {
-            workingarray[i] = mergePunctuation(((FileItem) (filelist.elementAt(i))).getFile()
+            workingarray[i] = mergePunctuation(filelist.get(i).getFile()
                     .getName());
         }
         return workingarray;
@@ -184,14 +188,14 @@ public class FileTypeList {
         // rootdir internal variables.
 
         for (int i = 0; i < filelist.size(); i++) {
-            if (isMatch((FileItem) filelist.elementAt(i), hash))
-                return (FileItem) filelist.elementAt(i);
+            if (isMatch(filelist.get(i), hash))
+                return filelist.get(i);
         }
 
         return null;
     }
 
-    private boolean isMatch(FileItem item, FileHash hash) {
+    private static boolean isMatch(FileItem item, FileHash hash) {
         FileHash myHash = item.getHash(hash.getHashName());
 
         if (myHash == null)
@@ -215,9 +219,9 @@ public class FileTypeList {
 
         assertFileList();
 
-        Vector results = new Vector(MAX_RESULTS);
+        List<String> results = new ArrayList<>();
 
-        Vector keywords = new Vector(20, 10);
+        List<String> keywords = new ArrayList<>();
         StringBuffer stringBuffer = new StringBuffer(" ");
 
         // boolean inWord = false;
@@ -238,7 +242,7 @@ public class FileTypeList {
                     stringBuffer.append(' ');
                 }
                 if (stringBuffer.length() > 1) {
-                    keywords.addElement(stringBuffer.toString());
+                    keywords.add(stringBuffer.toString());
                     stringBuffer = new StringBuffer(" ");
                 }
                 aggregate = !aggregate;
@@ -249,34 +253,32 @@ public class FileTypeList {
                 // uncomment to match full words only.
                 // for now it matches any begining of words.
                 if (stringBuffer.length() > 1 && !aggregate) {
-                    keywords.addElement(stringBuffer.toString());
+                    keywords.add(stringBuffer.toString());
                     stringBuffer = new StringBuffer(" ");
                 } else if (stringBuffer.charAt(stringBuffer.length() - 1) != ' ')
                     stringBuffer.append(' ');
             }
         }
         if (stringBuffer.length() > 1) {
-            keywords.addElement(stringBuffer.toString());
+            keywords.add(stringBuffer.toString());
         }
 
         // MATCHER
         for (int i = 0; i < filelist.size(); i++) {
-            FileItem file = (FileItem) filelist.elementAt(i);
+            FileItem file = filelist.get(i);
             String filename = mergePunctuation(file.getFile().getName());
 
             // Filter out sequential whitespace
             String simplified = simplify(filename);
 
             if (isMatch(keywords, simplified))
-                results.addElement(filename);
+                results.add(filename);
 
             if (results.size() > MAX_RESULTS)
                 break;
         }
 
-        String[] resultArray = new String[results.size()];
-        results.copyInto(resultArray);
-        return resultArray;
+        return results.toArray(new String[] {});
     }
 
     /**
@@ -291,9 +293,9 @@ public class FileTypeList {
      * @return the java.io.FileItem object corresponding the the query.
      * 
      */
-    private static boolean isMatch(Vector keywords, String simplified) {
+    private static boolean isMatch(List<String> keywords, String simplified) {
         for (int iKeyword = 0; iKeyword < keywords.size(); iKeyword++) {
-            String keyword = (String) keywords.elementAt(iKeyword);
+            String keyword = keywords.get(iKeyword);
             if (simplified.indexOf(keyword) == -1)
                 return false;
         }
@@ -328,7 +330,7 @@ public class FileTypeList {
     }
 
     /**
-     * rarray a java.io.FileItem object from a file name. NOTE: There is a direct mapping between
+     * Array a java.io.FileItem object from a file name. NOTE: There is a direct mapping between
      * file names and java.io.FileItem objects.
      * 
      * @param query
@@ -336,13 +338,14 @@ public class FileTypeList {
      * @return the java.io.FileItem object corresponding the the query.
      */
     public synchronized FileItem getFileItemFromString(String query) {
-        assertFileList(); // This must be called before working with filelist or
+        // This must be called before working with filelist or
         // rootdir internal variables.
+        assertFileList(); 
+        
 
         for (int i = 0; i < filelist.size(); i++) {
-            if ((mergePunctuation(((FileItem) (filelist.elementAt(i))).getFile().getName()))
-                    .equals(query))
-                return (FileItem) (filelist.elementAt(i));
+            if ((mergePunctuation(filelist.get(i).getFile().getName())).equals(query))
+                return filelist.get(i);
         }
         return null; // err, file not found.
     }
@@ -353,8 +356,10 @@ public class FileTypeList {
      * @return the number of files. Returns 0 if getShared() is false.
      */
     public synchronized int getNumOfFiles() {
-        assertFileList(); // This must be called before working with filelist or
+        // This must be called before working with filelist or
         // rootdir internal variables.
+        assertFileList();
+
         return filelist.size();
     }
 
@@ -383,7 +388,7 @@ public class FileTypeList {
         // info
     }
 
-    private synchronized void setFileList(Vector filelist) {
+    private synchronized void setFileList(List<FileItem> filelist) {
         resetIndexingVariables();
         this.filelist = filelist;
         assertFileList();
@@ -398,20 +403,20 @@ public class FileTypeList {
      * This function makes sure the the filelist and rootdir variables are up to date. The general
      * design of this object is that things should not happen until they need to. That is, files
      * should not be indexed if there's no one waiting on the index. This function does all the
-     * checks and calls nessesairy to make sure filelist and rootdir contain the most up-to-date
-     * values. This funcion is also responsible for clearing the filelist variable when the list has
+     * checks and calls necessary to make sure filelist and rootdir contain the most up-to-date
+     * values. This function is also responsible for clearing the filelist variable when the list has
      * been shared or un-shared. As a general rule it should be called before accessing the filelist
      * or rootdir variables.
      * 
      */
     private synchronized void assertFileList() {
         if (filelist == null) {
-            filelist = new Vector(1, 1);
+            filelist = new ArrayList<FileItem>();
         }
         if (!isShared()) { // if file list is not shared make sure list has
             // length = 0 then continue.
             if (filelist.size() != 0) {
-                filelist = new Vector(1, 1);
+                filelist = new ArrayList<FileItem>();
             }
             timeoflastupdate = 0; // never updated (we just buggered up the
             // list, you see...)
@@ -440,8 +445,7 @@ public class FileTypeList {
         }
     }
 
-    private class FileListCallListener implements CallListener {
-
+    private class FileListCallListener implements CallListener<List<FileItem>> {
         /*
          * (non-Javadoc)
          * 
@@ -456,8 +460,8 @@ public class FileTypeList {
          * 
          * @see com.general.thread.CallListener#handleResult(java.lang.Object)
          */
-        public void handleResult(Object result) {
-            setFileList((Vector) result);
+        public void handleResult(List<FileItem> result) {
+            setFileList(  result);
         }
 
         /*
@@ -477,15 +481,13 @@ public class FileTypeList {
         public void handleFinally() {
             resetIndexingVariables();
         }
-
     }
 
-    public static class FileListIndexCall implements CancellableCallable {
-        private boolean endFlag = false;
-
-        private MysterType type;
-
-        private File rootDir;
+    public static class FileListIndexCall implements CancellableCallable<List<FileItem>> {
+        private final MysterType type;
+        private final File rootDir;
+        
+        private volatile boolean endFlag = false;
 
         public FileListIndexCall(MysterType type, File rootFile) {
             this.type = type;
@@ -497,28 +499,29 @@ public class FileTypeList {
          * 
          * @see com.general.thread.CancellableCallable#call()
          */
-        public Object call() throws Exception {
+        public List<FileItem> call() {
             return indexFiles(type, rootDir);
         }
 
         /**
-         * an internal procedure used to do the setup of file indexing. This function is only called
-         * in one place at this writting.
+         * an internal procedure used to do the setup of file indexing. This
+         * function is only called in one place at this writing.
          */
-        private Vector indexFiles(MysterType type, File rootdir) {
-            Vector temp = new Vector(10000, 10000); // Preallocates a whole lot
-            // of
-            // space
-            if (rootdir.exists() && rootdir.isDirectory())
-                indexDir(type, rootdir, temp, 5); // Indexes root dir into temp with
-            // 5 levels
-            // deep.
-            temp.trimToSize(); // save some space
-            return temp;
+        private List<FileItem> indexFiles(MysterType type, File rootdir) {
+            List<FileItem> temp = new ArrayList<>();
+            
+            if (rootdir.exists() && rootdir.isDirectory()) {
+                // Indexes root dir into temp with 5 levels deep.
+                indexDir(type, rootdir, temp, 5); 
+            }
+            
+            Set<FileItem> items = new LinkedHashSet<>(temp);
+            
+            return new ArrayList<>(items);
         }
 
         /**
-         * an internal proceedure used to do the actual file indexing. This function is called
+         * an internal procedure used to do the actual file indexing. This function is called
          * recursively for each sub directories up to telomere levels
          * 
          * @param file
@@ -526,36 +529,30 @@ public class FileTypeList {
          * @param filelist
          *            is the data structure to save the indexed filename to.
          * @param telomere
-         *            is a recusion counter. The function will recurse a maximum of telomere times
+         *            is a recursion counter. The function will recurse a maximum of telomere times
          */
-        private void indexDir(MysterType type, File file, Vector filelist, int p_telomere) {
+        private void indexDir(MysterType type, File file, List<FileItem> filelist, int p_telomere) {
             int telomere = p_telomere - 1;
             if (telomere < 0)
                 return;
             if (!file.isDirectory() || !file.exists()) {
-                System.out
-                        .println("Nonsence sent to indexDir. Does this type have a d/l dir associated with it?");
+                System.out.println("Nonsence sent to indexDir. Does this "
+                        + "type have a d/l dir associated with it?");
                 return;
             }
+            
             String[] listing = file.list();
-            File temp;
             if (listing != null) { // listing is null on permission denied
                 for (int i = 0; i < listing.length; i++) {
                     if (endFlag)
                         return;
 
-                    temp = new File(file.getAbsolutePath() + File.separator + listing[i]);
+                    File temp = new File(file.getAbsolutePath() + File.separator + listing[i]);
                     if (temp.isDirectory()) {
                         indexDir(type, temp, filelist, telomere);
                     } else {
                         if (FileFilter.isCorrectType(type, temp)) {
-                            FileItem fileItem = createFileItem(temp);
-                            if (!filelist.contains(fileItem)) {// Don't add a
-                                // file to the
-                                // list if it's
-                                // already there
-                                filelist.addElement(fileItem);
-                            }
+                            filelist.add(createFileItem(temp));
                         }
                     }
                 }
@@ -579,8 +576,10 @@ public class FileTypeList {
          * @return FileItem created from file.
          */
         private FileItem createFileItem(File file) {
-            if (MPG3.equals(type))
+            if (MPG3.equals(type)) {
                 return new MPG3FileItem(file);
+            }
+            
             return new FileItem(file);
         }
     }

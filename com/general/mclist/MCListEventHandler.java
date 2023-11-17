@@ -16,11 +16,12 @@ import java.awt.event.KeyListener;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
 import java.awt.event.MouseMotionListener;
-import java.util.Vector;
+import java.util.ArrayList;
+import java.util.List;
 
 public class MCListEventHandler implements MouseListener, MouseMotionListener, KeyListener {
     //To Access "Component" features...
-    private AWTMCList callback;
+    private final AWTMCList callback;
 
     //Double click time
     private static final int DCTIME = 500; //Half a second double click time.
@@ -37,7 +38,7 @@ public class MCListEventHandler implements MouseListener, MouseMotionListener, K
     private boolean select = false; //select flag
 
     //Event Queue!
-    private Vector vector;
+    private List<MCListEventListener> listeners;
     
     private static final int DIRECTION_UP = -1;
     
@@ -45,11 +46,11 @@ public class MCListEventHandler implements MouseListener, MouseMotionListener, K
 
     public MCListEventHandler(AWTMCList c) {
         callback = c;
-        vector = new Vector(10);
+        listeners = new ArrayList<>();
     }
 
     public void addMCListEventListener(MCListEventListener e) {
-        vector.addElement(e);
+        listeners.add(e);
     }
 
     //MouseListener event handlers.
@@ -105,6 +106,7 @@ public class MCListEventHandler implements MouseListener, MouseMotionListener, K
     }
 
     public void mouseClicked(MouseEvent e) {
+     // nothing
     }
 
     public void mouseReleased(MouseEvent e) {
@@ -119,13 +121,16 @@ public class MCListEventHandler implements MouseListener, MouseMotionListener, K
     }
 
     public void mouseEntered(MouseEvent e) {
+        // nothing
     }
 
     public void mouseExited(MouseEvent e) {
+     // nothing
     }
 
     //MouseMontionListener event Handlers
     public void mouseMoved(MouseEvent e) {
+     // nothing
     }
 
     public void mouseDragged(MouseEvent e) {
@@ -191,11 +196,8 @@ public class MCListEventHandler implements MouseListener, MouseMotionListener, K
             if (xloc < currentLoc.x) {
                 //scrolling is possible
 
-                int difference = (currentLoc.x - xloc) / 4 + 1; //Amount to
-                // scroll is
-                // proportional
-                // to away from
-                // edge.
+                // Amount to scroll is proportional to away from edge.
+                int difference = (currentLoc.x - xloc) / 4 + 1; 
                 if (currentLoc.x >= difference) {
                     pane.setScrollPosition(currentLoc.x - difference, currentLoc.y);
                 } else {
@@ -244,9 +246,11 @@ public class MCListEventHandler implements MouseListener, MouseMotionListener, K
         // End auto scroll
     }
 
-    private int getSign(int x) {
-        if (x != 0)
+    private static int getSign(int x) {
+        if (x != 0) {
             return x / Math.abs(x);
+        }
+        
         return 1;
     }
 
@@ -276,7 +280,7 @@ public class MCListEventHandler implements MouseListener, MouseMotionListener, K
                     callback.getSize().height);
             break;
         default:
-            ;
+            
         }
 
         callback.repaint();
@@ -319,24 +323,28 @@ public class MCListEventHandler implements MouseListener, MouseMotionListener, K
     private void doubleClickEventDispatch() {
         MCListEvent e = buildEvent();
 
-        for (int i = 0; i < vector.size(); i++)
-            ((MCListEventListener) (vector.elementAt(i))).doubleClick(e);
+        for (int i = 0; i < listeners.size(); i++) {
+            listeners.get(i).doubleClick(e);
+        }
     }
 
     private void selectItemEventDispatch() {
         MCListEvent e = buildEvent();
 
-        if (callback.getSelectedIndex() == -1)
+        if (callback.getSelectedIndex() == -1) {
             return;
-        for (int i = 0; i < vector.size(); i++)
-            ((MCListEventListener) (vector.elementAt(i))).selectItem(e);
+        }
+        
+        for (int i = 0; i < listeners.size(); i++) {
+            listeners.get(i).selectItem(e);
+        }
     }
 
     private void unselectItemEventDispatch() {
         MCListEvent e = buildEvent();
 
-        for (int i = 0; i < vector.size(); i++)
-            ((MCListEventListener) (vector.elementAt(i))).unselectItem(e);
+        for (int i = 0; i < listeners.size(); i++)
+            listeners.get(i).unselectItem(e);
     }
 
     private MCListEvent buildEvent() {

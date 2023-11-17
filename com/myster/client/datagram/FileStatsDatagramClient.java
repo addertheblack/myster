@@ -12,7 +12,7 @@ import com.myster.net.StandardDatagramClientImpl;
 import com.myster.search.MysterFileStub;
 import com.myster.transaction.Transaction;
 
-public class FileStatsDatagramClient implements StandardDatagramClientImpl {
+public class FileStatsDatagramClient implements StandardDatagramClientImpl<RobustMML> {
     public static final int FILE_STATS_TRANSACTION_CODE = 77;
 
     private MysterFileStub stub;
@@ -22,7 +22,7 @@ public class FileStatsDatagramClient implements StandardDatagramClientImpl {
     }
 
     // returns RobustMML
-    public Object getObjectFromTransaction(Transaction transaction)
+    public RobustMML getObjectFromTransaction(Transaction transaction)
             throws IOException {
         //gets the byte[] puts it into a ByteArrayInputStream and puts THAT
         // into a

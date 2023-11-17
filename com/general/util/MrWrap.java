@@ -11,11 +11,13 @@
 package com.general.util;
 
 import java.awt.FontMetrics;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.StringTokenizer;
-import java.util.Vector;
+
 
 public class MrWrap {
-    private final Vector lines;
+    private final List<String> lines;
 
     private int counter = 0;
 
@@ -23,8 +25,8 @@ public class MrWrap {
         lines = wrap(s, x, m); //Yummy.
     }
 
-    public static Vector wrap(String string, final int x, FontMetrics metrics) {
-        Vector lines = new Vector(100, 100);
+    public static List<String> wrap(String string, final int x, FontMetrics metrics) {
+        List<String> lines = new ArrayList<>();
 
         StringTokenizer tokens = new StringTokenizer(string, " ", true);
 
@@ -39,7 +41,7 @@ public class MrWrap {
 
                 //continue working on the string.
                 if ((metrics.stringWidth(working + "" + temp)) >= x) {
-                    lines.addElement(working);
+                    lines.add(working);
                     working = "";
                 }
                 working = working + temp + "";
@@ -49,14 +51,13 @@ public class MrWrap {
             }
 
             working = doReturns(working, lines);
-            lines.addElement(working);
+            lines.add(working);
         }
 
-        lines.trimToSize();
         return lines;
     }
 
-    public static String doReturns(String working, Vector lines) {
+    public static String doReturns(String working, List<String> lines) {
         if (working.indexOf("\n") == -1) {
             return working;
         }
@@ -71,7 +72,7 @@ public class MrWrap {
                 break;
             }
             tempstring = working.substring(first, last);
-            lines.addElement(tempstring);
+            lines.add(tempstring);
             first = last + 1;
         } while (true);
         return working.substring(first, working.length());
@@ -85,7 +86,7 @@ public class MrWrap {
 
     public synchronized String nextElement() { //is thread safe.
         counter++;
-        return (String) (lines.elementAt(counter - 1));
+        return lines.get(counter - 1);
     }
 
     public int numberOfElements() {

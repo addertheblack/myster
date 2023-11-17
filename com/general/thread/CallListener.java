@@ -25,7 +25,7 @@ package com.general.thread;
  * @see com.general.thread.Executor
  * @see com.general.thread.Future
  */
-public interface CallListener {
+public interface CallListener<T> {
     /**
      * is called when the CancellableCallable is cancelled.
      */
@@ -37,7 +37,7 @@ public interface CallListener {
      * @param result
      *            the result returned by the CancellableCallable
      */
-    public void handleResult(Object result);
+    public void handleResult(T result);
 
     /**
      * is called when the cancellable callable throws an Exception. Currently does nto work with

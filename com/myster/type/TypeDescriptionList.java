@@ -6,7 +6,7 @@ import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.Hashtable;
 import java.util.List;
-import java.util.Vector;
+
 
 import com.general.events.EventDispatcher;
 import com.general.events.SyncEventDispatcher;
@@ -139,12 +139,12 @@ class DefaultTypeDescriptionList extends TypeDescriptionList {
 
     private static final String TYPE_ENABLED = "/enabled";
 
-    private Hashtable getEnabledFromPrefs() {
+    private static Hashtable getEnabledFromPrefs() {
         com.myster.pref.Preferences pref = com.myster.pref.Preferences
                 .getInstance();
 
-        PreferencesMML mml = pref.getAsMML(DEFAULT_LIST_KEY,
-                new PreferencesMML());
+        RobustMML mml = pref.getAsMML(DEFAULT_LIST_KEY,
+                new RobustMML());
 
         mml.setTrace(true);
 
@@ -168,7 +168,7 @@ class DefaultTypeDescriptionList extends TypeDescriptionList {
             String temp = "/" + i;
 
             mml.put(temp + TYPE_KEY, types[i].getType().toString());
-            mml.put(temp + TYPE_ENABLED, (types[i].getEnabled() ? "TRUE"
+            mml.put(temp + TYPE_ENABLED, (types[i].enabled ? "TRUE"
                     : "FALSE"));
         }
 
@@ -199,14 +199,14 @@ class DefaultTypeDescriptionList extends TypeDescriptionList {
     public TypeDescription[] getEnabledTypes() {
         int counter = 0;
         for (int i = 0; i < workingTypes.length; i++) {
-            if (workingTypes[i].getEnabled())
+            if (workingTypes[i].enabled)
                 counter++;
         }
 
         TypeDescription[] typeArray_temp = new TypeDescription[counter];
         counter = 0;
         for (int i = 0; i < types.length; i++) {
-            if (workingTypes[i].getEnabled())
+            if (workingTypes[i].enabled)
                 typeArray_temp[counter++] = types[i].getTypeDescription();
         }
 
@@ -216,13 +216,13 @@ class DefaultTypeDescriptionList extends TypeDescriptionList {
     public boolean isTypeEnabled(MysterType type) {
         int index = getIndexFromType(type);
 
-        return (index != -1 ? workingTypes[index].getEnabled() : false);
+        return (index != -1 ? workingTypes[index].enabled : false);
     }
 
     public boolean isTypeEnabledInPrefs(MysterType type) {
         int index = getIndexFromType(type);
 
-        return (index != -1 ? types[index].getEnabled() : false);
+        return (index != -1 ? types[index].enabled : false);
     }
 
     public void addTypeListener(TypeListener listener) {
@@ -242,7 +242,7 @@ class DefaultTypeDescriptionList extends TypeDescriptionList {
         //errs
         if (index == -1)
             return; //no such type
-        if (types[index].getEnabled() == enable)
+        if (types[index].enabled == enable)
             return;
 
         types[index].setEnabled(enable);
@@ -277,9 +277,12 @@ class DefaultTypeDescriptionList extends TypeDescriptionList {
                 System.exit(0);
             }
 
-            Vector vector = new Vector(10, 10);
+            List<TypeDescription> list = new ArrayList<>();
 
             RobustMML mml = new RobustMML(new String(readResource(in)));
+            
+            in.close();
+            
             /*
              * <List> <1> <Type>... </Type> <Description>... </Description>
              * <Extentions> <1>.exe </1> <2>.zip </2> </Extensions>
@@ -291,22 +294,16 @@ class DefaultTypeDescriptionList extends TypeDescriptionList {
             List<String> typeList = mml.list(LIST);
             for (int i = 0; i < typeList.size(); i++) {
                 TypeDescription typeDescription = getTypeDescriptionAtPath(mml,
-                        LIST + (String) (typeList.get(i)) + "/");
+                        LIST + typeList.get(i) + "/");
 
                 if (typeDescription != null)
-                    vector.addElement(typeDescription);
-            }
-
-            TypeDescription[] typeDescriptions = new TypeDescription[vector
-                    .size()];
-            for (int i = 0; i < typeDescriptions.length; i++) {
-                typeDescriptions[i] = (TypeDescription) vector.elementAt(i);
+                    list.add(typeDescription);
             }
 
             System.out.println("Type descriptions length "
-                    + typeDescriptions.length);
+                    + list.size());
 
-            return typeDescriptions;
+            return list.toArray(new TypeDescription[0]);
         } catch (Exception ex) {
             ex.printStackTrace();
             throw new RuntimeException("" + ex);
@@ -363,7 +360,6 @@ class DefaultTypeDescriptionList extends TypeDescriptionList {
 
     private static byte[] readResource(InputStream in) throws IOException {
         final int BUFFER_SIZE = 2000;
-        int amountRead = 0;
 
         byte[] buffer = new byte[BUFFER_SIZE];
 
@@ -395,14 +391,6 @@ class DefaultTypeDescriptionList extends TypeDescriptionList {
         public boolean setEnabled(boolean enabled) {
             this.enabled = enabled;
             return enabled;
-        }
-
-        public boolean getEnabled() {
-            return enabled;
-        }
-
-        public boolean isEnabled() {
-            return getEnabled();
         }
 
         public TypeDescription getTypeDescription() {

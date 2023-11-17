@@ -4,6 +4,10 @@
  */
 package com.general.thread;
 
+import java.util.concurrent.CancellationException;
+import java.util.concurrent.ExecutionException;
+
+
 /**
  * The Future object is a mechanism to allow client code to control or communicate with a task
  * executing asynchronously.
@@ -12,7 +16,9 @@ package com.general.thread;
  * @see com.general.thread.Executor
  * @see com.general.thread.Future
  */
-public interface Future {
+public interface Future<T> extends java.util.concurrent.Future<T>{
+    public T get() throws InterruptedException, ExecutionException, CancellationException;
+    
     /**
      * Cancel will attempt to cancel the asynchronous task represented by this object without
      * calling interrupt() on the thread.

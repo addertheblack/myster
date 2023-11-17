@@ -1,6 +1,5 @@
 package com.myster.ui;
 
-import java.awt.EventQueue;
 import java.awt.Frame;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
@@ -32,9 +31,9 @@ public class WindowManager {
 
     private static MysterFrame frontMost;
 
-    private static Vector menuItems;
+    private static List<MysterMenuItemFactory> menuItems;
 
-    private static Vector finalMenu;
+    private static List<MysterMenuItemFactory> finalMenu;
 
     public static void init() {
         synchronized (windows) {
@@ -45,14 +44,14 @@ public class WindowManager {
 
             isInited = true;
 
-            menuItems = new Vector();
+            menuItems = new ArrayList<>();
 
-            menuItems.addElement(new MysterMenuItemFactory("Cycle Windows", new CycleWindowsHandler(),
+            menuItems.add(new MysterMenuItemFactory("Cycle Windows", new CycleWindowsHandler(),
                     KeyEvent.VK_1));
-            menuItems.addElement(new MysterMenuItemFactory("Stack Windows", new StackWindowsHandler()));
-            menuItems.addElement(new MysterMenuItemFactory("-", new NullAction()));
+            menuItems.add(new MysterMenuItemFactory("Stack Windows", new StackWindowsHandler()));
+            menuItems.add(new MysterMenuItemFactory("-", new NullAction()));
 
-            finalMenu = new Vector();
+            finalMenu = new ArrayList<MysterMenuItemFactory>();
 
             MysterMenuBar.addMenu(new MysterMenuFactory("Windows", finalMenu) {
                 @Override
@@ -100,17 +99,17 @@ public class WindowManager {
             finalMenu = new Vector(windows.size() + menuItems.size());
 
             for (int i = 0; i < menuItems.size(); i++) {
-                finalMenu.addElement(menuItems.elementAt(i));
+                finalMenu.add(menuItems.get(i));
             }
 
-            finalMenu.addElement(new MysterMenuItemFactory()); // is a
+            finalMenu.add(new MysterMenuItemFactory()); // is a
             // seperator
 
             for (MysterFrame frame : windows) {
-                finalMenu.addElement(new MysterMenuItemFactory(frame.getTitle(),
-                                                               new OtherWindowHandler(frame)));
+                finalMenu.add(new MysterMenuItemFactory(frame.getTitle(),
+                                                        new OtherWindowHandler(frame)));
             }
-            
+
             for (JMenu menu : windowMenuHash.values()) {
                 fixMenu(menu);
             }

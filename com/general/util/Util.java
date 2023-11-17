@@ -8,6 +8,9 @@ import java.awt.MediaTracker;
 import java.awt.Toolkit;
 import java.lang.reflect.InvocationTargetException;
 import java.net.URL;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 
 import com.general.thread.CallListener;
 import com.general.thread.CancellableCallable;
@@ -150,20 +153,20 @@ public class Util { //This code was taken from an Apple Sample Code package,
         return glueBall;
     }
     
-    private static class CallableFutureGlue implements Future, Runnable {
-        CancellableCallable callable;
-        CallListener listener;
+    private static class CallableFutureGlue<T> implements Future<T>, Runnable {
+        CancellableCallable<T> callable;
+        CallListener<T> listener;
         private boolean cancelled;
         private boolean done;
         
-        private CallableFutureGlue(CancellableCallable callable, CallListener listener) {
+        private CallableFutureGlue(CancellableCallable<T> callable, CallListener<T> listener) {
             this.callable = callable;
             this.listener = listener;
         }
         
         public void run() {
             try {
-                Object result = callable.call();
+                T result = callable.call();
                 if (doCancel())
                     return;
                 listener.handleResult(result);
@@ -203,6 +206,17 @@ public class Util { //This code was taken from an Apple Sample Code package,
 
         public synchronized boolean isDone() {
             return done;
+        }
+
+        @Override
+        public T get(long timeout, TimeUnit unit)
+                throws InterruptedException, ExecutionException, TimeoutException {
+            throw new IllegalStateException();
+        }
+
+        @Override
+        public T get() throws InterruptedException, ExecutionException {
+            throw new IllegalStateException();
         }
         
     }

@@ -11,7 +11,9 @@ package com.myster.search;
 
 import java.io.IOException;
 import java.net.UnknownHostException;
-import java.util.Vector;
+import java.util.ArrayList;
+import java.util.List;
+
 import java.util.function.Consumer;
 
 import com.myster.client.stream.StandardSuite;
@@ -49,7 +51,7 @@ public class CrawlerThread extends MysterThread {
     }
 
     /**
-     * The thread does a top ten then searchs.. It only does a top ten on the first few IPs, so we
+     * The thread does a top ten then searches.. It only does a top ten on the first few IPs, so we
      * don't Do an insane flood.. This routine is responsible for most of the search.
      */
 
@@ -88,7 +90,7 @@ public class CrawlerThread extends MysterThread {
                     }
 
                     if (counter < DEPTH) {
-                        Vector addresses = new Vector();
+                        List<MysterAddress> addresses = new ArrayList<>();
                         try {
                             String[] ipList = com.myster.client.datagram.StandardDatagramSuite
                                     .getTopServers(currentIp, searchType);
@@ -106,12 +108,12 @@ public class CrawlerThread extends MysterThread {
                             }
 
                             socket = MysterSocketFactory.makeStreamConnection(currentIp);
-                            Vector ipList = StandardSuite.getTopServers(socket, searchType);
+                            List<String> ipList = StandardSuite.getTopServers(socket, searchType);
 
                             for (int i = 0; i < ipList.size(); i++) {
                                 try {
                                     addresses
-                                            .add(new MysterAddress((String) (ipList.elementAt(i))));
+                                            .add(new MysterAddress(ipList.get(i)));
                                 } catch (UnknownHostException ignore) {
                                     // ignore
                                 }
@@ -125,7 +127,7 @@ public class CrawlerThread extends MysterThread {
                         }
 
                         for (int i = 0; i < addresses.size(); i++) {
-                            MysterAddress mysterAddress = (MysterAddress) addresses.get(i);
+                            MysterAddress mysterAddress = addresses.get(i);
                             ipQueue.addIP(mysterAddress);
                             addIp.accept(mysterAddress);
                         }
