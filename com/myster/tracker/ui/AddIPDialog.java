@@ -32,26 +32,15 @@ import com.myster.tracker.IPListManager;
  */
 
 public class AddIPDialog extends JDialog {
+    private static final int XDEFAULT = 300;
+    private static final int YDEFAULT = 100;
+    
     private final GridBagLayout gblayout;
-
     private final GridBagConstraints gbconstrains;
-
     private final JLabel speed;
-
     private final JLabel explanation;
-
     private final JTextField textentry;
-
     private final JButton ok;
-
-    private final int XDEFAULT = 300;
-
-    private final int YDEFAULT = 100;
-
-    String choices[] = { "14.4", "28.8", "33.6", "56k", "IDSN 1 channel",
-            "IDSN 2 channel", "ADSL", "Cable modem",
-            "DSL (You have an \"ADSL\", trust me)", "T1", "T3", "40Mbits/sec +" };
-
     private final IPListManager ipListManager;
 
     public AddIPDialog(IPListManager ipListManager) {
@@ -71,7 +60,6 @@ public class AddIPDialog extends JDialog {
 
         textentry = new JTextField("Enter an IP here");
 
-        //explanation=new Label("The IP will be added to your IP list if it's a
         // suitably good Myster Server. This option is best used when using
         // Myster for the first few times. It Can be used to add a entry point
         // to the Myster network to your IP list. It can also be used on an
@@ -114,7 +102,7 @@ public class AddIPDialog extends JDialog {
     /**
      * the doAction routine is invoked when the user clicks the ok button. In
      * the ADDIPDislog, the routine sends the IP to the MysterIPListManager or
-     * addition to ALL IPLIsts being manitianed by myster.
+     * addition to ALL IPLIsts being maintained by myster.
      */
     public void doAction() {
         try {
@@ -126,12 +114,8 @@ public class AddIPDialog extends JDialog {
         }
     }
 
-    /**
-     * ohhh cool, a private class.. This is the ok button action handler. It's a
-     * private class so I don't have to put it into a seperate file.
-     */
     private static class AddIPAction implements ActionListener {
-        AddIPDialog a;
+        private final AddIPDialog a;
 
         public AddIPAction(AddIPDialog a) {
             this.a = a;
@@ -141,7 +125,5 @@ public class AddIPDialog extends JDialog {
             a.setVisible(false);
             a.doAction();
         }
-
     }
-
 }
