@@ -75,24 +75,26 @@ public class MultiSourceSender extends ServerThread {
     }
 
     private class MultiSourceDownloadInstance {
-        volatile boolean endFlag = false;
+        private static long CHUNK_SIZE = 8000;
+        
+        private volatile boolean endFlag = false;
 
-        ServerDownloadDispatcher dispatcher;
+        private final ServerDownloadDispatcher dispatcher;
+        private final MysterAddress remoteIP;
+        private final DownloadInfo downloadInfo;
+        private final TransferQueue transferQueue;
 
-        volatile MysterSocket socket;
+        private volatile MysterSocket socket;
 
-        MysterAddress remoteIP;
+        private String fileName = "??";
 
-        String fileName = "??";
+        private MysterType type = new MysterType("????".getBytes());
 
-        MysterType type = new MysterType("????".getBytes());
-
-        long fileLength = 0, startTime = System.currentTimeMillis(), amountDownloaded = 0,
-                myCounter = 0, offset = 0;
-
-        DownloadInfo downloadInfo;
-
-        TransferQueue transferQueue;
+        private long fileLength = 0;
+        private long startTime = System.currentTimeMillis();
+        private long amountDownloaded = 0;
+        private long myCounter = 0;
+        private long offset = 0;
 
         public MultiSourceDownloadInstance(ServerDownloadDispatcher dispatcher,
                 TransferQueue transferQueue, MysterAddress remoteIP) {
@@ -242,18 +244,22 @@ public class MultiSourceSender extends ServerThread {
         private void checkForLeechers(MysterSocket socket) throws IOException {
             if (FileSenderThread.kickFreeloaders()) {
                 try {
-                    com.myster.client.stream.StandardSuite
-                            .disconnectWithoutException(com.myster.net.MysterSocketFactory
-                                    .makeStreamConnection(new com.myster.net.MysterAddress(socket
-                                            .getInetAddress())));
-                } catch (IOException ex) { //if host is not reachable it will
+                    MysterSocket s = com.myster.net.MysterSocketFactory
+                            .makeStreamConnection(new com.myster.net.MysterAddress(socket
+                                    .getInetAddress()));
+
+                    try {
+                        s.close();
+                    } catch (Exception ex) {
+                        // nothing
+                    }
+                } catch (IOException ex) { 
+                    // if host is not reachable it will
                     // end up here.
                     sendQueuePosition(socket.out, 0, "You are not reachable from the outside");
 
-                    FileSenderThread.ServerTransfer.freeloaderComplain(socket.out); //send an image
-                                                                                    // +
-                    // URL about
-                    // firewalls.
+                    // sends and image complaining about firewalls
+                    FileSenderThread.ServerTransfer.freeloaderComplain(socket.out); 
 
                     throw new IOException("Downloader is a leech");
                 }
@@ -263,8 +269,6 @@ public class MultiSourceSender extends ServerThread {
         private void endBlock() {
             fireEvent(ServerDownloadEvent.SECTION_FINISHED, -1);
         }
-
-        long CHUNK_SIZE = 8000;
 
         private void sendFileSection(final MysterSocket socket, final File file_arg,
                 final UploadBlock currentBlock) throws IOException {
@@ -376,12 +380,13 @@ public class MultiSourceSender extends ServerThread {
                 try {
                     socket.close();
                 } catch (Exception ex) {
+                    // nothing
                 }
             }
         }
     }
 
     private static class DisconnectCommandException extends IOException {
-
+        // nothing
     }
 }

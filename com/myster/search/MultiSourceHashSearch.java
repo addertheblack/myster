@@ -2,13 +2,12 @@ package com.myster.search;
 
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import com.myster.client.net.MysterProtocol;
 import com.myster.client.stream.MultiSourceUtilities;
-import com.myster.client.stream.StandardSuite;
 import com.myster.client.stream.UnknownProtocolException;
 import com.myster.hash.FileHash;
 import com.myster.net.MysterAddress;
@@ -16,24 +15,24 @@ import com.myster.net.MysterSocket;
 import com.myster.tracker.IPListManager;
 import com.myster.type.MysterType;
 
-public class MultiSourceHashSearch implements MysterSearchClientSection {
-    //STATIC SUB SYSTEM
-
+public class MultiSourceHashSearch implements HashCrawlerManager {
     private static final int TIME_BETWEEN_CRAWLS = 10 * 60 * 1000;
 
-    private static final Map<MysterType, BatchedType> typeHashtable = new HashMap<>();
+    private final Map<MysterType, BatchedType> typeHashtable = new HashMap<>();
+    private final IPListManager ipListManager;
+    private final MysterProtocol protocol;
 
-    private static IPListManager ipListManager;
     
-    public static void init(IPListManager ipListManager) {
-        MultiSourceHashSearch.ipListManager = ipListManager;
+    public MultiSourceHashSearch(IPListManager ipListManager, MysterProtocol protocol) {
+        this.ipListManager = ipListManager;
+        this.protocol = protocol;
     }
     
-    private synchronized static List<SearchEntry> getEntriesForType(MysterType type) {
+    private synchronized List<SearchEntry> getEntriesForType(MysterType type) {
         return getBatchForType(type).entries;
     }
 
-    private synchronized static BatchedType getBatchForType(MysterType type) {
+    private synchronized BatchedType getBatchForType(MysterType type) {
         BatchedType batch = typeHashtable.get(type);
 
         if (batch == null) {
@@ -45,7 +44,7 @@ public class MultiSourceHashSearch implements MysterSearchClientSection {
         return batch;
     }
 
-    public synchronized static void addHash(MysterType type, FileHash hash,
+    public synchronized void addHash(MysterType type, FileHash hash,
             HashSearchListener listener) {
         List<SearchEntry> entriesVector = getEntriesForType(type);
 
@@ -56,7 +55,7 @@ public class MultiSourceHashSearch implements MysterSearchClientSection {
         }
     }
 
-    public synchronized static void removeHash(MysterType type, FileHash hash,
+    public synchronized void removeHash(MysterType type, FileHash hash,
             HashSearchListener listener) {
         List<SearchEntry> entriesVector = getEntriesForType(type);
 
@@ -67,12 +66,12 @@ public class MultiSourceHashSearch implements MysterSearchClientSection {
         }
     }
 
-    private synchronized static SearchEntry[] getSearchEntries(MysterType type) {
+    private synchronized SearchEntry[] getSearchEntries(MysterType type) {
         return getEntriesForType(type).toArray(new SearchEntry[0]);
     }
 
     // asserts that the crawler is stopping
-    private synchronized static void stopCrawler(MysterType type) {
+    private synchronized void stopCrawler(MysterType type) {
         BatchedType batchedType = getBatchForType(type);
 
         if (batchedType.crawler == null)
@@ -83,7 +82,7 @@ public class MultiSourceHashSearch implements MysterSearchClientSection {
         batchedType.crawler = null;
     }
 
-    private synchronized static void restartCrawler(MysterType type) {
+    private synchronized void restartCrawler(MysterType type) {
         stopCrawler(type);
         if (getEntriesForType(type).size() > 0) { // are we still relevent?
             MultiSourceUtilities.debug("Retarting crawler!");
@@ -93,7 +92,7 @@ public class MultiSourceHashSearch implements MysterSearchClientSection {
 
     // asserts that the crawler is running (ie: only "starts" the crawler if one
     // is not already running)
-    private synchronized static void startCrawler(final MysterType type) {
+    private synchronized void startCrawler(final MysterType type) {
         if (ipListManager==null)
             throw new NullPointerException("ipListManager not inited");
         
@@ -105,7 +104,7 @@ public class MultiSourceHashSearch implements MysterSearchClientSection {
         final IPQueue ipQueue = new IPQueue();
 
         
-        batchedType.crawler = new CrawlerThread(new MultiSourceHashSearch(),
+        batchedType.crawler = new CrawlerThread(protocol, new HashSearchCrawlerImpl(),
                 type, ipQueue, new com.myster.util.Sayable() {
                     public void say(String string) {
                         MultiSourceUtilities.debug("Hash Search -> " + string);
@@ -170,87 +169,93 @@ public class MultiSourceHashSearch implements MysterSearchClientSection {
         public CrawlerThread crawler;
     }
 
-    //OBJECT SYSTEM
+    private class HashSearchCrawlerImpl implements MysterSearchClientSection {
+        private boolean endFlag = false;
 
-    public void start() {
-        // lalalala...
-    }
-
-    public void search(MysterSocket socket, MysterAddress address, MysterType type)
-            throws IOException {
-        MultiSourceUtilities.debug("Hash Search -> Searching " + address);
-
-        SearchEntry[] searchEntries = getSearchEntries(type);
-
-        for (int i = 0; i < searchEntries.length; i++) {
-            searchEntries[i].listener.fireEvent(new HashSearchEvent(HashSearchEvent.START_SEARCH,
-                    null));
+        @Override
+        public void start() {
+            // lalalala...
         }
 
-        try {
+        @Override
+        public void search(MysterSocket socket, MysterAddress address, MysterType type)
+                throws IOException {
+            MultiSourceUtilities.debug("Hash Search -> Searching " + address);
 
-            //This loops goes through each entry one at a time. it oculd be
-            // optimised by sending them
-            //in a batch in the same way as file stats are done when downloaded
-            // off the server after a search
+            SearchEntry[] searchEntries = getSearchEntries(type);
+
             for (int i = 0; i < searchEntries.length; i++) {
-                SearchEntry searchEntry = searchEntries[i];
-
-                MultiSourceUtilities.debug("HashSearch -> Searching has " + searchEntry.hash);
-
-                String fileName = StandardSuite.getFileFromHash(socket, type, searchEntry.hash);
-
-                if (!fileName.equals("")) {
-                    MultiSourceUtilities.debug("HASH SEARCH FOUND FILE -> " + fileName);
-                    searchEntry.listener.fireEvent(new HashSearchEvent(
-                            HashSearchEvent.SEARCH_RESULT, new MysterFileStub(address, type,
-                                    fileName)));
-                }
+                searchEntries[i].listener
+                        .fireEvent(new HashSearchEvent(HashSearchEvent.START_SEARCH, null));
             }
-        } catch (UnknownProtocolException ex) {
-            MultiSourceUtilities.debug("Hash Search -> Server " + address
-                    + " doesn't understand search by hash connection section.");
-        }
 
-        for (int i = 0; i < searchEntries.length; i++) {
-            searchEntries[i].listener.fireEvent(new HashSearchEvent(HashSearchEvent.END_SEARCH,
-                    null));
-        }
-    }
+            try {
 
-    public void endSearch(final MysterType type) {
-        MultiSourceUtilities.debug("HashSearch -> Search thread has died");
-    }
+                // This loops goes through each entry one at a time. it oculd be
+                // optimised by sending them
+                // in a batch in the same way as file stats are done when
+                // downloaded
+                // off the server after a search
+                for (int i = 0; i < searchEntries.length; i++) {
+                    SearchEntry searchEntry = searchEntries[i];
 
-    boolean endFlag = false;
+                    MultiSourceUtilities.debug("HashSearch -> Searching has " + searchEntry.hash);
 
-    public void flagToEnd() {
-        endFlag = true;
-        MultiSourceUtilities.debug("HashSearch -> Search was told to end");
 
-    }
+                    String fileName = protocol.getStream()
+                            .getFileFromHash(socket, type, new FileHash[] { searchEntry.hash });
 
-    public void end() {
-        // we never call this so I'm not going to bother implementing it
-    }
-
-    public void searchedAll(final MysterType type) {
-        MultiSourceUtilities.debug("Hash Search -> Crawler has crawled the whole network!");
-        com.general.util.Timer timer = new com.general.util.Timer(new Runnable() {
-            public void run() {
-                synchronized (MultiSourceHashSearch.class) { //sigh..
-                    // this is
-                    // to fix a
-                    // dumb
-                    // race
-                    // condition
-                    // that can
-                    // happen
-                    if (!endFlag) {
-                        restartCrawler(type);
+                    if (!fileName.equals("")) {
+                        MultiSourceUtilities.debug("HASH SEARCH FOUND FILE -> " + fileName);
+                        searchEntry.listener
+                                .fireEvent(new HashSearchEvent(HashSearchEvent.SEARCH_RESULT,
+                                                               new MysterFileStub(address,
+                                                                                  type,
+                                                                                  fileName)));
                     }
                 }
+            } catch (UnknownProtocolException ex) {
+                MultiSourceUtilities.debug("Hash Search -> Server " + address
+                        + " doesn't understand search by hash connection section.");
             }
-        }, TIME_BETWEEN_CRAWLS);
+
+            for (int i = 0; i < searchEntries.length; i++) {
+                searchEntries[i].listener
+                        .fireEvent(new HashSearchEvent(HashSearchEvent.END_SEARCH, null));
+            }
+        }
+
+        @Override
+        public void endSearch(final MysterType type) {
+            MultiSourceUtilities.debug("HashSearch -> Search thread has died");
+        }
+
+        @Override
+        public void flagToEnd() {
+            endFlag = true;
+            MultiSourceUtilities.debug("HashSearch -> Search was told to end");
+
+        }
+
+        @Override
+        public void searchedAll(final MysterType type) {
+            MultiSourceUtilities.debug("Hash Search -> Crawler has crawled the whole network!");
+            com.general.util.Timer timer = new com.general.util.Timer(new Runnable() {
+                public void run() {
+                    synchronized (MultiSourceHashSearch.class) { // sigh..
+                        // this is
+                        // to fix a
+                        // dumb
+                        // race
+                        // condition
+                        // that can
+                        // happen
+                        if (!endFlag) {
+                            restartCrawler(type);
+                        }
+                    }
+                }
+            }, TIME_BETWEEN_CRAWLS);
+        }
     }
 }

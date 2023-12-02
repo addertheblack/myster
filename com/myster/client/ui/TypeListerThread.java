@@ -11,8 +11,11 @@
 package com.myster.client.ui;
 
 import java.io.IOException;
+import java.util.concurrent.ExecutionException;
 
-import com.myster.client.stream.StandardSuite;
+import com.general.thread.CallAdapter;
+import com.general.util.Util;
+import com.myster.client.net.MysterProtocol;
 import com.myster.net.MysterAddress;
 import com.myster.net.MysterSocket;
 import com.myster.net.MysterSocketFactory;
@@ -21,82 +24,96 @@ import com.myster.util.MysterThread;
 import com.myster.util.Sayable;
 
 public class TypeListerThread extends MysterThread {
-    ClientWindow container;
+    public interface TypeListener {
+        public void addItemToTypeList(MysterType s);   
+        public void refreshIP(MysterAddress address);
+    }
+    
 
-    Sayable msg;
+    private final MysterProtocol protocol;
+    private final TypeListener listener;
+    private final Sayable msg;
+    private final String ip;
+    
+    private MysterSocket socket;
 
-    String ip;
+    public TypeListerThread(MysterProtocol protocol,
+                            TypeListener listener,
+                            Sayable msg,
+                            String ip) {
+        this.protocol = protocol;
+        this.listener = new TypeListener() {
+            public void addItemToTypeList(MysterType s) {
+                Util.invokeLater(() -> {
+                    if (endFlag) {
+                        return;
+                    }
+                    listener.addItemToTypeList(s);
+                });
+            }
 
-    MysterSocket socket;
-
-    public TypeListerThread(ClientWindow w) {
-        container = w;
-        msg = w;
-        this.ip = w.getCurrentIP();
+            public void refreshIP(MysterAddress address) {
+                Util.invokeLater(() -> {
+                    if (endFlag) {
+                        return;
+                    }
+                    listener.refreshIP(address);
+                });
+            }
+        };
+        this.msg = (String s) -> Util.invokeLater(() -> msg.say(s));
+        this.ip = ip;
     }
 
     public void run() {
         try {
-            say("Requested Type List (UDP)...");
+            msg.say("Requested Type List (UDP)...");
 
             if (endFlag)
                 return;
             MysterAddress mysterAddress = new MysterAddress(ip);
-            container.refreshIP(mysterAddress);
-            com.myster.type.MysterType[] types = com.myster.client.datagram.StandardDatagramSuite
-                    .getTypes(mysterAddress);
+            listener.refreshIP(mysterAddress);
+            com.myster.type.MysterType[] types = protocol.getDatagram().getTypes(mysterAddress, new CallAdapter<>()).get();
             if (endFlag)
                 return;
 
             for (int i = 0; i < types.length; i++) {
-                addItemToTypeList(types[i]);
+                listener.addItemToTypeList(types[i]);
             }
 
-            say("Idle...");
-        } catch (IOException exp) {
-            try {
-                say("Connecting to server...");
-                socket = MysterSocketFactory
-                        .makeStreamConnection(new MysterAddress(ip));
+            msg.say("Idle...");
+        } catch (ExecutionException | IOException exp) {
+            if ((exp instanceof ExecutionException) && !(exp.getCause() instanceof IOException)) {
+                throw new IllegalStateException("Unexpected Exception", exp);
+            }
+            
+            msg.say("Connecting to server...");
+            try (MysterSocket socket =
+                    MysterSocketFactory.makeStreamConnection(new MysterAddress(ip))) {
                 if (endFlag)
                     return;
             } catch (IOException ex) {
-                say("Could not connect, server is unreachable...");
+                msg.say("Could not connect, server is unreachable...");
                 return;
             }
 
             try {
-                say("Requesting File Type List...");
+                msg.say("Requesting File Type List...");
 
-                MysterType[] typeList = StandardSuite.getTypes(socket);
+                MysterType[] typeList = protocol.getStream().getTypes(socket);
 
-                say("Adding Items...");
+                msg.say("Adding Items...");
                 for (int i = 0; i < typeList.length; i++) {
-                    addItemToTypeList(typeList[i]);
+                    listener.addItemToTypeList(typeList[i]);
                 }
 
-                say("Idle...");
+                msg.say("Idle...");
             } catch (IOException ex) {
-                say("Could not get File Type List from specified server.");
-            } finally {
-                try {
-                    socket.close();
-                } catch (Exception ex) {
-                }
+                msg.say("Could not get File Type List from specified server.");
             }
+        } catch (InterruptedException exception) {
+            return;
         }
-    }
-    
-    private synchronized void addItemToTypeList(final MysterType type) {
-        if (endFlag)
-            return;
-        container.addItemToTypeList(type.toString());
-    }
-    
-    private synchronized void say(final String message) {
-        if (endFlag)
-            return;
-        msg.say(message);
     }
     
     public void flagToEnd() {

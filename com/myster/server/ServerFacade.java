@@ -19,6 +19,7 @@ import com.myster.UpnpManager.HostAddress;
 import com.myster.application.MysterGlobals;
 import com.myster.client.datagram.PongTransport;
 import com.myster.client.datagram.UDPPingClient;
+import com.myster.client.net.MysterProtocol;
 import com.myster.net.DatagramProtocolManager;
 import com.myster.pref.Preferences;
 import com.myster.pref.ui.PreferencesPanel;

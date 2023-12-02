@@ -20,7 +20,8 @@ import com.general.util.BlockingQueue;
 import com.general.util.RInt;
 import com.myster.client.datagram.PingEvent;
 import com.myster.client.datagram.PingEventListener;
-import com.myster.client.stream.StandardSuite;
+import com.myster.client.net.MysterProtocol;
+import com.myster.client.net.MysterStream;
 import com.myster.net.MysterAddress;
 import com.myster.search.IPQueue;
 import com.myster.type.MysterType;
@@ -43,24 +44,20 @@ import com.myster.util.MysterThread;
  * com.myster.tracker.IPListManagerSingleton
  * 
  * @see com.myster.tracker.IPListManagerSingleton
- * 
- * @author Andrew Trumper
  */
 public class IPListManager { //aka tracker
     private static final String[] lastresort = { "bigmacs.homeip.net", "mysternetworks.homeip.net",
             "mysternetworks.dyndns.org", "myster.homeip.net" };
 
     private final IPList[] list;
-
     private final TypeDescription[] tdlist;
-
     private final BlockingQueue blockingQueue = new BlockingQueue();
-
     private final AddIP[] adderWorkers = new AddIP[2];
-    
     private final MysterIPPool pool;
-
-    public IPListManager(MysterIPPool pool) {
+    private final MysterProtocol protocol;
+    
+    public IPListManager(MysterIPPool pool, MysterProtocol protocol) {
+        this.protocol = protocol;
         this.pool = pool;
         blockingQueue.setRejectDuplicates(true);
 
@@ -92,13 +89,7 @@ public class IPListManager { //aka tracker
      *            The MysterAddress of the server you want to add.
      */
     public void addIP(MysterAddress ip) {
-        try {
-            com.myster.client.datagram.UDPPingClient.ping(ip, pingEventListener); //temporary..
-            // should be
-            // inside tracker...
-        } catch (IOException ex) {
-            ex.printStackTrace();
-        }
+        protocol.getDatagram().ping(ip, pingEventListener); // temporary..
     }
 
     private class Callback extends PingEventListener {
@@ -108,7 +99,7 @@ public class IPListManager { //aka tracker
             MysterAddress ip = e.getAddress();
             MysterServer mysterServer;
 
-            mysterServer = pool.getMysterIPLevelOne(ip);
+            mysterServer = pool.getCachedMysterIp(ip);
 
             //Error conditions first.
             if (mysterServer != null) {
@@ -125,9 +116,6 @@ public class IPListManager { //aka tracker
 
     /**
      * Calls getTop(type, 10).
-     * 
-     * @param type
-     * @return
      */
     public synchronized MysterServer[] getTopTen(MysterType type) {
         return getTop(type, 10);
@@ -158,19 +146,17 @@ public class IPListManager { //aka tracker
      * Asks the cache if it knows of this MysterServer and gets stats if it does
      * else returns null. Does not do any io. Returns quickly.
      * 
-     * @param address
      * @return Myster server at that address or null if the tracker doesn't have
      *         any record of a server at that address
      */
     public synchronized MysterServer getQuickServerStats(MysterAddress address) { //returns
-        return pool.getMysterIPLevelOne(address);
+        return pool.getCachedMysterIp(address);
     }
 
     /**
      * Returns vector of ALL MysterAddress object in order of rank for that
      * type.
      * 
-     * @param type
      * @return Vector of MysterAddresses in the order of rank.
      */
     public synchronized List<MysterServer> getAll(MysterType type) {
@@ -204,8 +190,7 @@ public class IPListManager { //aka tracker
      * all lists and the ADDIP Function can add an ip assuming that the IP
      * exists already.
      * 
-     * @param ip
-     *            to add
+     * @param ip to add
      */
 
     private void addIPBlocking(MysterServer ip) {
@@ -261,15 +246,13 @@ public class IPListManager { //aka tracker
             if (tdlist[i].getType().equals(type))
                 return i;
         }
+        
         return -1;
     }
 
     /**
      * Returns an IPList for the type in the tdlist variable for that index.
      * This is a stupid routine.
-     * 
-     * @param index
-     * @return
      */
     private synchronized IPList createNewList(int index) {
         return new IPList(tdlist[index].getType(), pool);
@@ -281,12 +264,9 @@ public class IPListManager { //aka tracker
      * triggered... Like when a search is done.. ideally, the IPs discovered
      * during a crawl should be fed back to the "tracker" portion. The downside
      * is servers do no crawling.. (bad)
-     * 
-     * @author Andrew Trumper
      */
 
     private class IPWalker extends MysterThread {
-
         /*
          * Protocol for handshake is Send 101, his # of file, his speed.
          */
@@ -295,20 +275,28 @@ public class IPListManager { //aka tracker
         }
 
         public void run() {
-
             System.out.println("Starting walker thread");
-            setPriority(Thread.MIN_PRIORITY); //slightly better than a daemon
-            // thread.
+            
+            //slightly better than a daemon thread.
+            setPriority(Thread.MIN_PRIORITY); 
             RInt rcounter = new RInt(tdlist.length - 1);
+            
             try {
                 sleep(10 * 1000);
             } catch (InterruptedException ex) {
+                 System.out.println("Waling thread CANCELLED!");
+                return;
             }
+            
             MysterServer[] iplist = getListFromIndex(rcounter.getVal()).getTop(10);
             try {
                 sleep(10 * 60 * 1000);
             } catch (InterruptedException ex) {
-            } //wait 10 minutes for the list to calm down
+                System.out.println("Waling thread CANCELLED!");
+                return;
+            } 
+            
+            //wait 10 minutes for the list to calm down
             //if this trick is omitted, the list spends ages sorting through a
             // load of ips that aren't up.
             while (true) {
@@ -336,28 +324,35 @@ public class IPListManager { //aka tracker
                 int i = 0;
                 for (MysterAddress ip = ipqueue.getNextIP(); ip != null; ip = ipqueue.getNextIP()) {
                     try {
-                        if (i <= max + 50)
+                        if (i <= max + 50) {
                             addIPs(ip, ipqueue, getListFromIndex(rcounter.getVal()).getType());
+                        }
                     } catch (IOException ex) {
                         //nothing.
                     }
-                    if (i >= max)
+                    
+                    if (i >= max) {
                         addIP(ip); //..
+                    }
+                    
                     i++;
                 }
 
                 System.out.println("CRAWLER THREAD: Going to sleep for a while.. Good night. Zzz.");
+                
                 try {
                     sleep(30 * 1000 * 60);
                 } catch (InterruptedException ex) {
                     throw new CancellationException();
                 } //300 000ms = 5 mins.
+                
                 rcounter.inc();
             }
         }
 
         private void addIPs(MysterAddress ip, IPQueue ipQueue, MysterType type) throws IOException {
-            List<String> ipList = StandardSuite.getTopServers(ip, type);
+            MysterStream stream = protocol.getStream();
+            List<String> ipList = stream.byIp(ip, (socket) -> stream.getTopServers(socket, type));
 
             for (int i = 0; i < ipList.size(); i++) {
                 try {
@@ -385,8 +380,6 @@ public class IPListManager { //aka tracker
     /**
      * This is a thread object representing the thread(s) that do the io
      * required to add IPAddresses to the tracker in a non-blocking manner.
-     * 
-     * @author Andrew Trumper
      */
     private class AddIP extends MysterThread {
 
@@ -418,7 +411,6 @@ public class IPListManager { //aka tracker
                 } catch (Exception ex) {
                     ex.printStackTrace();
                 } finally {
-
                     counter--;
                 }
             }

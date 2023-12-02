@@ -33,8 +33,9 @@ import com.general.mclist.SortableString;
 import com.general.util.AnswerDialog;
 import com.general.util.MessageField;
 import com.general.util.StandardWindowBehavior;
-import com.general.util.Util;
+import com.myster.client.net.MysterProtocol;
 import com.myster.net.MysterAddress;
+import com.myster.search.HashCrawlerManager;
 import com.myster.tracker.IPListManager;
 import com.myster.tracker.MysterServer;
 import com.myster.type.MysterType;
@@ -60,6 +61,8 @@ public class ClientWindow extends MysterFrame implements Sayable {
     private static WindowLocationKeeper keeper;
     
     private static IPListManager ipListManager;
+    private static MysterProtocol protocol;
+    private static HashCrawlerManager hashManager;
     
     private GridBagLayout gblayout;
 
@@ -87,8 +90,10 @@ public class ClientWindow extends MysterFrame implements Sayable {
 
     private FileInfoListerThread fileInfoListerThread;
 
-    public static void init(IPListManager ipListManager) {
+    public static void init(MysterProtocol protocol, HashCrawlerManager hashManager, IPListManager ipListManager) {
+        ClientWindow.protocol = protocol;
         ClientWindow.ipListManager = ipListManager;
+        ClientWindow.hashManager = hashManager;
     }
     
     public static void initWindowLocations() {
@@ -205,7 +210,7 @@ public class ClientWindow extends MysterFrame implements Sayable {
                 stopFileListing();
             }
         });
-        fileList.addMCListEventListener(new FileListAction(this));
+        fileList.addMCListEventListener(new FileListAction(protocol, hashManager, this));
         fileList.addMCListEventListener(new MCListEventAdapter(){
             public void selectItem(MCListEvent e) {
                 startStats();
@@ -245,8 +250,8 @@ public class ClientWindow extends MysterFrame implements Sayable {
 
     }
 
-    public void addItemToTypeList(String s) {
-        fileTypeList.addItem(new GenericMCListItem(new Sortable[] { new SortableString(s) }, s));
+    public void addItemToTypeList(MysterType s) {
+        fileTypeList.addItem(new GenericMCListItem(new Sortable[] { new SortableString(s.toString()) }, s));
     }
 
     public void addItemsToFileList(String[] files) {
@@ -260,14 +265,10 @@ public class ClientWindow extends MysterFrame implements Sayable {
     }
 
     public void refreshIP(final MysterAddress address) {
-        Util.invokeLater(new Runnable() {
-            public void run() {
-                MysterServer server = ipListManager.getQuickServerStats(address);
+        MysterServer server = ipListManager.getQuickServerStats(address);
 
-                setTitle(CLIENT_WINDOW_TITLE_PREFIX + "to \""
-                        + (server == null ? currentip : server.getServerIdentity()) + "\"");
-            }
-        });
+        setTitle(CLIENT_WINDOW_TITLE_PREFIX + "to \""
+                + (server == null ? currentip : server.getServerIdentity()) + "\"");
     }
 
     //To be in an interface??
@@ -279,7 +280,7 @@ public class ClientWindow extends MysterFrame implements Sayable {
         int selectedIndex = fileTypeList.getSelectedIndex();
 
         if (selectedIndex != -1)
-            return new MysterType(((String) (fileTypeList.getItem(selectedIndex))).getBytes());
+            return ((MysterType) (fileTypeList.getItem(selectedIndex)));
 
         return null;
     }
@@ -331,19 +332,37 @@ public class ClientWindow extends MysterFrame implements Sayable {
     public void startConnect() {
         stopConnect();
         currentip = IP.getText();
-        connectToThread = new TypeListerThread(this);
+        connectToThread =
+                new TypeListerThread(ClientWindow.protocol, new TypeListerThread.TypeListener() {
+                    public void addItemToTypeList(MysterType s) {
+                        ClientWindow.this.addItemToTypeList(s);
+                    }
+
+                    public void refreshIP(MysterAddress address) {
+                        ClientWindow.this.refreshIP(address);
+                    }
+                }, this::say, getCurrentIP());
         connectToThread.start();
     }
 
     public void startFileList() {
         stopFileListing();
-        fileListThread = new FileListerThread(this);
+        fileListThread = new FileListerThread(this::addItemsToFileList,
+                                              this::say,
+                                              getCurrentIP(),
+                                              getCurrentType());
         fileListThread.start();
     }
 
     public void startStats() {
         stopStats();
-        fileInfoListerThread = new FileInfoListerThread(this);
+        fileInfoListerThread =
+                new FileInfoListerThread(ClientWindow.protocol,
+                                         this::showFileStats,
+                                         this::say,
+                                         getCurrentIP(),
+                                         getCurrentType(),
+                                         getCurrentFile());
         fileInfoListerThread.start();
     }
 }

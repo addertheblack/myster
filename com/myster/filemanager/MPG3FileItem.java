@@ -32,7 +32,7 @@ public class MPG3FileItem extends FileItem {
     public static void patchFunction2(MML mml, File file) {
         MP3File mp3File = null;
         try {
-            mp3File = new MP3File(file);
+            mp3File = new MP3File(file, false);
         } catch (Throwable ex) {
             System.err.println("Could not read ID3 tag info for: " + file);
             return;

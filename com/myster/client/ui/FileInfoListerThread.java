@@ -11,69 +11,109 @@
 package com.myster.client.ui;
 
 import java.io.IOException;
+import java.net.UnknownHostException;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import com.myster.client.stream.StandardSuite;
+import com.general.util.Util;
+import com.myster.client.net.MysterProtocol;
 import com.myster.mml.RobustMML;
 import com.myster.net.MysterAddress;
 import com.myster.net.MysterSocket;
 import com.myster.net.MysterSocketFactory;
 import com.myster.search.MysterFileStub;
+import com.myster.type.MysterType;
 import com.myster.util.MysterThread;
+import com.myster.util.Sayable;
 
 public class FileInfoListerThread extends MysterThread {
-    private ClientWindow w;
+    public interface FileStatsListener {
+        void showFileStats(final Map<String, String> keyValue);   
+    }
 
-    private MysterSocket socket = null;
-    
-    public FileInfoListerThread(ClientWindow w) {
-        this.w = w;
+    private final FileStatsListener listener;
+    private final String addressAsString;
+    private final MysterType type;
+    private final String file;
+    private final Sayable msg;
+    private final MysterProtocol protocol;
+
+    public FileInfoListerThread(MysterProtocol protocol,
+                                FileStatsListener listener,
+                                Sayable msg,
+                                String address,
+                                MysterType type,
+                                String file) {
+        this.protocol = protocol;
+        this.addressAsString = address;
+        this.type = type;
+        this.file = file;
+        this.msg = (String s) -> Util.invokeLater(() -> {
+            if (endFlag) {
+                return;
+            }
+            msg.say(s);
+        });
+        
+        this.listener = (Map<String, String> k) -> Util.invokeLater(()-> {
+            if (endFlag) {
+                return;
+            }
+            listener.showFileStats(k);
+        });
     }
 
     public void run() {
+        if (endFlag)
+            return;
         try {
-            Thread.sleep(500);
+            Thread.sleep(1);
         } catch (InterruptedException ex) {
             return;
         }
+        
+        if (endFlag)
+            return;
 
-        FileInfoListerThread msg = this;
-
+        msg.say("Looking up address...");
+        if (endFlag)
+            return;
+        
+        MysterAddress address;
         try {
-            msg.say("Connecting to server...");
-            if (endFlag)
-                return;
-            socket = MysterSocketFactory
-                    .makeStreamConnection(new MysterAddress(w.getCurrentIP()));
+            address = new MysterAddress(addressAsString);
+        } catch (UnknownHostException exception) {
+            msg.say("Could not find address...");
+            return;
+        }
+
+        msg.say("Connecting to server...");
+        if (endFlag)
+            return;
+        
+        try (MysterSocket socket = MysterSocketFactory.makeStreamConnection(address)) {
             msg.say("Getting file information...");
 
             if (endFlag)
                 return;
-            RobustMML mml = new RobustMML(StandardSuite.getFileStats(socket,
-                    new MysterFileStub(new MysterAddress(w.getCurrentIP()), w
-                            .getCurrentType(), w.getCurrentFile())));
+            
+            RobustMML mml = new RobustMML(protocol.getStream().getFileStats(socket,
+                    new MysterFileStub(address, type, file)));
 
             msg.say("Parsing file information...");
 
             Map<String, String> keyvalue = new HashMap<String, String>();
-            keyvalue.put("File Name", w.getCurrentFile());
+            keyvalue.put("File Name", file);
 
             listDir(mml, keyvalue, "/", "");
 
-            showFileStats(keyvalue);
+            listener.showFileStats(keyvalue);
 
             msg.say("Idle...");
 
         } catch (IOException ex) {
             msg.say("Transmission errorm could not get File Stats.");
-        } finally {
-            try {
-                socket.close();
-            } catch (Exception ex) {
-                // nothing
-            }
         }
     }
 
@@ -102,25 +142,8 @@ public class FileInfoListerThread extends MysterThread {
         }
     }
     
-    private synchronized void showFileStats(final Map<String, String> keyValue) {
-        if (endFlag)
-            return;
-        w.showFileStats(keyValue);
-    }
-    
-    private synchronized void say(final String message) {
-        if (endFlag)
-            return;
-        w.say(message);
-    }
-    
-    public synchronized void flagToEnd() {
+    public void flagToEnd() {
         endFlag = true;
-        try {
-           socket.close();
-        } catch (Exception ex){
-            // nothing
-        }
         
         
         interrupt();

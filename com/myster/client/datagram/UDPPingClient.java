@@ -1,6 +1,5 @@
 package com.myster.client.datagram;
 
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
@@ -23,8 +22,7 @@ public class UDPPingClient {
         }
     }
 
-    public synchronized static void ping(MysterAddress address, PingEventListener listener)
-            throws IOException {
+    synchronized static void ping(MysterAddress address, PingEventListener listener) {
         ponger.ifPresentOrElse(ponger -> {
             ponger.ping(address, listener);
         }, () -> {

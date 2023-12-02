@@ -1,9 +1,13 @@
 package com.general.util;
 
-public class UnexpectedException extends RuntimeException {
-    private Exception ex;
+public class UnexpectedException extends IllegalStateException {
+    private Throwable ex;
 
-    public UnexpectedException(Exception ex) {
+    public UnexpectedException(String s) {
+        super(s);
+    }
+    
+    public UnexpectedException(Throwable ex) {
         this.ex = ex;
     }
 

@@ -4,14 +4,16 @@
  */
 package com.general.thread;
 
+import java.util.concurrent.Future;
+
 /**
  * Interface generally implemented by objects wanting to implement an asynchronous function call.
  * 
  * @see com.general.thread.CancellableCallable
- * @see com.general.thread.Executor
+ * @see com.general.thread.SpecialExecutor
  * @see com.general.thread.Future
  */
-public interface Executor {
+public interface SpecialExecutor {
     /**
      * 
      * This routine should execute the CancellableCallable and call back the CallListener while

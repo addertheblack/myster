@@ -21,7 +21,6 @@ import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 
-import com.myster.client.stream.StandardSuite;
 import com.myster.filemanager.FileTypeListManager;
 import com.myster.net.MysterAddress;
 import com.myster.net.MysterSocket;
@@ -59,11 +58,12 @@ public class FileSenderThread extends ServerThread {
 
             if (kickFreeloaders()) {
                 try {
-                    //if (!context.serverAddress.getIP().equals("127.0.0.1")) {
-                    StandardSuite
-                            .disconnectWithoutException(MysterSocketFactory
-                                    .makeStreamConnection(context.serverAddress));
-                    //}
+                    var socket = MysterSocketFactory.makeStreamConnection(context.serverAddress);
+                    try {
+                        socket.close();
+                    } catch (Exception ex) {
+                        // nothing
+                    }
                 } catch (Exception ex) { //if host is not reachable it will end
                                          // up here.
                     ServerTransfer.freeloaderComplain(context.socket.out);
@@ -149,27 +149,27 @@ public class FileSenderThread extends ServerThread {
 
     public static class ServerTransfer {
         //Events
-        ServerDownloadDispatcher dispatcher;
+        private ServerDownloadDispatcher dispatcher;
 
-        DownloadInfo downloadInfo;
+        private DownloadInfo downloadInfo;
 
         //Server stats
-        long bytessent = 0;
+        private long bytessent = 0;
 
-        String filename = "?";
+        private String filename = "?";
 
-        String filetype = "?";
+        private String filetype = "?";
 
-        long filelength = 0;
+        private long filelength = 0;
 
-        long starttime = 1;
+        private long starttime = 1;
 
-        MysterAddress remoteIP;
+        private MysterAddress remoteIP;
 
-        long initialOffset = 0;
+        private long initialOffset = 0;
 
         //?
-        boolean endflag = false;
+        private boolean endflag = false;
 
         //io
         private File file;
@@ -213,19 +213,18 @@ public class FileSenderThread extends ServerThread {
             int sizeOfImage = 0;
             int tempint;
 
-            InputStream qin = ServerTransfer.class
-                    .getResourceAsStream("firewall.gif");
+            try (InputStream qin = ServerTransfer.class.getResourceAsStream("firewall.gif")) {
 
-            //loading image...
+                // loading image...
 
-            do {
-                tempint = qin
-                        .read(queuedImage, sizeOfImage, 4096 - sizeOfImage);
-                if (tempint > 0)
-                    sizeOfImage += tempint;
-            } while (tempint != -1);
-
-            //mapping errors.
+                do {
+                    tempint = qin.read(queuedImage, sizeOfImage, 4096 - sizeOfImage);
+                    if (tempint > 0)
+                        sizeOfImage += tempint;
+                } while (tempint != -1);
+            }
+            
+            // mapping errors.
             if (sizeOfImage == -1)
                 sizeOfImage = -1;
             if (sizeOfImage == 4096)
@@ -236,13 +235,12 @@ public class FileSenderThread extends ServerThread {
             out.writeLong(sizeOfImage);
             out.write(queuedImage, 0, sizeOfImage);
 
-            sendURL(out,
-                    "http://www.mysternetworks.com/information/dl_error_faq.html");
+            sendURL(out, "http://www.mysternetworks.com/information/dl_error_faq.html");
         }
 
-        byte[] queuedImage;
+        private byte[] queuedImage;
 
-        int sizeOfImage = 0;
+        private int sizeOfImage = 0;
 
         private void refresh(int position) throws IOException {
 
@@ -253,16 +251,15 @@ public class FileSenderThread extends ServerThread {
                 if (queuedImage == null) { //if not loaded then load.
                     queuedImage = new byte[4096];
                     int tempint;
-                    InputStream qin = this.getClass().getResourceAsStream(
-                            "queued.gif");
+                    try (InputStream qin = this.getClass().getResourceAsStream("queued.gif")) {
 
-                    //loading image...
-                    do {
-                        tempint = qin.read(queuedImage, sizeOfImage,
-                                4096 - sizeOfImage);
-                        if (tempint > 0)
-                            sizeOfImage += tempint;
-                    } while (tempint != -1);
+                        // loading image...
+                        do {
+                            tempint = qin.read(queuedImage, sizeOfImage, 4096 - sizeOfImage);
+                            if (tempint > 0)
+                                sizeOfImage += tempint;
+                        } while (tempint != -1);
+                    }
 
                     //mapping errors.
                     if (sizeOfImage == -1)
@@ -419,6 +416,7 @@ public class FileSenderThread extends ServerThread {
                 try {
                     fin.close();
                 } catch (Exception ex) {
+                    // nothing
                 }
             }
         }
@@ -448,15 +446,15 @@ public class FileSenderThread extends ServerThread {
             return (int) bytesremaining;
         }
 
-        //code 'm' (not used?) (the code below is not correct. Strings should be UTF).
-        private void sendMessage(String m) throws IOException {
-            byte[] bytes = m.getBytes();
-            long length = bytes.length;
-            out.writeInt(6669);
-            out.write('m');
-            out.writeLong(length);
-            out.write(bytes);
-        }
+//        //code 'm' (not used?) (the code below is not correct. Strings should be UTF).
+//        private void sendMessage(String m) throws IOException {
+//            byte[] bytes = m.getBytes();
+//            long length = bytes.length;
+//            out.writeInt(6669);
+//            out.write('m');
+//            out.writeLong(length);
+//            out.write(bytes);
+//        }
 
         //code 'q'
         private void sendQueue(int i) throws IOException {
@@ -522,6 +520,7 @@ public class FileSenderThread extends ServerThread {
                 try {
                     in.close();
                 } catch (Exception ex) {
+                    // nothing
                 }
             }
 
@@ -567,6 +566,7 @@ public class FileSenderThread extends ServerThread {
                     return (bytessent - initialOffset)
                             / ((System.currentTimeMillis() - starttime) / 1000);
                 } catch (Exception ex) {
+                    // nothing
                 }
                 return 0;
             }
@@ -595,34 +595,18 @@ public class FileSenderThread extends ServerThread {
                 return filelength;
             }
 
-            public MysterAddress getRemoteIP() {
-                return FileSenderThread.ServerTransfer.this.getRemoteIP();
-            }
+//            public MysterAddress getRemoteIP() {
+//                return FileSenderThread.ServerTransfer.this.getRemoteIP();
+//            }
 
             public void disconnectClient() {
                 FileSenderThread.ServerTransfer.this.disconnect();
             }
 
-            public boolean isDone() {
-                return FileSenderThread.ServerTransfer.this.endflag;
-            }
+//            public boolean isDone() {
+//                return FileSenderThread.ServerTransfer.this.endflag;
+//            }
         }
-
-        /*
-         * private class DQueuePrivateClass implements QueuedTransfer {
-         * 
-         * public void refresh(int i) throws IOException {
-         * FileSenderThread.ServerTransfer.this.refresh(i); }
-         * 
-         * public void disconnect() {
-         * FileSenderThread.ServerTransfer.this.disconnect(); }
-         * 
-         * public void startDownload() {
-         * FileSenderThread.ServerTransfer.this.startDownload(); }
-         * 
-         * public boolean isDone() { return
-         * FileSenderThread.ServerTransfer.this.endflag; } }
-         */
 
         private class DownloaderPrivateClass implements Downloader {
 

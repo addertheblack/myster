@@ -1,14 +1,10 @@
 package com.general.util;
 
-public class UnexpectedInterrupt extends UnexpectedError {
-
+public class UnexpectedInterrupt extends UnexpectedException {
     public static boolean silent;
 
-    public UnexpectedInterrupt() {
-    }
-
-    public UnexpectedInterrupt(String msg) {
-        super(msg);
+    public UnexpectedInterrupt(InterruptedException ex) {
+        super(ex);
     }
 
     public void printStackTrace() {

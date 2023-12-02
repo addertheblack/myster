@@ -1,13 +1,14 @@
 package com.myster.util;
 
 import java.awt.Color;
+import java.awt.Container;
 import java.awt.Dimension;
 import java.awt.FlowLayout;
 import java.awt.FontMetrics;
 import java.awt.Graphics;
 import java.awt.Image;
-import java.awt.Insets;
 import java.awt.MediaTracker;
+import java.awt.Taskbar;
 import java.awt.event.MouseListener;
 import java.util.ArrayList;
 import java.util.List;
@@ -41,9 +42,10 @@ public class ProgressWindow extends MysterFrame {
     }
 
     private void commonInit() {
-        setLayout(new FlowLayout(FlowLayout.CENTER, 0, 0));
+        Container c = getContentPane();
+        c.setLayout(new FlowLayout(FlowLayout.CENTER, 0, 0));
 
-        add(adPanel);
+        c.add(adPanel);
         addProgressPanel();
 
         setResizable(false);
@@ -52,6 +54,9 @@ public class ProgressWindow extends MysterFrame {
 
         if (adImage != null)
             adPanel.addImage(adImage);
+        
+        
+        setDefaultCloseOperation(DO_NOTHING_ON_CLOSE);
     }
 
     public synchronized void show() {
@@ -62,42 +67,41 @@ public class ProgressWindow extends MysterFrame {
 
     public void pack() {
         super.pack();
-        resize();
     }
 
     protected synchronized void resize() {
-        Insets insets = getInsets();
-
+        Container c = getContentPane();
+        
         //Usually I would do a setSize() and leave it at that but
         //MacOS X 1.3.1 tends to ignore my setSize command if
         //the user is dragging the window and/or crash if
         //I continue too soon after sending it. *sigh*
-        int xSize = X_SIZE + insets.right + insets.left;
-        int ySize = AD_HEIGHT + (Y_SIZE * progressPanels.size()) + insets.top + insets.bottom;
-        int counter = 0;
+        int xSize = X_SIZE;
+        int ySize = AD_HEIGHT + (Y_SIZE * progressPanels.size()) ;
         if (Util.isEventDispatchThread()) {
-            setSize(xSize, ySize);
+            c.setPreferredSize(new Dimension(xSize, ySize));
         }
-        while ((getSize().width != xSize) || (getSize().height != ySize)) {
-            setSize(xSize, ySize);
-            try {
-                Thread.sleep(500);
-            } catch (Exception ex) {
-                // nothing
-            } //an attempt to stop crashing on resizing...
-            counter++;
-
-            if (counter > 20) {
-                System.out
-                        .println("Fine, I won't resize the window, but it will be the wrong size!");
-                break;
-            }
-
-            if (counter > 1) {
-                System.out.println("I have tried " + counter
-                        + " times to change the size of the progress window!");
-            }
-        }
+        pack();
+//        while ((getSize().width != xSize) || (getSize().height != ySize)) {
+//            setSize(xSize, ySize);
+//            try {
+//                Thread.sleep(500);
+//            } catch (Exception ex) {
+//                // nothing
+//            } //an attempt to stop crashing on resizing...
+//            counter++;
+//
+//            if (counter > 20) {
+//                System.out
+//                        .println("Fine, I won't resize the window, but it will be the wrong size!");
+//                break;
+//            }
+//
+//            if (counter > 1) {
+//                System.out.println("I have tried " + counter
+//                        + " times to change the size of the progress window!");
+//            }
+//        }
     }
 
     // methods to update progress window text
@@ -149,9 +153,10 @@ public class ProgressWindow extends MysterFrame {
     }
 
     private void addProgressPanel() {
+        Container c = getContentPane();
         ProgressPanel panel = new ProgressPanel();
 
-        add(panel);
+        c.add(panel);
         progressPanels.add(panel);
     }
 
@@ -250,7 +255,7 @@ public class ProgressWindow extends MysterFrame {
         if (piChart == null)
             piChart = createImage(32, 32);
         if (piChart == null)
-            return; //How does this happen??
+            return; // How does this happen??
         double percent = 0;
 
         percent = (getValue() < getMin() || getValue() > getMax() ? 0
@@ -258,8 +263,13 @@ public class ProgressWindow extends MysterFrame {
 
         int int_temp = (int) (percent * 100);
 
-        if (int_temp == lastPercent)
+        if (Taskbar.isTaskbarSupported()) {
+            Taskbar.getTaskbar().setWindowProgressValue(this, int_temp);
+        }
+
+        if (int_temp == lastPercent) {
             return;
+        }
 
         lastPercent = int_temp;
 
@@ -298,15 +308,11 @@ public class ProgressWindow extends MysterFrame {
 
     private static class ProgressPanel extends JPanel {
         public static final int PROGRESS_X_OFFSET = 10;
-
         public static final int PROGRESS_Y_OFFSET = 25;
-
         public static final int ADDITIONAL_X_SIZE = 50;
 
         private final ProgressBar progressBar;
-
         private final JLabel textLabel;
-
         private final JLabel additionalLabel;
 
         public ProgressPanel() {

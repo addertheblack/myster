@@ -3,7 +3,7 @@ package com.myster.search.ui;
 import com.general.mclist.Sortable;
 import com.myster.client.datagram.PingEvent;
 import com.myster.client.datagram.PingEventListener;
-import com.myster.client.datagram.UDPPingClient;
+import com.myster.client.net.MysterProtocol;
 import com.myster.net.MysterAddress;
 
 public class SortablePing implements Sortable {
@@ -13,12 +13,12 @@ public class SortablePing implements Sortable {
 
     private long number;
 
-    public SortablePing(MysterAddress address) {
+    public SortablePing(MysterProtocol protocol, MysterAddress address) {
         number = NOTPINGED;
 
         try {
 
-            UDPPingClient.ping(address, new MyPingEventListener());
+            protocol.getDatagram().ping(address, new MyPingEventListener());
         } catch (Exception ex) {
             ex.printStackTrace();
         }

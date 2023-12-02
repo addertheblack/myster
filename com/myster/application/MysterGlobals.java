@@ -9,13 +9,9 @@ import com.myster.pref.Preferences;
 /**
  */
 public class MysterGlobals {
-
     public static final int DEFAULT_PORT = 6669; //Default port. Changing this now works
-
     public static final String SPEEDPATH = "Globals/speed/";
-
     public static final String ADDRESSPATH = "Globals/address/";
-
     public static final String DEFAULT_ENCODING = "ASCII";
 
     private static long programLaunchTime = System.currentTimeMillis(); //class load time really..

@@ -3,20 +3,26 @@ package com.myster.search;
 import java.util.ArrayList;
 import java.util.List;
 
-
+import com.myster.client.net.MysterProtocol;
 import com.myster.mml.RobustMML;
 import com.myster.net.MysterAddress;
 import com.myster.search.ui.ServerStatsFromCache;
 import com.myster.tracker.MysterServer;
 
 public class MysterSearchResult implements SearchResult {
+    private final MysterFileStub stub;
+    private final ServerStatsFromCache cache;
+    private final MysterProtocol protocol;
+    private final HashCrawlerManager hashCrawler;
+    
     private RobustMML mml;
 
-    private final MysterFileStub stub;
-    
-    private final ServerStatsFromCache cache;
-
-    public MysterSearchResult(MysterFileStub stub, ServerStatsFromCache cache) {
+    public MysterSearchResult(MysterProtocol protocol,
+                              HashCrawlerManager hashCrawler,
+                              MysterFileStub stub,
+                              ServerStatsFromCache cache) {
+        this.protocol = protocol;
+        this.hashCrawler = hashCrawler;
         this.stub = stub;
         this.cache = cache;
     }
@@ -25,23 +31,26 @@ public class MysterSearchResult implements SearchResult {
         mml = m;
     }
 
-    //is called when the user decides to download the item
+    // is called when the user decides to download the item
+    @Override
     public void download() {
-        com.myster.client.stream.StandardSuite.downloadFile(stub
-                .getMysterAddress(), stub);
+        getProtocol().getStream().downloadFile(hashCrawler, stub.getMysterAddress(), stub);
     }
 
     //returns the network the search result is on.
+    @Override
     public String getNetwork() {
         return "Myster Network";
     }
 
     //gets a value for a meta data thingy
+    @Override
     public String getMetaData(String key) {
         return (mml == null ? null : mml.get(key));
     }
 
     //gets the list of known meta data types for this item.
+    @Override
     public String[] getKeyList() {
         if (mml == null)
             return new String[] {};
@@ -66,12 +75,13 @@ public class MysterSearchResult implements SearchResult {
         return sa_temp;
     }
 
-    //gets the Name of the search result (usualy a file name!)
+    //gets the filename of the search result
+    @Override
     public String getName() {
         return stub.getName();
     }
 
-    //gets the host address
+    @Override
     public MysterAddress getHostAddress() {
         return stub.getMysterAddress();
     }
@@ -79,5 +89,10 @@ public class MysterSearchResult implements SearchResult {
     @Override
     public MysterServer getServer() {
         return cache.get(getHostAddress());
+    }
+
+    @Override
+    public MysterProtocol getProtocol() {
+        return protocol;
     }
 }

@@ -68,7 +68,7 @@ public class FileProgressWindow extends ProgressWindow {
         
         if (newSize > oldSize) {
             for (int i = oldSize; i < newSize; i++) {
-                list.set( i, 0L);
+                list.add( 0L);
             }
         }
     }

@@ -6,7 +6,7 @@ package com.general.thread;
  * 
  * @see java.awt.event.WindowAdapter
  */
-public class CallAdapter implements CallListener {
+public class CallAdapter<T> implements CallListener<T> {
 
     /*
      * (non-Javadoc)
@@ -21,7 +21,7 @@ public class CallAdapter implements CallListener {
      * 
      * @see com.general.thread.CallListener#handleResult(java.lang.Object)
      */
-    public void handleResult(Object result) {
+    public void handleResult(T result) {
     }
 
     /*

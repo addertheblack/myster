@@ -31,13 +31,9 @@ public class TrackerWindow extends MysterFrame {
     private static TrackerWindow me;// = new TrackerWindow();
 
     private MyThread updater;
-
     private MCList list;
-
     private TypeChoice choice;
-
     private GridBagLayout gblayout;
-
     private GridBagConstraints gbconstrains;
 
     private static com.myster.ui.WindowLocationKeeper keeper = new com.myster.ui.WindowLocationKeeper(
@@ -200,7 +196,7 @@ public class TrackerWindow extends MysterFrame {
 
     /**
      * This thread is responsible for keeping the tracker window updated. It does so by polling the
-     * IPListManager repeataly. Every once in a while it reloads the information completely.
+     * IPListManager repeatedly. Every once in a while it reloads the information completely.
      */
     private class MyThread extends TimerThread {
         private long counter = 0;
@@ -391,5 +387,4 @@ public class TrackerWindow extends MysterFrame {
             }
         }
     }
-
 }

@@ -41,5 +41,6 @@ public abstract class EventListener {
      * implementation is empty.
      */
     public void err() {
+        // nothing
     }
 }

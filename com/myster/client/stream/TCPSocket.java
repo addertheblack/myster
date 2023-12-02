@@ -77,6 +77,8 @@ public class TCPSocket extends MysterSocket {
 
     public void close() throws IOException {
         internalSocket.close();
+        in.close();
+        out.close();
     }
 
     public String toString() {

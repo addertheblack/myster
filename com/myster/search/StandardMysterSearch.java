@@ -5,6 +5,7 @@ import java.util.List;
 
 
 import com.general.util.Util;
+import com.myster.client.net.MysterProtocol;
 import com.myster.mml.RobustMML;
 import com.myster.net.DisconnectException;
 import com.myster.net.MysterAddress;
@@ -30,13 +31,19 @@ public class StandardMysterSearch {
     private final SearchResultListener listener;
     private final MysterType type;
     private final IPListManager manager;
+    private final MysterProtocol protocol;
+    private final HashCrawlerManager hashCrawler;
 
     private volatile boolean endFlag = false;
 
-    public StandardMysterSearch(String searchString,
+    public StandardMysterSearch(MysterProtocol protocol,
+                                HashCrawlerManager hashCrawler,
+                                IPListManager manager,
+                                String searchString,
                                 MysterType type,
-                                SearchResultListener listener,
-                                IPListManager manager) {
+                                SearchResultListener listener) {
+        this.protocol = protocol;
+        this.hashCrawler = hashCrawler;
         this.searchString = searchString;
         this.listener = listener;
         this.type = type;
@@ -48,7 +55,7 @@ public class StandardMysterSearch {
         if (endFlag)
             throw new DisconnectException();
 
-        List<String> searchResults = com.myster.client.stream.StandardSuite.getSearch(socket, type,
+        List<String> searchResults = protocol.getStream().getSearch(socket, type,
                 searchString);
 
         if (endFlag)
@@ -58,7 +65,8 @@ public class StandardMysterSearch {
             final MysterSearchResult[] searchArray = new MysterSearchResult[searchResults.size()];
 
             for (int i = 0; i < searchArray.length; i++) {
-                searchArray[i] = new MysterSearchResult(
+                searchArray[i] = new MysterSearchResult(protocol, 
+                                                        hashCrawler,
                                                         new MysterFileStub(address,
                                                                            type,
                                                                            searchResults.get(i)),

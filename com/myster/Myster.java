@@ -33,11 +33,12 @@ import org.fourthline.cling.support.model.PortMapping;
 import com.general.application.ApplicationSingleton;
 import com.general.application.ApplicationSingletonListener;
 import com.general.util.AnswerDialog;
-import com.general.util.UnexpectedError;
 import com.general.util.UnexpectedException;
 import com.general.util.Util;
 import com.myster.application.MysterGlobals;
 import com.myster.bandwidth.BandwidthManager;
+import com.myster.client.net.MysterProtocol;
+import com.myster.client.net.MysterProtocolImpl;
 import com.myster.client.ui.ClientWindow;
 import com.myster.filemanager.FileTypeListManager;
 import com.myster.filemanager.ui.FMIChooser;
@@ -45,16 +46,18 @@ import com.myster.menubar.MysterMenuBar;
 import com.myster.message.MessageManager;
 import com.myster.message.ui.MessagePreferencesPanel;
 import com.myster.pref.Preferences;
+import com.myster.search.HashCrawlerManager;
 import com.myster.search.MultiSourceHashSearch;
 import com.myster.search.ui.SearchWindow;
 import com.myster.server.BannersManager.BannersPreferences;
 import com.myster.server.ServerFacade;
 import com.myster.server.ui.ServerStatsWindow;
 import com.myster.tracker.IPListManager;
-import com.myster.tracker.MysterIPPool;
+import com.myster.tracker.MysterIPPoolImpl;
 import com.myster.tracker.ui.TrackerWindow;
 import com.myster.type.ui.TypeManagerPreferencesGUI;
 import com.myster.ui.PreferencesGui;
+import com.myster.ui.tray.MysterTray;
 import com.myster.util.I18n;
 
 public class Myster {
@@ -69,8 +72,7 @@ public class Myster {
                 + System.getProperty("java.vm.specification.vendor"));
         System.out.println("java.vm.specification.name   :"
                 + System.getProperty("java.vm.specification.name"));
-        System.out
-                .println("java.vm.version              :" + System.getProperty("java.vm.version"));
+        System.out.println("java.vm.version              :" + System.getProperty("java.vm.version"));
         System.out.println("java.vm.vendor               :" + System.getProperty("java.vm.vendor"));
         System.out.println("java.vm.name                 :" + System.getProperty("java.vm.name"));
 
@@ -144,22 +146,15 @@ public class Myster {
 
         System.out.println("MAIN THREAD: Starting loader Thread..");
         
-        Preferences[] p = new Preferences[1];
-        try {
-            SwingUtilities.invokeAndWait(() -> {
-                p[0] = Preferences.getInstance();
-            });
-        } catch (InvocationTargetException | InterruptedException exception) {
-            throw new UnexpectedError(exception);
-        }
+        Preferences preferences  = Preferences.getInstance();
         
-        Preferences preferences = p[0];
+        MysterProtocol protocol = new MysterProtocolImpl();
         
-        IPListManager listManager = new IPListManager(new MysterIPPool(preferences));
+        IPListManager listManager = new IPListManager(new MysterIPPoolImpl(preferences, protocol), protocol);
         
-        MultiSourceHashSearch.init(listManager);
+        final HashCrawlerManager crawlerManager = new MultiSourceHashSearch(listManager, protocol);
         TrackerWindow.init(listManager);
-        ClientWindow.init(listManager);
+        ClientWindow.init(protocol, crawlerManager, listManager);
         ServerFacade serverFacade = new ServerFacade(listManager, preferences);
         
         MessageManager.init(listManager, preferences);
@@ -167,10 +162,8 @@ public class Myster {
         serverFacade.startServer();
         
         try {
-
             Util.invokeAndWait(new Runnable() {
                 public void run() {
-
                     try {
                         if (com.myster.type.TypeDescriptionList.getDefault().getEnabledTypes().length <= 0) {
                             AnswerDialog
@@ -201,7 +194,7 @@ public class Myster {
                     ServerStatsWindow.init(serverFacade.getServerDispatcher().getServerContext());
                     ServerStatsWindow.getInstance().pack();
 
-                    SearchWindow.init(listManager);
+                    SearchWindow.init(protocol, crawlerManager, listManager);
 
                     preferencesGui.addPanel(BandwidthManager.getPrefsPanel());
                     preferencesGui.addPanel(new BannersPreferences());
@@ -243,7 +236,7 @@ public class Myster {
             Util.invokeLater(new Runnable() {
                 public void run() {
                     try {
-                        com.myster.client.stream.MSPartialFile.restartDownloads();
+                        com.myster.client.stream.MSPartialFile.restartDownloads(crawlerManager);
                     } catch (IOException ex) {
                         System.out.println("Error in restarting downloads.");
                         ex.printStackTrace();
@@ -253,6 +246,8 @@ public class Myster {
 
             com.myster.hash.HashManager.start();
             FileTypeListManager.getInstance();
+            
+            Util.invokeLater(() -> MysterTray.init());
         } catch (InterruptedException ex) {
             ex.printStackTrace(); //never reached.
         }
@@ -271,13 +266,13 @@ public class Myster {
             PortMapping e = new PortMapping(MysterGlobals.DEFAULT_PORT,
                                             "" + inetAddress.getHostAddress(),
                                             PortMapping.Protocol.TCP,
-                                            "My Port Mapping TCP");
+                                            "Myster Port Mapping TCP");
             e.setLeaseDurationSeconds(new UnsignedIntegerFourBytes(100));
             portMappings.add(e);
             PortMapping e2 = new PortMapping(MysterGlobals.DEFAULT_PORT,
                                              "" + inetAddress.getHostAddress(),
                                              PortMapping.Protocol.UDP,
-                                             "Mooo");
+                                             "Myster Port Mapping UDP");
             e2.setLeaseDurationSeconds(new UnsignedIntegerFourBytes(100));
             portMappings.add(e2);
 
@@ -287,7 +282,7 @@ public class Myster {
             upnpService.getControlPoint().search();
             return upnpService;
         } catch (UnknownHostException exception) {
-            System.out.println("Could nto setup upnp because could not get local host: "
+            System.out.println("Could not setup upnp because could not get local host: "
                     + exception.getMessage());
             return null;
         }

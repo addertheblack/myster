@@ -6,10 +6,9 @@ import java.io.IOException;
 import java.io.RandomAccessFile;
 import java.util.ArrayList;
 import java.util.List;
-
+import java.util.concurrent.Future;
 
 import com.general.thread.CallListener;
-import com.general.thread.Future;
 import com.general.util.AnswerDialog;
 import com.general.util.Util;
 import com.myster.filemanager.FileTypeList;
@@ -19,7 +18,8 @@ import com.myster.mml.RobustMML;
 import com.myster.net.MysterAddress;
 import com.myster.net.MysterSocket;
 import com.myster.net.MysterSocketFactory;
-import com.myster.net.MysterSocketPool;
+import com.myster.net.MysterClientSocketPool;
+import com.myster.search.HashCrawlerManager;
 import com.myster.search.MysterFileStub;
 import com.myster.type.MysterType;
 import com.myster.util.FileProgressWindow;
@@ -27,34 +27,14 @@ import com.myster.util.FileProgressWindow;
 /**
  * Contains many of the more common (simple) stream based connection sections.
  */
-public class StandardSuite {
-
-    public static List<String> getSearch(MysterAddress ip, MysterType searchType, String searchString)
-            throws IOException {
-        MysterSocket socket = null;
-        try {
-            socket = MysterSocketFactory.makeStreamConnection(ip);
-            return getSearch(socket, searchType, searchString);
-        } finally {
-            disconnectWithoutException(socket);
-        }
-    }
-
-    public static Future<List<String>> getSearch(final MysterAddress ip, final MysterType searchType,
-            final String searchString, final CallListener<List<String>> listener) {
-        return MysterSocketPool.getInstance().execute(new StreamSection(ip) {
-            protected List<String> doSection() throws IOException {
-                return getSearch(socket, searchType, searchString);
-            }
-        }, listener);
-    }
-
+class StandardSuite {
     // Vector of strings
     public static List<String> getSearch(MysterSocket socket, MysterType searchType, String searchString)
             throws IOException {
         List<String> searchResults = new ArrayList<>();
 
         socket.out.writeInt(35);
+        socket.out.flush();
 
         checkProtocol(socket.in);
 
@@ -67,22 +47,14 @@ public class StandardSuite {
         return searchResults;
     }
 
-    public static List<String> getTopServers(MysterAddress ip, MysterType searchType) throws IOException {
-        MysterSocket socket = null;
-        try {
-            socket = MysterSocketFactory.makeStreamConnection(ip);
-            return getTopServers(socket, searchType);
-        } finally {
-            disconnectWithoutException(socket);
-        }
-    }
-
     public static List<String> getTopServers(MysterSocket socket, MysterType searchType)
             throws IOException {
         List<String> ipList = new ArrayList<String>();
 
         socket.out.writeInt(10); // Get top ten the 10 is the command code...
         // not the length of the list!
+        
+        socket.out.flush();
         
         checkProtocol(socket.in);
         
@@ -95,65 +67,30 @@ public class StandardSuite {
         return ipList;
     }
 
-    public static MysterType[] getTypes(MysterAddress ip) throws IOException {
-        MysterSocket socket = null;
-        try {
-            socket = MysterSocketFactory.makeStreamConnection(ip);
-            return getTypes(socket);
-        } finally {
-            disconnectWithoutException(socket);
-        }
-    }
-
     public static MysterType[] getTypes(MysterSocket socket) throws IOException {
-        try {
-            socket.out.writeInt(74);
+        socket.out.writeInt(74);
 
-            checkProtocol(socket.in);
+        socket.out.flush();
+        
+        checkProtocol(socket.in);
 
-            int numberOfTypes = socket.in.readInt();
-            MysterType[] mysterTypes = new MysterType[numberOfTypes];
+        int numberOfTypes = socket.in.readInt();
+        MysterType[] mysterTypes = new MysterType[numberOfTypes];
 
-            for (int i = 0; i < numberOfTypes; i++) {
-                mysterTypes[i] = new MysterType(socket.in.readInt());
-            }
-
-            return mysterTypes;
-        } catch (UnknownProtocolException ex) {
-            return getTypesVersion1Protocol(socket);
+        for (int i = 0; i < numberOfTypes; i++) {
+            mysterTypes[i] = new MysterType(socket.in.readInt());
         }
+
+        return mysterTypes;
     }
 
     
-    // TODO: die die die
-    private static MysterType[] getTypesVersion1Protocol(MysterSocket socket) throws IOException {
-        List<MysterType> container = new ArrayList<>();
-
-        socket.out.writeInt(79);
-
-        checkProtocol(socket.in);
-
-        for (String temp = socket.in.readUTF(); !temp.equals(""); temp = socket.in.readUTF()) {
-            try {
-                container.add(new MysterType(temp));
-            } catch (com.myster.type.MysterTypeException ex) {
-                throw new ProtocolException("Server sent a malformed MysterType");
-            }
-        }
-
-        MysterType[] types = new MysterType[container.size()];
-        for (int i = 0; i < types.length; i++) {
-            types[i] = container.get(i);
-        }
-
-        return types;
-    }
-
     public static RobustMML getServerStats(MysterSocket socket) throws IOException {
         socket.setSoTimeout(90000); // ? Probably important in some way or
         // other.
 
         socket.out.writeInt(101);
+        socket.out.flush();
 
         checkProtocol(socket.in);
 
@@ -164,42 +101,25 @@ public class StandardSuite {
         }
     }
 
-    public static Future<RobustMML> getServerStats(final MysterAddress ip, final CallListener listener) {
-        return MysterSocketPool.getInstance().execute(new StreamSection(ip) {
-            protected RobustMML doSection() throws IOException {
-                return getServerStats(socket);
-            }
-        }, listener);
-    }
-
-    public static RobustMML getServerStats(MysterAddress ip) throws IOException { // should
-        MysterSocket socket = null;
-        try {
-            socket = MysterSocketFactory.makeStreamConnection(ip);
-            return getServerStats(socket);
-        } finally {
-            disconnectWithoutException(socket);
-        }
-    }
-
     /**
      * downloadFile downloads a file by starting up a MultiSourceDownload or
      * Regular old style download whichever is appropriate.
      * <p>
      * THIS ROUTINE IS ASYNCHRONOUS!
      */
-    public static void downloadFile(final MysterAddress ip, final MysterFileStub stub) {
-        (new DownloadThread(ip, stub)).start();
+    public static void downloadFile(final HashCrawlerManager crawlerManager, final MysterAddress ip, final MysterFileStub stub) {
+        (new DownloadThread(crawlerManager, ip, stub)).start();
     }
 
     private static class DownloadThread extends com.myster.util.MysterThread {
-        private MysterAddress ip;
+        private final MysterAddress ip;
+        private final MysterFileStub stub;
+        private final HashCrawlerManager crawlerManager;
 
-        private MysterFileStub stub;
-
-        public DownloadThread(MysterAddress ip, MysterFileStub stub) {
+        public DownloadThread( HashCrawlerManager crawlerManager, MysterAddress ip, MysterFileStub stub) {
             this.ip = ip;
             this.stub = stub;
+            this.crawlerManager = crawlerManager;
         }
 
         public void run() {
@@ -246,7 +166,7 @@ public class StandardSuite {
             }
 
             try {
-                downloadFile(socket, stub, progressArray[0]);
+                downloadFile(socket, crawlerManager, stub, progressArray[0]);
             } catch (IOException ex) {
                 // ..
             } finally {
@@ -256,8 +176,11 @@ public class StandardSuite {
         }
 
         // should not be public
-        private void downloadFile(final MysterSocket socket, final MysterFileStub stub,
-                final FileProgressWindow progress) throws IOException {
+        private void downloadFile(final MysterSocket socket,
+                                  final HashCrawlerManager crawlerManager,
+                                  final MysterFileStub stub,
+                                  final FileProgressWindow progress)
+                throws IOException {
 
             try {
                 progressSetTextThreadSafe(progress, "Getting File Statistics...");
@@ -283,7 +206,7 @@ public class StandardSuite {
                 if (endFlag)
                     return;
 
-                if (!tryMultiSourceDownload(stub, progress, mml, theFile))
+                if (!tryMultiSourceDownload(stub, crawlerManager, progress, mml, theFile))
                     throw new IOException("Toss and catch");
             } catch (IOException ex) {
                 ex.printStackTrace();
@@ -308,7 +231,10 @@ public class StandardSuite {
 
         @SuppressWarnings("resource")
         private synchronized boolean tryMultiSourceDownload(final MysterFileStub stub,
-                final FileProgressWindow progress, RobustMML mml, final File theFile)
+                                                            HashCrawlerManager crawlerManager,
+                                                            final FileProgressWindow progress,
+                                                            RobustMML mml,
+                                                            final File theFile)
                 throws IOException {
             FileHash hash = MultiSourceUtilities.getHashFromStats(mml);
             if (hash == null)
@@ -330,7 +256,7 @@ public class StandardSuite {
                 throw ex;
             }
 
-            msDownload = new MultiSourceDownload(new RandomAccessFile(theFile, "rw"),
+            msDownload = new MultiSourceDownload(new RandomAccessFile(theFile, "rw"), crawlerManager,
                     new MSDownloadHandler(progress, theFile, partialFile), partialFile);
             msDownload.setInitialServers(new MysterFileStub[] { stub });
             msDownload.start();
@@ -373,12 +299,8 @@ public class StandardSuite {
     }
 
     public static RobustMML getFileStats(MysterAddress ip, MysterFileStub stub) throws IOException {
-        MysterSocket socket = null;
-        try {
-            socket = MysterSocketFactory.makeStreamConnection(ip);
+        try (MysterSocket socket = MysterSocketFactory.makeStreamConnection(ip)) {
             return getFileStats(socket, stub);
-        } finally {
-            disconnectWithoutException(socket);
         }
     }
 
@@ -480,16 +402,6 @@ public class StandardSuite {
             fileList[i] = socket.in.readUTF();
         }
         return fileList;
-    }
-    
-    public static String[] getFileList(MysterAddress address, MysterType type) throws IOException {
-        MysterSocket socket = null;
-        try {
-            socket = MysterSocketFactory.makeStreamConnection(address);
-            return getFileList(socket, type);
-        } finally {
-            disconnectWithoutException(socket);
-        }
     }
 
     public static void disconnectWithoutException(MysterSocket socket) {

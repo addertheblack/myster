@@ -8,17 +8,17 @@ package com.general.util;
  * slightly different names.
  *  
  */
-public class BlockingQueue {
-    protected LinkedList list = new LinkedList();
+public class BlockingQueue<T> {
+    private LinkedList<T> list = new LinkedList<>();
 
-    Semaphore sem = new Semaphore(0);
+    private Semaphore sem = new Semaphore(0);
 
     private boolean rejectDuplicates = false;
 
     /**
      * This routine adds an object to the work queue. It does not block.
      */
-    public void add(Object o) {
+    public void add(T o) {
         synchronized (list) {
             if (rejectDuplicates) {
                 if (list.contains(o))
@@ -33,7 +33,7 @@ public class BlockingQueue {
      * This routine gets an object to the work queue. Routine blocks until input
      * is available.
      */
-    public Object get() throws InterruptedException {
+    public T get() throws InterruptedException {
         sem.getLock();
         return list.removeFromHead();
 
@@ -76,7 +76,7 @@ public class BlockingQueue {
      *            Object to removes
      * @return true if an object was removed, false otherwise.
      */
-    public boolean remove(Object o) {
+    public boolean remove(T o) {
         return list.remove(o);
     }
 }

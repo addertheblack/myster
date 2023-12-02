@@ -57,8 +57,6 @@ public class Preferences {
     private Preferences() {
         loadFile();
         savethread = new SaveThread();
-        savethread.start();
-
     }
 
 
@@ -68,9 +66,9 @@ public class Preferences {
      * static...
      */
     public static synchronized Preferences getInstance() {
-
         if (pref == null) {
             pref = new Preferences();
+            pref.savethread.start();
         }
 
         return pref;

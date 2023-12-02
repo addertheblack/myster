@@ -22,7 +22,7 @@ package com.general.thread;
  * <p>
  * 
  * @see com.general.thread.CancellableCallable
- * @see com.general.thread.Executor
+ * @see com.general.thread.SpecialExecutor
  * @see com.general.thread.Future
  */
 public interface CallListener<T> {

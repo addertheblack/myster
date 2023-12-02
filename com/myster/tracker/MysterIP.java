@@ -16,12 +16,11 @@ import java.io.IOException;
 import java.net.UnknownHostException;
 import java.util.List;
 
-
 import com.general.util.BlockingQueue;
 import com.myster.client.datagram.PingEvent;
 import com.myster.client.datagram.PingEventListener;
-import com.myster.client.datagram.UDPPingClient;
-import com.myster.client.stream.StandardSuite;
+import com.myster.client.net.MysterProtocol;
+import com.myster.client.net.MysterStream;
 import com.myster.mml.MML;
 import com.myster.mml.MMLException;
 import com.myster.mml.RobustMML;
@@ -96,6 +95,8 @@ class MysterIP {
 
     private final double STATUSCONSTANT = 1;
 
+    private MysterProtocol protocol;
+
     private static final long UPDATETIME = 3600000;// 86400000==1 day,
 
     // 3600000==1 hour ;
@@ -104,17 +105,20 @@ class MysterIP {
 
     private static final int NUMBER_OF_UPDATER_THREADS = 1;
 
-    MysterIP(String ip) throws Exception {
+    MysterIP(String ip, MysterProtocol protocol) throws Exception {
         if (ip.equals("127.0.0.1"))
             throw new Exception("IP is local host.");
+        
+        this.protocol = protocol;
         MysterAddress t = new MysterAddress(ip); // to see if address is valid.
         createNewMysterIP(ip, 1, 50, 50, 1, 1, "", null, -1);
-        if (!MysterIP.internalRefreshAll(this))
+        if (!MysterIP.internalRefreshAll(protocol, this))
             throw new Exception("Failed to created new Myster IP");
         // System.out.println("A New MysterIP Object = "+getAddress());
     }
 
-    MysterIP(MML mml) {
+    MysterIP(MML mml, MysterProtocol protocol) {
+        this.protocol = protocol;
         createNewMysterIP(mml.get(IP),
                           Double.valueOf(mml.get(SPEED)).doubleValue(),
                           Integer.valueOf(mml.get(TIMEUP)).intValue(),
@@ -167,7 +171,6 @@ class MysterIP {
      * This private class implements the com.myster interface and allows outside objects to get
      * vital server statistics.
      */
-
     private class MysterIPInterfaceClass implements MysterServer {
         public MysterIPInterfaceClass() {
             referenceCounter++; //used for garbage collection.
@@ -268,10 +271,10 @@ class MysterIP {
     }
 
     /**
-     * Tests to see wherether the names (IPs) of two Myster Objects are equal..!
+     * Tests to see whether the names (IPs) of two Myster Objects are equal..!
      *  
      */
-
+    @Override
     public boolean equals(Object m) {
         MysterIP mysterIp;
         try {
@@ -281,6 +284,13 @@ class MysterIP {
         }
 
         return ip.equals(mysterIp.ip);
+    }
+    
+    
+    // I don't think we use the hashCode impl
+    @Override
+    public int hashCode() {
+        return ip.hashCode();
     }
 
     MML toMML() {
@@ -335,7 +345,7 @@ class MysterIP {
 
     private static MysterThread[] updaterThreads;
 
-    private static BlockingQueue statusQueue = new BlockingQueue();
+    private static BlockingQueue<MysterIP> statusQueue = new BlockingQueue<>();
 
     private synchronized void toUpdateOrNotToUpdate() {
         //if an update operation is already queued, return.
@@ -354,29 +364,23 @@ class MysterIP {
         // MysterIP
 
         //Make sure all threads and related crap are loaded and running.
-        MysterIP.assertUpdaterThreads();
+        assertUpdaterThreads();
 
-        //Add this myster IP object to the ones to be updated.
-        try {
-            UDPPingClient.ping(this.getAddress(), new MysterIPPingEventListener(this));
-        } catch (IOException ex) {
-            ex.printStackTrace();
-            occupied = false; //very bad things happen if it gets to here!!!
-        }
+        // Add this myster IP object to the ones to be updated.
+        protocol.getDatagram().ping(this.getAddress(), new MysterIPPingEventListener(this));
     }
 
     /**
-     * Refreshes all Stats (Number of files, Speed and upordown) from the IP. Blocks.
+     * Refreshes all Stats (Number of files, Speed and upordown) from the IP.
+     * Blocks.
      */
-    private static boolean internalRefreshAll(MysterIP mysterip) {
+    private static boolean internalRefreshAll(MysterProtocol  protocol, MysterIP mysterip) {
 
         //Do Status updated
         //Note, routine checks to see if it's required.
         //MysterIP.internalRefreshStatus(mysterip);
 
         //Do Statistics update
-        long time;
-
         try {
             //check if the update is needed.
             if (System.currentTimeMillis() - mysterip.timeoflastupdate < UPDATETIME)
@@ -387,9 +391,9 @@ class MysterIP {
 
             mysterip.timeoflastupdate = System.currentTimeMillis();
             //System.out.println("Getting stats from: "+mysterip.ip);
-            time = System.currentTimeMillis();
 
-            MML mml = StandardSuite.getServerStats(mysterip.ip);
+            MysterStream m = protocol.getStream();
+            RobustMML mml = m.byIp(mysterip.getAddress(), m::getServerStats);
             if (mml == null)
                 throw new MassiveProblemException("");
             //System.out.println("MML for "+mysterip.ip.toString()+ " is
@@ -458,26 +462,29 @@ class MysterIP {
         return false;
     }
 
-    private synchronized static void assertUpdaterThreads() {
+    private void assertUpdaterThreads() {
         if (MysterIP.updaterThreads == null) { //init threads
             MysterIP.updaterThreads = new MysterThread[NUMBER_OF_UPDATER_THREADS];
             for (int i = 0; i < updaterThreads.length; i++) {
-                MysterIP.updaterThreads[i] = new IPStatusUpdaterThread();
+                MysterIP.updaterThreads[i] = new IPStatusUpdaterThread(protocol);
                 MysterIP.updaterThreads[i].start();
             }
         }
     }
 
     private static class IPStatusUpdaterThread extends MysterThread {
-
-        public IPStatusUpdaterThread() {
+        private final MysterProtocol protocol;
+        
+        public IPStatusUpdaterThread(MysterProtocol protocol) {
             super("IPStatusUpdaterThread");
+            
+            this.protocol = protocol;
         }
 
         public void run() {
             try {
                 for (;;)
-                    MysterIP.internalRefreshAll((MysterIP) (MysterIP.statusQueue.get()));
+                    MysterIP.internalRefreshAll(protocol, MysterIP.statusQueue.get());
             } catch (InterruptedException ex) {
                 //nothing.
             }

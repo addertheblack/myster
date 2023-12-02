@@ -24,9 +24,11 @@ public class ProgressWindowClose extends WindowAdapter {
 
     public void windowClosing(WindowEvent e) {
         try {
-            //t.suspend();
-            t.end();
+            // I think you can't end() here because doing that blocks the EDT
+            // Best to not do that.
+            t.flagToEnd();
         } catch (Exception ex) {
+            // nothing
         }
         e.getWindow().setVisible(false);
         e.getWindow().dispose();

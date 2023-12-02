@@ -11,7 +11,7 @@ import java.util.concurrent.Callable;
  * with the Executor and future in this package.
  * 
  * @see com.general.thread.CancellableCallable
- * @see com.general.thread.Executor
+ * @see com.general.thread.SpecialExecutor
  * @see com.general.thread.Future
  */
 public interface CancellableCallable<T> extends Cancellable, Callable<T> {

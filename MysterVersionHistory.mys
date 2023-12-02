@@ -1,5 +1,5 @@
 //!Internal! version history from Dev6 onward
-//© Andrew Trumper 2001-2005
+//ï¿½ Andrew Trumper 2001-2005
 
 //NOTE TO READERS:
 //THIS DOCUMENT IS MENT FOR INTERNAL USE ONLY
@@ -1089,9 +1089,9 @@ Work on DEV 8:
 		-> Used the TimerThread to get rid of a thread used when the tracker window was open.
 		-> Optimized Multi-Column-List resizing code.
 		-> Made it so that the Tracker window is updated more frequently.
-		-> Wrote code so that MCList no uses a JTable implementation. Woohoo.
+		-> Wrote code so that MCList now uses a JTable implementation. Woohoo.
 		-> Made some things that I thought use the event thread actually use the event thread.
-		-> Fixed a bunch of compatability issues with MACSOS 1.4.X..
+		-> Fixed a bunch of comparability issues with MACSOS 1.4.X..
 		-> Made it so that ID3 tag information is cached (less odd pausing and disk activity).
 		-> Made it so the File manager (in the preferences) now indexes files in the background (no more freezing the 
 				GUI when clicking apply!!).
@@ -1110,13 +1110,31 @@ Work on DEV 8:
 	    -> Tweaked the startup time a little (but removed error dialogs and things.. naughty me)...
 	  	-> Removed dependencies of other classes on Myster.java.. Created MysterGlobals and "application" singleton classes.
 	  	-> Fixed none 1.1 compatible places to use reflection (hopefully this will actually work!).
-	  	-> Made Multi-source downlaod code more robust. Myster will now look in the current download directory as well as the 
-	  			original path the user downloaded the file to. (It still doesn't remeber the path when the user
+	  	-> Made Multi-source download code more robust. Myster will now look in the current download directory as well as the 
+	  			original path the user downloaded the file to. (It still doesn't remember the path when the user
 	  			manually tells myster where the file is... To do so would require re-writting the .p file.)
-	  	-> Fixed a bug where multi-source download wouldn't start a download because of un-merged puctuation
+	  	-> Fixed a bug where multi-source download wouldn't start a download because of un-merged punctuation
 	  	-> Rewrote the multi-source download error code - so that more errors are reported properly and better
 	  			appropriate corrective action is taken.
+	  			
+2023-12-01
+
+Refactored standard protocol suite code
+to better use new concurrency library.
+Added new concurrency library code to 
+take advantage of everything I've learned over the years
+Fix AnswerDialog to work correctly - resize broke
+fix ProgressDialog to adapt to new Java
+Fixed Ant build.xml to work
+Fixed manifest
+Tweaked the relationships between objects and started removing singletons in anticipation of new unit testing code
+
 		
 (Red List)
 to do:
+
+Need to convert to Maven
+Need to update all libraries
+Need to try out building using the modern JDK 20 tools
+Need to implement
 

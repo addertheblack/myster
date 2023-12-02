@@ -59,7 +59,7 @@ public class ClientGenericHandleObject implements ClientHandleObject {
                     .getServerIdentity());
             //The Three lines above can be combined into one really long line.
             // I hope you appreciate this :-)
-            ping = new SortablePing(result.getHostAddress());
+            ping = new SortablePing(result.getProtocol(), result.getHostAddress());
             sortableName = new SortableString(result.getName());
         }
 

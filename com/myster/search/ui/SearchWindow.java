@@ -31,6 +31,8 @@ import com.general.mclist.MCListFactory;
 import com.general.mclist.MCListItemInterface;
 import com.general.util.MessageField;
 import com.general.util.StandardWindowBehavior;
+import com.myster.client.net.MysterProtocol;
+import com.myster.search.HashCrawlerManager;
 import com.myster.search.SearchEngine;
 import com.myster.search.SearchResult;
 import com.myster.search.SearchResultListener;
@@ -52,7 +54,6 @@ public class SearchWindow extends MysterFrame implements SearchResultListener, S
 
     private static int counter = 0;
     
-    
     private final GridBagLayout gblayout;
     private final GridBagConstraints gbconstrains;
 
@@ -64,7 +65,6 @@ public class SearchWindow extends MysterFrame implements SearchResultListener, S
     
     private SearchEngine searchEngine;
     private ClientHandleObject metaDateHandler;
-
 
     public SearchWindow() {
         super("Search Window " + (++counter));
@@ -151,9 +151,13 @@ public class SearchWindow extends MysterFrame implements SearchResultListener, S
         pack();
     }
     
-    public static IPListManager manager;
+    private static HashCrawlerManager hashManager;
+    private static MysterProtocol protocol;
+    private static IPListManager manager;
     
-    public static void init(IPListManager manager) {
+    public static void init(MysterProtocol protocol, HashCrawlerManager hashManager, IPListManager manager) {
+        SearchWindow.protocol = protocol;
+        SearchWindow.hashManager = hashManager;
         SearchWindow.manager = manager;
     }
     
@@ -211,7 +215,13 @@ public class SearchWindow extends MysterFrame implements SearchResultListener, S
         if (searchEngine != null) {
             stopSearch();
         }
-        searchEngine = new SearchEngine(this, manager);
+        searchEngine = new SearchEngine(protocol,
+                                        hashManager,
+                                        manager,
+                                        this,
+                                        this,
+                                        this.getMysterType(),
+                                        this.getSearchString());
         searchEngine.run();
         setTitle("Search for \"" + getSearchString() + "\"");
     }

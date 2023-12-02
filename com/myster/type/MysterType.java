@@ -12,7 +12,7 @@ package com.myster.type;
 
 import java.io.UnsupportedEncodingException;
 
-import com.general.util.UnexpectedError;
+import com.general.util.UnexpectedException;
 
 /**
  * This class represents a MysterType. In Myster a MysterType is a 32 bit (4
@@ -59,7 +59,7 @@ public final class MysterType {
         try {
             return type.getBytes("cp1252");
         } catch (UnsupportedEncodingException ex) {
-            throw new UnexpectedError("cp1252 is not supported chracter encoding");
+            throw new UnexpectedException("cp1252 is not supported chracter encoding");
         }
     }
 
@@ -123,7 +123,7 @@ public final class MysterType {
 
     public String toString() {
         try {
-            return new String(type, "ASCII");
+            return new String(type, "cp1252");
         } catch (UnsupportedEncodingException ex) {
             ex.printStackTrace();
             return new String(type);

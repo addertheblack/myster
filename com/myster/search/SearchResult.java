@@ -1,5 +1,6 @@
 package com.myster.search;
 
+import com.myster.client.net.MysterProtocol;
 import com.myster.net.MysterAddress;
 import com.myster.tracker.MysterServer;
 
@@ -24,4 +25,7 @@ public interface SearchResult {
     public MysterAddress getHostAddress();
     
     public MysterServer getServer();
+
+    // this might be an abstraction violation.. I'm not sure.
+    public MysterProtocol getProtocol();
 }

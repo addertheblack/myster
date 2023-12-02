@@ -6,7 +6,6 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Hashtable;
 import java.util.List;
-import java.util.Vector;
 
 import com.myster.util.FileProgressWindow;
 
@@ -160,13 +159,13 @@ public class MSDownloadHandler extends MSDownloadListener {
 }
 
 class SegmentDownloaderHandler extends SegmentDownloaderListener {
-    final int bar;
+    private final int bar;
 
-    final FileProgressWindow progress;
+    private final FileProgressWindow progress;
 
-    final ProgressBannerManager progressBannerManager;
+    private final ProgressBannerManager progressBannerManager;
 
-    private static final int MAX_SPEED = 1 * 1024 * 1024;
+    private static final int MAX_SPEED = 1 * 1024 * 1024 * 100;
 
     public SegmentDownloaderHandler(ProgressBannerManager progressBannerManager,
             FileProgressWindow progress, int bar) {

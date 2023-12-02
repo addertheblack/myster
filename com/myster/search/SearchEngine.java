@@ -11,9 +11,11 @@
  */
 package com.myster.search;
 
-import com.myster.search.ui.SearchWindow;
+import com.myster.client.net.MysterProtocol;
 import com.myster.tracker.IPListManager;
+import com.myster.type.MysterType;
 import com.myster.util.MysterThread;
+import com.myster.util.Sayable;
 
 
 /**
@@ -21,13 +23,22 @@ import com.myster.util.MysterThread;
  * Myster searches but could be modified to search using multiple different protocols.
  */
 public class SearchEngine extends MysterThread {
-    private final SearchWindow window;
-
     private final MysterSearch mysterSearch;
 
-    public SearchEngine(SearchWindow w, IPListManager manager) {
-        window = w;
-        mysterSearch = new MysterSearch(window, window, window.getMysterType(), window.getSearchString(), manager);
+    public SearchEngine(MysterProtocol protocol,
+                        HashCrawlerManager hashManager,
+                        IPListManager ipListManager,
+                        SearchResultListener listener,
+                        Sayable msg,
+                        MysterType type,
+                        String searchString ) {
+        mysterSearch = new MysterSearch(protocol,
+                                        hashManager,
+                                        ipListManager,
+                                        listener,
+                                        msg,
+                                        type,
+                                        searchString);
     }
 
     public void run() {

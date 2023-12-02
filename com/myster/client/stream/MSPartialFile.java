@@ -19,6 +19,7 @@ import com.myster.hash.FileHash;
 import com.myster.hash.SimpleFileHash;
 import com.myster.mml.MMLException;
 import com.myster.mml.RobustMML;
+import com.myster.search.HashCrawlerManager;
 import com.myster.type.MysterType;
 import com.myster.util.FileProgressWindow;
 
@@ -113,12 +114,12 @@ public class MSPartialFile {
         return msPartialFiles;
     }
 
-    public static void restartDownloads() throws IOException {
+    public static void restartDownloads(HashCrawlerManager crawlerManager) throws IOException {
         MSPartialFile[] files = list();
 
         for (int i = 0; i < files.length; i++) {
             try {
-                startDownload(files[i]);
+                startDownload(files[i], crawlerManager);
             } catch (IOException ex) {
                 ex.printStackTrace();
             }
@@ -133,7 +134,7 @@ public class MSPartialFile {
     }
 
     //Resumable multisource driver.
-    public static void startDownload(MSPartialFile partialFile) throws IOException {
+    public static void startDownload(MSPartialFile partialFile, HashCrawlerManager crawlerManager) throws IOException {
         final String finalFileName = partialFile.getFilename() + ".i";
         final String pathToType = com.myster.filemanager.FileTypeListManager.getInstance()
                 .getPathFromType(partialFile.getType());
@@ -190,9 +191,10 @@ public class MSPartialFile {
             file = new File(dialog.getDirectory(), dialog.getFile());
         }
 
+        // TODO move this into MSDownload
         RandomAccessFile randomAccessFile = new RandomAccessFile(file, "rw");
 
-        final MultiSourceDownload download = new MultiSourceDownload(randomAccessFile,
+        final MultiSourceDownload download = new MultiSourceDownload(randomAccessFile,crawlerManager,
                 new MSDownloadHandler(progress, file, partialFile), partialFile);
 
         //there are no exceptions after this so that is why we
@@ -513,7 +515,7 @@ public class MSPartialFile {
             try {
                 out.writeUTF(toMML().toString());
             } catch (IOException ex) {
-                throw new com.general.util.UnexpectedError("This line should not throw and error.");
+                throw new com.general.util.UnexpectedException("This line should not throw an error.");
             }
 
             return b_out.toByteArray(); // lots of "to" methods here.

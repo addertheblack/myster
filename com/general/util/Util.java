@@ -9,12 +9,12 @@ import java.awt.Toolkit;
 import java.lang.reflect.InvocationTargetException;
 import java.net.URL;
 import java.util.concurrent.ExecutionException;
+import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
 import com.general.thread.CallListener;
 import com.general.thread.CancellableCallable;
-import com.general.thread.Future;
 
 public class Util { //This code was taken from an Apple Sample Code package,
 
@@ -147,6 +147,19 @@ public class Util { //This code was taken from an Apple Sample Code package,
         EventQueue.invokeLater(runnable);
     }
     
+    public static void invokeNowOrLater(final Runnable runnable) {
+        if (EventQueue.isDispatchThread()) {
+            try {
+                runnable.run();
+            } catch (Throwable t) {
+                t.printStackTrace();
+            }
+        } else {
+            EventQueue.invokeLater(runnable);
+        }
+    }
+    
+    @Deprecated
     public static Future invokeAsynchronously(final CancellableCallable callable, CallListener listener ) {
         CallableFutureGlue glueBall = new CallableFutureGlue(callable, listener);
         invokeLater(glueBall);

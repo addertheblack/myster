@@ -22,11 +22,10 @@ import java.util.ArrayList;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Set;
-
+import java.util.concurrent.Future;
 
 import com.general.thread.CallListener;
 import com.general.thread.CancellableCallable;
-import com.general.thread.Future;
 import com.myster.application.MysterGlobals;
 import com.myster.hash.FileHash;
 import com.myster.mml.MML;
@@ -422,7 +421,7 @@ public class FileTypeList {
             // list, you see...)
 
             if (indexingFuture != null) {
-                indexingFuture.cancel();
+                indexingFuture.cancel(false);
                 indexingFuture = null;
             }
             return;

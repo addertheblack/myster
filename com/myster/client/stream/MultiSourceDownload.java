@@ -21,6 +21,7 @@ import com.myster.mml.MMLException;
 import com.myster.mml.RobustMML;
 import com.myster.net.MysterSocket;
 import com.myster.net.MysterSocketFactory;
+import com.myster.search.HashCrawlerManager;
 import com.myster.search.HashSearchEvent;
 import com.myster.search.HashSearchListener;
 import com.myster.search.MultiSourceHashSearch;
@@ -36,42 +37,29 @@ import com.myster.util.MysterThread;
  */
 public class MultiSourceDownload implements Task, Cancellable {
     private final MSPartialFile partialFile;
-
     private final MysterType type;
-
     private final FileHash hash; // should be an array at some point!
-
     private final long fileLength;
-
     private final HashSearchListener hashSearchListener;
-
     private final Hashtable downloaders;
-
-    // File theFile; //file downloading to!
     private final RandomAccessFile randomAccessFile; // file downloading to!
-
     private final int chunkSize;
-
     private final long initialOffset; // how much was downloaded in a previous
-
-    // session
-
-    private long fileProgress = 0; // for work segments
-
-    private long bytesWrittenOut = 0; // to know how much of the file has been
-
-    private MysterFileStub[] initialFileStubs;
-
-    // downloaded.
-
+    
     // it's a stack 'cause it
     // doens't matter what data structure so long
     // as add and remove are O(C).
     private final Stack unfinishedSegments = new Stack();
-
     private final EventDispatcher dispatcher = new SyncEventDispatcher();
-
     private final Controller controller = new ControllerImpl(); // is self
+    private final HashCrawlerManager crawlerManager;
+    
+
+    // session
+
+    private long fileProgress = 0; // for work segments
+    private long bytesWrittenOut = 0; // to know how much of the file has been
+    private MysterFileStub[] initialFileStubs;
 
     // this is true when the user has asked that the download be cancelled.
     private boolean isCancelled = false;
@@ -90,11 +78,13 @@ public class MultiSourceDownload implements Task, Cancellable {
 
     private long lastProgress;
 
+
     private static final long MIN_TIME_BETWEEN_EVENTS = 100;
 
-    public MultiSourceDownload(RandomAccessFile randomAccessFile, MSDownloadListener listener,
+    public MultiSourceDownload(RandomAccessFile randomAccessFile, HashCrawlerManager crawlerManager, MSDownloadListener listener,
             MSPartialFile partialFile) throws IOException {
         this.randomAccessFile = randomAccessFile;
+        this.crawlerManager = crawlerManager;
         this.type = partialFile.getType();
         this.hash = partialFile.getHash(com.myster.hash.HashManager.MD5);
         this.fileLength = partialFile.getFileLength();
@@ -138,7 +128,7 @@ public class MultiSourceDownload implements Task, Cancellable {
                         newDownload(stubs[i]);
                     }
                 }
-                MultiSourceHashSearch.addHash(type, hash, hashSearchListener);
+                crawlerManager.addHash(type, hash, hashSearchListener);
             }
         };
         fireEventAsycronously(createMultiSourceEvent(MultiSourceEvent.START_DOWNLOAD), callListener);
@@ -173,6 +163,7 @@ public class MultiSourceDownload implements Task, Cancellable {
                 listener);
     }
 
+    @Deprecated
     private void fireEventAsycronously(final GenericEvent event, final CallListener listener) {
         CancellableCallable callable = new CancellableCallable() {
             public Object call() throws Exception {
@@ -362,11 +353,12 @@ public class MultiSourceDownload implements Task, Cancellable {
 
     // This method will only be called once right at the end of the download
     private synchronized void cleanUp() {
-        MultiSourceHashSearch.removeHash(type, hash, hashSearchListener);
+        crawlerManager.removeHash(type, hash, hashSearchListener);
 
         try {
             randomAccessFile.close();
         } catch (Exception ex) {
+            // nothing
         } // assert file is closed
 
         isDead = true;

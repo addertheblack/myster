@@ -18,16 +18,16 @@ import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Set;
+import java.util.concurrent.Future;
 
 import com.general.thread.CallListener;
 import com.general.thread.CancellableCallable;
-import com.general.thread.Future;
 import com.general.util.Util;
-import com.myster.client.datagram.StandardDatagramSuite;
+import com.myster.client.net.MysterProtocol;
 import com.myster.net.MysterAddress;
 import com.myster.net.MysterSocket;
 import com.myster.net.MysterSocketFactory;
-import com.myster.net.MysterSocketPool;
+import com.myster.net.MysterClientSocketPool;
 import com.myster.tracker.IPListManager;
 import com.myster.tracker.MysterServer;
 import com.myster.type.MysterType;
@@ -93,17 +93,30 @@ public class MysterSearch {
      * nothing left pending.
      */
     private final Set<Future> outStandingFutures;
+    private final IPListManager ipListManager;
+    private final MysterProtocol protocol;
+    private final HashCrawlerManager hashManager;
 
-    private final IPListManager manager;
-
-    public MysterSearch(SearchResultListener listener, Sayable msg, MysterType type,
-            String searchString, IPListManager manager) {
-        this.msg = msg;
-        this.searcher = new StandardMysterSearch(searchString, type, listener, manager);
+    public MysterSearch(MysterProtocol protocol, 
+                        HashCrawlerManager hashManager,
+                        IPListManager ipListManager,
+                        SearchResultListener listener,
+                        Sayable msg,
+                        MysterType type,
+                        String searchString) {
+        this.protocol = protocol;
+        this.hashManager = hashManager;
+        this.msg = (String s) -> Util.invokeNowOrLater(() -> msg.say(s));
+        this.searcher = new StandardMysterSearch(protocol,
+                                                 hashManager,
+                                                 ipListManager,
+                                                 searchString,
+                                                 type,
+                                                 listener);
         this.type = type;
         this.searchString = searchString;
         this.listener = listener;
-        this.manager = manager;
+        this.ipListManager = ipListManager;
 
         outStandingFutures = new HashSet();
     }
@@ -162,7 +175,7 @@ public class MysterSearch {
             public void run() {
                 for (Iterator iter = outStandingFutures.iterator(); iter.hasNext();) {
                     Future future = (Future) iter.next();
-                    future.cancel();
+                    future.cancel(false);
 
                     listener.searchOver(); //cannot be called twice. (see checkForDone()).
                 }
@@ -252,13 +265,13 @@ public class MysterSearch {
 
         // ADD_TOP_TEN
         CancellableCallableRemover removerTopTen = new UdpTopTen(ipQueue);
-        Future topTenFuture = StandardDatagramSuite.getTopServers(address, type, removerTopTen);
+        Future topTenFuture = protocol.getDatagram().getTopServers(address, type, removerTopTen);
         removerTopTen.setFuture(topTenFuture);
         outStandingFutures.add(topTenFuture);
 
         // ADD_SEARCH
         CancellableCallableRemover removerSearch = new UdpSearch(address);
-        Future searchFuture = StandardDatagramSuite.getSearch(address, type, searchString, removerSearch);
+        Future searchFuture = protocol.getDatagram().getSearch(address, type, searchString, removerSearch);
         removerSearch.setFuture(searchFuture);
         outStandingFutures.add(searchFuture);
     }
@@ -287,7 +300,7 @@ public class MysterSearch {
                 if (endFlag)
                     return;
                 CancellableCallableRemover remover = new CancellableCallableRemover();
-                Future future = MysterSocketPool.getInstance().execute(section, remover);
+                Future future = MysterClientSocketPool.getInstance().execute(section, remover);
                 remover.setFuture(future);
                 outStandingFutures.add(future);
             }
@@ -340,7 +353,7 @@ public class MysterSearch {
      * @return a primed IPQueue
      */
     private IPQueue createPrimedIpQueue() {
-        MysterServer[] iparray = manager.getTop(type, 50);
+        MysterServer[] iparray = ipListManager.getTop(type, 50);
 
         IPQueue queue = new IPQueue();
 
@@ -389,7 +402,7 @@ public class MysterSearch {
                 processNewAddresses(queue);
             }
         };
-        Future future = MysterSocketPool.getInstance().execute(addressLookup, callListener);
+        Future future = MysterClientSocketPool.getInstance().execute(addressLookup, callListener);
         callListener.setFuture(future);
         outStandingFutures.add(future);
     }
@@ -426,7 +439,12 @@ public class MysterSearch {
                     return; // don't call searchOver() if end flag is set (it
                 // has already been called).
             }
-            listener.searchOver();
+            Util.invokeNowOrLater(() -> {
+                if (endFlag)
+                    return;
+                
+                listener.searchOver();
+            });
         }
     }
 
@@ -438,10 +456,12 @@ public class MysterSearch {
      * @param mysterSearchResults
      */
     private synchronized void addResults(final MysterSearchResult[] mysterSearchResults) {
-        if (endFlag)
-            return;
+        Util.invokeNowOrLater(() -> {
+            if (endFlag)
+                return;
 
-        listener.addSearchResults(mysterSearchResults);
+            listener.addSearchResults(mysterSearchResults);
+        });
     }
 
     private final class UdpSearch extends CancellableCallableRemover<List<String>> {
@@ -468,8 +488,11 @@ public class MysterSearch {
             final MysterSearchResult[] mysterSearchResults = new MysterSearchResult[results.size()];
 
             for (int i = 0; i < results.size(); i++) {
-                mysterSearchResults[i] = new MysterSearchResult(new MysterFileStub(address, type,
-                        results.get(i)), manager::getQuickServerStats);
+                mysterSearchResults[i] =
+                        new MysterSearchResult(protocol,
+                                               hashManager,
+                                               new MysterFileStub(address, type, results.get(i)),
+                                               ipListManager::getQuickServerStats);
             }
 
             addResults(mysterSearchResults);
@@ -502,7 +525,7 @@ public class MysterSearch {
                 try {
                     MysterAddress mysterAddress = MysterAddress.createMysterAddress(addresses[i]);
                     ipQueue.addIP(mysterAddress);
-                    manager.addIP(mysterAddress);
+                    ipListManager.addIP(mysterAddress);
                 } catch (UnknownHostException exception) {
                     addAddressToQueue(ipQueue, addresses[i]);
                 }

@@ -33,15 +33,13 @@ public class SearchHashDatagramClient implements StandardDatagramClientImpl {
         this.hashes = hashes;
     }
 
-    //returns String
-    public Object getObjectFromTransaction(Transaction transaction)
+    public String getObjectFromTransaction(Transaction transaction)
             throws IOException {
         return FileTypeList.mergePunctuation((new DataInputStream(new ByteArrayInputStream(transaction
                 .getData()))).readUTF());
     }
 
-    //returns String
-    public Object getNullObject() {
+    public String getNullObject() {
         return new String("");
     }
 

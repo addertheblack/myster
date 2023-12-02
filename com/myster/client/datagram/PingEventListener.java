@@ -16,5 +16,4 @@ public abstract class PingEventListener extends EventListener {
     }
 
     public abstract void pingReply(PingEvent e);
-
 }

@@ -7,7 +7,7 @@ import java.io.IOException;
 import java.net.InetAddress;
 import java.net.SocketException;
 
-public abstract class MysterSocket {
+public abstract class MysterSocket implements AutoCloseable {
     public final DataInputStream in;
 
     public final DataOutputStream out;

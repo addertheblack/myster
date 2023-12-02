@@ -4,20 +4,20 @@ package com.general.util;
  * Is a generic Linked List implementation. Suitable for O(1) queues.
  */
 //Fast queues should use addToTail and removeFromHead
-public class LinkedList {
-    final Element head;
+public class LinkedList<T> {
+    private final Element<T> head;
 
-    Element tail;
+    private Element<T> tail;
 
-    int numOfItems = 0;
+    private int numOfItems = 0;
 
     public LinkedList() {
-        tail = head = new Element(null);
+        tail = head = new Element<T>(null);
     }
 
     //fast
-    public synchronized void addToHead(Object o) {
-        Element e = new Element(o);
+    public synchronized void addToHead(T o) {
+        Element<T> e = new Element<T>(o);
         e.next = head.next;
         head.next = e;
         numOfItems++;
@@ -26,11 +26,11 @@ public class LinkedList {
     }
 
     /** gets an element at the index starting from the head. */
-    public synchronized Object getElementAt(int index) {
+    public synchronized T getElementAt(int index) {
         if (index < 0 || index >= numOfItems)
             return null;
 
-        Element e = head;
+        Element<T> e = head;
         for (int i = 0; (e.next != null && i < index); e = e.next, i++)
             ;
 
@@ -38,21 +38,21 @@ public class LinkedList {
     }
 
     //fast
-    public synchronized void addToTail(Object o) {
-        Element e = new Element(o);
+    public synchronized void addToTail(T o) {
+        Element<T> e = new Element<T>(o);
         tail.next = e;
         tail = e;
         numOfItems++;
     }
 
     //fast
-    public synchronized Object getTail() {
+    public synchronized T getTail() {
         return tail.value;
     }
 
     //slow
-    public synchronized Object removeFromTail() {
-        Object o = tail.value;
+    public synchronized T removeFromTail() {
+        T o = tail.value;
         tail = head;
         while (tail.next != null) {
             if (tail.next.next == null) {
@@ -66,17 +66,17 @@ public class LinkedList {
     }
 
     //fast
-    public synchronized Object getHead() {
+    public synchronized T getHead() {
         if (head.next == null)
             return null;
         return head.next.value;
     }
 
     //fast
-    public synchronized Object removeFromHead() {
+    public synchronized T removeFromHead() {
         if (head.next == null)
             return null;
-        Object o = head.next.value;
+        T o = head.next.value;
         head.next = head.next.next;
         assertTail(); //in case item removed was the tail.
         numOfItems--;
@@ -90,15 +90,15 @@ public class LinkedList {
 
     //slow
     //deprecated use getPositionOf
-    public boolean contains(Object object) {
+    public boolean contains(T object) {
         return (getPositionOf(object) != -1);
     }
 
     /**
      * returns the index of the Object starting from the head.
      */
-    public synchronized int getPositionOf(Object o) {
-        Element temp = head;
+    public synchronized int getPositionOf(T o) {
+        Element<T> temp = head;
         int counter = 0;
 
         while (temp.next != null) {
@@ -112,7 +112,7 @@ public class LinkedList {
 
     //slow
     public synchronized boolean remove(Object o) {
-        Element temp = head;
+        Element<T> temp = head;
         while (temp.next != null) {
             if (temp.next.value.equals(o)) {
                 temp.next = temp.next.next;
@@ -141,12 +141,12 @@ public class LinkedList {
             findTheEnd(); //if (head==tail) won't work!
     }
 
-    private static class Element {
-        public Object value;
+    private static class Element<T> {
+        public T value;
 
-        public Element next;
+        public Element<T> next;
 
-        public Element(Object value) {
+        public Element(T value) {
             this.value = value;
         }
     }

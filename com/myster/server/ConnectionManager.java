@@ -83,7 +83,7 @@ public class ConnectionManager extends MysterThread {
     }
 
     /**
-     * ConnectionSection is ment to be called as a thread. Please call start()..
+     * ConnectionSection is meant to be called as a thread. Please call start()..
      */
     public void run() {
         while (true) {
@@ -127,7 +127,7 @@ public class ConnectionManager extends MysterThread {
             do {
                 try {
                     Thread.yield();
-                    protocalcode = i.readInt(); //reads the type of conneciton
+                    protocalcode = i.readInt(); //reads the type of connection
                     // requested
                 } catch (Exception ex) {
                     Thread.yield();
@@ -143,11 +143,11 @@ public class ConnectionManager extends MysterThread {
                 switch (protocalcode) {
                 case 1:
                     context.socket.out.write(1); //Tells the other end that the
-                    // command is good bad!
+                    // command is good  !
                     break;
                 case 2:
                     context.socket.out.write(1); //Tells the other end that the
-                    // command is good bad!
+                    // command is good  !
                     return;
                 default:
                     ConnectionSection section = (ConnectionSection) (connectionSections
