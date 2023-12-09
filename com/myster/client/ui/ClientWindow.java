@@ -40,6 +40,7 @@ import com.myster.tracker.IPListManager;
 import com.myster.tracker.MysterServer;
 import com.myster.type.MysterType;
 import com.myster.ui.MysterFrame;
+import com.myster.ui.MysterFrameContext;
 import com.myster.ui.WindowLocationKeeper;
 import com.myster.util.Sayable;
 
@@ -96,28 +97,28 @@ public class ClientWindow extends MysterFrame implements Sayable {
         ClientWindow.hashManager = hashManager;
     }
     
-    public static void initWindowLocations() {
+    public static void initWindowLocations(MysterFrameContext c) {
         Rectangle[] rectangles = com.myster.ui.WindowLocationKeeper.getLastLocs(WINDOW_KEEPER_KEY);
 
         keeper = new WindowLocationKeeper(WINDOW_KEEPER_KEY);
         
         for (int i = 0; i < rectangles.length; i++) {
-            ClientWindow window = new ClientWindow();
+            ClientWindow window = new ClientWindow(c);
             window.setBounds(rectangles[i]);
             window.show();
         }
     }
 
-    public ClientWindow() {
-        super("Direct Connection " + (++counter));
+    public ClientWindow(MysterFrameContext c) {
+        super(c, "Direct Connection " + (++counter));
 
         init();
 
         keeper.addFrame(this);
     }
 
-    public ClientWindow(String ip) {
-        super("Direct Connection " + (++counter));
+    public ClientWindow(MysterFrameContext c, String ip) {
+        super(c, "Direct Connection " + (++counter));
         init();
         IP.setText(ip);
         //connect.dispatchEvent(new KeyEvent(connect, KeyEvent.KEY_PRESSED,
@@ -169,7 +170,7 @@ public class ClientWindow extends MysterFrame implements Sayable {
                 try {
                     com.myster.net.MysterAddress address = new com.myster.net.MysterAddress(IP
                             .getText());
-                    com.myster.message.MessageWindow window = new com.myster.message.MessageWindow(
+                    com.myster.message.MessageWindow window = new com.myster.message.MessageWindow(getMysterFrameContext(),
                             address);
                     window.setVisible(true);
                 } catch (java.net.UnknownHostException ex) {
@@ -210,7 +211,7 @@ public class ClientWindow extends MysterFrame implements Sayable {
                 stopFileListing();
             }
         });
-        fileList.addMCListEventListener(new FileListAction(protocol, hashManager, this));
+        fileList.addMCListEventListener(new FileListAction(protocol, hashManager, getMysterFrameContext(), this));
         fileList.addMCListEventListener(new MCListEventAdapter(){
             public void selectItem(MCListEvent e) {
                 startStats();

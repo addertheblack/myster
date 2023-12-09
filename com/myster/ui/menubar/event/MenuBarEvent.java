@@ -1,10 +1,10 @@
-package com.myster.menubar.event;
+package com.myster.ui.menubar.event;
 
 import javax.swing.JFrame;
 import javax.swing.JMenuBar;
 
 import com.general.events.GenericEvent;
-import com.myster.menubar.MysterMenuBarFactory;
+import com.myster.ui.menubar.MysterMenuBarFactory;
 
 /**
  * Contains the events context for MysterMenuBar events.

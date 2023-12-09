@@ -25,6 +25,7 @@ import com.myster.tracker.IPListManager;
 import com.myster.tracker.MysterServer;
 import com.myster.type.MysterType;
 import com.myster.ui.MysterFrame;
+import com.myster.ui.MysterFrameContext;
 import com.myster.util.TypeChoice;
 
 public class TrackerWindow extends MysterFrame {
@@ -41,6 +42,8 @@ public class TrackerWindow extends MysterFrame {
 
     private static IPListManager ipListManager;
 
+    private static MysterFrameContext context;
+
     public static void initWindowLocations() {
         Rectangle[] rect = com.myster.ui.WindowLocationKeeper.getLastLocs("Tracker");
         if (rect.length > 0) {
@@ -49,11 +52,13 @@ public class TrackerWindow extends MysterFrame {
         }
     }
     
-    public static void init(IPListManager ipListManager) {
+    public static void init(IPListManager ipListManager, MysterFrameContext c) {
         TrackerWindow.ipListManager = ipListManager;
+        TrackerWindow.context= c;
     }
 
-    private TrackerWindow() {
+    private TrackerWindow(MysterFrameContext c) {
+        super(c);
         keeper.addFrame(this); //never remove
 
         //Do interface setup:
@@ -95,7 +100,7 @@ public class TrackerWindow extends MysterFrame {
         //loadList();
 
         addWindowListener(new MyWindowHandler());
-        list.addMCListEventListener(new OpenConnectionHandler());
+        list.addMCListEventListener(new OpenConnectionHandler(c));
 
         choice.addItemListener(new ChoiceListener());
 
@@ -130,7 +135,7 @@ public class TrackerWindow extends MysterFrame {
      */
     public static synchronized TrackerWindow getInstance() {
         if (me == null) {
-            me = new TrackerWindow();
+            me = new TrackerWindow(context);
         }
 
         return me;

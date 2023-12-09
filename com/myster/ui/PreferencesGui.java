@@ -8,10 +8,13 @@ import com.myster.pref.ui.PreferencesDialogBox;
 import com.myster.pref.ui.PreferencesPanel;
 
 public class PreferencesGui {
-    private PreferencesDialogBox prefsWindow;
+    private final PreferencesDialogBox prefsWindow;
+    private final MysterFrameContext context;
 
-    public PreferencesGui() {
-        prefsWindow = new PreferencesDialogBox();
+
+    public PreferencesGui(MysterFrameContext context) {
+        this.context = context;
+        prefsWindow = new PreferencesDialogBox(context);
         if ( !Util.isEventDispatchThread() )
             throw new IllegalStateException("Not on event thread!");
         prefsWindow.pack();

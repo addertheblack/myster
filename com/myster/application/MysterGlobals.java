@@ -2,7 +2,7 @@ package com.myster.application;
 
 import java.io.File;
 
-import com.general.application.ApplicationSingleton;
+import com.general.application.ApplicationContext;
 import com.myster.UpnpManager;
 import com.myster.pref.Preferences;
 
@@ -21,7 +21,7 @@ public class MysterGlobals {
 
     private static final File WORKING_DIRECTORY = new File(System.getProperty("user.dir"));
 
-    public static ApplicationSingleton appSigleton;
+    public static ApplicationContext appSigleton;
     
     /**
      * Instead of calling System.exit() directly to quit, call this routine. It makes sure cleanup

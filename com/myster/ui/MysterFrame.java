@@ -1,6 +1,5 @@
 package com.myster.ui;
 
-import java.awt.Color;
 import java.awt.Frame;
 import java.awt.Image;
 import java.awt.Point;
@@ -15,28 +14,34 @@ import javax.swing.JFrame;
 import javax.swing.JMenuBar;
 
 import com.myster.application.MysterGlobals;
-import com.myster.menubar.MysterMenuBar;
-import com.myster.menubar.event.MenuBarListener;
+import com.myster.ui.menubar.event.MenuBarListener;
 
 public class MysterFrame extends JFrame {
     private static int xStart = 5;
-
     private static int yStart = 5;
 
-    private MenuBarListener menuListener;
+    private final MysterFrameContext context;
 
+    private MenuBarListener menuListener;
     private boolean menuBarEnabled = true;
 
-    public MysterFrame() {
+
+    public MysterFrame(MysterFrameContext context) {
+        this.context = context;
         initEvents();
     }
 
-    public MysterFrame(String windowName) {
+    public MysterFrame(MysterFrameContext context, String windowName) {
         super(windowName);
+        this.context = context;
 
         setTitle(windowName);
 
         initEvents();
+    }
+
+    protected final MysterFrameContext getMysterFrameContext() {
+        return context;
     }
 
     public void setTitle(String windowName) {
@@ -72,12 +77,12 @@ public class MysterFrame extends JFrame {
 
             public void windowClosing(WindowEvent e) {
                 WindowManager.removeWindow(MysterFrame.this);
-                MysterMenuBar.removeMenuListener(menuListener);
+                context.menuBar().removeMenuListener(menuListener);
             }
 
             public void windowClosed(WindowEvent e) {
                 WindowManager.removeWindow(MysterFrame.this);
-                MysterMenuBar.removeMenuListener(menuListener);
+                context.menuBar().removeMenuListener(menuListener);
             }
 
             public void windowIconified(WindowEvent e) {
@@ -112,12 +117,12 @@ public class MysterFrame extends JFrame {
 
             public void componentHidden(ComponentEvent e) {
                 WindowManager.removeWindow(MysterFrame.this);
-                MysterMenuBar.removeMenuListener(menuListener);
+                context.menuBar().removeMenuListener(menuListener);
             }
         });
 
         menuListener = new MenuBarListener() {
-            public void stateChanged(com.myster.menubar.event.MenuBarEvent e) {
+            public void stateChanged(com.myster.ui.menubar.event.MenuBarEvent e) {
                 setNewMenuBar(e.makeNewMenuBar(MysterFrame.this));
             }
         };
@@ -142,7 +147,7 @@ public class MysterFrame extends JFrame {
 
         if (enable) {
             if (menuListener != null) {
-                MysterMenuBar.removeMenuListener(menuListener);
+                context.menuBar().removeMenuListener(menuListener);
             }
 
             setMenuBar(null);
@@ -154,8 +159,7 @@ public class MysterFrame extends JFrame {
     }
 
     private void enableMenuBar() {
-        MysterMenuBar.addMenuListener(menuListener);
-        setJMenuBar(MysterMenuBar.getFactory().makeMenuBar(MysterFrame.this));
+        context.menuBar().addMenuListener(menuListener);
     }
 
     public boolean isMenuBarEnabled() {
@@ -170,7 +174,7 @@ public class MysterFrame extends JFrame {
             Method method = Frame.class.getMethod("setState", new Class[] { Integer.TYPE });
 
             // 0 == normal.. Cannot use constant because it doens't exist in 1.1
-            method.invoke(this, new Object[] { new Integer(0) });
+            method.invoke(this, new Object[] { 0 });
         } catch (SecurityException ex) {
             //ex.printStackTrace();
         } catch (NoSuchMethodException ex) {

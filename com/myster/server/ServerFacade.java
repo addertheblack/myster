@@ -3,10 +3,12 @@ package com.myster.server;
 import java.awt.Dimension;
 import java.awt.GridLayout;
 import java.net.InetAddress;
+import java.net.Socket;
 import java.net.UnknownHostException;
 import java.util.ArrayList;
-import java.util.Hashtable;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.StringTokenizer;
 
 import javax.swing.JComboBox;
@@ -19,7 +21,6 @@ import com.myster.UpnpManager.HostAddress;
 import com.myster.application.MysterGlobals;
 import com.myster.client.datagram.PongTransport;
 import com.myster.client.datagram.UDPPingClient;
-import com.myster.client.net.MysterProtocol;
 import com.myster.net.DatagramProtocolManager;
 import com.myster.pref.Preferences;
 import com.myster.pref.ui.PreferencesPanel;
@@ -44,9 +45,9 @@ public class ServerFacade {
     private final Operator[] operators;
     private final TransferQueue transferQueue;
     private final ServerEventDispatcher serverDispatcher = new ServerEventDispatcher();
-    private final DoubleBlockingQueue connectionQueue;
+    private final DoubleBlockingQueue<Socket> connectionQueue;
     private final ConnectionManager[] connectionManagers;
-    private final Hashtable connectionSections = new Hashtable();
+    private final Map<Integer, ConnectionSection> connectionSections = new HashMap<>();
     private final IPListManager ipListManager;
     private final Preferences preferences;
 
@@ -60,7 +61,7 @@ public class ServerFacade {
         transferQueue = new ServerQueue();
         transferQueue.setMaxQueueLength(20);
 
-        connectionQueue = new DoubleBlockingQueue(0);
+        connectionQueue = new DoubleBlockingQueue<>(0);
 
         operators = new Operator[2];
         operators[0] = new Operator(connectionQueue, MysterGlobals.DEFAULT_PORT);
@@ -70,7 +71,9 @@ public class ServerFacade {
         TransactionManager.init(getServerDispatcher());
         initDatagramTransports();
         addStandardDatagramTransactions();
+    }
 
+    private void initPnPHolePunching() {
         InetAddress localHost = null;
         try {
             localHost = InetAddress.getLocalHost();
@@ -95,6 +98,9 @@ public class ServerFacade {
     public synchronized void startServer() {
         if (b) {
             b = false;
+
+            (new Thread(() -> initPnPHolePunching())).start();
+
             for (int i = 0; i < operators.length; i++) {
                 operators[i].start();
             }
@@ -192,19 +198,12 @@ public class ServerFacade {
 
     public class ServerPrefPanel extends PreferencesPanel {
         private final JTextField serverIdentityField;
-
         private final JLabel serverIdentityLabel;
-
         private final JComboBox<String> openSlotChoice;
-
         private final JLabel openSlotLabel;
-
         private final JComboBox<String> serverThreadsChoice;
-
         private final JLabel serverThreadsLabel;
-
         private final JLabel spacerLabel;
-
         private final JLabel explanation;
 
         private final com.myster.server.stream.FileSenderThread.FreeLoaderPref leech;

@@ -1,4 +1,4 @@
-package com.myster.menubar;
+package com.myster.ui.menubar;
 
 import java.awt.event.ActionListener;
 import java.awt.event.InputEvent;
@@ -9,13 +9,10 @@ import javax.swing.JMenuItem;
 import javax.swing.KeyStroke;
 
 public class MysterMenuItemFactory {
-    private ActionListener action;
-
-    private String name;
-
-    private int shortcut;
-
-    private boolean useShift;
+    private final ActionListener action;
+    private final String name;
+    private final int shortcut;
+    private final boolean useShift;
 
     private boolean isDisabled = false;
 

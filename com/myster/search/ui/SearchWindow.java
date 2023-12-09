@@ -39,6 +39,7 @@ import com.myster.search.SearchResultListener;
 import com.myster.tracker.IPListManager;
 import com.myster.type.MysterType;
 import com.myster.ui.MysterFrame;
+import com.myster.ui.MysterFrameContext;
 import com.myster.ui.WindowLocationKeeper;
 import com.myster.util.Sayable;
 import com.myster.util.TypeChoice;
@@ -66,8 +67,8 @@ public class SearchWindow extends MysterFrame implements SearchResultListener, S
     private SearchEngine searchEngine;
     private ClientHandleObject metaDateHandler;
 
-    public SearchWindow() {
-        super("Search Window " + (++counter));
+    public SearchWindow(MysterFrameContext c) {
+        super(c, "Search Window " + (++counter));
 
         setBackground(new Color(240, 240, 240));
 
@@ -161,19 +162,19 @@ public class SearchWindow extends MysterFrame implements SearchResultListener, S
         SearchWindow.manager = manager;
     }
     
-    public static void initWindowLocations() {
+    public static void initWindowLocations(MysterFrameContext c) {
         Rectangle[] rectangles = WindowLocationKeeper.getLastLocs(PREF_LOCATION_KEY);
 
         keeper = new WindowLocationKeeper(PREF_LOCATION_KEY);
 
         for (int i = 0; i < rectangles.length; i++) {
-            SearchWindow window = new SearchWindow();
+            SearchWindow window = new SearchWindow(c);
             window.setBounds(rectangles[i]);
             window.setVisible(true);
         }
 
         if (rectangles.length == 0) {
-            SearchWindow window = new SearchWindow();
+            SearchWindow window = new SearchWindow(c);
             window.setVisible(true);
         }
 
@@ -217,6 +218,7 @@ public class SearchWindow extends MysterFrame implements SearchResultListener, S
         }
         searchEngine = new SearchEngine(protocol,
                                         hashManager,
+                                        getMysterFrameContext(),
                                         manager,
                                         this,
                                         this,

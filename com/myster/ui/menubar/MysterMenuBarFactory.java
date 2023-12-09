@@ -1,4 +1,4 @@
-package com.myster.menubar;
+package com.myster.ui.menubar;
 
 import javax.swing.JFrame;
 import javax.swing.JMenuBar;

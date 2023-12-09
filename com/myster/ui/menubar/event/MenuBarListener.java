@@ -1,4 +1,4 @@
-package com.myster.menubar.event;
+package com.myster.ui.menubar.event;
 
 import com.general.events.EventListener;
 import com.general.events.GenericEvent;

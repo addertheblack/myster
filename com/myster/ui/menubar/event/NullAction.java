@@ -8,18 +8,18 @@
  * Copyright Andrew Trumper 2000-2001
  */
 
-package com.myster.menubar.event;
+package com.myster.ui.menubar.event;
 
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 
-import com.myster.server.ui.ServerStatsWindow;
+public class NullAction implements ActionListener {
 
-public class StatsWindowAction implements ActionListener {
+    public NullAction() {
+
+    }
 
     public void actionPerformed(ActionEvent e) {
-        ServerStatsWindow.getInstance().setVisible(true);
-        ServerStatsWindow.getInstance().toFrontAndUnminimize();
     }
 
 }

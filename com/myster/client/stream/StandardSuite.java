@@ -22,6 +22,7 @@ import com.myster.net.MysterClientSocketPool;
 import com.myster.search.HashCrawlerManager;
 import com.myster.search.MysterFileStub;
 import com.myster.type.MysterType;
+import com.myster.ui.MysterFrameContext;
 import com.myster.util.FileProgressWindow;
 
 /**
@@ -107,16 +108,18 @@ class StandardSuite {
      * <p>
      * THIS ROUTINE IS ASYNCHRONOUS!
      */
-    public static void downloadFile(final HashCrawlerManager crawlerManager, final MysterAddress ip, final MysterFileStub stub) {
-        (new DownloadThread(crawlerManager, ip, stub)).start();
+    public static void downloadFile(MysterFrameContext c, final HashCrawlerManager crawlerManager, final MysterAddress ip, final MysterFileStub stub) {
+        (new DownloadThread(c, crawlerManager, ip, stub)).start();
     }
 
     private static class DownloadThread extends com.myster.util.MysterThread {
         private final MysterAddress ip;
         private final MysterFileStub stub;
         private final HashCrawlerManager crawlerManager;
+        private final MysterFrameContext context;
 
-        public DownloadThread( HashCrawlerManager crawlerManager, MysterAddress ip, MysterFileStub stub) {
+        public DownloadThread(MysterFrameContext c, HashCrawlerManager crawlerManager, MysterAddress ip, MysterFileStub stub) {
+            this.context = c;
             this.ip = ip;
             this.stub = stub;
             this.crawlerManager = crawlerManager;
@@ -128,7 +131,7 @@ class StandardSuite {
             try {
                 Util.invokeAndWait(new Runnable() {
                     public void run() {
-                        progressArray[0] = new com.myster.util.FileProgressWindow("Connecting..");
+                        progressArray[0] = new com.myster.util.FileProgressWindow(context, "Connecting..");
                         FileProgressWindow progress = progressArray[0];
                         progress.setTitle("Downloading " + stub.getName());
                         progress.setText("Starting...");

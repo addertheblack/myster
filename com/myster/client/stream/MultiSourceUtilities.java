@@ -240,8 +240,6 @@ public class MultiSourceUtilities {
 
     /**
      * Asks the user to confirm stopping this download.
-     * 
-     * @return
      */
     public static boolean confirmCancel(Frame progress, MultiSourceDownload download) {
         if (download.isDone())

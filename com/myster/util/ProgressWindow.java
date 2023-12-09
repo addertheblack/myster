@@ -19,6 +19,7 @@ import javax.swing.JPanel;
 import com.general.util.ProgressBar;
 import com.general.util.Util;
 import com.myster.ui.MysterFrame;
+import com.myster.ui.MysterFrameContext;
 
 public class ProgressWindow extends MysterFrame {
     public static final int X_SIZE = 468;
@@ -31,12 +32,13 @@ public class ProgressWindow extends MysterFrame {
 
     protected final AdPanel adPanel = new AdPanel();
 
-    public ProgressWindow() {
+    public ProgressWindow(MysterFrameContext c) {
+        super(c);
         commonInit();
     }
 
-    public ProgressWindow(String title) {
-        super(title);
+    public ProgressWindow(MysterFrameContext c, String title) {
+        super(c, title);
 
         commonInit();
     }

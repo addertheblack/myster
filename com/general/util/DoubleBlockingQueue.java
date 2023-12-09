@@ -13,7 +13,7 @@ package com.general.util;
  * as a rendezvous point/variable or as a simple channel.
  *  
  */
-public class DoubleBlockingQueue extends BlockingQueue {
+public class DoubleBlockingQueue<T> extends BlockingQueue<T> {
     Semaphore addSem;
 
     public DoubleBlockingQueue(int length) { //if length=0, then it becomes a
@@ -29,7 +29,7 @@ public class DoubleBlockingQueue extends BlockingQueue {
      * Adds an object to the queue and returns when the data has been accepted
      * by the queue.
      */
-    public void add(Object o) {
+    public void add(T o) {
         addSem.waitx();
         super.add(o);
     }
@@ -37,8 +37,8 @@ public class DoubleBlockingQueue extends BlockingQueue {
     /**
      * Gets the next element from the queue. Blocks until Data is available.
      */
-    public Object get() throws InterruptedException {
-        Object t_o = super.get();
+    public T get() throws InterruptedException {
+        T t_o = super.get();
         addSem.signalx();
         return t_o;
     }

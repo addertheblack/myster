@@ -27,7 +27,14 @@ import com.general.thread.SpecialExecutor;
 public class MysterClientSocketPool implements SpecialExecutor {
     private static MysterClientSocketPool pool;
 
-    public static synchronized SpecialExecutor getInstance() {
+    /**
+     * Don't use this. It sucks.
+     * 
+     * @return yo moma
+     * @deprecated {@link PromiseFutures#execute(CancellableCallable, Executor)}
+     */
+    @Deprecated
+    public static synchronized MysterClientSocketPool getInstance() {
         if (pool == null) {
             pool = new MysterClientSocketPool(10);
         }
@@ -35,8 +42,12 @@ public class MysterClientSocketPool implements SpecialExecutor {
         return pool;
     }
 
+    public static synchronized Executor getExecutorInstance() {
+        return getInstance().threadPool;
+    }
+
     ///////////////////////////////Object\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
-    private final Executor threadPool;
+    public final Executor threadPool;
 
     /**
      * 

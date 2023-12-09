@@ -22,6 +22,7 @@ import java.util.ArrayList;
 import java.util.Enumeration;
 import java.util.List;
 
+import javax.swing.JFrame;
 import javax.swing.SwingUtilities;
 
 import org.fourthline.cling.UpnpService;
@@ -30,10 +31,9 @@ import org.fourthline.cling.model.types.UnsignedIntegerFourBytes;
 import org.fourthline.cling.support.igd.PortMappingListener;
 import org.fourthline.cling.support.model.PortMapping;
 
-import com.general.application.ApplicationSingleton;
+import com.general.application.ApplicationContext;
 import com.general.application.ApplicationSingletonListener;
 import com.general.util.AnswerDialog;
-import com.general.util.UnexpectedException;
 import com.general.util.Util;
 import com.myster.application.MysterGlobals;
 import com.myster.bandwidth.BandwidthManager;
@@ -42,8 +42,9 @@ import com.myster.client.net.MysterProtocolImpl;
 import com.myster.client.ui.ClientWindow;
 import com.myster.filemanager.FileTypeListManager;
 import com.myster.filemanager.ui.FMIChooser;
-import com.myster.menubar.MysterMenuBar;
+import com.myster.message.InstantMessageTransport;
 import com.myster.message.MessageManager;
+import com.myster.message.MessageWindow;
 import com.myster.message.ui.MessagePreferencesPanel;
 import com.myster.pref.Preferences;
 import com.myster.search.HashCrawlerManager;
@@ -55,8 +56,11 @@ import com.myster.server.ui.ServerStatsWindow;
 import com.myster.tracker.IPListManager;
 import com.myster.tracker.MysterIPPoolImpl;
 import com.myster.tracker.ui.TrackerWindow;
+import com.myster.transaction.TransactionManager;
 import com.myster.type.ui.TypeManagerPreferencesGUI;
+import com.myster.ui.MysterFrameContext;
 import com.myster.ui.PreferencesGui;
+import com.myster.ui.menubar.MysterMenuBar;
 import com.myster.ui.tray.MysterTray;
 import com.myster.util.I18n;
 
@@ -64,6 +68,8 @@ public class Myster {
     private static final String LOCK_FILE_NAME = ".lockFile";
 
     public static void main(String[] args) {
+        final long startTime = System.currentTimeMillis();
+
         final boolean isServer = (args.length > 0 && args[0].equals("-s"));
 
         System.out.println("java.vm.specification.version:"
@@ -72,72 +78,80 @@ public class Myster {
                 + System.getProperty("java.vm.specification.vendor"));
         System.out.println("java.vm.specification.name   :"
                 + System.getProperty("java.vm.specification.name"));
-        System.out.println("java.vm.version              :" + System.getProperty("java.vm.version"));
+        System.out
+                .println("java.vm.version              :" + System.getProperty("java.vm.version"));
         System.out.println("java.vm.vendor               :" + System.getProperty("java.vm.vendor"));
         System.out.println("java.vm.name                 :" + System.getProperty("java.vm.name"));
 
+        System.out.println("-------->> before javax.swing.UIManager invoke later "
+                + (System.currentTimeMillis() - startTime));
 
-        try {
-            SwingUtilities.invokeAndWait(() -> {
-                try {
-                    Class uiClass = Class.forName("javax.swing.UIManager");
-                    Method setLookAndFeel =
-                            uiClass.getMethod("setLookAndFeel", new Class[] { String.class });
-                    Method getSystemLookAndFeelClassName =
-                            uiClass.getMethod("getSystemLookAndFeelClassName", new Class[] {});
-                    String lookAndFeelName = (String) getSystemLookAndFeelClassName.invoke(null, new Object[0]);
-                    setLookAndFeel.invoke(null, new Object[] { lookAndFeelName });
-                } catch (ClassNotFoundException e1) {
-                    e1.printStackTrace();
-                } catch (SecurityException e) {
-                    e.printStackTrace();
-                } catch (NoSuchMethodException e) {
-                    e.printStackTrace();
-                } catch (IllegalArgumentException e) {
-                    e.printStackTrace();
-                } catch (IllegalAccessException e) {
-                    e.printStackTrace();
-                } catch (InvocationTargetException e) {
-                    e.printStackTrace();
-                }
-            });
-        } catch (InvocationTargetException | InterruptedException exception) {
-            throw new UnexpectedException(exception);
-        }
-
-        ApplicationSingletonListener applicationSingletonListener = new ApplicationSingletonListener() {
-            public void requestLaunch(String[] args) {
-                SearchWindow search = new SearchWindow();
-                search.show();
+        SwingUtilities.invokeLater(() -> {
+            try {
+                Class<?> uiClass = Class.forName("javax.swing.UIManager");
+                Method setLookAndFeel = uiClass.getMethod("setLookAndFeel", String.class);
+                Method getSystemLookAndFeelClassName =
+                        uiClass.getMethod("getSystemLookAndFeelClassName");
+                String lookAndFeelName = (String) getSystemLookAndFeelClassName.invoke(null);
+                setLookAndFeel.invoke(null, lookAndFeelName);
+            } catch (ClassNotFoundException e1) {
+                e1.printStackTrace();
+            } catch (SecurityException e) {
+                e.printStackTrace();
+            } catch (NoSuchMethodException e) {
+                e.printStackTrace();
+            } catch (IllegalArgumentException e) {
+                e.printStackTrace();
+            } catch (IllegalAccessException e) {
+                e.printStackTrace();
+            } catch (InvocationTargetException e) {
+                e.printStackTrace();
             }
+
+            // this gets awt to start initializing while we initialize Myster's
+            // backend
+            var f = new JFrame();
+            f.pack();
+            f.dispose();
+        });
+
+        System.out
+                .println("-------->> before Appl init " + (System.currentTimeMillis() - startTime));
+
+        ApplicationSingletonListener applicationSingletonListener =
+                new ApplicationSingletonListener() {
+                    public void requestLaunch(String[] args) {}
 
             public void errored(Exception ignore) {
                 // nothing
             }
         };
 
-        ApplicationSingleton applicationSingleton = new ApplicationSingleton(new File(MysterGlobals
-                .getCurrentDirectory(), LOCK_FILE_NAME), 10457, applicationSingletonListener, args);
+        ApplicationContext applicationContext =
+                new ApplicationContext(new File(MysterGlobals.getCurrentDirectory(),
+                                                LOCK_FILE_NAME),
+                                       10457,
+                                       applicationSingletonListener,
+                                       args);
 
-        MysterGlobals.appSigleton = applicationSingleton;
-        final long startTime = System.currentTimeMillis();
+        MysterGlobals.appSigleton = applicationContext;
+
         try {
-            if (!applicationSingleton.start())
+            if (!applicationContext.start())
                 return;
         } catch (IOException e) {
             e.printStackTrace();
             Frame parent = AnswerDialog.getCenteredFrame();
 
             AnswerDialog
-                    .simpleAlert(
-                            parent,
-                            "There seems to be another copy of Myster already running but I couldn't"
-                                    + " contact it. If you're sharing the computer with other people, one of them"
-                                    + " might be running Myster already or it might be that that Myster was not"
-                                    + " started from the same place the previous copy was started. Restarting the "
-                                    + " computer will make sure that the other Myster client gets quit.");
-            parent.dispose(); //if this isn't here Myster won't quit.
-            applicationSingleton.close();
+                    .simpleAlert(parent,
+                                 "There seems to be another copy of Myster already running but I couldn't"
+                                         + " contact it. If you're sharing the computer with other people, one of them"
+                                         + " might be running Myster already or it might be that that Myster was not"
+                                         + " started from the same place the previous copy was started. Restarting the "
+                                         + " computer will make sure that the other Myster client gets quit.");
+            parent.dispose(); // if this isn't here Myster won't quit.
+            applicationContext.close();
             System.exit(0);
             return;
         }
@@ -146,103 +160,117 @@ public class Myster {
 
         System.out.println("MAIN THREAD: Starting loader Thread..");
         
+        System.out.println("-------->> before preferences " + (System.currentTimeMillis() - startTime));
         Preferences preferences  = Preferences.getInstance();
+        System.out.println("-------->> after preferences " + (System.currentTimeMillis() - startTime));
         
         MysterProtocol protocol = new MysterProtocolImpl();
-        
+
+        System.out.println("-------->> before IPListManager " + (System.currentTimeMillis() - startTime));
         IPListManager listManager = new IPListManager(new MysterIPPoolImpl(preferences, protocol), protocol);
-        
+        System.out.println("-------->> after IPListManager " + (System.currentTimeMillis() - startTime));
+
         final HashCrawlerManager crawlerManager = new MultiSourceHashSearch(listManager, protocol);
-        TrackerWindow.init(listManager);
         ClientWindow.init(protocol, crawlerManager, listManager);
         ServerFacade serverFacade = new ServerFacade(listManager, preferences);
-        
+
         MessageManager.init(listManager, preferences);
-        
+
+
+        // asynchronously start the server
         serverFacade.startServer();
-        
+
+        System.out.println("-------->> before invokeAndWait " + (System.currentTimeMillis() - startTime));
+
         try {
-            Util.invokeAndWait(new Runnable() {
-                public void run() {
-                    try {
-                        if (com.myster.type.TypeDescriptionList.getDefault().getEnabledTypes().length <= 0) {
-                            AnswerDialog
-                                    .simpleAlert("There are not enabled types. This screws up Myster. Please make sure"
-                                            + " the typedescriptionlist.mml is in the right place and correctly"
-                                            + " formated.");
-                            MysterGlobals.quit();
-                            return; //not reached
-                        }
-                    } catch (Exception ex) {
-                        AnswerDialog.simpleAlert("Could not load the Type Description List: \n\n"
-                                + ex);
+            Util.invokeAndWait(() -> {
+                System.out.println("-------->> inside  invokeAndWait" + (System.currentTimeMillis() - startTime));
+                try {
+                    if (com.myster.type.TypeDescriptionList.getDefault().getEnabledTypes().length <= 0) {
+                        AnswerDialog
+                                .simpleAlert("There are not enabled types. This screws up Myster. Please make sure"
+                                        + " the typedescriptionlist.mml is in the right place and correctly"
+                                        + " formated.");
                         MysterGlobals.quit();
-                        return; //not reached
+                        return; // not reached
                     }
-                    PreferencesGui preferencesGui = new PreferencesGui();
-                    MysterMenuBar.init(listManager, preferencesGui);
+                } catch (Exception ex) {
+                    AnswerDialog.simpleAlert("Could not load the Type Description List: \n\n"
+                            + ex);
+                    MysterGlobals.quit();
+                    return; // not reached
+                }
 
-                    try {
-                        com.myster.hash.HashManager.init();
-                    } catch (Exception ex) {
-                        ex.printStackTrace();
-                    }
+                System.out.println("-------->> before menuBarFactory " + (System.currentTimeMillis() - startTime));
 
-                    
-                    com.myster.hash.ui.HashManagerGUI.init();
+                MysterMenuBar menuBarFactory = new MysterMenuBar();
+                final MysterFrameContext context = new MysterFrameContext(menuBarFactory);
+                PreferencesGui preferencesGui = new PreferencesGui(context);
 
-                    ServerStatsWindow.init(serverFacade.getServerDispatcher().getServerContext());
-                    ServerStatsWindow.getInstance().pack();
+                menuBarFactory.initMenuBar(listManager, preferencesGui);
 
-                    SearchWindow.init(protocol, crawlerManager, listManager);
+                TransactionManager.addTransactionProtocol(new InstantMessageTransport(preferences,
+                        (instantMessage) -> (new MessageWindow(context,
+                                instantMessage, listManager::getQuickServerStats))
+                                .show()));
 
-                    preferencesGui.addPanel(BandwidthManager.getPrefsPanel());
-                    preferencesGui.addPanel(new BannersPreferences());
-                    preferencesGui.addPanel(serverFacade.new ServerPrefPanel());
-                    preferencesGui.addPanel(new FMIChooser(FileTypeListManager.getInstance()));
-                    preferencesGui.addPanel(new MessagePreferencesPanel(preferences));
-                    preferencesGui.addPanel(new TypeManagerPreferencesGUI());
+                TrackerWindow.init(listManager, context);
 
-                    try {
-                        (new com.myster.plugin.PluginLoader(new File(MysterGlobals
-                                .getCurrentDirectory(), "plugins"))).loadPlugins();
-                    } catch (Exception ex) {
-                        // nothing
-                    }
+                try {
+                    com.myster.hash.HashManager.init();
+                } catch (Exception ex) {
+                    ex.printStackTrace();
+                }
 
-                    com.myster.hash.ui.HashPreferences.init();
+                com.myster.hash.ui.HashManagerGUI.init(context);
+
+                ServerStatsWindow.init(serverFacade.getServerDispatcher().getServerContext(), context);
+                 System.out.println("-------->> before ServerStatsWindow.getInstance().pack() " + (System.currentTimeMillis() - startTime));
+                ServerStatsWindow.getInstance().pack();
+
+                SearchWindow.init(protocol, crawlerManager, listManager);
+
+                 System.out.println("-------->> before addPanels " + (System.currentTimeMillis() - startTime));
+                preferencesGui.addPanel(BandwidthManager.getPrefsPanel());
+                preferencesGui.addPanel(new BannersPreferences());
+                preferencesGui.addPanel(serverFacade.new ServerPrefPanel());
+                preferencesGui.addPanel(new FMIChooser(FileTypeListManager.getInstance()));
+                preferencesGui.addPanel(new MessagePreferencesPanel(preferences));
+                preferencesGui.addPanel(new TypeManagerPreferencesGUI());
+
+                try {
+                    (new com.myster.plugin.PluginLoader(new File(MysterGlobals
+                            .getCurrentDirectory(), "plugins"))).loadPlugins();
+                } catch (Exception ex) {
+                    // nothing
+                }
+
+                com.myster.hash.ui.HashPreferences.init();
+
+                System.out.println("-------->> before inits " + (System.currentTimeMillis() - startTime));
+
+                if (isServer) {
+                    // nothing
+                } else {
+                    com.myster.ui.WindowManager.init(menuBarFactory);
+                    com.myster.client.ui.ClientWindow.initWindowLocations(context);
+                    ServerStatsWindow.initWindowLocations();
+                    com.myster.tracker.ui.TrackerWindow.initWindowLocations();
+                    com.myster.hash.ui.HashManagerGUI.initGui();
+                    SearchWindow.initWindowLocations(context);
+                }
+
+                try {
+                    com.myster.client.stream.MSPartialFile.restartDownloads(crawlerManager, context);
+                } catch (IOException ex) {
+                    System.out.println("Error in restarting downloads.");
+                    ex.printStackTrace();
                 }
             });
 
             System.out.println("-------->>" + (System.currentTimeMillis() - startTime));
-            if (isServer) {
-                // nothing
-            } else {
-                Util.invokeAndWait(new Runnable() {
-                    public void run() {
-                        com.myster.ui.WindowManager.init();
-                        
-                        com.myster.client.ui.ClientWindow.initWindowLocations();
-                        ServerStatsWindow.initWindowLocations();
-                        com.myster.tracker.ui.TrackerWindow.initWindowLocations();
-                        com.myster.hash.ui.HashManagerGUI.initGui();
-                        SearchWindow.initWindowLocations();
-                    }
-                });
-            }
 
             Thread.sleep(1);
-
-            Util.invokeLater(new Runnable() {
-                public void run() {
-                    try {
-                        com.myster.client.stream.MSPartialFile.restartDownloads(crawlerManager);
-                    } catch (IOException ex) {
-                        System.out.println("Error in restarting downloads.");
-                        ex.printStackTrace();
-                    }
-                }
-            });
 
             com.myster.hash.HashManager.start();
             FileTypeListManager.getInstance();
@@ -253,7 +281,6 @@ public class Myster {
         }
 
         // ugh
-
         printoutAllNetworkInterfaces();
         printoutAllIpAddresses();
         setupUpnp();

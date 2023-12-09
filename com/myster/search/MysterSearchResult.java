@@ -8,21 +8,25 @@ import com.myster.mml.RobustMML;
 import com.myster.net.MysterAddress;
 import com.myster.search.ui.ServerStatsFromCache;
 import com.myster.tracker.MysterServer;
+import com.myster.ui.MysterFrameContext;
 
 public class MysterSearchResult implements SearchResult {
     private final MysterFileStub stub;
     private final ServerStatsFromCache cache;
     private final MysterProtocol protocol;
     private final HashCrawlerManager hashCrawler;
+    private final  MysterFrameContext context;
     
     private RobustMML mml;
 
     public MysterSearchResult(MysterProtocol protocol,
                               HashCrawlerManager hashCrawler,
+                              MysterFrameContext context,
                               MysterFileStub stub,
                               ServerStatsFromCache cache) {
         this.protocol = protocol;
         this.hashCrawler = hashCrawler;
+        this.context = context;
         this.stub = stub;
         this.cache = cache;
     }
@@ -34,7 +38,7 @@ public class MysterSearchResult implements SearchResult {
     // is called when the user decides to download the item
     @Override
     public void download() {
-        getProtocol().getStream().downloadFile(hashCrawler, stub.getMysterAddress(), stub);
+        getProtocol().getStream().downloadFile(context, hashCrawler, stub.getMysterAddress(), stub);
     }
 
     //returns the network the search result is on.

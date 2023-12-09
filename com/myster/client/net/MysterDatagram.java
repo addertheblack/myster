@@ -3,7 +3,6 @@ package com.myster.client.net;
 
 import java.io.IOException;
 import java.util.List;
-import java.util.concurrent.Future;
 
 import com.general.thread.CallListener;
 import com.general.thread.PromiseFuture;

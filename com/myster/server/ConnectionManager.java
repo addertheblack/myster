@@ -14,7 +14,7 @@ package com.myster.server;
 import java.io.DataInputStream;
 import java.io.IOException;
 import java.net.Socket;
-import java.util.Hashtable;
+import java.util.Map;
 
 import com.general.util.BlockingQueue;
 import com.myster.net.MysterAddress;
@@ -44,18 +44,14 @@ import com.myster.util.MysterThread;
  */
 
 public class ConnectionManager extends MysterThread {
-    private Socket socket;
-
-    private ServerEventDispatcher eventSender;
-
-    private BlockingQueue socketQueue;
-
-    private TransferQueue transferQueue;
-
-    private Hashtable connectionSections = new Hashtable();
-
+    private final ServerEventDispatcher eventSender;
+    private final BlockingQueue<Socket> socketQueue;
+    private final TransferQueue transferQueue;
+    private final Map<Integer, ConnectionSection> connectionSections;
+    
     private ConnectionContext context;
-
+    private Socket socket;
+    
     private static volatile int threadCounter = 0;
 
     /**
@@ -72,8 +68,10 @@ public class ConnectionManager extends MysterThread {
      *            a Hashtable of connection section integers to
      *            ConnectionSection objects
      */
-    protected ConnectionManager(BlockingQueue socketQueue, ServerEventDispatcher eventSender,
-            TransferQueue transferQueue, Hashtable connectionSections) {
+    protected ConnectionManager(BlockingQueue<Socket> socketQueue,
+                                ServerEventDispatcher eventSender,
+                                TransferQueue transferQueue,
+                                Map<Integer, ConnectionSection> connectionSections) {
         super("Server Thread " + (++threadCounter));
 
         this.socketQueue = socketQueue;
@@ -102,7 +100,7 @@ public class ConnectionManager extends MysterThread {
      */
     private void doConnection() {
         try {
-            socket = (Socket) (socketQueue.get());
+            socket =  socketQueue.get();
         } catch (InterruptedException ex) {
             //should never happen
             return;//exit quickly in case it's being called by System.exit();
@@ -150,10 +148,11 @@ public class ConnectionManager extends MysterThread {
                     // command is good  !
                     return;
                 default:
-                    ConnectionSection section = (ConnectionSection) (connectionSections
-                            .get(new Integer(protocalcode)));
+                    ConnectionSection section = connectionSections
+                            .get(protocalcode);
                     if (section == null) {
-                        System.out.println("!!!System detects unknown protocol number : "
+                        System.out
+                                .println("!!!System detects unknown protocol number : "
                                 + protocalcode);
                         context.socket.out.write(0); //Tells the other end that
                         // the command is bad!
@@ -163,7 +162,7 @@ public class ConnectionManager extends MysterThread {
                 }
             } while (true);
         } catch (IOException ex) {
-
+            // nothing
         } finally {
 
             if (sectioncounter == 0)
@@ -223,6 +222,7 @@ public class ConnectionManager extends MysterThread {
         try {
             socket.close();
         } catch (Exception ex) {
+            //nothing
         }
     }
 

@@ -21,6 +21,7 @@ import com.general.tab.TabListener;
 import com.general.tab.TabPanel;
 import com.myster.server.event.ServerContext;
 import com.myster.ui.MysterFrame;
+import com.myster.ui.MysterFrameContext;
 import com.myster.util.Sayable;
 
 public class ServerStatsWindow extends MysterFrame implements Sayable {
@@ -44,13 +45,16 @@ public class ServerStatsWindow extends MysterFrame implements Sayable {
 
     private static ServerContext context;
 
-    public static void init(ServerContext context) {
+    private static MysterFrameContext mysterFrameContext;
+
+    public static void init(ServerContext context, MysterFrameContext c) {
         ServerStatsWindow.context = context;
+        ServerStatsWindow.mysterFrameContext = c;
     }
     
     public synchronized static ServerStatsWindow getInstance() {
         if (singleton == null) {
-            singleton = new ServerStatsWindow();
+            singleton = new ServerStatsWindow(ServerStatsWindow.mysterFrameContext);
         }
         return singleton;
     }
@@ -70,8 +74,8 @@ public class ServerStatsWindow extends MysterFrame implements Sayable {
         //System.out.println(s);
     }
 
-    protected ServerStatsWindow() {
-        super("Server Statistics");
+    protected ServerStatsWindow(MysterFrameContext c) {
+        super(c, "Server Statistics");
 
         keeper = new com.myster.ui.WindowLocationKeeper("Server Stats");
         keeper.addFrame(this); //never remove.
@@ -83,7 +87,7 @@ public class ServerStatsWindow extends MysterFrame implements Sayable {
 
         tab = new TabPanel();
 
-        downloadPanel = new DownloadInfoPanel(context);
+        downloadPanel = new DownloadInfoPanel(context, c);
 
         statsinfopanel = new StatsInfoPanel(context);
 

@@ -15,7 +15,6 @@ import java.awt.Color;
 import java.awt.Dimension;
 import java.awt.Font;
 import java.awt.Graphics;
-import java.awt.Insets;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.ComponentEvent;
@@ -37,8 +36,8 @@ import javax.swing.event.ListSelectionListener;
 
 import com.general.util.Util;
 
-import com.myster.filemanager.ui.FMIChooser;
 import com.myster.ui.MysterFrame;
+import com.myster.ui.MysterFrameContext;
 
 /**
  * This object is reponsible for the preferences dialog box that pops up when
@@ -48,8 +47,6 @@ import com.myster.ui.MysterFrame;
  */
 
 public class PreferencesDialogBox extends MysterFrame {
-    private Insets insets;
-
     private static final int XDEFAULT = 600;
 
     private static final int YDEFAULT = 400;
@@ -59,8 +56,9 @@ public class PreferencesDialogBox extends MysterFrame {
     /**
      * Builds a new Preferences Dialog
      */
-    public PreferencesDialogBox() {
-        super("Preferences Browser");
+    public PreferencesDialogBox(MysterFrameContext context) {
+        super(context,"Preferences Browser");
+
         setBackground(new Color(240, 240, 240));
         //setLayout(null);
 

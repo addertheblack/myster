@@ -16,6 +16,7 @@ import com.myster.hash.HashManager;
 import com.myster.hash.HashManagerEvent;
 import com.myster.hash.HashManagerListener;
 import com.myster.ui.MysterFrame;
+import com.myster.ui.MysterFrameContext;
 import com.myster.ui.WindowLocationKeeper;
 
 public class HashManagerGUI extends MysterFrame {
@@ -36,12 +37,12 @@ public class HashManagerGUI extends MysterFrame {
         }
     }
 
-    public static void init() {
-        singleton = new HashManagerGUI();
+    public static void init(MysterFrameContext context) {
+        singleton = new HashManagerGUI(context);
     }
 
-    public static com.myster.menubar.MysterMenuItemFactory getMenuItem() {
-        return new com.myster.menubar.MysterMenuItemFactory(
+    public static com.myster.ui.menubar.MysterMenuItemFactory getMenuItem() {
+        return new com.myster.ui.menubar.MysterMenuItemFactory(
                 "Show Hash Manager", new ActionListener() {
                     public void actionPerformed(ActionEvent e) {
                         singleton.setVisible(true);
@@ -57,8 +58,8 @@ public class HashManagerGUI extends MysterFrame {
 
     ////End
 
-    public HashManagerGUI() {
-        super("Hash Manager");
+    public HashManagerGUI(MysterFrameContext context) {
+        super(context, "Hash Manager");
 
         setBackground(new Color(240, 240, 240));
 

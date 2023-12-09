@@ -15,22 +15,24 @@ package com.myster.search;
 import java.io.IOException;
 import java.net.UnknownHostException;
 import java.util.HashSet;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Set;
-import java.util.concurrent.Future;
 
 import com.general.thread.CallListener;
+import com.general.thread.Cancellable;
 import com.general.thread.CancellableCallable;
+import com.general.thread.PromiseFuture;
+import com.general.thread.PromiseFutures;
 import com.general.util.Util;
 import com.myster.client.net.MysterProtocol;
 import com.myster.net.MysterAddress;
+import com.myster.net.MysterClientSocketPool;
 import com.myster.net.MysterSocket;
 import com.myster.net.MysterSocketFactory;
-import com.myster.net.MysterClientSocketPool;
 import com.myster.tracker.IPListManager;
 import com.myster.tracker.MysterServer;
 import com.myster.type.MysterType;
+import com.myster.ui.MysterFrameContext;
 import com.myster.util.Sayable;
 
 /**
@@ -92,13 +94,15 @@ public class MysterSearch {
      * represent outstanding asynchronous tasks. If this Set is empty then we're done since there's
      * nothing left pending.
      */
-    private final Set<Future> outStandingFutures;
+    private final Set<Cancellable> outStandingFutures;
     private final IPListManager ipListManager;
     private final MysterProtocol protocol;
     private final HashCrawlerManager hashManager;
+    private final MysterFrameContext context;
 
     public MysterSearch(MysterProtocol protocol, 
                         HashCrawlerManager hashManager,
+                        MysterFrameContext context, 
                         IPListManager ipListManager,
                         SearchResultListener listener,
                         Sayable msg,
@@ -106,9 +110,11 @@ public class MysterSearch {
                         String searchString) {
         this.protocol = protocol;
         this.hashManager = hashManager;
+        this.context = context;
         this.msg = (String s) -> Util.invokeNowOrLater(() -> msg.say(s));
         this.searcher = new StandardMysterSearch(protocol,
                                                  hashManager,
+                                                 context,
                                                  ipListManager,
                                                  searchString,
                                                  type,
@@ -118,7 +124,7 @@ public class MysterSearch {
         this.listener = listener;
         this.ipListManager = ipListManager;
 
-        outStandingFutures = new HashSet();
+        outStandingFutures = new HashSet<>();
     }
 
     /**
@@ -173,12 +179,10 @@ public class MysterSearch {
 
         Util.invokeLater(new Runnable() {
             public void run() {
-                for (Iterator iter = outStandingFutures.iterator(); iter.hasNext();) {
-                    Future future = (Future) iter.next();
-                    future.cancel(false);
-
-                    listener.searchOver(); //cannot be called twice. (see checkForDone()).
+                for (Cancellable cancellable : outStandingFutures) {
+                    cancellable.cancel();
                 }
+                listener.searchOver();
             }
         });
     }
@@ -264,14 +268,16 @@ public class MysterSearch {
             return;
 
         // ADD_TOP_TEN
-        CancellableCallableRemover removerTopTen = new UdpTopTen(ipQueue);
-        Future topTenFuture = protocol.getDatagram().getTopServers(address, type, removerTopTen);
+        CancellableCallableRemover<String[]> removerTopTen = new CancellableCallableRemover<>();
+        UdpTopTen  udpTopTen = new UdpTopTen(ipQueue);
+        PromiseFuture<String[]> topTenFuture = protocol.getDatagram().getTopServers(address, type, udpTopTen);
         removerTopTen.setFuture(topTenFuture);
         outStandingFutures.add(topTenFuture);
 
         // ADD_SEARCH
-        CancellableCallableRemover removerSearch = new UdpSearch(address);
-        Future searchFuture = protocol.getDatagram().getSearch(address, type, searchString, removerSearch);
+        CancellableCallableRemover<List<String>> removerSearch = new CancellableCallableRemover<>();
+        UdpSearch udpSearch = new UdpSearch(address);
+        PromiseFuture<List<String>> searchFuture = protocol.getDatagram().getSearch(address, type, searchString, udpSearch);
         removerSearch.setFuture(searchFuture);
         outStandingFutures.add(searchFuture);
     }
@@ -299,8 +305,8 @@ public class MysterSearch {
             public void run() {
                 if (endFlag)
                     return;
-                CancellableCallableRemover remover = new CancellableCallableRemover();
-                Future future = MysterClientSocketPool.getInstance().execute(section, remover);
+                CancellableCallableRemover<Object> remover = new CancellableCallableRemover<Object>();
+                PromiseFuture<Object> future = PromiseFutures.execute(section, MysterClientSocketPool.getExecutorInstance()).addCallListener(remover).useEdt();
                 remover.setFuture(future);
                 outStandingFutures.add(future);
             }
@@ -386,8 +392,8 @@ public class MysterSearch {
      * @param address
      */
     private void addAddressToQueue(final IPQueue queue, final String address) {
-        CancellableCallable addressLookup = new CancellableCallable() {
-            public Object call() throws Exception {
+        CancellableCallable<MysterAddress> addressLookup = new CancellableCallable<MysterAddress>() {
+            public MysterAddress call() throws Exception {
                 return new MysterAddress(address);
             }
 
@@ -396,13 +402,15 @@ public class MysterSearch {
             }
         };
 
-        CancellableCallableRemover callListener = new CancellableCallableRemover() {
-            public void handleResult(Object result) {
-                queue.addIP((MysterAddress) result);
+        CancellableCallableRemover<MysterAddress> callListener = new CancellableCallableRemover<MysterAddress>() {
+            public void handleResult(MysterAddress result) {
+                queue.addIP( result);
                 processNewAddresses(queue);
             }
         };
-        Future future = MysterClientSocketPool.getInstance().execute(addressLookup, callListener);
+        PromiseFuture<MysterAddress> future = PromiseFutures
+                .execute(addressLookup, MysterClientSocketPool.getExecutorInstance()).addCallListener(callListener)
+                .useEdt();
         callListener.setFuture(future);
         outStandingFutures.add(future);
     }
@@ -412,7 +420,7 @@ public class MysterSearch {
      * 
      * @param future
      */
-    private void removeFuture(Future future) {
+    private void removeFuture(Cancellable future) {
         boolean success = outStandingFutures.remove(future);
 
         if (!success) {
@@ -491,6 +499,7 @@ public class MysterSearch {
                 mysterSearchResults[i] =
                         new MysterSearchResult(protocol,
                                                hashManager,
+                                               context,
                                                new MysterFileStub(address, type, results.get(i)),
                                                ipListManager::getQuickServerStats);
             }
@@ -505,7 +514,7 @@ public class MysterSearch {
 
     }
 
-    private class UdpTopTen extends CancellableCallableRemover {
+    private class UdpTopTen extends CancellableCallableRemover<String[]> {
         private final IPQueue ipQueue;
 
         private UdpTopTen(IPQueue ipQueue) {
@@ -513,8 +522,7 @@ public class MysterSearch {
             this.ipQueue = ipQueue;
         }
 
-        public void handleResult(Object result) {
-            String[] addresses = (String[]) result;
+        public void handleResult(String[] addresses) {
 
             /*
              * We go through the list of returned addresses and first try to make a MysterAddress
@@ -539,7 +547,7 @@ public class MysterSearch {
         }
     }
 
-    public abstract class StreamSection implements CancellableCallable {
+    public abstract class StreamSection implements CancellableCallable<Object> {
         protected MysterAddress address;
 
         protected MysterSocket socket = null;
@@ -631,7 +639,7 @@ public class MysterSearch {
      * of futures maintained by this MysterSearch object.
      */
     private class CancellableCallableRemover<T> implements CallListener<T> {
-        private Future future;
+        private PromiseFuture<T> future;
 
         public void handleCancel() {
             // nothing
@@ -657,7 +665,7 @@ public class MysterSearch {
          * 
          * @param future
          */
-        public void setFuture(Future future) {
+        public void setFuture(PromiseFuture<T>  future) {
             this.future = future;
         }
     }

@@ -12,6 +12,7 @@ import com.myster.net.MysterSocket;
 import com.myster.search.HashCrawlerManager;
 import com.myster.search.MysterFileStub;
 import com.myster.type.MysterType;
+import com.myster.ui.MysterFrameContext;
 
 public class MysterStreamImpl implements MysterStream {
     @Override
@@ -46,12 +47,13 @@ public class MysterStreamImpl implements MysterStream {
     public RobustMML getFileStats(MysterSocket socket, MysterFileStub stub) throws IOException {
         return StandardSuite.getFileStats(socket, stub);
     }
-    
+
     @Override
-    public void downloadFile(HashCrawlerManager crawlerManager,
-                             MysterAddress ip,
-                             MysterFileStub stub) {
-        StandardSuite.downloadFile(crawlerManager, ip, stub);
+    public void downloadFile(MysterFrameContext c,
+                            HashCrawlerManager crawlerManager,
+                            MysterAddress ip,
+                            MysterFileStub stub) {
+        StandardSuite.downloadFile(c, crawlerManager, ip, stub);
     }
 
 }

@@ -32,6 +32,7 @@ import com.myster.net.MysterAddress;
 import com.myster.search.ui.ServerStatsFromCache;
 import com.myster.tracker.MysterServer;
 import com.myster.ui.MysterFrame;
+import com.myster.ui.MysterFrameContext;
 
 public class MessageWindow extends MysterFrame {
     private JPanel mainPanel;
@@ -52,29 +53,30 @@ public class MessageWindow extends MysterFrame {
 
     public static final boolean FROM_SOMEONE_ELSE = false;
 
-    public MessageWindow(InstantMessage message, ServerStatsFromCache getServer) {
-        this(FROM_SOMEONE_ELSE, message.message, message.quote, message.address, getServer);
+    public MessageWindow(MysterFrameContext context,InstantMessage message, ServerStatsFromCache getServer) {
+        this(context, FROM_SOMEONE_ELSE, message.message, message.quote, message.address, getServer);
     }
 
-    public MessageWindow(MysterAddress address, String quote, ServerStatsFromCache getServer) {
-        this(NEW_MESSAGE, "", quote, address, getServer);
+    public MessageWindow(MysterFrameContext context,MysterAddress address, String quote, ServerStatsFromCache getServer) {
+        this(context, NEW_MESSAGE, "", quote, address, getServer);
     }
 
-    public MessageWindow(MysterAddress address) {
-        this(NEW_MESSAGE, "", null, address, (a) -> null);
+    public MessageWindow(MysterFrameContext context, MysterAddress address) {
+        this(context, NEW_MESSAGE, "", null, address, (a) -> null);
     }
 
-    public MessageWindow() {
-        this(NEW_MESSAGE, "", null, null, (a) -> null);
+    public MessageWindow(MysterFrameContext context) {
+        this(context, NEW_MESSAGE, "", null, null, (a) -> null);
     }
 
-    private MessageWindow(final boolean type, final String message, final String quote,
+    private MessageWindow(MysterFrameContext context, final boolean type, final String message, final String quote,
             final MysterAddress address, ServerStatsFromCache getServer) {
+                super(context);
         this.getServer = getServer;
         
         setSize(320, 400);
 
-        //Do interface setup:
+        //Do interface setup: 
         gblayout = new GridBagLayout();
         gbconstrains = new GridBagConstraints();
         gbconstrains.fill = GridBagConstraints.BOTH;
@@ -222,7 +224,7 @@ public class MessageWindow extends MysterFrame {
                     public void actionPerformed(ActionEvent e) {
                         try {
                             MessageWindow messageWindow =
-                                    new MessageWindow(header.getAddress(), getMessage(), getServer);
+                                    new MessageWindow(getMysterFrameContext(),  header.getAddress(), getMessage(), getServer);
                             messageWindow.setBounds(MessageWindow.this.getBounds());
                             messageWindow.setVisible(true);
                             closeThisWindow();

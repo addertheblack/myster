@@ -920,7 +920,7 @@ Work on DEV 8:
 				DOES NOT REQUIRE MYSTER TO BE RESTARTED! Hurray!
 		-> Work around freeze on cancel.
 	
-	< Absence brough about by some sort of depression >
+	< Absence brought about by some sort of depression >
 	
 	Wrote a tutorial on Myster's Transaction framework
 	Wrote the top ten connection section as a UDP section
@@ -1119,16 +1119,21 @@ Work on DEV 8:
 	  			
 2023-12-01
 
-Refactored standard protocol suite code
-to better use new concurrency library.
-Added new concurrency library code to 
-take advantage of everything I've learned over the years
-Fix AnswerDialog to work correctly - resize broke
-fix ProgressDialog to adapt to new Java
-Fixed Ant build.xml to work
-Fixed manifest
-Tweaked the relationships between objects and started removing singletons in anticipation of new unit testing code
+    -> Refactored standard protocol suite code
+    -> to better use new concurrency library.
+    -> Added new concurrency library code to 
+    -> take advantage of everything I've learned over the years
+    -> Fix AnswerDialog to work correctly - resize broke
+    -> fix ProgressDialog to adapt to new Java
+    -> Fixed Ant build.xml to work
+    -> Fixed manifest
+    -> Tweaked the relationships between objects and started removing singletons in anticipation of new unit testing code
 
+2023-12-08
+    -> Refactored Myster menubar related code so it's injected not a singleton
+    
+    
+   
 		
 (Red List)
 to do:
@@ -1136,5 +1141,11 @@ to do:
 Need to convert to Maven
 Need to update all libraries
 Need to try out building using the modern JDK 20 tools
-Need to implement
+Need to implement private networks
+    need to get rid of old download code
+    need to get rid of myster type or otherwise make it as string
+    need to add private certificate code
+    need to find a format for sharing a network file - like public key, primary servers etc.. maybe other public keys too
+    need to be able to share the network config file (might be similar to network file.. or a superset)
+Fix hash cache to save things in preferences not on disk in a random file
 

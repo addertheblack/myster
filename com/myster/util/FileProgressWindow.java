@@ -14,6 +14,7 @@ import java.util.List;
 import com.general.util.Timer;
 import com.general.util.Util;
 import com.myster.net.web.WebLinkManager;
+import com.myster.ui.MysterFrameContext;
 
 public class FileProgressWindow extends ProgressWindow {
     public static final int BAR_1 = 0;
@@ -30,12 +31,12 @@ public class FileProgressWindow extends ProgressWindow {
 
     private String url;
 
-    public FileProgressWindow() {
-        this("");
+    public FileProgressWindow(MysterFrameContext c) {
+        this(c, "");
     }
 
-    public FileProgressWindow(String title) {
-        super(title);
+    public FileProgressWindow(MysterFrameContext c, String title) {
+        super(c, title);
 
         resizeVectorWithLongs(barStartTime, getProgressBarNumber());
         resizeVectorWithLongs(previouslyDownloaded, getProgressBarNumber());

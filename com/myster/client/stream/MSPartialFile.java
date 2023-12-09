@@ -21,6 +21,7 @@ import com.myster.mml.MMLException;
 import com.myster.mml.RobustMML;
 import com.myster.search.HashCrawlerManager;
 import com.myster.type.MysterType;
+import com.myster.ui.MysterFrameContext;
 import com.myster.util.FileProgressWindow;
 
 public class MSPartialFile {
@@ -114,31 +115,31 @@ public class MSPartialFile {
         return msPartialFiles;
     }
 
-    public static void restartDownloads(HashCrawlerManager crawlerManager) throws IOException {
+    public static void restartDownloads(HashCrawlerManager crawlerManager, MysterFrameContext c) throws IOException {
         MSPartialFile[] files = list();
 
         for (int i = 0; i < files.length; i++) {
             try {
-                startDownload(files[i], crawlerManager);
+                startDownload(files[i], crawlerManager, c);
             } catch (IOException ex) {
                 ex.printStackTrace();
             }
         }
     }
 
-    private static FileProgressWindow showProgres(final String filename) {
-        final FileProgressWindow progress = new FileProgressWindow();
+    private static FileProgressWindow showProgres(MysterFrameContext c, final String filename) {
+        final FileProgressWindow progress = new FileProgressWindow(c);
         progress.setTitle("Downloading " + filename);
         progress.show();
         return progress;
     }
 
     //Resumable multisource driver.
-    public static void startDownload(MSPartialFile partialFile, HashCrawlerManager crawlerManager) throws IOException {
+    public static void startDownload(MSPartialFile partialFile, HashCrawlerManager crawlerManager, MysterFrameContext c) throws IOException {
         final String finalFileName = partialFile.getFilename() + ".i";
         final String pathToType = com.myster.filemanager.FileTypeListManager.getInstance()
                 .getPathFromType(partialFile.getType());
-        final FileProgressWindow progress = showProgres(partialFile.getFilename());
+        final FileProgressWindow progress = showProgres(c, partialFile.getFilename());
         String incompleteFilename = partialFile.getFilename() + ".i";
         File dir = partialFile.getPath();
         File file = new File(dir, incompleteFilename);

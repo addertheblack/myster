@@ -12,6 +12,7 @@ import com.myster.net.MysterSocketFactory;
 import com.myster.search.HashCrawlerManager;
 import com.myster.search.MysterFileStub;
 import com.myster.type.MysterType;
+import com.myster.ui.MysterFrameContext;
 
 public interface MysterStream {
     // Vector of strings
@@ -35,7 +36,7 @@ public interface MysterStream {
      * <p>
      * THIS ROUTINE IS ASYNCHRONOUS!
      */
-    public void downloadFile(final HashCrawlerManager crawlerManager, final MysterAddress ip, final MysterFileStub stub);
+    public void downloadFile(MysterFrameContext c, final HashCrawlerManager crawlerManager, final MysterAddress ip, final MysterFileStub stub);
     
     public default <T> T byIp(MysterAddress ip, StandardStreamSection<T> section) throws IOException {
         try (MysterSocket socket = MysterSocketFactory.makeStreamConnection(ip)){

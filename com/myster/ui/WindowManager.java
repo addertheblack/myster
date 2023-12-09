@@ -1,5 +1,6 @@
 package com.myster.ui;
 
+import java.awt.EventQueue;
 import java.awt.Frame;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
@@ -8,16 +9,15 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Vector;
 
 import javax.swing.JFrame;
 import javax.swing.JMenu;
 
 import com.myster.application.MysterGlobals;
-import com.myster.menubar.MysterMenuBar;
-import com.myster.menubar.MysterMenuFactory;
-import com.myster.menubar.MysterMenuItemFactory;
-import com.myster.menubar.event.NullAction;
+import com.myster.ui.menubar.MysterMenuBar;
+import com.myster.ui.menubar.MysterMenuFactory;
+import com.myster.ui.menubar.MysterMenuItemFactory;
+import com.myster.ui.menubar.event.NullAction;
 
 /**
  * This class is responsible for managing the number and order of all Myster
@@ -25,17 +25,14 @@ import com.myster.menubar.event.NullAction;
  * "Windows" menu. It also is way too coupled with MysterFrame.
  */
 public class WindowManager {
-    private static final Map<MysterFrame, JMenu> windowMenuHash = new HashMap<>();
-
+    private static final Map<MysterFrame, JMenu> windowMenuMap = new HashMap<>();
     private static final List<MysterFrame> windows = new ArrayList<>();
 
     private static MysterFrame frontMost;
-
     private static List<MysterMenuItemFactory> menuItems;
-
     private static List<MysterMenuItemFactory> finalMenu;
 
-    public static void init() {
+    public static void init(MysterMenuBar mysterMenuBar) {
         synchronized (windows) {
             if (isInited) {
                 throw new IllegalStateException("Tried to init WindowManager twice");
@@ -53,7 +50,7 @@ public class WindowManager {
 
             finalMenu = new ArrayList<MysterMenuItemFactory>();
 
-            MysterMenuBar.addMenu(new MysterMenuFactory("Windows", finalMenu) {
+            mysterMenuBar.addMenu(new MysterMenuFactory("Windows", finalMenu) {
                 @Override
                 public JMenu makeMenu(JFrame frame) {
                     return getCorrectWindowsMenu(frame);
@@ -67,18 +64,17 @@ public class WindowManager {
         synchronized (windows) {
             if (!windows.contains(frame)) {
                 windows.add(frame);
-                windowMenuHash.put(frame, (new MysterMenuFactory("Windows", finalMenu))
+                windowMenuMap.put(frame, (new MysterMenuFactory("Windows", finalMenu))
                         .makeMenu(frame));
                 // Timer t=new Timer(doUpdateClass, 1);//might cause deadlocks.
                 updateMenu();
             }
         }
-
     }
 
     static void removeWindow(MysterFrame frame) {
         boolean yep = windows.remove(frame);
-        windowMenuHash.remove(frame);
+        windowMenuMap.remove(frame);
         if (yep) {
             // Timer t=new Timer(doUpdateClass, 1); //might cause deadlocks.
             updateMenu();
@@ -92,11 +88,18 @@ public class WindowManager {
     }
 
     public static void updateMenu() {
+        // I'm not sure if this needs to be synchronized because it's UI code that
+        // should be on the EDT
+
+        if (!EventQueue.isDispatchThread()) {
+            throw new IllegalStateException("Should be on the EDT");
+        }
+
         synchronized (windows) {
             if (!isInited)
                 return;
 
-            finalMenu = new Vector(windows.size() + menuItems.size());
+            finalMenu = new ArrayList<>(windows.size() + menuItems.size());
 
             for (int i = 0; i < menuItems.size(); i++) {
                 finalMenu.add(menuItems.get(i));
@@ -110,7 +113,7 @@ public class WindowManager {
                                                         new OtherWindowHandler(frame)));
             }
 
-            for (JMenu menu : windowMenuHash.values()) {
+            for (JMenu menu : windowMenuMap.values()) {
                 fixMenu(menu);
             }
         }
@@ -128,7 +131,7 @@ public class WindowManager {
     }
 
     private static JMenu getCorrectWindowsMenu(Frame frame) {
-        JMenu menu = windowMenuHash.get(frame);
+        JMenu menu = windowMenuMap.get(frame);
         if (menu == null) {
             return new JMenu("Windows");
             // throw new IllegalStateException("This frame has no windows menu!

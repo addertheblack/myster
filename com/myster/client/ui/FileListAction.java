@@ -15,15 +15,18 @@ import com.myster.client.net.MysterProtocol;
 import com.myster.net.MysterAddress;
 import com.myster.search.HashCrawlerManager;
 import com.myster.search.MysterFileStub;
+import com.myster.ui.MysterFrameContext;
 
 public class FileListAction extends MCListEventAdapter {
     private final HashCrawlerManager hashManager;
     private final MysterProtocol protocol;
     private final ClientWindow w;
+    private final MysterFrameContext mysterFrameContext;
 
-    public FileListAction(MysterProtocol protocol, HashCrawlerManager hashManager, ClientWindow w) {
+    public FileListAction(MysterProtocol protocol, HashCrawlerManager hashManager, MysterFrameContext mysterFrameContext, ClientWindow w) {
         this.hashManager = hashManager;
         this.protocol = protocol;
+        this.mysterFrameContext = mysterFrameContext;
         this.w = w;
     }
 
@@ -32,7 +35,7 @@ public class FileListAction extends MCListEventAdapter {
             MysterFileStub stub = new MysterFileStub(new MysterAddress(w.getCurrentIP()),
                                                      w.getCurrentType(),
                                                      w.getCurrentFile());
-            protocol.getStream().downloadFile(hashManager, stub.getMysterAddress(), stub);
+            protocol.getStream().downloadFile(mysterFrameContext, hashManager, stub.getMysterAddress(), stub);
         } catch (java.io.IOException ex) {
             com.general.util.AnswerDialog.simpleAlert(w, "Could not connect to server.");
         }

@@ -34,19 +34,22 @@ import com.myster.server.event.ConnectionManagerListener;
 import com.myster.server.event.ServerContext;
 import com.myster.server.event.ServerDownloadDispatcher;
 import com.myster.server.stream.FileSenderThread;
+import com.myster.ui.MysterFrameContext;
 
 public class DownloadInfoPanel extends JPanel {
     private MCList list;
 
     private JButton disconnect, browse, clearAll, message;
 
-    private ServerContext context;
-
+    private final ServerContext serverContext;
     private final ConnectionHandler chandler;
+    private final MysterFrameContext frameContext;
 
-    public DownloadInfoPanel(ServerContext context) {
+    public DownloadInfoPanel(ServerContext context, MysterFrameContext c) {
+        this.frameContext = c;
+        this.serverContext = context;
+
         setBackground(new Color(240, 240, 240));
-        this.context = context;
         chandler = new ConnectionHandler();
     }
 
@@ -104,7 +107,7 @@ public class DownloadInfoPanel extends JPanel {
                 int[] array = list.getSelectedIndexes();
                 for (int i = 0; i < array.length; i++) {
                     try {
-                        MessageWindow window = new MessageWindow(new com.myster.net.MysterAddress(
+                        MessageWindow window = new MessageWindow(frameContext, new com.myster.net.MysterAddress(
                                 (((DownloadMCListItem) (list.getMCListItem(array[i]))))
                                         .getAddress()));
                         window.setVisible(true);
@@ -154,7 +157,7 @@ public class DownloadInfoPanel extends JPanel {
 
         buttonsEnable(list.isAnythingSelected());
         
-        context.addConnectionManagerListener(chandler);
+        serverContext.addConnectionManagerListener(chandler);
     }
 
     private Image doubleBuffer; //adds double buffering
@@ -225,7 +228,7 @@ public class DownloadInfoPanel extends JPanel {
         public void newConnectWindow() {
             int[] array = list.getSelectedIndexes();
             for (int i = 0; i < array.length; i++) {
-                (new ClientWindow(""
+                (new ClientWindow(frameContext, ""
                         + (((DownloadMCListItem) (list.getMCListItem(array[i])))).getAddress()))
                         .show();
             }

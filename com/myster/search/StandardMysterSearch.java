@@ -12,6 +12,7 @@ import com.myster.net.MysterAddress;
 import com.myster.net.MysterSocket;
 import com.myster.tracker.IPListManager;
 import com.myster.type.MysterType;
+import com.myster.ui.MysterFrameContext;
 
 /**
  * This call is responsible for containing the piece of code that does TCP based searches and
@@ -33,17 +34,20 @@ public class StandardMysterSearch {
     private final IPListManager manager;
     private final MysterProtocol protocol;
     private final HashCrawlerManager hashCrawler;
+    private final MysterFrameContext context;
 
     private volatile boolean endFlag = false;
 
     public StandardMysterSearch(MysterProtocol protocol,
                                 HashCrawlerManager hashCrawler,
+                                MysterFrameContext context,
                                 IPListManager manager,
                                 String searchString,
                                 MysterType type,
                                 SearchResultListener listener) {
         this.protocol = protocol;
         this.hashCrawler = hashCrawler;
+        this.context = context;
         this.searchString = searchString;
         this.listener = listener;
         this.type = type;
@@ -67,6 +71,7 @@ public class StandardMysterSearch {
             for (int i = 0; i < searchArray.length; i++) {
                 searchArray[i] = new MysterSearchResult(protocol, 
                                                         hashCrawler,
+                                                        context,
                                                         new MysterFileStub(address,
                                                                            type,
                                                                            searchResults.get(i)),

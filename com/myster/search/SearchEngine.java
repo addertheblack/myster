@@ -14,6 +14,7 @@ package com.myster.search;
 import com.myster.client.net.MysterProtocol;
 import com.myster.tracker.IPListManager;
 import com.myster.type.MysterType;
+import com.myster.ui.MysterFrameContext;
 import com.myster.util.MysterThread;
 import com.myster.util.Sayable;
 
@@ -27,6 +28,7 @@ public class SearchEngine extends MysterThread {
 
     public SearchEngine(MysterProtocol protocol,
                         HashCrawlerManager hashManager,
+                        MysterFrameContext context,
                         IPListManager ipListManager,
                         SearchResultListener listener,
                         Sayable msg,
@@ -34,6 +36,7 @@ public class SearchEngine extends MysterThread {
                         String searchString ) {
         mysterSearch = new MysterSearch(protocol,
                                         hashManager,
+                                        context,
                                         ipListManager,
                                         listener,
                                         msg,
