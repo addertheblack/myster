@@ -3,6 +3,7 @@ package com.myster.filemanager;
 import java.io.File;
 
 import com.mpatric.mp3agic.ID3v1;
+import com.mpatric.mp3agic.ID3v2;
 import com.mpatric.mp3agic.Mp3File;
 
 //import org.farng.mp3.MP3File;
@@ -62,16 +63,18 @@ public class MPG3FileItem extends FileItem {
         String temp2 = id3Tag.getArtist();
         if (temp2 != null && !temp2.equals("")) {
             mml.put("/Artist", temp2);
-        } else {
-//            temp2 = id3Tag.getOriginalArtist();
-//            if (temp2 != null && !temp2.equals("")) {
-//                mml.put("/Artist", temp2);
-//            }
         }
 
         String temp1 = id3Tag.getAlbum();
         if (temp1 != null && !temp1.equals("")) {
             mml.put("/Album", temp1);
+        }
+        
+        if (id3Tag instanceof ID3v2 id3v2Tag) {
+            temp2 = id3v2Tag.getOriginalArtist();
+            if (temp2 != null && !temp2.equals("")) {
+                mml.put("/OriginalArtist", temp2);
+            }
         }
     }
 }

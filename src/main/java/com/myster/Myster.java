@@ -57,6 +57,7 @@ import com.myster.ui.PreferencesGui;
 import com.myster.ui.menubar.MysterMenuBar;
 import com.myster.ui.tray.MysterTray;
 import com.myster.util.I18n;
+import com.simtechdata.waifupnp.UPnP;
 
 public class Myster {
     private static final String LOCK_FILE_NAME = ".lockFile";
@@ -277,6 +278,13 @@ public class Myster {
         // ugh
         printoutAllNetworkInterfaces();
         printoutAllIpAddresses();
+        System.out.println("UPnP available: " +UPnP.isUPnPAvailable());
+        System.out.println("External UPnP gateway: " +UPnP.getDefaultGatewayIP());
+        System.out.println("External IP: " +UPnP.getExternalIP());
+        System.out.println("Local IP: " +UPnP.getLocalIP());
+        System.out.println("isMappedTCP(): " + UPnP.isMappedTCP(MysterGlobals.DEFAULT_PORT));
+        System.out.println("External TCP/IP port enabled: "+ UPnP.openPortTCP(MysterGlobals.DEFAULT_PORT));
+        System.out.println("External UDP/IP port enabled: " + UPnP.openPortUDP(MysterGlobals.DEFAULT_PORT));
     } // Utils, globals etc.. //These variables are System wide variables //
 
 
