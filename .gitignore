@@ -6,3 +6,5 @@ lib/jid3lib-0.5.4-src/
 *.class
 HashCache
 mysterprefs.mml
+*.exe
+/target/

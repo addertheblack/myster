@@ -166,7 +166,7 @@ public class CrawlerThread extends MysterThread {
                     }
                 }
 
-                msg.say("Searched " + ipQueue.getIndexNumber() + " Myster servers.");
+                msg.say("Searched " + ipQueue.getNumberOfItemsProcessed() + " Myster servers.");
 
             }
 

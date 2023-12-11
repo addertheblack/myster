@@ -1,0 +1,6 @@
+module com.myster {
+    requires java.base;
+    requires java.desktop;
+    
+    requires com.general;
+}

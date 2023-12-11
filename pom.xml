@@ -1,0 +1,95 @@
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+
+    <groupId>com.myster</groupId>
+    <artifactId>Myster</artifactId>
+    <version>1.0-SNAPSHOT</version>
+
+    <dependencies>
+        <dependency>
+            <groupId>com.simtechdata</groupId>
+            <artifactId>WaifUPnP</artifactId>
+            <version>1.0</version>
+        </dependency>
+        
+        <dependency>
+  <groupId>com.mpatric</groupId>
+  <artifactId>mp3agic</artifactId>
+  <version>0.9.1</version>
+</dependency>
+    </dependencies>
+
+    <properties>
+        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+        <maven.compiler.source>20</maven.compiler.source> <!-- Set your JDK
+        version here -->
+        <maven.compiler.target>20</maven.compiler.target> <!-- Set your JDK
+        version here -->
+        <outputName>MysterBuild.jar</outputName> <!-- Custom property for output
+        file name -->
+    </properties>
+
+    <build>
+        <finalName>${outputName}</finalName> <!-- Use custom property for output
+        file name -->
+
+
+        <plugins>
+            <!-- Compiler Plugin -->
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-compiler-plugin</artifactId>
+                <version>3.8.1</version>
+                <configuration>
+                    <source>${maven.compiler.source}</source>
+                    <target>${maven.compiler.target}</target>
+                </configuration>
+            </plugin>
+
+            <!-- JAR Plugin for packaging -->
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-jar-plugin</artifactId>
+                <version>3.2.0</version>
+                <configuration>
+                    <!-- Custom manifest and other jar configurations here -->
+                </configuration>
+            </plugin>
+
+            <!-- Exec plugin for jpackage -->
+            <plugin>
+                <groupId>org.codehaus.mojo</groupId>
+                <artifactId>exec-maven-plugin</artifactId>
+                <version>3.0.0</version>
+                <executions>
+                    <execution>
+                        <id>package-app</id>
+                        <phase>package</phase>
+                        <goals>
+                            <goal>exec</goal>
+                        </goals>
+                        <configuration>
+                            <executable>jpackage</executable>
+                            <arguments>
+                                <argument>--input</argument>
+                                <argument>${project.build.directory}</argument>
+                                <argument>--name</argument>
+                                <argument>Myster</argument>
+                                <argument>--main-class</argument>
+                                <argument>com.myster.Myster</argument>
+                                <argument>--add-modules</argument>
+                                <argument>java.base,java.desktop</argument>
+                                <argument>--main-jar</argument>
+                                <argument>${project.build.finalName}.jar</argument>
+                                <argument>--type</argument>
+                                <argument>exe</argument>
+                            </arguments>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
+        </plugins>
+    </build>
+</project>

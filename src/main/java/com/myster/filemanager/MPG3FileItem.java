@@ -1,10 +1,12 @@
 package com.myster.filemanager;
 
 import java.io.File;
-import java.io.IOException;
 
-import org.farng.mp3.MP3File;
-import org.farng.mp3.id3.AbstractID3;
+import com.mpatric.mp3agic.ID3v1;
+import com.mpatric.mp3agic.Mp3File;
+
+//import org.farng.mp3.MP3File;
+//import org.farng.mp3.id3.AbstractID3;
 
 import com.myster.mml.MML;
 
@@ -30,51 +32,44 @@ public class MPG3FileItem extends FileItem {
 
     // ugh.. for Mp3 stuff
     public static void patchFunction2(MML mml, File file) {
-        MP3File mp3File = null;
+        Mp3File mp3File = null;
         try {
-            mp3File = new MP3File(file, false);
+            mp3File = new Mp3File(file, 4096, false);
         } catch (Throwable ex) {
             System.err.println("Could not read ID3 tag info for: " + file);
             return;
         }
 
-        
-        
         if (file.getName().endsWith(".mp3")) {
-            try {
-                if (mp3File.seekMP3Frame()){
-                    mml.put("/BitRate", "" + (mp3File.getBitRate() * 1000));
-                    mml.put("/Hz", "" + mp3File.getFrequency());
-                }
-            } catch (IOException exception) {
-                System.err.println("Problem seeking first MP3 music frame for: " + file);
-            }
+            mml.put("/BitRate", "" + (mp3File.getBitrate() * 1000));
+            mml.put("/Hz", "" + mp3File.getSampleRate());
+            mml.put("/Vbr", "" + mp3File.isVbr());
         }
 
-        AbstractID3 id3Tag = mp3File.getID3v2Tag();
+        ID3v1 id3Tag = mp3File.getId3v2Tag();
         if (id3Tag == null) {
-            id3Tag = mp3File.getID3v1Tag();
+            id3Tag = mp3File.getId3v1Tag();
             if (id3Tag == null) {
                 return;
             }
         }
         
-        String temp = id3Tag.getSongTitle();
+        String temp = id3Tag.getTitle();
         if (temp != null && !temp.equals("")) {
             mml.put("/ID3Name", temp);
         }
 
-        String temp2 = id3Tag.getAuthorComposer();
+        String temp2 = id3Tag.getArtist();
         if (temp2 != null && !temp2.equals("")) {
             mml.put("/Artist", temp2);
         } else {
-            temp2 = id3Tag.getLeadArtist();
-            if (temp2 != null && !temp2.equals("")) {
-                mml.put("/Artist", temp2);
-            }
+//            temp2 = id3Tag.getOriginalArtist();
+//            if (temp2 != null && !temp2.equals("")) {
+//                mml.put("/Artist", temp2);
+//            }
         }
 
-        String temp1 = id3Tag.getAlbumTitle();
+        String temp1 = id3Tag.getAlbum();
         if (temp1 != null && !temp1.equals("")) {
             mml.put("/Album", temp1);
         }
