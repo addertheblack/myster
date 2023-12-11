@@ -123,11 +123,7 @@ public class Myster {
         };
 
         ApplicationContext applicationContext =
-                new ApplicationContext(new File(MysterGlobals.getCurrentDirectory(),
-                                                LOCK_FILE_NAME),
-                                       10457,
-                                       applicationSingletonListener,
-                                       args);
+                new ApplicationContext(10457, applicationSingletonListener, args);
 
         MysterGlobals.appSigleton = applicationContext;
 

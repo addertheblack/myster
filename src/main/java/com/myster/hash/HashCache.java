@@ -245,7 +245,7 @@ class DefaultHashCache extends HashCache {
             if (hashBackupFile.exists())
                 hashBackupFile.delete(); // on the mac the next line tosses
                                             // an
-            // excption if file already exists.
+            // Exception if file already exists.
 
             OutputStream basic_out = new FileOutputStream(hashBackupFile);
 

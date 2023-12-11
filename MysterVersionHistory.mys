@@ -84,7 +84,7 @@ Work on DEV7:
 	-> Made the list load item information in the background as a seperate thread. Looks sweet.
 	
 	2001/05/23
-	-> Fixed a few retarted problems with the threads continuing after the search has been canceled.
+	-> Fixed a few stupid problems with the threads continuing after the search has been canceled.
 			NOTE: This routine apears to occasionaly causes VM freezes on Macs.. Looking into it. Probably a stupid mac trick.
 	-> Fixed a bug with a removeCrap() routine in the IPList class. This routine is supposed to traverse the Myster data
 			structures looking for errors and the fix them. It was going through the data structures and
@@ -1132,20 +1132,38 @@ Work on DEV 8:
 2023-12-08
     -> Refactored Myster menubar related code so it's injected not a singleton
     
-    
+2023-12-11
+    -> Converted to Maven
+    -> Updated the ID3 tag library and the UPNP library to modern versions that don't have the same stupidly large numbers of 
+        dependencies
+    -> Used jpackage to create executable installer for Myster
    
 		
 (Red List)
 to do:
 
-Need to convert to Maven
-Need to update all libraries
-Need to try out building using the modern JDK 20 tools
 Need to implement private networks
     need to get rid of old download code
     need to get rid of myster type or otherwise make it as string
     need to add private certificate code
     need to find a format for sharing a network file - like public key, primary servers etc.. maybe other public keys too
     need to be able to share the network config file (might be similar to network file.. or a superset)
-Fix hash cache to save things in preferences not on disk in a random file
+Fix hash cache to save things in preferences not on disk in a random file.. might suck because
+it's large for me and I don't have that many files...
+Add reverse connection protocol.
+Add reverse connection using third party protocol.
+Add onramp servers https://www.dynu.com/en-US/
+Make communication encrypted (keep public key in MysterIP server information)
+Pick a place for downloads in progress by default like homedirectory/mysterdata or something.. Maybe app data on windows?
+Split off concurrency library from Myster and publish to Maven
+Make Myster modules compatible
+fix naming.. We probably want to use myster.org
+add unit tests
+delete older myster download code that doens't rely on md5
+Allow new code to use a server/port instead of and in addition to a md5
+Probably want to move that stuff into preferences/registry
+fix writeUTF to use write utf-8 instead.. fix data input/outputstreams
+Fix Myster startup to use Preferences
+
+
 

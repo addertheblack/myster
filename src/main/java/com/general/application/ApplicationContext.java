@@ -1,15 +1,13 @@
 package com.general.application;
 
-import java.io.BufferedInputStream;
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileOutputStream;
 import java.io.IOException;
 import java.net.InetAddress;
 import java.net.ServerSocket;
 import java.net.Socket;
+import java.util.prefs.BackingStoreException;
+import java.util.prefs.Preferences;
 
 /**
  * Use this class to assert that there's only one version of the program currently running. Will
@@ -17,8 +15,8 @@ import java.net.Socket;
  * users (so long as they are launched with different lock files.).
  * <p>
  * This class works by creating a Server on a certain port which listens for connections. The server
- * binds only to the localhost. A "lockfile" is then created containing a randomly chosen password.
- * When another app is launched it looks for the lock file. If it finds the lock file it reads the
+ * binds only to the localhost. A lock preferences is then created containing a randomly chosen password.
+ * When another app is launched it looks for the lock preferences. If it finds the lock prefs it reads the
  * "password" from it and tries to contact the specified port. If it can successfully contact the
  * remote port, it sends the password and the program args. When that happens the servers notifies
  * the ApplicationSingletonListener and passes the listener the args.
@@ -27,14 +25,10 @@ import java.net.Socket;
  * to contact each other and throw an Exception. Oh well...
  */
 public class ApplicationContext {
-    private File lockFile;
-
     private int port;
-
     private ApplicationServer server;
-
+     
     private final ApplicationSingletonListener listener;
-
     private final String[] args;
 
     /**
@@ -42,9 +36,8 @@ public class ApplicationContext {
      * write information that only the current user can write to. Doing this will insure that only
      * one user at a time can launch this app. The port should be a port knwon to both.
      */
-    public ApplicationContext(File lockFile, int port, ApplicationSingletonListener listener,
+    public ApplicationContext(int port, ApplicationSingletonListener listener,
             String[] args) {
-        this.lockFile = lockFile;
         this.port = port;
         this.listener = listener;
         this.args = args;
@@ -61,29 +54,27 @@ public class ApplicationContext {
      */
     public boolean start() throws IOException {
         try {
-            if (lockFile.exists()) {
-                connectToSelf(lockFile, args);
+            if (prefencesExist()) {
+                connectToSelf(args);
                 return false;
             }
-        } catch (IOException ex) {
+        } catch (BackingStoreException | IOException ex) {
             ex.printStackTrace();
         }
 
-        newSelf(lockFile, listener);
+        newSelf(listener);
         return true;
     }
 
-    private void connectToSelf(File file, String[] args) throws IOException {
-        try (DataInputStream in =
-                new DataInputStream(new BufferedInputStream(new FileInputStream(file)))) {
-            int password = in.readInt();
-            int port = in.readInt();
+    private void connectToSelf(String[] args) throws IOException {
+        Preferences prefs = getPreferences();
+        int password = prefs.getInt("password", 666);
+        int port = prefs.getInt("port", this.port);
 
-            if (port != this.port)
-                throw new IOException("Garbage in lock file.");
+        if (port != this.port)
+            throw new IOException("Garbage in lock file.");
 
-            connectToSelf(password, args);
-        }
+        connectToSelf(password, args);
     }
 
     private void connectToSelf(int password, String[] args) throws IOException {
@@ -109,24 +100,33 @@ public class ApplicationContext {
             out.writeUTF(args[i]);
         }
     }
+    
+    private Preferences getPreferences() {
+        return Preferences.userNodeForPackage(getClass()).node("startup");
+    }
+    
+    private boolean prefencesExist() throws BackingStoreException {
+        return Preferences.userNodeForPackage(getClass()).nodeExists("startup");
+    }
 
-    //public static int password=-1;
-    private void newSelf(File file, ApplicationSingletonListener listener) throws IOException {
-        if (file.exists())
-            file.delete();
-        DataOutputStream out = new DataOutputStream(new FileOutputStream(file));
-        Math.random();
-        Math.random();
-        Math.random();
+    private void newSelf(ApplicationSingletonListener listener) throws IOException {
+        try {
+            getPreferences().removeNode();
+        } catch (BackingStoreException exception) {
+            // ignore - it's a best effort thing
+        }
+        
+        Preferences node = getPreferences();
+        
         double temp = Math.random();
         int password = (int) (32000 * temp);
 
-        out.writeInt(password);
-        out.writeInt(port);
-        out.close();
+        node.putInt("password", password);
+        node.putInt("port", port);
 
-        server = new ApplicationServer(password, new ServerSocket(port, 1, InetAddress
-                .getLocalHost()), listener);
+        server = new ApplicationServer(password,
+                                       new ServerSocket(port, 1, InetAddress.getLocalHost()),
+                                       listener);
         server.start();
     }
 
@@ -135,7 +135,11 @@ public class ApplicationContext {
      *  
      */
     public void close() {
-        lockFile.delete();
+        try {
+            getPreferences().removeNode();
+        } catch (BackingStoreException exception) {
+            // ignore - it's a best effort thing
+        }
         if (server != null) 
             server.end();
     }

@@ -5,7 +5,7 @@
 
     <groupId>com.myster</groupId>
     <artifactId>Myster</artifactId>
-    <version>1.0-SNAPSHOT</version>
+    <version>10.0.0</version>
 
     <dependencies>
         <dependency>
@@ -27,7 +27,7 @@
         version here -->
         <maven.compiler.target>20</maven.compiler.target> <!-- Set your JDK
         version here -->
-        <outputName>MysterBuild.jar</outputName> <!-- Custom property for output
+        <outputName>MysterBuild</outputName> <!-- Custom property for output
         file name -->
     </properties>
 
@@ -54,7 +54,7 @@
                 <artifactId>maven-jar-plugin</artifactId>
                 <version>3.2.0</version>
                 <configuration>
-                    <!-- Custom manifest and other jar configurations here -->
+                     <outputDirectory>${project.basedir}/bin</outputDirectory>
                 </configuration>
             </plugin>
 
@@ -74,7 +74,7 @@
                             <executable>jpackage</executable>
                             <arguments>
                                 <argument>--input</argument>
-                                <argument>${project.build.directory}</argument>
+                                <argument>${project.basedir}/bin</argument>
                                 <argument>--name</argument>
                                 <argument>Myster</argument>
                                 <argument>--main-class</argument>
@@ -83,6 +83,13 @@
                                 <argument>java.base,java.desktop</argument>
                                 <argument>--main-jar</argument>
                                 <argument>${project.build.finalName}.jar</argument>
+                                <argument>--win-menu</argument>
+                                <argument>--win-menu-group</argument>
+                                <argument>Myster</argument>
+                                <argument>--app-version</argument>
+                                <argument>${project.version}</argument>
+                                <argument>--icon</argument>
+                               <argument>program_icon.ico</argument>
                                 <argument>--type</argument>
                                 <argument>exe</argument>
                             </arguments>
