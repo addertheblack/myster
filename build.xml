@@ -6,6 +6,7 @@
 	<property name="tmpdir" value="tmp" />
 	<property name="output.name" value="MysterBuild.jar" />
 	<property name="lib" value="lib" />
+	<property name="bin" value="bin" />
 	<property name="debug" value="off" />
 	<!-- Set this to "jikes" if you have it installed -->
 	<property name="build.compiler" value="modern" />
@@ -16,6 +17,7 @@
 	<target name="init">
 		<!-- we dont do much here right now, but may do later -->
 		<mkdir dir="${tmpdir}" />
+		<mkdir dir="${bin}" />
 		<tstamp />
 	</target>
 
@@ -61,7 +63,7 @@
 	</target>
 
 	<target name="jar" depends="init,compile,unjar-deps">
-		<jar destfile="${output.name}" manifest="MANIFEST.MF">
+		<jar destfile="${bin}/${output.name}" manifest="MANIFEST.MF">
 			<!-- all Myster properties and images -->
 			<fileset dir="${basedir}">
 				<!-- Yuk!  Why is this file in the root? -->
@@ -81,20 +83,34 @@
 	</target>
 
 	<!-- CLEAN -->
-	<target name="clean">
+	<target name="clean" depends="init">
 		<delete>
 			<fileset dir="${basedir}" includes="**/*.class" />
 			<fileset dir="${tmpdir}" />
+			<fileset dir="${bin}" />
 		</delete>
 	</target>
 	
 
-    <target name="all" depends="clean, jar">
+    <target name="all" depends="clean, jar, build-distribution">
         <javac srcdir="${basedir}" destdir="${tmpdir}" debug="${debug}">
             <classpath refid="project.classpath" />
             <patternset refid="project.includes" />
             <patternset refid="project.excludes" />
         </javac>
     </target>
+	
+	<target name="build-distribution" depends="jar">
+	  <exec executable="jpackage">
+	    <arg value="-i"/>
+	  	<arg value="${bin}"/>
+	  	<arg value="--main-class"/>
+	  	<arg value="com.myster.Myster"/>
+	  	<arg value="--add-modules"/>
+	  	<arg value="java.base,java.desktop"/>
+	    <arg value="--main-jar"/>
+	    <arg value="${output.name}"/>
+	  </exec>
+	</target>
 
 </project>

@@ -16,8 +16,6 @@ import javax.swing.JLabel;
 import javax.swing.JTextField;
 
 import com.general.util.DoubleBlockingQueue;
-import com.myster.UpnpManager;
-import com.myster.UpnpManager.HostAddress;
 import com.myster.application.MysterGlobals;
 import com.myster.client.datagram.PongTransport;
 import com.myster.client.datagram.UDPPingClient;
@@ -73,22 +71,6 @@ public class ServerFacade {
         addStandardDatagramTransactions();
     }
 
-    private void initPnPHolePunching() {
-        InetAddress localHost = null;
-        try {
-            localHost = InetAddress.getLocalHost();
-        } catch (UnknownHostException exception) {
-            System.out.println("Could not punch upnp hole because localhost could not be found.");
-            return;
-        }
-
-        List<HostAddress> hostAddresses = new ArrayList<>();
-        for (Operator operator : operators) {
-            hostAddresses.add(new HostAddress(localHost, operator.getPort()));
-        }
-
-        UpnpManager.initMapping(hostAddresses.toArray(new HostAddress[0]));
-    }
 
     /**
      * call this if you code assumes the server is actively running or you wish
@@ -98,8 +80,6 @@ public class ServerFacade {
     public synchronized void startServer() {
         if (b) {
             b = false;
-
-            (new Thread(() -> initPnPHolePunching())).start();
 
             for (int i = 0; i < operators.length; i++) {
                 operators[i].start();
