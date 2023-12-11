@@ -25,12 +25,6 @@ import java.util.List;
 import javax.swing.JFrame;
 import javax.swing.SwingUtilities;
 
-import org.fourthline.cling.UpnpService;
-import org.fourthline.cling.UpnpServiceImpl;
-import org.fourthline.cling.model.types.UnsignedIntegerFourBytes;
-import org.fourthline.cling.support.igd.PortMappingListener;
-import org.fourthline.cling.support.model.PortMapping;
-
 import com.general.application.ApplicationContext;
 import com.general.application.ApplicationSingletonListener;
 import com.general.util.AnswerDialog;
@@ -283,37 +277,8 @@ public class Myster {
         // ugh
         printoutAllNetworkInterfaces();
         printoutAllIpAddresses();
-        setupUpnp();
     } // Utils, globals etc.. //These variables are System wide variables //
 
-    private static UpnpService setupUpnp() {
-        try {
-            InetAddress inetAddress = InetAddress.getLocalHost();
-            List<PortMapping> portMappings = new ArrayList<>();
-            PortMapping e = new PortMapping(MysterGlobals.DEFAULT_PORT,
-                                            "" + inetAddress.getHostAddress(),
-                                            PortMapping.Protocol.TCP,
-                                            "Myster Port Mapping TCP");
-            e.setLeaseDurationSeconds(new UnsignedIntegerFourBytes(100));
-            portMappings.add(e);
-            PortMapping e2 = new PortMapping(MysterGlobals.DEFAULT_PORT,
-                                             "" + inetAddress.getHostAddress(),
-                                             PortMapping.Protocol.UDP,
-                                             "Myster Port Mapping UDP");
-            e2.setLeaseDurationSeconds(new UnsignedIntegerFourBytes(100));
-            portMappings.add(e2);
-
-            UpnpService upnpService = new UpnpServiceImpl(new PortMappingListener(portMappings
-                    .toArray(new PortMapping[0])));
-
-            upnpService.getControlPoint().search();
-            return upnpService;
-        } catch (UnknownHostException exception) {
-            System.out.println("Could not setup upnp because could not get local host: "
-                    + exception.getMessage());
-            return null;
-        }
-    }
 
     private static void printoutAllNetworkInterfaces() {
         try {
