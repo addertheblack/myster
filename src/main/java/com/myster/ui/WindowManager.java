@@ -32,55 +32,65 @@ public class WindowManager {
     private static List<MysterMenuItemFactory> menuItems;
     private static List<MysterMenuItemFactory> finalMenu;
 
+    private static boolean isInited;
+
     public static void init(MysterMenuBar mysterMenuBar) {
-        synchronized (windows) {
-            if (isInited) {
-                throw new IllegalStateException("Tried to init WindowManager twice");
-            }
-            
-
-            isInited = true;
-
-            menuItems = new ArrayList<>();
-
-            menuItems.add(new MysterMenuItemFactory("Cycle Windows", new CycleWindowsHandler(),
-                    KeyEvent.VK_1));
-            menuItems.add(new MysterMenuItemFactory("Stack Windows", new StackWindowsHandler()));
-            menuItems.add(new MysterMenuItemFactory("-", new NullAction()));
-
-            finalMenu = new ArrayList<MysterMenuItemFactory>();
-
-            mysterMenuBar.addMenu(new MysterMenuFactory("Windows", finalMenu) {
-                @Override
-                public JMenu makeMenu(JFrame frame) {
-                    return getCorrectWindowsMenu(frame);
-                }
-            });
-            updateMenu();
+        if (!EventQueue.isDispatchThread()) {
+            throw new IllegalStateException("Should be on the EDT");
         }
-    }
-    
-    protected static void addWindow(MysterFrame frame) {
-        synchronized (windows) {
-            if (!windows.contains(frame)) {
-                windows.add(frame);
-                windowMenuMap.put(frame, (new MysterMenuFactory("Windows", finalMenu))
-                        .makeMenu(frame));
-                // Timer t=new Timer(doUpdateClass, 1);//might cause deadlocks.
-                updateMenu();
+
+        if (isInited) {
+            throw new IllegalStateException("Tried to init WindowManager twice");
+        }
+
+
+        isInited = true;
+
+        menuItems = new ArrayList<>();
+
+        menuItems.add(new MysterMenuItemFactory("Cycle Windows",
+                                                new CycleWindowsHandler(),
+                                                KeyEvent.VK_1));
+        menuItems.add(new MysterMenuItemFactory("Stack Windows", new StackWindowsHandler()));
+        menuItems.add(new MysterMenuItemFactory("-", new NullAction()));
+
+        finalMenu = new ArrayList<MysterMenuItemFactory>();
+
+        mysterMenuBar.addMenu(new MysterMenuFactory("Windows", finalMenu) {
+            @Override
+            public JMenu makeMenu(JFrame frame) {
+                return getCorrectWindowsMenu(frame);
             }
+        });
+        updateMenu();
+    }
+
+    protected static void addWindow(MysterFrame frame) {
+        if (!EventQueue.isDispatchThread()) {
+            throw new IllegalStateException("Should be on the EDT");
+        }
+
+        if (!windows.contains(frame)) {
+            windows.add(frame);
+            windowMenuMap.put(frame, (new MysterMenuFactory("Windows", finalMenu)).makeMenu(frame));
+            // Timer t=new Timer(doUpdateClass, 1);//might cause deadlocks.
+            updateMenu();
         }
     }
 
     static void removeWindow(MysterFrame frame) {
+        if (!EventQueue.isDispatchThread()) {
+            throw new IllegalStateException("Should be on the EDT");
+        }
+
         boolean yep = windows.remove(frame);
         windowMenuMap.remove(frame);
         if (yep) {
             // Timer t=new Timer(doUpdateClass, 1); //might cause deadlocks.
             updateMenu();
             if (windows.size() == 0) {
-                //TODO: Fix this hack.
-                if (MysterGlobals.ON_LINUX) { //hack hack hack!
+                // TODO: Fix this hack.
+                if (MysterGlobals.ON_LINUX) { // hack hack hack!
                     MysterGlobals.quit();
                 }
             }
@@ -88,34 +98,29 @@ public class WindowManager {
     }
 
     public static void updateMenu() {
-        // I'm not sure if this needs to be synchronized because it's UI code that
-        // should be on the EDT
-
         if (!EventQueue.isDispatchThread()) {
             throw new IllegalStateException("Should be on the EDT");
         }
 
-        synchronized (windows) {
-            if (!isInited)
-                return;
+        if (!isInited)
+            return;
 
-            finalMenu = new ArrayList<>(windows.size() + menuItems.size());
+        finalMenu = new ArrayList<>(windows.size() + menuItems.size());
 
-            for (int i = 0; i < menuItems.size(); i++) {
-                finalMenu.add(menuItems.get(i));
-            }
+        for (int i = 0; i < menuItems.size(); i++) {
+            finalMenu.add(menuItems.get(i));
+        }
 
-            finalMenu.add(new MysterMenuItemFactory()); // is a
-            // seperator
+        // separator
+        finalMenu.add(new MysterMenuItemFactory());
 
-            for (MysterFrame frame : windows) {
-                finalMenu.add(new MysterMenuItemFactory(frame.getTitle(),
-                                                        new OtherWindowHandler(frame)));
-            }
+        for (MysterFrame frame : windows) {
+            finalMenu.add(new MysterMenuItemFactory(frame.getTitle(),
+                                                    new OtherWindowHandler(frame)));
+        }
 
-            for (JMenu menu : windowMenuMap.values()) {
-                fixMenu(menu);
-            }
+        for (JMenu menu : windowMenuMap.values()) {
+            fixMenu(menu);
         }
     }
 
@@ -152,7 +157,7 @@ public class WindowManager {
         return frontMost;
     }
 
-    static boolean isInited;
+
 
     private static class CycleWindowsHandler implements ActionListener {
         public void actionPerformed(ActionEvent e) {
@@ -179,8 +184,7 @@ public class WindowManager {
 
                     frame = windows.get(index);
                     if (counter > windows.size()) {
-                        throw new IllegalStateException(
-                                "No MysterFrames with menu bars exist and yet we have been asked to do a window cycle!");
+                        throw new IllegalStateException("No MysterFrames with menu bars exist and yet we have been asked to do a window cycle!");
                     }
                     counter++;
                 } while (!frame.isMenuBarEnabled());
@@ -197,9 +201,11 @@ public class WindowManager {
 
             synchronized (windows) {
                 for (int i = 0; i < windows.size(); i++) {
-                    (windows.get(i)).setLocation(new java.awt.Point(
-                            ((i % MOD) * 20) + 10, (i % MOD) * 20 + ((i / MOD) * 20) + 10
-                                    + (windows.get(i)).getInsets().top));
+                    (windows.get(i))
+                            .setLocation(new java.awt.Point(((i % MOD) * 20) + 10,
+                                                            (i % MOD) * 20 + ((i / MOD) * 20) + 10
+                                                                    + (windows.get(i))
+                                                                            .getInsets().top));
                 }
 
                 for (MysterFrame mysterFrame : windows) {

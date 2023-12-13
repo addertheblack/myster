@@ -9,6 +9,7 @@
 
 package com.myster;
 
+import java.awt.Desktop;
 import java.awt.Frame;
 import java.io.File;
 import java.io.IOException;
@@ -46,6 +47,7 @@ import com.myster.search.MultiSourceHashSearch;
 import com.myster.search.ui.SearchWindow;
 import com.myster.server.BannersManager.BannersPreferences;
 import com.myster.server.ServerFacade;
+import com.myster.server.ServerFacade.ServerPrefPanel;
 import com.myster.server.ui.ServerStatsWindow;
 import com.myster.tracker.IPListManager;
 import com.myster.tracker.MysterIPPoolImpl;
@@ -55,17 +57,20 @@ import com.myster.type.ui.TypeManagerPreferencesGUI;
 import com.myster.ui.MysterFrameContext;
 import com.myster.ui.PreferencesGui;
 import com.myster.ui.menubar.MysterMenuBar;
+import com.myster.ui.menubar.event.MenuBarEvent;
+import com.myster.ui.menubar.event.MenuBarListener;
 import com.myster.ui.tray.MysterTray;
 import com.myster.util.I18n;
 import com.simtechdata.waifupnp.UPnP;
 
 public class Myster {
-    private static final String LOCK_FILE_NAME = ".lockFile";
-
     public static void main(String[] args) {
         final long startTime = System.currentTimeMillis();
 
         final boolean isServer = (args.length > 0 && args[0].equals("-s"));
+        
+        // ignored by everyone except mac
+        System.setProperty("apple.laf.useScreenMenuBar", "true");
 
         System.out.println("java.vm.specification.version:"
                 + System.getProperty("java.vm.specification.version"));
@@ -77,6 +82,7 @@ public class Myster {
                 .println("java.vm.version              :" + System.getProperty("java.vm.version"));
         System.out.println("java.vm.vendor               :" + System.getProperty("java.vm.vendor"));
         System.out.println("java.vm.name                 :" + System.getProperty("java.vm.name"));
+        System.out.println("Desktop.isDesktopSupported() :" + Desktop.isDesktopSupported());
 
         System.out.println("-------->> before javax.swing.UIManager invoke later "
                 + (System.currentTimeMillis() - startTime));
@@ -199,6 +205,15 @@ public class Myster {
                 PreferencesGui preferencesGui = new PreferencesGui(context);
 
                 menuBarFactory.initMenuBar(listManager, preferencesGui);
+                
+                String osName = System.getProperty("os.name").toLowerCase();
+                if (osName.startsWith("mac os") && Desktop.isDesktopSupported()) {
+                    menuBarFactory.addMenuListener(new MenuBarListener() {
+                        public void stateChanged(MenuBarEvent e) {
+                            Desktop.getDesktop().setDefaultMenuBar(e.makeNewMenuBar(null));
+                        }
+                    });
+                }
 
                 TransactionManager.addTransactionProtocol(new InstantMessageTransport(preferences,
                         (instantMessage) -> (new MessageWindow(context,
