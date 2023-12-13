@@ -8,6 +8,8 @@ import javax.swing.JMenu;
 import javax.swing.JMenuItem;
 import javax.swing.KeyStroke;
 
+import com.myster.application.MysterGlobals;
+
 public class MysterMenuItemFactory {
     private final ActionListener action;
     private final String name;
@@ -45,11 +47,14 @@ public class MysterMenuItemFactory {
             menu.addSeparator();
             return;
         }
+        int keyMask = MysterGlobals.ON_MAC ? InputEvent.META_DOWN_MASK:InputEvent.CTRL_DOWN_MASK;
+        
+        
         
         JMenuItem menuItem = new JMenuItem(com.myster.util.I18n.tr(name));
         if (shortcut != -1) {
             int shiftMask = useShift ? InputEvent.SHIFT_DOWN_MASK : 0;
-            menuItem.setAccelerator(KeyStroke.getKeyStroke(shortcut, InputEvent.CTRL_DOWN_MASK|shiftMask));
+            menuItem.setAccelerator(KeyStroke.getKeyStroke(shortcut, keyMask|shiftMask));
         }
 
         if (action != null) {

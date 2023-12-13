@@ -1,6 +1,6 @@
 <project xmlns="http://maven.apache.org/POM/4.0.0"
-    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-    xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
 
     <groupId>com.myster</groupId>
@@ -13,28 +13,23 @@
             <artifactId>WaifUPnP</artifactId>
             <version>1.0</version>
         </dependency>
-        
+
         <dependency>
-  <groupId>com.mpatric</groupId>
-  <artifactId>mp3agic</artifactId>
-  <version>0.9.1</version>
-</dependency>
+            <groupId>com.mpatric</groupId>
+            <artifactId>mp3agic</artifactId>
+            <version>0.9.1</version>
+        </dependency>
     </dependencies>
 
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-        <maven.compiler.source>20</maven.compiler.source> <!-- Set your JDK
-        version here -->
-        <maven.compiler.target>20</maven.compiler.target> <!-- Set your JDK
-        version here -->
-        <outputName>MysterBuild</outputName> <!-- Custom property for output
-        file name -->
+        <maven.compiler.source>21</maven.compiler.source> <!-- Set your JDK version here -->
+        <maven.compiler.target>21</maven.compiler.target> <!-- Set your JDK version here -->
+        <outputName>MysterBuild</outputName> <!-- Custom property for output file name -->
     </properties>
 
     <build>
-        <finalName>${outputName}</finalName> <!-- Use custom property for output
-        file name -->
-
+        <finalName>${outputName}</finalName> <!-- Use custom property for output file name -->
 
         <plugins>
             <!-- Compiler Plugin -->
@@ -54,7 +49,7 @@
                 <artifactId>maven-jar-plugin</artifactId>
                 <version>3.2.0</version>
                 <configuration>
-                     <outputDirectory>${project.basedir}/bin</outputDirectory>
+                    <outputDirectory>${project.basedir}/bin</outputDirectory>
                 </configuration>
             </plugin>
 
@@ -63,16 +58,35 @@
                 <groupId>org.codehaus.mojo</groupId>
                 <artifactId>exec-maven-plugin</artifactId>
                 <version>3.0.0</version>
-                <executions>
-                    <execution>
-                        <id>package-app</id>
-                        <phase>package</phase>
-                        <goals>
-                            <goal>exec</goal>
-                        </goals>
-                        <configuration>
-                            <executable>jpackage</executable>
-                            <arguments>
+            </plugin>
+        </plugins>
+    </build>
+
+    <profiles>
+        <!-- Windows Profile -->
+        <profile>
+            <id>windows-build</id>
+            <activation>
+                <os>
+                    <family>Windows</family>
+                </os>
+            </activation>
+            <build>
+                <plugins>
+                    <plugin>
+                        <groupId>org.codehaus.mojo</groupId>
+                        <artifactId>exec-maven-plugin</artifactId>
+                        <version>3.0.0</version>
+                        <executions>
+                            <execution>
+                                <id>package-app-windows</id>
+                                <phase>package</phase>
+                                <goals>
+                                    <goal>exec</goal>
+                                </goals>
+                                <configuration>
+                                    <executable>jpackage</executable>
+                                    <arguments>
                                 <argument>--input</argument>
                                 <argument>${project.basedir}/bin</argument>
                                 <argument>--name</argument>
@@ -93,10 +107,60 @@
                                 <argument>--type</argument>
                                 <argument>exe</argument>
                             </arguments>
-                        </configuration>
-                    </execution>
-                </executions>
-            </plugin>
-        </plugins>
-    </build>
+                                </configuration>
+                            </execution>
+                        </executions>
+                    </plugin>
+                </plugins>
+            </build>
+        </profile>
+
+        <!-- macOS Profile -->
+        <profile>
+            <id>macos-build</id>
+            <activation>
+                <os>
+                    <family>mac</family>
+                </os>
+            </activation>
+            <build>
+                <plugins>
+                    <plugin>
+                        <groupId>org.codehaus.mojo</groupId>
+                        <artifactId>exec-maven-plugin</artifactId>
+                        <version>3.0.0</version>
+                        <executions>
+                            <execution>
+                                <id>package-app-macos</id>
+                                <phase>package</phase>
+                                <goals>
+                                    <goal>exec</goal>
+                                </goals>
+                                <configuration>
+                                    <executable>jpackage</executable>
+                                    <arguments>
+								<argument>--input</argument>
+								<argument>${project.basedir}/bin</argument>
+								<argument>--name</argument>
+								<argument>Myster</argument>
+								<argument>--main-class</argument>
+								<argument>com.myster.Myster</argument>
+								<argument>--add-modules</argument>
+								<argument>java.base,java.desktop</argument>
+								<argument>--main-jar</argument>
+								<argument>${project.build.finalName}.jar</argument>
+								<argument>--type</argument>
+								<argument>dmg</argument>
+								<argument>--app-version</argument>
+								<argument>${project.version}</argument>
+							</arguments>
+                                </configuration>
+                            </execution>
+                        </executions>
+                    </plugin>
+                </plugins>
+            </build>
+        </profile>
+    </profiles>
 </project>
+

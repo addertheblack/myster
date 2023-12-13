@@ -17,6 +17,9 @@ public class MysterGlobals {
     
     public static final boolean ON_LINUX = (System.getProperty("os.name") != null ? System
             .getProperty("os.name").equals("Linux") : false);
+    
+    public static final boolean ON_MAC = (System.getProperty("os.name") != null ? System
+            .getProperty("os.name").toLowerCase().startsWith("mac os") : false);
 
     private static final File WORKING_DIRECTORY = new File(System.getProperty("user.dir"));
 

@@ -206,8 +206,7 @@ public class Myster {
 
                 menuBarFactory.initMenuBar(listManager, preferencesGui);
                 
-                String osName = System.getProperty("os.name").toLowerCase();
-                if (osName.startsWith("mac os") && Desktop.isDesktopSupported()) {
+                if (MysterGlobals.ON_MAC && Desktop.isDesktopSupported()) {
                     menuBarFactory.addMenuListener(new MenuBarListener() {
                         public void stateChanged(MenuBarEvent e) {
                             Desktop.getDesktop().setDefaultMenuBar(e.makeNewMenuBar(null));
