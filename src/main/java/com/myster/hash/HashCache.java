@@ -1,23 +1,6 @@
 package com.myster.hash;
 
-import java.io.DataInputStream;
-import java.io.DataOutputStream;
-import java.io.EOFException;
 import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileOutputStream;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.ObjectInputStream;
-import java.io.ObjectOutputStream;
-import java.io.OutputStream;
-import java.io.Serializable;
-import java.util.ArrayList;
-import java.util.Enumeration;
-import java.util.Hashtable;
-import java.util.List;
-
-import com.myster.application.MysterGlobals;
 
 /**
  * This class is yet another manager. In this case, this manager should only be
@@ -43,7 +26,7 @@ public interface HashCache {
      *            The java.io.File you wish to get the Hashes for
      * @return The known FileHashes[] for this file
      */
-    public abstract FileHash[] getHashesForFile(File file);
+    public FileHash[] getHashesForFile(File file);
 
     /**
      * Gets the File Hash for a files if the information is contained in the
@@ -55,7 +38,7 @@ public interface HashCache {
      *            String, the type of hash you wish to extract.
      * @return The known FileHash for this file
      */
-    public abstract FileHash getHashFromFile(File file, String hashType);
+    public FileHash getHashFromFile(File file, String hashType);
 
     /**
      * Adds and updates the file hashes for a file. If a Hash of that type
@@ -67,7 +50,7 @@ public interface HashCache {
      * @param hashes
      *            The hashes you wish to add
      */
-    public abstract void putHashes(File file, FileHash[] hashes);
+    public void putHashes(File file, FileHash[] hashes);
 
     /**
      * Same behavior as putHashes only for one Hash
@@ -77,7 +60,7 @@ public interface HashCache {
      * @param hash
      *            The hashes you wish to add
      */
-    public abstract void putHash(File file, FileHash hash);
+    public void putHash(File file, FileHash hash);
 
     /**
      * Deletes all cached hashes for this File.
@@ -85,7 +68,7 @@ public interface HashCache {
      * @param file
      *            The java.io.File you wish to delete all cached hashes
      */
-    public abstract void clearHashes(File file);
+    public void clearHashes(File file);
 
     /**
      * Deletes cached hash for this File given the type. If the type is not
@@ -96,5 +79,5 @@ public interface HashCache {
      * @param hashType
      *            String, the type of hahs you want to clear from the cache.
      */
-    public abstract void clearHash(File file, String hashType);
+    public void clearHash(File file, String hashType);
 }
