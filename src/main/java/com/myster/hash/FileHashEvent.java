@@ -20,7 +20,7 @@ public class FileHashEvent extends GenericEvent {
     }
 
     public FileHash[] getHashes() {
-        return (FileHash[]) hashes.clone();
+        return  hashes.clone();
     }
 
     public File getFile() {

@@ -26,18 +26,20 @@ public class HashManagerGUI extends MysterFrame {
 
     private WindowLocationKeeper windowKeeper;
 
+    private static HashManager hashManager;
+
     public static void initGui() {
         Rectangle[] rect = com.myster.ui.WindowLocationKeeper
                 .getLastLocs(WINDOW_LOC_KEY);
         if (rect.length > 0) {
-            Dimension d = singleton.getSize();
             singleton.setBounds(rect[0]);
             singleton.setVisible(true);
             singleton.pack();
         }
     }
 
-    public static void init(MysterFrameContext context) {
+    public static void init(MysterFrameContext context, HashManager hashManager) {
+        HashManagerGUI.hashManager = hashManager;
         singleton = new HashManagerGUI(context);
     }
 
@@ -108,7 +110,7 @@ public class HashManagerGUI extends MysterFrame {
         public InternalPanel() {
             setLayout(null);
 
-            enabled = HashManager.getHashingEnabled();
+            enabled =  HashManagerGUI.hashManager.getHashingEnabled();
 
             totalFilesLabel = new JLabel("Number Of Files:");
             totalFilesLabel.setSize(LABEL_X_SIZE, LABEL_Y_SIZE);
@@ -159,8 +161,8 @@ public class HashManagerGUI extends MysterFrame {
             progress.setBackground(Color.white);
             progress.setForeground(new Color(0, 0, 255));
             add(progress);
-
-            HashManager.addHashManagerListener(new HashManagerListener() {
+            
+            HashManagerGUI.hashManager .addHashManagerListener(new HashManagerListener() {
                 public void enabledStateChanged(HashManagerEvent e) {
                     enabled = e.isEnabled();
 

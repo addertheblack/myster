@@ -36,21 +36,30 @@ public class FileTypeListManager {
 
     private FileTypeList filelist[]; //An array of all file lists. 1 Per type.
 
+    private final HashProvider hashProvider;
+
     public static final String PATH = "/File Lists/"; //Path the File Lists
+
 
     // information is stored
     // in the prefs.
 
     //Each File List decides what information it will store
     //under this path.
+    
+    public synchronized static void init(HashProvider hashProvider) {
+        f = new FileTypeListManager(hashProvider);
+    }
 
     /**
      * Gets an instance of the current File manager. This routine uses a varient
      * of the singleton desing pattern with dynamic loading.
      */
     public synchronized static FileTypeListManager getInstance() {
-        if (f == null)
-            f = new FileTypeListManager();
+        if (f == null) {
+            throw new IllegalStateException("FileTypeListManager is not initialized yet.");
+        }
+        
         return f;
     }
 
@@ -58,7 +67,8 @@ public class FileTypeListManager {
      * Private Constructor. Does nothing except call initFileTypeListManager()
      * routine.
      */
-    private FileTypeListManager() {
+    private FileTypeListManager(HashProvider hashProvider) {
+        this.hashProvider = hashProvider;
         initFileTypeListManager();
     }
 
@@ -72,7 +82,7 @@ public class FileTypeListManager {
         TypeDescription[] list = TypeDescriptionList.getDefault().getEnabledTypes();
         filelist = new FileTypeList[list.length];
         for (int i = 0; i < list.length; i++) {
-            filelist[i] = new FileTypeList(list[i].getType(), PATH); //This
+            filelist[i] = new FileTypeList(list[i].getType(), PATH, hashProvider); //This
             // code is
             // redundent
             // with...

@@ -5,22 +5,14 @@ import java.io.File;
 import com.myster.hash.FileHash;
 import com.myster.hash.FileHashEvent;
 import com.myster.hash.FileHashListener;
-import com.myster.hash.HashManager;
 import com.myster.mml.MML;
 
 public class FileItem {
     private final File file;
-
     private FileHash[] fileHashes;
 
     public FileItem(File file) {
         this.file = file;
-
-        HashManager.findHashNoneBlocking(file, new FileHashListener() {
-            public void foundHash(FileHashEvent e) {
-                setHash(e.getHashes());
-            }
-        });
     }
 
     /**
@@ -43,7 +35,7 @@ public class FileItem {
         return -1;
     }
 
-    private synchronized void setHash(FileHash[] fileHashes) {
+    public synchronized void setHash(FileHash[] fileHashes) {
         this.fileHashes = fileHashes;
     }
 

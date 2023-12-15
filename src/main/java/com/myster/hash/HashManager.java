@@ -6,11 +6,11 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
+import java.util.prefs.Preferences;
 
 import com.general.events.AsyncEventThreadDispatcher;
 import com.general.events.EventDispatcher;
 import com.general.util.BlockingQueue;
-import com.myster.pref.Preferences;
 
 /**
  * Facilities for passively determining the hash values of files.
@@ -18,42 +18,40 @@ import com.myster.pref.Preferences;
 
 public class HashManager implements Runnable {
     public static final String MD5 = "md5";
-
     public static final String SHA1 = "sha1";
 
     private static final String[] hashTypes = { MD5 };
+    
+    private static final String HASHING_ENABLED_PREF_KEY = "Hash Manager Is Enabled";
+    private static final String HASH_CACHE_NODE = "Hash Manager Cache";
+    
+    private volatile boolean hashingIsEnabled = true;
+    
+    private final EventDispatcher hashManagerDispatcher;
+    private final BlockingQueue<WorkingQueueItem> workQueue;
+    private final HashCache oldHashes;
 
-    private static HashManager hashManager;
-
-    private static EventDispatcher hashManagerDispatcher;
-
-    private static volatile boolean hashingIsEnabled = true;
-
-    private static final String HASHING_ENABLED_PREF_KEY = "/Hash Manager Is Enabled";
-
-    private static final String TRUE_AS_STRING = "TRUE";
-
-    private static final String FALSE_AS_STRING = "FALSE";
-
-    /**
-     * This should be called before any other functions are (ie, on startup)
-     */
-    public static void init() {
+    public HashManager() {
         hashManagerDispatcher = new AsyncEventThreadDispatcher();
+        
+        workQueue = new BlockingQueue<WorkingQueueItem>();
+        workQueue.setRejectDuplicates(true);
 
-        hashingIsEnabled = (TRUE_AS_STRING.equals(Preferences.getInstance().get(
-                HASHING_ENABLED_PREF_KEY, TRUE_AS_STRING)));
+        oldHashes = new PreferencesHashCache(getHashManagerRoot().node(HASH_CACHE_NODE));
 
-        hashManager = new HashManager();
-
+        hashingIsEnabled = getHashManagerRoot().getBoolean(HASHING_ENABLED_PREF_KEY, true);
+    }
+    
+    private static Preferences getHashManagerRoot() {
+        return Preferences.userNodeForPackage(HashManager.class);
     }
 
     /**
      * Starts up the HashManager. Used to allow plugins to register themselves
      * before the Hashing begins.
      */
-    public static void start() {
-        (new Thread(hashManager)).start();
+    public void start() {
+        (new Thread(this)).start();
     }
 
     /**
@@ -62,11 +60,10 @@ public class HashManager implements Runnable {
      * (Synchronized because prefs and cached value should be in agreement and
      * events should exec in right order)
      */
-    public static synchronized void setHashingEnabled(boolean enableHashing) {
+    public synchronized void setHashingEnabled(boolean enableHashing) {
         hashingIsEnabled = enableHashing;
 
-        Preferences.getInstance().put(HASHING_ENABLED_PREF_KEY,
-                (enableHashing ? TRUE_AS_STRING : FALSE_AS_STRING));
+        getHashManagerRoot().putBoolean(HASHING_ENABLED_PREF_KEY, enableHashing);
 
         hashManagerDispatcher.fireEvent(new HashManagerEvent(
                 HashManagerEvent.ENABLED_STATE_CHANGED, enableHashing));
@@ -75,7 +72,7 @@ public class HashManager implements Runnable {
     /**
      * If hashing is enabling this function returns true, false otherwise.
      */
-    public static boolean getHashingEnabled() {
+    public boolean getHashingEnabled() {
         return hashingIsEnabled;
     }
 
@@ -83,17 +80,18 @@ public class HashManager implements Runnable {
      * Adds a listener for common hash manager events. This routine cannot be
      * synchronized.
      */
-    public static void addHashManagerListener(HashManagerListener listener) {
+    public void addHashManagerListener(HashManagerListener listener) {
         hashManagerDispatcher.addListener(listener);
     }
 
-    /**
-     * Removes a listener from common hash manager events. This routine cannot
-     * be synchronized.
-     */
-    public static void removeHashManagerListener(HashManagerListener listener) {
-        hashManagerDispatcher.removeListener(listener);
-    }
+//    /**
+//     * Removes a listener from common hash manager events. This routine cannot
+//     * be synchronized.
+//     */
+//    public static void removeHashManagerListener(HashManagerListener listener) {
+//        hashManagerDispatcher.removeListener(listener);
+//    }
+
 
     /**
      * This routine could take a long time or not. If the file is cached the
@@ -102,40 +100,6 @@ public class HashManager implements Runnable {
      * thread management in java is <->to memory alloc free in C++ in pointless
      * complexity)...
      */
-    public static void findHashNoneBlocking(File file, FileHashListener listener) {
-        hashManager.findHash(file, listener);
-    }
-
-    // synchronous version is missing.. If found please fill in.
-
-    /**
-     * Returns true if file is already hashed.
-     */
-    public static boolean hashIsKnown(File file) {
-        return false;
-    }
-
-    /**
-     * Returns the hash value of a file if it is cached. returns null otherwise.
-     */
-    public static FileHash getHashFromCache(File file) {
-        return null;
-    }
-
-    /////////////////////////////////////////end of static sub
-    // system\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
-
-    private BlockingQueue workQueue;
-
-    private HashCache oldHashes;
-
-    public HashManager() {
-        workQueue = new BlockingQueue();
-        workQueue.setRejectDuplicates(true);
-
-        oldHashes = HashCache.getDefault();
-    }
-
     public void findHash(File file, FileHashListener listener) {
         FileHash[] hashes = oldHashes.getHashesForFile(file);
 
@@ -152,7 +116,7 @@ public class HashManager implements Runnable {
         }
     }
 
-    private void dispatchHashFoundEvent(FileHashListener listener, FileHash[] hashes, File file) {
+    private static void dispatchHashFoundEvent(FileHashListener listener, FileHash[] hashes, File file) {
         listener.fireEvent(new FileHashEvent(FileHashEvent.FOUND_HASH, hashes, file));
     }
 
@@ -163,7 +127,7 @@ public class HashManager implements Runnable {
 
         for (;;) {
             try {
-                WorkingQueueItem item = (WorkingQueueItem) (workQueue.get());
+                WorkingQueueItem item = workQueue.get();
 
                 if (!hashingIsEnabled)
                     continue;
@@ -238,6 +202,7 @@ public class HashManager implements Runnable {
             try {
                 in.close();
             } catch (Exception ex) {
+                // ignore
             } // don't care
 
             hashManagerDispatcher.fireEvent(new HashManagerEvent(HashManagerEvent.END_HASH,

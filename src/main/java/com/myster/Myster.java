@@ -37,6 +37,7 @@ import com.myster.client.net.MysterProtocolImpl;
 import com.myster.client.ui.ClientWindow;
 import com.myster.filemanager.FileTypeListManager;
 import com.myster.filemanager.ui.FMIChooser;
+import com.myster.hash.HashManager;
 import com.myster.message.InstantMessageTransport;
 import com.myster.message.MessageManager;
 import com.myster.message.MessageWindow;
@@ -47,7 +48,6 @@ import com.myster.search.MultiSourceHashSearch;
 import com.myster.search.ui.SearchWindow;
 import com.myster.server.BannersManager.BannersPreferences;
 import com.myster.server.ServerFacade;
-import com.myster.server.ServerFacade.ServerPrefPanel;
 import com.myster.server.ui.ServerStatsWindow;
 import com.myster.tracker.IPListManager;
 import com.myster.tracker.MysterIPPoolImpl;
@@ -173,6 +173,8 @@ public class Myster {
 
         MessageManager.init(listManager, preferences);
 
+        final HashManager hashManager = new HashManager();
+        FileTypeListManager.init((f, l) -> hashManager.findHash(f, l));
 
         // asynchronously start the server
         serverFacade.startServer();
@@ -206,7 +208,8 @@ public class Myster {
 
                 menuBarFactory.initMenuBar(listManager, preferencesGui);
                 
-                if (MysterGlobals.ON_MAC && Desktop.isDesktopSupported()) {
+                String osName = System.getProperty("os.name").toLowerCase();
+                if (osName.startsWith("mac os") && Desktop.isDesktopSupported()) {
                     menuBarFactory.addMenuListener(new MenuBarListener() {
                         public void stateChanged(MenuBarEvent e) {
                             Desktop.getDesktop().setDefaultMenuBar(e.makeNewMenuBar(null));
@@ -221,13 +224,7 @@ public class Myster {
 
                 TrackerWindow.init(listManager, context);
 
-                try {
-                    com.myster.hash.HashManager.init();
-                } catch (Exception ex) {
-                    ex.printStackTrace();
-                }
-
-                com.myster.hash.ui.HashManagerGUI.init(context);
+                com.myster.hash.ui.HashManagerGUI.init(context, hashManager);
 
                 ServerStatsWindow.init(serverFacade.getServerDispatcher().getServerContext(), context);
                  System.out.println("-------->> before ServerStatsWindow.getInstance().pack() " + (System.currentTimeMillis() - startTime));
@@ -250,7 +247,7 @@ public class Myster {
                     // nothing
                 }
 
-                com.myster.hash.ui.HashPreferences.init();
+                com.myster.hash.ui.HashPreferences.init(preferencesGui, hashManager);
 
                 System.out.println("-------->> before inits " + (System.currentTimeMillis() - startTime));
 
@@ -277,7 +274,7 @@ public class Myster {
 
             Thread.sleep(1);
 
-            com.myster.hash.HashManager.start();
+            
             FileTypeListManager.getInstance();
             
             Util.invokeLater(() -> MysterTray.init());
@@ -285,6 +282,8 @@ public class Myster {
             ex.printStackTrace(); //never reached.
         }
 
+        hashManager.start();
+        
         // ugh
         printoutAllNetworkInterfaces();
         printoutAllIpAddresses();

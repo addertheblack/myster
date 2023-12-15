@@ -3,6 +3,7 @@ package com.myster.hash;
 import java.io.Serializable;
 
 public class SimpleFileHash extends FileHash implements Serializable {
+    
     private byte[] hash;
 
     private String hashName;
@@ -50,23 +51,29 @@ public class SimpleFileHash extends FileHash implements Serializable {
     }
 
     public static String asHex(byte hash[]) {
-        StringBuffer buf = new StringBuffer(hash.length * 2);
-        int i;
+        StringBuilder buf = new StringBuilder(hash.length * 2);
 
-        for (i = 0; i < hash.length; i++) {
+        for (int i = 0; i < hash.length; i++) {
             if ((hash[i] & 0xff) < 0x10)
                 buf.append("0");
 
             buf.append(Long.toString(hash[i] & 0xff, 16));
-
-            //if (i != hash.length -1) buf.append(":");
         }
 
         return buf.toString();
     }
 
     public static FileHash buildFileHash(String hashName, byte[] hash) {
-        return new SimpleFileHash(hashName, hash);
+        switch (hashName) {
+            case HashManager.MD5: {
+                return new MD5Hash(hashName, hash);
+            }
+            case HashManager.SHA1: {
+                return new Sha1Hash(hashName, hash);
+            }
+            default:
+                return new SimpleFileHash(hashName, hash);
+        }
     }
 
     public static FileHash buildFromHexString(String hashName, String hexString) {

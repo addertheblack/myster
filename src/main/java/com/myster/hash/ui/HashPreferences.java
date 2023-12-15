@@ -5,28 +5,29 @@ import java.awt.Checkbox;
 import com.general.util.MessagePanel;
 import com.myster.hash.HashManager;
 import com.myster.pref.ui.PreferencesPanel;
+import com.myster.ui.PreferencesGui;
 
 /**
  * Unlike most other modules in Myster, the hash package hash a clear frontend /
- * backend seperation even with it's preferences. This should allow preferences
+ * backend separation even with it's preferences. This should allow preferences
  * to be set from any interface and not just privately. it does, however, mean
  * more coding for me, which is why I don't usually bother. In this case it
  * proves usefull, but not very.
  */
 
 public class HashPreferences extends PreferencesPanel {
-    MessagePanel explanation;
-
-    Checkbox enableHashing;
-
     public static final int CHECKBOX_Y_SIZE = 25;
+    
+    private final MessagePanel explanation;
+    private final Checkbox enableHashing;
+    private final HashManager manager;
 
-    public static void init() {
-        //Preferences.getInstance().addPanel(new HashPreferences()); //People
-        // should never disable hashing.
+    public static void init(PreferencesGui preferencesGui, HashManager manager) {
+        preferencesGui.addPanel(new HashPreferences(manager)); //People
     }
 
-    public HashPreferences() {
+    public HashPreferences(HashManager manager) {
+        this.manager = manager;
         setLayout(null);
 
         explanation = new MessagePanel(
@@ -45,11 +46,11 @@ public class HashPreferences extends PreferencesPanel {
     }
 
     public void save() {
-        HashManager.setHashingEnabled(enableHashing.getState());
+        manager.setHashingEnabled(enableHashing.getState());
     }
 
     public void reset() {
-        enableHashing.setState(HashManager.getHashingEnabled());
+        enableHashing.setState(manager.getHashingEnabled());
     }
 
     public String getKey() {

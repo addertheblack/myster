@@ -28,6 +28,8 @@ import com.general.thread.CallListener;
 import com.general.thread.CancellableCallable;
 import com.myster.application.MysterGlobals;
 import com.myster.hash.FileHash;
+import com.myster.hash.FileHashEvent;
+import com.myster.hash.FileHashListener;
 import com.myster.mml.MML;
 import com.myster.mml.MMLException;
 import com.myster.pref.Preferences;
@@ -64,6 +66,8 @@ public class FileTypeList {
 
     private volatile Future indexingFuture = null; // if true then the list is
 
+    private final HashProvider hashProvider;
+
     // indexing...
 
     /**
@@ -74,9 +78,11 @@ public class FileTypeList {
      * @param path
      *            is the root path IN THE PREFERENCES that this FileItem List should store it's
      *            preferences.
+     * @param hashProvider 
      */
-    public FileTypeList(MysterType type, String path) {
+    public FileTypeList(MysterType type, String path, HashProvider hashProvider) {
         this.type = type;
+        this.hashProvider = hashProvider;
         this.pref_key = PREF_KEY + "." + type;
 
         try {
@@ -439,7 +445,7 @@ public class FileTypeList {
          */
         if (indexingFuture == null && (isOld() || !rootdir.equals(workingdir))) {
             rootdir = workingdir; // in case the dir for this type has changed.
-            indexingFuture = MysterExecutor.getInstance().execute(new FileListIndexCall(type, new File(rootdir)),
+            indexingFuture = MysterExecutor.getInstance().execute(new FileListIndexCall(type, new File(rootdir), hashProvider),
                     new FileListCallListener());
         }
     }
@@ -485,12 +491,14 @@ public class FileTypeList {
     public static class FileListIndexCall implements CancellableCallable<List<FileItem>> {
         private final MysterType type;
         private final File rootDir;
+        private final HashProvider hashProvider;
         
         private volatile boolean endFlag = false;
 
-        public FileListIndexCall(MysterType type, File rootFile) {
+        public FileListIndexCall(MysterType type, File rootFile, HashProvider hashProvider) {
             this.type = type;
             this.rootDir = rootFile;
+            this.hashProvider = hashProvider;
         }
 
         /*
@@ -575,11 +583,15 @@ public class FileTypeList {
          * @return FileItem created from file.
          */
         private FileItem createFileItem(File file) {
-            if (MPG3.equals(type)) {
-                return new MPG3FileItem(file);
-            }
+            FileItem fileItem = MPG3.equals(type) ? new MPG3FileItem(file) : new FileItem(file);
             
-            return new FileItem(file);
+            hashProvider.findHashNonBlocking(file, new FileHashListener() {
+                public void foundHash(FileHashEvent e) {
+                    fileItem.setHash(e.getHashes());
+                }
+            });
+            
+            return fileItem; 
         }
     }
 
