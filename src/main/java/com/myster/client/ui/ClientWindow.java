@@ -36,7 +36,7 @@ import com.general.util.StandardWindowBehavior;
 import com.myster.client.net.MysterProtocol;
 import com.myster.net.MysterAddress;
 import com.myster.search.HashCrawlerManager;
-import com.myster.tracker.IPListManager;
+import com.myster.tracker.IpListManager;
 import com.myster.tracker.MysterServer;
 import com.myster.type.MysterType;
 import com.myster.ui.MysterFrame;
@@ -61,7 +61,7 @@ public class ClientWindow extends MysterFrame implements Sayable {
     
     private static WindowLocationKeeper keeper;
     
-    private static IPListManager ipListManager;
+    private static IpListManager ipListManager;
     private static MysterProtocol protocol;
     private static HashCrawlerManager hashManager;
     
@@ -91,7 +91,7 @@ public class ClientWindow extends MysterFrame implements Sayable {
 
     private FileInfoListerThread fileInfoListerThread;
 
-    public static void init(MysterProtocol protocol, HashCrawlerManager hashManager, IPListManager ipListManager) {
+    public static void init(MysterProtocol protocol, HashCrawlerManager hashManager, IpListManager ipListManager) {
         ClientWindow.protocol = protocol;
         ClientWindow.ipListManager = ipListManager;
         ClientWindow.hashManager = hashManager;

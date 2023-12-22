@@ -140,7 +140,7 @@ class DefaultTypeDescriptionList extends TypeDescriptionList {
     private static final String TYPE_ENABLED = "/enabled";
 
     private static Hashtable getEnabledFromPrefs() {
-        com.myster.pref.Preferences pref = com.myster.pref.Preferences
+        com.myster.pref.MysterPreferences pref = com.myster.pref.MysterPreferences
                 .getInstance();
 
         RobustMML mml = pref.getAsMML(DEFAULT_LIST_KEY,
@@ -172,7 +172,7 @@ class DefaultTypeDescriptionList extends TypeDescriptionList {
                     : "FALSE"));
         }
 
-        com.myster.pref.Preferences.getInstance().put(DEFAULT_LIST_KEY, mml);
+        com.myster.pref.MysterPreferences.getInstance().put(DEFAULT_LIST_KEY, mml);
     }
 
     //TypeDescription Methods

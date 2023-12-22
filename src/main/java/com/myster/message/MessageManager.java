@@ -14,22 +14,22 @@ import com.myster.mml.RobustMML;
 import com.myster.net.BadPacketException;
 import com.myster.net.DataPacket;
 import com.myster.net.MysterAddress;
-import com.myster.pref.Preferences;
+import com.myster.pref.MysterPreferences;
 import com.myster.pref.PreferencesMML;
-import com.myster.tracker.IPListManager;
+import com.myster.tracker.IpListManager;
 import com.myster.transaction.Transaction;
 import com.myster.transaction.TransactionEvent;
 import com.myster.transaction.TransactionListener;
 import com.myster.transaction.TransactionSocket;
 
 public class MessageManager {
-    private static Preferences preferences;
+    private static MysterPreferences preferences;
 
-    private static IPListManager ipListManager;
+    private static IpListManager ipListManager;
 
     
     
-    public static void init(IPListManager ipListManager, Preferences preferences) {
+    public static void init(IpListManager ipListManager, MysterPreferences preferences) {
         MessageManager.ipListManager = ipListManager;
         MessageManager.preferences = preferences;
     }
@@ -114,15 +114,15 @@ public class MessageManager {
     private static final String TRUE_AS_STRING = "TRUE";
     private static final String FALSE_AS_STRING = "FALSE";
     
-    public static boolean isRefusingMessages(Preferences p) {
+    public static boolean isRefusingMessages(MysterPreferences p) {
         return getPreferencesMML(p).get(MML_REFUSE_FLAG, FALSE_AS_STRING).equals(TRUE_AS_STRING);
     }
 
-    public static String getRefusingMessage(Preferences p) {
+    public static String getRefusingMessage(MysterPreferences p) {
         return getPreferencesMML(p).get(MML_REFUSE_MESSAGE, REFUSAL_MESSAGE_DEFAULT);
     }
 
-    public static void setPrefs(Preferences p, Optional<String> text, boolean refuseMessages) {
+    public static void setPrefs(MysterPreferences p, Optional<String> text, boolean refuseMessages) {
         RobustMML mml = new RobustMML();
         mml.put(MML_REFUSE_MESSAGE, text.orElse(REFUSAL_MESSAGE_DEFAULT));
 
@@ -131,7 +131,7 @@ public class MessageManager {
         p.put(PREFS_MESSAGING_KEY, mml);
     }
 
-    private static PreferencesMML getPreferencesMML(Preferences p) {
+    private static PreferencesMML getPreferencesMML(MysterPreferences p) {
         return new PreferencesMML(p.getAsMML(PREFS_MESSAGING_KEY,
                 new PreferencesMML()));
     }

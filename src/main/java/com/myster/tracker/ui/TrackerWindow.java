@@ -21,7 +21,7 @@ import com.general.mclist.SortableLong;
 import com.general.mclist.SortableString;
 import com.general.util.TimerThread;
 import com.myster.client.ui.OpenConnectionHandler;
-import com.myster.tracker.IPListManager;
+import com.myster.tracker.IpListManager;
 import com.myster.tracker.MysterServer;
 import com.myster.type.MysterType;
 import com.myster.ui.MysterFrame;
@@ -40,7 +40,7 @@ public class TrackerWindow extends MysterFrame {
     private static com.myster.ui.WindowLocationKeeper keeper = new com.myster.ui.WindowLocationKeeper(
             "Tracker");
 
-    private static IPListManager ipListManager;
+    private static IpListManager ipListManager;
 
     private static MysterFrameContext context;
 
@@ -52,7 +52,7 @@ public class TrackerWindow extends MysterFrame {
         }
     }
     
-    public static void init(IPListManager ipListManager, MysterFrameContext c) {
+    public static void init(IpListManager ipListManager, MysterFrameContext c) {
         TrackerWindow.ipListManager = ipListManager;
         TrackerWindow.context= c;
     }

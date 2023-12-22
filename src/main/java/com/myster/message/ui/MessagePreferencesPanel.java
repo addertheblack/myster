@@ -10,16 +10,16 @@ import javax.swing.JLabel;
 import javax.swing.JTextField;
 
 import com.myster.message.MessageManager;
-import com.myster.pref.Preferences;
+import com.myster.pref.MysterPreferences;
 import com.myster.pref.ui.PreferencesPanel;
 
 public class MessagePreferencesPanel extends PreferencesPanel {
     private final JCheckBox refuseMessages;
     private final JLabel denyMessageLabel;
     private final JTextField denyMessageText;
-    private final Preferences preferences;
+    private final MysterPreferences preferences;
 
-    public MessagePreferencesPanel(Preferences preferences) {
+    public MessagePreferencesPanel(MysterPreferences preferences) {
         this.preferences = preferences;
         setLayout(null);
 

@@ -1,6 +1,6 @@
 package com.myster.server;
 
-import com.myster.pref.Preferences;
+import com.myster.pref.MysterPreferences;
 import com.myster.transferqueue.AbstractDownloadQueue;
 
 public class ServerQueue extends AbstractDownloadQueue {
@@ -26,13 +26,13 @@ public class ServerQueue extends AbstractDownloadQueue {
                                                                                    // in
                                                                                    // the
                                                                                    // !prefs!.
-        Preferences.getInstance().put(PREF_PATH + "/" + UNIQUE_PATH_IN_PREFS,
+        MysterPreferences.getInstance().put(PREF_PATH + "/" + UNIQUE_PATH_IN_PREFS,
                 "" + i);
     }
 
     private static final int getQueueLength(String UNIQUE_PATH_IN_PREFS,
             int defaultValue) { //gets the queue length from the !prefs!.
-        String s_spots = Preferences.getInstance().get(
+        String s_spots = MysterPreferences.getInstance().get(
                 PREF_PATH + "/" + UNIQUE_PATH_IN_PREFS);
 
         if (s_spots != null) {

@@ -13,6 +13,7 @@ package com.myster.client.ui;
 import java.io.IOException;
 import java.net.UnknownHostException;
 import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -103,7 +104,7 @@ public class FileInfoListerThread extends MysterThread {
 
             msg.say("Parsing file information...");
 
-            Map<String, String> keyvalue = new HashMap<String, String>();
+            Map<String, String> keyvalue = new LinkedHashMap<String, String>();
             keyvalue.put("File Name", file);
 
             listDir(mml, keyvalue, "/", "");

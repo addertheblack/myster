@@ -5,7 +5,7 @@ import java.util.Queue;
 
 import com.myster.net.BadPacketException;
 import com.myster.net.MysterAddress;
-import com.myster.pref.Preferences;
+import com.myster.pref.MysterPreferences;
 import com.myster.transaction.Transaction;
 import com.myster.transaction.TransactionProtocol;
 
@@ -17,7 +17,7 @@ public class InstantMessageTransport extends TransactionProtocol {
 
     private final Queue<ReceivedMessage> recentlyReceivedMessages = new ArrayDeque<>();
 
-    private final Preferences preferences;
+    private final MysterPreferences preferences;
 
     public final InstantMessageListener listener;
 
@@ -25,7 +25,7 @@ public class InstantMessageTransport extends TransactionProtocol {
         public void messageReceived(InstantMessage msg);
     }
 
-    public InstantMessageTransport(Preferences preferences, InstantMessageListener listener) {
+    public InstantMessageTransport(MysterPreferences preferences, InstantMessageListener listener) {
         this.preferences = preferences;
         this.listener = listener;
     }

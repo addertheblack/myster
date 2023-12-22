@@ -22,7 +22,7 @@ import com.myster.client.net.MysterProtocol;
 import com.myster.mml.MML;
 import com.myster.mml.MMLException;
 import com.myster.net.MysterAddress;
-import com.myster.pref.Preferences;
+import com.myster.pref.MysterPreferences;
 
 /**
  * This class exists to make sure that if a server is listed under many
@@ -33,8 +33,7 @@ import com.myster.pref.Preferences;
  * they can be collected by the MysterIPPool's funky garbage collector.
  * 
  */
-
-public interface MysterIPPool {
+public interface MysterIpPool {
     /**
      * @return The {@link MysterIP} for this {@link MysterAddress} Blocking if not in pool!
      */
@@ -43,12 +42,14 @@ public interface MysterIPPool {
     public MysterServer getMysterServer(String name) throws IOException;
 
     /**
-     * In order to avoid having thread problems the two functions below are
-     * used. They are required because the checking the index and getting the
-     * object at that index should be atomic, hence the synchronized! and the
-     * two functions (for two levels of checking
+     * @return The MysterServer for this address assuming it's already in the cache. Null otherwise.
      */
     public MysterServer getCachedMysterIp(MysterAddress address);
 
+    
+    /**
+     * @return true if the MysterServer is in the cache, null otherwise. Danger of race condition
+     * between the check and the call to {@link MysterIpPool#getCachedMysterIp(MysterAddress)}
+     */
     public boolean existsInPool(MysterAddress s);
 }

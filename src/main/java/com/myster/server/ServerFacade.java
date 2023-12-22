@@ -20,7 +20,7 @@ import com.myster.application.MysterGlobals;
 import com.myster.client.datagram.PongTransport;
 import com.myster.client.datagram.UDPPingClient;
 import com.myster.net.DatagramProtocolManager;
-import com.myster.pref.Preferences;
+import com.myster.pref.MysterPreferences;
 import com.myster.pref.ui.PreferencesPanel;
 import com.myster.server.datagram.FileStatsDatagramServer;
 import com.myster.server.datagram.PingTransport;
@@ -30,7 +30,7 @@ import com.myster.server.datagram.ServerStatsDatagramServer;
 import com.myster.server.datagram.TopTenDatagramServer;
 import com.myster.server.datagram.TypeDatagramServer;
 import com.myster.server.event.ServerEventDispatcher;
-import com.myster.tracker.IPListManager;
+import com.myster.tracker.IpListManager;
 import com.myster.transaction.TransactionManager;
 import com.myster.transferqueue.TransferQueue;
 
@@ -46,10 +46,10 @@ public class ServerFacade {
     private final DoubleBlockingQueue<Socket> connectionQueue;
     private final ConnectionManager[] connectionManagers;
     private final Map<Integer, ConnectionSection> connectionSections = new HashMap<>();
-    private final IPListManager ipListManager;
-    private final Preferences preferences;
+    private final IpListManager ipListManager;
+    private final MysterPreferences preferences;
 
-    public ServerFacade(IPListManager ipListManager, Preferences preferences) {
+    public ServerFacade(IpListManager ipListManager, MysterPreferences preferences) {
         this.ipListManager = ipListManager;
         this.preferences = preferences;
 

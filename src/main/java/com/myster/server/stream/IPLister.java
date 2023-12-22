@@ -6,16 +6,16 @@ import java.io.IOException;
 
 import com.myster.net.MysterAddress;
 import com.myster.server.ConnectionContext;
-import com.myster.tracker.IPListManager;
+import com.myster.tracker.IpListManager;
 import com.myster.tracker.MysterServer;
 import com.myster.type.MysterType;
 
 public class IPLister extends ServerThread {
     public static final int NUMBER = 10;
     
-    private final IPListManager ipListManager;
+    private final IpListManager ipListManager;
 
-    public IPLister(IPListManager ipListManager) {
+    public IPLister(IpListManager ipListManager) {
         this.ipListManager = ipListManager;
     }
 

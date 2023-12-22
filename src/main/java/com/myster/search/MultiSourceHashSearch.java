@@ -12,18 +12,18 @@ import com.myster.client.stream.UnknownProtocolException;
 import com.myster.hash.FileHash;
 import com.myster.net.MysterAddress;
 import com.myster.net.MysterSocket;
-import com.myster.tracker.IPListManager;
+import com.myster.tracker.IpListManager;
 import com.myster.type.MysterType;
 
 public class MultiSourceHashSearch implements HashCrawlerManager {
     private static final int TIME_BETWEEN_CRAWLS = 10 * 60 * 1000;
 
     private final Map<MysterType, BatchedType> typeHashtable = new HashMap<>();
-    private final IPListManager ipListManager;
+    private final IpListManager ipListManager;
     private final MysterProtocol protocol;
 
     
-    public MultiSourceHashSearch(IPListManager ipListManager, MysterProtocol protocol) {
+    public MultiSourceHashSearch(IpListManager ipListManager, MysterProtocol protocol) {
         this.ipListManager = ipListManager;
         this.protocol = protocol;
     }
@@ -114,7 +114,7 @@ public class MultiSourceHashSearch implements HashCrawlerManager {
             public void run() {
                 com.myster.tracker.MysterServer[] iparray = ipListManager.getTop(type, 50);
 
-                String[] startingIps = IPListManager.getOnRamps();
+                String[] startingIps = IpListManager.getOnRamps();
 
                 int counter = 0;
                 for (int i = 0; (i < iparray.length) && (iparray[i] != null); i++) {

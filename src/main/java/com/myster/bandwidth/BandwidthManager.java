@@ -12,7 +12,7 @@ import javax.swing.JTextField;
 
 import com.general.util.MessagePanel;
 import com.myster.mml.RobustMML;
-import com.myster.pref.Preferences;
+import com.myster.pref.MysterPreferences;
 import com.myster.pref.ui.PreferencesPanel;
 
 /**
@@ -119,7 +119,7 @@ public class BandwidthManager {
         public RobustMML prefMML;
 
         public SomeStruct() {
-            prefMML = (RobustMML) (Preferences.getInstance()
+            prefMML = (RobustMML) (MysterPreferences.getInstance()
                     .getAsMML(BandwidthManager.KEY_IN_PREFS));
 
             if (prefMML == null)
@@ -175,7 +175,7 @@ public class BandwidthManager {
             int max = Math.max(2, p_max);
 
             prefMML.put(OUTGOING_MAX, "" + max);
-            Preferences.getInstance().put(KEY_IN_PREFS, prefMML);
+            MysterPreferences.getInstance().put(KEY_IN_PREFS, prefMML);
             outgoingImpl.setRate(max);
 
             return max;
@@ -185,7 +185,7 @@ public class BandwidthManager {
             int max = Math.max(2, p_max);
 
             prefMML.put(INCOMMING_MAX, "" + max);
-            Preferences.getInstance().put(KEY_IN_PREFS, prefMML);
+            MysterPreferences.getInstance().put(KEY_IN_PREFS, prefMML);
             incommingImpl.setRate(max);
 
             return max;

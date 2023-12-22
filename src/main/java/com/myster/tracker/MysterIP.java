@@ -15,6 +15,7 @@ package com.myster.tracker;
 import java.io.IOException;
 import java.net.UnknownHostException;
 import java.util.List;
+import java.util.prefs.Preferences;
 
 import com.general.util.BlockingQueue;
 import com.myster.client.datagram.PingEvent;
@@ -29,29 +30,20 @@ import com.myster.type.MysterType;
 import com.myster.util.MysterThread;
 
 /**
- * MysteriP objects are responsible for two things. 1) Saving server statistics information and 2)
- * keeping this information upt to date.
+ * MysterIP objects are responsible for two things. 1) Saving server statistics information and 2)
+ * keeping this information up to date.
  */
 
 class MysterIP {
     private MysterAddress ip;
-
     private double speed;
-
     private int timeup;
-
     private int timedown;
-
     private NumOfFiles numberOfFiles;
-
     private int numberofhits;
-
     private boolean upordown = true;
-
     private String serverIdentity;
-
     private long uptime;
-
     private int lastPingTime = -1; //in millis. (not saved)
 
     private volatile boolean occupied = false; //used in updating...
@@ -67,68 +59,53 @@ class MysterIP {
     //ip = root!
 
     public static final String IP = "/ip_address";
-
     public static final String SPEED = "/speed";
-
     public static final String TIMESINCEUPDATE = "/timeSinceUpdate";
-
     public static final String TIMEUP = "/timeUp";
-
     public static final String TIMEDOWN = "/timeDown";
-
     public static final String NUMBEROFHITS = "/numberOfHits";
-
     public static final String NUMBEROFFILES = "/numberOfFiles";
-
     public static final String SERVERIDENTITY = "/serverIdentity";
-
     public static final String UPTIME = "/uptime";
 
     //These are weights.
-    private final double SPEEDCONSTANT = 0.5;
-
-    private final double FILESCONSTANT = 0.5;
-
-    private final double HITSCONSTANT = 0.25;
-
-    private final double UPVSDOWNCONSTANT = 5;
-
-    private final double STATUSCONSTANT = 1;
+    private static final double SPEEDCONSTANT = 0.5;
+    private static final double FILESCONSTANT = 0.5;
+    private static final double HITSCONSTANT = 0.25;
+    private static final double UPVSDOWNCONSTANT = 5;
+    private static final double STATUSCONSTANT = 1;
 
     private MysterProtocol protocol;
 
-    private static final long UPDATETIME = 3600000;// 86400000==1 day,
+    private static final long UPDATETIME_MS = 1000 * 60 * 60;
 
-    // 3600000==1 hour ;
-
-    private static final long MINIUPDATETIME = 10 * 60 * 1000;
-
+    private static final long MINI_UPDATE_TIME_MS = 10 * 60 * 1000;
     private static final int NUMBER_OF_UPDATER_THREADS = 1;
 
-    MysterIP(String ip, MysterProtocol protocol) throws Exception {
+    MysterIP(String ip, MysterProtocol protocol) throws IOException {
         if (ip.equals("127.0.0.1"))
-            throw new Exception("IP is local host.");
+            throw new IOException("IP is local host.");
         
         this.protocol = protocol;
-        MysterAddress t = new MysterAddress(ip); // to see if address is valid.
+        new MysterAddress(ip); // to see if address is valid.
         createNewMysterIP(ip, 1, 50, 50, 1, 1, "", null, -1);
         if (!MysterIP.internalRefreshAll(protocol, this))
-            throw new Exception("Failed to created new Myster IP");
+            throw new IOException("Failed to created new Myster IP");
         // System.out.println("A New MysterIP Object = "+getAddress());
     }
 
-    MysterIP(MML mml, MysterProtocol protocol) {
+     MysterIP(Preferences node, MysterProtocol protocol) {
         this.protocol = protocol;
-        createNewMysterIP(mml.get(IP),
-                          Double.valueOf(mml.get(SPEED)).doubleValue(),
-                          Integer.valueOf(mml.get(TIMEUP)).intValue(),
-                          Integer.valueOf(mml.get(TIMEDOWN)).intValue(),
-                          Integer.valueOf(mml.get(NUMBEROFHITS)).intValue(),
-                          Long.valueOf(mml.get(TIMESINCEUPDATE)).longValue(),
-                          mml.get(NUMBEROFFILES),
-                          mml.get(SERVERIDENTITY),
-                          (mml.get(UPTIME) == null ? -1
-                                  : Long.valueOf(mml.get(UPTIME)).longValue()));
+        createNewMysterIP(node.get(IP, ""),
+                          Double.valueOf(node.get(SPEED, "")).doubleValue(),
+                          Integer.valueOf(node.get(TIMEUP, "")).intValue(),
+                          Integer.valueOf(node.get(TIMEDOWN, "")).intValue(),
+                          Integer.valueOf(node.get(NUMBEROFHITS, "")).intValue(),
+                          Long.valueOf(node.get(TIMESINCEUPDATE, "")).longValue(),
+                          node.get(NUMBEROFFILES, ""),
+                          node.get(SERVERIDENTITY, ""),
+                          (node.get(UPTIME, "") == null ? -1
+                                  : Long.valueOf(node.get(UPTIME, "")).longValue()));
     }
 
     private void createNewMysterIP(String i, double s, int tu, int td, int h, long t, String nof,
@@ -209,7 +186,6 @@ class MysterIP {
          * Ranks self for "goodness" and returns the result. The Rank is for Comparison to other
          * Myster IP objects.
          */
-
         public double getRank(MysterType type) {
             toUpdateOrNotToUpdate();
             return (SPEEDCONSTANT * Math.log(speed) //
@@ -293,7 +269,25 @@ class MysterIP {
         return ip.hashCode();
     }
 
-    MML toMML() {
+    void save(Preferences node) {
+        node.put(IP, "" + ip.toString());
+        node.put(SPEED, "" + speed);
+        node.put(TIMESINCEUPDATE, "" + timeoflastupdate);
+        node.put(TIMEUP, "" + timeup);
+        node.put(TIMEDOWN, "" + timedown);
+        node.put(NUMBEROFHITS, "" + numberofhits);
+        node.put(UPTIME, "" + uptime);
+        if (serverIdentity != null && !serverIdentity.equals(""))
+            node.put(SERVERIDENTITY, "" + serverIdentity);
+
+        String s_temp = numberOfFiles.toString();
+        if (!s_temp.equals(""))
+            node.put(NUMBEROFFILES, numberOfFiles.toString());
+    }
+    
+    
+    /** For debugging */
+    private MML toMML() {
         try {
             MML workingmml = new MML();
 
@@ -354,9 +348,9 @@ class MysterIP {
 
         //if both stats and all stats don't need updaing return.
 
-        if ((System.currentTimeMillis() - lastminiupdate < (getMysterCount() > 0 ? MINIUPDATETIME
-                : UPDATETIME))
-                && (System.currentTimeMillis() - timeoflastupdate < UPDATETIME)) {
+        if ((System.currentTimeMillis() - lastminiupdate < (getMysterCount() > 0 ? MINI_UPDATE_TIME_MS
+                : UPDATETIME_MS))
+                && (System.currentTimeMillis() - timeoflastupdate < UPDATETIME_MS)) {
             return;
         }
 
@@ -383,7 +377,7 @@ class MysterIP {
         //Do Statistics update
         try {
             //check if the update is needed.
-            if (System.currentTimeMillis() - mysterip.timeoflastupdate < UPDATETIME)
+            if (System.currentTimeMillis() - mysterip.timeoflastupdate < UPDATETIME_MS)
                 throw new MassiveProblemException("");
 
             if (!(mysterip.upordown))

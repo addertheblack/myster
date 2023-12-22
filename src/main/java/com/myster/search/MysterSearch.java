@@ -29,7 +29,7 @@ import com.myster.net.MysterAddress;
 import com.myster.net.MysterClientSocketPool;
 import com.myster.net.MysterSocket;
 import com.myster.net.MysterSocketFactory;
-import com.myster.tracker.IPListManager;
+import com.myster.tracker.IpListManager;
 import com.myster.tracker.MysterServer;
 import com.myster.type.MysterType;
 import com.myster.ui.MysterFrameContext;
@@ -95,7 +95,7 @@ public class MysterSearch {
      * nothing left pending.
      */
     private final Set<Cancellable> outStandingFutures;
-    private final IPListManager ipListManager;
+    private final IpListManager ipListManager;
     private final MysterProtocol protocol;
     private final HashCrawlerManager hashManager;
     private final MysterFrameContext context;
@@ -103,7 +103,7 @@ public class MysterSearch {
     public MysterSearch(MysterProtocol protocol, 
                         HashCrawlerManager hashManager,
                         MysterFrameContext context, 
-                        IPListManager ipListManager,
+                        IpListManager ipListManager,
                         SearchResultListener listener,
                         Sayable msg,
                         MysterType type,
@@ -370,7 +370,7 @@ public class MysterSearch {
         }
 
         if (i <= 4) {
-            String[] lastresort = IPListManager.getOnRamps();
+            String[] lastresort = IpListManager.getOnRamps();
 
             for (int j = 0; j < lastresort.length; j++) {
                 addAddressToQueue(queue, lastresort[j]);

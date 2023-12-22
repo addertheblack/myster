@@ -25,7 +25,7 @@ import com.myster.filemanager.FileTypeListManager;
 import com.myster.net.MysterAddress;
 import com.myster.net.MysterSocket;
 import com.myster.net.MysterSocketFactory;
-import com.myster.pref.Preferences;
+import com.myster.pref.MysterPreferences;
 import com.myster.server.BannersManager;
 import com.myster.server.ConnectionContext;
 import com.myster.server.DownloadInfo;
@@ -110,7 +110,7 @@ public class FileSenderThread extends ServerThread {
 
         try {
             b_temp = Boolean
-                    .valueOf(Preferences.getInstance().get(freeloadKey))
+                    .valueOf(MysterPreferences.getInstance().get(freeloadKey))
                     .booleanValue();
         } catch (NumberFormatException ex) {
             //nothing
@@ -121,7 +121,7 @@ public class FileSenderThread extends ServerThread {
     }
 
     private static void setKickFreeloaders(boolean b) {
-        Preferences.getInstance().put(freeloadKey, "" + b);
+        MysterPreferences.getInstance().put(freeloadKey, "" + b);
     }
 
     public static class FreeLoaderPref extends Panel {

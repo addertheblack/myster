@@ -27,18 +27,18 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.StringTokenizer;
+import java.util.prefs.Preferences;
 
 import com.myster.net.MysterAddress;
-import com.myster.pref.Preferences;
 import com.myster.type.MysterType;
 
-class IPList {
+class IpList {
     public static final int LISTSIZE = 100; //Size of any given list..
-    private static final String PATH = "/IPLists/";
+    private static final String PATH = "IPLists";
     
     private final Map<MysterAddress, MysterServer> mapOfServers = new LinkedHashMap<>();
     private final MysterType type;
-    private final String mypath;
+    private final Preferences preferences;
     
     private MysterServer worstRank = null;
     private long worstTime = 0;
@@ -46,15 +46,12 @@ class IPList {
     /**
      * Takes as an argument a list of strings.. These strings are the .toString() product of
      * com.myster objects.
+     * @param preferences 
      */
-    protected IPList(MysterType type, MysterIPPool pool) {
-        mypath = PATH + type;
+    protected IpList(MysterType type, MysterIpPool pool, Preferences preferences) {
+        this.preferences = preferences.node(PATH);
 
-        if (!Preferences.getInstance().containsKey(mypath)) {
-            System.out.println("Making new IP list entry.");
-            Preferences.getInstance().put(mypath, " ");
-        }
-        String s = Preferences.getInstance().get(mypath);
+        String s = preferences.get(type.toString(), "");
         StringTokenizer ips = new StringTokenizer(s);
         int max = ips.countTokens();
         for (int i = 0; i < max; i++) {
@@ -153,7 +150,7 @@ class IPList {
             buffer.append("" + a + " ");
         }
 
-        Preferences.getInstance().put(mypath, buffer.toString());
+        preferences.put(type.toString(), buffer.toString());
     }
 
     /**

@@ -3,7 +3,7 @@ package com.myster.application;
 import java.io.File;
 
 import com.general.application.ApplicationContext;
-import com.myster.pref.Preferences;
+import com.myster.pref.MysterPreferences;
 
 /**
  */
@@ -34,7 +34,6 @@ public class MysterGlobals {
      * quitting!).
      */
     public static void quit() {
-        Preferences.getInstance().flush(); //flushes prefs to disk.
         System.out.println("Byeeeee.");
         if (appSigleton!=null)
             appSigleton.close();

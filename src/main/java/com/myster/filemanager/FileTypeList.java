@@ -32,7 +32,7 @@ import com.myster.hash.FileHashEvent;
 import com.myster.hash.FileHashListener;
 import com.myster.mml.MML;
 import com.myster.mml.MMLException;
-import com.myster.pref.Preferences;
+import com.myster.pref.MysterPreferences;
 import com.myster.type.MysterType;
 import com.myster.util.MysterExecutor;
 
@@ -86,7 +86,7 @@ public class FileTypeList {
         this.pref_key = PREF_KEY + "." + type;
 
         try {
-            local_prefs = new MML(Preferences.getInstance().query(pref_key));
+            local_prefs = new MML(MysterPreferences.getInstance().query(pref_key));
         } catch (MMLException ex) {
             local_prefs = new MML();
         }
@@ -389,7 +389,7 @@ public class FileTypeList {
     }
 
     private synchronized void savePrefs() {
-        Preferences.getInstance().put(pref_key, local_prefs.toString()); // Change
+        MysterPreferences.getInstance().put(pref_key, local_prefs.toString()); // Change
         // info
     }
 

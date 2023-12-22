@@ -11,16 +11,26 @@
 
 package com.myster.ui.menubar;
 
-import java.awt.EventQueue;
+import java.awt.Component;
+import java.awt.KeyboardFocusManager;
+import java.awt.event.ActionEvent;
+import java.awt.event.KeyEvent;
+import java.beans.PropertyChangeEvent;
+import java.beans.PropertyChangeListener;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.function.Consumer;
 
+import javax.swing.AbstractAction;
+import javax.swing.Action;
 import javax.swing.JFrame;
 import javax.swing.JMenuBar;
+import javax.swing.KeyStroke;
+import javax.swing.text.JTextComponent;
 
 import com.general.events.AsyncEventThreadDispatcher;
 import com.general.events.EventDispatcher;
-import com.myster.tracker.IPListManager;
+import com.myster.tracker.IpListManager;
 import com.myster.ui.MysterFrameContext;
 import com.myster.ui.PreferencesGui;
 import com.myster.ui.menubar.event.AddIPMenuAction;
@@ -59,11 +69,9 @@ public class MysterMenuBar {
 
     public MysterMenuBar() {
         mysterMenuBarFactory = newMysterMenubarFactory();
-
-        EventQueue.invokeLater(() -> updateMenuBars());
     }
 
-    public void initMenuBar(IPListManager manager, PreferencesGui prefGui) {
+    public void initMenuBar(IpListManager manager, PreferencesGui prefGui) {
         file = new ArrayList<>();
         edit = new ArrayList<>();
         special = new ArrayList<>();
@@ -94,23 +102,22 @@ public class MysterMenuBar {
                                                   java.awt.event.KeyEvent.VK_Q));
 
         // Edit menu items
+//        edit.add(new MysterMenuItemFactory(createCutCopyPasteMenu("Undo", KeyEvent.VK_Z, (t) -> t.keySt))));
         edit.add(new MysterMenuItemFactory("Undo", NULL));
-        edit.add(new MysterMenuItemFactory("-", NULL));
-        edit.add(new MysterMenuItemFactory("Cut", NULL));
-        edit.add(new MysterMenuItemFactory("Copy (use command-c)", NULL));
-        edit.add(new MysterMenuItemFactory("Paste (use command-v)", NULL));
-        edit.add(new MysterMenuItemFactory("Clear", NULL));
-        edit.add(new MysterMenuItemFactory("-", NULL));
-        edit.add(new MysterMenuItemFactory("Select All", NULL));
+        edit.add(new MysterMenuItemFactory());
+        edit.add(new MysterMenuItemFactory(createCutCopyPasteMenu("Cut", KeyEvent.VK_X, (t) -> t.cut())));
+        edit.add(new MysterMenuItemFactory(createCutCopyPasteMenu("Copy", KeyEvent.VK_C, (t) -> t.copy())));
+        edit.add(new MysterMenuItemFactory(createCutCopyPasteMenu("Paste", KeyEvent.VK_V, (t) -> t.paste())));
+        
+        edit.add(new MysterMenuItemFactory());
+        edit.add(new MysterMenuItemFactory(createCutCopyPasteMenu("Select All",
+                                                                  KeyEvent.VK_A,
+                                                                  (t) -> t.selectAll())));
         edit.add(new MysterMenuItemFactory("-", NULL));
         edit.add(new MysterMenuItemFactory("Preferences",
-                                                  new PreferencesAction(prefGui),
-                                                  java.awt.event.KeyEvent.VK_SEMICOLON));
+                                           new PreferencesAction(prefGui),
+                                           java.awt.event.KeyEvent.VK_SEMICOLON));
 
-        // Disable all Edit menu commands
-        for (int i = 0; i < edit.size() - 1; i++) {
-            edit.get(i).setEnabled(false);
-        }
 
         // Myster menu items
         special.add(new MysterMenuItemFactory("Add IP", new AddIPMenuAction(manager)));
@@ -136,6 +143,36 @@ public class MysterMenuBar {
         mysterMenuBarFactoryImpl = new DefaultMysterMenuBarFactory(menuBarFactories);
 
         updateMenuBars();
+    }
+    
+    private static AbstractAction createCutCopyPasteMenu(String name, int key, Consumer<JTextComponent> c) {
+        final JTextComponent[] a = new JTextComponent[1];
+        AbstractAction action = new AbstractAction(name) {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                if (a[0]!= null) {
+                    c.accept(a[0]);
+                }
+            }
+        };
+        
+        action.putValue(Action.ACCELERATOR_KEY, KeyStroke.getKeyStroke(key, 0));
+        
+        KeyboardFocusManager.getCurrentKeyboardFocusManager().addPropertyChangeListener("permanentFocusOwner", new PropertyChangeListener() {
+            @Override
+            public void propertyChange(PropertyChangeEvent evt) {
+                Component focusedComponent = KeyboardFocusManager.getCurrentKeyboardFocusManager().getFocusOwner();
+                boolean isEnabled = focusedComponent instanceof JTextComponent;
+                action.setEnabled(isEnabled);
+                if (isEnabled) {
+                    a[0] = (JTextComponent) focusedComponent;
+                }
+            }
+        });
+        
+        action.setEnabled(true);
+        
+        return action;
     }
 
     private MysterMenuBarFactory newMysterMenubarFactory() {

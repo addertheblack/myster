@@ -13,13 +13,13 @@ package com.myster.ui.menubar.event;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 
-import com.myster.tracker.IPListManager;
+import com.myster.tracker.IpListManager;
 import com.myster.tracker.ui.AddIPDialog;
 
 public class AddIPMenuAction implements ActionListener {
-    private final IPListManager ipListManager;
+    private final IpListManager ipListManager;
     
-    public AddIPMenuAction(IPListManager ipListManager) {
+    public AddIPMenuAction(IpListManager ipListManager) {
         this.ipListManager = ipListManager;
     }
     

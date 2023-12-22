@@ -15,7 +15,7 @@ import javax.swing.JTextArea;
 
 import com.general.util.AskDialog;
 import com.myster.application.MysterGlobals;
-import com.myster.pref.Preferences;
+import com.myster.pref.MysterPreferences;
 import com.myster.pref.PreferencesMML;
 import com.myster.pref.ui.PreferencesPanel;
 
@@ -79,7 +79,7 @@ public class BannersManager {
     }
 
     private static synchronized Hashtable getPrefsAsHash() {
-        PreferencesMML mmlPrefs = new PreferencesMML(Preferences.getInstance().getAsMML(
+        PreferencesMML mmlPrefs = new PreferencesMML(MysterPreferences.getInstance().getAsMML(
                 KEY_IN_PREFS, new PreferencesMML()).copyMML());
 
         mmlPrefs.setTrace(true);
@@ -119,7 +119,7 @@ public class BannersManager {
         // language
         // be
         // damned!)
-        Preferences.getInstance().put(KEY_IN_PREFS, mml);
+        MysterPreferences.getInstance().put(KEY_IN_PREFS, mml);
         prefsHaveChanged(); // signal that this object should be re-inited from
         // prefs.
     }

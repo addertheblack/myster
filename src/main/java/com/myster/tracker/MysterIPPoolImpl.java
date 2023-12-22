@@ -7,14 +7,13 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.prefs.BackingStoreException;
+import java.util.prefs.Preferences;
 
 import com.myster.client.net.MysterProtocol;
-import com.myster.mml.MML;
-import com.myster.mml.MMLException;
 import com.myster.net.MysterAddress;
-import com.myster.pref.Preferences;
 
-public class MysterIPPoolImpl implements MysterIPPool {
+public class MysterIPPoolImpl implements MysterIpPool {
     private static final int GC_UPPER_LIMIT = 100;
 
     // MysterIPPool stores all its ips
@@ -33,25 +32,25 @@ public class MysterIPPoolImpl implements MysterIPPool {
 
     private final MysterProtocol protocol;
 
+    private final Preferences preferences;
+
 
     public MysterIPPoolImpl(Preferences prefs, MysterProtocol mysterProtocol) {
+        this.preferences = prefs.node(pref_key);
         this.protocol = mysterProtocol;
         System.out.println("Loading IPPool.....");
         cache = new HashMap<>(); // You put cereal on the Hashtable. In a
                                  // bowl of course...
-        MML mml = prefs.getAsMML(pref_key);
-
-        if (mml != null) {
-            List<String> dirList = mml.list("/"); // list root dir
-            for (int i = 0; i < dirList.size(); i++) {
-                try {
-                    MysterIP mysterip =
-                            new MysterIP(new MML(mml.get("/" + (dirList.get(i)))), protocol);
-                    cache.put(mysterip.getAddress(), mysterip);
-                } catch (MMLException ex) {
-                    ex.printStackTrace();
-                }
+        
+        String[] dirList;
+        try {
+            dirList = preferences.childrenNames();
+            for (String nodeName : dirList) {
+                MysterIP mysterip = new MysterIP(preferences.node(nodeName), protocol);
+                cache.put(mysterip.getAddress(), mysterip);
             }
+        } catch (BackingStoreException exception) {
+            // ignore
         }
 
         System.out.println("Loaded IPPool");
@@ -193,31 +192,17 @@ public class MysterIPPoolImpl implements MysterIPPool {
      * manager, this routine can be called as often as I like.
      */
     private synchronized void save() {
-        MML mml = new MML(); // make a new file system.
+        Iterator<MysterIP> iterator = cache.values().iterator();
 
-        Iterator<MysterIP> iterator = cache.values().iterator(); // ugh.. This
-                                                                 // syntax
-                                                                 // SUCKS!
-
-        // Collect worthless....
         int i = 0;
         while (iterator.hasNext()) {
             MysterIP mysterip = (iterator.next());
 
             if (mysterip.getMysterCount() > 0) {
-                mml.put("/" + i, mysterip.toMML().toString()); // write the
-                                                               // MysterIP's MML
-                                                               // representation
-                                                               // as a string.
-                                                               // //directories
-                                                               // are numbered
-                                                               // 1, 2, 3 etc...
+                mysterip.save(preferences.node("" + i));
             }
-            
+
             i++;
         }
-
-        // System.out.println("Saving: "+mml.toString());
-        Preferences.getInstance().put(pref_key, mml);
     }
 }

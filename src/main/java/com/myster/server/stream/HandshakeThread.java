@@ -15,7 +15,7 @@ import java.util.function.Supplier;
 
 import com.myster.filemanager.FileTypeListManager;
 import com.myster.mml.MML;
-import com.myster.pref.Preferences;
+import com.myster.pref.MysterPreferences;
 import com.myster.server.ConnectionContext;
 import com.myster.type.MysterType;
 
@@ -40,8 +40,8 @@ public class HandshakeThread extends ServerThread {
     public static MML getMMLToSend(String identity) {
         try {
             MML mml = new MML();
-            Preferences prefs;
-            prefs = Preferences.getInstance();
+            MysterPreferences prefs;
+            prefs = MysterPreferences.getInstance();
 
             String tempstring = prefs.query(com.myster.application.MysterGlobals.SPEEDPATH);
             if (!(tempstring.equals(""))) {

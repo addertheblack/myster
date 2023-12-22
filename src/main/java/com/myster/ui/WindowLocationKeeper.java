@@ -13,7 +13,7 @@ import java.util.StringTokenizer;
 
 import javax.swing.JFrame;
 
-import com.myster.pref.Preferences;
+import com.myster.pref.MysterPreferences;
 import com.myster.pref.PreferencesMML;
 
 /**
@@ -88,12 +88,12 @@ public class WindowLocationKeeper {
     private void saveLocation(Component c, int id) {
         prefs.put(key + id, rect2String(c.getBounds()));
 
-        Preferences.getInstance().put(PREF_KEY, prefs);
+        MysterPreferences.getInstance().put(PREF_KEY, prefs);
     }
     
     private void deleteLocation(Component c, int id) {
         prefs.remove(key + id);
-        Preferences.getInstance().put(PREF_KEY, prefs);
+        MysterPreferences.getInstance().put(PREF_KEY, prefs);
     }
 
     /////////// STATIC SUB SYSTEM
@@ -111,9 +111,9 @@ public class WindowLocationKeeper {
             return; //dont init twice.
 
         initFlag = true;
-        oldPrefs = new PreferencesMML(Preferences.getInstance().getAsMML(
+        oldPrefs = new PreferencesMML(MysterPreferences.getInstance().getAsMML(
                 PREF_KEY, new PreferencesMML()).copyMML());
-        System.out.println("" + Preferences.getInstance().getAsMML(PREF_KEY));
+        System.out.println("" + MysterPreferences.getInstance().getAsMML(PREF_KEY));
     }
 
     public static boolean fitsOnScreen(Rectangle rect) {

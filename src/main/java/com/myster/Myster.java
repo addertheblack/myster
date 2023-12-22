@@ -42,14 +42,14 @@ import com.myster.message.InstantMessageTransport;
 import com.myster.message.MessageManager;
 import com.myster.message.MessageWindow;
 import com.myster.message.ui.MessagePreferencesPanel;
-import com.myster.pref.Preferences;
+import com.myster.pref.MysterPreferences;
 import com.myster.search.HashCrawlerManager;
 import com.myster.search.MultiSourceHashSearch;
 import com.myster.search.ui.SearchWindow;
 import com.myster.server.BannersManager.BannersPreferences;
 import com.myster.server.ServerFacade;
 import com.myster.server.ui.ServerStatsWindow;
-import com.myster.tracker.IPListManager;
+import com.myster.tracker.IpListManager;
 import com.myster.tracker.MysterIPPoolImpl;
 import com.myster.tracker.ui.TrackerWindow;
 import com.myster.transaction.TransactionManager;
@@ -158,14 +158,20 @@ public class Myster {
         System.out.println("MAIN THREAD: Starting loader Thread..");
         
         System.out.println("-------->> before preferences " + (System.currentTimeMillis() - startTime));
-        Preferences preferences  = Preferences.getInstance();
+        MysterPreferences preferences  = MysterPreferences.getInstance();
         System.out.println("-------->> after preferences " + (System.currentTimeMillis() - startTime));
         
         MysterProtocol protocol = new MysterProtocolImpl();
 
-        System.out.println("-------->> before IPListManager " + (System.currentTimeMillis() - startTime));
-        IPListManager listManager = new IPListManager(new MysterIPPoolImpl(preferences, protocol), protocol);
-        System.out.println("-------->> after IPListManager " + (System.currentTimeMillis() - startTime));
+        System.out.println("-------->> before IPListManager "
+                + (System.currentTimeMillis() - startTime));
+        IpListManager listManager =
+                new IpListManager(new MysterIPPoolImpl(java.util.prefs.Preferences.userRoot(),
+                                                       protocol),
+                                  protocol,
+                                  java.util.prefs.Preferences.userRoot().node("Tracker.IpListManager"));
+        System.out.println("-------->> after IPListManager "
+                + (System.currentTimeMillis() - startTime));
 
         final HashCrawlerManager crawlerManager = new MultiSourceHashSearch(listManager, protocol);
         ClientWindow.init(protocol, crawlerManager, listManager);
@@ -226,13 +232,16 @@ public class Myster {
 
                 com.myster.hash.ui.HashManagerGUI.init(context, hashManager);
 
-                ServerStatsWindow.init(serverFacade.getServerDispatcher().getServerContext(), context);
-                 System.out.println("-------->> before ServerStatsWindow.getInstance().pack() " + (System.currentTimeMillis() - startTime));
+                ServerStatsWindow.init(serverFacade.getServerDispatcher().getServerContext(),
+                                       context);
+                System.out.println("-------->> before ServerStatsWindow.getInstance().pack() "
+                        + (System.currentTimeMillis() - startTime));
                 ServerStatsWindow.getInstance().pack();
 
                 SearchWindow.init(protocol, crawlerManager, listManager);
 
-                 System.out.println("-------->> before addPanels " + (System.currentTimeMillis() - startTime));
+                System.out.println("-------->> before addPanels "
+                        + (System.currentTimeMillis() - startTime));
                 preferencesGui.addPanel(BandwidthManager.getPrefsPanel());
                 preferencesGui.addPanel(new BannersPreferences());
                 preferencesGui.addPanel(serverFacade.new ServerPrefPanel());
@@ -273,9 +282,6 @@ public class Myster {
             System.out.println("-------->>" + (System.currentTimeMillis() - startTime));
 
             Thread.sleep(1);
-
-            
-            FileTypeListManager.getInstance();
             
             Util.invokeLater(() -> MysterTray.init());
         } catch (InterruptedException ex) {
@@ -320,6 +326,7 @@ public class Myster {
         try {
             InetAddress localhost = InetAddress.getLocalHost();
             System.out.println("IP Addr for local host: " + localhost.getHostAddress());
+            
             // Just in case this host has multiple IP addresses....
             InetAddress[] allMyIps = InetAddress.getAllByName(localhost.getCanonicalHostName());
             if (allMyIps != null && allMyIps.length > 1) {

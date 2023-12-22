@@ -15,6 +15,7 @@ import java.net.UnknownHostException;
 import java.util.List;
 
 import java.util.concurrent.CancellationException;
+import java.util.prefs.Preferences;
 
 import com.general.util.BlockingQueue;
 import com.general.util.RInt;
@@ -45,31 +46,33 @@ import com.myster.util.MysterThread;
  * 
  * @see com.myster.tracker.IPListManagerSingleton
  */
-public class IPListManager { //aka tracker
+public class IpListManager { //aka tracker
     private static final String[] lastresort = { "bigmacs.homeip.net", "mysternetworks.homeip.net",
             "mysternetworks.dyndns.org", "myster.homeip.net" };
 
-    private final IPList[] list;
+    private final IpList[] list;
     private final TypeDescription[] tdlist;
     private final BlockingQueue blockingQueue = new BlockingQueue();
-    private final AddIP[] adderWorkers = new AddIP[2];
-    private final MysterIPPool pool;
+    private final AddIp[] adderWorkers = new AddIp[2];
+    private final MysterIpPool pool;
     private final MysterProtocol protocol;
+    private final Preferences preferences;
     
-    public IPListManager(MysterIPPool pool, MysterProtocol protocol) {
+    public IpListManager(MysterIpPool pool, MysterProtocol protocol, Preferences preferences) {
         this.protocol = protocol;
         this.pool = pool;
+        this.preferences = preferences;
         blockingQueue.setRejectDuplicates(true);
 
         tdlist = TypeDescriptionList.getDefault().getEnabledTypes();
 
-        list = new IPList[tdlist.length];
+        list = new IpList[tdlist.length];
         for (int i = 0; i < list.length; i++) {
             assertIndex(i); //loads all lists.
         }
 
         for (int i = 0; i < adderWorkers.length; i++) {
-            adderWorkers[i] = new AddIP();
+            adderWorkers[i] = new AddIp();
             adderWorkers[i].start();
         }
 
@@ -134,7 +137,7 @@ public class IPListManager { //aka tracker
      *         containing nulls.
      */
     public synchronized MysterServer[] getTop(MysterType type, int x) {
-        IPList iplist;
+        IpList iplist;
         iplist = getListFromType(type);
         if (iplist == null)
             return null;
@@ -160,7 +163,7 @@ public class IPListManager { //aka tracker
      * @return Vector of MysterAddresses in the order of rank.
      */
     public synchronized List<MysterServer> getAll(MysterType type) {
-        IPList iplist;
+        IpList iplist;
         iplist = getListFromType(type);
         if (iplist == null)
             return null;
@@ -180,7 +183,7 @@ public class IPListManager { //aka tracker
         return temp;
     }
 
-    private synchronized IPList getListFromIndex(int index) {
+    private synchronized IpList getListFromIndex(int index) {
         assertIndex(index);
         return list[index];
     }
@@ -209,7 +212,7 @@ public class IPListManager { //aka tracker
      * @return the IPList for the type or null if no list exists for that typ.
      */
 
-    private IPList getListFromType(MysterType type) {
+    private IpList getListFromType(MysterType type) {
         int index;
         index = getIndex(type);
 
@@ -254,8 +257,8 @@ public class IPListManager { //aka tracker
      * Returns an IPList for the type in the tdlist variable for that index.
      * This is a stupid routine.
      */
-    private synchronized IPList createNewList(int index) {
-        return new IPList(tdlist[index].getType(), pool);
+    private synchronized IpList createNewList(int index) {
+        return new IpList(tdlist[index].getType(), pool, preferences);
     }
 
     /**
@@ -381,9 +384,9 @@ public class IPListManager { //aka tracker
      * This is a thread object representing the thread(s) that do the io
      * required to add IPAddresses to the tracker in a non-blocking manner.
      */
-    private class AddIP extends MysterThread {
+    private class AddIp extends MysterThread {
 
-        public AddIP() {
+        public AddIp() {
             super("AddIP Thread");
         }
 
