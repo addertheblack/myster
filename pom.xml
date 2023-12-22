@@ -1,6 +1,6 @@
 <project xmlns="http://maven.apache.org/POM/4.0.0"
-         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
 
     <groupId>com.myster</groupId>
@@ -23,13 +23,18 @@
 
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-        <maven.compiler.source>21</maven.compiler.source> <!-- Set your JDK version here -->
-        <maven.compiler.target>21</maven.compiler.target> <!-- Set your JDK version here -->
-        <outputName>MysterBuild</outputName> <!-- Custom property for output file name -->
+        <maven.compiler.source>21</maven.compiler.source> <!-- Set your JDK
+        version here -->
+        <maven.compiler.target>21</maven.compiler.target> <!-- Set your JDK
+        version here -->
+        <outputName>MysterBuild</outputName> <!-- Custom property for output filename -->
+        <mainclass>com.myster.Myster</mainclass>
+      
     </properties>
 
     <build>
-        <finalName>${outputName}</finalName> <!-- Use custom property for output file name -->
+        <finalName>${project.artifactId}-partial</finalName> <!-- Use custom property for output
+        file name -->
 
         <plugins>
             <!-- Compiler Plugin -->
@@ -51,6 +56,30 @@
                 <configuration>
                     <outputDirectory>${project.basedir}/bin</outputDirectory>
                 </configuration>
+            </plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-shade-plugin</artifactId>
+                <version>3.2.4</version>
+                <executions>
+                    <execution>
+                        <phase>package</phase>
+                        <goals>
+                            <goal>shade</goal>
+                        </goals>
+                        <configuration>
+                            <createDependencyReducedPom>false</createDependencyReducedPom>
+        
+                            <transformers>
+                                <transformer
+                                    implementation="org.apache.maven.plugins.shade.resource.ManifestResourceTransformer">
+                                    <mainClass>${mainclass}</mainClass>
+                                </transformer>
+                            </transformers>
+                            <outputFile>${project.basedir}/bin/${outputName}.jar</outputFile> 
+                        </configuration>
+                    </execution>
+                </executions>
             </plugin>
 
             <!-- Exec plugin for jpackage -->
@@ -87,26 +116,26 @@
                                 <configuration>
                                     <executable>jpackage</executable>
                                     <arguments>
-                                <argument>--input</argument>
-                                <argument>${project.basedir}/bin</argument>
-                                <argument>--name</argument>
-                                <argument>Myster</argument>
-                                <argument>--main-class</argument>
-                                <argument>com.myster.Myster</argument>
-                                <argument>--add-modules</argument>
-                                <argument>java.base,java.desktop</argument>
-                                <argument>--main-jar</argument>
-                                <argument>${project.build.finalName}.jar</argument>
-                                <argument>--win-menu</argument>
-                                <argument>--win-menu-group</argument>
-                                <argument>Myster</argument>
-                                <argument>--app-version</argument>
-                                <argument>${project.version}</argument>
-                                <argument>--icon</argument>
-                               <argument>program_icon.ico</argument>
-                                <argument>--type</argument>
-                                <argument>exe</argument>
-                            </arguments>
+                                        <argument>--input</argument>
+                                        <argument>${project.basedir}/bin</argument>
+                                        <argument>--name</argument>
+                                        <argument>Myster</argument>
+                                        <argument>--main-class</argument>
+                                        <argument>${mainclass}</argument>
+                                        <argument>--add-modules</argument>
+                                        <argument>java.base,java.desktop,java.prefs,java.xml</argument>
+                                        <argument>--main-jar</argument>
+                                        <argument>${project.basedir}/bin/${outputName}.jar</argument>
+                                        <argument>--win-menu</argument>
+                                        <argument>--win-menu-group</argument>
+                                        <argument>Myster</argument>
+                                        <argument>--app-version</argument>
+                                        <argument>${project.version}</argument>
+                                        <argument>--icon</argument>
+                                        <argument>program_icon.ico</argument>
+                                        <argument>--type</argument>
+                                        <argument>exe</argument>
+                                    </arguments>
                                 </configuration>
                             </execution>
                         </executions>
@@ -139,21 +168,21 @@
                                 <configuration>
                                     <executable>jpackage</executable>
                                     <arguments>
-								<argument>--input</argument>
-								<argument>${project.basedir}/bin</argument>
-								<argument>--name</argument>
-								<argument>Myster</argument>
-								<argument>--main-class</argument>
-								<argument>com.myster.Myster</argument>
-								<argument>--add-modules</argument>
-								<argument>java.base,java.desktop</argument>
-								<argument>--main-jar</argument>
-								<argument>${project.build.finalName}.jar</argument>
-								<argument>--type</argument>
-								<argument>dmg</argument>
-								<argument>--app-version</argument>
-								<argument>${project.version}</argument>
-							</arguments>
+                                        <argument>--input</argument>
+                                        <argument>${project.basedir}/bin</argument>
+                                        <argument>--name</argument>
+                                        <argument>Myster</argument>
+                                        <argument>--main-class</argument>
+                                        <argument>${mainclass}</argument>
+                                        <argument>--add-modules</argument>
+                                        <argument>java.base,java.desktop,java.prefs,java.xml</argument>
+                                        <argument>--main-jar</argument>
+                                        <argument>${project.basedir}/bin/${outputName}.jar</argument>
+                                        <argument>--type</argument>
+                                        <argument>dmg</argument>
+                                        <argument>--app-version</argument>
+                                        <argument>${project.version}</argument>
+                                    </arguments>
                                 </configuration>
                             </execution>
                         </executions>
