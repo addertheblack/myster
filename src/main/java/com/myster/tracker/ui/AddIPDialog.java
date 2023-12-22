@@ -23,8 +23,10 @@ import javax.swing.JDialog;
 import javax.swing.JLabel;
 import javax.swing.JTextField;
 
+import com.general.util.Util;
 import com.myster.net.MysterAddress;
 import com.myster.tracker.IpListManager;
+import com.myster.ui.WindowManager;
 
 /**
  * Implements the addIP dialog box.
@@ -43,8 +45,8 @@ public class AddIPDialog extends JDialog {
     private final JButton ok;
     private final IpListManager ipListManager;
 
-    public AddIPDialog(IpListManager ipListManager) {
-        super(com.myster.ui.WindowManager.getFrontMostWindow(), "Add IP", true);
+    public AddIPDialog(IpListManager ipListManager, WindowManager windowManager) {
+        super(windowManager.getFrontMostWindow(), "Add IP", true);
         
         this.ipListManager = ipListManager;
         
@@ -80,6 +82,8 @@ public class AddIPDialog extends JDialog {
 
         ok.addActionListener(new AddIPAction(this));
         addWindowListener(new com.general.util.StandardWindowBehavior());
+        
+        Util.centerFrame(this, 0, 0);
     }
 
     private void addComponent(Component c, int row, int column, int width,
@@ -97,6 +101,12 @@ public class AddIPDialog extends JDialog {
 
         add(c);
 
+    }
+    
+    public void show() {
+        pack();
+        Util.centerFrame(this, 0, 0);
+        super.show();
     }
 
     /**

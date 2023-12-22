@@ -33,6 +33,7 @@ import com.general.events.EventDispatcher;
 import com.myster.tracker.IpListManager;
 import com.myster.ui.MysterFrameContext;
 import com.myster.ui.PreferencesGui;
+import com.myster.ui.WindowManager;
 import com.myster.ui.menubar.event.AddIPMenuAction;
 import com.myster.ui.menubar.event.CloseWindowAction;
 import com.myster.ui.menubar.event.MenuBarEvent;
@@ -66,17 +67,20 @@ public class MysterMenuBar {
     private  List<MysterMenuFactory> menuBarFactories;
 
     private  MysterMenuFactory pluginMenuFactory;
+    
+    private CloseWindowAction closeWindowAction;
 
     public MysterMenuBar() {
         mysterMenuBarFactory = newMysterMenubarFactory();
     }
 
-    public void initMenuBar(IpListManager manager, PreferencesGui prefGui) {
+    // note that this is construction time dependencies
+    public void initMenuBar(IpListManager manager, PreferencesGui prefGui, WindowManager windowManager) {
         file = new ArrayList<>();
         edit = new ArrayList<>();
         special = new ArrayList<>();
 
-        MysterFrameContext context = new MysterFrameContext(this);
+        MysterFrameContext context = new MysterFrameContext(this, windowManager);
 
         // File menu items
         file.add(new MysterMenuItemFactory("New Search",
@@ -92,9 +96,10 @@ public class MysterMenuBar {
                                                               new com.myster.message.MessageWindow(context);
                                                       window.setVisible(true);
                                                   }));
-        file.add(new MysterMenuItemFactory("Close Window",
-                                                  new CloseWindowAction(),
-                                                  java.awt.event.KeyEvent.VK_W));
+        closeWindowAction = new CloseWindowAction("Close Window", windowManager);
+        closeWindowAction.putValue(Action.ACCELERATOR_KEY,
+                                   KeyStroke.getKeyStroke(java.awt.event.KeyEvent.VK_W, 0));
+        file.add(new MysterMenuItemFactory(closeWindowAction));
         file.add(new MysterMenuItemFactory("-", NULL));
 
         file.add(new MysterMenuItemFactory("Quit",
@@ -120,7 +125,7 @@ public class MysterMenuBar {
 
 
         // Myster menu items
-        special.add(new MysterMenuItemFactory("Add IP", new AddIPMenuAction(manager)));
+        special.add(new MysterMenuItemFactory("Add IP", new AddIPMenuAction(manager, windowManager)));
         special.add(new MysterMenuItemFactory("Show Server Stats",
                                                      new StatsWindowAction(),
                                                      java.awt.event.KeyEvent.VK_S,
@@ -141,6 +146,8 @@ public class MysterMenuBar {
         // plugins menu is not added here.
 
         mysterMenuBarFactoryImpl = new DefaultMysterMenuBarFactory(menuBarFactories);
+        
+        windowManager.addMenus(this);
 
         updateMenuBars();
     }
@@ -315,7 +322,7 @@ public class MysterMenuBar {
      * @param factory
      *            that will create the menu.
      */
-    public  void addMenu(MysterMenuFactory factory) {
+    public void addMenu(MysterMenuFactory factory) {
         menuBarFactories.add(factory);
         updateMenuBars();
     }
@@ -366,4 +373,5 @@ public class MysterMenuBar {
         updateMenuBars();
         return success;
     }
+
 }

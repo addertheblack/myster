@@ -56,6 +56,7 @@ import com.myster.transaction.TransactionManager;
 import com.myster.type.ui.TypeManagerPreferencesGUI;
 import com.myster.ui.MysterFrameContext;
 import com.myster.ui.PreferencesGui;
+import com.myster.ui.WindowManager;
 import com.myster.ui.menubar.MysterMenuBar;
 import com.myster.ui.menubar.event.MenuBarEvent;
 import com.myster.ui.menubar.event.MenuBarListener;
@@ -209,10 +210,12 @@ public class Myster {
                 System.out.println("-------->> before menuBarFactory " + (System.currentTimeMillis() - startTime));
 
                 MysterMenuBar menuBarFactory = new MysterMenuBar();
-                final MysterFrameContext context = new MysterFrameContext(menuBarFactory);
+                WindowManager windowManager = new WindowManager();
+                final MysterFrameContext context = new MysterFrameContext(menuBarFactory, windowManager);
                 PreferencesGui preferencesGui = new PreferencesGui(context);
 
-                menuBarFactory.initMenuBar(listManager, preferencesGui);
+                
+                menuBarFactory.initMenuBar(listManager, preferencesGui, windowManager);
                 
                 String osName = System.getProperty("os.name").toLowerCase();
                 if (osName.startsWith("mac os") && Desktop.isDesktopSupported()) {
@@ -263,7 +266,6 @@ public class Myster {
                 if (isServer) {
                     // nothing
                 } else {
-                    com.myster.ui.WindowManager.init(menuBarFactory);
                     com.myster.client.ui.ClientWindow.initWindowLocations(context);
                     ServerStatsWindow.initWindowLocations();
                     com.myster.tracker.ui.TrackerWindow.initWindowLocations();

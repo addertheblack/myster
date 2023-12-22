@@ -2,10 +2,10 @@ package com.general.util;
 
 import java.awt.Component;
 import java.awt.EventQueue;
-import java.awt.Frame;
 import java.awt.Image;
 import java.awt.MediaTracker;
 import java.awt.Toolkit;
+import java.awt.Window;
 import java.lang.reflect.InvocationTargetException;
 import java.net.URL;
 import java.util.concurrent.ExecutionException;
@@ -126,7 +126,7 @@ public class Util { //This code was taken from an Apple Sample Code package,
      * Centers the frame passed on the screen. The offsets are to offset the frame from perfect
      * center. If you want it centered call this with offsets of 0,0
      */
-    public static void centerFrame(Frame frame, int xOffset, int yOffset) {
+    public static void centerFrame(Window frame, int xOffset, int yOffset) {
         Toolkit tool = Toolkit.getDefaultToolkit();
         frame.setLocation(tool.getScreenSize().width / 2 - frame.getSize().width / 2 + xOffset,
                 tool.getScreenSize().height / 2 - frame.getSize().height / 2 + yOffset);

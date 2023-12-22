@@ -46,7 +46,7 @@ public class MysterFrame extends JFrame {
 
     public void setTitle(String windowName) {
         super.setTitle(MysterGlobals.ON_LINUX ? windowName + " - Myster" : windowName);
-        WindowManager.updateMenu();
+        context.windowManager().updateMenu();
     }
 
     private static synchronized Point getWindowStartingLocation() {
@@ -76,12 +76,12 @@ public class MysterFrame extends JFrame {
             }
 
             public void windowClosing(WindowEvent e) {
-                WindowManager.removeWindow(MysterFrame.this);
+                context.windowManager().removeWindow(MysterFrame.this);
                 context.menuBar().removeMenuListener(menuListener);
             }
 
             public void windowClosed(WindowEvent e) {
-                WindowManager.removeWindow(MysterFrame.this);
+                context.windowManager().removeWindow(MysterFrame.this);
                 context.menuBar().removeMenuListener(menuListener);
             }
 
@@ -94,7 +94,7 @@ public class MysterFrame extends JFrame {
             }
 
             public void windowActivated(WindowEvent e) {
-                WindowManager.setFrontWindow(MysterFrame.this);
+                context.windowManager().setFrontWindow(MysterFrame.this);
             }
 
             public void windowDeactivated(WindowEvent e) {
@@ -116,7 +116,7 @@ public class MysterFrame extends JFrame {
             }
 
             public void componentHidden(ComponentEvent e) {
-                WindowManager.removeWindow(MysterFrame.this);
+                context.windowManager().removeWindow(MysterFrame.this);
                 context.menuBar().removeMenuListener(menuListener);
             }
         });
@@ -130,7 +130,7 @@ public class MysterFrame extends JFrame {
     }
 
     public void show() {
-        WindowManager.addWindow(MysterFrame.this);
+        context.windowManager().addWindow(MysterFrame.this);
 
         if (menuBarEnabled) {
             enableMenuBar();

@@ -15,16 +15,19 @@ import java.awt.event.ActionListener;
 
 import com.myster.tracker.IpListManager;
 import com.myster.tracker.ui.AddIPDialog;
+import com.myster.ui.WindowManager;
 
 public class AddIPMenuAction implements ActionListener {
     private final IpListManager ipListManager;
+    private final WindowManager windowManager;
     
-    public AddIPMenuAction(IpListManager ipListManager) {
+    public AddIPMenuAction(IpListManager ipListManager, WindowManager windowManager) {
         this.ipListManager = ipListManager;
+        this.windowManager = windowManager;
     }
     
     public void actionPerformed(ActionEvent e) {
-        AddIPDialog a = new AddIPDialog(ipListManager);
+        AddIPDialog a = new AddIPDialog(ipListManager, windowManager);
         a.show();
     }
 

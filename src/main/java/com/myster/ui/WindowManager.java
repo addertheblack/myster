@@ -25,26 +25,25 @@ import com.myster.ui.menubar.event.NullAction;
  * "Windows" menu. It also is way too coupled with MysterFrame.
  */
 public class WindowManager {
-    private static final Map<MysterFrame, JMenu> windowMenuMap = new HashMap<>();
-    private static final List<MysterFrame> windows = new ArrayList<>();
+    private final Map<MysterFrame, JMenu> windowMenuMap = new HashMap<>();
+    private final List<MysterFrame> windows = new ArrayList<>();
 
-    private static MysterFrame frontMost;
-    private static List<MysterMenuItemFactory> menuItems;
-    private static List<MysterMenuItemFactory> finalMenu;
+    private final JMenu noFrameMenu;
+    private final List<MysterMenuItemFactory> menuItems;
+    private final List<MysterMenuItemFactory> finalMenu;
 
-    private static boolean isInited;
+    private MysterFrame frontMost;
+    private final List<WindowListener> listeners = new ArrayList<>();
 
-    public static void init(MysterMenuBar mysterMenuBar) {
+    public interface WindowListener {
+        public void windowCountChanged(int windowCount);
+    }
+    
+    public WindowManager() {
         if (!EventQueue.isDispatchThread()) {
             throw new IllegalStateException("Should be on the EDT");
         }
 
-        if (isInited) {
-            throw new IllegalStateException("Tried to init WindowManager twice");
-        }
-
-
-        isInited = true;
 
         menuItems = new ArrayList<>();
 
@@ -56,16 +55,36 @@ public class WindowManager {
 
         finalMenu = new ArrayList<MysterMenuItemFactory>();
 
+        updateMenu();
+        
+        // it's fine this is not updated since frameless menu is for when no other windows are showing
+        if (MysterGlobals.ON_MAC) {
+            noFrameMenu =  (new MysterMenuFactory("Windows", finalMenu)).makeMenu(null);
+        } else {
+            noFrameMenu = null;
+        }
+    }
+    
+    public void addMenus(MysterMenuBar mysterMenuBar) {
         mysterMenuBar.addMenu(new MysterMenuFactory("Windows", finalMenu) {
             @Override
             public JMenu makeMenu(JFrame frame) {
                 return getCorrectWindowsMenu(frame);
             }
         });
-        updateMenu();
+    }
+    
+    public void addWindowListener(WindowListener listener) {
+        listeners.add(listener);
+    }
+    
+    private void fireWidowListenerEvent() {
+        for (WindowListener l: listeners) {
+            l.windowCountChanged(windows.size());
+        }
     }
 
-    protected static void addWindow(MysterFrame frame) {
+    protected  void addWindow(MysterFrame frame) {
         if (!EventQueue.isDispatchThread()) {
             throw new IllegalStateException("Should be on the EDT");
         }
@@ -75,10 +94,11 @@ public class WindowManager {
             windowMenuMap.put(frame, (new MysterMenuFactory("Windows", finalMenu)).makeMenu(frame));
             // Timer t=new Timer(doUpdateClass, 1);//might cause deadlocks.
             updateMenu();
+            fireWidowListenerEvent();
         }
     }
 
-    static void removeWindow(MysterFrame frame) {
+     void removeWindow(MysterFrame frame) {
         if (!EventQueue.isDispatchThread()) {
             throw new IllegalStateException("Should be on the EDT");
         }
@@ -88,6 +108,8 @@ public class WindowManager {
         if (yep) {
             // Timer t=new Timer(doUpdateClass, 1); //might cause deadlocks.
             updateMenu();
+            
+            fireWidowListenerEvent();
             if (windows.size() == 0) {
                 // TODO: Fix this hack.
                 if (MysterGlobals.ON_LINUX) { // hack hack hack!
@@ -97,15 +119,12 @@ public class WindowManager {
         }
     }
 
-    public static void updateMenu() {
+    public void updateMenu() {
         if (!EventQueue.isDispatchThread()) {
             throw new IllegalStateException("Should be on the EDT");
         }
 
-        if (!isInited)
-            return;
-
-        finalMenu = new ArrayList<>(windows.size() + menuItems.size());
+        finalMenu.clear();
 
         for (int i = 0; i < menuItems.size(); i++) {
             finalMenu.add(menuItems.get(i));
@@ -124,7 +143,7 @@ public class WindowManager {
         }
     }
 
-    private static void fixMenu(JMenu menu) {
+    private  void fixMenu(JMenu menu) {
         for (int i = menu.getItemCount(); i > 3; i--) {
             menu.remove(i - 1);
         }
@@ -134,34 +153,33 @@ public class WindowManager {
                     .makeMenuItem(frame, menu);
         }
     }
-
-    private static JMenu getCorrectWindowsMenu(Frame frame) {
+    
+    private JMenu getCorrectWindowsMenu(Frame frame) {
         JMenu menu = windowMenuMap.get(frame);
         if (menu == null) {
-            return new JMenu("Windows");
-            // throw new IllegalStateException("This frame has no windows menu!
-            // " +
-            // frame.getTitle());
-            // menu = (new MysterMenuFactory("Windows",
-            // finalMenu)).makeMenu(frame);
-            // windowMenuHash.put(frame, menu);
+            if (noFrameMenu != null) {
+                return noFrameMenu;
+            }
+
+            throw new IllegalStateException("This frame has no windows menu and we're not on MacOS!"
+                    + frame.getTitle());
         }
         return menu;
     }
 
-    static void setFrontWindow(MysterFrame frame) {
+     void setFrontWindow(MysterFrame frame) {
         frontMost = frame;
     }
 
-    public static MysterFrame getFrontMostWindow() {
+    public  MysterFrame getFrontMostWindow() {
         return frontMost;
     }
 
 
 
-    private static class CycleWindowsHandler implements ActionListener {
+    private class CycleWindowsHandler implements ActionListener {
         public void actionPerformed(ActionEvent e) {
-            List<MysterFrame> windows = WindowManager.windows;
+            List<MysterFrame> windows = WindowManager.this.windows;
 
             synchronized (windows) {
                 if (windows.size() <= 0)
@@ -193,9 +211,9 @@ public class WindowManager {
         }
     }
 
-    private static class StackWindowsHandler implements ActionListener {
+    private class StackWindowsHandler implements ActionListener {
         public void actionPerformed(ActionEvent e) {
-            List<MysterFrame> windows = WindowManager.windows;
+            List<MysterFrame> windows = WindowManager.this.windows;
 
             final int MOD = 7;
 
