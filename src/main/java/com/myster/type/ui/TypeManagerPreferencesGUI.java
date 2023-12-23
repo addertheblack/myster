@@ -10,6 +10,7 @@ import com.general.mclist.MCListFactory;
 import com.general.mclist.Sortable;
 import com.general.mclist.SortableBoolean;
 import com.general.mclist.SortableString;
+import com.general.util.AnswerDialog;
 import com.general.util.MessagePanel;
 import com.myster.pref.ui.PreferencesPanel;
 import com.myster.type.MysterType;
@@ -90,10 +91,9 @@ public class TypeManagerPreferencesGUI extends PreferencesPanel {
      */
     public void save() {
         if (!isThereAtLeastOneTypeEnabled()) {
-            (new com.general.util.AnswerDialog(
-                    getFrame(),
-                    "You must have at least one File Type enabled to run Myster.",
-                    new String[] { "Ok" })).answer();
+            AnswerDialog.simpleAlert(getFrame(),
+                                     "You must have at least one File Type enabled to run Myster.",
+                                     new String[] { "Ok" });
             return;
         }
 

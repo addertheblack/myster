@@ -5,13 +5,16 @@ import java.awt.event.ActionListener;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.io.File;
-import java.util.Hashtable;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import javax.swing.DefaultListModel;
 import javax.swing.JButton;
+import javax.swing.JLabel;
 import javax.swing.JList;
 import javax.swing.JTextArea;
+import javax.swing.text.DefaultCaret;
 
 import com.general.util.AskDialog;
 import com.myster.application.MysterGlobals;
@@ -41,7 +44,7 @@ public class BannersManager {
     // initally read the
     // prefs
 
-    private static Hashtable imageNamesToUrls = new Hashtable();
+    private static Map<String, String> imageNamesToUrls = new HashMap<>();
 
     private static String[] imageNames;
 
@@ -69,7 +72,7 @@ public class BannersManager {
     }
 
     public static synchronized String getURLFromImageName(String imageName) {
-        String string = (String) imageNamesToUrls.get(imageName);
+        String string = imageNamesToUrls.get(imageName);
 
         return (string == null ? "" : string);
     }
@@ -78,14 +81,14 @@ public class BannersManager {
         prefsHasChangedFlag = true;
     }
 
-    private static synchronized Hashtable getPrefsAsHash() {
+    private static synchronized Map<String, String> getPrefsAsHash() {
         PreferencesMML mmlPrefs = new PreferencesMML(MysterPreferences.getInstance().getAsMML(
                 KEY_IN_PREFS, new PreferencesMML()).copyMML());
 
         mmlPrefs.setTrace(true);
 
         List<String> folders = mmlPrefs.list(PATH_TO_URLS);
-        Hashtable hashtable = new Hashtable();
+        Map<String, String> imageNameToUrl = new HashMap<>();
 
         if (folders != null) {
             for (int i = 0; i < folders.size(); i++) {
@@ -98,27 +101,14 @@ public class BannersManager {
                 if (imageName == null | url == null)
                     continue; // notice how I am using | here and not ||
 
-                hashtable.put(imageName, url);
+                imageNameToUrl.put(imageName, url);
             }
         }
 
-        return hashtable;
+        return imageNameToUrl;
     }
 
     private static synchronized void setPrefsMML(PreferencesMML mml) { // is a
-        // string
-        // ->
-        // String
-        // hash
-        // of
-        // imageNames
-        // to
-        // URLs
-        // (strongly
-        // typed
-        // language
-        // be
-        // damned!)
         MysterPreferences.getInstance().put(KEY_IN_PREFS, mml);
         prefsHaveChanged(); // signal that this object should be re-inited from
         // prefs.
@@ -169,19 +159,15 @@ public class BannersManager {
     }
 
     public static class BannersPreferences extends PreferencesPanel {
-        private JList list;
-
-        private JTextArea msg;
-
-        private JButton refreshButton;
-
-        private Hashtable hashtable = new Hashtable();
-
         public static final int LIST_YSIZE = 150;
-
         public static final int BUTTON_YSIZE = 25;
-
         public static final int PADDING = 5;
+
+        private final JList<String> list;
+        private final JTextArea msg;
+        private final JButton refreshButton;
+
+        private Map<String, String> hashtable = new HashMap<>();
 
         public BannersPreferences() {
             setSize(STD_XSIZE, STD_YSIZE);
@@ -205,6 +191,13 @@ public class BannersManager {
             msg.setLocation(PADDING, PADDING);
             msg.setSize(STD_XSIZE - 2 * PADDING, STD_YSIZE - 4 * PADDING - LIST_YSIZE
                     - BUTTON_YSIZE);
+            msg.setFont(new JLabel().getFont().deriveFont(new JLabel().getFont().getSize() + 2f));
+            msg.setCaret(new DefaultCaret() {
+                @Override
+                public void setVisible(boolean v) {
+                    super.setVisible(false); // Always keep the caret invisible
+                }
+            });
             add(msg);
 
             refreshButton = new JButton(com.myster.util.I18n.tr("Refresh"));
@@ -227,17 +220,15 @@ public class BannersManager {
                         return;
                     }
 
-                    String currentURL = (String) hashtable.get(list.getSelectedValue());
+                    String currentURL = hashtable.get(list.getSelectedValue());
 
                     if (currentURL == null)
                         currentURL = "";
 
-                    AskDialog askDialog = new AskDialog(BannersPreferences.this.getFrame(),
+                    String answerString = AskDialog.simpleAsk(BannersPreferences.this.getFrame(),
                                                         com.myster.util.I18n
                                                                 .tr("What URL would you like to link to this image?\n(Leave it blank to remove the url completely)"),
                                                         currentURL);
-
-                    String answerString = askDialog.ask();
 
                     if (answerString == null)
                         return; // box has been canceled.
@@ -254,14 +245,14 @@ public class BannersManager {
             mmlPrefs.setTrace(true);
 
             for (int i = 0; i < list.getModel().getSize(); i++) {
-                String url = (String) hashtable.get(list.getModel().getElementAt(i));
+                String url = hashtable.get(list.getModel().getElementAt(i));
 
                 if (url == null || url.equals(""))
                     continue; // Don't bother saving this one, skip to the
                 // next
                 // one.
 
-                mmlPrefs.put(PATH_TO_URLS + i + "/" + PARTIAL_PATH_TO_IMAGES, (String)list.getModel().getElementAt(i));
+                mmlPrefs.put(PATH_TO_URLS + i + "/" + PARTIAL_PATH_TO_IMAGES, list.getModel().getElementAt(i));
                 mmlPrefs.put(PATH_TO_URLS + i + "/" + PARTIAL_PATH_TO_URLS, url);
             }
 

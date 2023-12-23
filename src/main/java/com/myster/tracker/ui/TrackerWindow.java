@@ -3,6 +3,7 @@ package com.myster.tracker.ui;
 import java.awt.Component;
 import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
+import java.awt.Insets;
 import java.awt.Rectangle;
 import java.awt.event.ComponentAdapter;
 import java.awt.event.ComponentEvent;
@@ -12,6 +13,9 @@ import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
 import java.util.ArrayList;
 import java.util.List;
+
+import javax.swing.JLabel;
+import javax.swing.JPanel;
 
 import com.general.mclist.MCList;
 import com.general.mclist.MCListFactory;
@@ -68,6 +72,7 @@ public class TrackerWindow extends MysterFrame {
         gbconstrains.fill = GridBagConstraints.BOTH;
         gbconstrains.ipadx = 1;
         gbconstrains.ipady = 1;
+        gbconstrains.insets = new Insets(5, 5, 5, 5);
 
         //init objects
         choice = new TypeChoice();
@@ -75,8 +80,10 @@ public class TrackerWindow extends MysterFrame {
         list = MCListFactory.buildMCList(7, true, this);
 
         //add Objects
-        addComponent(choice, 0, 0, 1, 1, 99, 0);
-        addComponent(list.getPane(), 1, 0, 1, 1, 99, 99);
+        addComponent(new JLabel("Tracked servers on network: "), 0, 0, 1, 1, 0, 0);
+        addComponent(choice, 0, 1, 1, 1, 1, 0);
+        addComponent(new JPanel(), 0, 2, 1, 1, 1, 0);
+        addComponent(list.getPane(), 1, 0, 3, 1, 99, 99);
 
         //Add Event handlers
 

@@ -10,6 +10,7 @@
 package com.myster;
 
 import java.awt.Desktop;
+import java.awt.Desktop.Action;
 import java.awt.EventQueue;
 import java.awt.Frame;
 import java.io.IOException;
@@ -282,11 +283,14 @@ public class Myster {
                     ex.printStackTrace();
                 }
                 
-//                if (true)
-//                	throw new RuntimeException("dsds");
-                Desktop.getDesktop().setPreferencesHandler(e -> preferencesGui.setGUI(true));
+                if (Desktop.getDesktop().isSupported(Action.APP_PREFERENCES)) {
+                    Desktop.getDesktop().setPreferencesHandler(e -> preferencesGui.setGUI(true));
+                }
                 
-                Desktop.getDesktop().setAboutHandler(e -> AnswerDialog.simpleAlert("Myster PR 10\n\nCommon, join the party.."));
+                if (Desktop.getDesktop().isSupported(Action.APP_ABOUT)) {
+                    Desktop.getDesktop().setAboutHandler(e -> AnswerDialog
+                            .simpleAlert("Myster PR 10\n\nCommon, join the party.."));
+                }
             });
 
             System.out.println("-------->>" + (System.currentTimeMillis() - startTime));

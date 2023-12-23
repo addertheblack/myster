@@ -167,7 +167,7 @@ public class MSPartialFile {
 
             if (!dialog.getFile().equals(finalFileName)) {
                 final String YES_ANSWER = "Yes", NO_ANSWER = "No", CANCEL_ANSWER = "Cancel";
-                AnswerDialog fileIsNotTheSameDialog = new AnswerDialog(
+                String response = AnswerDialog.simpleAlert(
                         progress,
                         "The file name \n\n\""
                                 + dialog.getFile()
@@ -178,10 +178,9 @@ public class MSPartialFile {
                                 + " with this file?", new String[] { YES_ANSWER, NO_ANSWER,
                                 CANCEL_ANSWER });
 
-                fileIsNotTheSameDialog.answer();
-                if (fileIsNotTheSameDialog.getIt().equals(NO_ANSWER)) {
+                if (response.equals(NO_ANSWER)) {
                     continue;
-                } else if (fileIsNotTheSameDialog.getIt().equals(CANCEL_ANSWER)) {
+                } else if (response.equals(CANCEL_ANSWER)) {
                     userCancelled(progress, partialFile); //always
                     // throws
                     // exception !

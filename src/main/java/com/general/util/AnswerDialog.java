@@ -8,6 +8,9 @@ import java.awt.Point;
 import java.awt.Toolkit;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
 
 import javax.swing.BorderFactory;
 import javax.swing.JButton;
@@ -17,17 +20,16 @@ import javax.swing.JPanel;
 import javax.swing.JTextArea;
 import javax.swing.text.DefaultCaret;
 
-public class AnswerDialog extends JDialog {
-    private JButton[] buttons;
-    private String it; // just like HyperCard :-) You all know HyperCard, right?
+import com.myster.application.MysterGlobals;
 
-    private final static int BUTTONY = 30;
-    private final static int BUTTONX = 100;
+public class AnswerDialog extends JDialog {
+    private List<JButton> buttons;
+    private String it; // just like HyperCard :-) You all know HyperCard, right?
 
     private final Frame parent;
     private final String theString;
 
-    public AnswerDialog(Frame f, String q, String ... b) {
+    private AnswerDialog(Frame f, String q, String ... b) {
         super(f, "Alert!", true);
         theString = q;
         parent = f;
@@ -40,14 +42,6 @@ public class AnswerDialog extends JDialog {
         initComponents(buttons);
         
         setResizable(true);
-    }
-
-    public AnswerDialog(String q, String[] b) {
-        this(getCenteredFrame(), q, b);
-    }
-
-    public static String simpleAlert(String s, String[] b) {
-        return (new AnswerDialog(getCenteredFrame(), s, b)).answer();
     }
 
     public static String simpleAlert(String s) {
@@ -77,18 +71,15 @@ public class AnswerDialog extends JDialog {
         this(f, q, new String[0]);
     }
 
-    private void initComponents(String[] b) {
+    private void initComponents(String[] buttonNames) {
     	 int padding = 10; // 10 pixels padding
          ((JComponent)getContentPane()).setBorder(BorderFactory.createEmptyBorder(padding, padding, padding, padding));
 
+         if (buttonNames.length > 3) {
+             throw new IllegalStateException("Can only have 3 buttons max, got " + buttonNames.length);
+         }
          
         setLayout(new BorderLayout());
-
-        int length;
-        if (b.length < 3)
-            length = b.length;
-        else
-            length = 3; // ha haaa!
 
         JTextArea textArea = new JTextArea(theString, 0, theString.length() > 200 ? 80 : 40);
         textArea.setLineWrap(true);
@@ -109,19 +100,21 @@ public class AnswerDialog extends JDialog {
 
         JPanel buttonPanel = new JPanel();
         buttonPanel.setLayout(new FlowLayout(FlowLayout.RIGHT));
-        buttons = new JButton[length];
+        buttons = new ArrayList<>();
 
-        for (int i = 0; i < length; i++) {
-            buttons[i] = new JButton(b[i]);
-            buttons[i].addActionListener(new ActionHandler());
-            buttons[i].setSize(BUTTONX, BUTTONY);
-            buttons[i].setLocation(getSize().width - (120 * i + 20) - BUTTONX,
-                    getSize().height - BUTTONY - 10 - 20 );//-1-insets.bottom);
-            buttonPanel.add(buttons[i]);
-            
-            if (i == length -1 ) {
-               getRootPane().setDefaultButton(buttons[i]);
-            }
+        for (String buttonName: buttonNames) {
+            JButton button = new JButton(buttonName);
+            button.addActionListener(new ActionHandler());
+            buttons.add(button);
+        }
+        getRootPane().setDefaultButton(buttons.get(0));
+        
+        if (MysterGlobals.ON_MAC) {
+            Collections.reverse(buttons);
+        }
+        
+        for (JButton b : buttons) {
+            buttonPanel.add(b);
         }
         
         add(buttonPanel, BorderLayout.SOUTH);

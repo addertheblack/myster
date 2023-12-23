@@ -137,12 +137,11 @@ public class DownloaderThread extends SafeThread {
         } else {
             File tempFile = new File(dp + theFileName);
             if (tempFile.exists()) {
-                String it = (new AnswerDialog(
-                        progress,
-                        "The file "
-                                + theFileName
-                                + " already exists. Would you like to over-write the file or rename the file you're downloading?\n\nWarning: Over-writting will delete the current file contents.",
-                        new String[] { "Cancel", "Rename", "Over-Write" })).answer();
+                String it = AnswerDialog
+                        .simpleAlert(progress,
+                                     "The file " + theFileName
+                                             + " already exists. Would you like to over-write the file or rename the file you're downloading?\n\nWarning: Over-writting will delete the current file contents.",
+                                     new String[] { "Over-Write", "Rename", "Cancel" });
                 if (it.equals("Cancel")) {
                     progress.setText("User Canceled", FileProgressWindow.BAR_1);
                     return;
@@ -419,10 +418,10 @@ public class DownloaderThread extends SafeThread {
 
         if (fileToWriteTo.exists() && (fileToWriteTo.length() != 0)) {
 
-            String it = (new AnswerDialog(
+            String it = AnswerDialog.simpleAlert(
                     progress,
                     "A file by this name already exists. Would you like to restart this download or continue?",
-                    new String[] { "restart", "continue", "cancel" })).answer();
+                    new String[] { "restart", "continue", "cancel" });
 
             if (it.equals("restart")) {
                 if (!(fileToWriteTo.delete())) {

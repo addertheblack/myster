@@ -31,9 +31,11 @@ public class MultiSourceUtilities {
             if (file == null) {
                 return null;
             } else if (file.exists()) {
-                String answer = (new AnswerDialog(parentFrame, "A file by the name of "
-                        + file.getName() + " already exists. What do you want to do.",
-                        new String[] { CANCEL_BUTTON, WRITE_OVER })).answer();
+                String answer = AnswerDialog
+                        .simpleAlert(parentFrame,
+                                     "A file by the name of " + file.getName()
+                                             + " already exists. What do you want to do.",
+                                     new String[] { WRITE_OVER, CANCEL_BUTTON });
                 if (answer.equals(CANCEL_BUTTON)) {
                     return null;
                 } else if (answer.equals(WRITE_OVER)) {
@@ -46,9 +48,9 @@ public class MultiSourceUtilities {
                     file = askUserForANewFile(stub.getName());
                 }
             } else if (!isWritable(file)) {
-                String answer = (new AnswerDialog(parentFrame,
+                String answer =  AnswerDialog.simpleAlert(parentFrame,
                         "Cannot write to this directory, it appears to be read-only.",
-                        new String[] { CANCEL_BUTTON, OK_BUTTON })).answer();
+                        new String[] { OK_BUTTON, CANCEL_BUTTON });
                 if (answer.equals(CANCEL_BUTTON)) {
                     return null;
                 } else {

@@ -18,6 +18,8 @@ import java.awt.Insets;
 import java.awt.Rectangle;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.awt.event.FocusEvent;
+import java.awt.event.FocusListener;
 import java.util.Map;
 
 import javax.swing.JButton;
@@ -45,50 +47,32 @@ import com.myster.ui.WindowLocationKeeper;
 import com.myster.util.Sayable;
 
 public class ClientWindow extends MysterFrame implements Sayable {
+    private static final String ENTER_AN_IP_HERE = "Enter a server address here";
     private static final int XDEFAULT = 600;
-
     private static final int YDEFAULT = 400;
-
     private static final int SBXDEFAULT = 72; //send button X default
-
     private static final int GYDEFAULT = 50; //Generic Y default
+    private static final String WINDOW_KEEPER_KEY = "Myster's Client Windows";
+    private static final String CLIENT_WINDOW_TITLE_PREFIX = "Direct Connection ";
 
     private static int counter = 0;
-
-    private static final String WINDOW_KEEPER_KEY = "Myster's Client Windows";
-
-    private static final String CLIENT_WINDOW_TITLE_PREFIX = "Direct Connection ";
-    
     private static WindowLocationKeeper keeper;
-    
     private static IpListManager ipListManager;
     private static MysterProtocol protocol;
     private static HashCrawlerManager hashManager;
     
     private GridBagLayout gblayout;
-
     private GridBagConstraints gbconstrains;
-
     private JButton connect;
-
-    private JTextField IP;
-
+    private JTextField ipTextField;
     private MCList fileTypeList;
-
     private MCList fileList;
-
     private FileInfoPane pane;
-
     private String currentip;
-
     private JButton instant;
-
     private MessageField msg;
-
     private TypeListerThread connectToThread;
-
     private FileListerThread fileListThread;
-
     private FileInfoListerThread fileInfoListerThread;
 
     public static void init(MysterProtocol protocol, HashCrawlerManager hashManager, IpListManager ipListManager) {
@@ -120,13 +104,8 @@ public class ClientWindow extends MysterFrame implements Sayable {
     public ClientWindow(MysterFrameContext c, String ip) {
         super(c, "Direct Connection " + (++counter));
         init();
-        IP.setText(ip);
-        //connect.dispatchEvent(new KeyEvent(connect, KeyEvent.KEY_PRESSED,
-        // System.currentTimeMillis(), 0, KeyEvent.VK_ENTER,
-        // (char)KeyEvent.VK_ENTER));
-        //connect.dispatchEvent(new KeyEvent(connect, KeyEvent.KEY_RELEASED,
-        // System.currentTimeMillis(), 0, KeyEvent.VK_ENTER,
-        // (char)KeyEvent.VK_ENTER));
+        ipTextField.setText(ip);
+        ipTextField.setForeground(Color.BLACK);
         connect.dispatchEvent(new ActionEvent(connect, ActionEvent.ACTION_PERFORMED,
                 "Connect Button"));
     }
@@ -149,8 +128,36 @@ public class ClientWindow extends MysterFrame implements Sayable {
         connect = new JButton("Connect");
         connect.setSize(SBXDEFAULT, GYDEFAULT);
 
-        IP = new JTextField("Enter an IP here");
-        IP.setEditable(true);
+        ipTextField = new JTextField(ENTER_AN_IP_HERE) {
+            @Override
+            public String getText() {
+                String text = super.getText();
+                if (text.equals(ENTER_AN_IP_HERE)) {
+                    return "";
+                }
+                return text;
+            }
+        };
+        ipTextField.setEditable(true);
+        ipTextField.setToolTipText(ENTER_AN_IP_HERE);
+        ipTextField.setForeground(Color.GRAY);
+        ipTextField.addFocusListener(new FocusListener() {
+            @Override
+            public void focusLost(FocusEvent e) {
+                if (ipTextField.getText().equals("")) {
+                    ipTextField.setText(ENTER_AN_IP_HERE);
+                    ipTextField.setForeground(Color.GRAY);
+                }
+            }
+            
+            @Override
+            public void focusGained(FocusEvent e) {
+                if (ipTextField.getText().equals("")) {
+                    ipTextField.setForeground(Color.BLACK);
+                    ipTextField.setText("");
+                }
+            }
+        });
 
         fileTypeList = MCListFactory.buildMCList(1, true, this);
         fileTypeList.sortBy(-1);
@@ -168,13 +175,13 @@ public class ClientWindow extends MysterFrame implements Sayable {
         instant.addActionListener(new ActionListener() {
             public void actionPerformed(ActionEvent e) {
                 try {
-                    com.myster.net.MysterAddress address = new com.myster.net.MysterAddress(IP
+                    com.myster.net.MysterAddress address = new com.myster.net.MysterAddress(ipTextField
                             .getText());
                     com.myster.message.MessageWindow window = new com.myster.message.MessageWindow(getMysterFrameContext(),
                             address);
                     window.setVisible(true);
                 } catch (java.net.UnknownHostException ex) {
-                    (new AnswerDialog(ClientWindow.this, "The address " + IP.getText()
+                    (new AnswerDialog(ClientWindow.this, "The address " + ipTextField.getText()
                             + " does not apear to be a valid internet address.")).answer();
                 }
             }
@@ -183,7 +190,7 @@ public class ClientWindow extends MysterFrame implements Sayable {
         //reshape(0, 0, XDEFAULT, YDEFAULT);
 
         addComponent(connect, 0, 0, 1, 1, 1, 0);
-        addComponent(IP, 0, 1, 2, 1, 6, 0);
+        addComponent(ipTextField, 0, 1, 2, 1, 6, 0);
         addComponent(instant, 0, 3, 1, 1, 5, 0);
         addComponent(fileTypeList.getPane(), 1, 0, 1, 1, 1, 99);
         addComponent(fileList.getPane(), 1, 1, 2, 1, 6, 99);
@@ -200,7 +207,7 @@ public class ClientWindow extends MysterFrame implements Sayable {
             }
         };
         connect.addActionListener(connectButtonEvent);
-        IP.addActionListener(connectButtonEvent);
+        ipTextField.addActionListener(connectButtonEvent);
 
         fileTypeList.addMCListEventListener(new MCListEventAdapter(){
             public void selectItem(MCListEvent e) {
@@ -248,7 +255,6 @@ public class ClientWindow extends MysterFrame implements Sayable {
         gblayout.setConstraints(c, gbconstrains);
 
         add(c);
-
     }
 
     public void addItemToTypeList(MysterType s) {
@@ -268,8 +274,11 @@ public class ClientWindow extends MysterFrame implements Sayable {
     public void refreshIP(final MysterAddress address) {
         MysterServer server = ipListManager.getQuickServerStats(address);
 
-        setTitle(CLIENT_WINDOW_TITLE_PREFIX + "to \""
-                + (server == null ? currentip : server.getServerIdentity()) + "\"");
+        String fallbackWindowName = currentip.equals("") ? "myself" : currentip;
+        String windowName =
+                (server == null ? fallbackWindowName : "\"" + server.getServerIdentity() + "\" ("
+                        + currentip + ")");
+        setTitle(CLIENT_WINDOW_TITLE_PREFIX + "to " + windowName);
     }
 
     //To be in an interface??
@@ -332,7 +341,7 @@ public class ClientWindow extends MysterFrame implements Sayable {
 
     public void startConnect() {
         stopConnect();
-        currentip = IP.getText();
+        currentip = ipTextField.getText();
         connectToThread =
                 new TypeListerThread(ClientWindow.protocol, new TypeListerThread.TypeListener() {
                     public void addItemToTypeList(MysterType s) {
