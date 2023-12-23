@@ -92,12 +92,7 @@ public class TypeListerThread extends MysterThread {
                     MysterSocketFactory.makeStreamConnection(new MysterAddress(ip))) {
                 if (endFlag)
                     return;
-            } catch (IOException ex) {
-                msg.say("Could not connect, server is unreachable...");
-                return;
-            }
 
-            try {
                 msg.say("Requesting File Type List...");
 
                 MysterType[] typeList = protocol.getStream().getTypes(socket);

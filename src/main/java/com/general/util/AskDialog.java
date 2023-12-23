@@ -103,6 +103,8 @@ public class AskDialog extends JDialog {
         pack();
         
         Util.centerFrame(this, 0, 0);
+        
+        messagebox.requestFocus();
     }
 
     public String ask() {
