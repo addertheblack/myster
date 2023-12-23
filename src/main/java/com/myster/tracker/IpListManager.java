@@ -48,8 +48,7 @@ import com.myster.util.MysterThread;
  * @see com.myster.tracker.IPListManagerSingleton
  */
 public class IpListManager { //aka tracker
-    private static final String[] lastresort = { "bigmacs.homeip.net", "mysternetworks.homeip.net",
-            "mysternetworks.dyndns.org", "myster.homeip.net" };
+    private static final String[] LAST_RESORT = { "myster.ddnsgeek.com" };
     private static final String PATH = "IPLists";
 
     private final IpList[] list;
@@ -181,8 +180,8 @@ public class IpListManager { //aka tracker
      *         (ip:port or domain name:port format)
      */
     public static String[] getOnRamps() {
-        String[] temp = new String[lastresort.length];
-        System.arraycopy(lastresort, 0, temp, 0, lastresort.length);
+        String[] temp = new String[LAST_RESORT.length];
+        System.arraycopy(LAST_RESORT, 0, temp, 0, LAST_RESORT.length);
         return temp;
     }
 
