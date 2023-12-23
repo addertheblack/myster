@@ -180,6 +180,8 @@
                                         <argument>${project.basedir}/bin/${outputName}.jar</argument>
                                         <argument>--type</argument>
                                         <argument>dmg</argument>
+                                        <argument>--icon</argument>
+                                        <argument>program_icon.icns</argument>
                                         <argument>--app-version</argument>
                                         <argument>${project.version}</argument>
                                     </arguments>

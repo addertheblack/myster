@@ -10,5 +10,5 @@ for i in 16 32 128 256 512 ; do
         x="@2x"
     done
 done >/dev/null  # /dev/null in lieu of a "-s" silent option
-iconutil -—convert icns $DIR
+iconutil --convert icns $DIR
 rm -r $DIR

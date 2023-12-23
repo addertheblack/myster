@@ -9,6 +9,7 @@ import java.awt.Graphics;
 import java.awt.Image;
 import java.awt.MediaTracker;
 import java.awt.Taskbar;
+import java.awt.Taskbar.Feature;
 import java.awt.event.MouseListener;
 import java.util.ArrayList;
 import java.util.List;
@@ -265,8 +266,8 @@ public class ProgressWindow extends MysterFrame {
 
         int int_temp = (int) (percent * 100);
 
-        if (Taskbar.isTaskbarSupported()) {
-            Taskbar.getTaskbar().setWindowProgressValue(this, int_temp);
+        if (Taskbar.isTaskbarSupported() && Taskbar.getTaskbar().isSupported(Feature.PROGRESS_VALUE_WINDOW)) {
+        	Taskbar.getTaskbar().setWindowProgressValue(this, int_temp);
         }
 
         if (int_temp == lastPercent) {

@@ -10,7 +10,7 @@ public interface PromiseFuture<T> extends Cancellable, Future<T> {
     public static <R> PromiseFuture<R> newPromiseFuture(Consumer<AsyncContext<R>> context) {
         PromiseFutureImpl<R> f = new PromiseFutureImpl<>();
         
-        context.accept(f);
+        context.accept(f.getAsyncContext());
         
         return f;
     }

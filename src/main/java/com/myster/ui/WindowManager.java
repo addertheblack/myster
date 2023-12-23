@@ -1,5 +1,6 @@
 package com.myster.ui;
 
+import java.awt.Desktop;
 import java.awt.EventQueue;
 import java.awt.Frame;
 import java.awt.event.ActionEvent;

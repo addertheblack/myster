@@ -3,11 +3,11 @@ package com.myster.net;
 import java.util.concurrent.Executor;
 import java.util.concurrent.Executors;
 
+import com.general.thread.BoundedExecutor;
 import com.general.thread.CallListener;
 import com.general.thread.CancellableCallable;
 import com.general.thread.PromiseFuture;
 import com.general.thread.PromiseFutures;
-import com.general.thread.SpecialExecutor;
 
 /**
  * This class should be used whenever the user wishes to do an asynchronous IO
@@ -24,7 +24,7 @@ import com.general.thread.SpecialExecutor;
 /*
  * Locking order is InternalFuture -> MysterSocketPool -> BlockingQueue
  */
-public class MysterClientSocketPool implements SpecialExecutor {
+public class MysterClientSocketPool {
     private static MysterClientSocketPool pool;
 
     /**
@@ -56,10 +56,9 @@ public class MysterClientSocketPool implements SpecialExecutor {
      *            here.
      */
     public MysterClientSocketPool(final int numberOfThreads) {
-        threadPool = Executors.newFixedThreadPool(numberOfThreads);
+        threadPool = new BoundedExecutor(numberOfThreads, Executors.newVirtualThreadPerTaskExecutor());
     }
 
-    @Override
     public <T> PromiseFuture<T> execute(CancellableCallable<T> callable, CallListener<T> listener) {
         return PromiseFutures.execute(callable, threadPool).useEdt().addCallListener(listener);
     }

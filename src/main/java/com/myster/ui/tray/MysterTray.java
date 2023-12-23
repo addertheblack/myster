@@ -17,6 +17,9 @@ import com.myster.ui.MysterFrame;
 
 public class MysterTray {
     public static void init() {
+    	if ( MysterGlobals.ON_MAC) {
+    		return;
+    	}
         if (SystemTray.isSupported()) {
             SystemTray t = SystemTray.getSystemTray();
             try {

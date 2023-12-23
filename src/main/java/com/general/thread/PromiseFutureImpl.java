@@ -11,7 +11,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import java.util.function.Consumer;
 
-public class PromiseFutureImpl<T> implements PromiseFuture<T>, AsyncContext<T> {
+public class PromiseFutureImpl<T> implements PromiseFuture<T> {
     private Invoker invoker;
     private CallResult<T> result = null;
     private final CountDownLatch latch = new CountDownLatch(1);
@@ -35,27 +35,51 @@ public class PromiseFutureImpl<T> implements PromiseFuture<T>, AsyncContext<T> {
         return setInvoker(Invoker.EDT);
     }
     
-    @Override
-    public synchronized boolean setCallResult(CallResult<T> result) {
-        if(result.isCancelled()) {
-            cancel();
-            
-            return true;
-        }
-        
-        if (isDone() || isCancelled()) {
-            return false;
-        }
-        
-        this.result = result;
-        
-        checkForDispatch();
-        
-        latch.countDown();
-        
-        return true;
+    public AsyncContext<T> getAsyncContext() {
+    	return new AsyncContextImpl();
     }
     
+    private class AsyncContextImpl implements AsyncContext<T> {
+		@Override
+		public synchronized boolean setCallResult(CallResult<T> r) {
+			if (r.isCancelled()) {
+				cancel();
+
+				return true;
+			}
+
+			if (isDone() || isCancelled()) {
+				return false;
+			}
+
+			result = r;
+
+			checkForDispatch();
+
+			latch.countDown();
+
+			return true;
+		}
+		
+
+	    @Override
+	    public synchronized void registerDependentTask(Cancellable... c) {
+	        if (isCancelled()) {
+	            for (Cancellable cancellable : c) {
+	                cancellable.cancel();
+	            }
+	        } else {
+	            cancellables.addAll(Arrays.asList(c));
+	        }
+	    }
+
+
+		@Override
+		public boolean isCancelled() {
+			return PromiseFutureImpl.this.isCancelled();
+		}
+	}
+
     @Override
     public synchronized void cancel() {
         this.result =  CallResult.createCancelled();
@@ -97,7 +121,7 @@ public class PromiseFutureImpl<T> implements PromiseFuture<T>, AsyncContext<T> {
             for (Consumer<CallResult<T>> consumer : toDispatch) {
                 try {
                     consumer.accept(resultToDispatch);
-                }catch (Throwable t) {
+                } catch (Throwable t) {
                     t.printStackTrace();
                 }
             }
@@ -105,7 +129,7 @@ public class PromiseFutureImpl<T> implements PromiseFuture<T>, AsyncContext<T> {
     }
 
     @Override
-    public boolean cancel(boolean mayInterruptIfRunning) {
+    public synchronized boolean cancel(boolean mayInterruptIfRunning) {
         if (isDone()) {
             return false;
         }
@@ -115,12 +139,12 @@ public class PromiseFutureImpl<T> implements PromiseFuture<T>, AsyncContext<T> {
     }
 
     @Override
-    public boolean isCancelled() {
+    public synchronized boolean isCancelled() {
         return result == null ? false : result.isCancelled();
     }
 
     @Override
-    public boolean isDone() {
+    public synchronized boolean isDone() {
         return result != null;
     }
 
@@ -134,36 +158,28 @@ public class PromiseFutureImpl<T> implements PromiseFuture<T>, AsyncContext<T> {
     }
 
     @Override
-    public synchronized void registerDependentTask(Cancellable... c) {
-        if (isCancelled()) {
-            for (Cancellable cancellable : c) {
-                cancellable.cancel();
-            }
-        } else {
-            cancellables.addAll(Arrays.asList(c));
-        }
-    }
-
-    @Override
     public T get() throws InterruptedException, ExecutionException, CancellationException {
         if (invoker.isInvokerThread()) {
-            throw new IllegalStateException("get() Called on invoker thread");
-        }
-        
-        latch.await();
-        
-        return result.get();
-    }
+			throw new IllegalStateException("get() Called on invoker thread");
+		}
 
-    @Override
-    public T get(long timeout, TimeUnit unit)
-            throws InterruptedException, ExecutionException, TimeoutException {
-        if (invoker.isInvokerThread()) {
-            throw new IllegalStateException("get() Called on invoker thread");
-        }
-        
-        latch.await(timeout, unit);
-        
-        return result.get();
-    }
+		latch.await();
+
+		synchronized (this) {
+			return result.get();
+		}
+	}
+
+	@Override
+	public T get(long timeout, TimeUnit unit) throws InterruptedException, ExecutionException, TimeoutException {
+		if (invoker.isInvokerThread()) {
+			throw new IllegalStateException("get() Called on invoker thread");
+		}
+
+		latch.await(timeout, unit);
+
+		synchronized (this) {
+			return result.get();
+		}
+	}
 }

@@ -26,10 +26,15 @@ import javax.swing.Action;
 import javax.swing.JFrame;
 import javax.swing.JMenuBar;
 import javax.swing.KeyStroke;
+import javax.swing.SwingUtilities;
+import javax.swing.event.UndoableEditEvent;
+import javax.swing.event.UndoableEditListener;
 import javax.swing.text.JTextComponent;
+import javax.swing.undo.UndoManager;
 
 import com.general.events.AsyncEventThreadDispatcher;
 import com.general.events.EventDispatcher;
+import com.myster.application.MysterGlobals;
 import com.myster.tracker.IpListManager;
 import com.myster.ui.MysterFrameContext;
 import com.myster.ui.PreferencesGui;
@@ -102,26 +107,28 @@ public class MysterMenuBar {
         file.add(new MysterMenuItemFactory(closeWindowAction));
         file.add(new MysterMenuItemFactory("-", NULL));
 
-        file.add(new MysterMenuItemFactory("Quit",
-                                                  new QuitMenuAction(),
-                                                  java.awt.event.KeyEvent.VK_Q));
+		if (!MysterGlobals.ON_MAC) {
+			file.add(new MysterMenuItemFactory("Exit", new QuitMenuAction(), java.awt.event.KeyEvent.VK_Q));
+		}
 
         // Edit menu items
-//        edit.add(new MysterMenuItemFactory(createCutCopyPasteMenu("Undo", KeyEvent.VK_Z, (t) -> t.keySt))));
-        edit.add(new MysterMenuItemFactory("Undo", NULL));
+		DynamicUndoRedo undoRepo = new DynamicUndoRedo();
+		
+		edit.add(new MysterMenuItemFactory(undoRepo.getUndoAction()));
+		edit.add(new MysterMenuItemFactory(undoRepo.getRedoAction()));
         edit.add(new MysterMenuItemFactory());
         edit.add(new MysterMenuItemFactory(createCutCopyPasteMenu("Cut", KeyEvent.VK_X, (t) -> t.cut())));
         edit.add(new MysterMenuItemFactory(createCutCopyPasteMenu("Copy", KeyEvent.VK_C, (t) -> t.copy())));
         edit.add(new MysterMenuItemFactory(createCutCopyPasteMenu("Paste", KeyEvent.VK_V, (t) -> t.paste())));
         
-        edit.add(new MysterMenuItemFactory());
-        edit.add(new MysterMenuItemFactory(createCutCopyPasteMenu("Select All",
-                                                                  KeyEvent.VK_A,
-                                                                  (t) -> t.selectAll())));
-        edit.add(new MysterMenuItemFactory("-", NULL));
-        edit.add(new MysterMenuItemFactory("Preferences",
-                                           new PreferencesAction(prefGui),
-                                           java.awt.event.KeyEvent.VK_SEMICOLON));
+		edit.add(new MysterMenuItemFactory());
+		edit.add(new MysterMenuItemFactory(createCutCopyPasteMenu("Select All", KeyEvent.VK_A, (t) -> t.selectAll())));
+		
+		if (!MysterGlobals.ON_MAC) {
+			edit.add(new MysterMenuItemFactory("-", NULL));
+			edit.add(new MysterMenuItemFactory("Preferences", new PreferencesAction(prefGui),
+					java.awt.event.KeyEvent.VK_SEMICOLON));
+		}
 
 
         // Myster menu items
@@ -170,7 +177,7 @@ public class MysterMenuBar {
             public void propertyChange(PropertyChangeEvent evt) {
                 Component focusedComponent = KeyboardFocusManager.getCurrentKeyboardFocusManager().getFocusOwner();
                 boolean isEnabled = focusedComponent instanceof JTextComponent;
-                action.setEnabled(isEnabled);
+                action.setEnabled(isEnabled && focusedComponent.isShowing());
                 if (isEnabled) {
                     a[0] = (JTextComponent) focusedComponent;
                 }
@@ -373,5 +380,92 @@ public class MysterMenuBar {
         updateMenuBars();
         return success;
     }
+}
 
+class DynamicUndoRedo {
+    private UndoManager undoManager;
+    private JTextComponent currentTextComponent;
+    private UndoableEditListener undoableEditListener;
+    private Action undoAction, redoAction;
+
+    public DynamicUndoRedo() {
+        undoManager = new UndoManager();
+        undoableEditListener = new UndoableEditListener() {
+            public void undoableEditHappened(UndoableEditEvent e) {
+                undoManager.addEdit(e.getEdit());
+                updateUndoRedoActions();
+            }
+        };
+
+        // Initialize actions
+        initActions();
+
+        // Monitor focus changes to text components
+        KeyboardFocusManager.getCurrentKeyboardFocusManager().addPropertyChangeListener("permanentFocusOwner", new PropertyChangeListener() {
+            @Override
+            public void propertyChange(PropertyChangeEvent evt) {
+                if (evt.getNewValue() instanceof JTextComponent) {
+                    setCurrentTextComponent((JTextComponent) evt.getNewValue());
+                } else {
+                    setCurrentTextComponent(null);
+                }
+            }
+        });
+    }
+
+    private void initActions() {
+        undoAction = new AbstractAction("Undo") {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                if (undoManager.canUndo()) {
+                    undoManager.undo();
+                }
+                updateUndoRedoActions();
+            }
+        };
+        undoAction.setEnabled(false);
+        undoAction.putValue(Action.ACCELERATOR_KEY, KeyStroke.getKeyStroke(KeyEvent.VK_Z, 0));
+
+        redoAction = new AbstractAction("Redo") {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                if (undoManager.canRedo()) {
+                    undoManager.redo();
+                }
+                updateUndoRedoActions();
+            }
+        };
+        redoAction.setEnabled(false);
+        redoAction.putValue(Action.ACCELERATOR_KEY, KeyStroke.getKeyStroke(KeyEvent.VK_Z, KeyEvent.SHIFT_DOWN_MASK));
+    }
+
+    private void setCurrentTextComponent(JTextComponent newComponent) {
+        if (currentTextComponent != null) {
+            // Remove listener from the old component
+            currentTextComponent.getDocument().removeUndoableEditListener(undoableEditListener);
+        }
+
+        currentTextComponent = newComponent;
+        undoManager.discardAllEdits(); // Clear undo/redo history when focus changes
+
+        if (currentTextComponent != null) {
+            // Add listener to the new component
+            currentTextComponent.getDocument().addUndoableEditListener(undoableEditListener);
+        }
+
+        updateUndoRedoActions();
+    }
+
+    private void updateUndoRedoActions() {
+        undoAction.setEnabled(undoManager.canUndo());
+        redoAction.setEnabled(undoManager.canRedo());
+    }
+
+    public Action getUndoAction() {
+        return undoAction;
+    }
+
+    public Action getRedoAction() {
+        return redoAction;
+    }
 }

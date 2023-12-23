@@ -10,8 +10,8 @@
 package com.myster;
 
 import java.awt.Desktop;
+import java.awt.EventQueue;
 import java.awt.Frame;
-import java.io.File;
 import java.io.IOException;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
@@ -36,7 +36,7 @@ import com.myster.client.net.MysterProtocol;
 import com.myster.client.net.MysterProtocolImpl;
 import com.myster.client.ui.ClientWindow;
 import com.myster.filemanager.FileTypeListManager;
-import com.myster.filemanager.ui.FMIChooser;
+import com.myster.filemanager.ui.FmiChooser;
 import com.myster.hash.HashManager;
 import com.myster.message.InstantMessageTransport;
 import com.myster.message.MessageManager;
@@ -72,6 +72,7 @@ public class Myster {
         
         // ignored by everyone except mac
         System.setProperty("apple.laf.useScreenMenuBar", "true");
+//        System.setProperty("com.apple.macos.use-file-dialog-packages", "true");
 
         System.out.println("java.vm.specification.version:"
                 + System.getProperty("java.vm.specification.version"));
@@ -189,7 +190,7 @@ public class Myster {
         System.out.println("-------->> before invokeAndWait " + (System.currentTimeMillis() - startTime));
 
         try {
-            Util.invokeAndWait(() -> {
+        	EventQueue.invokeAndWait(() -> {
                 System.out.println("-------->> inside  invokeAndWait" + (System.currentTimeMillis() - startTime));
                 try {
                     if (com.myster.type.TypeDescriptionList.getDefault().getEnabledTypes().length <= 0) {
@@ -225,6 +226,7 @@ public class Myster {
                         }
                     });
                 }
+                
 
                 TransactionManager.addTransactionProtocol(new InstantMessageTransport(preferences,
                         (instantMessage) -> (new MessageWindow(context,
@@ -248,16 +250,16 @@ public class Myster {
                 preferencesGui.addPanel(BandwidthManager.getPrefsPanel());
                 preferencesGui.addPanel(new BannersPreferences());
                 preferencesGui.addPanel(serverFacade.new ServerPrefPanel());
-                preferencesGui.addPanel(new FMIChooser(FileTypeListManager.getInstance()));
+                preferencesGui.addPanel(new FmiChooser(FileTypeListManager.getInstance()));
                 preferencesGui.addPanel(new MessagePreferencesPanel(preferences));
                 preferencesGui.addPanel(new TypeManagerPreferencesGUI());
 
-                try {
-                    (new com.myster.plugin.PluginLoader(new File(MysterGlobals
-                            .getCurrentDirectory(), "plugins"))).loadPlugins();
-                } catch (Exception ex) {
-                    // nothing
-                }
+//                try {
+//                    (new com.myster.plugin.PluginLoader(new File(MysterGlobals
+//                            .getCurrentDirectory(), "plugins"))).loadPlugins();
+//                } catch (Exception ex) {
+//                    // nothing
+//                }
 
                 com.myster.hash.ui.HashPreferences.init(preferencesGui, hashManager);
 
@@ -279,15 +281,26 @@ public class Myster {
                     System.out.println("Error in restarting downloads.");
                     ex.printStackTrace();
                 }
+                
+//                if (true)
+//                	throw new RuntimeException("dsds");
+                Desktop.getDesktop().setPreferencesHandler(e -> preferencesGui.setGUI(true));
+                
+                Desktop.getDesktop().setAboutHandler(e -> AnswerDialog.simpleAlert("Myster PR 10\n\nCommon, join the party.."));
             });
 
             System.out.println("-------->>" + (System.currentTimeMillis() - startTime));
 
+            
             Thread.sleep(1);
             
             Util.invokeLater(() -> MysterTray.init());
+            
+          
         } catch (InterruptedException ex) {
             ex.printStackTrace(); //never reached.
+        } catch (InvocationTargetException ex ) {
+        	Util.invokeLater(() -> AnswerDialog.simpleAlert(""+ex.getTargetException().toString()));
         }
 
         hashManager.start();

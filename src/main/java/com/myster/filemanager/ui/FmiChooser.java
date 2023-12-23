@@ -13,25 +13,25 @@ package com.myster.filemanager.ui;
 
 import java.awt.Color;
 import java.awt.Dimension;
-import java.awt.FileDialog;
-import java.awt.Frame;
 import java.awt.Graphics;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.ItemEvent;
 import java.awt.event.ItemListener;
-import java.util.Enumeration;
-import java.util.Hashtable;
+import java.io.File;
+import java.util.HashMap;
+import java.util.Map;
 
 import javax.swing.DefaultListModel;
 import javax.swing.JButton;
 import javax.swing.JCheckBox;
+import javax.swing.JFileChooser;
 import javax.swing.JLabel;
 import javax.swing.JList;
 import javax.swing.JScrollPane;
+import javax.swing.SwingUtilities;
 
 import com.general.util.Timer;
-
 import com.myster.filemanager.FileTypeListManager;
 import com.myster.pref.ui.PreferencesPanel;
 import com.myster.type.MysterType;
@@ -43,72 +43,58 @@ import com.myster.util.TypeChoice;
  * working of the FileManager, dispite having access to the sweat, sweat inners.
  */
 
-public class FMIChooser extends PreferencesPanel {
+public class FmiChooser extends PreferencesPanel {
+	private static final int XPAD = 10;
+	private static final int SAB = 200;
+	private static final int MAX_PATH_LABEL_SIZE = STD_XSIZE - 100 - 3 * XPAD - 5;
+	
+    private final FileTypeListManager manager;
+    private final TypeChoice choice;
+    private final JCheckBox checkbox;
+    private final JButton button;
+    private final JLabel pathLabel;
+    private final JLabel folderl, filelistl;
+    private final JList<String> fList;
+    private final JButton setAllButton;
+    private final Map<MysterType, SettingsStruct> hash = new HashMap<>();
+    private final DefaultListModel<String> fListModel;
+
+    private Timer timer = null;
     private String path;
 
-    private FileTypeListManager manager;
-
-    private TypeChoice choice;
-
-    private JCheckBox checkbox;
-
-    private JButton button;
-
-    private JLabel pathLabel;
-
-    private JLabel folderl, filelistl;
-
-    private JList fList;
-
-    private JButton setAllButton;
-
-    private Hashtable hash = new Hashtable();
-
-    private DefaultListModel fListModel;
-
-    private static final int XPAD = 10;
-
-    private static final int SAB = 200;
-
-    private static final int MAX_PATH_LABEL_SIZE = STD_XSIZE - 100 - 3 * XPAD - 5;
-
-    public FMIChooser(FileTypeListManager manager) {
+    public FmiChooser(FileTypeListManager manager) {
         this.manager = manager;
         setLayout(null);
 
         choice = new TypeChoice();
         choice.setLocation(5, 4);
         choice.setSize(STD_XSIZE - XPAD - XPAD - SAB, 20);
-        choice.addItemListener(new ItemListener() {
-            public void itemStateChanged(ItemEvent a) {
-                restoreState();
-                repaint();
-            }
+        choice.addItemListener((ItemEvent a) -> {
+            restoreState();
+            repaint();
         });
         add(choice);
 
         setAllButton = new JButton("Set all paths to this path");
         setAllButton.setLocation(STD_XSIZE - XPAD - SAB, 4);
         setAllButton.setSize(SAB, 20);
-        setAllButton.addActionListener(new ActionListener() {
-            public void actionPerformed(ActionEvent a) {
-                String newPath = path;
+        setAllButton.addActionListener((ActionEvent a) -> {
+            String newPath = path;
 
-                for (int i = 0; i < choice.getItemCount(); i++) {
+            for (int i = 0; i < choice.getItemCount(); i++) {
 
-                    //Figure out what the bool.. should be (hack)
-                    Object o = hash.get(choice.getType(i));
-                    boolean bool_temp;
-                    if (o != null) {
-                        bool_temp = ((SettingsStruct) (o)).shared;
-                    } else {
-                        bool_temp = FMIChooser.this.manager.isShared(choice.getType(i));
-                    } //end
+                // Figure out what the bool.. should be (hack)
+                Object o = hash.get(choice.getType(i));
+                boolean bool_temp;
+                if (o != null) {
+                    bool_temp = ((SettingsStruct) (o)).shared;
+                } else {
+                    bool_temp = FmiChooser.this.manager.isShared(choice.getType(i));
+                } // end
 
-                    hash.put(choice.getType(i), new SettingsStruct(choice.getType(i), newPath,
-                            bool_temp));
-                    System.out.println(newPath);
-                }
+                hash.put(choice.getType(i),
+                         new SettingsStruct(choice.getType(i), newPath, bool_temp));
+                System.out.println(newPath);
             }
         });
         add(setAllButton);
@@ -118,33 +104,33 @@ public class FMIChooser extends PreferencesPanel {
         checkbox = new JCheckBox("Share this type", manager.isShared(choice.getType()));
         checkbox.setLocation(10, 55);
         checkbox.setSize(150, 25);
-        checkbox.addItemListener(new ItemListener() {
-            public void itemStateChanged(ItemEvent e) {
-                hash.put(choice.getType(), new SettingsStruct(choice.getType(), path, checkbox
-                        .isSelected()));
-            }
+        checkbox.addItemListener((ItemEvent e) -> {
+            hash.put(choice.getType(),
+                     new SettingsStruct(choice.getType(), path, checkbox.isSelected()));
         });
         add(checkbox);
 
         button = new JButton("Set Folder");
         button.setLocation(STD_XSIZE - 100 - XPAD, 55);
         button.setSize(100, 25);
-        button.addActionListener(new ActionListener() {
-            public synchronized void actionPerformed(ActionEvent a) {
-                FileDialog dialog = new FileDialog(new Frame(),
-                        "Choose a directory and press save", FileDialog.SAVE);
-                dialog.setFile("Choose a directory and press save");
-                dialog.show(); //show choose dir dialog
-                String p = dialog.getDirectory();
+        button.addActionListener((ActionEvent a) -> {
+            JFileChooser fileChooser = new JFileChooser();
+            fileChooser.setFileSelectionMode(JFileChooser.DIRECTORIES_ONLY);
+            fileChooser.setDialogTitle("Choose a directory");
 
-                if (p == null) { //If user canceled path will be null
-                    System.out.println("User cancelled the action.");
-                    return;
-                }
-                path = p;
+            int returnValue =
+                    fileChooser.showOpenDialog(SwingUtilities.getWindowAncestor(FmiChooser.this));
+            if (returnValue == JFileChooser.APPROVE_OPTION) {
+                File selectedDirectory = fileChooser.getSelectedFile();
+                path = selectedDirectory.getAbsolutePath();
+
+                // Your existing logic after selecting the directory
                 setPathLabel(path);
-                hash.put(choice.getType(), new SettingsStruct(choice.getType(), path, checkbox
-                        .isSelected()));
+                // Assuming 'hash' and 'choice' are accessible here
+                hash.put(choice.getType(),
+                         new SettingsStruct(choice.getType(), path, checkbox.isSelected()));
+            } else {
+                System.out.println("User cancelled the action.");
             }
 
         });
@@ -155,12 +141,8 @@ public class FMIChooser extends PreferencesPanel {
         folderl.setSize(100, 20);
         add(folderl);
 
-        pathLabel = new JLabel(); //dependency
-        // on
-        // choice
-        // being
-        // created
-        // first.
+        // choice must be created first
+        pathLabel = new JLabel();
         pathLabel.setLocation(100 + XPAD + 5, 85);
         //textfeild.setEditable(false);
         pathLabel.setSize(STD_XSIZE - 100 - 3 * XPAD - 5, 20);
@@ -172,8 +154,8 @@ public class FMIChooser extends PreferencesPanel {
         filelistl.setSize(STD_XSIZE - 2 * XPAD, 20);
         add(filelistl);
 
-        fList = new JList();
-        fListModel = new DefaultListModel();
+        fList = new JList<>();
+        fListModel = new DefaultListModel<>();
         fList.setModel(fListModel);
         JScrollPane fListScrollPane = new JScrollPane(fList);
         fListScrollPane.setHorizontalScrollBarPolicy(JScrollPane.HORIZONTAL_SCROLLBAR_NEVER);
@@ -190,33 +172,19 @@ public class FMIChooser extends PreferencesPanel {
         pathLabel.setText(newPath);
         for (int i = newPath.length(); MAX_PATH_LABEL_SIZE < pathLabel.getPreferredSize().width
                 && i >= 0; i--) {
-            pathLabel.setText(TIM(newPath, i));
+            pathLabel.setText(trimInMiddle(newPath, i));
         }
     }
 
     public void save() {
-        Enumeration enumeration = hash.elements();
-        while (enumeration.hasMoreElements()) {
-            SettingsStruct s = (SettingsStruct) (enumeration.nextElement());
+    	for (SettingsStruct s : hash.values()) {
             manager.setPathFromType(s.type, s.path);
             manager.setShared(s.type, s.shared);
         }
         reset();//funky.
     }
 
-    private static class SettingsStruct {
-        public final String path;
-
-        public final boolean shared;
-
-        public final MysterType type;
-
-        public SettingsStruct(MysterType type, String path, boolean shared) {
-            this.type = type;
-            this.path = path;
-            this.shared = shared;
-        }
-    }
+    private record SettingsStruct(MysterType type, String path, boolean shared) {}
 
     public void reset() {
         hash.clear();
@@ -251,7 +219,7 @@ public class FMIChooser extends PreferencesPanel {
     }
 
     private void restoreState() {
-        SettingsStruct ss = (SettingsStruct) (hash.get(choice.getType()));
+        SettingsStruct ss = hash.get(choice.getType());
         if (ss != null) {
             path = ss.path;
             checkbox.setSelected(ss.shared);
@@ -293,33 +261,25 @@ public class FMIChooser extends PreferencesPanel {
         }
     }
 
-    Timer timer = null;
-
     public void pokeTimer() {
         if (timer != null)
             return;
         if (manager.getFileTypeList(choice.getType()).isIndexing()) {
-            timer = new Timer(new Runnable() {/*
-                                               * (non-Javadoc)
-                                               * 
-                                               * @see java.lang.Runnable#run()
-                                               */
-                public void run() {
-                    timer = null;
-                    pokeTimer();
-                }
+            timer = new Timer(() -> {
+                timer = null;
+                pokeTimer();
             }, 100);
         } else {
             restoreState();
         }
     }
 
-    /*
-     * TIM = Trim in the Middle. This is a utility function that keeps strings
+    /**
+     * This is a utility function that keeps strings
      * under numberOfChars characters and removes characters from the middle and
      * adding "..."
      */
-    private static String TIM(String input, int numberOfChars) {
+    private static String trimInMiddle(String input, int numberOfChars) {
         if (input.length() <= numberOfChars)
             return input;
         if (input.length() < 2)

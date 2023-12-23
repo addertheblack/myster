@@ -22,10 +22,12 @@ import java.util.ArrayList;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Set;
+import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 
 import com.general.thread.CallListener;
 import com.general.thread.CancellableCallable;
+import com.general.thread.PromiseFutures;
 import com.myster.application.MysterGlobals;
 import com.myster.hash.FileHash;
 import com.myster.hash.FileHashEvent;
@@ -34,7 +36,6 @@ import com.myster.mml.MML;
 import com.myster.mml.MMLException;
 import com.myster.pref.MysterPreferences;
 import com.myster.type.MysterType;
-import com.myster.util.MysterExecutor;
 
 public class FileTypeList {
     private List<FileItem> filelist; // List of java.io.FileItem objects that are
@@ -64,7 +65,7 @@ public class FileTypeList {
     // returnable (doesn't limit ""
     // queries)
 
-    private volatile Future indexingFuture = null; // if true then the list is
+    private volatile Future<List<FileItem>> indexingFuture = null; // if true then the list is
 
     private final HashProvider hashProvider;
 
@@ -445,10 +446,12 @@ public class FileTypeList {
          */
         if (indexingFuture == null && (isOld() || !rootdir.equals(workingdir))) {
             rootdir = workingdir; // in case the dir for this type has changed.
-            indexingFuture = MysterExecutor.getInstance().execute(new FileListIndexCall(type, new File(rootdir), hashProvider),
-                    new FileListCallListener());
-        }
-    }
+			indexingFuture = PromiseFutures
+					.execute(new FileListIndexCall(type, new File(rootdir), hashProvider),
+							Executors.newVirtualThreadPerTaskExecutor())
+					.addCallListener(new FileListCallListener()).useEdt();
+		}
+	}
 
     private class FileListCallListener implements CallListener<List<FileItem>> {
         /*

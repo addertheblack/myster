@@ -9,10 +9,13 @@ import java.awt.Toolkit;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 
+import javax.swing.BorderFactory;
 import javax.swing.JButton;
+import javax.swing.JComponent;
 import javax.swing.JDialog;
 import javax.swing.JPanel;
 import javax.swing.JTextArea;
+import javax.swing.text.DefaultCaret;
 
 public class AnswerDialog extends JDialog {
     private JButton[] buttons;
@@ -75,6 +78,10 @@ public class AnswerDialog extends JDialog {
     }
 
     private void initComponents(String[] b) {
+    	 int padding = 10; // 10 pixels padding
+         ((JComponent)getContentPane()).setBorder(BorderFactory.createEmptyBorder(padding, padding, padding, padding));
+
+         
         setLayout(new BorderLayout());
 
         int length;
@@ -87,6 +94,13 @@ public class AnswerDialog extends JDialog {
         textArea.setLineWrap(true);
         textArea.setWrapStyleWord(true);
         textArea.setEditable(false);
+        textArea.setCaret(new DefaultCaret() {
+            @Override
+            public void setVisible(boolean v) {
+                super.setVisible(false); // Always keep the caret invisible
+            }
+        });
+       
         
         pack(); // font is null if not packed
         textArea.setFont(getFont());

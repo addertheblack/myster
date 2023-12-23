@@ -49,12 +49,9 @@ public class MysterGlobals {
     }
 
     public static File getCurrentDirectory() {
-        if (ON_LINUX) {
             File result = new File(new File(System.getProperty("user.home")), "myster");
             if (!result.exists())
                 result.mkdir();
             return result;
-        } else
-            return WORKING_DIRECTORY; //not yet implemented
     }
 }

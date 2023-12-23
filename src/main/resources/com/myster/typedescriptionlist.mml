@@ -15,7 +15,7 @@ If you add more types to the file list PLEASE SEND THEM TO info at mysternetwork
 We can't add them to Myster if you don't tell us about them!
 
 NOTE:
-Don't add new file catagories.. Unless they are of the form:
+Don't add new file categories.. Unless they are of the form:
 !XXX 
 
 that is they start with an "!"..
@@ -90,7 +90,7 @@ your new type.
 		         <0>.mov</0> <1>.avi</1> <2>.asf</2> <3>.rm</3> <4>.ram</4> <5>.mpg</5>
 		         <6>.mp4</6> <7>.mpeg</7> <8>.3iv</8> <9>.div</9> <10>.xiv</10> <11>.rm</11>
 		         <12>.mpe</12> <13>.swf</13> <14>.wmv</14> <15>.mp2v</15> <16>.mlv</16> <17>.mpv</17>
-		         <18>.wm</18> <19>.vob</19> <20>.ifo</20>
+		         <18>.wm</18> <19>.vob</19> <20>.ifo</20> <21>.mkv</21>
 		</Extensions>
 		<Archived>True</Archived>
 		<Enabled By Default>true</Enabled By Default>
