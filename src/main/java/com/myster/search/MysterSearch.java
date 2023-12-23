@@ -268,17 +268,15 @@ public class MysterSearch {
             return;
 
         // ADD_TOP_TEN
-        CancellableCallableRemover<String[]> removerTopTen = new CancellableCallableRemover<>();
         UdpTopTen  udpTopTen = new UdpTopTen(ipQueue);
         PromiseFuture<String[]> topTenFuture = protocol.getDatagram().getTopServers(address, type, udpTopTen);
-        removerTopTen.setFuture(topTenFuture);
+        udpTopTen.setFuture(topTenFuture);
         outStandingFutures.add(topTenFuture);
 
         // ADD_SEARCH
-        CancellableCallableRemover<List<String>> removerSearch = new CancellableCallableRemover<>();
         UdpSearch udpSearch = new UdpSearch(address);
         PromiseFuture<List<String>> searchFuture = protocol.getDatagram().getSearch(address, type, searchString, udpSearch);
-        removerSearch.setFuture(searchFuture);
+        udpSearch.setFuture(searchFuture);
         outStandingFutures.add(searchFuture);
     }
 
@@ -421,6 +419,10 @@ public class MysterSearch {
      * @param future
      */
     private void removeFuture(Cancellable future) {
+        if (future == null) {
+            throw new NullPointerException("future is null");
+        }
+        
         boolean success = outStandingFutures.remove(future);
 
         if (!success) {
