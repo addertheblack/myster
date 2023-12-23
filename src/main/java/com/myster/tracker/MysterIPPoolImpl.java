@@ -17,7 +17,7 @@ public class MysterIPPoolImpl implements MysterIpPool {
     private static final int GC_UPPER_LIMIT = 100;
 
     // MysterIPPool stores all its ips
-    private static final String pref_key = "Tracker.MysterIPPool";
+    private static final String PREF_NODE_NAME = "Tracker.MysterIPPool";
 
     private final Map<MysterAddress, MysterIP> cache;
 
@@ -36,7 +36,7 @@ public class MysterIPPoolImpl implements MysterIpPool {
 
 
     public MysterIPPoolImpl(Preferences prefs, MysterProtocol mysterProtocol) {
-        this.preferences = prefs.node(pref_key);
+        this.preferences = prefs.node(PREF_NODE_NAME);
         this.protocol = mysterProtocol;
         System.out.println("Loading IPPool.....");
         cache = new HashMap<>(); // You put cereal on the Hashtable. In a

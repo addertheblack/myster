@@ -27,6 +27,7 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.StringTokenizer;
+import java.util.prefs.BackingStoreException;
 import java.util.prefs.Preferences;
 
 import com.myster.net.MysterAddress;
@@ -34,7 +35,6 @@ import com.myster.type.MysterType;
 
 class IpList {
     public static final int LISTSIZE = 100; //Size of any given list..
-    private static final String PATH = "IPLists";
     
     private final Map<MysterAddress, MysterServer> mapOfServers = new LinkedHashMap<>();
     private final MysterType type;
@@ -49,7 +49,7 @@ class IpList {
      * @param preferences 
      */
     protected IpList(MysterType type, MysterIpPool pool, Preferences preferences) {
-        this.preferences = preferences.node(PATH);
+        this.preferences = preferences;
 
         String s = preferences.get(type.toString(), "");
         StringTokenizer ips = new StringTokenizer(s);
@@ -151,6 +151,15 @@ class IpList {
         }
 
         preferences.put(type.toString(), buffer.toString());
+        try {
+            System.out.println(preferences.keys()[0]);
+            System.out.println(preferences.get(type.toString(), ""));
+            preferences.flush();
+        } catch (BackingStoreException exception) {
+            // TODO Auto-generated catch block
+            exception.printStackTrace();
+        }
+        
     }
 
     /**

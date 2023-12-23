@@ -15,6 +15,7 @@ import java.net.UnknownHostException;
 import java.util.List;
 
 import java.util.concurrent.CancellationException;
+import java.util.prefs.BackingStoreException;
 import java.util.prefs.Preferences;
 
 import com.general.util.BlockingQueue;
@@ -49,10 +50,11 @@ import com.myster.util.MysterThread;
 public class IpListManager { //aka tracker
     private static final String[] lastresort = { "bigmacs.homeip.net", "mysternetworks.homeip.net",
             "mysternetworks.dyndns.org", "myster.homeip.net" };
+    private static final String PATH = "IPLists";
 
     private final IpList[] list;
     private final TypeDescription[] tdlist;
-    private final BlockingQueue blockingQueue = new BlockingQueue();
+    private final BlockingQueue<MysterAddress> blockingQueue = new BlockingQueue<>();
     private final AddIp[] adderWorkers = new AddIp[2];
     private final MysterIpPool pool;
     private final MysterProtocol protocol;
@@ -61,7 +63,19 @@ public class IpListManager { //aka tracker
     public IpListManager(MysterIpPool pool, MysterProtocol protocol, Preferences preferences) {
         this.protocol = protocol;
         this.pool = pool;
-        this.preferences = preferences;
+        this.preferences = preferences.node(PATH);
+//        
+//        try {
+//            System.out.println(this.preferences.keys().length + "");
+//        } catch (BackingStoreException exception) {
+//            exception.printStackTrace();
+//        }
+//        
+        
+//        this.preferences.put("lklklkkll", "lkdlksdlkfsdkldklsdkf");
+//        this.preferences.put("dfs", "lkdlksdlkfsdkldklsdkf");
+//        this.preferences.put("db", "lkdlksdlkfsdkldklsdkf");
+//        this.preferences.put("gsdfgsd", "lkdlksdlkfsdkldklsdkf");
         blockingQueue.setRejectDuplicates(true);
 
         tdlist = TypeDescriptionList.getDefault().getEnabledTypes();
@@ -394,7 +408,7 @@ public class IpListManager { //aka tracker
             MysterAddress ip = null;
             for (;;) {
                 try {
-                    ip = (MysterAddress) (blockingQueue.get());//BlockingQueue
+                    ip = (blockingQueue.get());//BlockingQueue
 
                     counter++;
                     System.out.println("Number of servers still queued : -> "
