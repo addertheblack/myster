@@ -64,18 +64,7 @@ public class IpListManager { //aka tracker
         this.protocol = protocol;
         this.pool = pool;
         this.preferences = preferences.node(PATH);
-//        
-//        try {
-//            System.out.println(this.preferences.keys().length + "");
-//        } catch (BackingStoreException exception) {
-//            exception.printStackTrace();
-//        }
-//        
         
-//        this.preferences.put("lklklkkll", "lkdlksdlkfsdkldklsdkf");
-//        this.preferences.put("dfs", "lkdlksdlkfsdkldklsdkf");
-//        this.preferences.put("db", "lkdlksdlkfsdkldklsdkf");
-//        this.preferences.put("gsdfgsd", "lkdlksdlkfsdkldklsdkf");
         blockingQueue.setRejectDuplicates(true);
 
         tdlist = TypeDescriptionList.getDefault().getEnabledTypes();

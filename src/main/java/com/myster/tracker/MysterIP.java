@@ -75,14 +75,16 @@ class MysterIP {
     private static final double UPVSDOWNCONSTANT = 5;
     private static final double STATUSCONSTANT = 1;
 
-    private MysterProtocol protocol;
+    private final MysterProtocol protocol;
+    private final Preferences preferences;
 
     private static final long UPDATETIME_MS = 1000 * 60 * 60;
 
     private static final long MINI_UPDATE_TIME_MS = 10 * 60 * 1000;
     private static final int NUMBER_OF_UPDATER_THREADS = 1;
 
-    MysterIP(String ip, MysterProtocol protocol) throws IOException {
+    MysterIP(Preferences node, String ip, MysterProtocol protocol) throws IOException {
+        this.preferences = node;
         if (ip.equals("127.0.0.1"))
             throw new IOException("IP is local host.");
         
@@ -95,6 +97,7 @@ class MysterIP {
     }
 
      MysterIP(Preferences node, MysterProtocol protocol) {
+         this.preferences = node;
         this.protocol = protocol;
         createNewMysterIP(node.get(IP, ""),
                           Double.valueOf(node.get(SPEED, "")).doubleValue(),
@@ -269,22 +272,24 @@ class MysterIP {
         return ip.hashCode();
     }
 
-    void save(Preferences node) {
-        node.put(IP, "" + ip.toString());
-        node.put(SPEED, "" + speed);
-        node.put(TIMESINCEUPDATE, "" + timeoflastupdate);
-        node.put(TIMEUP, "" + timeup);
-        node.put(TIMEDOWN, "" + timedown);
-        node.put(NUMBEROFHITS, "" + numberofhits);
-        node.put(UPTIME, "" + uptime);
-        if (serverIdentity != null && !serverIdentity.equals(""))
-            node.put(SERVERIDENTITY, "" + serverIdentity);
+    void save() {
+        preferences.put(IP, "" + ip.toString());
+        preferences.put(SPEED, "" + speed);
+        preferences.put(TIMESINCEUPDATE, "" + timeoflastupdate);
+        preferences.put(TIMEUP, "" + timeup);
+        preferences.put(TIMEDOWN, "" + timedown);
+        preferences.put(NUMBEROFHITS, "" + numberofhits);
+        preferences.put(UPTIME, "" + uptime);
+        if (serverIdentity != null && !serverIdentity.equals("")) {
+            preferences.put(SERVERIDENTITY, "" + serverIdentity);
+        }
 
         String s_temp = numberOfFiles.toString();
-        if (!s_temp.equals(""))
-            node.put(NUMBEROFFILES, numberOfFiles.toString());
+        if (!s_temp.equals("")) {
+            preferences.put(NUMBEROFFILES, numberOfFiles.toString());
+        }
     }
-    
+
     
     /** For debugging */
     private MML toMML() {
@@ -452,7 +457,10 @@ class MysterIP {
             ex.printStackTrace();
         } finally {
             mysterip.occupied = false; //we're done.
+            mysterip.save();
         }
+        
+        
         return false;
     }
 

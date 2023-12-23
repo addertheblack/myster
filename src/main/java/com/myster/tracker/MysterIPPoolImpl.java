@@ -74,7 +74,9 @@ public class MysterIPPoolImpl implements MysterIpPool {
 
         try {
             // get the "other" name (dns) for that ip...
-            return getMysterIPLevelTwo(new MysterIP(address.toString(), this.protocol));
+            return getMysterIPLevelTwo(new MysterIP(preferences.node(address.toString()),
+                                                    address.toString(),
+                                                    this.protocol));
         } catch (Exception ex) {
             deadCache.addDeadAddress(address);
             throw new IOException("Bad thing happened in MysterIP Pool add");
@@ -131,7 +133,7 @@ public class MysterIPPoolImpl implements MysterIpPool {
                                             // DOH!
             deleteUseless(); // Cleans up the pool, deletes useless MysterIP
                              // objects!
-            save();
+            ip.save();
             return mysterServer;
         } else {
             return getMysterIP(ip.getAddress()).getInterface();
@@ -180,29 +182,35 @@ public class MysterIPPoolImpl implements MysterIpPool {
                 + " object from the pool. There are now " + cache.size() + " objects in the pool");
 
         // signal that the changes should be saved asap...
-        save();
+        for (MysterAddress mysterAddress : keysToDelete) {
+            try {
+                preferences.node(mysterAddress.toString()).removeNode();
+            } catch (BackingStoreException exception) {
+                System.out.println("Could not delete MysterIP pref node for " + mysterAddress.toString());
+            }
+        }
     }
 
     private MysterIP getMysterIP(MysterAddress address) {
         return cache.get(address);
     }
 
-    /**
-     * Saves the state of the MysterIPPool.. Thanks to the new preferences
-     * manager, this routine can be called as often as I like.
-     */
-    private synchronized void save() {
-        Iterator<MysterIP> iterator = cache.values().iterator();
-
-        int i = 0;
-        while (iterator.hasNext()) {
-            MysterIP mysterip = (iterator.next());
-
-            if (mysterip.getMysterCount() > 0) {
-                mysterip.save(preferences.node("" + i));
-            }
-
-            i++;
-        }
-    }
+//    /**
+//     * Saves the state of the MysterIPPool.. Thanks to the new preferences
+//     * manager, this routine can be called as often as I like.
+//     */
+//    private synchronized void save() {
+//        Iterator<MysterIP> iterator = cache.values().iterator();
+//
+//        int i = 0;
+//        while (iterator.hasNext()) {
+//            MysterIP mysterip = (iterator.next());
+//
+//            if (mysterip.getMysterCount() > 0) {
+//                mysterip.save(preferences.node("" + i));
+//            }
+//
+//            i++;
+//        }
+//    }
 }
