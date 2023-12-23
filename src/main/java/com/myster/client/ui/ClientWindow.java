@@ -47,7 +47,7 @@ import com.myster.ui.WindowLocationKeeper;
 import com.myster.util.Sayable;
 
 public class ClientWindow extends MysterFrame implements Sayable {
-    private static final String ENTER_AN_IP_HERE = "Enter a server address here";
+    private static final String ENTER_AN_IP_HERE = "Enter a server address";
     private static final int XDEFAULT = 600;
     private static final int YDEFAULT = 400;
     private static final int SBXDEFAULT = 72; //send button X default
