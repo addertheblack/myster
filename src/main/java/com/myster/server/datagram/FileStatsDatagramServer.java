@@ -15,7 +15,8 @@ import com.myster.transaction.TransactionProtocol;
 import com.myster.type.MysterType;
 
 public class FileStatsDatagramServer extends TransactionProtocol {
-    public static final int FILE_STATS_TRANSACTION_CODE = com.myster.client.datagram.FileStatsDatagramClient.FILE_STATS_TRANSACTION_CODE;
+    public static final int FILE_STATS_TRANSACTION_CODE =
+            com.myster.client.datagram.FileStatsDatagramClient.FILE_STATS_TRANSACTION_CODE;
 
     public int getTransactionCode() {
         return FILE_STATS_TRANSACTION_CODE;
