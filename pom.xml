@@ -192,6 +192,55 @@
                 </plugins>
             </build>
         </profile>
+        
+        <!-- linux Profile -->
+        <profile>
+            <id>linux-build</id>
+            <activation>
+                <os>
+                    <family>linux</family>
+                </os>
+            </activation>
+            <build>
+                <plugins>
+                    <plugin>
+                        <groupId>org.codehaus.mojo</groupId>
+                        <artifactId>exec-maven-plugin</artifactId>
+                        <version>3.0.0</version>
+                        <executions>
+                            <execution>
+                                <id>package-app-linux</id>
+                                <phase>package</phase>
+                                <goals>
+                                    <goal>exec</goal>
+                                </goals>
+                                <configuration>
+                                    <executable>jpackage</executable>
+                                    <arguments>
+                                        <argument>--input</argument>
+                                        <argument>${project.basedir}/bin</argument>
+                                        <argument>--name</argument>
+                                        <argument>Myster</argument>
+                                        <argument>--main-class</argument>
+                                        <argument>${mainclass}</argument>
+                                        <argument>--add-modules</argument>
+                                        <argument>java.base,java.desktop,java.prefs,java.xml</argument>
+                                        <argument>--main-jar</argument>
+                                        <argument>${project.basedir}/bin/${outputName}.jar</argument>
+                                        <argument>--type</argument>
+                                        <argument>rpm</argument>
+                                        <argument>--icon</argument>
+                                        <argument>program_icon.png</argument>
+                                        <argument>--app-version</argument>
+                                        <argument>${project.version}</argument>
+                                    </arguments>
+                                </configuration>
+                            </execution>
+                        </executions>
+                    </plugin>
+                </plugins>
+            </build>
+        </profile>
     </profiles>
 </project>
 
