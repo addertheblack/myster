@@ -12,7 +12,7 @@ import com.myster.net.StandardDatagramClientImpl;
 import com.myster.transaction.Transaction;
 import com.myster.type.MysterType;
 
-public class SearchHashDatagramClient implements StandardDatagramClientImpl {
+public class SearchHashDatagramClient implements StandardDatagramClientImpl<String> {
     public static final int SEARCH_HASH_TRANSACTION_CODE = 150; //There is no
                                                                 // UDP version
                                                                 // of the first

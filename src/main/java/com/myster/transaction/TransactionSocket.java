@@ -34,14 +34,6 @@ public class TransactionSocket {
         outstanding = true;
     }
 
-    //public Transaction sendTransactionBlocking(Transaction r) {
-    //	return reply; //blocking version (not yet implemented)
-    //}
-
-    public void close() {
-        //nothing (not nessesairy for transactions, they are one shot.)
-    }
-
     /**
      * Attempts to cancel this transaction. If cancelling was successful return
      * true. A transaction must have been sent before trying to cancel().

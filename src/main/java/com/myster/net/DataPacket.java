@@ -24,5 +24,5 @@ public interface DataPacket { //ImmutablePacket should have this too? no
     /**
      * @deprecated don't assume that packets only have a header.
      */
-    public byte[] getHeader(); //returns header?
+//    public byte[] getHeader(); //returns header?
 }

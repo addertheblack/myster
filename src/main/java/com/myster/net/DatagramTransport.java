@@ -30,7 +30,7 @@ public abstract class DatagramTransport implements DatagramSender {
 
     /**
      * This routine is so the transport manager can set the mechanism through
-     * wich you are supposed to send your outgoing packets... Assuming you want
+     * which you are supposed to send your outgoing packets... Assuming you want
      * to send packets out on the same port as the one you received them.
      */
     final void setSender(DatagramSender sender) { //don't over-ride

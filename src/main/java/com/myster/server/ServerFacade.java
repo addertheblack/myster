@@ -156,7 +156,7 @@ public class ServerFacade {
     }
 
     private void addStandardStreamConnectionSections() {
-        addConnectionSection(new com.myster.server.stream.IPLister(ipListManager));
+        addConnectionSection(new com.myster.server.stream.IpLister(ipListManager));
         addConnectionSection(new com.myster.server.stream.RequestDirThread());
         addConnectionSection(new com.myster.server.stream.FileSenderThread());
         addConnectionSection(new com.myster.server.stream.FileTypeLister());

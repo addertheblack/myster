@@ -10,12 +10,12 @@ import com.myster.tracker.IpListManager;
 import com.myster.tracker.MysterServer;
 import com.myster.type.MysterType;
 
-public class IPLister extends ServerThread {
+public class IpLister extends ServerThread {
     public static final int NUMBER = 10;
     
     private final IpListManager ipListManager;
 
-    public IPLister(IpListManager ipListManager) {
+    public IpLister(IpListManager ipListManager) {
         this.ipListManager = ipListManager;
     }
 

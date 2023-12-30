@@ -9,7 +9,7 @@ import com.myster.pref.MysterPreferences;
 import com.myster.transaction.Transaction;
 import com.myster.transaction.TransactionProtocol;
 
-public class InstantMessageTransport extends TransactionProtocol {
+public class ImTransactionServer extends TransactionProtocol {
     private static final long EXPIRE_TIME = 60 * 60 * 1000; //1 hour.. (wow!)
 
     // package protected on purpose
@@ -25,7 +25,7 @@ public class InstantMessageTransport extends TransactionProtocol {
         public void messageReceived(InstantMessage msg);
     }
 
-    public InstantMessageTransport(MysterPreferences preferences, InstantMessageListener listener) {
+    public ImTransactionServer(MysterPreferences preferences, InstantMessageListener listener) {
         this.preferences = preferences;
         this.listener = listener;
     }

@@ -1,7 +1,8 @@
 package com.myster.client.datagram;
 
 import java.io.IOException;
-import java.util.Hashtable;
+import java.util.HashMap;
+import java.util.Map;
 
 import com.general.events.EventDispatcher;
 import com.general.events.SyncEventDispatcher;
@@ -20,7 +21,7 @@ public class PongTransport extends DatagramTransport {
 
     static final int FIRST_TIMEOUT = 10000;
 
-    private Hashtable requests = new Hashtable();
+    private Map<MysterAddress, PongItemStruct> requests = new HashMap<>();
 
     public short getTransportCode() {
         return transportNumber;
@@ -36,7 +37,7 @@ public class PongTransport extends DatagramTransport {
             MysterAddress param_address = new MysterAddress(immutablePacket
                     .getAddress(), immutablePacket.getPort());
             synchronized (requests) {
-                struct = (PongItemStruct) (requests.get(param_address));
+                struct = requests.get(param_address);
                 if (struct != null) {
                     justBeforeDispatch(param_address, struct);
                 } else {

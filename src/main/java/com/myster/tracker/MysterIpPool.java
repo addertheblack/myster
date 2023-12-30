@@ -26,7 +26,7 @@ import com.myster.net.MysterAddress;
  */
 public interface MysterIpPool {
     /**
-     * @return The {@link MysterIP} for this {@link MysterAddress} Blocking if not in pool!
+     * @return The {@link MysterIp} for this {@link MysterAddress} Blocking if not in pool!
      */
     public MysterServer getMysterServer(MysterAddress address) throws IOException;
 

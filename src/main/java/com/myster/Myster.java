@@ -39,7 +39,7 @@ import com.myster.client.ui.ClientWindow;
 import com.myster.filemanager.FileTypeListManager;
 import com.myster.filemanager.ui.FmiChooser;
 import com.myster.hash.HashManager;
-import com.myster.message.InstantMessageTransport;
+import com.myster.message.ImTransactionServer;
 import com.myster.message.MessageManager;
 import com.myster.message.MessageWindow;
 import com.myster.message.ui.MessagePreferencesPanel;
@@ -180,8 +180,6 @@ public class Myster {
         ClientWindow.init(protocol, crawlerManager, listManager);
         ServerFacade serverFacade = new ServerFacade(listManager, preferences);
 
-        MessageManager.init(listManager, preferences);
-
         final HashManager hashManager = new HashManager();
         FileTypeListManager.init((f, l) -> hashManager.findHash(f, l));
 
@@ -229,7 +227,7 @@ public class Myster {
                 }
                 
 
-                TransactionManager.addTransactionProtocol(new InstantMessageTransport(preferences,
+                TransactionManager.addTransactionProtocol(new ImTransactionServer(preferences,
                         (instantMessage) -> (new MessageWindow(context,
                                 instantMessage, listManager::getQuickServerStats))
                                 .show()));

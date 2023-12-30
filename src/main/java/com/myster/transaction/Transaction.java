@@ -36,27 +36,23 @@ public final class Transaction implements DataPacket { //Immutable (Java needs
                                                        // some way to enforce
                                                        // immutable on sub
                                                        // classes)
-    final MysterAddress address; //immutable
-
-    final int transactionCode;
-
-    final int connectionNumber;
-
-    final boolean isForClient;
-
-    final byte errorByte; //To server transactions should have simply 0000 0000
-                          // here or "NO_ERROR" (padding ick!)
-
-    final byte[] data;
-
-    private final static int HEADER_SIZE = 10; //reply packets are 1 byte
-                                               // longer
-
+    // reply packets are 1 byte longer
+    private final static int HEADER_SIZE = 10; 
     public final static short TRANSACTION_PROTOCOL_NUMBER = 1234;
-
     public final static byte NO_ERROR = 0;
-
     public final static byte TRANSACTION_TYPE_UNKNOWN = 1;
+    
+    private final MysterAddress address; //immutable
+    private final int transactionCode;
+    private final int connectionNumber;
+    private final boolean isForClient;
+    /*
+     * To server transactions should have simply 0000 0000
+     * here or "NO_ERROR" (padding ick!)
+     */
+    private final byte errorByte;
+    private final byte[] data;
+
 
     ///note: put in checks for length etc...
     protected Transaction(ImmutableDatagramPacket packet)
@@ -163,10 +159,6 @@ public final class Transaction implements DataPacket { //Immutable (Java needs
         return (errorByte != NO_ERROR);
     }
 
-    public ImmutableDatagramPacket getImmutableDatagramPacket() {
-        return toImmutableDatagramPacket();
-    }
-
     public ImmutableDatagramPacket toImmutableDatagramPacket() {
         return new ImmutableDatagramPacket(address.getInetAddress(), address
                 .getPort(), getBytes());
@@ -176,7 +168,7 @@ public final class Transaction implements DataPacket { //Immutable (Java needs
         return Util.concatenateBytes(getHeader(), data); //byteOut.. funny.
     }
 
-    public byte[] getHeader() { //slow
+    private byte[] getHeader() { //slow
         ByteArrayOutputStream byteOut = new ByteArrayOutputStream();
         DataOutputStream out = new DataOutputStream(byteOut);
 
@@ -203,7 +195,7 @@ public final class Transaction implements DataPacket { //Immutable (Java needs
 
     public byte[] getData() { //for those who wish to parse the juice (You know
                               // what is the juice?).
-        return (byte[]) (data.clone());
+        return data.clone();
     }
 
     private int getFullyQualifiedConnectionNumber() { //long function name.

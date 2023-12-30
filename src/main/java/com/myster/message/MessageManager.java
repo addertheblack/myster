@@ -16,34 +16,18 @@ import com.myster.net.DataPacket;
 import com.myster.net.MysterAddress;
 import com.myster.pref.MysterPreferences;
 import com.myster.pref.PreferencesMML;
-import com.myster.tracker.IpListManager;
 import com.myster.transaction.Transaction;
 import com.myster.transaction.TransactionEvent;
 import com.myster.transaction.TransactionListener;
 import com.myster.transaction.TransactionSocket;
 
 public class MessageManager {
-    private static MysterPreferences preferences;
-
-    private static IpListManager ipListManager;
-
-    
-    
-    public static void init(IpListManager ipListManager, MysterPreferences preferences) {
-        MessageManager.ipListManager = ipListManager;
-        MessageManager.preferences = preferences;
-    }
-
-    public static void sendInstantMessage(MysterAddress address, String msg) {
-        sendInstantMessage(address, msg, null);
-    }
-
     public static void sendInstantMessage(InstantMessage message) {
         sendInstantMessage(message.address, message.message, message.quote);
     }
 
     public static void sendInstantMessage(MysterAddress address, String msg, String reply) {
-        TransactionSocket tsocket = new TransactionSocket(InstantMessageTransport.TRANSPORT_NUMBER);
+        TransactionSocket tsocket = new TransactionSocket(ImTransactionServer.TRANSPORT_NUMBER);
 
         tsocket.sendTransaction(new MessagePacket(generateID(), address, msg, reply),
                 new TransactionListener() {
@@ -339,13 +323,8 @@ class MessagePacket implements DataPacket { //Is Immutable
         return (data.clone());
     }
 
-    public byte[] getHeader() {
-        return new byte[] {};
-    }
-
     public byte[] getBytes() {
-        return getData(); //warning.. does not access getHeader!!!!!! (is not
-        // necessary at this writing)
+        return getData();
     }
 }
 

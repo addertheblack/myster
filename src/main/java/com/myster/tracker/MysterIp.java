@@ -34,7 +34,7 @@ import com.myster.util.MysterThread;
  * keeping this information up to date.
  */
 
-class MysterIP {
+class MysterIp {
     private MysterAddress ip;
     private double speed;
     private int timeup;
@@ -83,7 +83,7 @@ class MysterIP {
     private static final long MINI_UPDATE_TIME_MS = 10 * 60 * 1000;
     private static final int NUMBER_OF_UPDATER_THREADS = 1;
 
-    MysterIP(Preferences node, String ip, MysterProtocol protocol) throws IOException {
+    MysterIp(Preferences node, String ip, MysterProtocol protocol) throws IOException {
         this.preferences = node;
         if (ip.equals("127.0.0.1"))
             throw new IOException("IP is local host.");
@@ -91,12 +91,12 @@ class MysterIP {
         this.protocol = protocol;
         new MysterAddress(ip); // to see if address is valid.
         createNewMysterIP(ip, 1, 50, 50, 1, 1, "", null, -1);
-        if (!MysterIP.internalRefreshAll(protocol, this))
+        if (!MysterIp.internalRefreshAll(protocol, this))
             throw new IOException("Failed to created new Myster IP");
         // System.out.println("A New MysterIP Object = "+getAddress());
     }
 
-     MysterIP(Preferences node, MysterProtocol protocol) {
+     MysterIp(Preferences node, MysterProtocol protocol) {
          this.preferences = node;
         this.protocol = protocol;
         createNewMysterIP(node.get(IP, ""),
@@ -157,7 +157,7 @@ class MysterIP {
         }
 
         public boolean getStatus() {
-            return MysterIP.this.getStatus();
+            return MysterIp.this.getStatus();
         }
 
         public boolean getStatusPassive() {
@@ -165,7 +165,7 @@ class MysterIP {
         }
 
         public MysterAddress getAddress() {
-            return MysterIP.this.ip;
+            return MysterIp.this.ip;
         }
 
         /**
@@ -173,7 +173,7 @@ class MysterIP {
          */
 
         public int getNumberOfFiles(MysterType type) {
-            return MysterIP.this.getNumberOfFiles(type);
+            return MysterIp.this.getNumberOfFiles(type);
         }
 
         /**
@@ -215,7 +215,7 @@ class MysterIP {
         }
 
         public String toString() {
-            return MysterIP.this.toString();
+            return MysterIp.this.toString();
         }
 
         public boolean isUntried() {
@@ -255,9 +255,9 @@ class MysterIP {
      */
     @Override
     public boolean equals(Object m) {
-        MysterIP mysterIp;
+        MysterIp mysterIp;
         try {
-            mysterIp = (MysterIP) m;
+            mysterIp = (MysterIp) m;
         } catch (ClassCastException ex) {
             return false;
         }
@@ -344,7 +344,7 @@ class MysterIP {
 
     private static MysterThread[] updaterThreads;
 
-    private static BlockingQueue<MysterIP> statusQueue = new BlockingQueue<>();
+    private static BlockingQueue<MysterIp> statusQueue = new BlockingQueue<>();
 
     private synchronized void toUpdateOrNotToUpdate() {
         //if an update operation is already queued, return.
@@ -373,7 +373,7 @@ class MysterIP {
      * Refreshes all Stats (Number of files, Speed and upordown) from the IP.
      * Blocks.
      */
-    private static boolean internalRefreshAll(MysterProtocol  protocol, MysterIP mysterip) {
+    private static boolean internalRefreshAll(MysterProtocol  protocol, MysterIp mysterip) {
 
         //Do Status updated
         //Note, routine checks to see if it's required.
@@ -465,11 +465,11 @@ class MysterIP {
     }
 
     private void assertUpdaterThreads() {
-        if (MysterIP.updaterThreads == null) { //init threads
-            MysterIP.updaterThreads = new MysterThread[NUMBER_OF_UPDATER_THREADS];
+        if (MysterIp.updaterThreads == null) { //init threads
+            MysterIp.updaterThreads = new MysterThread[NUMBER_OF_UPDATER_THREADS];
             for (int i = 0; i < updaterThreads.length; i++) {
-                MysterIP.updaterThreads[i] = new IPStatusUpdaterThread(protocol);
-                MysterIP.updaterThreads[i].start();
+                MysterIp.updaterThreads[i] = new IPStatusUpdaterThread(protocol);
+                MysterIp.updaterThreads[i].start();
             }
         }
     }
@@ -486,7 +486,7 @@ class MysterIP {
         public void run() {
             try {
                 for (;;)
-                    MysterIP.internalRefreshAll(protocol, MysterIP.statusQueue.get());
+                    MysterIp.internalRefreshAll(protocol, MysterIp.statusQueue.get());
             } catch (InterruptedException ex) {
                 //nothing.
             }
@@ -528,9 +528,9 @@ class MysterIP {
     }
 
     private static class MysterIPPingEventListener extends PingEventListener {
-        MysterIP ip;
+        MysterIp ip;
 
-        public MysterIPPingEventListener(MysterIP ip) {
+        public MysterIPPingEventListener(MysterIp ip) {
             this.ip = ip;
         }
 

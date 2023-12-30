@@ -47,7 +47,7 @@ import com.myster.util.MysterThread;
  * 
  * @see com.myster.tracker.IPListManagerSingleton
  */
-public class IpListManager { //aka tracker
+public class IpListManager { // aka tracker
     private static final String[] LAST_RESORT = { "myster.ddnsgeek.com" };
     private static final String PATH = "IPLists";
 

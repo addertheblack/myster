@@ -34,7 +34,6 @@ public class SearchDatagramServer extends TransactionProtocol {
             DataOutputStream out = new DataOutputStream(byteOutputStream);
 
             String searchstring;
-            String tempstring;
 
             MysterType type = new MysterType(in.readInt());
             searchstring = in.readUTF();

@@ -1,6 +1,8 @@
 package com.myster.transaction;
 
-import java.util.Hashtable;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Objects;
 
 import com.general.net.ImmutableDatagramPacket;
 import com.general.util.Timer;
@@ -147,9 +149,9 @@ public class TransactionManager implements TransactionSender {
      * @see DatagramProtocolManager
      */
     private static class TransactionTransportImplementation extends DatagramTransport {
-        private final Hashtable serverProtocols = new Hashtable();
+        private final Map<Integer, TransactionProtocol> serverProtocols = new HashMap<>();
 
-        private final Hashtable outstandingTransactions = new Hashtable();
+        private final Map<Integer, ListenerRecord> outstandingTransactions = new HashMap<>();
 
         private final ServerEventDispatcher dispatcher;
 
@@ -171,8 +173,8 @@ public class TransactionManager implements TransactionSender {
             if (transaction.isForClient()) {
                 fireEvents(transaction.getConnectionNumber(), transaction);
             } else {
-                TransactionProtocol protocol = (TransactionProtocol) (serverProtocols
-                        .get(transaction.getTransactionCode()));
+                TransactionProtocol protocol = serverProtocols
+                        .get(transaction.getTransactionCode());
 
                 if (protocol == null) {
                     System.out.println("No Transaction protocol registered under type: "
@@ -218,7 +220,7 @@ public class TransactionManager implements TransactionSender {
          * @return true if cancelled.
          */
         public boolean cancelTransaction(int uniqueId) {
-            final ListenerRecord record = (ListenerRecord) outstandingTransactions
+            final ListenerRecord record = outstandingTransactions
                     .remove(uniqueId);
 
             if (record == null)
@@ -248,27 +250,29 @@ public class TransactionManager implements TransactionSender {
         }
 
         public void sendTransaction(Transaction transaction) {
-            sendPacket(transaction.getImmutableDatagramPacket());
+            sendPacket(transaction.toImmutableDatagramPacket());
         }
 
-        public TransactionProtocol addTransactionProtocol(TransactionProtocol protocol) { //For
-            // server
-            return (TransactionProtocol) (serverProtocols.put(protocol
-                    .getTransactionCode(), protocol));
+        /**
+         * If you want to handle transactions as a server.
+         */
+        public TransactionProtocol addTransactionProtocol(TransactionProtocol protocol) {
+            return serverProtocols.put(protocol.getTransactionCode(), protocol);
         }
 
-        public TransactionProtocol removeTransactionProtocol(TransactionProtocol protocol) { //For
-            // server
-            return (TransactionProtocol) (serverProtocols.remove(protocol
-                    .getTransactionCode()));
+        /**
+         * If you want to remove transactions as a server.
+         */
+        public TransactionProtocol removeTransactionProtocol(TransactionProtocol protocol) {
+            return serverProtocols.remove(protocol.getTransactionCode());
         }
 
         /*
          * Not all events are sent through here. Cancelled events aren't sent here.
          */
         private void fireEvents(int uniqueid, Transaction transaction) {
-            ListenerRecord record = ((ListenerRecord) (outstandingTransactions.remove(
-                    uniqueid)));
+            ListenerRecord record = outstandingTransactions.remove(
+                    uniqueid);
 
             if (record == null)
                 return; //minor err
@@ -304,41 +308,26 @@ public class TransactionManager implements TransactionSender {
             fireEvents(uniqueid, null);
         }
 
-        //STRUCT
-        private static class ListenerRecord { //NOT immutable
-            public final long timeStamp;
-
-            public final TimeoutTimer timer;
-
-            public final TransactionListener listener;
-
-            public final int uniqueid;
-
-            public MysterAddress address; //if reply is from different it won't
-
-            // work.
-
+        private static record ListenerRecord(MysterAddress address, int uniqueid,
+                                             TransactionListener listener, TimeoutTimer timer, long timeStamp) {
             public ListenerRecord(MysterAddress address, int uniqueid,
-                    TransactionListener listener, TimeoutTimer timer) {
-                this.address = address;
-                this.uniqueid = uniqueid;
-                this.listener = listener;
-                this.timeStamp = System.currentTimeMillis();
-                this.timer = timer;
+                                  TransactionListener listener, TimeoutTimer timer) {
+                this(address, uniqueid, listener, timer, System.currentTimeMillis());
+                
+                Objects.requireNonNull(address);
+                Objects.requireNonNull(listener);
+                Objects.requireNonNull(timer);
             }
-
         }
 
         private class TimeoutTimer implements Runnable {
             private final int[] TIMEOUTS = { 2500, 5000, 10000, 20000 };
 
-            int timeoutCycle = 0;
-
-            Transaction transaction;
-
-            int uniqueid;
-
-            boolean endFlag = false;
+            private final Transaction transaction;
+            private final int uniqueid;
+            
+            private int timeoutCycle = 0;
+            private boolean endFlag = false;
 
             public TimeoutTimer(int uniqueid, Transaction transaction) {
                 this.uniqueid = uniqueid;
@@ -348,11 +337,8 @@ public class TransactionManager implements TransactionSender {
             }
 
             private void setTheTimer() {
-                Timer timer = new Timer(this, TIMEOUTS[timeoutCycle++]); // doens't
-                // have
-                // to
-                // be
-                // read
+                // doens't need to be read
+                Timer timer = new Timer(this, TIMEOUTS[timeoutCycle++]);
             }
 
             private void sendTheTransaction() {
