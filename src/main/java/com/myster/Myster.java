@@ -51,7 +51,7 @@ import com.myster.server.BannersManager.BannersPreferences;
 import com.myster.server.ServerFacade;
 import com.myster.server.ui.ServerStatsWindow;
 import com.myster.tracker.IpListManager;
-import com.myster.tracker.MysterIPPoolImpl;
+import com.myster.tracker.MysterIpPoolImpl;
 import com.myster.tracker.ui.TrackerWindow;
 import com.myster.transaction.TransactionManager;
 import com.myster.type.ui.TypeManagerPreferencesGUI;
@@ -169,7 +169,7 @@ public class Myster {
         System.out.println("-------->> before IPListManager "
                 + (System.currentTimeMillis() - startTime));
         IpListManager listManager =
-                new IpListManager(new MysterIPPoolImpl(java.util.prefs.Preferences.userRoot(),
+                new IpListManager(new MysterIpPoolImpl(java.util.prefs.Preferences.userRoot(),
                                                        protocol),
                                   protocol,
                                   java.util.prefs.Preferences.userRoot().node("Tracker.IpListManager"));

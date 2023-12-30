@@ -13,13 +13,13 @@ import java.util.prefs.Preferences;
 import com.myster.client.net.MysterProtocol;
 import com.myster.net.MysterAddress;
 
-public class MysterIPPoolImpl implements MysterIpPool {
+public class MysterIpPoolImpl implements MysterIpPool {
     private static final int GC_UPPER_LIMIT = 100;
 
     // MysterIPPool stores all its ips
     private static final String PREF_NODE_NAME = "Tracker.MysterIPPool";
 
-    private final Map<MysterAddress, MysterIp> cache;
+    private final Map<MysterAddress, MysterServerImplementation> cache;
 
 
     /**
@@ -35,7 +35,7 @@ public class MysterIPPoolImpl implements MysterIpPool {
     private final Preferences preferences;
 
 
-    public MysterIPPoolImpl(Preferences prefs, MysterProtocol mysterProtocol) {
+    public MysterIpPoolImpl(Preferences prefs, MysterProtocol mysterProtocol) {
         this.preferences = prefs.node(PREF_NODE_NAME);
         this.protocol = mysterProtocol;
         System.out.println("Loading IPPool.....");
@@ -46,7 +46,7 @@ public class MysterIPPoolImpl implements MysterIpPool {
         try {
             dirList = preferences.childrenNames();
             for (String nodeName : dirList) {
-                MysterIp mysterip = new MysterIp(preferences.node(nodeName), protocol);
+                MysterServerImplementation mysterip = new MysterServerImplementation(preferences.node(nodeName), protocol);
                 cache.put(mysterip.getAddress(), mysterip);
             }
         } catch (BackingStoreException exception) {
@@ -74,7 +74,7 @@ public class MysterIPPoolImpl implements MysterIpPool {
 
         try {
             // get the "other" name (dns) for that ip...
-            return getMysterIPLevelTwo(new MysterIp(preferences.node(address.toString()),
+            return getMysterIPLevelTwo(new MysterServerImplementation(preferences.node(address.toString()),
                                                     address.toString(),
                                                     this.protocol));
         } catch (Exception ex) {
@@ -95,7 +95,7 @@ public class MysterIPPoolImpl implements MysterIpPool {
      */
 
     public synchronized MysterServer getCachedMysterIp(MysterAddress address) {
-        MysterIp mysterip = getMysterIP(address);
+        MysterServerImplementation mysterip = getMysterIP(address);
 
         if (mysterip == null)
             return null;
@@ -107,7 +107,7 @@ public class MysterIPPoolImpl implements MysterIpPool {
         return (getMysterIP(s) != null);
     }
 
-    private synchronized MysterServer getMysterIPLevelTwo(MysterIp m) throws IOException {
+    private synchronized MysterServer getMysterIPLevelTwo(MysterServerImplementation m) throws IOException {
         MysterAddress address = m.getAddress(); // possible future bugs here...
         if (existsInPool(address))
             return getCachedMysterIp(address);
@@ -124,7 +124,7 @@ public class MysterIPPoolImpl implements MysterIpPool {
      * appropriate object.
      */
 
-    private synchronized MysterServer addANewMysterObjectToThePool(MysterIp ip) {
+    private synchronized MysterServer addANewMysterObjectToThePool(MysterServerImplementation ip) {
         if (!existsInPool(ip.getAddress())) {
             MysterServer mysterServer = ip.getInterface();
             cache.put(ip.getAddress(), ip); // if deleteUseless went first,
@@ -157,7 +157,7 @@ public class MysterIPPoolImpl implements MysterIpPool {
         while (iterator.hasNext()) {
             MysterAddress workingKey = iterator.next();
 
-            MysterIp mysterip = cache.get(workingKey);
+            MysterServerImplementation mysterip = cache.get(workingKey);
 
             if ((mysterip.getMysterCount() <= 0) && (!mysterip.getStatus())) {
                 keysToDelete.add(workingKey);
@@ -191,7 +191,7 @@ public class MysterIPPoolImpl implements MysterIpPool {
         }
     }
 
-    private MysterIp getMysterIP(MysterAddress address) {
+    private MysterServerImplementation getMysterIP(MysterAddress address) {
         return cache.get(address);
     }
 
