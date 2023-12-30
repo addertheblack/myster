@@ -13,8 +13,10 @@
 package com.myster.tracker;
 
 import java.io.IOException;
+import java.lang.ref.Cleaner;
 import java.net.UnknownHostException;
 import java.util.List;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.prefs.Preferences;
 
 import com.general.util.BlockingQueue;
@@ -145,15 +147,19 @@ class MysterServerImplementation {
         return new MysterServerReference();
     }
 
-    private volatile int referenceCounter = 0;
+    private final AtomicInteger referenceCounter = new AtomicInteger(0);
+    
 
     /**
      * This private class implements the com.myster interface and allows outside objects to get
      * vital server statistics.
      */
     private class MysterServerReference implements MysterServer {
+        private static final Cleaner cleaner = Cleaner.create();
+        
         public MysterServerReference() {
-            referenceCounter++; //used for garbage collection.
+            referenceCounter.incrementAndGet(); //used for garbage collection.
+            cleaner.register(this, () -> referenceCounter.decrementAndGet());
         }
 
         public boolean getStatus() {
@@ -209,11 +215,6 @@ class MysterServerImplementation {
             return lastPingTime;
         }
 
-        protected void finalize() throws Throwable {
-            referenceCounter--; //used for garbage collection.
-            super.finalize();
-        }
-
         public String toString() {
             return MysterServerImplementation.this.toString();
         }
@@ -232,9 +233,7 @@ class MysterServerImplementation {
         return upordown;
     }
 
-    /**
-     * The ever famous toString() method!!! You can't go from string to new Myster IP easily!!!
-     */
+    @Override
     public String toString() {
         toUpdateOrNotToUpdate();
 
@@ -246,13 +245,9 @@ class MysterServerImplementation {
     }
 
     protected int getMysterCount() {
-        return referenceCounter;
+        return referenceCounter.get();
     }
 
-    /**
-     * Tests to see whether the names (IPs) of two Myster Objects are equal..!
-     *  
-     */
     @Override
     public boolean equals(Object m) {
         MysterServerImplementation mysterIp;
@@ -374,7 +369,6 @@ class MysterServerImplementation {
      * Blocks.
      */
     private static boolean internalRefreshAll(MysterProtocol  protocol, MysterServerImplementation mysterip) {
-
         //Do Status updated
         //Note, routine checks to see if it's required.
         //MysterIP.internalRefreshStatus(mysterip);
