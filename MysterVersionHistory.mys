@@ -1164,6 +1164,7 @@ Allow new code to use a server/port instead of and in addition to a md5
 Probably want to move that stuff into preferences/registry
 fix writeUTF to use write utf-8 instead.. fix data input/outputstreams
 Fix Myster startup to use Preferences
+Unit tests
 
 
 

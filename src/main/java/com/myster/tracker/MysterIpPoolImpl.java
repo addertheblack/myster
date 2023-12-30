@@ -74,9 +74,8 @@ public class MysterIpPoolImpl implements MysterIpPool {
 
         try {
             // get the "other" name (dns) for that ip...
-            return getMysterIPLevelTwo(new MysterServerImplementation(preferences.node(address.toString()),
-                                                    address.toString(),
-                                                    this.protocol));
+            return getMysterIPLevelTwo(new MysterServerImplementation(preferences
+                    .node(address.toString()), address.toString(), this.protocol));
         } catch (Exception ex) {
             deadCache.addDeadAddress(address);
             throw new IOException("Bad thing happened in MysterIP Pool add");
@@ -194,23 +193,4 @@ public class MysterIpPoolImpl implements MysterIpPool {
     private MysterServerImplementation getMysterIP(MysterAddress address) {
         return cache.get(address);
     }
-
-//    /**
-//     * Saves the state of the MysterIPPool.. Thanks to the new preferences
-//     * manager, this routine can be called as often as I like.
-//     */
-//    private synchronized void save() {
-//        Iterator<MysterIP> iterator = cache.values().iterator();
-//
-//        int i = 0;
-//        while (iterator.hasNext()) {
-//            MysterIP mysterip = (iterator.next());
-//
-//            if (mysterip.getMysterCount() > 0) {
-//                mysterip.save(preferences.node("" + i));
-//            }
-//
-//            i++;
-//        }
-//    }
 }
