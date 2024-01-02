@@ -99,7 +99,7 @@ public class CrawlerThread extends MysterThread {
                         List<MysterAddress> addresses = new ArrayList<>();
                         try {
                             String[] ipList = protocol.getDatagram()
-                                    .getTopServers(currentIp, searchType, new CallAdapter<String[]>()).get();
+                                    .getTopServers(currentIp, searchType).get();
                             for (int i = 0; i < ipList.length; i++) {
                                 try {
                                     addresses.add(new MysterAddress(ipList[i]));

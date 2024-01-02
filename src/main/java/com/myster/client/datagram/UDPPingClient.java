@@ -1,36 +1,40 @@
 package com.myster.client.datagram;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Optional;
-
+import com.general.thread.PromiseFuture;
+import com.myster.net.DatagramProtocolManager;
 import com.myster.net.MysterAddress;
 
 public class UDPPingClient {
-    private static Optional<PongTransport> ponger = Optional.empty();
-    private static List<PingElement> backlog = new ArrayList<>();
+    private final DatagramProtocolManager protocolManager;
 
-    public synchronized static void setPonger(PongTransport p) {
-        if (ponger.isEmpty()) {
-            ponger = Optional.of(p);
-            
-            for (PingElement pingElement : backlog) {
-                ponger.get().ping(pingElement.address, pingElement.listener);
-            }
-        } else {
-            throw new IllegalStateException("UDPPingClient initialized twice.");
-        }
+    public UDPPingClient(DatagramProtocolManager protocolManager) {
+        this.protocolManager = protocolManager;
     }
 
-    synchronized static void ping(MysterAddress address, PingEventListener listener) {
-        ponger.ifPresentOrElse(ponger -> {
-            ponger.ping(address, listener);
-        }, () -> {
-            backlog.add(new PingElement(address, listener));
+    public PromiseFuture<PingResponse> ping(MysterAddress address) {
+        return protocolManager.accessPort(address.getPort(), (transportManager) -> {
+            PongTransport t = (PongTransport) transportManager.getTransport(PongTransport.TRANSPORT_NUMBER);
+            
+            if (t == null ) {
+                t = new PongTransport();
+                transportManager.addTransport(t);
+            }
+            
+            PongTransport transport = t;
+            
+            return PromiseFuture.newPromiseFuture( context -> {
+                transport.ping(address, new PingEventListener() {
+                    @Override
+                    public void pingReply(PingEvent e) {
+                        context.setResult(new PingResponse(address, e.getPingTime()));
+                        protocolManager.accessPort(address.getPort(),
+                                                   (t) -> transportManager
+                                                           .removeTransportIfEmpty(transport));
+                    }
+                }); 
+            });
         });
     }
-
-    private record PingElement(MysterAddress address, PingEventListener listener) {}
 
     /*
      * public static boolean ping(String s) { DatagramSocket dsocket=null; int

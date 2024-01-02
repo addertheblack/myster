@@ -10,6 +10,7 @@ import com.general.util.Util;
 import com.myster.net.BadPacketException;
 import com.myster.net.DataPacket;
 import com.myster.net.DatagramProtocolManager;
+import com.myster.net.DatagramProtocolManager.TransportManager;
 import com.myster.net.DatagramTransport;
 import com.myster.net.MysterAddress;
 import com.myster.server.event.ConnectionManagerEvent;
@@ -21,52 +22,22 @@ import com.myster.server.event.ServerEventDispatcher;
  * 
  * TODO put in transaction protocol docs here.
  */
-public class TransactionManager implements TransactionSender {
-    private TransactionTransportImplementation impl;
-
-    private static TransactionManager singleton;
+public class TransactionManager {
+    private final ServerEventDispatcher dispatcher;
+    private final DatagramProtocolManager datagramManager;
 
     /**
      * Creates a TransactionManager which also has a TransactionManager implementation (which is
      * supposed to actually do the work).
      * 
      * @param dispatcher
+     * @param datagramManager 
      */
-    private TransactionManager(ServerEventDispatcher dispatcher) {
-        impl = new TransactionTransportImplementation(dispatcher);
-        try {
-            DatagramProtocolManager.addTransport(impl);
-        } catch (Exception ex) {
-            ex.printStackTrace();
-        }
+    public TransactionManager(ServerEventDispatcher dispatcher, DatagramProtocolManager datagramManager) {
+        this.dispatcher = dispatcher;
+        this.datagramManager = datagramManager;
     }
 
-    /**
-     * Singleton lazy init loader. Don't call this from the outside.
-     */
-    public static synchronized void init(ServerEventDispatcher dispatcher) {
-        if (singleton != null)
-            throw new IllegalStateException("Don't init me twice!");
-
-        singleton = new TransactionManager(dispatcher);
-    }
-    
-    public static synchronized TransactionManager load() {
-        if (singleton==null)
-            throw new IllegalStateException("You need to init me first!");
-        return singleton;
-    }
-
-    /**
-     * Sends a transaction back. Meant for use by TransactionProtol (serve side).
-     * 
-     * @param packet
-     *            to send
-     * @see TransactionProtocol
-     */
-    public void sendTransaction(Transaction packet) {
-        impl.sendTransaction(packet);
-    }
 
     /**
      * Responsible for sending a transaction and notifying the listener if there is any reply or
@@ -85,11 +56,64 @@ public class TransactionManager implements TransactionSender {
      * @param listener
      *            to be notified upon events to do with this transaction
      * @return integer based ID to make references to this outstanding transaction. The id is no
-     *         longer valid after the transaciton has responded
+     *         longer valid after the transaction has responded
      */
-    static int sendTransaction(DataPacket data, int transactionCode, TransactionListener listener) {
-        return load().impl.sendTransaction(data, transactionCode, listener);
+    public int sendTransaction(DataPacket data, int transactionCode, TransactionListener listener_in) {
+        int port = data.getAddress().getPort();
+        
+        return datagramManager.accessPort(port, (transportManager) -> {
+            TransactionTransportImplementation transactionTransport =
+                    extractTransactionTransport(transportManager);
+            
+            TransactionListener listener = new TransactionListener() {
+                
+                @Override
+                public void transactionTimout(TransactionEvent event) {
+                    datagramManager
+                            .accessPort(port,
+                                        (transportManager) -> transportManager
+                                                .removeTransportIfEmpty(transactionTransport));
+
+                    listener_in.transactionTimout(event);
+                }
+
+                @Override
+                public void transactionReply(TransactionEvent event) {
+                    datagramManager
+                            .accessPort(port,
+                                        (transportManager) -> transportManager
+                                                .removeTransportIfEmpty(transactionTransport));
+
+                    listener_in.transactionReply(event);
+                }
+
+                @Override
+                public void transactionCancelled(TransactionEvent event) {
+                    datagramManager
+                            .accessPort(port,
+                                        (transportManager) -> transportManager
+                                                .removeTransportIfEmpty(transactionTransport));
+
+                    listener_in.transactionCancelled(event);
+                }
+            };
+            
+            return transactionTransport.sendTransaction(data, transactionCode, listener);
+        });
     }
+
+    private TransactionTransportImplementation extractTransactionTransport(TransportManager transportManager) {
+        TransactionTransportImplementation transactionTransport =
+                (TransactionTransportImplementation) transportManager
+                        .getTransport(Transaction.TRANSACTION_PROTOCOL_NUMBER);
+        
+        if (transactionTransport == null) {
+            transactionTransport = new TransactionTransportImplementation(dispatcher);
+            transportManager.addTransport(transactionTransport);
+        }
+        return transactionTransport;
+    }
+    
 
     /**
      * Cancels the outstanding transaction referenced by this id.
@@ -108,8 +132,13 @@ public class TransactionManager implements TransactionSender {
      *            (internal) of the outstanding transaction to cancel.
      * @return true if transaction was cancelled, false otherwise.
      */
-    static boolean cancelTransaction(int id) {
-        return load().impl.cancelTransaction(id);
+    public boolean cancelTransaction(int port, int id) {
+        return datagramManager.accessPort(port, (TransportManager transportManager) -> {
+            TransactionTransportImplementation transport =
+                    (TransactionTransportImplementation) transportManager.getTransport(Transaction.TRANSACTION_PROTOCOL_NUMBER);
+            
+            return transport.cancelTransaction(id);
+        });
     }
 
     /**
@@ -122,23 +151,15 @@ public class TransactionManager implements TransactionSender {
      *            listener to add.
      * @return the same TransactionProtocol but with a valid "sender"
      */
-    public static TransactionProtocol addTransactionProtocol(TransactionProtocol protocol) { //For
-        // server
-        protocol.setSender(load());
-        return load().impl.addTransactionProtocol(protocol);
-    }
+    public TransactionProtocol addTransactionProtocol(int port, TransactionProtocol protocol) {
+        return datagramManager.accessPort(port, (TransportManager transportManager) -> {
+            TransactionTransportImplementation transactionTransport =
+                    extractTransactionTransport(transportManager);
 
-//    /**
-//     * Removes this protocol from active duty. Does not invalidate the sender.
-//     * 
-//     * @param protocol
-//     *            object to remove.
-//     * @return the same TransactionProtocol object..
-//     */
-//    public static TransactionProtocol removeTransactionProtocol(TransactionProtocol protocol) { //For
-//        // server
-//        return load().impl.removeTransactionProtocol(protocol);
-//    }
+            protocol.setSender(transactionTransport);
+            return transactionTransport.addTransactionProtocol(protocol);
+        });
+    }
 
     /**
      * This class implements the DatagramTransport which means it implements a listener for all
@@ -148,7 +169,7 @@ public class TransactionManager implements TransactionSender {
      * 
      * @see DatagramProtocolManager
      */
-    private static class TransactionTransportImplementation extends DatagramTransport {
+    private static class TransactionTransportImplementation extends DatagramTransport implements TransactionSender {
         private final Map<Integer, TransactionProtocol> serverProtocols = new HashMap<>();
 
         private final Map<Integer, ListenerRecord> outstandingTransactions = new HashMap<>();
@@ -160,6 +181,10 @@ public class TransactionManager implements TransactionSender {
          */
         public TransactionTransportImplementation(ServerEventDispatcher dispatcher) {
             this.dispatcher = dispatcher;
+        }
+
+        public boolean isEmpty() {
+            return serverProtocols.isEmpty() && outstandingTransactions.isEmpty();
         }
 
         public short getTransportCode() {
@@ -258,13 +283,6 @@ public class TransactionManager implements TransactionSender {
          */
         public TransactionProtocol addTransactionProtocol(TransactionProtocol protocol) {
             return serverProtocols.put(protocol.getTransactionCode(), protocol);
-        }
-
-        /**
-         * If you want to remove transactions as a server.
-         */
-        public TransactionProtocol removeTransactionProtocol(TransactionProtocol protocol) {
-            return serverProtocols.remove(protocol.getTransactionCode());
         }
 
         /*

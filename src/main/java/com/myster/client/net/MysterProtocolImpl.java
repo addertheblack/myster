@@ -5,21 +5,22 @@ import com.myster.client.datagram.MysterDatagramImpl;
 import com.myster.client.stream.MysterStreamImpl;
 
 public class MysterProtocolImpl implements MysterProtocol {
-    private final MysterDatagram datagramImpl;
-    private final MysterStream streamImpl;
+    private final MysterDatagram datagram;
+    private final MysterStream stream;
 
-    public MysterProtocolImpl() {
-        datagramImpl = new MysterDatagramImpl();
-        streamImpl = new MysterStreamImpl();
+    public MysterProtocolImpl(MysterStreamImpl stream,
+                              MysterDatagramImpl datagram) {
+        this.stream = stream;
+        this.datagram = datagram;
     }
-    
+
     @Override
     public MysterDatagram getDatagram() {
-        return datagramImpl;
+        return datagram;
     }
 
     @Override
     public MysterStream getStream() {
-        return streamImpl;
+        return stream;
     }
 }

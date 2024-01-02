@@ -13,7 +13,6 @@ package com.myster.client.ui;
 import java.io.IOException;
 import java.util.concurrent.ExecutionException;
 
-import com.general.thread.CallAdapter;
 import com.general.util.Util;
 import com.myster.client.net.MysterProtocol;
 import com.myster.net.MysterAddress;
@@ -73,7 +72,7 @@ public class TypeListerThread extends MysterThread {
                 return;
             MysterAddress mysterAddress = new MysterAddress(ip);
             listener.refreshIP(mysterAddress);
-            com.myster.type.MysterType[] types = protocol.getDatagram().getTypes(mysterAddress, new CallAdapter<>()).get();
+            com.myster.type.MysterType[] types = protocol.getDatagram().getTypes(mysterAddress).get();
             if (endFlag)
                 return;
 

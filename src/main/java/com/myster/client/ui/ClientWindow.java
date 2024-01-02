@@ -177,8 +177,10 @@ public class ClientWindow extends MysterFrame implements Sayable {
                 try {
                     com.myster.net.MysterAddress address = new com.myster.net.MysterAddress(ipTextField
                             .getText());
-                    com.myster.message.MessageWindow window = new com.myster.message.MessageWindow(getMysterFrameContext(),
-                            address);
+                    com.myster.message.MessageWindow window =
+                            new com.myster.message.MessageWindow(getMysterFrameContext(),
+                                                                 protocol,
+                                                                 address);
                     window.setVisible(true);
                 } catch (java.net.UnknownHostException ex) {
                     (new AnswerDialog(ClientWindow.this, "The address " + ipTextField.getText()

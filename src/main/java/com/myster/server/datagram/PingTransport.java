@@ -8,10 +8,10 @@ import com.myster.net.PingPacket;
 import com.myster.net.PongPacket;
 
 public class PingTransport extends DatagramTransport {
-    static final short transportNumber = 20553; // 'P', 'I' in network byte order
+    private static final short TRANSPORT_NUMBER = 20553; // 'P', 'I' in network byte order
 
     public short getTransportCode() {
-        return transportNumber;
+        return TRANSPORT_NUMBER;
     }
 
     @SuppressWarnings("unused")
@@ -25,5 +25,10 @@ public class PingTransport extends DatagramTransport {
         sendPacket(PongPacket.getImmutablePacket(new MysterAddress(
                 immutablePacket.getAddress(), immutablePacket.getPort())));
         //System.out.println("Replied to a ping!");
+    }
+
+    @Override
+    public boolean isEmpty() {
+        return false;
     }
 }

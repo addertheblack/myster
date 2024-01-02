@@ -27,6 +27,7 @@ import com.general.mclist.MCListEventListener;
 import com.general.mclist.MCListFactory;
 import com.general.mclist.MCListItemInterface;
 import com.general.util.Timer;
+import com.myster.client.net.MysterProtocol;
 import com.myster.client.ui.ClientWindow;
 import com.myster.message.MessageWindow;
 import com.myster.server.event.ConnectionManagerEvent;
@@ -44,10 +45,13 @@ public class DownloadInfoPanel extends JPanel {
     private final ServerContext serverContext;
     private final ConnectionHandler chandler;
     private final MysterFrameContext frameContext;
+    private final MysterProtocol protocol;
 
-    public DownloadInfoPanel(ServerContext context, MysterFrameContext c) {
+
+    public DownloadInfoPanel(ServerContext context, MysterFrameContext c, MysterProtocol protocol) {
         this.frameContext = c;
         this.serverContext = context;
+        this.protocol = protocol;
 
         setBackground(new Color(240, 240, 240));
         chandler = new ConnectionHandler();
@@ -107,9 +111,12 @@ public class DownloadInfoPanel extends JPanel {
                 int[] array = list.getSelectedIndexes();
                 for (int i = 0; i < array.length; i++) {
                     try {
-                        MessageWindow window = new MessageWindow(frameContext, new com.myster.net.MysterAddress(
-                                (((DownloadMCListItem) (list.getMCListItem(array[i]))))
-                                        .getAddress()));
+                        MessageWindow window =
+                                new MessageWindow(frameContext,
+                                                  protocol,
+                                                  new com.myster.net.MysterAddress((((DownloadMCListItem) (list
+                                                          .getMCListItem(array[i]))))
+                                                                  .getAddress()));
                         window.setVisible(true);
                     } catch (java.net.UnknownHostException ex) {
 

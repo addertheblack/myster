@@ -1,6 +1,5 @@
 package com.myster.client.datagram;
 
-import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -10,32 +9,28 @@ import com.general.net.ImmutableDatagramPacket;
 import com.general.util.Semaphore;
 import com.general.util.Timer;
 import com.myster.net.BadPacketException;
+import com.myster.net.DatagramProtocolManager;
 import com.myster.net.DatagramTransport;
 import com.myster.net.MysterAddress;
 import com.myster.net.PingPacket;
 
 public class PongTransport extends DatagramTransport {
-    static final short transportNumber = 20559;
+    public static final short TRANSPORT_NUMBER = 20559;
+    private static final int TIMEOUT = 60000;
+    private static final int FIRST_TIMEOUT = 10000;
 
-    static final int TIMEOUT = 60000;
-
-    static final int FIRST_TIMEOUT = 10000;
-
-    private Map<MysterAddress, PongItemStruct> requests = new HashMap<>();
+    private final Map<MysterAddress, PongItemStruct> requests = new HashMap<>();
 
     public short getTransportCode() {
-        return transportNumber;
+        return TRANSPORT_NUMBER;
     }
 
     public void packetReceived(ImmutableDatagramPacket immutablePacket)
             throws BadPacketException {
         try {
-
-            //PongPacket packet=new PongPacket(immutablePacket);
-
             PongItemStruct struct = null;
-            MysterAddress param_address = new MysterAddress(immutablePacket
-                    .getAddress(), immutablePacket.getPort());
+            MysterAddress param_address =
+                    new MysterAddress(immutablePacket.getAddress(), immutablePacket.getPort());
             synchronized (requests) {
                 struct = requests.get(param_address);
                 if (struct != null) {
@@ -49,17 +44,24 @@ public class PongTransport extends DatagramTransport {
             ex.printStackTrace();
         }
     }
+    
+    @Override
+    public boolean isEmpty() {
+        return requests.isEmpty();
+    }
 
     /**
      * Private method for code reuse. should NOT be in any sychronized block.
      */
     private void dispatch(MysterAddress param_address,
-            ImmutableDatagramPacket immutablePacket, PongItemStruct pongItem) {
+                          ImmutableDatagramPacket immutablePacket,
+                          PongItemStruct pongItem) {
         long pingTime = System.currentTimeMillis() - pongItem.timeStamp;
 
         pongItem.dispatcher.fireEvent(new PingEvent(PingEvent.PING,
-                immutablePacket, (int) pingTime, param_address));
-
+                                                    immutablePacket,
+                                                    (int) pingTime,
+                                                    param_address));
     }
 
     /**
@@ -78,46 +80,19 @@ public class PongTransport extends DatagramTransport {
      * @param param_address
      * @param listener
      */
-    public void ping(MysterAddress param_address, PingEventListener listener) { //DANGER DEADLOCKS!
+    public void ping(MysterAddress param_address, PingEventListener listener) {
         synchronized (requests) {
-            PongItemStruct pongItemStruct = (PongItemStruct) requests
-                    .get(param_address);
+            PongItemStruct pongItemStruct = requests.get(param_address);
             if (pongItemStruct == null) {
                 pongItemStruct = new PongItemStruct(param_address);
                 requests.put(param_address, pongItemStruct);
+                
+                // TODO: NO! Need to connect on the fly
                 sendPacket((new PingPacket(param_address))
                         .toImmutableDatagramPacket());
             }
 
             pongItemStruct.dispatcher.addListener(listener);
-        }
-    }
-
-    public boolean ping(MysterAddress param_address) throws IOException,
-            InterruptedException { //should NOT be synchronized!!!
-        DefaultPingListener p = new DefaultPingListener();
-        ping(param_address, p);
-        return p.getResult(); //because this blocks for a long time.
-    }
-
-    private static class DefaultPingListener extends PingEventListener {
-        /*
-         * THis is a utiltity class that allows calling the ping routine in a
-         * synchrous way.
-         */
-        Semaphore sem = new Semaphore(0);
-
-        boolean value;
-
-        public boolean getResult() throws InterruptedException {
-            sem.getLock();
-
-            return value;
-        }
-
-        public void pingReply(PingEvent e) {
-            value = (e.getPacket() != null ? true : false);
-            sem.signal();
         }
     }
 

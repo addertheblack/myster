@@ -28,6 +28,7 @@ import javax.swing.JTextArea;
 import javax.swing.JTextField;
 import javax.swing.ScrollPaneConstants;
 
+import com.myster.client.net.MysterProtocol;
 import com.myster.net.MysterAddress;
 import com.myster.search.ui.ServerStatsFromCache;
 import com.myster.tracker.MysterServer;
@@ -35,45 +36,59 @@ import com.myster.ui.MysterFrame;
 import com.myster.ui.MysterFrameContext;
 
 public class MessageWindow extends MysterFrame {
-    private JPanel mainPanel;
-
-    private HeaderPanel header;
-
-    private GridBagLayout gblayout;
-
-    private GridBagConstraints gbconstrains;
-
-    private MessageWindowButtonBar bar;
-
-    MessageTextArea quoteArea, messageArea;
-
-    private final ServerStatsFromCache getServer;
-
     public static final boolean NEW_MESSAGE = true;
-
     public static final boolean FROM_SOMEONE_ELSE = false;
+    
+    private final JPanel mainPanel;
+    private final HeaderPanel header;
+    private final GridBagLayout gblayout;
+    private final GridBagConstraints gbconstrains;
+    private final MessageWindowButtonBar bar;
+    private final ServerStatsFromCache getServer;
+    private final MysterProtocol protocol;
 
-    public MessageWindow(MysterFrameContext context,InstantMessage message, ServerStatsFromCache getServer) {
-        this(context, FROM_SOMEONE_ELSE, message.message, message.quote, message.address, getServer);
+    private MessageTextArea quoteArea, messageArea;
+
+    public MessageWindow(MysterFrameContext context,
+                         MysterProtocol protocol,
+                         InstantMessage message,
+                         ServerStatsFromCache getServer) {
+        this(context,
+             protocol,
+             FROM_SOMEONE_ELSE,
+             message.message,
+             message.quote,
+             message.address,
+             getServer);
     }
 
-    public MessageWindow(MysterFrameContext context,MysterAddress address, String quote, ServerStatsFromCache getServer) {
-        this(context, NEW_MESSAGE, "", quote, address, getServer);
+    public MessageWindow(MysterFrameContext context,
+                         MysterProtocol protocol,
+                         MysterAddress address,
+                         String quote,
+                         ServerStatsFromCache getServer) {
+        this(context, protocol, NEW_MESSAGE, "", quote, address, getServer);
     }
 
-    public MessageWindow(MysterFrameContext context, MysterAddress address) {
-        this(context, NEW_MESSAGE, "", null, address, (a) -> null);
+    public MessageWindow(MysterFrameContext context, MysterProtocol protocol, MysterAddress address) {
+        this(context, protocol, NEW_MESSAGE, "", null, address, (a) -> null);
     }
 
-    public MessageWindow(MysterFrameContext context) {
-        this(context, NEW_MESSAGE, "", null, null, (a) -> null);
+    public MessageWindow(MysterFrameContext context, MysterProtocol protocol) {
+        this(context, protocol, NEW_MESSAGE, "", null, null, (a) -> null);
     }
 
-    private MessageWindow(MysterFrameContext context, final boolean type, final String message, final String quote,
-            final MysterAddress address, ServerStatsFromCache getServer) {
-                super(context);
+    private MessageWindow(MysterFrameContext context,
+                          MysterProtocol protocol,
+                          final boolean type,
+                          final String message,
+                          final String quote,
+                          final MysterAddress address,
+                          ServerStatsFromCache getServer) {
+        super(context);
+        this.protocol = protocol;
         this.getServer = getServer;
-        
+
         setSize(320, 400);
 
         //Do interface setup: 
@@ -207,8 +222,11 @@ public class MessageWindow extends MysterFrame {
                             return; //err (this should not be possible)
 
                         try {
-                            MessageManager.sendInstantMessage(new InstantMessage(header
-                                    .getAddress(), getMessage(), getQuote()));
+                            MessageManager
+                                    .sendInstantMessage(protocol.getDatagram(),
+                                                        new InstantMessage(header.getAddress(),
+                                                                           getMessage(),
+                                                                           getQuote()));
                             closeThisWindow();
                         } catch (UnknownHostException ex) {
                             System.out
@@ -223,8 +241,11 @@ public class MessageWindow extends MysterFrame {
                 accept.addActionListener(new ActionListener() {
                     public void actionPerformed(ActionEvent e) {
                         try {
-                            MessageWindow messageWindow =
-                                    new MessageWindow(getMysterFrameContext(),  header.getAddress(), getMessage(), getServer);
+                            MessageWindow messageWindow = new MessageWindow(getMysterFrameContext(),
+                                                                            protocol,
+                                                                            header.getAddress(),
+                                                                            getMessage(),
+                                                                            getServer);
                             messageWindow.setBounds(MessageWindow.this.getBounds());
                             messageWindow.setVisible(true);
                             closeThisWindow();

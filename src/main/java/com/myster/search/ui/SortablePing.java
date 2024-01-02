@@ -1,12 +1,12 @@
 package com.myster.search.ui;
 
 import com.general.mclist.Sortable;
-import com.myster.client.datagram.PingEvent;
-import com.myster.client.datagram.PingEventListener;
+import com.general.thread.CallAdapter;
+import com.myster.client.datagram.PingResponse;
 import com.myster.client.net.MysterProtocol;
 import com.myster.net.MysterAddress;
 
-public class SortablePing implements Sortable {
+public class SortablePing implements Sortable<Long> {
     public static final int NOTPINGED = 1000000;
 
     public static final int TIMEOUT = 1000001;
@@ -18,50 +18,57 @@ public class SortablePing implements Sortable {
 
         try {
 
-            protocol.getDatagram().ping(address, new MyPingEventListener());
+            protocol.getDatagram().ping(address).addCallListener(new MyPingEventListener());
         } catch (Exception ex) {
             ex.printStackTrace();
         }
     }
 
-    public synchronized Object getValue() {
-        return new Long(number);
+    @Override
+    public synchronized Long getValue() {
+        return number;
     }
 
-    public synchronized boolean isLessThan(Sortable temp) {
+    public synchronized boolean isLessThan(Sortable<Long> temp) {
         if (temp == this)
             return false;
         if (!(temp instanceof SortablePing))
             return false;
-        Long n = (Long) temp.getValue();
+        Long n = temp.getValue();
 
         if (number < n.longValue())
             return true;
         return false;
     }
 
-    public synchronized boolean isGreaterThan(Sortable temp) {
+    public synchronized boolean isGreaterThan(Sortable<Long> temp) {
         if (temp == this)
             return false;
         if (!(temp instanceof SortablePing))
             return false;
-        Long n = (Long) temp.getValue();
+        Long n = temp.getValue();
 
         if (number > n.longValue())
             return true;
         return false;
     }
 
-    public synchronized boolean equals(Sortable temp) {
-        if (temp == this)
+    @Override
+    public boolean equals(Sortable<Long> m) {
+        return equals((Object) m);
+    }
+    
+    @Override
+    public synchronized boolean equals(Object temp) {
+        if (temp == this) {
             return true;
-        if (!(temp instanceof SortablePing))
+        }
+        
+        if (temp instanceof SortablePing sortablePing) {
+            return number == sortablePing.getValue().longValue();
+        } else {
             return false;
-        Long n = (Long) temp.getValue();
-
-        if (number == n.longValue())
-            return true;
-        return false;
+        }
     }
 
     public synchronized void setNumber(long temp) {
@@ -80,14 +87,14 @@ public class SortablePing implements Sortable {
         }
     }
 
-    private class MyPingEventListener extends PingEventListener {
-        public void pingReply(PingEvent e) {
-            if (e.isTimeout()) {
+    private class MyPingEventListener extends CallAdapter<PingResponse> {
+        @Override
+        public void handleResult(PingResponse pingResponse) {
+            if (pingResponse.isTimeout()) {
                 setNumber(TIMEOUT);
             } else {
-                setNumber(e.getPingTime());
+                setNumber(pingResponse.pingTimeMs());
             }
         }
     }
-
 }

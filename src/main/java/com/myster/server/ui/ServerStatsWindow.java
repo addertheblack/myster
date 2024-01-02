@@ -19,6 +19,7 @@ import javax.swing.JPanel;
 import com.general.tab.TabEvent;
 import com.general.tab.TabListener;
 import com.general.tab.TabPanel;
+import com.myster.client.net.MysterProtocol;
 import com.myster.server.event.ServerContext;
 import com.myster.ui.MysterFrame;
 import com.myster.ui.MysterFrameContext;
@@ -47,9 +48,12 @@ public class ServerStatsWindow extends MysterFrame implements Sayable {
 
     private static MysterFrameContext mysterFrameContext;
 
-    public static void init(ServerContext context, MysterFrameContext c) {
+    private static MysterProtocol protocol;
+
+    public static void init(ServerContext context, MysterFrameContext c, MysterProtocol protocol) {
         ServerStatsWindow.context = context;
         ServerStatsWindow.mysterFrameContext = c;
+        ServerStatsWindow.protocol = protocol;
     }
     
     public synchronized static ServerStatsWindow getInstance() {
@@ -87,7 +91,7 @@ public class ServerStatsWindow extends MysterFrame implements Sayable {
 
         tab = new TabPanel();
 
-        downloadPanel = new DownloadInfoPanel(context, c);
+        downloadPanel = new DownloadInfoPanel(context, c, protocol);
 
         statsinfopanel = new StatsInfoPanel(context);
 

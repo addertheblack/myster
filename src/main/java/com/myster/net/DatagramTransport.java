@@ -21,9 +21,10 @@ public abstract class DatagramTransport implements DatagramSender {
      * the correct port/address.
      */
     public void sendPacket(ImmutableDatagramPacket packet) {
-        if (sender == null)
+        if (sender == null) {
             throw new IllegalStateException(
                     "Transport has not been added to the TransportManager yet!");
+        }
 
         sender.sendPacket(packet);
     }
@@ -55,5 +56,6 @@ public abstract class DatagramTransport implements DatagramSender {
      */
     public abstract void packetReceived(ImmutableDatagramPacket packet) throws BadPacketException;
 
+    public abstract boolean isEmpty();
 }
 

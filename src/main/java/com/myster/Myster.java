@@ -33,22 +33,32 @@ import com.general.util.AnswerDialog;
 import com.general.util.Util;
 import com.myster.application.MysterGlobals;
 import com.myster.bandwidth.BandwidthManager;
+import com.myster.client.datagram.MysterDatagramImpl;
+import com.myster.client.datagram.UDPPingClient;
 import com.myster.client.net.MysterProtocol;
 import com.myster.client.net.MysterProtocolImpl;
+import com.myster.client.stream.MysterStreamImpl;
 import com.myster.client.ui.ClientWindow;
 import com.myster.filemanager.FileTypeListManager;
 import com.myster.filemanager.ui.FmiChooser;
 import com.myster.hash.HashManager;
 import com.myster.message.ImTransactionServer;
-import com.myster.message.MessageManager;
 import com.myster.message.MessageWindow;
 import com.myster.message.ui.MessagePreferencesPanel;
+import com.myster.net.DatagramProtocolManager;
 import com.myster.pref.MysterPreferences;
 import com.myster.search.HashCrawlerManager;
 import com.myster.search.MultiSourceHashSearch;
 import com.myster.search.ui.SearchWindow;
 import com.myster.server.BannersManager.BannersPreferences;
 import com.myster.server.ServerFacade;
+import com.myster.server.datagram.FileStatsDatagramServer;
+import com.myster.server.datagram.SearchDatagramServer;
+import com.myster.server.datagram.SearchHashDatagramServer;
+import com.myster.server.datagram.ServerStatsDatagramServer;
+import com.myster.server.datagram.TopTenDatagramServer;
+import com.myster.server.datagram.TypeDatagramServer;
+import com.myster.server.event.ServerEventDispatcher;
 import com.myster.server.ui.ServerStatsWindow;
 import com.myster.tracker.IpListManager;
 import com.myster.tracker.MysterIpPoolImpl;
@@ -164,11 +174,19 @@ public class Myster {
         MysterPreferences preferences  = MysterPreferences.getInstance();
         System.out.println("-------->> after preferences " + (System.currentTimeMillis() - startTime));
         
-        MysterProtocol protocol = new MysterProtocolImpl();
+        ServerEventDispatcher serverDispatcher = new ServerEventDispatcher();
+        DatagramProtocolManager datagramManager = new DatagramProtocolManager(); 
+        TransactionManager transactionManager =
+                new TransactionManager(serverDispatcher, datagramManager);
+
+        MysterProtocol protocol =
+                new MysterProtocolImpl(new MysterStreamImpl(),
+                                       new MysterDatagramImpl(transactionManager,
+                                                              new UDPPingClient(datagramManager)));
 
         System.out.println("-------->> before IPListManager "
                 + (System.currentTimeMillis() - startTime));
-        IpListManager listManager =
+        IpListManager ipListManager =
                 new IpListManager(new MysterIpPoolImpl(java.util.prefs.Preferences.userRoot(),
                                                        protocol),
                                   protocol,
@@ -176,9 +194,22 @@ public class Myster {
         System.out.println("-------->> after IPListManager "
                 + (System.currentTimeMillis() - startTime));
 
-        final HashCrawlerManager crawlerManager = new MultiSourceHashSearch(listManager, protocol);
-        ClientWindow.init(protocol, crawlerManager, listManager);
-        ServerFacade serverFacade = new ServerFacade(listManager, preferences);
+        final HashCrawlerManager crawlerManager = new MultiSourceHashSearch(ipListManager, protocol);
+        ClientWindow.init(protocol, crawlerManager, ipListManager);
+
+
+
+        ServerFacade serverFacade = new ServerFacade(ipListManager,
+                                                     preferences,
+                                                     datagramManager,
+                                                     transactionManager,
+                                                     serverDispatcher);
+        
+        serverFacade.addDatagramTransactions(
+                                             new TopTenDatagramServer(ipListManager), new TypeDatagramServer(),
+                                             new SearchDatagramServer(), new ServerStatsDatagramServer(serverFacade::getIdentity),
+                                             new FileStatsDatagramServer(), new SearchHashDatagramServer()
+                                             );
 
         final HashManager hashManager = new HashManager();
         FileTypeListManager.init((f, l) -> hashManager.findHash(f, l));
@@ -211,11 +242,19 @@ public class Myster {
 
                 MysterMenuBar menuBarFactory = new MysterMenuBar();
                 WindowManager windowManager = new WindowManager();
-                final MysterFrameContext context = new MysterFrameContext(menuBarFactory, windowManager);
+                final MysterFrameContext context =
+                        new MysterFrameContext(menuBarFactory, windowManager);
                 PreferencesGui preferencesGui = new PreferencesGui(context);
 
-                
-                menuBarFactory.initMenuBar(listManager, preferencesGui, windowManager);
+                serverFacade.addDatagramTransactions(
+                    new ImTransactionServer(preferences,
+                                         (instantMessage) -> (new MessageWindow(context,
+                                                                                protocol,
+                                                                                instantMessage,
+                                                                                ipListManager::getQuickServerStats))
+                                                                                        .show()));
+
+                menuBarFactory.initMenuBar(ipListManager, preferencesGui, windowManager, protocol);
                 
                 String osName = System.getProperty("os.name").toLowerCase();
                 if (osName.startsWith("mac os") && Desktop.isDesktopSupported()) {
@@ -226,23 +265,19 @@ public class Myster {
                     });
                 }
                 
-
-                TransactionManager.addTransactionProtocol(new ImTransactionServer(preferences,
-                        (instantMessage) -> (new MessageWindow(context,
-                                instantMessage, listManager::getQuickServerStats))
-                                .show()));
-
-                TrackerWindow.init(listManager, context);
+                TrackerWindow.init(ipListManager, context);
 
                 com.myster.hash.ui.HashManagerGUI.init(context, hashManager);
 
                 ServerStatsWindow.init(serverFacade.getServerDispatcher().getServerContext(),
-                                       context);
-                System.out.println("-------->> before ServerStatsWindow.getInstance().pack() "
+                                       context,
+                                       protocol);
+                System.out
+                        .println("-------->> before ServerStatsWindow.getInstance().pack() "
                         + (System.currentTimeMillis() - startTime));
                 ServerStatsWindow.getInstance().pack();
 
-                SearchWindow.init(protocol, crawlerManager, listManager);
+                SearchWindow.init(protocol, crawlerManager, ipListManager);
 
                 System.out.println("-------->> before addPanels "
                         + (System.currentTimeMillis() - startTime));

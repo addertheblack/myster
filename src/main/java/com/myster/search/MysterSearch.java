@@ -268,15 +268,15 @@ public class MysterSearch {
             return;
 
         // ADD_TOP_TEN
-        UdpTopTen  udpTopTen = new UdpTopTen(ipQueue);
-        PromiseFuture<String[]> topTenFuture = protocol.getDatagram().getTopServers(address, type, udpTopTen);
-        udpTopTen.setFuture(topTenFuture);
+        UdpTopTen  udpTopTenListener = new UdpTopTen(ipQueue);
+        PromiseFuture<String[]> topTenFuture = protocol.getDatagram().getTopServers(address, type).addCallListener(udpTopTenListener);
+        udpTopTenListener.setFuture(topTenFuture);
         outStandingFutures.add(topTenFuture);
 
         // ADD_SEARCH
-        UdpSearch udpSearch = new UdpSearch(address);
-        PromiseFuture<List<String>> searchFuture = protocol.getDatagram().getSearch(address, type, searchString, udpSearch);
-        udpSearch.setFuture(searchFuture);
+        UdpSearch udpSearchListener = new UdpSearch(address);
+        PromiseFuture<List<String>> searchFuture = protocol.getDatagram().getSearch(address, type, searchString).addCallListener(udpSearchListener);
+        udpSearchListener.setFuture(searchFuture);
         outStandingFutures.add(searchFuture);
     }
 

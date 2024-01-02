@@ -2,12 +2,8 @@ package com.myster.server;
 
 import java.awt.Dimension;
 import java.awt.GridLayout;
-import java.net.InetAddress;
 import java.net.Socket;
-import java.net.UnknownHostException;
-import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 import java.util.StringTokenizer;
 
@@ -17,41 +13,43 @@ import javax.swing.JTextField;
 
 import com.general.util.DoubleBlockingQueue;
 import com.myster.application.MysterGlobals;
-import com.myster.client.datagram.PongTransport;
-import com.myster.client.datagram.UDPPingClient;
 import com.myster.net.DatagramProtocolManager;
 import com.myster.pref.MysterPreferences;
 import com.myster.pref.ui.PreferencesPanel;
-import com.myster.server.datagram.FileStatsDatagramServer;
 import com.myster.server.datagram.PingTransport;
-import com.myster.server.datagram.SearchDatagramServer;
-import com.myster.server.datagram.SearchHashDatagramServer;
-import com.myster.server.datagram.ServerStatsDatagramServer;
-import com.myster.server.datagram.TopTenDatagramServer;
-import com.myster.server.datagram.TypeDatagramServer;
 import com.myster.server.event.ServerEventDispatcher;
 import com.myster.tracker.IpListManager;
 import com.myster.transaction.TransactionManager;
+import com.myster.transaction.TransactionProtocol;
 import com.myster.transferqueue.TransferQueue;
 
 public class ServerFacade {
-    private static String identityKey = "ServerIdentityKey/";
+    private static String IDENTITY_KEY = "ServerIdentityKey/";
     private static String serverThreadKey = "MysterTCPServerThreads/";
 
     private boolean b = true;
 
     private final Operator[] operators;
     private final TransferQueue transferQueue;
-    private final ServerEventDispatcher serverDispatcher = new ServerEventDispatcher();
+    private final ServerEventDispatcher serverDispatcher;
     private final DoubleBlockingQueue<Socket> connectionQueue;
     private final ConnectionManager[] connectionManagers;
     private final Map<Integer, ConnectionSection> connectionSections = new HashMap<>();
     private final IpListManager ipListManager;
     private final MysterPreferences preferences;
+    private final DatagramProtocolManager datagramManager;
+    private final TransactionManager transactionManager;
 
-    public ServerFacade(IpListManager ipListManager, MysterPreferences preferences) {
+    public ServerFacade(IpListManager ipListManager,
+                        MysterPreferences preferences,
+                        DatagramProtocolManager datagramManager,
+                        TransactionManager transactionManager,
+                        ServerEventDispatcher serverDispatcher) {
         this.ipListManager = ipListManager;
         this.preferences = preferences;
+        this.datagramManager = datagramManager;
+        this.transactionManager = transactionManager;
+        this.serverDispatcher = serverDispatcher;
 
         connectionManagers = new ConnectionManager[getServerThreads()];
 
@@ -66,9 +64,7 @@ public class ServerFacade {
         operators[1] = new Operator(connectionQueue, 80); // .. arrrgghh
 
         addStandardStreamConnectionSections();
-        TransactionManager.init(getServerDispatcher());
         initDatagramTransports();
-        addStandardDatagramTransactions();
     }
 
 
@@ -98,24 +94,17 @@ public class ServerFacade {
     /**
      * 
      */
-    private static void initDatagramTransports() {
-        PongTransport ponger = new PongTransport();
-        DatagramProtocolManager.addTransport(ponger);
-        DatagramProtocolManager.addTransport(new PingTransport());
-
-        UDPPingClient.setPonger(ponger);
+    private void initDatagramTransports() {
+        datagramManager.accessPort(MysterGlobals.DEFAULT_PORT, t -> t.addTransport(new PingTransport()));
     }
 
     /**
      * 
      */
-    private void addStandardDatagramTransactions() {
-        TransactionManager.addTransactionProtocol(new TopTenDatagramServer(ipListManager));
-        TransactionManager.addTransactionProtocol(new TypeDatagramServer());
-        TransactionManager.addTransactionProtocol(new SearchDatagramServer());
-        TransactionManager.addTransactionProtocol(new ServerStatsDatagramServer(this::getIdentity));
-        TransactionManager.addTransactionProtocol(new FileStatsDatagramServer());
-        TransactionManager.addTransactionProtocol(new SearchHashDatagramServer());
+    public void addDatagramTransactions(TransactionProtocol ... protocols) {
+        for (TransactionProtocol transactionProtocol : protocols) {
+            transactionManager.addTransactionProtocol(MysterGlobals.DEFAULT_PORT,transactionProtocol);
+        }
     }
 
     /**
@@ -129,13 +118,13 @@ public class ServerFacade {
     protected void setIdentity(String s) {
         if (s == null)
             return;
-        preferences.put(identityKey, s);
+        preferences.put(IDENTITY_KEY, s);
     }
 
     public String getIdentity() {
-        return preferences.query(identityKey);
+        return preferences.query(IDENTITY_KEY);
     }
-
+    
     public void addConnectionSection(ConnectionSection section) {
         connectionSections.put(section.getSectionNumber(), section);
     }
