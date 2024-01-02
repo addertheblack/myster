@@ -19,9 +19,9 @@ import java.util.List;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.prefs.Preferences;
 
+import com.general.thread.CallAdapter;
 import com.general.util.BlockingQueue;
-import com.myster.client.datagram.PingEvent;
-import com.myster.client.datagram.PingEventListener;
+import com.myster.client.datagram.PingResponse;
 import com.myster.client.net.MysterProtocol;
 import com.myster.client.net.MysterStream;
 import com.myster.mml.MML;
@@ -361,7 +361,7 @@ class MysterServerImplementation {
         assertUpdaterThreads();
 
         // Add this myster IP object to the ones to be updated.
-        protocol.getDatagram().ping(this.getAddress(), new MysterIpPingEventListener(this));
+        protocol.getDatagram().ping(this.getAddress()).addCallListener(new MysterIpPingEventListener());
     }
 
     /**
@@ -521,25 +521,18 @@ class MysterServerImplementation {
         }
     }
 
-    private static class MysterIpPingEventListener extends PingEventListener {
-        private final MysterServerImplementation ip;
-
-        public MysterIpPingEventListener(MysterServerImplementation ip) {
-            this.ip = ip;
-        }
-
-        public void pingReply(PingEvent e) {
-            if (e.isTimeout()) {
-                ip.setStatus(false);
-                ip.lastPingTime = -2;
-                ip.occupied = false;
+    private class MysterIpPingEventListener extends CallAdapter<PingResponse> {
+        public void handleResult(PingResponse pingResponse) {
+            if (pingResponse.isTimeout()) {
+                setStatus(false);
+                lastPingTime = -2;
+                occupied = false;
             } else {
-                ip.setStatus(true);
-                ip.lastPingTime = e.getPingTime();
-                statusQueue.add(ip); //doesn't block...
+                setStatus(true);
+                lastPingTime = pingResponse.pingTimeMs();
+                statusQueue.add(MysterServerImplementation.this); // doesn't block...
             }
-            ip.lastminiupdate = System.currentTimeMillis();
-
+            lastminiupdate = System.currentTimeMillis();
         }
     }
 }

@@ -18,10 +18,12 @@ import java.util.concurrent.CancellationException;
 import java.util.prefs.BackingStoreException;
 import java.util.prefs.Preferences;
 
+import com.general.thread.CallAdapter;
 import com.general.util.BlockingQueue;
 import com.general.util.RInt;
 import com.myster.client.datagram.PingEvent;
 import com.myster.client.datagram.PingEventListener;
+import com.myster.client.datagram.PingResponse;
 import com.myster.client.net.MysterProtocol;
 import com.myster.client.net.MysterStream;
 import com.myster.net.MysterAddress;
@@ -94,14 +96,15 @@ public class IpListManager { // aka tracker
      *            The MysterAddress of the server you want to add.
      */
     public void addIP(MysterAddress ip) {
-        protocol.getDatagram().ping(ip, pingEventListener); // temporary..
+        protocol.getDatagram().ping(ip).addCallListener(pingEventListener); // temporary..
     }
 
-    private class Callback extends PingEventListener {
-        public void pingReply(PingEvent e) {
-            if (e.isTimeout())
+    private class Callback extends CallAdapter<PingResponse> {
+        @Override
+        public void handleResult(PingResponse pingResponse) {
+            if (pingResponse.isTimeout())
                 return; //dead ip.
-            MysterAddress ip = e.getAddress();
+            MysterAddress ip = pingResponse.address();
             MysterServer mysterServer;
 
             mysterServer = pool.getCachedMysterIp(ip);

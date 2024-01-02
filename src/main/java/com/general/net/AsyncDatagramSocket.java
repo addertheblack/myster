@@ -12,29 +12,24 @@ import java.io.InterruptedIOException;
 import java.net.DatagramPacket;
 import java.net.DatagramSocket;
 
-import com.general.util.AnswerDialog;
+import com.general.thread.Invoker;
 import com.general.util.LinkedList;
-import com.general.util.Util;
+import com.myster.util.MysterThread;
 
 public final class AsyncDatagramSocket {
-    private AsyncDatagramListener portListener;
-
-    private DatagramSocket dsocket;
-
-    private ManagerThread managerThread;
-
-    private LinkedList queue = new LinkedList();
-
-    private int port;
-
-    private DatagramPacket bufferPacket;
-
     private static final int BIG_BUFFER = 65536;
+    
+    private final LinkedList<ImmutableDatagramPacket> queue = new LinkedList<>();
+    private final ManagerThread managerThread;
+    private final DatagramPacket bufferPacket;
+    private final int port;
+    private final Invoker invoker = Invoker.EDT;
 
+    /** This is accessed by the thread. All call backs to this listener happen on the invoker */
+    private AsyncDatagramListener portListener;
+    
     public AsyncDatagramSocket(int port) throws IOException {
         this.port = port;
-
-        open(port);
 
         bufferPacket = new DatagramPacket(new byte[BIG_BUFFER], BIG_BUFFER);
 
@@ -53,41 +48,41 @@ public final class AsyncDatagramSocket {
         queue.addToTail(p);
     }
 
-    private void open(int port) throws IOException {
-        dsocket = new DatagramSocket(port);
-        dsocket.setSoTimeout(5);
-    }
-
     public void close() {
-        dsocket.close();
-
-        //managerThread.end();
+        managerThread.end();
     }
 
-    private void doGetNewPackets() throws IOException {
-        int counter = 0;
-        long startTime = System.currentTimeMillis();
-        while (true) { //System.currentTimeMillis() - startTime < 50) {
+    private void doGetNewPackets(DatagramSocket dsocket) throws IOException {
+        while (true) { 
             try {
                 bufferPacket.setLength(BIG_BUFFER);
 
                 dsocket.receive(bufferPacket);
 
                 if (portListener != null) {
-                    Util.invokeLater(new PrivateRunnable(new ImmutableDatagramPacket(bufferPacket)));
+                    ImmutableDatagramPacket immutablePacket =
+                            new ImmutableDatagramPacket(bufferPacket);
+                    invoker.invoke(() -> {
+                        portListener.packetReceived(immutablePacket);
+                    });
                 }
             } catch (InterruptedIOException ex) {
                 return;
             }
-            counter++;
-
         }
     }
 
-    private void doSendNewPackets() throws IOException {
+    private void doSendNewPackets(DatagramSocket dsocket) throws IOException {
         int counter = 0;
-        while (queue.getSize() > 0 && counter < 5) {
-            ImmutableDatagramPacket p = (ImmutableDatagramPacket) (queue.removeFromHead());
+        
+        /* 
+         * Only send a tiny number of packets then check for new incoming packets.. 
+         * 
+         * It's ok if we overload the buffer and cause packet loss. But we also want to check for
+         * incoming packets once in a while.
+         */
+        while (queue.getSize() > 0 && counter < 50) {
+            ImmutableDatagramPacket p = queue.removeFromHead();
 
             if (p != null) {
                 dsocket.send(p.getDatagramPacket());
@@ -96,60 +91,48 @@ public final class AsyncDatagramSocket {
         }
     }
 
-    private class ManagerThread extends Thread {
-        boolean endFlag = false;
-
+    private class ManagerThread extends MysterThread {
         public void run() {
-            for (;;) {
-                if (endFlag)
-                    return;
+            for (int counter = 0; counter < 3; counter++) {
+                System.out.println("Opening dsocket on UDP port " + port + ".");
+                try (DatagramSocket dsocket = open(port)) {
+                    for (;;) {
+                        if (endFlag) {
+                            closingHook();
+                            return;
+                        }
 
-                try {
-                    doGetNewPackets();
-                } catch (IOException ex) {
-                    //close();
-                    ex.printStackTrace();
-                } catch (Exception ex) {
-                    ex.printStackTrace();
-                }
+                        doGetNewPackets(dsocket);
 
-                if (endFlag)
-                    return;
+                        if (endFlag) {
+                            closingHook();
+                            return;
+                        }
 
-                try {
-                    doSendNewPackets();
-                } catch (IOException exp) {
-                    close();
-                    try {
-                        open(port);
-                        //com.general.util.AnswerDialog.simpleAlert("The UDP
-                        // sub-system was acting up. It has been restarted
-                        // successfully. If this message appears frequently, ");
-                    } catch (Exception ex) {
-                        AnswerDialog
-                                .simpleAlert("The UDP sub-system crashed and could not be re-started. Consider restarting the computer. Myster can not work properly without a UDP sub-system.");
-                        end();
+                        doSendNewPackets(dsocket);
                     }
-                } catch (Exception ex) {
-                    ex.printStackTrace();
+                } catch (IOException ex) {
+                    System.out.println("Communication error on UDP port " + port + " closing dsocket...");
                 }
             }
+            
+            System.out.println("UDP port " + port + " giving up due to too many errors...");
+        }
+        
+        private void closingHook() {
+            System.out.println("UDP port " + port + " is doing a happy close");
         }
 
+        private static DatagramSocket open(int port) throws IOException {
+            DatagramSocket dsocket = new DatagramSocket(port);
+            dsocket.setSoTimeout(5);
+            
+            return dsocket;
+        }
+
+        @Override
         public void end() {
-            endFlag = true;
-        }
-    }
-
-    private class PrivateRunnable implements Runnable {
-        ImmutableDatagramPacket packet;
-
-        PrivateRunnable(ImmutableDatagramPacket packet) {
-            this.packet = packet;
-        }
-
-        public void run() {
-            portListener.packetReceived(packet);
+            flagToEnd();
         }
     }
 }

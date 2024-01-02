@@ -9,12 +9,12 @@
 
 package com.general.mclist;
 
-public interface Sortable {
-    public boolean isLessThan(Sortable m);
+public interface Sortable<T> {
+    public boolean isLessThan(Sortable<T> m);
 
-    public boolean isGreaterThan(Sortable m);
+    public boolean isGreaterThan(Sortable<T> m);
 
-    public boolean equals(Sortable m);
+    public boolean equals(Sortable<T> m);
 
-    public Object getValue();
+    public T getValue();
 }

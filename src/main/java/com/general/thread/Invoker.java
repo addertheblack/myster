@@ -18,5 +18,7 @@ public interface Invoker {
     
     public void invoke(Runnable r);
     
+    // invokeAndWait();// <- uses isInvokerThread()
+    
     public boolean isInvokerThread();
 }

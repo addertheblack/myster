@@ -1,12 +1,9 @@
 package com.myster.net;
 
-/**
- * Transport manager
- */
-
 import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.function.Function;
 
 import com.general.net.AsyncDatagramListener;
 import com.general.net.AsyncDatagramSocket;
@@ -25,78 +22,111 @@ import com.general.net.ImmutableDatagramPacket;
  * @see DatagramTransport
  */
 public class DatagramProtocolManager {
-    private static GenericTransportManager impl;
-
-//    /**
-//     * Call this to "load" the manager.
-//     */
-//    public static synchronized void load() throws IOException {
-//        if (calledAlreadyFlag)
-//            return; // sould throw some sort of exception
-//        getImpl(); //getImpl will load the thing..
-//    }
-
-    /**
-     * Adds transport to port 6669 on all addresses.
-     * 
-     * @param transport
-     *            to add
-     * @return true if protocol was added successfully. false otherwise (usually because it has
-     *         already been added or there is already a DatagramTransport registered for that
-     *         transport code.
-     */
-    /*
-     * In the future this routine might have a second param: port
-     */
-    public static boolean addTransport(DatagramTransport transport) { //might
-        return getImpl().addTransport(transport);
+    private final Map<Integer, TransportManager> lookup;
+    
+    public DatagramProtocolManager() {
+        lookup = new HashMap<>();
     }
 
-//    /**
-//     * Removes transport from port 6669 on all addresses.
-//     * 
-//     * @param transport
-//     *            to remove
-//     * @return success (will fail if protocol was not registered)
-//     */
-//    public static DatagramTransport removeTranport(DatagramTransport transport) {
-//        return getImpl().removeTransport(transport);
-//    }
+    public synchronized <R> R accessPort(int port, AccessTransportManager<R> function) {
+        TransportManager t = lookup.get(port);
 
-    private synchronized static GenericTransportManager getImpl() { //Transport
-        if (impl == null) {
-            //Load Transport Manager...
-            impl = new GenericTransportManager(); //magic number
-            // bad.
+        if (t == null) {
+            t = newTransportManager(port);
+            lookup.put(port, t);
         }
-        return impl;
+
+        R result = null;
+        try {
+            result = function.apply(t);
+        } catch (Exception ex) {
+            ex.printStackTrace();
+        }
+
+        if (t.isEmpty()) {
+            t.close();
+            lookup.remove(port);
+        }
+
+        return result;
     }
 
+    private TransportManager newTransportManager(int port) {
+        return new GenericTransportManager(port); //magic number;
+    }
+
+
+    public interface TransportManager extends DatagramSender {
+        /**
+         * Adds transport to port on all addresses.
+         * 
+         * @param transport
+         *            to add
+         * @return true if protocol was added successfully. false otherwise (usually because it has
+         *         already been added or there is already a DatagramTransport registered for that
+         *         transport code.
+         */
+        boolean addTransport(DatagramTransport t);
+
+        /**
+         * @param t to remove but only if empty
+         * @return transport that was removed or null if none
+         */
+        DatagramTransport removeTransportIfEmpty(DatagramTransport t);
+
+        /**
+         * @return True if there's not active transports
+         */
+        boolean isEmpty();
+
+        /**
+         * Close this port - must have no transports ie: isEmpty() must be true
+         */
+        void close();
+
+        DatagramTransport getTransport(short transactionProtocolNumber);
+    }
+    
+    public interface AccessTransportManager<R> extends Function<TransportManager, R> {
+        R apply(TransportManager transportManager);
+    }
+    
     /**
      * This class is the implementation of the transport manager. Could be any class.
      */
-    private static class GenericTransportManager implements DatagramSender, AsyncDatagramListener {
+    private static class GenericTransportManager implements TransportManager, DatagramSender, AsyncDatagramListener {
         private final Map<Short, DatagramTransport> transportProtocols = new HashMap<>();
+        private final int port;
+        
+        private AsyncDatagramSocket dsocket;
 
-        AsyncDatagramSocket dsocket;
+        public GenericTransportManager(int port) {
+            this.port = port;
+        }
 
+        @Override
         public boolean addTransport(DatagramTransport t) {
             if (transportProtocols.get(t.getTransportCode()) != null)
                 return false; //could not add because it already exists.
 
             transportProtocols.put(t.getTransportCode(), t);
 
+            // TODO: Remove this
+            // So the Transport has something to send packets to.            
             t.setSender(this); //So the Transport has something to send packets
-            // to.
 
             return true;
         }
 
-//        public DatagramTransport removeTransport(DatagramTransport t) {
-//            return (transportProtocols
-//                    .remove(t.getTransportCode()));
-//        }
+        @Override
+        public DatagramTransport removeTransportIfEmpty(DatagramTransport t) {
+            if (t.isEmpty()) {
+                return transportProtocols.remove(t.getTransportCode());
+            }
+            return null;
+        }
 
+        @Override
         public void packetReceived(ImmutableDatagramPacket p) {
             try {
                 DatagramTransport t =
@@ -104,6 +134,8 @@ public class DatagramProtocolManager {
 
                 if (t != null) {
                     t.packetReceived(p);
+                } else {
+                    System.out.println("Oh no!!! -> " + getCodeFromPacket(p));
                 }
             } catch (IOException ex) {
                 System.out.println("Packet too short Exception.");
@@ -111,13 +143,27 @@ public class DatagramProtocolManager {
             }
         }
 
+        @Override
+        public void close() {
+            if (!isEmpty()) {
+                throw new IllegalStateException("Could not close socket, there are still listeners");
+            }
+            
+            dsocket.close();
+        }
+        
+        @Override
+        public boolean isEmpty() {
+            return transportProtocols.isEmpty();
+        }
+        
         private static long lastErrorTime = 0;
 
         public synchronized void sendPacket(ImmutableDatagramPacket p) {
             if (dsocket == null) {
                 if (System.currentTimeMillis() - lastErrorTime > 5 * 60 * 100) {
                     try {
-                        dsocket = new AsyncDatagramSocket(com.myster.application.MysterGlobals.DEFAULT_PORT);
+                        dsocket = new AsyncDatagramSocket(port);
                         dsocket.setPortListener(this);
                     } catch (IOException ex) {
                         System.out.println("The datagram socket could not be created ->> ");
@@ -137,12 +183,16 @@ public class DatagramProtocolManager {
 
             short code = 0;
             for (int i = 0; i < data.length; i++) {
-                code <<= 8; //inititally it shifts zeros...
-                code |= data[i] & 255; //oops sign extending bug was
-                // here.
+                code <<= 8; //Initially it shifts zeros...
+                code |= data[i] & 255; //sign extension grrr
             }
 
             return code;
+        }
+
+        @Override
+        public DatagramTransport getTransport(short transactionProtocolNumber) {
+            return transportProtocols.get(transactionProtocolNumber);
         }
     }
 

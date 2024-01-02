@@ -8,12 +8,14 @@ import com.myster.net.DataPacket;
  */
 public class TransactionSocket {
     private final int protocolNumber;
+    private final TransactionManager transactionManager;
 
+    private int port;
     private int uniqueIdFromTransactionManager;
-
     private boolean outstanding = false;
 
-    public TransactionSocket(int protocolNumber) {
+    public TransactionSocket(TransactionManager transactionManager, int protocolNumber) {
+        this.transactionManager = transactionManager;
         this.protocolNumber = protocolNumber;
     }
 
@@ -29,7 +31,8 @@ public class TransactionSocket {
     public void sendTransaction(DataPacket dataPacket, TransactionListener listener) {
         if (outstanding)
             throw new IllegalStateException("Cannot send two Transactions on this port!");
-        uniqueIdFromTransactionManager = TransactionManager.sendTransaction(dataPacket,
+        port = dataPacket.getAddress().getPort();
+        uniqueIdFromTransactionManager = transactionManager.sendTransaction(dataPacket,
                 protocolNumber, listener);
         outstanding = true;
     }
@@ -44,6 +47,6 @@ public class TransactionSocket {
         if (!outstanding)
             return false;
         
-        return TransactionManager.cancelTransaction(uniqueIdFromTransactionManager);
+        return transactionManager.cancelTransaction(port, uniqueIdFromTransactionManager);
     }
 }

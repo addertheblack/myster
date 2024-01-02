@@ -13,7 +13,7 @@ public class ImTransactionServer extends TransactionProtocol {
     private static final long EXPIRE_TIME = 60 * 60 * 1000; //1 hour.. (wow!)
 
     // package protected on purpose
-    static final int TRANSPORT_NUMBER = 1111;
+    static final int TRANSACTION_CODE = 1111;
 
     private final Queue<ReceivedMessage> recentlyReceivedMessages = new ArrayDeque<>();
 
@@ -31,14 +31,16 @@ public class ImTransactionServer extends TransactionProtocol {
     }
     
     public int getTransactionCode() {
-        return TRANSPORT_NUMBER;
+        return TRANSACTION_CODE;
     }
 
     private boolean messageReceived(MessagePacket msg) {
         if (MessageManager.isRefusingMessages(preferences))
             return false;
 
-            listener.messageReceived(new InstantMessage(msg.getAddress(), msg.getMessage(), msg.getReply()));
+        listener.messageReceived(new InstantMessage(msg.getAddress(),
+                                                    msg.getMessage(),
+                                                    msg.getReply()));
 
         java.awt.Toolkit.getDefaultToolkit().beep();
 
@@ -49,7 +51,7 @@ public class ImTransactionServer extends TransactionProtocol {
             throws BadPacketException {
         MessagePacket msg = new MessagePacket(transaction);
 
-        ReceivedMessage receivedMessage = new ReceivedMessage(msg);
+        ReceivedMessage receivedMessage = new ReceivedMessage(transaction, msg);
         if (isOld(receivedMessage)) {
             sendTransaction(new Transaction(transaction, (new MessagePacket(transaction
                     .getAddress(), 0, "")).getData(), Transaction.NO_ERROR));
@@ -96,11 +98,11 @@ public class ImTransactionServer extends TransactionProtocol {
 
         private final int messageID;
 
-        public ReceivedMessage(MessagePacket msgPacket) {
+        public ReceivedMessage(Transaction transaction, MessagePacket msgPacket) {
             timeStamp = System.currentTimeMillis();
             msg = msgPacket.getMessage();
-            address = msgPacket.getAddress();
-            messageID = msgPacket.getID();
+            address = transaction.getAddress();
+            messageID = transaction.getConnectionNumber();
             //System.out.println("message id:"+messageID);
         }
 

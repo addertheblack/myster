@@ -20,9 +20,4 @@ public interface DataPacket { //ImmutablePacket should have this too? no
     public byte[] getData(); //returns ONLY& the data part
 
     public byte[] getBytes(); //returns data + header
-
-    /**
-     * @deprecated don't assume that packets only have a header.
-     */
-//    public byte[] getHeader(); //returns header?
 }
