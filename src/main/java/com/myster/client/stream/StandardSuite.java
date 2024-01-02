@@ -214,21 +214,8 @@ class StandardSuite {
             } catch (IOException ex) {
                 ex.printStackTrace();
 
-                try {
-                    progressSetTextThreadSafe(progress, "Trying to use normal download...");
-
-                    synchronized (StandardSuite.DownloadThread.this) {
-                        if (endFlag)
-                            return;
-
-                        secondDownload = new DownloaderThread(MysterSocketFactory
-                                .makeStreamConnection(stub.getMysterAddress()), stub, progress);
-                    }
-                    secondDownload.run();
-                } catch (IOException exp) {
                     progressSetTextThreadSafe(progress,
-                            "Could not download file by either method...");
-                }
+                            "Could not download file...");
             }
         }
 
@@ -278,8 +265,6 @@ class StandardSuite {
 
         MultiSourceDownload msDownload;
 
-        DownloaderThread secondDownload;
-
         boolean endFlag;
 
         public synchronized void flagToEnd() {
@@ -287,9 +272,6 @@ class StandardSuite {
 
             if (msDownload != null)
                 msDownload.cancel();
-
-            if (secondDownload != null)
-                secondDownload.end();
         }
 
         public void end() {

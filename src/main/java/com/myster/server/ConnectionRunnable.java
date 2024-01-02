@@ -15,14 +15,13 @@ import java.io.DataInputStream;
 import java.io.IOException;
 import java.net.Socket;
 import java.util.Map;
+import java.util.concurrent.atomic.AtomicInteger;
 
-import com.general.util.BlockingQueue;
 import com.myster.net.MysterAddress;
 import com.myster.server.event.ConnectionManagerEvent;
 import com.myster.server.event.OperatorEvent;
 import com.myster.server.event.ServerEventDispatcher;
 import com.myster.transferqueue.TransferQueue;
-import com.myster.util.MysterThread;
 
 /**
  * This class takes incoming stream connections and applies the Myster protocol
@@ -43,16 +42,15 @@ import com.myster.util.MysterThread;
  *  
  */
 
-public class ConnectionManager extends MysterThread {
+public class ConnectionRunnable implements Runnable {
     private final ServerEventDispatcher eventSender;
-    private final BlockingQueue<Socket> socketQueue;
     private final TransferQueue transferQueue;
     private final Map<Integer, ConnectionSection> connectionSections;
+    private final Socket socket;
     
-    private ConnectionContext context;
-    private Socket socket;
+    private final ConnectionContext context;
     
-    private static volatile int threadCounter = 0;
+    private static volatile AtomicInteger threadCounter = new AtomicInteger(0);
 
     /**
      * Builds a connection section object.
@@ -68,59 +66,38 @@ public class ConnectionManager extends MysterThread {
      *            a Hashtable of connection section integers to
      *            ConnectionSection objects
      */
-    protected ConnectionManager(BlockingQueue<Socket> socketQueue,
+    protected ConnectionRunnable(Socket socket,
                                 ServerEventDispatcher eventSender,
                                 TransferQueue transferQueue,
                                 Map<Integer, ConnectionSection> connectionSections) {
-        super("Server Thread " + (++threadCounter));
+        Thread.currentThread().setName("Server Thread " + (threadCounter.incrementAndGet()));
 
-        this.socketQueue = socketQueue;
+        context = new ConnectionContext();
+        
+        this.socket = socket;
         this.transferQueue = transferQueue;
         this.eventSender = eventSender;
         this.connectionSections = connectionSections;
     }
 
     /**
-     * ConnectionSection is meant to be called as a thread. Please call start()..
-     */
-    public void run() {
-        while (true) {
-            try {
-                doConnection();
-            } catch (Exception ex) {
-                ex.printStackTrace();
-            }
-        }
-
-    }
-
-    /**
      * Does the actual work in this object.
      *  
      */
-    private void doConnection() {
-        try {
-            socket =  socketQueue.get();
-        } catch (InterruptedException ex) {
-            //should never happen
-            return;//exit quickly in case it's being called by System.exit();
-        }
-
+    public void run() {
         eventSender.fireOEvent(new OperatorEvent(OperatorEvent.CONNECT, new MysterAddress(socket
                 .getInetAddress())));
 
         int sectioncounter = 0;
-        try {
-
-            context = new ConnectionContext();
-            context.socket = new com.myster.client.stream.TCPSocket(socket);
+        try (var tempTcpSocket = new com.myster.client.stream.TCPSocket(socket)) {
+            context.socket = tempTcpSocket;
             context.transferQueue = transferQueue;
             context.serverAddress = new MysterAddress(socket.getInetAddress());
 
             DataInputStream i = context.socket.in; //opens the connection
 
             int protocalcode;
-            setPriority(Thread.MIN_PRIORITY);
+            Thread.currentThread().setPriority(Thread.MIN_PRIORITY);
 
             do {
                 try {
@@ -171,8 +148,8 @@ public class ConnectionManager extends MysterThread {
 
             eventSender.fireOEvent(new OperatorEvent(OperatorEvent.DISCONNECT, new MysterAddress(
                     socket.getInetAddress())));
-
-            close(socket);
+            
+            // socket already closed here
         }
 
     }
@@ -212,27 +189,4 @@ public class ConnectionManager extends MysterThread {
             fireDisconnectEvent(d, remoteIP, o);
         }
     }
-
-    /**
-     * Closes the socket ignoring any complaining.
-     * 
-     * @param socket
-     */
-    private static void close(Socket socket) {
-        try {
-            socket.close();
-        } catch (Exception ex) {
-            //nothing
-        }
-    }
-
-    /*
-     * (non-Javadoc)
-     * 
-     * @see com.myster.util.MysterThread#end()
-     */
-    public void end() {
-        throw new RuntimeException("This function is not implemented");
-    }
-
 }

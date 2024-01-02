@@ -31,7 +31,6 @@ import com.myster.server.event.ServerSearchEvent;
 import com.myster.server.event.ServerSearchListener;
 import com.myster.server.stream.FileByHash;
 import com.myster.server.stream.FileInfoLister;
-import com.myster.server.stream.FileSenderThread;
 import com.myster.server.stream.HandshakeThread;
 import com.myster.server.stream.IpLister;
 import com.myster.server.stream.MultiSourceSender;
@@ -295,7 +294,6 @@ public class StatsInfoPanel extends JPanel {
                 ((ServerSearchDispatcher) (e.getSectionObject()))
                         .addServerSearchListener(new SearchHandler());
                 break;
-            case FileSenderThread.NUMBER:
             case MultiSourceSender.SECTION_NUMBER:
                 numofld.increment(isUdp);
                 ((ServerDownloadDispatcher) (e.getSectionObject()))
