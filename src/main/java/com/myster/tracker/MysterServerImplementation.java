@@ -346,11 +346,8 @@ class MysterServerImplementation {
         if (occupied)
             return;
 
-        //if both stats and all stats don't need updaing return.
-
-        if ((System.currentTimeMillis() - lastminiupdate < (getMysterCount() > 0 ? MINI_UPDATE_TIME_MS
-                : UPDATETIME_MS))
-                && (System.currentTimeMillis() - timeoflastupdate < UPDATETIME_MS)) {
+        if (System.currentTimeMillis()
+                - lastminiupdate < (getMysterCount() > 0 ? MINI_UPDATE_TIME_MS : UPDATETIME_MS)) {
             return;
         }
 
@@ -479,8 +476,9 @@ class MysterServerImplementation {
 
         public void run() {
             try {
-                for (;;)
+                for (;;) {
                     MysterServerImplementation.internalRefreshAll(protocol, MysterServerImplementation.statusQueue.get());
+                }
             } catch (InterruptedException ex) {
                 //nothing.
             }
