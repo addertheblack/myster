@@ -1,7 +1,7 @@
 /* 
 
- Title:			Myster Open Source
- Author:			Andrew Trumper
+ Title:         Myster Open Source
+ Author:        Andrew Trumper
  Description:	Generic Myster Code
  
  This code is under GPL
@@ -14,38 +14,33 @@ package com.myster.server;
 import java.io.IOException;
 import java.net.ServerSocket;
 import java.net.Socket;
+import java.util.function.Consumer;
 
-import com.general.util.DoubleBlockingQueue;
 import com.general.util.Timer;
-import com.myster.util.MysterThread;
 
 /**
- * This class is reponsible for "picking up the phone" or making a TCP
- * connection with clients. After the connection hasw been made it's up to the
+ * This class is responsible for "picking up the phone" or making a TCP
+ * connection with clients. After the connection has been made it's up to the
  * connection manager to figure out what kind o of service to employ and to
  * manage the different connection sections.
- * 
- *  
  */
-
-public class Operator extends MysterThread {
-    private ServerSocket serverSocket;
-
-    private DoubleBlockingQueue socketQueue; //Communcation CHANNEL.
-
+public class Operator implements Runnable {
+    private final Consumer<Socket> socketConsumer; //Communication CHANNEL.
     private final int port;
 
-    protected Operator(DoubleBlockingQueue socketQueue, int port) {
-        super("Server Operator");
+    private ServerSocket serverSocket;
+    private volatile Timer timer;
 
-        this.socketQueue = socketQueue; //comunications channel
+    protected Operator(Consumer<Socket> socketConsumer, int port) {
+        Thread.currentThread().setName("Operator Thread port: " + port);
+        this.socketConsumer = socketConsumer; //Communications channel
         // between operator and
         // section threads.
         this.port = port;
     }
         
     public void run() {
-        setPriority(MAX_PRIORITY); //to minimize the time it takes to make a
+        Thread.currentThread().setPriority(Thread.MAX_PRIORITY); //to minimize the time it takes to make a
         // connection.
 
         refreshServerSocket(); //creates the sever socket.
@@ -57,7 +52,7 @@ public class Operator extends MysterThread {
             try {
                 socket = serverSocket.accept();
                 socket.setSoTimeout(120000);
-                socketQueue.add(socket);
+                socketConsumer.accept(socket);
 
                 resetSocketTimer();
             } catch (IOException ex) {
@@ -68,7 +63,7 @@ public class Operator extends MysterThread {
                 synchronized (this) { //synchronized in case the socket is
                     // being re-set.
                     try {
-                        sleep(100); //sometimes the OS will crash in such a way
+                        Thread.sleep(100); //sometimes the OS will crash in such a way
                         // that it supplies an
                         //infinite number of brokens sockets.
                         //This is here so that the system remains responsive
@@ -94,14 +89,12 @@ public class Operator extends MysterThread {
                 break;
             } catch (IOException ex) {
                 try {
-                    sleep(10 * 1000);
+                    Thread.sleep(10 * 1000);
                 } catch (InterruptedException exp) {
                 } //wait 10 seconds then try to make the socket again.
             }
         }
     }
-
-    Timer timer;
 
     public void resetSocketTimer() {
         if (timer != null) {
@@ -114,15 +107,6 @@ public class Operator extends MysterThread {
                 refreshServerSocket();
             }
         }, 10 * 60 * 1000); //ms -> seconds -> minutes 10 minutes.
-    }
-
-    /*
-     * (non-Javadoc)
-     * 
-     * @see com.myster.util.MysterThread#end()
-     */
-    public void end() {
-        throw new RuntimeException("Not implemented");
     }
 
     public int getPort() {

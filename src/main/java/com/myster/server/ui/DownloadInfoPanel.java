@@ -34,7 +34,6 @@ import com.myster.server.event.ConnectionManagerEvent;
 import com.myster.server.event.ConnectionManagerListener;
 import com.myster.server.event.ServerContext;
 import com.myster.server.event.ServerDownloadDispatcher;
-import com.myster.server.stream.FileSenderThread;
 import com.myster.ui.MysterFrameContext;
 
 public class DownloadInfoPanel extends JPanel {
@@ -187,8 +186,7 @@ public class DownloadInfoPanel extends JPanel {
     private class ConnectionHandler extends ConnectionManagerListener {
 
         public void sectionEventConnect(ConnectionManagerEvent e) {
-            if ((e.getSection() == FileSenderThread.NUMBER)
-                    || (e.getSection() == com.myster.server.stream.MultiSourceSender.SECTION_NUMBER)) {
+            if (e.getSection() == com.myster.server.stream.MultiSourceSender.SECTION_NUMBER) {
                 ServerDownloadDispatcher d = (ServerDownloadDispatcher) e.getSectionObject();
                 DownloadMCListItem i = new DownloadMCListItem(d);
                 list.addItem(i);
@@ -197,8 +195,7 @@ public class DownloadInfoPanel extends JPanel {
         }
 
         public void sectionEventDisconnect(ConnectionManagerEvent e) {
-            if (e.getSection() == FileSenderThread.NUMBER
-                    || (e.getSection() == com.myster.server.stream.MultiSourceSender.SECTION_NUMBER)) {
+            if (e.getSection() == com.myster.server.stream.MultiSourceSender.SECTION_NUMBER) {
                 ServerDownloadDispatcher d = (ServerDownloadDispatcher) e.getSectionObject();
                 int index = getIndexOfDispatcher(d);
                 if (index == -1) {

@@ -128,6 +128,7 @@ public class ClientWindow extends MysterFrame implements Sayable {
 
         connect = new JButton("Connect");
         connect.setSize(SBXDEFAULT, GYDEFAULT);
+        getRootPane().setDefaultButton(connect);
 
         ipTextField = new JTextField(ENTER_AN_IP_HERE) {
             @Override

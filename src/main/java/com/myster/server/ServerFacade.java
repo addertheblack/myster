@@ -1,17 +1,23 @@
 package com.myster.server;
 
 import java.awt.Dimension;
+import java.awt.FlowLayout;
 import java.awt.GridLayout;
 import java.net.Socket;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.StringTokenizer;
+import java.util.concurrent.Executor;
+import java.util.concurrent.Executors;
+import java.util.function.Consumer;
 
+import javax.swing.JCheckBox;
 import javax.swing.JComboBox;
 import javax.swing.JLabel;
+import javax.swing.JPanel;
 import javax.swing.JTextField;
 
-import com.general.util.DoubleBlockingQueue;
+import com.general.thread.BoundedExecutor;
 import com.myster.application.MysterGlobals;
 import com.myster.net.DatagramProtocolManager;
 import com.myster.pref.MysterPreferences;
@@ -32,13 +38,13 @@ public class ServerFacade {
     private final Operator[] operators;
     private final TransferQueue transferQueue;
     private final ServerEventDispatcher serverDispatcher;
-    private final DoubleBlockingQueue<Socket> connectionQueue;
-    private final ConnectionManager[] connectionManagers;
     private final Map<Integer, ConnectionSection> connectionSections = new HashMap<>();
     private final IpListManager ipListManager;
     private final MysterPreferences preferences;
     private final DatagramProtocolManager datagramManager;
     private final TransactionManager transactionManager;
+    private final Executor operatorExecutor;
+    private final Executor connectionExecutor;
 
     public ServerFacade(IpListManager ipListManager,
                         MysterPreferences preferences,
@@ -50,18 +56,22 @@ public class ServerFacade {
         this.datagramManager = datagramManager;
         this.transactionManager = transactionManager;
         this.serverDispatcher = serverDispatcher;
-
-        connectionManagers = new ConnectionManager[getServerThreads()];
-
+        this.operatorExecutor = Executors.newVirtualThreadPerTaskExecutor();
+        this.connectionExecutor = new BoundedExecutor(getServerThreads(), operatorExecutor);
 
         transferQueue = new ServerQueue();
         transferQueue.setMaxQueueLength(20);
 
-        connectionQueue = new DoubleBlockingQueue<>(0);
+        Consumer<Socket> socketConsumer =
+                (socket) -> connectionExecutor.execute(new ConnectionRunnable(socket,
+                                                                              serverDispatcher,
+                                                                              transferQueue,
+                                                                              connectionSections));
 
         operators = new Operator[2];
-        operators[0] = new Operator(connectionQueue, MysterGlobals.SERVER_PORT);
-        operators[1] = new Operator(connectionQueue, 80); // .. arrrgghh
+        operators[0] = new Operator(socketConsumer, MysterGlobals.SERVER_PORT);
+        operators[1] = new Operator(socketConsumer, 80); // ..
+                                                         // arrrgghh
 
         addStandardStreamConnectionSections();
         initDatagramTransports();
@@ -78,15 +88,7 @@ public class ServerFacade {
             b = false;
 
             for (int i = 0; i < operators.length; i++) {
-                operators[i].start();
-            }
-
-            for (int i = 0; i < connectionManagers.length; i++) {
-                connectionManagers[i] = new ConnectionManager(connectionQueue,
-                                                              serverDispatcher,
-                                                              transferQueue,
-                                                              connectionSections);
-                connectionManagers[i].start();
+                operatorExecutor.execute(operators[i]);
             }
         }
     }
@@ -132,11 +134,11 @@ public class ServerFacade {
     private int getServerThreads() {
         String info = preferences.get(serverThreadKey);
         if (info == null)
-            info = "35"; // default value;
+            info = "120"; // default value;
         try {
             return Integer.parseInt(info);
         } catch (NumberFormatException ex) {
-            return 35; // should *NEVER* happen.
+            return 120; // should *NEVER* happen.
         }
     }
 
@@ -147,7 +149,7 @@ public class ServerFacade {
     private void addStandardStreamConnectionSections() {
         addConnectionSection(new com.myster.server.stream.IpLister(ipListManager));
         addConnectionSection(new com.myster.server.stream.RequestDirThread());
-        addConnectionSection(new com.myster.server.stream.FileSenderThread());
+//        addConnectionSection(new com.myster.server.stream.FileSenderThread());
         addConnectionSection(new com.myster.server.stream.FileTypeLister());
         addConnectionSection(new com.myster.server.stream.RequestSearchThread());
         addConnectionSection(new com.myster.server.stream.HandshakeThread(this::getIdentity));
@@ -165,6 +167,52 @@ public class ServerFacade {
         return transferQueue.getDownloadSpots();
     }
 
+
+    public static class FreeLoaderPref extends JPanel {
+        private final JCheckBox freeloaderCheckbox;
+
+        public FreeLoaderPref() {
+            setLayout(new FlowLayout());
+
+            freeloaderCheckbox = new JCheckBox("Kick Freeloaders");
+            add(freeloaderCheckbox);
+        }
+
+        public void save() {
+            setKickFreeloaders(freeloaderCheckbox.isSelected());
+        }
+
+        public void reset() {
+            freeloaderCheckbox.setSelected(kickFreeloaders());
+        }
+
+        public Dimension getPreferredSize() {
+            return new Dimension(100, 1);
+        }
+        
+
+        private static String freeloadKey = "ServerFreeloaderKey/";
+
+        public static boolean kickFreeloaders() {
+            boolean b_temp = false;
+
+            try {
+                b_temp = Boolean
+                        .valueOf(MysterPreferences.getInstance().get(freeloadKey))
+                        .booleanValue();
+            } catch (NumberFormatException ex) {
+                //nothing
+            } catch (NullPointerException ex) {
+                //nothing
+            }
+            return b_temp;
+        }
+
+        private static void setKickFreeloaders(boolean b) {
+            MysterPreferences.getInstance().put(freeloadKey, "" + b);
+        }
+    }
+    
     public class ServerPrefPanel extends PreferencesPanel {
         private final JTextField serverIdentityField;
         private final JLabel serverIdentityLabel;
@@ -175,7 +223,7 @@ public class ServerFacade {
         private final JLabel spacerLabel;
         private final JLabel explanation;
 
-        private final com.myster.server.stream.FileSenderThread.FreeLoaderPref leech;
+        private final FreeLoaderPref leech;
 
         public ServerPrefPanel() {
             // setBackground(Color.red);
@@ -210,7 +258,7 @@ public class ServerFacade {
             spacerLabel = new JLabel();
             add(spacerLabel);
 
-            leech = com.myster.server.stream.FileSenderThread.getPrefPanel();
+            leech = new FreeLoaderPref();
             add(leech);
 
             explanation = new JLabel("          * requires restart");

@@ -1127,16 +1127,33 @@ Work on DEV 8:
     -> fix ProgressDialog to adapt to new Java
     -> Fixed Ant build.xml to work
     -> Fixed manifest
-    -> Tweaked the relationships between objects and started removing singletons in anticipation of new unit testing code
+    -> Tweaked the relationships between objects and started removing singletons in anticipation of 
+        new unit testing code
+    -> Fixed Ask dialog - layout broke over the years
+    -> Changed add ip dialog to use ask dialog - long standing annoying issue
 
 2023-12-08
     -> Refactored Myster menubar related code so it's injected not a singleton
     
 2023-12-11
-    -> Converted to Maven
+    -> Converted to Maven project
     -> Updated the ID3 tag library and the UPNP library to modern versions that don't have the same stupidly large numbers of 
         dependencies
     -> Used jpackage to create executable installer for Myster
+    
+2023-12-31
+    -> Refactored UDP so that every UDP section build a new UDP socket depending on the target port of
+        the packet. So if I need to ping port 7000, I will build a new DatagramSocket for that port
+        and keep it open until I get a reply on that port or it timesout. Then I will close that port 
+        and reclaim the resources. Not that if there are two connections using the port then the port
+        will be reclaimed when the two connections are done. Note that it's also possible to keep a 
+        port active by adding on a server component. Server side UDP transactions will keep the port open
+    -> Added new onramp server since the old ones were all dyndns which now costs money. We are using
+        https://www.dynu.com/en-US/
+    -> Make Myster use Java's Preferences  for everything
+    -> Put hashcache in java prefs too
+    -> Add github actions to build all the binaries we need. More work needs to be done here
+    
    
 		
 (Red List)
@@ -1154,7 +1171,8 @@ Add reverse connection protocol.
 Add reverse connection using third party protocol.
 Add onramp servers https://www.dynu.com/en-US/
 Make communication encrypted (keep public key in MysterIP server information)
-Pick a place for downloads in progress by default like homedirectory/mysterdata or something.. Maybe app data on windows?
+Pick a place for downloads in progress by default like homedirectory/mysterdata or something..
+    Maybe app data on windows?
 Split off concurrency library from Myster and publish to Maven
 Make Myster modules compatible
 fix naming.. We probably want to use myster.org
@@ -1165,6 +1183,3 @@ Probably want to move that stuff into preferences/registry
 fix writeUTF to use write utf-8 instead.. fix data input/outputstreams
 Fix Myster startup to use Preferences
 Unit tests
-
-
-

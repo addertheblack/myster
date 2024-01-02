@@ -8,6 +8,7 @@ import java.util.function.Function;
 import com.general.net.AsyncDatagramListener;
 import com.general.net.AsyncDatagramSocket;
 import com.general.net.ImmutableDatagramPacket;
+import com.myster.application.MysterGlobals;
 
 /**
  * This class provides functionality for the Myster Datagram multiplexer protocol. The point of this
@@ -135,8 +136,10 @@ public class DatagramProtocolManager {
                 if (t != null) {
                     t.packetReceived(p);
                 } else {
-                    System.out.println("Oh no!!! -> " + getCodeFromPacket(p) + " on from "
-                            + p.getAddress().toString() + ":" + p.getPort());
+                    if (MysterGlobals.SERVER_PORT == p.getPort()) {
+                        System.out.println("Transport Code not found -> " + getCodeFromPacket(p)
+                                + " " + p.getAddress().toString() + ":" + p.getPort());
+                    }
                 }
             } catch (IOException ex) {
                 System.out.println("Packet too short Exception.");

@@ -3,15 +3,19 @@ package com.myster.server.stream;
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.io.File;
+import java.io.FileInputStream;
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.RandomAccessFile;
 
 import com.myster.filemanager.FileTypeListManager;
 import com.myster.mml.RobustMML;
 import com.myster.net.MysterAddress;
 import com.myster.net.MysterSocket;
+import com.myster.server.BannersManager;
 import com.myster.server.ConnectionContext;
 import com.myster.server.DownloadInfo;
+import com.myster.server.ServerFacade.FreeLoaderPref;
 import com.myster.server.event.ServerDownloadDispatcher;
 import com.myster.server.event.ServerDownloadEvent;
 import com.myster.transferqueue.Downloader;
@@ -150,7 +154,7 @@ public class MultiSourceSender extends ServerThread {
 
                             fireEvent(ServerDownloadEvent.STARTED, -1);
 
-                            FileSenderThread.ServerTransfer.sendImage(socket.out); //sends an "ad"
+                            sendImage(socket.out); //sends an "ad"
                             // image and URL
 
                             startTime = System.currentTimeMillis();
@@ -211,7 +215,7 @@ public class MultiSourceSender extends ServerThread {
 
                 fireEvent(ServerDownloadEvent.STARTED, -1);
 
-                FileSenderThread.ServerTransfer.sendImage(socket.out); //sends
+                sendImage(socket.out); //sends
                 // an
                 // "ad"
                 // image
@@ -242,7 +246,7 @@ public class MultiSourceSender extends ServerThread {
 
         //Throws an IOException if there's a leech.
         private void checkForLeechers(MysterSocket socket) throws IOException {
-            if (FileSenderThread.kickFreeloaders()) {
+            if (FreeLoaderPref.kickFreeloaders()) {
                 try {
                     MysterSocket s = com.myster.net.MysterSocketFactory
                             .makeStreamConnection(new com.myster.net.MysterAddress(socket
@@ -259,11 +263,104 @@ public class MultiSourceSender extends ServerThread {
                     sendQueuePosition(socket.out, 0, "You are not reachable from the outside");
 
                     // sends and image complaining about firewalls
-                    FileSenderThread.ServerTransfer.freeloaderComplain(socket.out); 
+                    freeloaderComplain(socket.out); 
 
                     throw new IOException("Downloader is a leech");
                 }
             }
+        }
+        
+        //code 'i'
+        public static void sendImage(DataOutputStream out) throws IOException {
+            DataInputStream in = null;
+            File file;
+
+            String imageName = BannersManager.getNextImageName();
+
+            if (imageName == null)
+                return;
+
+            file = BannersManager.getFileFromImageName(imageName);
+
+            if (file == null) { //is needed (Threading issue)
+                return;
+            }
+
+            try {
+                in = new DataInputStream(new FileInputStream(file));
+
+                byte[] bytearray = new byte[(int) file.length()];
+
+                in.readFully(bytearray, 0, (int) file.length());
+
+                out.writeInt(6669);
+                out.write('i');
+                out.writeLong(bytearray.length);
+                out.write(bytearray);
+
+                sendURLFromImageName(out, imageName);
+            } finally {
+                try {
+                    in.close();
+                } catch (Exception ex) {
+                    // nothing
+                }
+            }
+
+        }
+        
+        //A utility method that allows one to send a banner URL from an Image
+        // name
+        public static void sendURLFromImageName(DataOutputStream out,
+                String imageName) throws IOException {
+            String url = BannersManager.getURLFromImageName(imageName);
+
+            if (url == null)
+                return;
+
+            sendURL(out, url);
+        }
+
+        //code 'u'
+        public static void sendURL(DataOutputStream out, String url)
+                throws IOException {
+            out.writeInt(6669);
+            out.write('u');
+            out.writeInt(0); //padding 'cause writeUTF preceed the UTF with a
+                             // short.
+            out.writeShort(0);
+            out.writeUTF(url);
+        }
+        
+        public static void freeloaderComplain(DataOutputStream out)
+                throws IOException {
+            byte[] queuedImage = new byte[4096];
+            int sizeOfImage = 0;
+            int tempint;
+
+            try (InputStream qin = MultiSourceSender.class.getResourceAsStream("firewall.gif")) {
+
+                // loading image...
+
+                do {
+                    tempint = qin.read(queuedImage, sizeOfImage, 4096 - sizeOfImage);
+                    if (tempint > 0)
+                        sizeOfImage += tempint;
+                } while (tempint != -1);
+            }
+            
+            // mapping errors.
+            if (sizeOfImage == -1)
+                sizeOfImage = -1;
+            if (sizeOfImage == 4096)
+                sizeOfImage = -1;
+
+            out.writeInt(6669);
+            out.writeByte('i');
+            out.writeLong(sizeOfImage);
+            out.write(queuedImage, 0, sizeOfImage);
+
+            sendURL(out, "http://www.mysternetworks.com/information/dl_error_faq.html");
         }
 
         private void endBlock() {
