@@ -35,6 +35,7 @@ import com.general.mclist.SortableString;
 import com.general.util.AnswerDialog;
 import com.general.util.MessageField;
 import com.general.util.StandardWindowBehavior;
+import com.general.util.Util;
 import com.myster.client.net.MysterProtocol;
 import com.myster.net.MysterAddress;
 import com.myster.search.HashCrawlerManager;
@@ -74,6 +75,8 @@ public class ClientWindow extends MysterFrame implements Sayable {
     private TypeListerThread connectToThread;
     private FileListerThread fileListThread;
     private FileInfoListerThread fileInfoListerThread;
+    
+    private boolean hasBeenShown = false;
 
     public static void init(MysterProtocol protocol, HashCrawlerManager hashManager, IpListManager ipListManager) {
         ClientWindow.protocol = protocol;
@@ -106,8 +109,6 @@ public class ClientWindow extends MysterFrame implements Sayable {
         init();
         ipTextField.setText(ip);
         ipTextField.setForeground(Color.BLACK);
-        connect.dispatchEvent(new ActionEvent(connect, ActionEvent.ACTION_PERFORMED,
-                "Connect Button"));
     }
 
     private void init() {
@@ -236,6 +237,12 @@ public class ClientWindow extends MysterFrame implements Sayable {
     
     public void show() {
         super.show();
+        if (!ipTextField.getText().equals("") && !hasBeenShown) {
+            Util.invokeLater(() -> {
+                connect.doClick();
+            });
+            hasBeenShown = true;
+        }
     }
         
     public void dispose() {
