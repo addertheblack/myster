@@ -82,13 +82,7 @@ public class MysterDatagramImpl implements MysterDatagram {
             final StandardDatagramClientImpl<T> impl)  {
 
         return PromiseFuture.<T>newPromiseFuture((context) -> {
-            final TransactionSocket tsocket = new TransactionSocket(transactionManager, impl.getCode());
-
-            // We need to convert between a generic transaction, listener and a
-            // Standard CallListener because call listeners make a good abstract
-            // and
-            // turn the call into an RMI. cooool eh?
-            tsocket.sendTransaction(new DataPacket() { // inline class
+            transactionManager.sendTransaction(new DataPacket() { // inline class
                 @Override
                 public MysterAddress getAddress() {
                     return address;
@@ -103,7 +97,7 @@ public class MysterDatagramImpl implements MysterDatagram {
                 public byte[] getBytes() {
                     return getData();
                 }
-            }, new TransactionListener() { // inline class
+            }, impl.getCode(), new TransactionListener() { // inline class
                 public void transactionReply(TransactionEvent e) {
                     if (DatagramUtilities.dealWithError(e.getTransaction(), context))
                         return;

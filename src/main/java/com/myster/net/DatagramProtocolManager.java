@@ -135,7 +135,8 @@ public class DatagramProtocolManager {
                 if (t != null) {
                     t.packetReceived(p);
                 } else {
-                    System.out.println("Oh no!!! -> " + getCodeFromPacket(p));
+                    System.out.println("Oh no!!! -> " + getCodeFromPacket(p) + " on from "
+                            + p.getAddress().toString() + ":" + p.getPort());
                 }
             } catch (IOException ex) {
                 System.out.println("Packet too short Exception.");
@@ -148,8 +149,12 @@ public class DatagramProtocolManager {
             if (!isEmpty()) {
                 throw new IllegalStateException("Could not close socket, there are still listeners");
             }
-            
-            dsocket.close();
+
+            synchronized (this) {
+                if (dsocket != null) {
+                    dsocket.close();
+                }
+            }
         }
         
         @Override

@@ -349,9 +349,9 @@ public class Myster {
         System.out.println("External UPnP gateway: " +UPnP.getDefaultGatewayIP());
         System.out.println("External IP: " +UPnP.getExternalIP());
         System.out.println("Local IP: " +UPnP.getLocalIP());
-        System.out.println("isMappedTCP(): " + UPnP.isMappedTCP(MysterGlobals.DEFAULT_PORT));
-        System.out.println("External TCP/IP port enabled: "+ UPnP.openPortTCP(MysterGlobals.DEFAULT_PORT));
-        System.out.println("External UDP/IP port enabled: " + UPnP.openPortUDP(MysterGlobals.DEFAULT_PORT));
+        System.out.println("isMappedTCP(): " + UPnP.isMappedTCP(MysterGlobals.SERVER_PORT));
+        System.out.println("External TCP/IP port enabled: "+ UPnP.openPortTCP(MysterGlobals.SERVER_PORT));
+        System.out.println("External UDP/IP port enabled: " + UPnP.openPortUDP(MysterGlobals.SERVER_PORT));
     } // Utils, globals etc.. //These variables are System wide variables //
 
 

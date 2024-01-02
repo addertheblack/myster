@@ -60,7 +60,7 @@ public class ServerFacade {
         connectionQueue = new DoubleBlockingQueue<>(0);
 
         operators = new Operator[2];
-        operators[0] = new Operator(connectionQueue, MysterGlobals.DEFAULT_PORT);
+        operators[0] = new Operator(connectionQueue, MysterGlobals.SERVER_PORT);
         operators[1] = new Operator(connectionQueue, 80); // .. arrrgghh
 
         addStandardStreamConnectionSections();
@@ -95,7 +95,7 @@ public class ServerFacade {
      * 
      */
     private void initDatagramTransports() {
-        datagramManager.accessPort(MysterGlobals.DEFAULT_PORT, t -> t.addTransport(new PingTransport()));
+        datagramManager.accessPort(MysterGlobals.SERVER_PORT, t -> t.addTransport(new PingTransport()));
     }
 
     /**
@@ -103,7 +103,7 @@ public class ServerFacade {
      */
     public void addDatagramTransactions(TransactionProtocol ... protocols) {
         for (TransactionProtocol transactionProtocol : protocols) {
-            transactionManager.addTransactionProtocol(MysterGlobals.DEFAULT_PORT,transactionProtocol);
+            transactionManager.addTransactionProtocol(MysterGlobals.SERVER_PORT,transactionProtocol);
         }
     }
 

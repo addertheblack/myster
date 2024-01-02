@@ -6,10 +6,8 @@ import java.util.Map;
 import com.general.events.EventDispatcher;
 import com.general.events.SyncEventDispatcher;
 import com.general.net.ImmutableDatagramPacket;
-import com.general.util.Semaphore;
 import com.general.util.Timer;
 import com.myster.net.BadPacketException;
-import com.myster.net.DatagramProtocolManager;
 import com.myster.net.DatagramTransport;
 import com.myster.net.MysterAddress;
 import com.myster.net.PingPacket;
@@ -47,7 +45,9 @@ public class PongTransport extends DatagramTransport {
     
     @Override
     public boolean isEmpty() {
+        synchronized (requests) {
         return requests.isEmpty();
+        }
     }
 
     /**
