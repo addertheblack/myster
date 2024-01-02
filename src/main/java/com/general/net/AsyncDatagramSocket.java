@@ -14,6 +14,7 @@ import java.net.DatagramSocket;
 
 import com.general.thread.Invoker;
 import com.general.util.LinkedList;
+import com.general.util.Util;
 import com.myster.util.MysterThread;
 
 public final class AsyncDatagramSocket {
@@ -113,6 +114,11 @@ public final class AsyncDatagramSocket {
                     }
                 } catch (IOException ex) {
                     System.out.println("Communication error on UDP port " + port + " closing dsocket...");
+                    try {
+                        Thread.sleep(1000);
+                    } catch (InterruptedException exception) {
+                        exception.printStackTrace();
+                    }
                 }
             }
             
