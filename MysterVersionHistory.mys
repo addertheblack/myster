@@ -1153,7 +1153,11 @@ Work on DEV 8:
     -> Make Myster use Java's Preferences  for everything
     -> Put hashcache in java prefs too
     -> Add github actions to build all the binaries we need. More work needs to be done here
-    
+
+2023-01-02
+    -> Deleted old download code
+    -> Made search and connect the default buttons
+    -> Made server threads use virtual threads
    
 		
 (Red List)

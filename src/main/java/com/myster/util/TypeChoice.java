@@ -16,7 +16,7 @@ import com.myster.type.MysterType;
 import com.myster.type.TypeDescription;
 import com.myster.type.TypeDescriptionList;
 
-public class TypeChoice extends JComboBox {
+public class TypeChoice extends JComboBox<String> {
     TypeDescription[] types;
 
     public TypeChoice() {
