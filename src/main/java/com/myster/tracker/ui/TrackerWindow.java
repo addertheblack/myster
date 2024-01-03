@@ -165,7 +165,10 @@ public class TrackerWindow extends MysterFrame {
         gblayout.setConstraints(c, gbconstrains);
 
         add(c);
+    }
 
+    public MysterType getSelectedType() {
+        return choice.getType();
     }
 
     /**

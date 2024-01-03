@@ -77,6 +77,7 @@ public class ClientWindow extends MysterFrame implements Sayable {
     private FileInfoListerThread fileInfoListerThread;
     
     private boolean hasBeenShown = false;
+    private MysterType type;
 
     public static void init(MysterProtocol protocol, HashCrawlerManager hashManager, IpListManager ipListManager) {
         ClientWindow.protocol = protocol;
@@ -109,6 +110,11 @@ public class ClientWindow extends MysterFrame implements Sayable {
         init();
         ipTextField.setText(ip);
         ipTextField.setForeground(Color.BLACK);
+    }
+    
+    public ClientWindow(MysterFrameContext c, String ip, MysterType type) {
+        this(c, ip);
+        this.type = type;
     }
 
     private void init() {
@@ -269,6 +275,12 @@ public class ClientWindow extends MysterFrame implements Sayable {
 
     public void addItemToTypeList(MysterType s) {
         fileTypeList.addItem(new GenericMCListItem(new Sortable[] { new SortableString(s.toString()) }, s));
+        
+        if (s.equals(type)) {
+            type = null;
+            
+            fileTypeList.select(fileTypeList.length()-1);
+        }
     }
 
     public void addItemsToFileList(String[] files) {

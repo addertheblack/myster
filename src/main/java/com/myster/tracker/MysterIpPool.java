@@ -29,7 +29,6 @@ public interface MysterIpPool {
      * @return The {@link MysterServer} for this {@link MysterAddress} Blocking if not in pool!
      */
     public MysterServer getMysterServer(MysterAddress address) throws IOException;
-
     public MysterServer getMysterServer(String name) throws IOException;
 
     /**
