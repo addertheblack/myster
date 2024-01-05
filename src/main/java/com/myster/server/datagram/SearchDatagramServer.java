@@ -11,20 +11,24 @@ import com.myster.server.event.ServerSearchDispatcher;
 import com.myster.server.event.ServerSearchEvent;
 import com.myster.transaction.Transaction;
 import com.myster.transaction.TransactionProtocol;
+import com.myster.transaction.TransactionSender;
 import com.myster.type.MysterType;
 
-public class SearchDatagramServer extends TransactionProtocol {
+public class SearchDatagramServer implements TransactionProtocol {
     public static final int SEARCH_TRANSACTION_CODE = com.myster.client.datagram.SearchDatagramClient.SEARCH_TRANSACTION_CODE;
 
+    @Override
     public int getTransactionCode() {
         return SEARCH_TRANSACTION_CODE;
     }
 
+    @Override
     public Object getTransactionObject() {
         return new ServerSearchDispatcher();
     }
 
-    public void transactionReceived(Transaction transaction, Object transactionObject)
+    @Override
+    public void transactionReceived(TransactionSender sender, Transaction transaction, Object transactionObject)
             throws BadPacketException {
         try {
             DataInputStream in = new DataInputStream(
@@ -62,8 +66,9 @@ public class SearchDatagramServer extends TransactionProtocol {
 
             out.writeUTF("");
 
-            sendTransaction(new Transaction(transaction, byteOutputStream.toByteArray(),
-                    Transaction.NO_ERROR));
+            sender.sendTransaction(new Transaction(transaction,
+                                                   byteOutputStream.toByteArray(),
+                                                   Transaction.NO_ERROR));
         } catch (IOException ex) {
             throw new BadPacketException("Bad packet " + ex);
         }

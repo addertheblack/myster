@@ -30,7 +30,7 @@ import javax.swing.table.TableCellRenderer;
 
 public class JMCList extends JTable implements MCList {
     private final JScrollPane scrollPane;
-    private final List listeners;
+    private final List<MCListEventListener> listeners;
 
     public JMCList() {
         this(1, true);
@@ -48,8 +48,9 @@ public class JMCList extends JTable implements MCList {
             public void valueChanged(ListSelectionEvent e) {
                 if (listeners == null)
                     return;
-                for (Iterator iterator = listeners.iterator(); iterator.hasNext();) {
-                    MCListEventListener handler = (MCListEventListener) iterator.next();
+                
+                for (Iterator<MCListEventListener> iterator = listeners.iterator(); iterator.hasNext();) {
+                    MCListEventListener handler = iterator.next();
                     if (e.getFirstIndex() >= length())
                         return;
                     if (getMCListItem(e.getFirstIndex()).isSelected()) {
@@ -87,8 +88,8 @@ public class JMCList extends JTable implements MCList {
         addMouseListener(new MouseAdapter() {
             public void mouseClicked(MouseEvent e) {
                 if (e.getClickCount() == 2) {
-                    for (Iterator iterator = listeners.iterator(); iterator.hasNext();) {
-                        MCListEventListener handler = (MCListEventListener) iterator.next();
+                    for (Iterator<MCListEventListener> iterator = listeners.iterator(); iterator.hasNext();) {
+                        MCListEventListener handler = iterator.next();
                         handler.doubleClick(new MCListEvent(JMCList.this));
                     }
                 }
@@ -437,7 +438,7 @@ class MCListTableModel extends AbstractTableModel {
     private final List<String> columnNames = new ArrayList<>();
     private final List<MCListItemInterface> rowValues = new ArrayList<>();
 
-    int sortByIndex = -1;
+    private  int sortByIndex = -1;
 
     private boolean lessThan = true;
 
@@ -580,7 +581,6 @@ class MCListTableModel extends AbstractTableModel {
     public int indexOf(MCListItemInterface item) {
         return rowValues.indexOf(item);
     }
-
 }
 
 class MCListSelectionModel implements ListSelectionModel {

@@ -2,8 +2,8 @@ package com.general.util;
 
 import java.util.Collection;
 
-public interface Heap extends Collection {
-    public Object extractTop();
+public interface Heap<E> extends Collection<E> {
+    public E extractTop();
 
-    public Object top();
+    public E top();
 }

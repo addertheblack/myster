@@ -1,15 +1,16 @@
 package com.general.util;
 
 import java.util.AbstractCollection;
+import java.util.Comparator;
 import java.util.Iterator;
 import java.util.NoSuchElementException;
 
-abstract public class AbstractHeap extends AbstractCollection implements Heap {
+abstract public class AbstractHeap<E> extends AbstractCollection<E> implements Heap<E> {
     protected int size_;
 
     protected Object[] data;
 
-    protected Comparator comparator;
+    protected Comparator<E> comparator;
 
     public AbstractHeap() {
         this(4, null);
@@ -19,11 +20,11 @@ abstract public class AbstractHeap extends AbstractCollection implements Heap {
         this(initialMemoryAllocation, null);
     }
 
-    public AbstractHeap(Comparator comparator) {
+    public AbstractHeap(Comparator<E> comparator) {
         this(4, comparator);
     }
 
-    public AbstractHeap(int initialMemoryAllocation, Comparator comparator) {
+    public AbstractHeap(int initialMemoryAllocation, Comparator<E> comparator) {
         data = new Object[initialMemoryAllocation];
         this.comparator = comparator;
     }
@@ -33,7 +34,8 @@ abstract public class AbstractHeap extends AbstractCollection implements Heap {
         size_ = 0;
     }
 
-    public boolean add(Object item) {
+    @SuppressWarnings({ "cast", "unchecked" })
+    public boolean add(E item) {
         if (size_ == data.length) {
             Object[] fresh = new Object[(size_ + 2) * 2];
             System.arraycopy(data, 0, fresh, 0, size_);
@@ -41,7 +43,7 @@ abstract public class AbstractHeap extends AbstractCollection implements Heap {
         }
 
         int i;
-        for (i = size_++; (i > 0) && !isInOrder(data[parent(i)], item); i = parent(i))
+        for (i = size_++; (i > 0) && !isInOrder((E)data[parent(i)], (E)item); i = parent(i))
             data[i] = data[parent(i)];
 
         data[i] = item;
@@ -49,6 +51,7 @@ abstract public class AbstractHeap extends AbstractCollection implements Heap {
         return true;
     }
 
+    @SuppressWarnings("unchecked")
     private int find(Object item, int i) {
         if (data[i].equals(item))
             return i;
@@ -56,9 +59,9 @@ abstract public class AbstractHeap extends AbstractCollection implements Heap {
         int l = ((i << 1) + 1);
         int r = ((i << 1) + 2);
         int found = -1;
-        if (l < size_ && isInOrder(data[l], item))
+        if (l < size_ && isInOrder((E)data[l], (E)item))
             found = find(item, l);
-        if (found == -1 && r < size_ && isInOrder(data[r], item))
+        if (found == -1 && r < size_ && isInOrder((E)data[r], (E)item))
             found = find(item, r);
         return found;
     }
@@ -98,16 +101,17 @@ abstract public class AbstractHeap extends AbstractCollection implements Heap {
         }
     }
 
-    public class HeapIterator implements Iterator {
+    public class HeapIterator implements Iterator<E> {
         private int index = 0;
 
         private boolean removeLegal = false;
 
-        public Object next() {
+        @SuppressWarnings("unchecked")
+        public E next() {
             if (index == size_)
                 throw new NoSuchElementException();
             removeLegal = true;
-            return data[index++];
+            return (E) data[index++];
         }
 
         public boolean hasNext() {
@@ -123,7 +127,7 @@ abstract public class AbstractHeap extends AbstractCollection implements Heap {
         }
     }
 
-    public Iterator iterator() { // the order returned is mostly undefined.
+    public Iterator<E> iterator() { // the order returned is mostly undefined.
         return new HeapIterator();
     }
 
@@ -131,7 +135,8 @@ abstract public class AbstractHeap extends AbstractCollection implements Heap {
         return size_;
     }
 
-    public Object extractTop() {
+    @SuppressWarnings("unchecked")
+    public E extractTop() {
         if (size_ == 0)
             throw new NoSuchElementException();
 
@@ -146,13 +151,14 @@ abstract public class AbstractHeap extends AbstractCollection implements Heap {
             data = fresh;
         }
 
-        return max;
+        return (E) max;
     }
 
-    public Object top() {
+    @SuppressWarnings("unchecked")
+    public E top() {
         if (size_ == 0)
             throw new NoSuchElementException();
-        return data[0];
+        return (E) data[0];
     }
 
     private void swap(int a, int b) {
@@ -161,18 +167,19 @@ abstract public class AbstractHeap extends AbstractCollection implements Heap {
         data[b] = tmp;
     }
 
+    @SuppressWarnings("unchecked")
     protected void heapify(int i) {
         int higher;
 
         int l = ((i << 1) + 1);
         int r = ((i << 1) + 2);
 
-        if (l < size_ && isInOrder(data[l], data[i]))
+        if (l < size_ && isInOrder((E)data[l], (E)data[i]))
             higher = l;
         else
             higher = i;
 
-        if (r < size_ && isInOrder(data[r], data[higher]))
+        if (r < size_ && isInOrder((E)data[r], (E)data[higher]))
             higher = r;
 
         if (higher != i) {
@@ -181,7 +188,7 @@ abstract public class AbstractHeap extends AbstractCollection implements Heap {
         }
     }
 
-    protected int compare(Object a, Object b) {
+    protected int compare(E a, E b) {
         if (comparator == null)
             return ((Comparable) a).compareTo(b);
         else
@@ -192,11 +199,12 @@ abstract public class AbstractHeap extends AbstractCollection implements Heap {
         return ((i - 1) >> 1);
     }
 
-    abstract protected boolean isInOrder(Object higher, Object lower);
+    abstract protected boolean isInOrder(E higher, E lower);
 
+    @SuppressWarnings("unchecked")
     protected boolean isInOrderWithParent(int i) {
         int p = parent(i);
-        return isInOrder(data[p], data[i]);
+        return isInOrder((E)data[p],(E) data[i]);
     }
 
 };

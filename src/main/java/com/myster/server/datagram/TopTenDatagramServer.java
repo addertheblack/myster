@@ -11,9 +11,10 @@ import com.myster.tracker.IpListManager;
 import com.myster.tracker.MysterServer;
 import com.myster.transaction.Transaction;
 import com.myster.transaction.TransactionProtocol;
+import com.myster.transaction.TransactionSender;
 import com.myster.type.MysterType;
 
-public class TopTenDatagramServer extends TransactionProtocol {
+public class TopTenDatagramServer implements TransactionProtocol {
     public static final int NUMBER_OF_SERVERS_TO_RETURN = 100;
 
     public static final int TOP_TEN_TRANSACTION_CODE = com.myster.client.datagram.TopTenDatagramClient.TOP_TEN_TRANSACTION_CODE;
@@ -24,11 +25,16 @@ public class TopTenDatagramServer extends TransactionProtocol {
         this.ipListManager = ipListManager;
     }
 
+    @Override
     public int getTransactionCode() {
         return TOP_TEN_TRANSACTION_CODE;
     }
 
-    public void transactionReceived(Transaction transaction, Object transactionObject) throws BadPacketException {
+    @Override
+    public void transactionReceived(TransactionSender sender,
+                                    Transaction transaction,
+                                    Object transactionObject)
+            throws BadPacketException {
         try {
             ipListManager.addIP(transaction.getAddress());
 
@@ -42,7 +48,7 @@ public class TopTenDatagramServer extends TransactionProtocol {
                 topTenStrings[i] = topTenServers[i].getAddress().toString();
             }
 
-            sendTransaction(new Transaction(transaction, getBytesFromStrings(topTenStrings),
+           sender.sendTransaction(new Transaction(transaction, getBytesFromStrings(topTenStrings),
                     Transaction.NO_ERROR));
         } catch (IOException ex) {
             throw new BadPacketException("Bad packet " + ex);

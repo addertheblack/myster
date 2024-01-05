@@ -3,7 +3,7 @@ package com.myster.net;
 import com.general.net.ImmutableDatagramPacket;
 
 /**
- * All classes who wish to be registered as official transport protocols Need to
+ * All classes that wish to be registered as official transport protocols Need to
  * use this "interface". Common usage is to register as a listener. At that time
  * the TransportManager will set the sender so Immutablepackets can be sent
  * through the correct manager using sendPacket().
@@ -13,31 +13,31 @@ import com.general.net.ImmutableDatagramPacket;
  * Transport Listener
  */
 
-public abstract class DatagramTransport implements DatagramSender {
-    private DatagramSender sender;
+public abstract class DatagramTransport {
+//    private DatagramSender sender;
 
-    /**
-     * Use this function to send reply packets (or just to send packets) using
-     * the correct port/address.
-     */
-    public void sendPacket(ImmutableDatagramPacket packet) {
-        if (sender == null) {
-            throw new IllegalStateException(
-                    "Transport has not been added to the TransportManager yet!");
-        }
+//    /**
+//     * Use this function to send reply packets (or just to send packets) using
+//     * the correct port/address.
+//     */
+//    public void sendPacket(ImmutableDatagramPacket packet) {
+//        if (sender == null) {
+//            throw new IllegalStateException(
+//                    "Transport has not been added to the TransportManager yet!");
+//        }
+//
+//        sender.sendPacket(packet);
+//    }
 
-        sender.sendPacket(packet);
-    }
-
-    /**
-     * This routine is so the transport manager can set the mechanism through
-     * which you are supposed to send your outgoing packets... Assuming you want
-     * to send packets out on the same port as the one you received them.
-     */
-    final void setSender(DatagramSender sender) { //don't over-ride
-        // (or even access)
-        this.sender = sender; //weeeee...
-    }
+//    /**
+//     * This routine is so the transport manager can set the mechanism through
+//     * which you are supposed to send your outgoing packets... Assuming you want
+//     * to send packets out on the same port as the one you received them.
+//     */
+//    final void setSender(DatagramSender sender) { //don't over-ride
+//        // (or even access)
+//        this.sender = sender; //weeeee...
+//    }
 
     /**
      * gets the transport code associated with this Datagramransport
@@ -54,7 +54,7 @@ public abstract class DatagramTransport implements DatagramSender {
      * @throws BadPacketException
      *             feel free to throw this if the packet was badly formated.
      */
-    public abstract void packetReceived(ImmutableDatagramPacket packet) throws BadPacketException;
+    public abstract void packetReceived(DatagramSender sender, ImmutableDatagramPacket packet) throws BadPacketException;
 
     public abstract boolean isEmpty();
 }

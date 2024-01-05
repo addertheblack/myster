@@ -95,7 +95,7 @@ public class DatagramProtocolManager {
     /**
      * This class is the implementation of the transport manager. Could be any class.
      */
-    private static class GenericTransportManager implements TransportManager, DatagramSender, AsyncDatagramListener {
+    private static class GenericTransportManager implements TransportManager, AsyncDatagramListener {
         private final Map<Short, DatagramTransport> transportProtocols = new HashMap<>();
         private final int port;
         
@@ -111,10 +111,6 @@ public class DatagramProtocolManager {
                 return false; //could not add because it already exists.
 
             transportProtocols.put(t.getTransportCode(), t);
-
-            // TODO: Remove this
-            // So the Transport has something to send packets to.            
-            t.setSender(this); //So the Transport has something to send packets
 
             return true;
         }
@@ -134,7 +130,7 @@ public class DatagramProtocolManager {
                         (transportProtocols.get(getCodeFromPacket(p)));
 
                 if (t != null) {
-                    t.packetReceived(p);
+                    t.packetReceived(this::sendPacket, p);
                 } else {
                     if (MysterGlobals.SERVER_PORT == p.getPort()) {
                         System.out.println("Transport Code not found -> " + getCodeFromPacket(p)
@@ -179,8 +175,9 @@ public class DatagramProtocolManager {
                     }
                 }
             }
-            if (dsocket != null)
+            if (dsocket != null) {
                 dsocket.sendPacket(p);
+            }
         }
 
         private static short getCodeFromPacket(ImmutableDatagramPacket p) throws IOException {

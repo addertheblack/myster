@@ -16,7 +16,7 @@ public class UDPPingClient {
             PongTransport t = (PongTransport) transportManager.getTransport(PongTransport.TRANSPORT_NUMBER);
             
             if (t == null ) {
-                t = new PongTransport();
+                t = new PongTransport(transportManager::sendPacket);
                 transportManager.addTransport(t);
             }
             

@@ -8,8 +8,9 @@ import java.util.function.Supplier;
 import com.myster.net.BadPacketException;
 import com.myster.transaction.Transaction;
 import com.myster.transaction.TransactionProtocol;
+import com.myster.transaction.TransactionSender;
 
-public class ServerStatsDatagramServer extends TransactionProtocol {
+public class ServerStatsDatagramServer implements TransactionProtocol {
     public static final int SERVER_STATS_TRANSACTION_CODE = com.myster.client.datagram.ServerStatsDatagramClient.SERVER_STATS_TRANSACTION_CODE;
     private final Supplier<String> getIdentity;
 
@@ -17,11 +18,13 @@ public class ServerStatsDatagramServer extends TransactionProtocol {
         this.getIdentity = getIdentity;
     }
 
+    @Override
     public int getTransactionCode() {
         return SERVER_STATS_TRANSACTION_CODE;
     }
 
-    public void transactionReceived(Transaction transaction, Object transactionObject) throws BadPacketException {
+    @Override
+    public void transactionReceived(TransactionSender sender, Transaction transaction, Object transactionObject) throws BadPacketException {
         try {
             ByteArrayOutputStream byteOutputStream = new ByteArrayOutputStream();
             DataOutputStream out = new DataOutputStream(byteOutputStream);
@@ -30,7 +33,7 @@ public class ServerStatsDatagramServer extends TransactionProtocol {
             // TODO: pass in getMMLToSend as the supplier
             out.writeUTF("" + com.myster.server.stream.HandshakeThread.getMMLToSend(getIdentity.get()));
 
-            sendTransaction(new Transaction(transaction, byteOutputStream.toByteArray(),
+            sender.sendTransaction(new Transaction(transaction, byteOutputStream.toByteArray(),
                     Transaction.NO_ERROR));
 
         } catch (IOException ex) {
