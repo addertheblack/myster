@@ -8,22 +8,31 @@ import com.general.events.SyncEventDispatcher;
 import com.general.net.ImmutableDatagramPacket;
 import com.general.util.Timer;
 import com.myster.net.BadPacketException;
+import com.myster.net.DatagramSender;
 import com.myster.net.DatagramTransport;
 import com.myster.net.MysterAddress;
 import com.myster.net.PingPacket;
 
 public class PongTransport extends DatagramTransport {
     public static final short TRANSPORT_NUMBER = 20559;
+    
     private static final int TIMEOUT = 60000;
     private static final int FIRST_TIMEOUT = 10000;
 
     private final Map<MysterAddress, PongItemStruct> requests = new HashMap<>();
+    private final DatagramSender sender;
+    
+    public PongTransport(DatagramSender sender) {
+        this.sender = sender;
+    }
 
+    @Override
     public short getTransportCode() {
         return TRANSPORT_NUMBER;
     }
 
-    public void packetReceived(ImmutableDatagramPacket immutablePacket)
+    @Override
+    public void packetReceived(DatagramSender ignore, ImmutableDatagramPacket immutablePacket)
             throws BadPacketException {
         try {
             PongItemStruct struct = null;
@@ -86,10 +95,8 @@ public class PongTransport extends DatagramTransport {
             if (pongItemStruct == null) {
                 pongItemStruct = new PongItemStruct(param_address);
                 requests.put(param_address, pongItemStruct);
-                
-                // TODO: NO! Need to connect on the fly
-                sendPacket((new PingPacket(param_address))
-                        .toImmutableDatagramPacket());
+
+                sender.sendPacket((new PingPacket(param_address)).toImmutableDatagramPacket());
             }
 
             pongItemStruct.dispatcher.addListener(listener);
@@ -127,14 +134,14 @@ public class PongTransport extends DatagramTransport {
 
             PongItemStruct struct = null;
             synchronized (requests) {
-                struct = (PongItemStruct) (requests.get(address));
+                struct = requests.get(address);
                 if (struct != null) {
                     if (!struct.secondPing) {
-                        sendPacket((new PingPacket(address))
+                        sender.sendPacket((new PingPacket(address))
                                 .toImmutableDatagramPacket()); //send two
                                                                // packet the
                                                                // second time
-                        sendPacket((new PingPacket(address))
+                        sender.sendPacket((new PingPacket(address))
                                 .toImmutableDatagramPacket()); //send two
                                                                // packet the
                                                                // second time

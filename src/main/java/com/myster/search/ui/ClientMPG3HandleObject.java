@@ -41,18 +41,13 @@ public class ClientMPG3HandleObject extends ClientGenericHandleObject {
         }
     }
 
-    public MCListItemInterface getMCListItem(SearchResult s) { //factory...
-                                                               // chugga
-                                                               // chugga...
+    public MCListItemInterface<SearchResult> getMCListItem(SearchResult s) {
         return new MPG3SearchItem(s);
     }
 
     private class MPG3SearchItem extends GenericSearchItem {
-        SearchResult result;
-
         public MPG3SearchItem(SearchResult s) {
             super(s);
-            result = s;
         }
 
         public Sortable getValueOfColumn(int index) {
@@ -91,12 +86,8 @@ public class ClientMPG3HandleObject extends ClientGenericHandleObject {
                     return new SortableString(s_temp == null ? "-" : s_temp);
 
                 default:
-                    throw new RuntimeException("This column doesn't exist"); //This
-                                                                             // should
-                                                                             // crash
-                                                                             // the
-                                                                             // thread
-                                                                             // nicely.
+                    // This should crash the thread nicely.
+                    throw new RuntimeException("This column doesn't exist");
                 }
             }
         }

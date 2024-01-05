@@ -8,15 +8,15 @@ import com.myster.net.MysterAddress;
 import com.myster.pref.MysterPreferences;
 import com.myster.transaction.Transaction;
 import com.myster.transaction.TransactionProtocol;
+import com.myster.transaction.TransactionSender;
 
-public class ImTransactionServer extends TransactionProtocol {
+public class ImTransactionServer implements TransactionProtocol {
     private static final long EXPIRE_TIME = 60 * 60 * 1000; //1 hour.. (wow!)
 
     // package protected on purpose
     static final int TRANSACTION_CODE = 1111;
 
     private final Queue<ReceivedMessage> recentlyReceivedMessages = new ArrayDeque<>();
-
     private final MysterPreferences preferences;
 
     public final InstantMessageListener listener;
@@ -30,6 +30,7 @@ public class ImTransactionServer extends TransactionProtocol {
         this.listener = listener;
     }
     
+    @Override
     public int getTransactionCode() {
         return TRANSACTION_CODE;
     }
@@ -47,30 +48,41 @@ public class ImTransactionServer extends TransactionProtocol {
         return true;
     }
 
-    public synchronized void transactionReceived(Transaction transaction, Object transactionObject)
+    @Override
+    public synchronized void transactionReceived(TransactionSender sender, Transaction transaction, Object transactionObject)
             throws BadPacketException {
         MessagePacket msg = new MessagePacket(transaction);
 
         ReceivedMessage receivedMessage = new ReceivedMessage(transaction, msg);
         if (isOld(receivedMessage)) {
-            sendTransaction(new Transaction(transaction, (new MessagePacket(transaction
-                    .getAddress(), 0, "")).getData(), Transaction.NO_ERROR));
-            return; //if it's one we've seen before ignore it.
+            sender.sendTransaction(new Transaction(transaction,
+                                                   (new MessagePacket(transaction.getAddress(),
+                                                                      0,
+                                                                      "")).getData(),
+                                                   Transaction.NO_ERROR));
+            return; // if it's one we've seen before ignore it.
         }
 
         recentlyReceivedMessages.add(receivedMessage);
 
-        //below is where the event system would go.
+        // below is where the event system would go.
         if (messageReceived(msg)) {
-            sendTransaction(new Transaction(transaction, (new MessagePacket(transaction
-                    .getAddress(), 0, "")).getData(), Transaction.NO_ERROR));
+            sender.sendTransaction(new Transaction(transaction,
+                                                   (new MessagePacket(transaction.getAddress(),
+                                                                      0,
+                                                                      "")).getData(),
+                                                   Transaction.NO_ERROR));
         } else {
-            sendTransaction(new Transaction(transaction, (new MessagePacket(transaction
-                    .getAddress(), 1, MessageManager.getRefusingMessage(preferences))).getData(),
-                    Transaction.NO_ERROR));
+            sender.sendTransaction(new Transaction(transaction,
+                                                   (new MessagePacket(transaction.getAddress(),
+                                                                      1,
+                                                                      MessageManager
+                                                                              .getRefusingMessage(preferences)))
+                                                                                      .getData(),
+                                                   Transaction.NO_ERROR));
         }
 
-        //reply with err or not
+        // reply with err or not
     }
 
     private void trashOld() { //gets rid of old messages.

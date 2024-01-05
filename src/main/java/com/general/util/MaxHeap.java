@@ -1,7 +1,8 @@
 package com.general.util;
 
-public class MaxHeap extends AbstractHeap {
+import java.util.Comparator;
 
+public class MaxHeap<E> extends AbstractHeap<E> {
     public MaxHeap() {
     }
 
@@ -9,19 +10,16 @@ public class MaxHeap extends AbstractHeap {
         super(initialMemoryAllocation);
     }
 
-    public MaxHeap(Comparator comparator) {
+    public MaxHeap(Comparator<E> comparator) {
         super(comparator);
     }
 
-    public MaxHeap(int initialMemoryAllocation, Comparator comparator) {
+    public MaxHeap(int initialMemoryAllocation, Comparator<E> comparator) {
         super(initialMemoryAllocation, comparator);
     }
 
-    protected boolean isInOrder(Object higher, Object lower) {
-
+    protected boolean isInOrder(E higher, E lower) {
         return (compare(higher, lower) >= 0);
-
     }
-
 }
 

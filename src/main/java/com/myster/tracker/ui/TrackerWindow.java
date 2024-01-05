@@ -151,8 +151,13 @@ public class TrackerWindow extends MysterFrame {
     /**
      * Makes grid bag layout less nasty.
      */
-    public void addComponent(Component c, int row, int column, int width, int height, int weightx,
-            int weighty) {
+    public void addComponent(Component c,
+                             int row,
+                             int column,
+                             int width,
+                             int height,
+                             int weightx,
+                             int weighty) {
         gbconstrains.gridx = column;
         gbconstrains.gridy = row;
 
@@ -246,12 +251,11 @@ public class TrackerWindow extends MysterFrame {
         }
     }
 
-    private static class TrackerMCListItem extends MCListItemInterface {
-        MysterServer server;
+    private static class TrackerMCListItem extends MCListItemInterface<TrackerMCListItem> {
+        private final MysterServer server;
+        private final MysterType type;
 
-        Sortable sortables[] = new Sortable[7];
-
-        MysterType type;
+        private final Sortable sortables[] = new Sortable[7];
 
         public TrackerMCListItem(MysterServer s, MysterType t) {
             server = s;
@@ -284,7 +288,7 @@ public class TrackerWindow extends MysterFrame {
 //            }
         }
 
-        public Object getObject() {
+        public TrackerMCListItem getObject() {
             return this;
         }
 

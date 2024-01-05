@@ -15,11 +15,9 @@ import java.net.DatagramPacket;
 import java.net.InetAddress;
 
 public final class ImmutableDatagramPacket {
-    final InetAddress address;
-
-    final int port;
-
-    final byte[] data;
+    private final InetAddress address;
+    private final int port;
+    private final byte[] data;
 
     public ImmutableDatagramPacket(InetAddress i, int port, byte[] d) {
         address = i;

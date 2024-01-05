@@ -2,6 +2,7 @@ package com.myster.server.datagram;
 
 import com.general.net.ImmutableDatagramPacket;
 import com.myster.net.BadPacketException;
+import com.myster.net.DatagramSender;
 import com.myster.net.DatagramTransport;
 import com.myster.net.MysterAddress;
 import com.myster.net.PingPacket;
@@ -16,13 +17,13 @@ public class PingTransport extends DatagramTransport {
 
     @SuppressWarnings("unused")
     @Override
-    public void packetReceived(ImmutableDatagramPacket immutablePacket)
+    public void packetReceived(DatagramSender sender, ImmutableDatagramPacket immutablePacket)
             throws BadPacketException {
         // We want the side effect of making sure this is a PING packet
         // The transport matcher only matches 'P' and 'I'
         new PingPacket(immutablePacket);
 
-        sendPacket(PongPacket.getImmutablePacket(new MysterAddress(
+        sender.sendPacket(PongPacket.getImmutablePacket(new MysterAddress(
                 immutablePacket.getAddress(), immutablePacket.getPort())));
         //System.out.println("Replied to a ping!");
     }

@@ -10,6 +10,7 @@ import com.general.util.Util;
 import com.myster.net.BadPacketException;
 import com.myster.net.DataPacket;
 import com.myster.net.DatagramProtocolManager;
+import com.myster.net.DatagramSender;
 import com.myster.net.DatagramProtocolManager.TransportManager;
 import com.myster.net.DatagramTransport;
 import com.myster.net.MysterAddress;
@@ -108,7 +109,7 @@ public class TransactionManager {
                         .getTransport(Transaction.TRANSACTION_PROTOCOL_NUMBER);
         
         if (transactionTransport == null) {
-            transactionTransport = new TransactionTransportImplementation(dispatcher);
+            transactionTransport = new TransactionTransportImplementation(transportManager::sendPacket, dispatcher);
             transportManager.addTransport(transactionTransport);
         }
         return transactionTransport;
@@ -156,7 +157,6 @@ public class TransactionManager {
             TransactionTransportImplementation transactionTransport =
                     extractTransactionTransport(transportManager);
 
-            protocol.setSender(transactionTransport);
             return transactionTransport.addTransactionProtocol(protocol);
         });
     }
@@ -169,17 +169,20 @@ public class TransactionManager {
      * 
      * @see DatagramProtocolManager
      */
-    private static class TransactionTransportImplementation extends DatagramTransport implements TransactionSender {
+    private static class TransactionTransportImplementation extends DatagramTransport {
         private final Map<Integer, TransactionProtocol> serverProtocols = new HashMap<>();
 
         private final Map<Integer, ListenerRecord> outstandingTransactions = new HashMap<>();
 
         private final ServerEventDispatcher dispatcher;
 
+        private final DatagramSender sender;
+
         /**
          * @param dispatcher
          */
-        public TransactionTransportImplementation(ServerEventDispatcher dispatcher) {
+        public TransactionTransportImplementation(DatagramSender sender, ServerEventDispatcher dispatcher) {
+            this.sender = sender;
             this.dispatcher = dispatcher;
         }
 
@@ -191,7 +194,8 @@ public class TransactionManager {
             return Transaction.TRANSACTION_PROTOCOL_NUMBER;
         }
 
-        public void packetReceived(ImmutableDatagramPacket immutablePacket)
+        @Override
+        public void packetReceived(DatagramSender sender, ImmutableDatagramPacket immutablePacket)
                 throws BadPacketException {
             Transaction transaction = new Transaction(immutablePacket);
 
@@ -205,7 +209,7 @@ public class TransactionManager {
                     System.out.println("No Transaction protocol registered under type: "
                             + transaction.getTransactionCode());
 
-                    sendTransaction(new Transaction(transaction, new byte[0],
+                    sendTransaction(sender, new Transaction(transaction, new byte[0],
                             Transaction.TRANSACTION_TYPE_UNKNOWN));//returning
                     // error
                     // here!
@@ -216,7 +220,7 @@ public class TransactionManager {
                 dispatcher.fireCEvent(new ConnectionManagerEvent(
                         ConnectionManagerEvent.SECTIONCONNECT, transaction.getAddress(),
                         transaction.getTransactionCode(), transactionObject, true));
-                protocol.transactionReceived(transaction, transactionObject); //fun...
+                protocol.transactionReceived((t) -> sendTransaction(sender, t), transaction, transactionObject); //fun...
             }
         }
 
@@ -230,7 +234,7 @@ public class TransactionManager {
             outstandingTransactions.put(uniqueid, new ListenerRecord(packet
                     .getAddress(), uniqueid, listener, new TimeoutTimer(uniqueid, transaction)));
 
-            sendPacket(transaction.toImmutableDatagramPacket());
+            sender.sendPacket(transaction.toImmutableDatagramPacket());
 
             return uniqueid;
         }
@@ -274,8 +278,11 @@ public class TransactionManager {
             return true;
         }
 
-        public void sendTransaction(Transaction transaction) {
-            sendPacket(transaction.toImmutableDatagramPacket());
+        private void sendTransaction(DatagramSender sender, Transaction transaction) {
+            if (!transaction.isForClient()) {
+                System.out.println("oh no!");
+            }
+            sender.sendPacket(transaction.toImmutableDatagramPacket());
         }
 
         /**
@@ -360,7 +367,7 @@ public class TransactionManager {
             }
 
             private void sendTheTransaction() {
-                sendPacket(transaction.toImmutableDatagramPacket());
+                sender.sendPacket(transaction.toImmutableDatagramPacket());
             }
 
             public synchronized void run() {

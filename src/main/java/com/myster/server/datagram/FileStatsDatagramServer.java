@@ -12,9 +12,10 @@ import com.myster.mml.MML;
 import com.myster.net.BadPacketException;
 import com.myster.transaction.Transaction;
 import com.myster.transaction.TransactionProtocol;
+import com.myster.transaction.TransactionSender;
 import com.myster.type.MysterType;
 
-public class FileStatsDatagramServer extends TransactionProtocol {
+public class FileStatsDatagramServer implements TransactionProtocol {
     public static final int FILE_STATS_TRANSACTION_CODE =
             com.myster.client.datagram.FileStatsDatagramClient.FILE_STATS_TRANSACTION_CODE;
 
@@ -22,10 +23,13 @@ public class FileStatsDatagramServer extends TransactionProtocol {
         return FILE_STATS_TRANSACTION_CODE;
     }
 
-    public void transactionReceived(Transaction transaction, Object transactionObject) throws BadPacketException {
+    public void transactionReceived(TransactionSender sender,
+                                    Transaction transaction,
+                                    Object transactionObject)
+            throws BadPacketException {
         try {
-            DataInputStream in = new DataInputStream(
-                    new ByteArrayInputStream(transaction.getData()));
+            DataInputStream in =
+                    new DataInputStream(new ByteArrayInputStream(transaction.getData()));
 
             ByteArrayOutputStream byteOutputStream = new ByteArrayOutputStream();
             DataOutputStream out = new DataOutputStream(byteOutputStream);
@@ -44,8 +48,9 @@ public class FileStatsDatagramServer extends TransactionProtocol {
 
             out.writeUTF(mml.toString());
 
-            sendTransaction(new Transaction(transaction, byteOutputStream.toByteArray(),
-                    Transaction.NO_ERROR));
+            sender.sendTransaction(new Transaction(transaction,
+                                                   byteOutputStream.toByteArray(),
+                                                   Transaction.NO_ERROR));
         } catch (IOException ex) {
             throw new BadPacketException("Bad packet " + ex);
         }

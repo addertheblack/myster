@@ -4,17 +4,16 @@ import com.general.mclist.MCListItemInterface;
 import com.general.mclist.Sortable;
 import com.general.mclist.SortableByte;
 import com.general.mclist.SortableString;
-import com.myster.net.MysterAddress;
 import com.myster.search.SearchResult;
 import com.myster.tracker.MysterServer;
 
 public class ClientGenericHandleObject implements ClientHandleObject {
-    protected String[] headerarray = { "File Name", "File Size", "Server",
+    protected final String[] headerarray = { "File Name", "File Size", "Server",
             "Ping" };
 
-    protected int[] headerSize = { 300, 70, 150, 70 };
+    protected final int[] headerSize = { 300, 70, 150, 70 };
 
-    protected String[] keyarray = { "n/a", "/size", "n/a", "n/a" };
+    protected final String[] keyarray = { "n/a", "/size", "n/a", "n/a" };
 
     public String getHeader(int index) {
         return headerarray[index];
@@ -28,31 +27,28 @@ public class ClientGenericHandleObject implements ClientHandleObject {
         return headerarray.length;
     }
 
-    public MCListItemInterface getMCListItem(SearchResult s) { //factory...
-                                                               // chugga
-                                                               // chugga...
+    /**
+     * factory... chugga chugga...
+     */
+    public MCListItemInterface<SearchResult> getMCListItem(SearchResult s) {
         return new GenericSearchItem(s);
     }
 
-    protected class GenericSearchItem extends MCListItemInterface {
-        SearchResult result;
+    protected class GenericSearchItem extends MCListItemInterface<SearchResult> {
+        private static final SortableByte NOT_IN = new SortableByte(-1);
+        private static final SortableByte NUMBER_ERR = new SortableByte(-2);
+        
+        protected final SearchResult result;
+        
+        private final SortableString serverString;
+        private final SortablePing ping;
+        private final SortableString sortableName;
 
-        SortableString serverString;
-
-        SortablePing ping;
-
-        SortableString sortableName;
-
-        SortableByte sortableSize;
-
-        private final SortableByte NOT_IN = new SortableByte(-1);
-
-        private final SortableByte NUMBER_ERR = new SortableByte(-2);
+        private SortableByte sortableSize;
 
         public GenericSearchItem(SearchResult s) {
             result = s;
 
-//                    .getQuickServerStats(hostAsAddress);
             MysterServer server = result.getServer();
             
             serverString = new SortableString(server == null ? "N/A" : server
@@ -91,7 +87,7 @@ public class ClientGenericHandleObject implements ClientHandleObject {
             }
         }
 
-        public Object getObject() {
+        public SearchResult getObject() {
             return result;
         }
     }

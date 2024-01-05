@@ -26,17 +26,17 @@ public class TransactionEvent extends GenericEvent {
     /*
      * Time it took to receive a reply.
      */
-    long transactionTime;
+    private final long transactionTime;
 
     /*
      * Address + port the reply came from.
      */
-    MysterAddress address;
+    private final MysterAddress address;
 
     /*
      * the transaction response or null.
      */
-    Transaction transaction;
+    private final Transaction transaction;
 
     /**
      * Creates an event. Only the transaction manager transport implementation
@@ -84,4 +84,14 @@ public class TransactionEvent extends GenericEvent {
     public Transaction getTransaction() {
         return transaction;
     }
+//    
+//    /**
+//     * 
+//     * TODO: Remove me
+//     * @deprecated Why the hell do you need this?
+//     */
+//    @Deprecated
+//    public TransactionSender getTransactionSender() {
+//        return transactionSender;
+//    }
 }

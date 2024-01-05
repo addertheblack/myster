@@ -8,21 +8,26 @@ import com.myster.filemanager.FileTypeListManager;
 import com.myster.net.BadPacketException;
 import com.myster.transaction.Transaction;
 import com.myster.transaction.TransactionProtocol;
+import com.myster.transaction.TransactionSender;
 import com.myster.type.MysterType;
 
 /**
  * Server side datagram implementation of Myster type lister conneciton section. 
  */
-public class TypeDatagramServer extends TransactionProtocol {
+public class TypeDatagramServer implements TransactionProtocol {
     public static final int NUMBER_OF_FILE_TYPE_TO_RETURN = 100;
 
     public static final int TYPE_TRANSACTION_CODE = com.myster.client.datagram.TypeDatagramClient.TYPE_TRANSACTION_CODE;
 
+    @Override
     public int getTransactionCode() {
         return TYPE_TRANSACTION_CODE;
     }
 
-    public void transactionReceived(Transaction transaction, Object transactionObject)
+    @Override
+    public void transactionReceived(TransactionSender sender,
+                                    Transaction transaction,
+                                    Object transactionObject)
             throws BadPacketException {
         try {
 
@@ -39,8 +44,9 @@ public class TypeDatagramServer extends TransactionProtocol {
                 out.writeInt(temp[i].getAsInt()); //BAD protocol
             }
 
-            sendTransaction(new Transaction(transaction, byteOutputStream
-                    .toByteArray(), Transaction.NO_ERROR));
+            sender.sendTransaction(new Transaction(transaction,
+                                                   byteOutputStream.toByteArray(),
+                                                   Transaction.NO_ERROR));
 
             System.out.println("SIZE OF ARRAY IS -> "
                     + byteOutputStream.toByteArray().length);
