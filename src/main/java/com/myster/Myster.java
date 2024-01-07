@@ -13,7 +13,9 @@ import java.awt.Desktop;
 import java.awt.Desktop.Action;
 import java.awt.EventQueue;
 import java.awt.Frame;
+import java.io.BufferedInputStream;
 import java.io.IOException;
+import java.io.InputStream;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.net.InetAddress;
@@ -23,6 +25,7 @@ import java.net.UnknownHostException;
 import java.util.ArrayList;
 import java.util.Enumeration;
 import java.util.List;
+import java.util.logging.LogManager;
 
 import javax.swing.JFrame;
 import javax.swing.SwingUtilities;
@@ -76,14 +79,22 @@ import com.myster.util.I18n;
 import com.simtechdata.waifupnp.UPnP;
 
 public class Myster {
-    public static void main(String[] args) {
+    public static void main(String[] args) throws IOException {
+        setupLogging();
+        
+        String loggingConfig = System.getProperty("java.util.logging.config.file");
+        if (loggingConfig != null) {
+            System.out.println("Logging config file: " + loggingConfig);
+        } else {
+            System.out.println("Logging config file not set");
+        }
+        
         final long startTime = System.currentTimeMillis();
 
         final boolean isServer = (args.length > 0 && args[0].equals("-s"));
         
         // ignored by everyone except mac
         System.setProperty("apple.laf.useScreenMenuBar", "true");
-//        System.setProperty("com.apple.macos.use-file-dialog-packages", "true");
 
         System.out.println("java.vm.specification.version:"
                 + System.getProperty("java.vm.specification.version"));
@@ -353,6 +364,20 @@ public class Myster {
         System.out.println("External TCP/IP port enabled: "+ UPnP.openPortTCP(MysterGlobals.SERVER_PORT));
         System.out.println("External UDP/IP port enabled: " + UPnP.openPortUDP(MysterGlobals.SERVER_PORT));
     } // Utils, globals etc.. //These variables are System wide variables //
+
+
+    private static void setupLogging() throws IOException {
+        InputStream inputStream =
+                Myster.class.getClassLoader().getResourceAsStream("logging.properties");
+        if (inputStream != null) {
+            try (InputStream in = new BufferedInputStream(inputStream)) {
+                LogManager.getLogManager().readConfiguration(in);
+            }
+        } else {
+            System.out.println("logging.properties file not found");
+            return;
+        }
+    }
 
 
     private static void printoutAllNetworkInterfaces() {

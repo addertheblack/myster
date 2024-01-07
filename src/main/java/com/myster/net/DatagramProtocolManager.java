@@ -166,13 +166,8 @@ public class DatagramProtocolManager {
         public synchronized void sendPacket(ImmutableDatagramPacket p) {
             if (dsocket == null) {
                 if (System.currentTimeMillis() - lastErrorTime > 5 * 60 * 100) {
-                    try {
-                        dsocket = new AsyncDatagramSocket(port);
-                        dsocket.setPortListener(this);
-                    } catch (IOException ex) {
-                        System.out.println("The datagram socket could not be created ->> ");
-                        ex.printStackTrace();
-                    }
+                    dsocket = new AsyncDatagramSocket(port);
+                    dsocket.setPortListener(this);
                 }
             }
             if (dsocket != null) {
