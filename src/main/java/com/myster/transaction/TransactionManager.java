@@ -210,9 +210,7 @@ public class TransactionManager {
                             + transaction.getTransactionCode());
 
                     sendTransaction(sender, new Transaction(transaction, new byte[0],
-                            Transaction.TRANSACTION_TYPE_UNKNOWN));//returning
-                    // error
-                    // here!
+                            Transaction.TRANSACTION_TYPE_UNKNOWN));
 
                     return;
                 }

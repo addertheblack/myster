@@ -108,8 +108,9 @@ abstract public class AbstractHeap<E> extends AbstractCollection<E> implements H
 
         @SuppressWarnings("unchecked")
         public E next() {
-            if (index == size_)
+            if (index == size_) {
                 throw new NoSuchElementException();
+            }
             removeLegal = true;
             return (E) data[index++];
         }
@@ -119,8 +120,9 @@ abstract public class AbstractHeap<E> extends AbstractCollection<E> implements H
         }
 
         public void remove() {
-            if (!removeLegal)
-                throw new IllegalStateException();
+            if (!removeLegal) {
+                throw new IllegalStateException("Can't remove without next() being called.");
+            }
             removeLegal = false;
             data[index] = data[--size_];
             heapify(index);

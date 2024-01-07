@@ -11,31 +11,40 @@ import java.io.IOException;
 import java.io.InterruptedIOException;
 import java.net.DatagramPacket;
 import java.net.DatagramSocket;
+import java.util.Deque;
+import java.util.concurrent.ConcurrentLinkedDeque;
+import java.util.concurrent.Executors;
+import java.util.logging.Logger;
 
 import com.general.thread.Invoker;
-import com.general.util.LinkedList;
-import com.general.util.Util;
-import com.myster.util.MysterThread;
 
 public final class AsyncDatagramSocket {
+    private static final Logger LOGGER = Logger.getLogger(AsyncDatagramSocket.class.getName());
+    
+    // Specify the maximum size of a UDP packet. This is the maximum size of a UDP packet.
     private static final int BIG_BUFFER = 65536;
     
-    private final LinkedList<ImmutableDatagramPacket> queue = new LinkedList<>();
-    private final ManagerThread managerThread;
+    private final Deque<ImmutableDatagramPacket> queue = new ConcurrentLinkedDeque<>();
+    private final SocketRunner socketRunner;
     private final DatagramPacket bufferPacket;
     private final int port;
     private final Invoker invoker = Invoker.EDT;
 
+    private volatile int usedPort = -1;
+
     /** This is accessed by the thread. All call backs to this listener happen on the invoker */
-    private AsyncDatagramListener portListener;
+    private volatile AsyncDatagramListener portListener;
     
-    public AsyncDatagramSocket(int port) throws IOException {
+    /**
+     * @param port to user or 0 for any free port
+     */
+    public AsyncDatagramSocket(int port) {
         this.port = port;
 
         bufferPacket = new DatagramPacket(new byte[BIG_BUFFER], BIG_BUFFER);
 
-        managerThread = new ManagerThread();
-        managerThread.start();
+        socketRunner = new SocketRunner();
+        Executors.newVirtualThreadPerTaskExecutor().execute(socketRunner);
     }
 
     public void setPortListener(AsyncDatagramListener p) {
@@ -43,14 +52,24 @@ public final class AsyncDatagramSocket {
     }
 
     /**
+     * Package protected for unit tests
+     * 
+     * @return port used or -1 if not yet known or -2 if socket is closed
+     */
+    int getUsedPort() {
+        return usedPort;
+    }
+
+    /**
      * Asynchronous send. Will never block but consumes memory.
      */
     public void sendPacket(ImmutableDatagramPacket p) {
-        queue.addToTail(p);
+        queue.addLast(p);
     }
 
     public void close() {
-        managerThread.end();
+        // don't wait for the thread to close. It will be done asynchronously.
+        socketRunner.flagToEnd();
     }
 
     private void doGetNewPackets(DatagramSocket dsocket) throws IOException {
@@ -82,8 +101,8 @@ public final class AsyncDatagramSocket {
          * It's ok if we overload the buffer and cause packet loss. But we also want to check for
          * incoming packets once in a while.
          */
-        while (queue.getSize() > 0 && counter < 50) {
-            ImmutableDatagramPacket p = queue.removeFromHead();
+        while (queue.peekFirst() != null && counter < 50) {
+            ImmutableDatagramPacket p = queue.removeFirst();
 
             if (p != null) {
                 dsocket.send(p.getDatagramPacket());
@@ -92,41 +111,64 @@ public final class AsyncDatagramSocket {
         }
     }
 
-    private class ManagerThread extends MysterThread {
+    private class SocketRunner implements Runnable {
+        private volatile boolean endFlag = false;
+
         public void run() {
-            for (int counter = 0; counter < 3; counter++) {
-                System.out.println("Opening dsocket on UDP port " + port + ".");
+            int counter = 0;
+            for (; counter < 3; counter++) {
                 try (DatagramSocket dsocket = open(port)) {
-                    for (;;) {
-                        if (endFlag) {
-                            closingHook();
-                            return;
-                        }
+                    usedPort = dsocket.getLocalPort();
+                    LOGGER.info("Opened dsocket on UDP port " + usedPort + ".");
 
-                        doGetNewPackets(dsocket);
-
-                        if (endFlag) {
-                            closingHook();
-                            return;
-                        }
-
-                        doSendNewPackets(dsocket);
-                    }
+                    runMainLoop(dsocket);
                 } catch (IOException ex) {
-                    System.out.println("Communication error on UDP port " + port + " closing dsocket...");
+                    LOGGER.info("Communication error on UDP port " + port
+                            + " closing dsocket. counter: " + counter + " error: " + ex.getMessage());
                     try {
+                        /*
+                         * Wait a bit before trying again. This is to prevent a
+                         * condition where there is an error because the
+                         * previous instance of this AsyncDatagramSocket is
+                         * still closing because it is closed by this thread
+                         * asynchronously.
+                         */
                         Thread.sleep(1000);
                     } catch (InterruptedException exception) {
                         exception.printStackTrace();
                     }
                 }
             }
-            
-            System.out.println("UDP port " + port + " giving up due to too many errors...");
+            //-Djava.util.logging.config.file=src/main/resources/logging.properties
+
+            usedPort = -2;
+
+            if (counter >= 3) {
+                LOGGER.info("UDP port " + port + " giving up due to too many errors...");
+            }
         }
+
+        private void runMainLoop(DatagramSocket dsocket) throws IOException {
+            for (;;) {
+                if (endFlag) {
+                    closingHook();
+                    return;
+                }
+
+                doGetNewPackets(dsocket);
+
+                if (endFlag) {
+                    closingHook();
+                    return;
+                }
+
+                doSendNewPackets(dsocket);
+            }
+        }
+
         
         private void closingHook() {
-            System.out.println("UDP port " + port + " is doing a happy close");
+            LOGGER.info("UDP port " + port + " is doing a happy close");
         }
 
         private static DatagramSocket open(int port) throws IOException {
@@ -136,9 +178,8 @@ public final class AsyncDatagramSocket {
             return dsocket;
         }
 
-        @Override
-        public void end() {
-            flagToEnd();
+        public void flagToEnd() {
+            endFlag = true;
         }
     }
 }
