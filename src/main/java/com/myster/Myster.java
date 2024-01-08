@@ -26,12 +26,14 @@ import java.util.ArrayList;
 import java.util.Enumeration;
 import java.util.List;
 import java.util.logging.LogManager;
+import java.util.logging.Logger;
 
 import javax.swing.JFrame;
 import javax.swing.SwingUtilities;
 
 import com.general.application.ApplicationContext;
 import com.general.application.ApplicationSingletonListener;
+import com.general.net.AsyncDatagramSocket;
 import com.general.util.AnswerDialog;
 import com.general.util.Util;
 import com.myster.application.MysterGlobals;
@@ -79,36 +81,37 @@ import com.myster.util.I18n;
 import com.simtechdata.waifupnp.UPnP;
 
 public class Myster {
+    private static final Logger LOGGER = Logger.getLogger(AsyncDatagramSocket.class.getName());
+
     public static void main(String[] args) throws IOException {
         setupLogging();
-        
+
         String loggingConfig = System.getProperty("java.util.logging.config.file");
         if (loggingConfig != null) {
-            System.out.println("Logging config file: " + loggingConfig);
+            LOGGER.info("Logging config file: " + loggingConfig);
         } else {
-            System.out.println("Logging config file not set");
+            LOGGER.info("Logging config file not set");
         }
-        
+
         final long startTime = System.currentTimeMillis();
 
         final boolean isServer = (args.length > 0 && args[0].equals("-s"));
-        
+
         // ignored by everyone except mac
         System.setProperty("apple.laf.useScreenMenuBar", "true");
 
-        System.out.println("java.vm.specification.version:"
+        LOGGER.info("java.vm.specification.version:"
                 + System.getProperty("java.vm.specification.version"));
-        System.out.println("java.vm.specification.vendor :"
+        LOGGER.info("java.vm.specification.vendor :"
                 + System.getProperty("java.vm.specification.vendor"));
-        System.out.println("java.vm.specification.name   :"
+        LOGGER.info("java.vm.specification.name   :"
                 + System.getProperty("java.vm.specification.name"));
-        System.out
-                .println("java.vm.version              :" + System.getProperty("java.vm.version"));
-        System.out.println("java.vm.vendor               :" + System.getProperty("java.vm.vendor"));
-        System.out.println("java.vm.name                 :" + System.getProperty("java.vm.name"));
-        System.out.println("Desktop.isDesktopSupported() :" + Desktop.isDesktopSupported());
+        LOGGER.info("java.vm.version              :" + System.getProperty("java.vm.version"));
+        LOGGER.info("java.vm.vendor               :" + System.getProperty("java.vm.vendor"));
+        LOGGER.info("java.vm.name                 :" + System.getProperty("java.vm.name"));
+        LOGGER.info("Desktop.isDesktopSupported() :" + Desktop.isDesktopSupported());
 
-        System.out.println("-------->> before javax.swing.UIManager invoke later "
+        LOGGER.info("-------->> before javax.swing.UIManager invoke later "
                 + (System.currentTimeMillis() - startTime));
 
         SwingUtilities.invokeLater(() -> {
@@ -140,17 +143,16 @@ public class Myster {
             f.dispose();
         });
 
-        System.out
-                .println("-------->> before Appl init " + (System.currentTimeMillis() - startTime));
+        LOGGER.info("-------->> before Appl init " + (System.currentTimeMillis() - startTime));
 
         ApplicationSingletonListener applicationSingletonListener =
                 new ApplicationSingletonListener() {
                     public void requestLaunch(String[] args) {}
 
-            public void errored(Exception ignore) {
-                // nothing
-            }
-        };
+                    public void errored(Exception ignore) {
+                        // nothing
+                    }
+                };
 
         ApplicationContext applicationContext =
                 new ApplicationContext(10457, applicationSingletonListener, args);
@@ -179,14 +181,14 @@ public class Myster {
 
         I18n.init();
 
-        System.out.println("MAIN THREAD: Starting loader Thread..");
-        
-        System.out.println("-------->> before preferences " + (System.currentTimeMillis() - startTime));
-        MysterPreferences preferences  = MysterPreferences.getInstance();
-        System.out.println("-------->> after preferences " + (System.currentTimeMillis() - startTime));
-        
+        LOGGER.info("MAIN THREAD: Starting loader Thread..");
+
+        LOGGER.info("-------->> before preferences " + (System.currentTimeMillis() - startTime));
+        MysterPreferences preferences = MysterPreferences.getInstance();
+        LOGGER.info("-------->> after preferences " + (System.currentTimeMillis() - startTime));
+
         ServerEventDispatcher serverDispatcher = new ServerEventDispatcher();
-        DatagramProtocolManager datagramManager = new DatagramProtocolManager(); 
+        DatagramProtocolManager datagramManager = new DatagramProtocolManager();
         TransactionManager transactionManager =
                 new TransactionManager(serverDispatcher, datagramManager);
 
@@ -195,17 +197,17 @@ public class Myster {
                                        new MysterDatagramImpl(transactionManager,
                                                               new UDPPingClient(datagramManager)));
 
-        System.out.println("-------->> before IPListManager "
-                + (System.currentTimeMillis() - startTime));
+        LOGGER.info("-------->> before IPListManager " + (System.currentTimeMillis() - startTime));
         IpListManager ipListManager =
                 new IpListManager(new MysterIpPoolImpl(java.util.prefs.Preferences.userRoot(),
                                                        protocol),
                                   protocol,
-                                  java.util.prefs.Preferences.userRoot().node("Tracker.IpListManager"));
-        System.out.println("-------->> after IPListManager "
-                + (System.currentTimeMillis() - startTime));
+                                  java.util.prefs.Preferences.userRoot()
+                                          .node("Tracker.IpListManager"));
+        LOGGER.info("-------->> after IPListManager " + (System.currentTimeMillis() - startTime));
 
-        final HashCrawlerManager crawlerManager = new MultiSourceHashSearch(ipListManager, protocol);
+        final HashCrawlerManager crawlerManager =
+                new MultiSourceHashSearch(ipListManager, protocol);
         ClientWindow.init(protocol, crawlerManager, ipListManager);
 
 
@@ -215,12 +217,14 @@ public class Myster {
                                                      datagramManager,
                                                      transactionManager,
                                                      serverDispatcher);
-        
-        serverFacade.addDatagramTransactions(
-                                             new TopTenDatagramServer(ipListManager), new TypeDatagramServer(),
-                                             new SearchDatagramServer(), new ServerStatsDatagramServer(serverFacade::getIdentity),
-                                             new FileStatsDatagramServer(), new SearchHashDatagramServer()
-                                             );
+
+        serverFacade
+                .addDatagramTransactions(new TopTenDatagramServer(ipListManager),
+                                         new TypeDatagramServer(),
+                                         new SearchDatagramServer(),
+                                         new ServerStatsDatagramServer(serverFacade::getIdentity),
+                                         new FileStatsDatagramServer(),
+                                         new SearchHashDatagramServer());
 
         final HashManager hashManager = new HashManager();
         FileTypeListManager.init((f, l) -> hashManager.findHash(f, l));
@@ -228,13 +232,15 @@ public class Myster {
         // asynchronously start the server
         serverFacade.startServer();
 
-        System.out.println("-------->> before invokeAndWait " + (System.currentTimeMillis() - startTime));
+        LOGGER.info("-------->> before invokeAndWait " + (System.currentTimeMillis() - startTime));
 
         try {
-        	EventQueue.invokeAndWait(() -> {
-                System.out.println("-------->> inside  invokeAndWait" + (System.currentTimeMillis() - startTime));
+            EventQueue.invokeAndWait(() -> {
+                LOGGER.info("-------->> inside  invokeAndWait"
+                        + (System.currentTimeMillis() - startTime));
                 try {
-                    if (com.myster.type.TypeDescriptionList.getDefault().getEnabledTypes().length <= 0) {
+                    if (com.myster.type.TypeDescriptionList.getDefault()
+                            .getEnabledTypes().length <= 0) {
                         AnswerDialog
                                 .simpleAlert("There are not enabled types. This screws up Myster. Please make sure"
                                         + " the typedescriptionlist.mml is in the right place and correctly"
@@ -243,13 +249,13 @@ public class Myster {
                         return; // not reached
                     }
                 } catch (Exception ex) {
-                    AnswerDialog.simpleAlert("Could not load the Type Description List: \n\n"
-                            + ex);
+                    AnswerDialog.simpleAlert("Could not load the Type Description List: \n\n" + ex);
                     MysterGlobals.quit();
                     return; // not reached
                 }
 
-                System.out.println("-------->> before menuBarFactory " + (System.currentTimeMillis() - startTime));
+                LOGGER.info("-------->> before menuBarFactory "
+                        + (System.currentTimeMillis() - startTime));
 
                 MysterMenuBar menuBarFactory = new MysterMenuBar();
                 WindowManager windowManager = new WindowManager();
@@ -257,16 +263,16 @@ public class Myster {
                         new MysterFrameContext(menuBarFactory, windowManager);
                 PreferencesGui preferencesGui = new PreferencesGui(context);
 
-                serverFacade.addDatagramTransactions(
-                    new ImTransactionServer(preferences,
-                                         (instantMessage) -> (new MessageWindow(context,
-                                                                                protocol,
-                                                                                instantMessage,
-                                                                                ipListManager::getQuickServerStats))
-                                                                                        .show()));
+                serverFacade
+                        .addDatagramTransactions(new ImTransactionServer(preferences,
+                                                                         (instantMessage) -> (new MessageWindow(context,
+                                                                                                                protocol,
+                                                                                                                instantMessage,
+                                                                                                                ipListManager::getQuickServerStats))
+                                                                                                                        .show()));
 
                 menuBarFactory.initMenuBar(ipListManager, preferencesGui, windowManager, protocol);
-                
+
                 String osName = System.getProperty("os.name").toLowerCase();
                 if (osName.startsWith("mac os") && Desktop.isDesktopSupported()) {
                     menuBarFactory.addMenuListener(new MenuBarListener() {
@@ -275,7 +281,7 @@ public class Myster {
                         }
                     });
                 }
-                
+
                 TrackerWindow.init(ipListManager, context);
 
                 com.myster.hash.ui.HashManagerGUI.init(context, hashManager);
@@ -283,14 +289,13 @@ public class Myster {
                 ServerStatsWindow.init(serverFacade.getServerDispatcher().getServerContext(),
                                        context,
                                        protocol);
-                System.out
-                        .println("-------->> before ServerStatsWindow.getInstance().pack() "
+                LOGGER.info("-------->> before ServerStatsWindow.getInstance().pack() "
                         + (System.currentTimeMillis() - startTime));
                 ServerStatsWindow.getInstance().pack();
 
                 SearchWindow.init(protocol, crawlerManager, ipListManager);
 
-                System.out.println("-------->> before addPanels "
+                LOGGER.info("-------->> before addPanels "
                         + (System.currentTimeMillis() - startTime));
                 preferencesGui.addPanel(BandwidthManager.getPrefsPanel());
                 preferencesGui.addPanel(new BannersPreferences());
@@ -299,16 +304,16 @@ public class Myster {
                 preferencesGui.addPanel(new MessagePreferencesPanel(preferences));
                 preferencesGui.addPanel(new TypeManagerPreferencesGUI());
 
-//                try {
-//                    (new com.myster.plugin.PluginLoader(new File(MysterGlobals
-//                            .getCurrentDirectory(), "plugins"))).loadPlugins();
-//                } catch (Exception ex) {
-//                    // nothing
-//                }
+                // try {
+                // (new com.myster.plugin.PluginLoader(new File(MysterGlobals
+                // .getCurrentDirectory(), "plugins"))).loadPlugins();
+                // } catch (Exception ex) {
+                // // nothing
+                // }
 
                 com.myster.hash.ui.HashPreferences.init(preferencesGui, hashManager);
 
-                System.out.println("-------->> before inits " + (System.currentTimeMillis() - startTime));
+                LOGGER.info("-------->> before inits " + (System.currentTimeMillis() - startTime));
 
                 if (isServer) {
                     // nothing
@@ -321,48 +326,50 @@ public class Myster {
                 }
 
                 try {
-                    com.myster.client.stream.MSPartialFile.restartDownloads(crawlerManager, context);
+                    com.myster.client.stream.MSPartialFile.restartDownloads(crawlerManager,
+                                                                            context);
                 } catch (IOException ex) {
-                    System.out.println("Error in restarting downloads.");
+                    LOGGER.info("Error in restarting downloads.");
                     ex.printStackTrace();
                 }
-                
+
                 if (Desktop.getDesktop().isSupported(Action.APP_PREFERENCES)) {
                     Desktop.getDesktop().setPreferencesHandler(e -> preferencesGui.setGUI(true));
                 }
-                
+
                 if (Desktop.getDesktop().isSupported(Action.APP_ABOUT)) {
                     Desktop.getDesktop().setAboutHandler(e -> AnswerDialog
                             .simpleAlert("Myster PR 10\n\nCommon, join the party.."));
                 }
             });
 
-            System.out.println("-------->>" + (System.currentTimeMillis() - startTime));
+            LOGGER.info("-------->>" + (System.currentTimeMillis() - startTime));
 
-            
+
             Thread.sleep(1);
-            
+
             Util.invokeLater(() -> MysterTray.init());
-            
-          
+
+
         } catch (InterruptedException ex) {
-            ex.printStackTrace(); //never reached.
-        } catch (InvocationTargetException ex ) {
-        	Util.invokeLater(() -> AnswerDialog.simpleAlert(""+ex.getTargetException().toString()));
+            ex.printStackTrace(); // never reached.
+        } catch (InvocationTargetException ex) {
+            Util.invokeLater(() -> AnswerDialog
+                    .simpleAlert("" + ex.getTargetException().toString()));
         }
 
         hashManager.start();
-        
+
         // ugh
         printoutAllNetworkInterfaces();
         printoutAllIpAddresses();
-        System.out.println("UPnP available: " +UPnP.isUPnPAvailable());
-        System.out.println("External UPnP gateway: " +UPnP.getDefaultGatewayIP());
-        System.out.println("External IP: " +UPnP.getExternalIP());
-        System.out.println("Local IP: " +UPnP.getLocalIP());
-        System.out.println("isMappedTCP(): " + UPnP.isMappedTCP(MysterGlobals.SERVER_PORT));
-        System.out.println("External TCP/IP port enabled: "+ UPnP.openPortTCP(MysterGlobals.SERVER_PORT));
-        System.out.println("External UDP/IP port enabled: " + UPnP.openPortUDP(MysterGlobals.SERVER_PORT));
+        LOGGER.info("UPnP available: " + UPnP.isUPnPAvailable());
+        LOGGER.info("External UPnP gateway: " + UPnP.getDefaultGatewayIP());
+        LOGGER.info("External IP: " + UPnP.getExternalIP());
+        LOGGER.info("Local IP: " + UPnP.getLocalIP());
+        LOGGER.info("isMappedTCP(): " + UPnP.isMappedTCP(MysterGlobals.SERVER_PORT));
+        LOGGER.info("External TCP/IP port enabled: " + UPnP.openPortTCP(MysterGlobals.SERVER_PORT));
+        LOGGER.info("External UDP/IP port enabled: " + UPnP.openPortUDP(MysterGlobals.SERVER_PORT));
     } // Utils, globals etc.. //These variables are System wide variables //
 
 
@@ -374,7 +381,7 @@ public class Myster {
                 LogManager.getLogManager().readConfiguration(in);
             }
         } else {
-            System.out.println("logging.properties file not found");
+            LOGGER.info("logging.properties file not found");
             return;
         }
     }
@@ -382,19 +389,19 @@ public class Myster {
 
     private static void printoutAllNetworkInterfaces() {
         try {
-            System.out.println("Full list of Network Interfaces:");
+            LOGGER.info("Full list of Network Interfaces:");
             for (Enumeration<NetworkInterface> en = NetworkInterface.getNetworkInterfaces(); en
                     .hasMoreElements();) {
                 NetworkInterface intf = en.nextElement();
-                System.out.println("    " + intf.getName() + " " + intf.getDisplayName());
+                LOGGER.info("    " + intf.getName() + " " + intf.getDisplayName());
                 for (Enumeration<InetAddress> enumIpAddr = intf.getInetAddresses(); enumIpAddr
                         .hasMoreElements();) {
                     InetAddress nextAddress = enumIpAddr.nextElement();
-                    System.out.println("        " + nextAddress.toString());
+                    LOGGER.info("        " + nextAddress.toString());
                 }
             }
         } catch (SocketException e) {
-            System.out.println(" (error retrieving network interface list)");
+            LOGGER.info(" (error retrieving network interface list)");
         }
     }
 
@@ -402,20 +409,20 @@ public class Myster {
         List<InetAddress> networkAddresses = new ArrayList<>();
         try {
             InetAddress localhost = InetAddress.getLocalHost();
-            System.out.println("IP Addr for local host: " + localhost.getHostAddress());
-            
+            LOGGER.info("IP Addr for local host: " + localhost.getHostAddress());
+
             // Just in case this host has multiple IP addresses....
             InetAddress[] allMyIps = InetAddress.getAllByName(localhost.getCanonicalHostName());
             if (allMyIps != null && allMyIps.length > 1) {
-                System.out.println(" Full list of IP addresses:");
+                LOGGER.info(" Full list of IP addresses:");
                 for (int i = 0; i < allMyIps.length; i++) {
-                    System.out.println("    " + allMyIps[i].getHostAddress());
+                    LOGGER.info("    " + allMyIps[i].getHostAddress());
                     if (networkAddresses.isEmpty())
                         networkAddresses.add(allMyIps[i]);
                 }
             }
         } catch (UnknownHostException e) {
-            System.out.println(" (error retrieving server host name)");
+            LOGGER.info(" (error retrieving server host name)");
         }
     }
 }
