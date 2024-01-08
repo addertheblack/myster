@@ -1159,6 +1159,10 @@ Work on DEV 8:
     -> Made search and connect the default buttons
     -> Made server threads use virtual threads
    
+2023-01-07
+    -> Added unit testing frameworks to the build
+    -> Added test for min/max heap and AsynchronousDatagramSocket
+    -> Added first hints of using the Java logging framework (JUL)
 		
 (Red List)
 to do:
@@ -1181,7 +1185,6 @@ Split off concurrency library from Myster and publish to Maven
 Make Myster modules compatible
 fix naming.. We probably want to use myster.org
 add unit tests
-delete older myster download code that doens't rely on md5
 Allow new code to use a server/port instead of and in addition to a md5
 Probably want to move that stuff into preferences/registry
 fix writeUTF to use write utf-8 instead.. fix data input/outputstreams
