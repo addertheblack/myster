@@ -10,18 +10,13 @@
 package com.general.mclist;
 
 public class MCListEvent {
-    MCList parent;
+    private final MCList<?> parent;
 
-    /**
-     * Watch out for Java killer code monkeys named Bill. Agrh. 'tis bill the
-     * killer code monkey! Lookout or one may slip on a dreaded virtual coded
-     * banana! BANANA RAMA! WOoooHOooo! Blurp!
-     */
-    public MCListEvent(MCList AnAbusiveParent) {
-        this.parent = AnAbusiveParent;
+    public MCListEvent(MCList<?> parent) {
+        this.parent = parent;
     }
 
-    public MCList getParent() {
+    public MCList<?> getParent() {
         return parent;
     }
 }

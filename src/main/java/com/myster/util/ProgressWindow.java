@@ -13,6 +13,7 @@ import java.awt.Taskbar.Feature;
 import java.awt.event.MouseListener;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.logging.Logger;
 
 import javax.swing.JLabel;
 import javax.swing.JPanel;
@@ -21,8 +22,11 @@ import com.general.util.ProgressBar;
 import com.general.util.Util;
 import com.myster.ui.MysterFrame;
 import com.myster.ui.MysterFrameContext;
+import com.myster.ui.WindowLocationKeeper;
 
 public class ProgressWindow extends MysterFrame {
+    private static final Logger LOGGER = Logger.getLogger(ProgressWindow.class.getName());
+    
     public static final int X_SIZE = 468;
     public static final int Y_SIZE = 50;
     public static final int AD_HEIGHT = 60;
@@ -101,7 +105,7 @@ public class ProgressWindow extends MysterFrame {
 //            }
 //
 //            if (counter > 1) {
-//                System.out.println("I have tried " + counter
+//                LOGGER.fine("I have tried " + counter
 //                        + " times to change the size of the progress window!");
 //            }
 //        }
@@ -177,7 +181,7 @@ public class ProgressWindow extends MysterFrame {
         try {
             tracker.waitForID(0);
         } catch (Exception ex) {
-            System.out.println("Crap");
+            LOGGER.severe("Crap");
         }
 
         adPanel.addImage(ad);

@@ -52,7 +52,6 @@ public class FileInfoLister extends ServerThread {
             }
 
             out.writeUTF(mml.toString());
-            //System.out.println(mml.toString());
         } catch (IOException ex) {
             ex.printStackTrace();
             throw ex;

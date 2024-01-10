@@ -8,6 +8,7 @@ import java.awt.MenuItem;
 import java.awt.PopupMenu;
 import java.awt.SystemTray;
 import java.awt.TrayIcon;
+import java.util.logging.Logger;
 
 import javax.swing.JFrame;
 
@@ -16,6 +17,8 @@ import com.myster.server.ui.ServerStatsWindow;
 import com.myster.ui.MysterFrame;
 
 public class MysterTray {
+    private static final Logger LOGGER = Logger.getLogger(MysterTray.class.getName());
+    
     public static void init() {
     	if ( MysterGlobals.ON_MAC) {
     		return;
@@ -54,7 +57,7 @@ public class MysterTray {
                 exception.printStackTrace();
             }
         } else {
-            System.out.println("SystemTray                   :not supported");
+            LOGGER.info("SystemTray                   :not supported");
         }
     }
 }

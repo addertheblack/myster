@@ -17,6 +17,7 @@ import java.lang.ref.Cleaner;
 import java.net.UnknownHostException;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.logging.Logger;
 import java.util.prefs.Preferences;
 
 import com.general.thread.CallAdapter;
@@ -37,6 +38,8 @@ import com.myster.util.MysterThread;
  */
 
 class MysterServerImplementation {
+    private static final Logger LOGGER = Logger.getLogger("com.myster.tracker.MysterServer");
+    
     private MysterAddress ip;
     private double speed;
     private int timeup;
@@ -95,7 +98,7 @@ class MysterServerImplementation {
         createNewMysterIP(ip, 1, 50, 50, 1, 1, "", null, -1);
         if (!MysterServerImplementation.internalRefreshAll(protocol, this))
             throw new IOException("Failed to created new Myster IP");
-        // System.out.println("A New MysterIP Object = "+getAddress());
+        LOGGER.fine("A New MysterIP Object = "+getAddress());
     }
 
      MysterServerImplementation(Preferences node, MysterProtocol protocol) {
@@ -135,7 +138,7 @@ class MysterServerImplementation {
         } catch (NullPointerException ex) {
             ex.printStackTrace();
             numberOfFiles = new NumOfFiles();
-            System.out.println("IP: has no num of files " + ip);
+            LOGGER.info("IP: has no num of files " + ip);
         }
 
         serverIdentity = si;
@@ -308,14 +311,14 @@ class MysterServerImplementation {
 
             return workingmml;
         } catch (Exception ex) {
-            System.out.println("" + ex);
+            LOGGER.info("Exception while trying to go from MysterServer to MML " + ex);
             ex.printStackTrace();
         }
         return null; //NEVER HAPPENS!
     }
 
     private void setStatus(boolean b) {
-        //if (b!=upordown) System.out.println(ip+" is now "+(b?"up":"down"));
+        if (b!=upordown) LOGGER.fine(ip+" is now "+(b?"up":"down"));
         upordown = b;
         if (b)
             timeup++;
@@ -370,24 +373,25 @@ class MysterServerImplementation {
         //Note, routine checks to see if it's required.
         //MysterIP.internalRefreshStatus(mysterip);
 
+        long time = System.currentTimeMillis();
+        
         //Do Statistics update
         try {
             //check if the update is needed.
             if (System.currentTimeMillis() - mysterip.timeoflastupdate < UPDATETIME_MS)
-                throw new MassiveProblemException("");
+                throw new MinorProblemException("Too soon after last update");
 
             if (!(mysterip.upordown))
-                throw new MassiveProblemException("");
+                throw new MinorProblemException("Can't update. Server is not up");
 
             mysterip.timeoflastupdate = System.currentTimeMillis();
-            //System.out.println("Getting stats from: "+mysterip.ip);
+            LOGGER.fine("Getting stats from: "+mysterip.ip);
 
             MysterStream m = protocol.getStream();
-            RobustMML mml = m.byIp(mysterip.getAddress(), m::getServerStats);
+            RobustMML mml = m.doSection(mysterip.getAddress(), m::getServerStats);
             if (mml == null)
-                throw new MassiveProblemException("");
-            //System.out.println("MML for "+mysterip.ip.toString()+ " is
-            // "+mml.toString());
+                throw new MinorProblemException("Can't get server stats for this server " + mysterip);
+            LOGGER.fine("MML for "+mysterip.ip.toString()+ " is "+mml.toString());
             String temp = mml.get("/Speed");
             if (temp == null)
                 temp = "1";
@@ -407,7 +411,7 @@ class MysterServerImplementation {
                     mysterip.uptime = Long.valueOf(uptimeString).longValue();
                 }
             } catch (NumberFormatException ex) {
-                // Number was badly formated
+                // ignore and keep going
             }
 
             synchronized (mysterip) {
@@ -433,18 +437,17 @@ class MysterServerImplementation {
                 }
             }
 
-            //System.out.println("The stats update of "+mysterip.ip+" took
-            // "+(System.currentTimeMillis()-time)+"ms");
+            LOGGER.fine("The stats update of " + mysterip.ip + " took "
+                    + (System.currentTimeMillis() - time) + "ms");
             return true;
         } catch (IOException ex) {
-            System.out.println("MYSTERIP: Error in refresh fuction of MysterIP on IP: "
-                    + mysterip.ip + "  " + ex);
+            LOGGER.info("MYSTERIP: Error in refresh fuction of MysterIP on IP: " + mysterip.ip
+                    + "  " + ex);
             //ex.printStackTrace();
-        } catch (MassiveProblemException ex) {
-            //System.out.println("Some sort of problem stopped "+mysterip.ip+"
-            // from being refreshed.");
+        } catch (MinorProblemException ex) {
+            LOGGER.fine("Some sort of problem stopped "+mysterip.ip+" from being refreshed." + ex);
         } catch (Exception ex) {
-            System.out.println("Unexpected error occured in internal refresh all");
+            LOGGER.warning("Unexpected error occured in internal refresh all " + ex);
             ex.printStackTrace();
         } finally {
             mysterip.occupied = false; //we're done.
@@ -489,8 +492,8 @@ class MysterServerImplementation {
         }
     }
 
-    private static class MassiveProblemException extends Exception {
-        public MassiveProblemException(String s) {
+    private static class MinorProblemException extends Exception {
+        public MinorProblemException(String s) {
             super(s);
         }
     }
@@ -512,7 +515,7 @@ class MysterServerImplementation {
             } catch (NullPointerException ex) {
                 return 0;
             } catch (Exception ex) {
-                System.out.println("UNexcepted Error occured");
+                LOGGER.warning("Unexcepted Error occured");
                 ex.printStackTrace();
                 return 0;
             }

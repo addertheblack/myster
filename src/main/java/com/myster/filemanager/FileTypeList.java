@@ -24,6 +24,7 @@ import java.util.List;
 import java.util.Set;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
+import java.util.logging.Logger;
 
 import com.general.thread.CallListener;
 import com.general.thread.CancellableCallable;
@@ -38,6 +39,8 @@ import com.myster.pref.MysterPreferences;
 import com.myster.type.MysterType;
 
 public class FileTypeList {
+    private static final Logger LOGGER = Logger.getLogger(FileTypeList.class.getName());
+    
     private List<FileItem> filelist; // List of java.io.FileItem objects that are
 
     // shared.
@@ -546,8 +549,8 @@ public class FileTypeList {
             if (telomere < 0)
                 return;
             if (!file.isDirectory() || !file.exists()) {
-                System.out.println("Nonsence sent to indexDir. Does this "
-                        + "type have a d/l dir associated with it?");
+                LOGGER.warning("Nonsence sent to indexDir. Does this "
+                               + "type have a d/l dir associated with it?");
                 return;
             }
             

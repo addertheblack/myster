@@ -246,7 +246,6 @@ class BlockedThread {
                 int randomNumber = (int) (Math.random() * waitLatency);
                 if (randomNumber < (waitLatency - sleepAmount)) {
                     thread = null;
-                    //System.out.println("Skip");
                     return;
                 } else {
                     sleepAmount = 1;
@@ -259,7 +258,6 @@ class BlockedThread {
                     wait(sleepAmount);
                     WAIT_LATENCY = System.currentTimeMillis() - sstartTime + 1
                             - sleepAmount; //the +1 is important
-                    //System.out.println("Wait latency: "+WAIT_LATENCY);
                 } else {
                     wait(sleepAmount);
                 }
@@ -463,7 +461,6 @@ class BandwidthImpl implements Bandwidth {
 
     public final synchronized void setRate(double rate) {
         this.rate = (rate * 1024) / 1000; //rate was in k/s but not now.
-        System.out.println("rate is now :" + rate);
     }
 }
 

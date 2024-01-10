@@ -17,10 +17,8 @@ import com.general.thread.CallListener;
 import com.general.thread.CancellableCallable;
 
 public class Util { //This code was taken from an Apple Sample Code package,
-
     public static Image loadImage(String filename, Component watcher) {
         if (filename != null) {
-            System.out.println(watcher.getClass().getName());
             URL url = watcher.getClass().getResource(filename);
             return loadImage(filename, watcher, url);
         }

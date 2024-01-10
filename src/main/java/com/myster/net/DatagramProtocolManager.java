@@ -4,6 +4,7 @@ import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.function.Function;
+import java.util.logging.Logger;
 
 import com.general.net.AsyncDatagramListener;
 import com.general.net.AsyncDatagramSocket;
@@ -96,6 +97,8 @@ public class DatagramProtocolManager {
      * This class is the implementation of the transport manager. Could be any class.
      */
     private static class GenericTransportManager implements TransportManager, AsyncDatagramListener {
+        private static final Logger LOGGER = Logger.getLogger(GenericTransportManager.class.getName());
+        
         private final Map<Short, DatagramTransport> transportProtocols = new HashMap<>();
         private final int port;
         
@@ -133,12 +136,12 @@ public class DatagramProtocolManager {
                     t.packetReceived(this::sendPacket, p);
                 } else {
                     if (MysterGlobals.SERVER_PORT == p.getPort()) {
-                        System.out.println("Transport Code not found -> " + getCodeFromPacket(p)
-                                + " " + p.getAddress().toString() + ":" + p.getPort());
+                        LOGGER.info("Transport Code not found -> " + getCodeFromPacket(p) + " "
+                                    + p.getAddress().toString() + ":" + p.getPort());
                     }
                 }
             } catch (IOException ex) {
-                System.out.println("Packet too short Exception.");
+                LOGGER.info("Packet too short Exception.");
                 ex.printStackTrace();
             }
         }

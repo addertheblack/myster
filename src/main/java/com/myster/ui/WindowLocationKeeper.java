@@ -10,6 +10,7 @@ import java.awt.event.WindowEvent;
 import java.util.List;
 import java.util.NoSuchElementException;
 import java.util.StringTokenizer;
+import java.util.logging.Logger;
 
 import javax.swing.JFrame;
 
@@ -30,6 +31,7 @@ import com.myster.pref.PreferencesMML;
  */
 
 public class WindowLocationKeeper {
+    private static final Logger LOGGER = Logger.getLogger(WindowLocationKeeper.class.getName());
 
     private String key;
 
@@ -108,12 +110,12 @@ public class WindowLocationKeeper {
 
     public static synchronized void init() {
         if (initFlag)
-            return; //dont init twice.
+            return; //don't init twice.
 
         initFlag = true;
         oldPrefs = new PreferencesMML(MysterPreferences.getInstance().getAsMML(
                 PREF_KEY, new PreferencesMML()).copyMML());
-        System.out.println("" + MysterPreferences.getInstance().getAsMML(PREF_KEY));
+        LOGGER.info("" + MysterPreferences.getInstance().getAsMML(PREF_KEY));
     }
 
     public static boolean fitsOnScreen(Rectangle rect) {
@@ -139,7 +141,7 @@ public class WindowLocationKeeper {
                     + (keyList.get(i)), "0,0,400,400"));
             if (!fitsOnScreen(rectangles[i]))
                 rectangles[i].setLocation(50, 50);
-            //System.out.println(key+(String)(keyList.elementAt(i)));
+            LOGGER.fine("Getting the last window location " + key + keyList.get(i));
         }
 
         return rectangles;

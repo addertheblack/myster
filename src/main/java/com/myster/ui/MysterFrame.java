@@ -196,7 +196,6 @@ public class MysterFrame extends JFrame {
         if (oldMenuBar == null) {
             setJMenuBar(newMenuBar);
         } else {
-            System.out.println("Swapped menus");
             int maxOldMenus = oldMenuBar.getMenuCount();
             int maxNewMenus = newMenuBar.getMenuCount();
 

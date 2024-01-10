@@ -8,17 +8,17 @@ import java.lang.reflect.InvocationTargetException;
  */
 public class MCListFactory {
 
-    public static MCList buildMCList(int numberofcolumns, boolean singleselect, Component c) {
+    public static <E> MCList<E> buildMCList(int numberofcolumns, boolean singleselect, Component c) {
         String version = System.getProperty("java.version");
         if (false || version.startsWith("1.1") || version.startsWith("1.0")) {
             throw new IllegalStateException("Nope. Not doing 1.1 or 1.0 Java anymore"); //  new AWTMCList(numberofcolumns, singleselect, c);
         } else {
             try {
-                Class jmcListClass = Class.forName("com.general.mclist.JMCList");
-                Constructor jmcListConstructor = jmcListClass.getConstructor(new Class[] {
-                        Integer.TYPE, Boolean.TYPE });
-                return (MCList) jmcListConstructor.newInstance(new Object[] {
-                        new Integer(numberofcolumns), new Boolean(singleselect) });
+                @SuppressWarnings("unchecked")
+                Class<JMCList<E>> jmcListClass = (Class<JMCList<E>>) Class.forName("com.general.mclist.JMCList");
+                Constructor<JMCList<E>> jmcListConstructor =
+                        jmcListClass.getConstructor(Integer.TYPE, Boolean.TYPE);
+                return jmcListConstructor.newInstance(numberofcolumns, singleselect);
             } catch (IllegalArgumentException e) {
                 e.printStackTrace();
             } catch (InstantiationException e) {

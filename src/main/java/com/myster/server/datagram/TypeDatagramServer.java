@@ -47,10 +47,6 @@ public class TypeDatagramServer implements TransactionProtocol {
             sender.sendTransaction(new Transaction(transaction,
                                                    byteOutputStream.toByteArray(),
                                                    Transaction.NO_ERROR));
-
-            System.out.println("SIZE OF ARRAY IS -> "
-                    + byteOutputStream.toByteArray().length);
-
         } catch (IOException ex) {
             throw new BadPacketException("Bad packet " + ex);
         }

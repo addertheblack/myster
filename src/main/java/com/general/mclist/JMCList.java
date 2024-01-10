@@ -28,7 +28,7 @@ import javax.swing.table.AbstractTableModel;
 import javax.swing.table.JTableHeader;
 import javax.swing.table.TableCellRenderer;
 
-public class JMCList extends JTable implements MCList {
+public class JMCList<E> extends JTable implements MCList<E> {
     private final JScrollPane scrollPane;
     private final List<MCListEventListener> listeners;
 
@@ -38,7 +38,7 @@ public class JMCList extends JTable implements MCList {
 
     public JMCList(int numberOfColumns, boolean singleselect) {
         listeners = new ArrayList<>();
-        setModel(new MCListTableModel());
+        setModel(new MCListTableModel<E>());
         scrollPane = new JScrollPane(this);
         scrollPane.setDoubleBuffered(true);
         setShowHorizontalLines(false);
@@ -62,7 +62,7 @@ public class JMCList extends JTable implements MCList {
             }
         };
         
-        setSelectionModel(new MCListSelectionModel(getMCTableModel(), internalSelectionListener));
+        setSelectionModel(new MCListSelectionModel<E>(getMCTableModel(), internalSelectionListener));
 
         setColumnSelectionAllowed(false);
         getTableHeader().setReorderingAllowed(false);
@@ -83,7 +83,7 @@ public class JMCList extends JTable implements MCList {
         });
 
         getTableHeader().setDefaultRenderer(
-                new MCHeaderCellRenderer(getTableHeader().getDefaultRenderer(), getMCTableModel()));
+                new MCHeaderCellRenderer<E>(getTableHeader().getDefaultRenderer(), getMCTableModel()));
 
         addMouseListener(new MouseAdapter() {
             public void mouseClicked(MouseEvent e) {
@@ -102,8 +102,9 @@ public class JMCList extends JTable implements MCList {
                 : ListSelectionModel.MULTIPLE_INTERVAL_SELECTION);
     }
 
-    private MCListTableModel getMCTableModel() {
-        return (MCListTableModel) getModel();
+    @SuppressWarnings("unchecked")
+    private MCListTableModel<E> getMCTableModel() {
+        return (MCListTableModel<E>) getModel();
     }
 
     /*
@@ -168,7 +169,7 @@ public class JMCList extends JTable implements MCList {
      * 
      * @see com.general.jmclist.MCList#addItem(com.general.mclist.MCListItemInterface)
      */
-    public void addItem(MCListItemInterface m) {
+    public void addItem(MCListItemInterface<E> m) {
         getMCTableModel().addRow(m);
     }
 
@@ -177,7 +178,7 @@ public class JMCList extends JTable implements MCList {
      * 
      * @see com.general.jmclist.MCList#addItem(com.general.mclist.MCListItemInterface[])
      */
-    public void addItem(MCListItemInterface[] m) {
+    public void addItem(MCListItemInterface<E>[] m) {
         getMCTableModel().addRows(m);
     }
 
@@ -189,7 +190,7 @@ public class JMCList extends JTable implements MCList {
     int lastSort = -1;
 
     public void setSorted(boolean isSorted) {
-        MCListTableModel model = getMCTableModel();
+        MCListTableModel<E> model = getMCTableModel();
         if (isSorted && model.getSortByIndex() == -1) {
             model.sortByIndex(lastSort);
         } else {
@@ -272,8 +273,9 @@ public class JMCList extends JTable implements MCList {
         return getMCListSelectionModel().getSelectedIndexes();
     }
 
-    private MCListSelectionModel getMCListSelectionModel() {
-        return (MCListSelectionModel) getSelectionModel();
+    @SuppressWarnings("unchecked")
+    private MCListSelectionModel<E> getMCListSelectionModel() {
+        return (MCListSelectionModel<E>) getSelectionModel();
     }
 
     /*
@@ -336,7 +338,7 @@ public class JMCList extends JTable implements MCList {
      * 
      * @see com.general.jmclist.MCList#removeItem(com.general.mclist.MCListItemInterface)
      */
-    public void removeItem(MCListItemInterface o) {
+    public void removeItem(MCListItemInterface<E> o) {
         getMCTableModel().removeRow(o);
     }
 
@@ -354,7 +356,7 @@ public class JMCList extends JTable implements MCList {
      * 
      * @see com.general.jmclist.MCList#getItem(int)
      */
-    public Object getItem(int i) {
+    public E getItem(int i) {
         return getMCTableModel().getRow(i).getObject();
     }
 
@@ -363,7 +365,7 @@ public class JMCList extends JTable implements MCList {
      * 
      * @see com.general.jmclist.MCList#getMCListItem(int)
      */
-    public MCListItemInterface getMCListItem(int i) {
+    public MCListItemInterface<E> getMCListItem(int i) {
         return getMCTableModel().getRow(i);
     }
 
@@ -386,7 +388,7 @@ public class JMCList extends JTable implements MCList {
     }
 
     public static void main(String[] args) throws InterruptedException, InvocationTargetException {
-        final JMCList list = new JMCList();
+        final JMCList<Void> list = new JMCList<Void>();
         SwingUtilities.invokeAndWait(new Runnable() {
             public void run() {
                 JFrame frame = new JFrame("Testing...");
@@ -401,7 +403,7 @@ public class JMCList extends JTable implements MCList {
                 list.setColumnName(4, "short");
 
                 for (int i = 0; i < 100; i++) {
-                    list.addItem(new GenericMCListItem(new Sortable[] {
+                    list.addItem(new GenericMCListItem<Void>(new Sortable<?>[] {
                             new SortableString("number " + i), new SortableString("number 2"),
                             new SortableString("number 3"), new SortableString("number 4"),
                             new SortableString("number 5") }));
@@ -434,9 +436,9 @@ public class JMCList extends JTable implements MCList {
     }
 }
 
-class MCListTableModel extends AbstractTableModel {
+class MCListTableModel<E> extends AbstractTableModel {
     private final List<String> columnNames = new ArrayList<>();
-    private final List<MCListItemInterface> rowValues = new ArrayList<>();
+    private final List<MCListItemInterface<E>> rowValues = new ArrayList<>();
 
     private  int sortByIndex = -1;
 
@@ -476,10 +478,10 @@ class MCListTableModel extends AbstractTableModel {
         }
 
         Collections.sort(rowValues,
-                new Comparator() {
-                    public int compare(Object a, Object b) {
-                        Sortable sa = ((MCListItemInterface) a).getValueOfColumn(sortByIndex);
-                        Sortable sb = ((MCListItemInterface) b).getValueOfColumn(sortByIndex);
+                new Comparator<MCListItemInterface<E>>() {
+                    public int compare(MCListItemInterface<E> a, MCListItemInterface<E> b) {
+                        Sortable<?> sa = a.getValueOfColumn(sortByIndex);
+                        Sortable<?> sb = b.getValueOfColumn(sortByIndex);
 
                         if (sa.equals(sb))
                             return 0;
@@ -509,7 +511,7 @@ class MCListTableModel extends AbstractTableModel {
     /**
      * @param o
      */
-    public void removeRow(MCListItemInterface o) {
+    public void removeRow(MCListItemInterface<E> o) {
         int index = rowValues.indexOf(o);
         removeRow(index);
 
@@ -533,13 +535,13 @@ class MCListTableModel extends AbstractTableModel {
         fireTableStructureChanged();
     }
 
-    public void addRow(MCListItemInterface item) {
+    public void addRow(MCListItemInterface<E> item) {
         rowValues.add(item);
         fireTableRowsInserted(rowValues.size() - 1, rowValues.size() - 1);
         resort();
     }
 
-    public void addRows(MCListItemInterface[] items) {
+    public void addRows(MCListItemInterface<E>[] items) {
         for (int i = 0; i < items.length; i++) {
             rowValues.add(items[i]);
         }
@@ -574,30 +576,30 @@ class MCListTableModel extends AbstractTableModel {
         return rowValues.size();
     }
 
-    MCListItemInterface getRow(int index) {
+    MCListItemInterface<E> getRow(int index) {
         return rowValues.get(index);
     }
 
-    public int indexOf(MCListItemInterface item) {
+    public int indexOf(MCListItemInterface<E> item) {
         return rowValues.indexOf(item);
     }
 }
 
-class MCListSelectionModel implements ListSelectionModel {
+class MCListSelectionModel<E> implements ListSelectionModel {
     private final EventListenerList listenerList = new EventListenerList();
     
-    private final MCListTableModel tableModel;
+    private final MCListTableModel<E> tableModel;
     private final ListSelectionListener internalSelectionListener;
     
-    private MCListItemInterface anchorValue;
-    private MCListItemInterface leadSelectionValue;
+    private MCListItemInterface<E> anchorValue;
+    private MCListItemInterface<E> leadSelectionValue;
 
     private boolean valueIsAdjusting;
     private int selectionMode;
 
     //Is used by the MCList to generate its specific events
 
-    MCListSelectionModel(MCListTableModel tableModel, ListSelectionListener internalSelectionListener) {
+    MCListSelectionModel(MCListTableModel<E> tableModel, ListSelectionListener internalSelectionListener) {
         this.tableModel = tableModel;
         this.internalSelectionListener = internalSelectionListener;
     }
@@ -906,12 +908,12 @@ class MCListSelectionModel implements ListSelectionModel {
     }
 }
 
-class MCHeaderCellRenderer extends JPanel implements TableCellRenderer {
+class MCHeaderCellRenderer<E> extends JPanel implements TableCellRenderer {
     private final TableCellRenderer renderer;
 
-    private final MCListTableModel model;
+    private final MCListTableModel<E> model;
 
-    public MCHeaderCellRenderer(TableCellRenderer renderer, MCListTableModel model) {
+    public MCHeaderCellRenderer(TableCellRenderer renderer, MCListTableModel<E> model) {
         this.renderer = renderer;
         this.model = model;
         setOpaque(false);

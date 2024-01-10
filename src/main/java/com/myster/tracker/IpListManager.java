@@ -13,16 +13,13 @@ package com.myster.tracker;
 import java.io.IOException;
 import java.net.UnknownHostException;
 import java.util.List;
-
 import java.util.concurrent.CancellationException;
-import java.util.prefs.BackingStoreException;
+import java.util.logging.Logger;
 import java.util.prefs.Preferences;
 
 import com.general.thread.CallAdapter;
 import com.general.util.BlockingQueue;
 import com.general.util.RInt;
-import com.myster.client.datagram.PingEvent;
-import com.myster.client.datagram.PingEventListener;
 import com.myster.client.datagram.PingResponse;
 import com.myster.client.net.MysterProtocol;
 import com.myster.client.net.MysterStream;
@@ -50,6 +47,7 @@ import com.myster.util.MysterThread;
  * @see com.myster.tracker.IPListManagerSingleton
  */
 public class IpListManager { // aka tracker
+    private static final Logger LOGGER = Logger.getLogger(IpListManager.class.getName());
     private static final String[] LAST_RESORT = { "myster.ddnsgeek.com" };
     private static final String PATH = "IPLists";
 
@@ -114,7 +112,7 @@ public class IpListManager { // aka tracker
                 addIPBlocking(mysterServer); //if not truly new then don't
                 // make a new thread.
             } else if (blockingQueue.length() > 100) {
-                System.out.println("->   !!!!!!!!!!!!!!!!!!!!!!AddIP queue is at Max length.");
+                LOGGER.warning("AddIP queue is at Max length.");
             } else {
                 blockingQueue.add(ip); //if it's truly new then make a new
                 // thread to passively add the ip
@@ -238,7 +236,7 @@ public class IpListManager { // aka tracker
     private synchronized void assertIndex(int index) {
         if (list[index] == null) {
             list[index] = createNewList(index);
-            System.out.println("Loaded List " + list[index].getType());
+            LOGGER.info("Loaded List " + list[index].getType());
         }
     }
 
@@ -283,7 +281,7 @@ public class IpListManager { // aka tracker
         }
 
         public void run() {
-            System.out.println("Starting walker thread");
+            LOGGER.info("Starting walker thread");
             
             //slightly better than a daemon thread.
             setPriority(Thread.MIN_PRIORITY); 
@@ -292,7 +290,7 @@ public class IpListManager { // aka tracker
             try {
                 sleep(10 * 1000);
             } catch (InterruptedException ex) {
-                 System.out.println("Waling thread CANCELLED!");
+                LOGGER.info("Walking thread CANCELLED!");
                 return;
             }
             
@@ -300,7 +298,7 @@ public class IpListManager { // aka tracker
             try {
                 sleep(10 * 60 * 1000);
             } catch (InterruptedException ex) {
-                System.out.println("Waling thread CANCELLED!");
+                LOGGER.info("Walking thread CANCELLED!");
                 return;
             } 
             
@@ -308,7 +306,7 @@ public class IpListManager { // aka tracker
             //if this trick is omitted, the list spends ages sorting through a
             // load of ips that aren't up.
             while (true) {
-                System.out.println("CRAWLER THREAD: Starting new automatic crawl for new IPS");
+                LOGGER.info("CRAWLER THREAD: Starting new automatic crawl for new IPS");
                 iplist = getListFromIndex(rcounter.getVal()).getTop(10);
                 IPQueue ipqueue = new IPQueue();
 
@@ -319,7 +317,7 @@ public class IpListManager { // aka tracker
                     try {
                         ipqueue.addIP(new MysterAddress(onramps[i]));
                     } catch (UnknownHostException ex) {
-                        System.out.println("One of the array of threw an error : " + onramps[i]);
+                        LOGGER.info("One of the array of threw an error : " + onramps[i]);
                     }
                     max++;
                 }
@@ -346,7 +344,7 @@ public class IpListManager { // aka tracker
                     i++;
                 }
 
-                System.out.println("CRAWLER THREAD: Going to sleep for a while.. Good night. Zzz.");
+                LOGGER.info("CRAWLER THREAD: Going to sleep for a while.. Good night. Zzz.");
                 
                 try {
                     sleep(30 * 1000 * 60);
@@ -360,7 +358,7 @@ public class IpListManager { // aka tracker
 
         private void addIPs(MysterAddress ip, IPQueue ipQueue, MysterType type) throws IOException {
             MysterStream stream = protocol.getStream();
-            List<String> ipList = stream.byIp(ip, (socket) -> stream.getTopServers(socket, type));
+            List<String> ipList = stream.doSection(ip, (socket) -> stream.getTopServers(socket, type));
 
             for (int i = 0; i < ipList.size(); i++) {
                 try {
@@ -402,7 +400,7 @@ public class IpListManager { // aka tracker
                     ip = (blockingQueue.get());//BlockingQueue
 
                     counter++;
-                    System.out.println("Number of servers still queued : -> "
+                    LOGGER.info("AddIp: Number of servers still queued : -> "
                             + blockingQueue.length());
 
                     MysterServer mysterserver = null;

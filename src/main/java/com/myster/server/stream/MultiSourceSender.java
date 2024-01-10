@@ -7,7 +7,9 @@ import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.RandomAccessFile;
+import java.util.logging.Logger;
 
+import com.myster.client.stream.MultiSourceUtilities;
 import com.myster.filemanager.FileTypeListManager;
 import com.myster.mml.RobustMML;
 import com.myster.net.MysterAddress;
@@ -37,8 +39,9 @@ import com.myster.type.MysterType;
 //repeat from 1
 
 public class MultiSourceSender extends ServerThread {
+    private static final Logger LOGGER = Logger.getLogger(MultiSourceSender.class.getName());
+    
     public static final String QUEUED_PATH = "/queued";
-
     public static final String MESSAGE_PATH = "/message";
 
     public static final int SECTION_NUMBER = 90;
@@ -142,7 +145,7 @@ public class MultiSourceSender extends ServerThread {
                     // code!!!!!! AGHHH!!
                     this.offset = this.fileLength;
                     amountDownloaded = 0;
-                    System.out.println("GOT END SIGNAL: " + this.offset + " : " + this.fileLength);
+                    LOGGER.info("GOT END SIGNAL: " + this.offset + " : " + this.fileLength);
                     return;
                 }
 
@@ -205,7 +208,7 @@ public class MultiSourceSender extends ServerThread {
                 if (currentBlock.isEndSignal()) {
                     this.offset = this.fileLength;
                     amountDownloaded = 0;
-                    System.out.println("GOT END SIGNAL: " + this.offset + " : " + this.fileLength);
+                    LOGGER.info("GOT END SIGNAL: " + this.offset + " : " + this.fileLength);
                     break;
                 }
 

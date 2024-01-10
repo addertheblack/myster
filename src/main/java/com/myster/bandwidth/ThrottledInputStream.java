@@ -24,7 +24,6 @@ public class ThrottledInputStream extends InputStream {
         int amountRead = in.read(b, off, len);//bytesDownloadable);
 
         if (amountRead > 0) {
-            //System.out.println(""+amountRead);
             BandwidthManager.requestBytesIncoming(amountRead);
         }
 

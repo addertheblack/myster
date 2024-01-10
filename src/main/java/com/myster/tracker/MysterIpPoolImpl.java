@@ -7,6 +7,7 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.logging.Logger;
 import java.util.prefs.BackingStoreException;
 import java.util.prefs.Preferences;
 
@@ -15,6 +16,7 @@ import com.myster.net.MysterAddress;
 
 public class MysterIpPoolImpl implements MysterIpPool {
     private static final int GC_UPPER_LIMIT = 100;
+    private static final Logger LOGGER = Logger.getLogger(MysterIpPoolImpl.class.getName());
 
     // MysterIPPool stores all its ips
     private static final String PREF_NODE_NAME = "Tracker.MysterIPPool";
@@ -38,7 +40,7 @@ public class MysterIpPoolImpl implements MysterIpPool {
     public MysterIpPoolImpl(Preferences prefs, MysterProtocol mysterProtocol) {
         this.preferences = prefs.node(PREF_NODE_NAME);
         this.protocol = mysterProtocol;
-        System.out.println("Loading IPPool.....");
+        LOGGER.info("Loading IPPool.....");
         cache = new HashMap<>(); // You put cereal on the Hashtable. In a
                                  // bowl of course...
         
@@ -53,7 +55,7 @@ public class MysterIpPoolImpl implements MysterIpPool {
             // ignore
         }
 
-        System.out.println("Loaded IPPool");
+        LOGGER.info("Loaded IPPool");
     }
 
 
@@ -170,14 +172,14 @@ public class MysterIpPoolImpl implements MysterIpPool {
 
         // brag about it...
         if (keysToDelete.size() >= 100) {
-            System.out.println(keysToDelete.size()
+            LOGGER.info(keysToDelete.size()
                     + " useless MysterIP objects found. Cleaning up...");
             System.gc();
-            System.out.println("Deleted " + keysToDelete.size()
+            LOGGER.info("Deleted " + keysToDelete.size()
                     + " useless MysterIP objects from the Myster pool.");
         }
 
-        System.out.println("IPPool : Removed " + keysToDelete.size()
+        LOGGER.info("IPPool : Removed " + keysToDelete.size()
                 + " object from the pool. There are now " + cache.size() + " objects in the pool");
 
         // signal that the changes should be saved asap...
@@ -185,7 +187,7 @@ public class MysterIpPoolImpl implements MysterIpPool {
             try {
                 preferences.node(mysterAddress.toString()).removeNode();
             } catch (BackingStoreException exception) {
-                System.out.println("Could not delete MysterIP pref node for " + mysterAddress.toString());
+                LOGGER.info("Could not delete MysterIP pref node for " + mysterAddress.toString());
             }
         }
     }

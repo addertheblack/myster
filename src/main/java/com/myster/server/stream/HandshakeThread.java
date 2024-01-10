@@ -75,7 +75,6 @@ public class HandshakeThread extends ServerThread {
 
             return mml;
         } catch (Exception ex) {
-            System.out.println("Error in getMMLtoSend()");
             ex.printStackTrace();
             return null;
         }

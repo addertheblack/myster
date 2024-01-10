@@ -27,6 +27,7 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.StringTokenizer;
+import java.util.logging.Logger;
 import java.util.prefs.BackingStoreException;
 import java.util.prefs.Preferences;
 
@@ -35,6 +36,8 @@ import com.myster.type.MysterType;
 
 class IpList {
     public static final int LISTSIZE = 100; //Size of any given list..
+    
+    private static final Logger LOGGER = Logger.getLogger(IpList.class.getName());
     
     private final Map<MysterAddress, MysterServer> mapOfServers = new LinkedHashMap<>();
     private final MysterType type;
@@ -65,15 +68,16 @@ class IpList {
                     } catch (UnknownHostException ex) {
                         // do nothing
                     }
-                }//if IP doens't exist in the pool, remove it from the list!
+                } // if IP doens't exist in the pool, remove it from the list!
                 if (temp == null) {
-                    System.out.println("Found a list bubble: " + workingip + ". Repairing.");
+                    LOGGER.warning("This server does not existing in the pool: " + workingip
+                            + ". Repairing.");
                     continue;
                 }
 
                 mapOfServers.put(temp.getAddress(), temp);
             } catch (Exception ex) {
-                System.out.println("Failed to add an IP to an IP list: " + type);
+                LOGGER.warning("Failed to add an IP to an IP list: " + type + " " + ex);
             }
         }
 
@@ -152,8 +156,6 @@ class IpList {
 
         preferences.put(type.toString(), buffer.toString());
         try {
-            System.out.println(preferences.keys()[0]);
-            System.out.println(preferences.get(type.toString(), ""));
             preferences.flush();
         } catch (BackingStoreException exception) {
             // TODO Auto-generated catch block

@@ -264,7 +264,6 @@ public class PreferencesDialogBox extends MysterFrame {
                 p.setSize(p.getPreferredSize());
                 showerPanel.add(p);
                 showerPanel.doLayout();//java VM bug.
-                System.out.println("ADDING PANEL");
                 selectKey(p.getKey());
             }
         }

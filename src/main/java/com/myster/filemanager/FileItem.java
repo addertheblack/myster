@@ -1,13 +1,14 @@
 package com.myster.filemanager;
 
 import java.io.File;
+import java.util.logging.Logger;
 
 import com.myster.hash.FileHash;
-import com.myster.hash.FileHashEvent;
-import com.myster.hash.FileHashListener;
 import com.myster.mml.MML;
 
 public class FileItem {
+    private static final Logger LOGGER = Logger.getLogger(FileItem.class.getName());
+    
     private final File file;
     private FileHash[] fileHashes;
 
@@ -31,7 +32,8 @@ public class FileItem {
                 return i;
         }
 
-        System.out.println("Could not find hash type: " + hashType);
+        LOGGER.fine("Could not find hash type: " + hashType);
+        
         return -1;
     }
 
