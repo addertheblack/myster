@@ -38,7 +38,7 @@ public interface MysterStream {
      */
     public void downloadFile(MysterFrameContext c, final HashCrawlerManager crawlerManager, final MysterAddress ip, final MysterFileStub stub);
     
-    public default <T> T byIp(MysterAddress ip, StandardStreamSection<T> section) throws IOException {
+    public default <T> T doSection(MysterAddress ip, StandardStreamSection<T> section) throws IOException {
         try (MysterSocket socket = MysterSocketFactory.makeStreamConnection(ip)){
             return section.doSection(socket);
         }

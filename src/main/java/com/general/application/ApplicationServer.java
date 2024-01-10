@@ -34,7 +34,6 @@ class ApplicationServer extends SafeThread {
                 try (DataInputStream in = new DataInputStream(socket.getInputStream());
                         DataOutputStream out = new DataOutputStream(socket.getOutputStream())) {
 
-                    System.out.println("getting connection form self");
                     int password = in.readInt();
                     final String[] args = getArgs(in);
                     if (password == this.password) {

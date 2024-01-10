@@ -9,26 +9,26 @@
 
 package com.general.mclist;
 
-public class GenericMCListItem extends MCListItemInterface {
-    protected Sortable[] sortables;
+public class GenericMCListItem<E> extends MCListItemInterface<E> {
+    protected Sortable<?>[] sortables;
 
-    protected Object object;
+    protected E object;
 
-    public GenericMCListItem(Sortable[] s) {
+    public GenericMCListItem(Sortable<?>[] s) {
         this(s, null);
     }
 
-    public GenericMCListItem(Sortable[] s, Object o) {
+    public GenericMCListItem(Sortable<?>[] s, E o) {
         sortables = s;
         object = o;
     }
 
-    public Sortable getValueOfColumn(int i) {
+    public Sortable<?> getValueOfColumn(int i) {
         //if (i>=sortables.length||i<0) return "ERR";
         return sortables[i];
     }
 
-    public Object getObject() {
+    public E getObject() {
         return object;
     }
 }

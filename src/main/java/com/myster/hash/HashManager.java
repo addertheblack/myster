@@ -6,6 +6,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
+import java.util.logging.Logger;
 import java.util.prefs.Preferences;
 
 import com.general.events.AsyncEventThreadDispatcher;
@@ -17,6 +18,8 @@ import com.general.util.BlockingQueue;
  */
 
 public class HashManager implements Runnable {
+    private static final Logger LOGGER = Logger.getLogger(HashManager.class.getName());
+    
     public static final String MD5 = "md5";
     public static final String SHA1 = "sha1";
 
@@ -197,7 +200,7 @@ public class HashManager implements Runnable {
                 }
             }
         } catch (IOException ex) {
-            System.out.println("Could not read a file.");
+            LOGGER.warning("Could not read a file.");
         } finally {
             try {
                 in.close();

@@ -18,13 +18,15 @@ import java.util.ArrayList;
 import java.util.Enumeration;
 import java.util.Hashtable;
 import java.util.List;
+import java.util.logging.Logger;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
 
 public class JarClassLoader extends ClassLoader {
-    ZipFile zip;
-
-    Hashtable cache = new Hashtable();
+    private static final Logger LOGGER = Logger.getLogger(JarClassLoader.class.getName());
+    
+    private final Hashtable<String, Class> cache = new Hashtable<>();
+    private final ZipFile zip;
 
     public JarClassLoader(String jar) throws IOException {
         zip = new ZipFile(jar);
@@ -39,7 +41,7 @@ public class JarClassLoader extends ClassLoader {
 
         while (t.hasMoreElements()) {
             ZipEntry entry = ((ZipEntry) (t.nextElement()));
-            System.out.println(entry.getName());
+            LOGGER.info(entry.getName());
         }
     }
 
@@ -61,7 +63,7 @@ public class JarClassLoader extends ClassLoader {
             InputStream in = zip.getInputStream(entry);
             long size = entry.getSize();
             if (size == -1) {
-                System.out.println("This file is broken");
+                LOGGER.info("This file is broken");
                 throw new ClassNotFoundException("Fuck");
             }
             
@@ -81,16 +83,16 @@ public class JarClassLoader extends ClassLoader {
             try {
                 return findSystemClass(name);
             } catch (NoClassDefFoundError ex) {
-                System.out.println("Here.");
+                LOGGER.info("Here.");
                 return null;
             } catch (Error ex) {
-                System.out.println("" + ex);
+                LOGGER.info("" + ex);
                 throw ex;
             }
         } catch (ClassNotFoundException ex) {
-            Class c = (Class) (cache.get(name));
+            Class c = cache.get(name);
             if (c == null) {
-                System.out.println("Loading class : " + name);
+                LOGGER.info("Loading class : " + name);
                 byte data[] = loadClassData(name);
                 c = defineClass(name, data, 0, data.length);
                 cache.put(name, c);
@@ -111,5 +113,4 @@ public class JarClassLoader extends ClassLoader {
             return null;
         }
     }
-
 }

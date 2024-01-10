@@ -13,6 +13,7 @@ import java.awt.event.ComponentAdapter;
 import java.awt.event.ComponentEvent;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
+import java.util.logging.Logger;
 
 import javax.swing.JPanel;
 
@@ -26,6 +27,8 @@ import com.myster.ui.MysterFrameContext;
 import com.myster.util.Sayable;
 
 public class ServerStatsWindow extends MysterFrame implements Sayable {
+    private static final Logger LOGGER = Logger.getLogger(ServerStatsWindow.class.getName());
+    
     private TabPanel tab;
 
     private DownloadInfoPanel downloadPanel;
@@ -75,7 +78,7 @@ public class ServerStatsWindow extends MysterFrame implements Sayable {
     }
 
     public void say(String s) {
-        //System.out.println(s);
+        LOGGER.info(s);
     }
 
     protected ServerStatsWindow(MysterFrameContext c) {

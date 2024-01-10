@@ -64,7 +64,6 @@ public class CrawlerThread extends MysterThread {
     public void run() {
         int counter = 0;
 
-        //System.out.println("!CRAWLER THREAD Starting the crawl");
 
         try {
 
@@ -204,7 +203,7 @@ public class CrawlerThread extends MysterThread {
         try {
             socket.close();
         } catch (Exception ex) {
-            System.out.println("Crawler thread was not happy about being asked to close.");
+            // nothing
         }
 
         interrupt();

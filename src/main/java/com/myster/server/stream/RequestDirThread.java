@@ -13,13 +13,17 @@ package com.myster.server.stream;
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.io.IOException;
+import java.util.logging.Logger;
 
+import com.myster.client.stream.MultiSourceUtilities;
 import com.myster.filemanager.FileTypeListManager;
 import com.myster.server.ConnectionContext;
 import com.myster.type.MysterType;
 
 public class RequestDirThread extends ServerThread {
     public static final int NUMBER = 78;
+    
+    private static final Logger LOGGER = Logger.getLogger(RequestDirThread.class.getName());
 
     public int getSectionNumber() {
         return NUMBER;
@@ -34,19 +38,19 @@ public class RequestDirThread extends ServerThread {
                 .getOutputStream();
 
         in.readFully(b);
-        System.out.println("Reading: " + (new String(b)));
+        LOGGER.info("Reading: " + (new String(b)));
         String[] array = FileTypeListManager.getInstance().getDirList(
                 new MysterType(b));
         if (array == null) {
-            System.out.println("Null Pointer");
+            LOGGER.info("Null Pointer");
             out.writeInt(0);
         } else {
-            System.out.println("Sending: " + array.length + " Strings");
+            LOGGER.info("Sending: " + array.length + " Strings");
             out.writeInt(array.length);
 
             for (int j = 0; j < array.length; j++) {
                 out.writeUTF(array[j]);
-                //System.out.println("Outputting: "+array[j]);
+                LOGGER.fine("Outputting: "+array[j]);
             }
         }
     }

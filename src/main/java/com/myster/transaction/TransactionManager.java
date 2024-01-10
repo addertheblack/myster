@@ -3,6 +3,7 @@ package com.myster.transaction;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Objects;
+import java.util.logging.Logger;
 
 import com.general.net.ImmutableDatagramPacket;
 import com.general.util.Timer;
@@ -10,8 +11,8 @@ import com.general.util.Util;
 import com.myster.net.BadPacketException;
 import com.myster.net.DataPacket;
 import com.myster.net.DatagramProtocolManager;
-import com.myster.net.DatagramSender;
 import com.myster.net.DatagramProtocolManager.TransportManager;
+import com.myster.net.DatagramSender;
 import com.myster.net.DatagramTransport;
 import com.myster.net.MysterAddress;
 import com.myster.server.event.ConnectionManagerEvent;
@@ -24,6 +25,8 @@ import com.myster.server.event.ServerEventDispatcher;
  * TODO put in transaction protocol docs here.
  */
 public class TransactionManager {
+    private static final Logger LOGGER = Logger.getLogger(TransactionManager.class.getName());
+    
     private final ServerEventDispatcher dispatcher;
     private final DatagramProtocolManager datagramManager;
 
@@ -206,7 +209,7 @@ public class TransactionManager {
                         .get(transaction.getTransactionCode());
 
                 if (protocol == null) {
-                    System.out.println("No Transaction protocol registered under type: "
+                    LOGGER.info("No Transaction protocol registered under type: "
                             + transaction.getTransactionCode());
 
                     sendTransaction(sender, new Transaction(transaction, new byte[0],
@@ -278,7 +281,7 @@ public class TransactionManager {
 
         private void sendTransaction(DatagramSender sender, Transaction transaction) {
             if (!transaction.isForClient()) {
-                System.out.println("oh no!");
+                throw new IllegalStateException("transaction is for client");
             }
             sender.sendPacket(transaction.toImmutableDatagramPacket());
         }

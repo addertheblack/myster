@@ -115,7 +115,6 @@ public class ImTransactionServer implements TransactionProtocol {
             msg = msgPacket.getMessage();
             address = transaction.getAddress();
             messageID = transaction.getConnectionNumber();
-            //System.out.println("message id:"+messageID);
         }
 
         public boolean equals(Object o) {

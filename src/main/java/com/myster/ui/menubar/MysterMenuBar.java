@@ -133,7 +133,7 @@ public class MysterMenuBar {
 
 
         // Myster menu items
-        special.add(new MysterMenuItemFactory("Add IP", new AddIPMenuAction(manager, windowManager)));
+        special.add(new MysterMenuItemFactory("Add IP", new AddIPMenuAction(manager)));
         special.add(new MysterMenuItemFactory("Show Server Stats",
                                                      new StatsWindowAction(),
                                                      java.awt.event.KeyEvent.VK_S,

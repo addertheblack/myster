@@ -12,12 +12,13 @@ import com.general.mclist.Sortable;
 import com.general.mclist.SortableByte;
 import com.general.mclist.SortableString;
 import com.general.util.Util;
+import com.myster.client.stream.MultiSourceUtilities;
 import com.myster.server.DownloadInfo;
 import com.myster.server.event.ServerDownloadDispatcher;
 import com.myster.server.event.ServerDownloadEvent;
 import com.myster.server.event.ServerDownloadListener;
 
-public class DownloadMCListItem extends MCListItemInterface {
+public class DownloadMCListItem extends MCListItemInterface<ServerDownloadDispatcher> {
     private ServerDownloadDispatcher dispatcher;
 
     private DownloadInfo info;
@@ -51,7 +52,7 @@ public class DownloadMCListItem extends MCListItemInterface {
         d.addServerDownloadListener(new DownloadEventHandler());
     }
 
-    public Object getObject() {
+    public ServerDownloadDispatcher getObject() {
         return dispatcher;
     }
 
@@ -61,7 +62,7 @@ public class DownloadMCListItem extends MCListItemInterface {
             info.disconnectClient();
     }
 
-    public synchronized Sortable getValueOfColumn(int i) {
+    public synchronized Sortable<?> getValueOfColumn(int i) {
         if (isDone()) {
             switch (i) {
             case 0:
@@ -195,7 +196,7 @@ public class DownloadMCListItem extends MCListItemInterface {
                 if (endFlag) {
                     info.disconnectClient();
                 }
-                System.out.println("Here and " + info);
+                MultiSourceUtilities.debug("Here and " + info);
             }
         }
 

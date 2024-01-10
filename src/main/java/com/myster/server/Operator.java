@@ -15,6 +15,7 @@ import java.io.IOException;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.util.function.Consumer;
+import java.util.logging.Logger;
 
 import com.general.util.Timer;
 
@@ -25,6 +26,8 @@ import com.general.util.Timer;
  * manage the different connection sections.
  */
 public class Operator implements Runnable {
+    private static final Logger LOGGER = Logger.getLogger(Operator.class.getName());
+    
     private final Consumer<Socket> socketConsumer; //Communication CHANNEL.
     private final int port;
 
@@ -103,7 +106,7 @@ public class Operator implements Runnable {
 
         timer = new Timer(new Runnable() {
             public void run() {
-                System.out.println("RESETING THE CONNECTION");
+                LOGGER.info("RESETING THE CONNECTION");
                 refreshServerSocket();
             }
         }, 10 * 60 * 1000); //ms -> seconds -> minutes 10 minutes.

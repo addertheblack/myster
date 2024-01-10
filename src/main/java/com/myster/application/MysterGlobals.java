@@ -1,9 +1,9 @@
 package com.myster.application;
 
 import java.io.File;
+import java.util.logging.Logger;
 
 import com.general.application.ApplicationContext;
-import com.myster.pref.MysterPreferences;
 
 /**
  */
@@ -13,6 +13,7 @@ public class MysterGlobals {
     public static final String ADDRESSPATH = "Globals/address/";
     public static final String DEFAULT_ENCODING = "ASCII";
 
+    private static final Logger LOGGER = Logger.getLogger(MysterGlobals.class.getName());
     private static long programLaunchTime = System.currentTimeMillis(); //class load time really..
     
     public static final boolean ON_LINUX = (System.getProperty("os.name") != null ? System
@@ -32,7 +33,7 @@ public class MysterGlobals {
      * quitting!).
      */
     public static void quit() {
-        System.out.println("Byeeeee.");
+        LOGGER.info("Byeeeee.");
         if (appSigleton!=null)
             appSigleton.close();
         System.exit(0);

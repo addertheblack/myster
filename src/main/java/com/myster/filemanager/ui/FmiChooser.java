@@ -15,12 +15,11 @@ import java.awt.Color;
 import java.awt.Dimension;
 import java.awt.Graphics;
 import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
 import java.awt.event.ItemEvent;
-import java.awt.event.ItemListener;
 import java.io.File;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.logging.Logger;
 
 import javax.swing.DefaultListModel;
 import javax.swing.JButton;
@@ -40,10 +39,11 @@ import com.myster.util.TypeChoice;
 /**
  * The FMICHooser is the FileManagerInterfaceChooser. It's the GUI for the
  * FileManager prefs panel. It's built to be as independent from the internal
- * working of the FileManager, dispite having access to the sweat, sweat inners.
+ * working of the FileManager, despite having access to the sweat, sweat inners.
  */
 
 public class FmiChooser extends PreferencesPanel {
+    private static final Logger LOGGER = Logger.getLogger(PreferencesPanel.class.getName());
 	private static final int XPAD = 10;
 	private static final int SAB = 200;
 	private static final int MAX_PATH_LABEL_SIZE = STD_XSIZE - 100 - 3 * XPAD - 5;
@@ -94,7 +94,6 @@ public class FmiChooser extends PreferencesPanel {
 
                 hash.put(choice.getType(i),
                          new SettingsStruct(choice.getType(i), newPath, bool_temp));
-                System.out.println(newPath);
             }
         });
         add(setAllButton);
@@ -130,9 +129,8 @@ public class FmiChooser extends PreferencesPanel {
                 hash.put(choice.getType(),
                          new SettingsStruct(choice.getType(), path, checkbox.isSelected()));
             } else {
-                System.out.println("User cancelled the action.");
+                LOGGER.info("User cancelled the action.");
             }
-
         });
         add(button);
 

@@ -20,6 +20,7 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
+import java.util.logging.Logger;
 
 import javax.swing.JButton;
 import javax.swing.JTextField;
@@ -45,10 +46,9 @@ import com.myster.util.Sayable;
 import com.myster.util.TypeChoice;
 
 public class SearchWindow extends MysterFrame implements SearchResultListener, Sayable {
+    private static final Logger LOGGER = Logger.getLogger(SearchWindow.class.getName());
     private static final int XDEFAULT = 640;
-
     private static final int YDEFAULT = 400;
-
     private static final String PREF_LOCATION_KEY = "Search Window";
 
     private static WindowLocationKeeper keeper;
@@ -277,7 +277,7 @@ public class SearchWindow extends MysterFrame implements SearchResultListener, S
     }
 
     public void say(String s) {
-        //System.out.println(s);
+        LOGGER.fine(s);
         msg.say("" + s);
     }
 }

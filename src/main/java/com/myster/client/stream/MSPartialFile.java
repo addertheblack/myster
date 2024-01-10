@@ -25,19 +25,6 @@ import com.myster.ui.MysterFrameContext;
 import com.myster.util.FileProgressWindow;
 
 public class MSPartialFile {
-    public static void main(String args[]) { //broken test case
-        /*
-         * try { MSPartialFile file = new MSPartialFile("Testing");
-         * 
-         * 
-         * System.out.println("Starting..."); for (int i = 0; i < 409600; i++) {
-         * //file.setBit(i); System.out.print(""+file.getBit(i)); }
-         * 
-         * System.out.println("Finished..."); } catch (IOException ex) {
-         * ex.printStackTrace(); }
-         */
-    }
-
     public static final String FILE_ENDING = ".p";
 
     //////////// STATIC SUB SYSTEM \\\\\\\\\\\\\\\\
@@ -149,7 +136,8 @@ public class MSPartialFile {
             dir = new File(pathToType);
             file = new File(dir, incompleteFilename);
         }
-        System.out.println("GMResuming:" + file);
+        
+        MultiSourceUtilities.debug("GMResuming:" + file);
 
         for (int loopCounter = 0; (loopCounter < 3)
                 && ((!dir.exists()) || (!dir.isDirectory()) || (!file.exists()) || (!file.isFile())); loopCounter++) {
@@ -374,7 +362,7 @@ public class MSPartialFile {
         dispose();
 
         if (!fileReference.delete()) {
-            System.out.println("Could not delete partial file.");
+            MultiSourceUtilities.debug("Could not delete partial file.");
         }
     }
 
@@ -486,8 +474,9 @@ public class MSPartialFile {
                     return hashes[i];
             }
 
-            System.out.println("Could not find hash of type " + hashType);
-            return null;// !
+            MultiSourceUtilities.debug("Could not find hash of type " + hashType);
+            
+            return null;
         }
 
         public com.myster.mml.MML toMML() {

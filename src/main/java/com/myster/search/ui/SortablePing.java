@@ -29,33 +29,28 @@ public class SortablePing implements Sortable<Long> {
         return number;
     }
 
-    public synchronized boolean isLessThan(Sortable<Long> temp) {
+    public synchronized boolean isLessThan(Sortable<?> temp) {
         if (temp == this)
             return false;
         if (!(temp instanceof SortablePing))
             return false;
-        Long n = temp.getValue();
 
+        Long n = (Long) temp.getValue();
         if (number < n.longValue())
             return true;
         return false;
     }
 
-    public synchronized boolean isGreaterThan(Sortable<Long> temp) {
+    public synchronized boolean isGreaterThan(Sortable<?> temp) {
         if (temp == this)
             return false;
         if (!(temp instanceof SortablePing))
             return false;
-        Long n = temp.getValue();
 
+        Long n = (Long) temp.getValue();
         if (number > n.longValue())
             return true;
         return false;
-    }
-
-    @Override
-    public boolean equals(Sortable<Long> m) {
-        return equals((Object) m);
     }
     
     @Override

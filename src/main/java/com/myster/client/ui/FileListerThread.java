@@ -12,6 +12,7 @@ package com.myster.client.ui;
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.io.IOException;
+import java.util.logging.Logger;
 
 import com.general.util.TextSpinner;
 import com.general.util.Util;
@@ -23,6 +24,8 @@ import com.myster.util.MysterThread;
 import com.myster.util.Sayable;
 
 public class FileListerThread extends MysterThread {
+    private static final Logger LOGGER = Logger.getLogger(FileListerThread.class.getName());
+    
     public interface ItemListListener {
         public void addItemsToFileList(String[] files);
     }
@@ -45,7 +48,9 @@ public class FileListerThread extends MysterThread {
             if (endFlag) {
                 return;
             }
+            
             msg.say(s);
+            LOGGER.info(s);
         });
 
         this.ip = ip;
@@ -86,7 +91,6 @@ public class FileListerThread extends MysterThread {
             int numberoffiles = in.readInt();
 
             msg.say("Receiving List of Size: " + numberoffiles);
-            System.out.println("Receiving List of Size: " + numberoffiles);
 
             TextSpinner spinner = new TextSpinner();
 

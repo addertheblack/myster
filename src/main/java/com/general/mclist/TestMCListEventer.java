@@ -15,15 +15,13 @@ public class TestMCListEventer implements MCListEventListener {
 
     }
 
-    public void doubleClick(MCListEvent e) {//System.out.println("DOUBLE
-                                            // CLICK!");
+    public void doubleClick(MCListEvent e) {
     }
 
-    public void selectItem(MCListEvent e) {//System.out.println("SELECT
-                                           // EVENT!");
+    public void selectItem(MCListEvent e) {
     }
 
-    public void unselectItem(MCListEvent e) {//System.out.println("UNSELECT");
+    public void unselectItem(MCListEvent e) {
     }
 
 }

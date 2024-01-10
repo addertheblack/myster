@@ -17,6 +17,7 @@ import java.net.UnknownHostException;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+import java.util.logging.Logger;
 
 import com.general.thread.CallListener;
 import com.general.thread.Cancellable;
@@ -57,6 +58,8 @@ import com.myster.util.Sayable;
  * asynchronous tasks.
  */
 public class MysterSearch {
+    private static final Logger LOGGER = Logger.getLogger(MysterSearch.class.getName());
+    
     /** Contains the object to pass status messages to. */
     private final Sayable msg;
 
@@ -443,7 +446,7 @@ public class MysterSearch {
             synchronized (this) {
                 isDone = true;
                 notifyAll();
-                System.out.println("DONE search!");
+                LOGGER.info("DONE search!");
 
                 if (endFlag)
                     return; // don't call searchOver() if end flag is set (it

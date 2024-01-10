@@ -118,15 +118,12 @@ public class TrackerWindow extends MysterFrame {
         setTitle("Tracker");
         addComponentListener(new ComponentAdapter() {
             public void componentShown(ComponentEvent e) {
-                System.out.println("SHOWN!");
-
                 updater.flagToEnd();
                 updater = new MyThread();
                 updater.start();
             }
 
             public void componentHidden(ComponentEvent e) {
-                System.out.println("HIDDEN!");
                 updater.flagToEnd();
             }
         });

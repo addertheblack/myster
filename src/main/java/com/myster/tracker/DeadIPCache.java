@@ -1,5 +1,7 @@
 package com.myster.tracker;
 
+import java.util.logging.Logger;
+
 import com.general.util.LinkedList;
 import com.myster.net.MysterAddress;
 
@@ -10,7 +12,9 @@ import com.myster.net.MysterAddress;
  *  
  */
 class DeadIPCache {
-    LinkedList queue = new LinkedList();
+    private static final Logger LOGGER = Logger.getLogger(DeadIPCache.class.getName());
+    
+    private final LinkedList<DeadItem> queue = new LinkedList<>();
 
     public static final long EXPIRE_TIME = 60 * 60 * 1000;//.. time
 
@@ -35,8 +39,10 @@ class DeadIPCache {
      */
     public synchronized void addDeadAddress(MysterAddress address) {
         removeDead();
-        if (queue.getSize() > 150)
-            System.out.println("Dead IP Cache has " + queue.getSize() + " items in it!");
+        if (queue.getSize() > 150) {
+            LOGGER.info("Dead IP Cache has " + queue.getSize() + " items in it!");
+        }
+        
         DeadItem i = new DeadItem(address, System.currentTimeMillis());
         if (!queue.contains(i))
             queue.addToTail(i);
@@ -49,7 +55,7 @@ class DeadIPCache {
     private synchronized void removeDead() {
         long currentTime = System.currentTimeMillis();
         while (queue.getHead() != null
-                && (currentTime - EXPIRE_TIME) > ((DeadItem) (queue.getHead())).timeStamp) {
+                && (currentTime - EXPIRE_TIME) > queue.getHead().timeStamp) {
             queue.removeFromHead();
         }
     }

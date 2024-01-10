@@ -20,14 +20,10 @@ public class MML implements Serializable {
         } catch (Exception ex) {
             throw new MMLException("String is not an MML string");
         }
-        //System.out.println("THingy is still null?"+startNode);//if
-        // (startNode==null) startNode=new RootNode();
     }
 
     public MML(MML mml) {
-        startNode = mml.copyMML().startNode; //now both objects point to a copy
-        // of the same structure.
-        // Which, unfortunately, SUCKS for thread safety you freaking idiot!
+        startNode = mml.copyMML().startNode; 
     }
 
     final protected Branch startNode;
@@ -578,7 +574,7 @@ public class MML implements Serializable {
         return vector;
     }
 
-    private static class PathVector<T> extends ArrayList<T> {
+    private static class PathVector extends ArrayList<String> {
         static final long serialVersionUID = -1768617897371815823L;
 
         public boolean hasMore(int i) {
@@ -586,7 +582,7 @@ public class MML implements Serializable {
         }
 
         public String getToken(int i) {
-            return (String) (get(i));
+            return get(i);
         }
 
         public boolean isLeafPath() {
@@ -687,7 +683,7 @@ public class MML implements Serializable {
             if (leaf.tag != null)
                 temp = temp + "</>";
         } else {
-            System.out.println("Impossible");
+            // impossible
         }
         return temp;
     }

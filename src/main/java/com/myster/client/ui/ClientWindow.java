@@ -66,8 +66,8 @@ public class ClientWindow extends MysterFrame implements Sayable {
     private GridBagConstraints gbconstrains;
     private JButton connect;
     private JTextField ipTextField;
-    private MCList fileTypeList;
-    private MCList fileList;
+    private MCList<MysterType> fileTypeList;
+    private MCList<String> fileList;
     private FileInfoPane pane;
     private String currentip;
     private JButton instant;
@@ -274,7 +274,7 @@ public class ClientWindow extends MysterFrame implements Sayable {
     }
 
     public void addItemToTypeList(MysterType s) {
-        fileTypeList.addItem(new GenericMCListItem(new Sortable[] { new SortableString(s.toString()) }, s));
+        fileTypeList.addItem(new GenericMCListItem<MysterType>(new Sortable[] { new SortableString(s.toString()) }, s));
         
         if (s.equals(type)) {
             type = null;
@@ -284,10 +284,11 @@ public class ClientWindow extends MysterFrame implements Sayable {
     }
 
     public void addItemsToFileList(String[] files) {
-        GenericMCListItem[] items = new GenericMCListItem[files.length];
+        @SuppressWarnings("unchecked")
+        GenericMCListItem<String>[] items = new GenericMCListItem[files.length];
 
         for (int i = 0; i < items.length; i++)
-            items[i] = new GenericMCListItem(new Sortable[] { new SortableString(files[i]) },
+            items[i] = new GenericMCListItem<String>(new Sortable[] { new SortableString(files[i]) },
                     files[i]);
 
         fileList.addItem(items);
@@ -312,7 +313,7 @@ public class ClientWindow extends MysterFrame implements Sayable {
         int selectedIndex = fileTypeList.getSelectedIndex();
 
         if (selectedIndex != -1)
-            return ((MysterType) (fileTypeList.getItem(selectedIndex)));
+            return (fileTypeList.getItem(selectedIndex));
 
         return null;
     }
@@ -323,7 +324,7 @@ public class ClientWindow extends MysterFrame implements Sayable {
         if (selectedIndex == -1)
             return "";
 
-        return (String) fileList.getItem(selectedIndex);
+        return fileList.getItem(selectedIndex);
     }
 
     public void say(String s) {

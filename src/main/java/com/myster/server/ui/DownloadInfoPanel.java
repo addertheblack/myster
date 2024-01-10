@@ -17,6 +17,7 @@ import java.awt.Image;
 import java.awt.Insets;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.util.logging.Logger;
 
 import javax.swing.JButton;
 import javax.swing.JPanel;
@@ -34,18 +35,19 @@ import com.myster.server.event.ConnectionManagerEvent;
 import com.myster.server.event.ConnectionManagerListener;
 import com.myster.server.event.ServerContext;
 import com.myster.server.event.ServerDownloadDispatcher;
+import com.myster.server.stream.RequestDirThread;
 import com.myster.ui.MysterFrameContext;
 
 public class DownloadInfoPanel extends JPanel {
-    private MCList list;
-
-    private JButton disconnect, browse, clearAll, message;
-
+    private static final Logger LOGGER = Logger.getLogger(DownloadInfoPanel.class.getName());
+    
     private final ServerContext serverContext;
     private final ConnectionHandler chandler;
     private final MysterFrameContext frameContext;
     private final MysterProtocol protocol;
-
+    
+    private MCList list;
+    private JButton disconnect, browse, clearAll, message;
 
     public DownloadInfoPanel(ServerContext context, MysterFrameContext c, MysterProtocol protocol) {
         this.frameContext = c;
@@ -159,7 +161,7 @@ public class DownloadInfoPanel extends JPanel {
         add(panel, constraints);
         panel.doLayout();
 
-        Timer timer = new Timer(new RepaintLoop(), 10000);
+        new Timer(new RepaintLoop(), 10000);
 
         buttonsEnable(list.isAnythingSelected());
         
@@ -199,7 +201,7 @@ public class DownloadInfoPanel extends JPanel {
                 ServerDownloadDispatcher d = (ServerDownloadDispatcher) e.getSectionObject();
                 int index = getIndexOfDispatcher(d);
                 if (index == -1) {
-                    System.out.println("Couldn't find this dispatcher.. weird..");
+                    LOGGER.warning("Couldn't find this dispatcher.. weird..");
                     return;
                 }
                 DownloadMCListItem downloadMCListItem = (DownloadMCListItem) list
@@ -271,7 +273,7 @@ public class DownloadInfoPanel extends JPanel {
     private class RepaintLoop implements Runnable {
         public void run() {
             list.repaint();
-            Timer timer = new Timer(this, 700);
+            new Timer(this, 700);
         }
     }
 

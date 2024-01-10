@@ -12,7 +12,7 @@ package com.general.mclist;
 public abstract class MCListItemInterface<T> {
     boolean selected = false;
 
-    public abstract Sortable getValueOfColumn(int i);
+    public abstract Sortable<?> getValueOfColumn(int i);
 
     public T getObject() {
         return null;

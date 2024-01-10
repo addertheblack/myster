@@ -27,19 +27,6 @@ public class MysterSocketFactory {
         return socket;
     }
 
-//    private static Socket makeNoProxy(String s) throws IOException {
-//        int port = 6669;
-//        String ip = s;
-//        if (s.indexOf(":") != -1) {
-//            String portstr = s.substring(s.indexOf(":") + 1);
-//            port = Integer.parseInt(portstr);
-//            ip = s.substring(0, s.indexOf(":"));
-//        }
-//
-//        //System.out.println(ip+":"+port);
-//        return new Socket(ip, port);
-//    }
-
     public static MysterSocket makeStreamConnection(MysterAddress ip)
             throws IOException {
         return new TCPSocket(makeTCPSocket(ip));

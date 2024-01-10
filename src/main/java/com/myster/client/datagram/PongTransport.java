@@ -146,9 +146,6 @@ public class PongTransport extends DatagramTransport {
                                                                // packet the
                                                                // second time
                         struct.secondPing = !struct.secondPing;
-                        //System.out.println("Trying "+address+" again. it only
-                        // has "+(TIMEOUT-(curTime-struct.timeStamp))+"ms
-                        // left.");
                         struct.timer = new Timer(new TimeoutClass(address),
                                 TIMEOUT - (curTime - struct.timeStamp)
                                         + (1 * 1000), false);
@@ -156,9 +153,7 @@ public class PongTransport extends DatagramTransport {
                     } else {
                         justBeforeDispatch(address, struct);
                         if (struct.timeStamp > (curTime - TIMEOUT)) {
-                            //System.out.println("Assumption bad in Pong
-                            // transport");
-                            //System.exit(1);
+                            // nothing ?
                         }
                     }
                 } else {

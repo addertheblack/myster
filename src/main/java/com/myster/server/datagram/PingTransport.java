@@ -25,7 +25,6 @@ public class PingTransport extends DatagramTransport {
 
         sender.sendPacket(PongPacket.getImmutablePacket(new MysterAddress(
                 immutablePacket.getAddress(), immutablePacket.getPort())));
-        //System.out.println("Replied to a ping!");
     }
 
     @Override

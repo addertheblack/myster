@@ -6,12 +6,13 @@ import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.Hashtable;
 import java.util.List;
-
+import java.util.logging.Logger;
 
 import com.general.events.EventDispatcher;
 import com.general.events.SyncEventDispatcher;
 import com.myster.mml.RobustMML;
 import com.myster.pref.PreferencesMML;
+import com.myster.transaction.TransactionManager;
 
 /**
  * The TypeDescriptionList contains some basic type information for most file
@@ -84,7 +85,8 @@ public abstract class TypeDescriptionList {
 }
 
 class DefaultTypeDescriptionList extends TypeDescriptionList {
-
+    private static final Logger LOGGER = Logger.getLogger(TransactionManager.class.getName());
+    
     //Ok, so here's the situation
     //I designed this so that I could change types while the program is running
     //and have all modules auto update without Myster restarting.. but it's too
@@ -268,9 +270,8 @@ class DefaultTypeDescriptionList extends TypeDescriptionList {
             InputStream in = Class.forName("com.myster.Myster")
                     .getResourceAsStream("typedescriptionlist.mml");
             if (in == null) {
-                System.out
-                        .println("There is no \"typedescriptionlist.mml\" file at com.myster level. Myster needs this file. Myster will exit now.");
-                System.out.println("Please get a Type Description list.");
+                LOGGER.severe("There is no \"typedescriptionlist.mml\" file at com.myster level. Myster needs this file. Myster will exit now.");
+                LOGGER.severe("Please get a Type Description list.");
 
                 com.general.util.AnswerDialog
                         .simpleAlert("PROGRAMER'S ERROR: There is no \"typedescriptionlist.mml\" file at com.myster level. Myster needs this file. Myster will exit now.\n\nThe Type Description List should be inside the Myster program. If you can see this message it means the developer has forgotten to merge this file into the program. You should contact the developer and tell him of his error.");
@@ -300,8 +301,7 @@ class DefaultTypeDescriptionList extends TypeDescriptionList {
                     list.add(typeDescription);
             }
 
-            System.out.println("Type descriptions length "
-                    + list.size());
+            LOGGER.info("Type descriptions length " + list.size());
 
             return list.toArray(new TypeDescription[0]);
         } catch (Exception ex) {
