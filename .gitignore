@@ -7,4 +7,8 @@ lib/jid3lib-0.5.4-src/
 HashCache
 mysterprefs.mml
 *.exe
+*.dmg
 /target/
+.settings/*
+/pom.xml.versionsBackup
+/settings.json
