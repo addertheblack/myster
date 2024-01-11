@@ -43,7 +43,6 @@ public class RequestSearchThread extends ServerThread {
 
         byte[] type = new byte[4];
         String searchstring;
-        String tempstring;
 
         in.readFully(type);
         searchstring = in.readUTF();
