@@ -12,3 +12,4 @@ mysterprefs.mml
 .settings/*
 /pom.xml.versionsBackup
 /settings.json
+.vscode/*
