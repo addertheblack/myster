@@ -9,18 +9,18 @@
 
 package com.general.mclist;
 
-public class SortableLong implements Sortable {
+public class SortableLong implements Sortable<Long> {
     protected long number;
 
     public SortableLong(long n) {
         number = n;
     }
 
-    public Object getValue() {
-        return new Long(number);
+    public Long getValue() {
+        return number;
     }
 
-    public boolean isLessThan(Sortable temp) {
+    public boolean isLessThan(Sortable<?> temp) {
         if (temp == this)
             return false;
         if (!(temp instanceof SortableLong))
@@ -32,7 +32,7 @@ public class SortableLong implements Sortable {
         return false;
     }
 
-    public boolean isGreaterThan(Sortable temp) {
+    public boolean isGreaterThan(Sortable<?> temp) {
         if (temp == this)
             return false;
         if (!(temp instanceof SortableLong))
@@ -44,12 +44,13 @@ public class SortableLong implements Sortable {
         return false;
     }
 
-    public boolean equals(Sortable temp) {
+    public boolean equals(Object temp) {
         if (temp == this)
             return true;
         if (!(temp instanceof SortableLong))
             return false;
-        Long n = (Long) temp.getValue();
+        @SuppressWarnings("cast")
+        Long n = (Long) ((SortableLong)temp).getValue();
 
         if (number == n.longValue())
             return true;
