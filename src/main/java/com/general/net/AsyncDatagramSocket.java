@@ -122,6 +122,8 @@ public final class AsyncDatagramSocket {
                     LOGGER.info("Opened dsocket on UDP port " + usedPort + ".");
 
                     runMainLoop(dsocket);
+                    
+                    break;
                 } catch (IOException ex) {
                     LOGGER.info("Communication error on UDP port " + port
                             + " closing dsocket. counter: " + counter + " error: " + ex.getMessage());
@@ -133,7 +135,7 @@ public final class AsyncDatagramSocket {
                          * still closing because it is closed by this thread
                          * asynchronously.
                          */
-                        Thread.sleep(1000);
+                        Thread.sleep(100 * (long)Math.pow(5, counter));
                     } catch (InterruptedException exception) {
                         exception.printStackTrace();
                     }
