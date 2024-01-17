@@ -3,7 +3,7 @@ package com.myster.net.web;
 import com.general.events.EventListener;
 import com.general.events.GenericEvent;
 
-public abstract class WebLinkListener extends EventListener {
+public abstract class WebLinkListener implements EventListener {
 
     public final void fireEvent(GenericEvent e) {
         WebLinkEvent event = (WebLinkEvent) e;

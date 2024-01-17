@@ -17,7 +17,6 @@ import java.util.concurrent.CancellationException;
 import java.util.concurrent.ExecutionException;
 import java.util.function.Consumer;
 
-import com.general.thread.CallAdapter;
 import com.myster.client.net.MysterProtocol;
 import com.myster.net.MysterAddress;
 import com.myster.net.MysterSocket;

@@ -8,13 +8,7 @@ import java.awt.Toolkit;
 import java.awt.Window;
 import java.lang.reflect.InvocationTargetException;
 import java.net.URL;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.Future;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.TimeoutException;
-
-import com.general.thread.CallListener;
-import com.general.thread.CancellableCallable;
+import java.util.concurrent.Callable;
 
 public class Util { //This code was taken from an Apple Sample Code package,
     public static Image loadImage(String filename, Component watcher) {
@@ -156,81 +150,6 @@ public class Util { //This code was taken from an Apple Sample Code package,
             EventQueue.invokeLater(runnable);
         }
     }
-    
-    @Deprecated
-    public static Future invokeAsynchronously(final CancellableCallable callable, CallListener listener ) {
-        CallableFutureGlue glueBall = new CallableFutureGlue(callable, listener);
-        invokeLater(glueBall);
-        return glueBall;
-    }
-    
-    private static class CallableFutureGlue<T> implements Future<T>, Runnable {
-        CancellableCallable<T> callable;
-        CallListener<T> listener;
-        private boolean cancelled;
-        private boolean done;
-        
-        private CallableFutureGlue(CancellableCallable<T> callable, CallListener<T> listener) {
-            this.callable = callable;
-            this.listener = listener;
-        }
-        
-        public void run() {
-            try {
-                T result = callable.call();
-                if (doCancel())
-                    return;
-                listener.handleResult(result);
-            } catch (Exception ex) {
-                if (doCancel())
-                    return;
-                listener.handleException(ex);
-            } finally {
-                listener.handleFinally();
-            }
-        }
-        
-        private synchronized boolean doCancel() {
-            if (isCancelled())
-                return true;
-            done = true;
-            listener.handleCancel();
-            return false;
-        }
-        
-        public synchronized boolean cancel() {
-            if (done || cancelled)
-                return false;
-            cancelled = true;
-            callable.cancel();
-            return true;
-        }
-
-        public boolean cancel(boolean mayInterruptIfRunning) {
-            //can't interrupt since task is on event thread!
-            return cancel();
-        }
-
-        public synchronized boolean isCancelled() {
-            return cancelled;
-        }
-
-        public synchronized boolean isDone() {
-            return done;
-        }
-
-        @Override
-        public T get(long timeout, TimeUnit unit)
-                throws InterruptedException, ExecutionException, TimeoutException {
-            throw new IllegalStateException();
-        }
-
-        @Override
-        public T get() throws InterruptedException, ExecutionException {
-            throw new IllegalStateException();
-        }
-        
-    }
 
     public static boolean isEventDispatchThread() {
         return EventQueue.isDispatchThread();
@@ -243,8 +162,47 @@ public class Util { //This code was taken from an Apple Sample Code package,
             e.printStackTrace(); //?
         }
     }
+
+    /**
+     * This method gets around much of the idiocy of invoke and wait. If it's a
+     * runtime exception we just rethrow it. If it's an interrupt exception we
+     * throw it as a RuntimeInterruptedException. If it's any other exception we
+     * throw an UnexpectedException.
+     */
+    public static void invokeAndWaitNoThrows(final Runnable runnable) {
+        try {
+            EventQueue.invokeAndWait(runnable);
+        } catch (InvocationTargetException e) {
+            Throwable ex = e.getCause();
+            if (ex instanceof RuntimeException exception) {
+                throw exception;
+            }
+            
+            throw new UnexpectedException(ex);
+        } catch (InterruptedException exception) {
+           throw new RuntimeInterruptedException(exception);
+        }
+    }
     
-    
+    /**
+     * Runs a callable on the EDT.
+     * 
+     * @see Util#invokeAndWaitNoThrows(Runnable)
+     */
+    @SuppressWarnings("unchecked")
+    public static <T> T callAndWaitNoThrows(final Callable<T> callable) {
+        final Object[] result = new Object[1];
+        invokeAndWaitNoThrows(() -> {
+            try {
+                result[0] = callable.call();
+            } catch (Exception exception) {
+                throw new UnexpectedException(exception);
+            }
+        });
+
+        return (T) result[0];
+    }
+
     /////////////// time \\\\\\\\\\\
     private static final int MINUTE = 1000 * 60;
 

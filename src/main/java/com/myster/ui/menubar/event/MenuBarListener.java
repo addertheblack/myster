@@ -7,7 +7,7 @@ import com.general.events.GenericEvent;
  * Interface to override to listen for MenuBarEvents from Myster's global menu
  * bar.
  */
-public abstract class MenuBarListener extends EventListener {
+public abstract class MenuBarListener implements EventListener {
 
     public final void fireEvent(GenericEvent event) {
         MenuBarEvent e = (MenuBarEvent) event;

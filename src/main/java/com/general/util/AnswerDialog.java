@@ -7,22 +7,29 @@ import java.awt.Frame;
 import java.awt.Point;
 import java.awt.Toolkit;
 import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
+import java.awt.event.KeyEvent;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
+import javax.swing.AbstractAction;
+import javax.swing.Action;
+import javax.swing.ActionMap;
 import javax.swing.BorderFactory;
+import javax.swing.InputMap;
 import javax.swing.JButton;
 import javax.swing.JComponent;
 import javax.swing.JDialog;
 import javax.swing.JPanel;
 import javax.swing.JTextArea;
+import javax.swing.KeyStroke;
 import javax.swing.text.DefaultCaret;
 
 import com.myster.application.MysterGlobals;
 
 public class AnswerDialog extends JDialog {
+    protected static final String CANCEL_ACTION = "Cancel";
+    
     private List<JButton> buttons;
     private String it; // just like HyperCard :-) You all know HyperCard, right?
 
@@ -58,9 +65,9 @@ public class AnswerDialog extends JDialog {
 
     public static Frame getCenteredFrame() {
         Frame tempframe = new Frame();
-        tempframe.setSize(0, 0);
+        tempframe.setSize(1, 1);
         Toolkit tool = Toolkit.getDefaultToolkit();
-        tempframe.setLocation(tool.getScreenSize().width / 2 - 200, tool
+        tempframe.setLocation(tool.getScreenSize().width / 2, tool
                 .getScreenSize().height / 2 - 150);
         tempframe.setTitle("Dialog Box!");
         //tempframe.show();
@@ -104,7 +111,12 @@ public class AnswerDialog extends JDialog {
 
         for (String buttonName: buttonNames) {
             JButton button = new JButton(buttonName);
-            button.addActionListener(new ActionHandler());
+            button.addActionListener((e) -> {
+                JButton b = ((JButton) (e.getSource()));
+
+                it = b.getText();
+                dispose();
+            });
             buttons.add(button);
         }
         getRootPane().setDefaultButton(buttons.get(0));
@@ -119,16 +131,33 @@ public class AnswerDialog extends JDialog {
         
         add(buttonPanel, BorderLayout.SOUTH);
         
+        // Create an action to dispose of the dialog
+        Action escapeAction = new AbstractAction() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                it = CANCEL_ACTION;
+                AnswerDialog.this.dispose();
+            }
+        };
+
+        // Get the root pane's input and action maps
+        InputMap inputMap = getRootPane().getInputMap(JComponent.WHEN_IN_FOCUSED_WINDOW);
+        ActionMap actionMap = getRootPane().getActionMap();
+
+        // Bind the escape key to the action
+        inputMap.put(KeyStroke.getKeyStroke(KeyEvent.VK_ESCAPE, 0), "ESCAPE");
+        actionMap.put("ESCAPE", escapeAction);
+        
+        // need to pack twice in order to get JTextArea to lay out correctly
+        pack();
+        pack();
+        
         Dimension d = parent.getSize();
         Point l = parent.getLocation();
 
         Dimension mysize = getSize();
 
-        setLocation(l.x + (d.width - mysize.width) / 2, l.y);
-        
-        // need to pack twice in order to get JTextArea to lay out correctly
-        pack();
-        pack();
+        setLocation(l.x + (d.width / 2) - (mysize.width / 2), l.y);
     }
 
     public String answer() {
@@ -138,17 +167,5 @@ public class AnswerDialog extends JDialog {
 
     public String getIt() {
         return it;
-    }
-
-    private class ActionHandler implements ActionListener {
-        public ActionHandler() {
-        }
-
-        public void actionPerformed(ActionEvent e) {
-            JButton b = ((JButton) (e.getSource()));
-
-            it = b.getLabel();
-            dispose();
-        }
     }
 }

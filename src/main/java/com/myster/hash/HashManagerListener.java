@@ -3,7 +3,7 @@ package com.myster.hash;
 import com.general.events.EventListener;
 import com.general.events.GenericEvent;
 
-public abstract class HashManagerListener extends EventListener {
+public abstract class HashManagerListener implements EventListener {
     public void fireEvent(GenericEvent e) {
         HashManagerEvent event = (HashManagerEvent) e;
 

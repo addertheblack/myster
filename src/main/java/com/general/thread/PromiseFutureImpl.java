@@ -41,43 +41,47 @@ public class PromiseFutureImpl<T> implements PromiseFuture<T> {
     
     private class AsyncContextImpl implements AsyncContext<T> {
 		@Override
-		public synchronized boolean setCallResult(CallResult<T> r) {
-			if (r.isCancelled()) {
-				cancel();
+		public boolean setCallResult(CallResult<T> r) {
+            synchronized (PromiseFutureImpl.this) {
+                if (r.isCancelled()) {
+                    cancel();
 
-				return true;
-			}
+                    return true;
+                }
 
-			if (isDone() || isCancelled()) {
-				return false;
-			}
+                if (isDone() || isCancelled()) {
+                    return false;
+                }
 
-			result = r;
+                result = r;
 
-			checkForDispatch();
+                checkForDispatch();
 
-			latch.countDown();
+                latch.countDown();
 
-			return true;
+                return true;
+            }
 		}
 		
 
-	    @Override
-	    public synchronized void registerDependentTask(Cancellable... c) {
-	        if (isCancelled()) {
-	            for (Cancellable cancellable : c) {
-	                cancellable.cancel();
-	            }
-	        } else {
-	            cancellables.addAll(Arrays.asList(c));
-	        }
-	    }
+        @Override
+        public void registerDependentTask(Cancellable... c) {
+            synchronized (PromiseFutureImpl.this) {
+                if (isCancelled()) {
+                    for (Cancellable cancellable : c) {
+                        cancellable.cancel();
+                    }
+                } else {
+                    cancellables.addAll(Arrays.asList(c));
+                }
+            }
+        }
 
 
-		@Override
-		public boolean isCancelled() {
-			return PromiseFutureImpl.this.isCancelled();
-		}
+        @Override
+        public boolean isCancelled() {
+            return PromiseFutureImpl.this.isCancelled();
+        }
 	}
 
     @Override

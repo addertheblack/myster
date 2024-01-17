@@ -4,40 +4,29 @@ import java.awt.Color;
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.Hashtable;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import com.myster.util.FileProgressWindow;
 
-public class MSDownloadHandler extends MSDownloadListener {
-    private FileProgressWindow progress;
-
-    private int macBarCounter;
-
-    private List<Integer> freeBars;
-
-    private Hashtable segmentListeners;
-
-    private File fileBeingDownloadedTo;
-
-    private ProgressBannerManager progressBannerManager;
-
-    private MSPartialFile partialFile;
-
+public class MSDownloadHandler implements MSDownloadListener {
+    private final FileProgressWindow progress;
+    private final List<Integer> freeBars;
+    private final Map<SegmentDownloader, SegmentDownloaderHandler> segmentListeners;
+    private final ProgressBannerManager progressBannerManager;
+    
+    private int maxBarCounter;
     private int segmentCounter = 0;
 
-    public MSDownloadHandler(FileProgressWindow progress, File fileBeingDownloadedTo,
-            MSPartialFile partialFile) {
+    public MSDownloadHandler(FileProgressWindow progress) {
         this.progress = progress;
 
-        macBarCounter = 1; // the first bar is used for overall progress
+        maxBarCounter = 1; // the first bar is used for overall progress
         freeBars = new ArrayList<Integer>();
-        segmentListeners = new Hashtable();
-        this.fileBeingDownloadedTo = fileBeingDownloadedTo;
+        segmentListeners = new HashMap<>();
 
         this.progressBannerManager = new ProgressBannerManager(progress);
-
-        this.partialFile = partialFile;
     }
 
     public void startDownload(MultiSourceEvent event) {
@@ -77,8 +66,7 @@ public class MSDownloadHandler extends MSDownloadListener {
         if (segmentCounter == 0)
             progress.setText("Looking for new sources...");
 
-        SegmentDownloaderHandler handler = (SegmentDownloaderHandler) (segmentListeners
-                .remove(event.getSegmentDownloader()));
+        SegmentDownloaderHandler handler = segmentListeners.remove(event.getSegmentDownloader());
 
         if (handler == null)
             throw new RuntimeException(
@@ -89,11 +77,6 @@ public class MSDownloadHandler extends MSDownloadListener {
 
     public void endDownload(MultiSourceEvent event) {
         progress.setText("Download Stopped");
-
-        if (event.isCancelled()) {
-            partialFile.done();
-            fileBeingDownloadedTo.delete();
-        }
     }
 
     public void doneDownload(MultiSourceEvent event) {
@@ -101,16 +84,6 @@ public class MSDownloadHandler extends MSDownloadListener {
         progress.setValue(progress.getMax());
         progress.done();
         progress.setProgressBarNumber(1);
-
-        try {
-            if (!MultiSourceUtilities.moveFileToFinalDestination(fileBeingDownloadedTo, progress))
-                throw new IOException("");
-        } catch (IOException ex) {
-            com.general.util.AnswerDialog.simpleAlert(progress,
-                    "Error: Couldn't move and rename file. " + ex); //yuck
-        }
-
-        partialFile.done();
     }
 
     /**
@@ -120,7 +93,7 @@ public class MSDownloadHandler extends MSDownloadListener {
      */
     private int getAppropriateBarNumber() {
         if (freeBars.size() == 0) {
-            progress.setProgressBarNumber(macBarCounter + 1);
+            progress.setProgressBarNumber(maxBarCounter + 1);
 
 //            final int MAX_STEP = 5;
 //            int i = macBarCounter - 1;
@@ -130,7 +103,7 @@ public class MSDownloadHandler extends MSDownloadListener {
 //            progress.setBarColor(new java.awt.Color(0, (MAX_STEP - i) * (255 / MAX_STEP), 150),
 //                    macBarCounter);
 
-            return macBarCounter++;
+            return maxBarCounter++;
         }
 
         //this blob of code figures out which of the freebars to re-use

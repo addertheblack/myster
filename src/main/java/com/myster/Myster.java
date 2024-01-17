@@ -153,7 +153,7 @@ public class Myster {
                         // nothing
                     }
                 };
-
+        
         ApplicationContext applicationContext =
                 new ApplicationContext(10457, applicationSingletonListener, args);
 

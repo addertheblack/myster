@@ -9,7 +9,7 @@ package com.myster.server.event;
 import com.general.events.EventListener;
 import com.general.events.GenericEvent;
 
-public abstract class OperatorListener extends EventListener {
+public abstract class OperatorListener implements EventListener {
 
     public final void fireEvent(GenericEvent e) {
         OperatorEvent event = (OperatorEvent) e;

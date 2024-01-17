@@ -3,7 +3,7 @@ package com.myster.client.stream;
 import com.general.events.EventListener;
 import com.general.events.GenericEvent;
 
-public class SegmentDownloaderListener extends EventListener {
+public class SegmentDownloaderListener implements EventListener {
     /*
      * Using the interface below this is the transition table. 1 -> 2 | 3 | 6 2 ->
      * 3 | 6 3 -> 4 | 6 4 -> 4 | 5 | 6 5 -> 2 | 3 | 6 6 -> end
