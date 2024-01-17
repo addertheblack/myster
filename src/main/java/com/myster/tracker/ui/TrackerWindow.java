@@ -36,7 +36,7 @@ public class TrackerWindow extends MysterFrame {
     private static TrackerWindow me;// = new TrackerWindow();
 
     private MyThread updater;
-    private MCList list;
+    private MCList<TrackerMCListItem> list;
     private TypeChoice choice;
     private GridBagLayout gblayout;
     private GridBagConstraints gbconstrains;
@@ -252,7 +252,7 @@ public class TrackerWindow extends MysterFrame {
         private final MysterServer server;
         private final MysterType type;
 
-        private final Sortable sortables[] = new Sortable[7];
+        private final Sortable<?>[] sortables = new Sortable<?>[7];
 
         public TrackerMCListItem(MysterServer s, MysterType t) {
             server = s;
@@ -260,7 +260,7 @@ public class TrackerWindow extends MysterFrame {
             refresh();
         }
 
-        public Sortable getValueOfColumn(int i) {
+        public Sortable<?> getValueOfColumn(int i) {
             return sortables[i];
 
         }
@@ -334,7 +334,7 @@ public class TrackerWindow extends MysterFrame {
             }
         }
 
-        private static class SortableStatus implements Sortable {
+        private static class SortableStatus implements Sortable<Boolean[]> {
             boolean status, isUntried;
 
             public SortableStatus(boolean status, boolean isUntried) {
@@ -342,7 +342,7 @@ public class TrackerWindow extends MysterFrame {
                 this.status = status;
             }
 
-            public boolean isLessThan(Sortable temp) {
+            public boolean isLessThan(Sortable<?> temp) {
                 SortableStatus other = (SortableStatus) (temp);
 
                 if (isUntried) {
@@ -360,7 +360,7 @@ public class TrackerWindow extends MysterFrame {
                 }
             }
 
-            public boolean isGreaterThan(Sortable temp) {
+            public boolean isGreaterThan(Sortable<?> temp) {
                 SortableStatus other = (SortableStatus) (temp);
 
                 if (isUntried) {
@@ -378,13 +378,13 @@ public class TrackerWindow extends MysterFrame {
                 }
             }
 
-            public boolean equals(Sortable m) {
+            public boolean equals(Object m) {
                 SortableStatus other = (SortableStatus) m;
                 return (other.status == status && other.isUntried == isUntried);
             }
 
-            public Object getValue() {
-                return null;//caution
+            public Boolean[] getValue() {
+                return new Boolean[] {status, isUntried};
             }
 
             public String toString() {

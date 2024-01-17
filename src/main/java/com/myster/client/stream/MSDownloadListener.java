@@ -3,8 +3,8 @@ package com.myster.client.stream;
 import com.general.events.EventListener;
 import com.general.events.GenericEvent;
 
-public abstract class MSDownloadListener extends EventListener {
-    public final void fireEvent(GenericEvent e) {
+public interface MSDownloadListener extends EventListener {
+    default void fireEvent(GenericEvent e) {
         switch (e.getID()) {
         case MultiSourceEvent.START_DOWNLOAD:
             startDownload((MultiSourceEvent) e);
@@ -30,21 +30,15 @@ public abstract class MSDownloadListener extends EventListener {
         }
     }
 
-    public void startDownload(MultiSourceEvent event) {
-    }
+    void startDownload(MultiSourceEvent event);
 
-    public void progress(MultiSourceEvent event) {
-    }
+    void progress(MultiSourceEvent event);
 
-    public void startSegmentDownloader(MSSegmentEvent event) {
-    }
+    void startSegmentDownloader(MSSegmentEvent event);
 
-    public void endSegmentDownloader(MSSegmentEvent event) {
-    }
+    void endSegmentDownloader(MSSegmentEvent event);
 
-    public void endDownload(MultiSourceEvent event) {
-    }
+    void endDownload(MultiSourceEvent event);
 
-    public void doneDownload(MultiSourceEvent event) {
-    }
+    void doneDownload(MultiSourceEvent event);
 }

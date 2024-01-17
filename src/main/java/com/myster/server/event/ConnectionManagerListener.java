@@ -9,7 +9,7 @@ package com.myster.server.event;
 import com.general.events.EventListener;
 import com.general.events.GenericEvent;
 
-public class ConnectionManagerListener extends EventListener {
+public class ConnectionManagerListener implements EventListener {
     public void fireEvent(GenericEvent e) {
         switch (e.getID()) {
         case ConnectionManagerEvent.SECTIONCONNECT:

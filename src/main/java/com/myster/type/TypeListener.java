@@ -10,7 +10,7 @@ import com.general.events.GenericEvent;
  *
  */
 
-public abstract class TypeListener extends EventListener {
+public abstract class TypeListener implements EventListener {
     public void fireEvent(GenericEvent e) {
         TypeDescriptionEvent event = (TypeDescriptionEvent) e;
         switch (event.getID()) {

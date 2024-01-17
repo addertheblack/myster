@@ -1,5 +1,9 @@
 package com.myster.client.stream;
 
+import static com.myster.client.stream.MultiSourceDownload.toIoFile;
+
+import java.awt.EventQueue;
+
 /**
  * This class is here to encapsulate all the information related to a Myster
  * multi source download resumable download block file.
@@ -9,12 +13,12 @@ package com.myster.client.stream;
 import java.io.ByteArrayOutputStream;
 import java.io.DataOutputStream;
 import java.io.File;
-import java.io.FilenameFilter;
 import java.io.IOException;
 import java.io.RandomAccessFile;
 import java.util.List;
 
 import com.general.util.AnswerDialog;
+import com.myster.client.stream.MultiSourceDownload.FileMover;
 import com.myster.hash.FileHash;
 import com.myster.hash.SimpleFileHash;
 import com.myster.mml.MMLException;
@@ -24,7 +28,7 @@ import com.myster.type.MysterType;
 import com.myster.ui.MysterFrameContext;
 import com.myster.util.FileProgressWindow;
 
-public class MSPartialFile {
+public class MSPartialFile implements AutoCloseable {
     public static final String FILE_ENDING = ".p";
 
     //////////// STATIC SUB SYSTEM \\\\\\\\\\\\\\\\
@@ -38,6 +42,7 @@ public class MSPartialFile {
         try {
             mml = new RobustMML(maskFile.readUTF());
         } catch (MMLException ex) {
+            maskFile.close();
             throw new IOException("MML Meta data was badly formed. This file is corrupt.");
         }
 
@@ -50,9 +55,10 @@ public class MSPartialFile {
         File fileReference = new File(MultiSourceUtilities.getIncomingDirectory(), filename + FILE_ENDING);
 
         if (fileReference.exists()) {
-            if (!fileReference.delete())
+            if (!fileReference.delete()) {
                 throw new IOException(
                         "There's a file (" + fileReference + ") in the way and I can't delete it!");
+            }
         }
         
         RandomAccessFile maskFile;
@@ -71,32 +77,24 @@ public class MSPartialFile {
     }
 
     public static MSPartialFile[] list() throws IOException {
-        File dir = MultiSourceUtilities.getIncomingDirectory();
+        File incomingDir = MultiSourceUtilities.getIncomingDirectory();
 
-        String[] file_list = dir.list(new FilenameFilter() { //I love this
-                    // idea. way to go
-                    // java guys. pitty
-                    // there's no half
-                    // decent way to
-                    // make it generic
-                    // (yet?)
-                    public boolean accept(File dir, String name) {
-                        if (!name.endsWith(".p"))
-                            return false;
+        String[] file_list = incomingDir.list((File dir, String name) -> {
+            if (!name.endsWith(".p"))
+                return false;
 
-                        File file = new File(dir, name);
+            File file = new File(dir, name);
 
-                        if (file.isDirectory())
-                            return false;
+            if (file.isDirectory())
+                return false;
 
-                        return true;
-                    }
-                });
+            return true;
+        });
 
         MSPartialFile[] msPartialFiles = new MSPartialFile[file_list.length];
 
         for (int i = 0; i < file_list.length; i++) {
-            msPartialFiles[i] = recreate(new File(dir, file_list[i]));
+            msPartialFiles[i] = recreate(new File(incomingDir, file_list[i]));
         }
 
         return msPartialFiles;
@@ -143,10 +141,10 @@ public class MSPartialFile {
                 && ((!dir.exists()) || (!dir.isDirectory()) || (!file.exists()) || (!file.isFile())); loopCounter++) {
             final String DIALOG_PROMPT = "Where is the file " + partialFile.getFilename() + "?";
 
-            final java.awt.FileDialog dialog = new java.awt.FileDialog(progress, DIALOG_PROMPT,
-                    java.awt.FileDialog.LOAD);
+            final java.awt.FileDialog dialog =
+                    new java.awt.FileDialog(progress, DIALOG_PROMPT, java.awt.FileDialog.LOAD);
 
-            dialog.show();
+            dialog.setVisible(true);
 
             if (dialog.getFile() == null)
                 userCancelled(progress, partialFile); //always
@@ -179,11 +177,21 @@ public class MSPartialFile {
             file = new File(dialog.getDirectory(), dialog.getFile());
         }
 
+        FileMover fileMover = (f) -> {
+            EventQueue.invokeLater(() -> {
+                MultiSourceUtilities.moveFileToFinalDestination(f, progress);
+            });
+        };
+
         // TODO move this into MSDownload
         RandomAccessFile randomAccessFile = new RandomAccessFile(file, "rw");
 
-        final MultiSourceDownload download = new MultiSourceDownload(randomAccessFile,crawlerManager,
-                new MSDownloadHandler(progress, file, partialFile), partialFile);
+        final MultiSourceDownload download =
+                new MultiSourceDownload(toIoFile(randomAccessFile, file),
+                                        crawlerManager,
+                                        new MSDownloadHandler(progress),
+                                        fileMover,
+                                        partialFile);
 
         //there are no exceptions after this so that is why we
         // can
@@ -192,12 +200,12 @@ public class MSPartialFile {
 
         progress.addWindowListener(new java.awt.event.WindowAdapter() {
             public void windowClosing(java.awt.event.WindowEvent e) {
-                if (!MultiSourceUtilities.confirmCancel(progress, download))
+                if (!MultiSourceUtilities.confirmCancel(progress))
                     return;
 
                 download.cancel();
 
-                progress.hide();
+                progress.setVisible(false);
             }
         });
         download.start();
@@ -211,7 +219,7 @@ public class MSPartialFile {
 
     private static void userCancelled(FileProgressWindow progress, MSPartialFile file)
             throws UserCanceledException {
-        progress.hide();
+        progress.setVisible(false);
         file.done();
         throw new UserCanceledException();
     }
@@ -219,13 +227,11 @@ public class MSPartialFile {
     ///////////////// OBJECT SYSTEM \\\\\\\\\\\\\\
 
     //private static final String filePath;
-    long offset = 0;
+    private long offset = 0;
 
-    File fileReference;
-
-    RandomAccessFile maskFile;
-
-    PartialFileHeader header;
+    private final File fileReference;
+    private final RandomAccessFile maskFile;
+    private final PartialFileHeader header;
 
     private MSPartialFile(File fileReference, RandomAccessFile maskFile, PartialFileHeader header) {
         this.maskFile = maskFile;
@@ -270,6 +276,9 @@ public class MSPartialFile {
         return header.getPath();
     }
 
+    /**
+     * @return the location in the file being downloaded of the first undownloaded block
+     */
     public long getFirstUndownloadedBlock() throws IOException {
         maskFile.seek(offset);
 
@@ -277,24 +286,7 @@ public class MSPartialFile {
 
         final byte[] buffer = new byte[blockSize];
 
-        int numberOfBlocks = (int) ((maskFile.length() - offset) / buffer.length); //DANGER!
-        // UNSAFE
-        // CAST
-        // TO
-        // INT!
-        // THIS
-        // CODE
-        // CAN
-        // FAIL
-        // FOR
-        // LARGE
-        // FILE
-        // SIZES!
-        // (very,
-        // very
-        // large
-        // but
-        // whatever)
+        int numberOfBlocks = (int) ((maskFile.length() - offset) / buffer.length);
 
         for (long blockCounter = 0; blockCounter <= numberOfBlocks; blockCounter++) {
             int currentBlockSize = (int) (blockCounter >= numberOfBlocks ? (maskFile.length() - offset)
@@ -335,12 +327,21 @@ public class MSPartialFile {
         maskFile.write(myData | getMask(bit));
     }
 
-    private long getSeek(long bit) {
-        return offset + (bit / 8);
+    /**
+     * @param blockNumber to lookup
+     * @return get the bytes position to seek to in the MSPartial file of the block number
+     */
+    private long getSeek(long blockNumber) {
+        return offset + (blockNumber / 8);
     }
 
-    private static int getMask(long bit) {
-        return 0x80 >> (bit % 8);
+    /**
+     * @return get the mask to use to mask away everything except the bit position
+     *      corresponding to the bit number assuming the seek has already been used
+     * @see MSPartialFile#getSeek(long)
+     */
+    private static int getMask(long blockNumber) {
+        return 0x80 >> (blockNumber % 8);
     }
 
     protected void finalize() throws Throwable {
@@ -351,10 +352,16 @@ public class MSPartialFile {
         }
     }
 
+    @Override
+    public void close() throws IOException {
+        maskFile.close();
+    }
+
     public void dispose() {
         try {
-            maskFile.close();
+            close();
         } catch (IOException ex) {
+            // nothing
         }
     }
 
@@ -367,34 +374,23 @@ public class MSPartialFile {
     }
 
     private static class PartialFileHeader {
-        static final String FILENAME_PATH = "/Filename";
+        private static final String FILENAME_PATH = "/Filename";
+        private static final String BLOCK_SIZE_PATH = "/Block Size Path";
+        private static final String HASHES_PATH = "/Hashes/";
+        private static final String TYPE = "/Type";
+        private static final String FILE_LENGTH = "/File Length";
+        private static final String PATH = "/File Path";
 
-        static final String BLOCK_SIZE_PATH = "/Block Size Path";
-
-        static final String HASHES_PATH = "/Hashes/";
-
-        static final String TYPE = "/Type";
-
-        static final String FILE_LENGTH = "/File Length";
-
-        static final String PATH = "/File Path";
-
-        private String filename;
-
-        private MysterType type;
-
-        private long blockSize;
-
-        private FileHash[] hashes;
-
-        private long fileLength;
-
-        private File path;
-
-        private int offset;
+        private final String filename;
+        private final MysterType type;
+        private final long blockSize;
+        private final FileHash[] hashes;
+        private final long fileLength;
+        private final File path;
+        private final int headerOffset;
 
         PartialFileHeader(RobustMML mml, int offset) throws IOException {
-            this.offset = offset;
+            this.headerOffset = offset;
             try {
                 filename = mml.get(FILENAME_PATH);
                 String string_blockSize = mml.get(BLOCK_SIZE_PATH);
@@ -425,7 +421,7 @@ public class MSPartialFile {
             this.hashes = hashes;
             this.fileLength = fileLength;
             this.path = path;
-            this.offset = toBytes().length;
+            this.headerOffset = toBytes().length;
         }
 
         public long getBlockSize() {
@@ -510,8 +506,13 @@ public class MSPartialFile {
             return b_out.toByteArray(); // lots of "to" methods here.
         }
 
+        /**
+         * @return the number of bytes that the MML header information takes up
+         *         in the mask file. Start reading the mask data from this
+         *         point.
+         */
         public int getOffset() {
-            return offset;
+            return headerOffset;
         }
     }
 
@@ -559,4 +560,5 @@ public class MSPartialFile {
     private static void throwIOException(String errorMessage) throws IOException {
         throw new IOException(errorMessage);
     }
+
 }

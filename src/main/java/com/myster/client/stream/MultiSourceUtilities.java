@@ -80,35 +80,36 @@ public class MultiSourceUtilities {
         return true;
     }
 
-    public static boolean moveFileToFinalDestination(final File sourceFile, Frame parentFrame)
-            throws IOException {
+    public static void moveFileToFinalDestination(final File sourceFile, Frame parentFrame) {
         final String FILE_ENDING = ".i";
 
         if (!sourceFile.getName().endsWith(FILE_ENDING)) {
-            AnswerDialog.simpleAlert(parentFrame, "Could not rename file \"" + sourceFile.getName()
-                    + "\" because it does not end with " + FILE_ENDING + ".");
-            return true; //don't display an error, I've already done it
+            AnswerDialog.simpleAlert(parentFrame,
+                                     "Could not rename file \"" + sourceFile.getName()
+                                             + "\" because it does not end with " + FILE_ENDING
+                                             + ".");
+            return; // don't display an error, I've already done it
         }
 
         String path = sourceFile.getAbsolutePath();
-        
+
         File someFile = new File(path.substring(0, path.length() - (FILE_ENDING.length())));
 
         if (someFile.exists()) {
-            AnswerDialog.simpleAlert(parentFrame, "Could not rename file from \""
-                    + sourceFile.getName() + "\" to \"" + someFile.getName()
-                    + "\" because a file by that name already exists.");
-            return true;
+            AnswerDialog.simpleAlert(parentFrame,
+                                     "Could not rename file from \"" + sourceFile.getName()
+                                             + "\" to \"" + someFile.getName()
+                                             + "\" because a file by that name already exists.");
+            return;
         }
 
         if (!sourceFile.renameTo(someFile)) {
-            AnswerDialog.simpleAlert(parentFrame, "Could not rename file from \""
-                    + sourceFile.getName() + "\" to \"" + someFile.getName()
-                    + "\" because an unspecified error occured.");
-            return true;
+            AnswerDialog.simpleAlert(parentFrame,
+                                     "Could not rename file from \"" + sourceFile.getName()
+                                             + "\" to \"" + someFile.getName()
+                                             + "\" because an unspecified error occured.");
+            return;
         }
-        
-        return true;
     }
 
     /**
@@ -194,10 +195,7 @@ public class MultiSourceUtilities {
     /**
      * Asks the user to confirm stopping this download.
      */
-    public static boolean confirmCancel(Frame progress, MultiSourceDownload download) {
-        if (download.isDone())
-            return true;
-
+    public static boolean confirmCancel(Frame progress) {
         final String choice = AnswerDialog.simpleAlert(progress,
                 "Are you sure you want to kill this download?", new String[] { STOP_DOWNLOAD,
                         CANCEL });

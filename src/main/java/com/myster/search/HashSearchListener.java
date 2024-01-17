@@ -3,7 +3,7 @@ package com.myster.search;
 import com.general.events.EventListener;
 import com.general.events.GenericEvent;
 
-public class HashSearchListener extends EventListener {
+public class HashSearchListener implements EventListener {
     public void fireEvent(GenericEvent e) {
         HashSearchEvent event = (HashSearchEvent) e;
 

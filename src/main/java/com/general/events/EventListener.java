@@ -8,7 +8,7 @@ package com.general.events;
  * @see com.general.events.GenericEvent
  */
 
-public abstract class EventListener {
+public interface EventListener {
 
     /**
      * This is called by the dispatcher when an event has happened.
@@ -34,13 +34,13 @@ public abstract class EventListener {
      * }
      * </pre>
      */
-    public abstract void fireEvent(GenericEvent e);
+    void fireEvent(GenericEvent e);
 
     /**
      * This routine should be called if the event isn't in the case table. Its current
      * implementation is empty.
      */
-    public void err() {
+    default void err() {
         // nothing
     }
 }

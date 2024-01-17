@@ -7,7 +7,7 @@ package com.myster.server.event;
 import com.general.events.EventListener;
 import com.general.events.GenericEvent;
 
-public abstract class ServerDownloadListener extends EventListener {
+public abstract class ServerDownloadListener implements EventListener {
 
     public final void fireEvent(GenericEvent e) {
         switch (e.getID()) {

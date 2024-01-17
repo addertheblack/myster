@@ -1,16 +1,11 @@
 package com.myster.client.stream;
 
 import java.io.DataInputStream;
-import java.io.File;
 import java.io.IOException;
-import java.io.RandomAccessFile;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.concurrent.Future;
+import java.util.concurrent.Executors;
 
-import com.general.thread.CallListener;
-import com.general.util.AnswerDialog;
-import com.general.util.Util;
 import com.myster.filemanager.FileTypeList;
 import com.myster.hash.FileHash;
 import com.myster.mml.MMLException;
@@ -18,12 +13,10 @@ import com.myster.mml.RobustMML;
 import com.myster.net.MysterAddress;
 import com.myster.net.MysterSocket;
 import com.myster.net.MysterSocketFactory;
-import com.myster.net.MysterClientSocketPool;
 import com.myster.search.HashCrawlerManager;
 import com.myster.search.MysterFileStub;
 import com.myster.type.MysterType;
 import com.myster.ui.MysterFrameContext;
-import com.myster.util.FileProgressWindow;
 
 /**
  * Contains many of the more common (simple) stream based connection sections.
@@ -108,179 +101,11 @@ class StandardSuite {
      * <p>
      * THIS ROUTINE IS ASYNCHRONOUS!
      */
-    public static void downloadFile(MysterFrameContext c, final HashCrawlerManager crawlerManager, final MysterAddress ip, final MysterFileStub stub) {
-        (new DownloadThread(c, crawlerManager, ip, stub)).start();
-    }
-
-    private static class DownloadThread extends com.myster.util.MysterThread {
-        private final MysterAddress ip;
-        private final MysterFileStub stub;
-        private final HashCrawlerManager crawlerManager;
-        private final MysterFrameContext context;
-
-        public DownloadThread(MysterFrameContext c, HashCrawlerManager crawlerManager, MysterAddress ip, MysterFileStub stub) {
-            this.context = c;
-            this.ip = ip;
-            this.stub = stub;
-            this.crawlerManager = crawlerManager;
-        }
-
-        public void run() {
-            final FileProgressWindow[] progressArray = new FileProgressWindow[1];
-
-            try {
-                Util.invokeAndWait(new Runnable() {
-                    public void run() {
-                        progressArray[0] = new com.myster.util.FileProgressWindow(context, "Connecting..");
-                        FileProgressWindow progress = progressArray[0];
-                        progress.setTitle("Downloading " + stub.getName());
-                        progress.setText("Starting...");
-
-                        progress.show();
-                    }
-                });
-            } catch (InterruptedException e1) {
-                Util.invokeLater(new Runnable() {
-                    public void run() {
-                        progressArray[0].close();
-                    }
-                });
-                return;
-            }
-
-            progressArray[0].addWindowListener(new java.awt.event.WindowAdapter() {
-                public void windowClosing(java.awt.event.WindowEvent e) {
-                    if ((msDownload != null)
-                            && (!MultiSourceUtilities.confirmCancel(progressArray[0], msDownload)))
-                        return;
-
-                    StandardSuite.DownloadThread.this.flagToEnd();
-
-                    progressArray[0].setVisible(false);
-                }
-            });
-
-            MysterSocket socket = null;
-            try {
-                socket = MysterSocketFactory.makeStreamConnection(ip);
-            } catch (Exception ex) {
-                com.general.util.AnswerDialog.simpleAlert("Could not connect to server.");
-                return;
-            }
-
-            try {
-                downloadFile(socket, crawlerManager, stub, progressArray[0]);
-            } catch (IOException ex) {
-                // ..
-            } finally {
-                disconnectWithoutException(socket);
-            }
-
-        }
-
-        // should not be public
-        private void downloadFile(final MysterSocket socket,
-                                  final HashCrawlerManager crawlerManager,
-                                  final MysterFileStub stub,
-                                  final FileProgressWindow progress)
-                throws IOException {
-
-            try {
-                progressSetTextThreadSafe(progress, "Getting File Statistics...");
-
-                if (endFlag)
-                    return;
-                RobustMML mml = getFileStats(socket, stub);
-
-                progressSetTextThreadSafe(progress, "Trying to use multi-source download...");
-
-                final boolean DONT_USE_MULTISOURCE = false;
-                if (DONT_USE_MULTISOURCE)
-                    throw new IOException("Toss and catch: Multisource download disabled");
-
-                if (endFlag)
-                    return;
-
-                final File theFile = MultiSourceUtilities.getFileToDownloadTo(stub, progress);
-                if (theFile == null) {
-                    progressSetTextThreadSafe(progress, "User cancelled...");
-                    return;
-                }
-                if (endFlag)
-                    return;
-
-                if (!tryMultiSourceDownload(stub, crawlerManager, progress, mml, theFile))
-                    throw new IOException("Toss and catch");
-            } catch (IOException ex) {
-                ex.printStackTrace();
-
-                    progressSetTextThreadSafe(progress,
-                            "Could not download file...");
-            }
-        }
-
-        @SuppressWarnings("resource")
-        private synchronized boolean tryMultiSourceDownload(final MysterFileStub stub,
-                                                            HashCrawlerManager crawlerManager,
-                                                            final FileProgressWindow progress,
-                                                            RobustMML mml,
-                                                            final File theFile)
-                throws IOException {
-            FileHash hash = MultiSourceUtilities.getHashFromStats(mml);
-            if (hash == null)
-                return false;
-
-            long fileLengthFromStats = MultiSourceUtilities.getLengthFromStats(mml);
-            MSPartialFile partialFile;
-            try {
-                partialFile = MSPartialFile.create(stub.getName(), new File(theFile.getParent()),
-                        stub.getType(), MultiSourceDownload.DEFAULT_CHUNK_SIZE,
-                        new FileHash[] { hash }, fileLengthFromStats);
-            } catch (IOException ex) {
-                AnswerDialog
-                        .simpleAlert(
-                                progress,
-                                "I can't create a partial file because of: \n\n"
-                                        + ex.getMessage()
-                                        + "\n\nIf I can't make this partial file I can't use multi-source download.");
-                throw ex;
-            }
-
-            msDownload = new MultiSourceDownload(new RandomAccessFile(theFile, "rw"), crawlerManager,
-                    new MSDownloadHandler(progress, theFile, partialFile), partialFile);
-            msDownload.setInitialServers(new MysterFileStub[] { stub });
-            msDownload.start();
-            
-            return true;
-        }
-
-        private static void progressSetTextThreadSafe(final FileProgressWindow progress,
-                                               final String string) {
-            Util.invokeLater(new Runnable() {
-                public void run() {
-                    progress.setText(string);
-                }
-            });
-        }
-
-        MultiSourceDownload msDownload;
-
-        boolean endFlag;
-
-        public synchronized void flagToEnd() {
-            endFlag = true;
-
-            if (msDownload != null)
-                msDownload.cancel();
-        }
-
-        public void end() {
-            flagToEnd();
-
-            // try {
-            // join();
-            // } catch (InterruptedException ex) {}
-        }
+    public static void downloadFile(MysterFrameContext c,
+                                    final HashCrawlerManager crawlerManager,
+                                    final MysterAddress ip,
+                                    final MysterFileStub stub) {
+        Executors.newVirtualThreadPerTaskExecutor().execute(new DownloadInitiator(c, crawlerManager, ip, stub));
     }
 
     public static RobustMML getFileStats(MysterAddress ip, MysterFileStub stub) throws IOException {

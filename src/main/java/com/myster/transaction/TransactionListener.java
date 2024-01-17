@@ -10,7 +10,7 @@ import com.general.events.GenericEvent;
  * This listener is not guaranteed to be called if the TransactionSocket was
  * cancelled.
  */
-public abstract class TransactionListener extends EventListener {
+public abstract class TransactionListener implements EventListener {
 
     public final void fireEvent(GenericEvent event) {
         TransactionEvent e = (TransactionEvent) event;

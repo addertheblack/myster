@@ -2,28 +2,35 @@ package com.general.util;
 
 import java.awt.BorderLayout;
 import java.awt.FlowLayout;
-import java.awt.FontMetrics;
 import java.awt.Frame;
-import java.awt.Insets;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.awt.event.KeyEvent;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 
+import javax.swing.AbstractAction;
+import javax.swing.Action;
+import javax.swing.ActionMap;
 import javax.swing.BorderFactory;
+import javax.swing.InputMap;
 import javax.swing.JButton;
 import javax.swing.JComponent;
 import javax.swing.JDialog;
 import javax.swing.JPanel;
 import javax.swing.JTextArea;
 import javax.swing.JTextField;
+import javax.swing.KeyStroke;
 import javax.swing.text.DefaultCaret;
 
 import com.myster.application.MysterGlobals;
 
 public class AskDialog extends JDialog {
+    private static final String CANCEL_ACTION = "Cancel";
+    private static final String OK_ACTION = "Ok";
+    
     private List<JButton> buttons;
     private String it;
     private JTextField messagebox;
@@ -81,7 +88,7 @@ public class AskDialog extends JDialog {
         buttonPanel.setLayout(new FlowLayout(FlowLayout.RIGHT));
 
         buttons = new ArrayList<>(Arrays
-                .asList(new JButton[] { new JButton("Ok"), new JButton("Cancel") }));
+                .asList(new JButton[] { new JButton(OK_ACTION), new JButton(CANCEL_ACTION) }));
 
         for (JButton b: buttons) {
             b.addActionListener(new ActionHandler());
@@ -99,6 +106,24 @@ public class AskDialog extends JDialog {
         southPanel.add(buttonPanel, BorderLayout.SOUTH);
 
         add(southPanel, BorderLayout.SOUTH);
+        
+        // Create an action to dispose of the dialog
+        Action escapeAction = new AbstractAction() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                it = CANCEL_ACTION;
+                AskDialog.this.dispose();
+            }
+        };
+
+        // Get the root pane's input and action maps
+        InputMap inputMap = getRootPane().getInputMap(JComponent.WHEN_IN_FOCUSED_WINDOW);
+        ActionMap actionMap = getRootPane().getActionMap();
+
+        // Bind the escape key to the action
+        inputMap.put(KeyStroke.getKeyStroke(KeyEvent.VK_ESCAPE, 0), "ESCAPE");
+        actionMap.put("ESCAPE", escapeAction);
+        
         pack();
         pack();
         
@@ -113,7 +138,7 @@ public class AskDialog extends JDialog {
     }
 
     public String getIt() {
-        return msg;
+        return it;
     }
 
     public static String simpleAsk(String question) {
@@ -133,7 +158,7 @@ public class AskDialog extends JDialog {
         public void actionPerformed(ActionEvent e) {
             JButton b = ((JButton) (e.getSource()));
 
-            it = b.getLabel();
+            it = b.getText();
             if (it.equals("Ok"))
                 msg = messagebox.getText();
             dispose();
