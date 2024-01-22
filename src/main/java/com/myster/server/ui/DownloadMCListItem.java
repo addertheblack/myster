@@ -12,7 +12,7 @@ import com.general.mclist.Sortable;
 import com.general.mclist.SortableByte;
 import com.general.mclist.SortableString;
 import com.general.util.Util;
-import com.myster.client.stream.MultiSourceUtilities;
+import com.myster.client.stream.msdownload.MultiSourceUtilities;
 import com.myster.server.DownloadInfo;
 import com.myster.server.event.ServerDownloadDispatcher;
 import com.myster.server.event.ServerDownloadEvent;

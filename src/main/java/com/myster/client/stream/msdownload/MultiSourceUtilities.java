@@ -1,4 +1,4 @@
-package com.myster.client.stream;
+package com.myster.client.stream.msdownload;
 
 import java.awt.Frame;
 import java.io.File;
@@ -120,13 +120,7 @@ public class MultiSourceUtilities {
      * downloads are downloaded.
      */
     public static File getIncomingDirectory() throws IOException {
-        File file = new File(com.myster.application.MysterGlobals.getCurrentDirectory(), "Incoming"); //!
-        // This
-        // will
-        // only
-        // ever
-        // return
-        // null;
+        File file = new File(com.myster.application.MysterGlobals.getCurrentDirectory(), "Incoming");
 
         if ((file.exists()) && (file.isDirectory()))
             return file;

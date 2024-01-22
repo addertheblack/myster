@@ -14,7 +14,7 @@ public class MysterGlobals {
     public static final String DEFAULT_ENCODING = "ASCII";
 
     private static final Logger LOGGER = Logger.getLogger(MysterGlobals.class.getName());
-    private static long programLaunchTime = System.currentTimeMillis(); //class load time really..
+    private static final long programLaunchTime = System.currentTimeMillis(); //class load time really..
     
     public static final boolean ON_LINUX = (System.getProperty("os.name") != null ? System
             .getProperty("os.name").equals("Linux") : false);

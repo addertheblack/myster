@@ -1,4 +1,4 @@
-package com.myster.client.stream;
+package com.myster.client.stream.msdownload;
 
 public interface SegmentDownloader {
     public void addListener(SegmentDownloaderListener listener);

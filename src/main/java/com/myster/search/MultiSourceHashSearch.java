@@ -7,8 +7,8 @@ import java.util.List;
 import java.util.Map;
 
 import com.myster.client.net.MysterProtocol;
-import com.myster.client.stream.MultiSourceUtilities;
 import com.myster.client.stream.UnknownProtocolException;
+import com.myster.client.stream.msdownload.MultiSourceUtilities;
 import com.myster.hash.FileHash;
 import com.myster.net.MysterAddress;
 import com.myster.net.MysterSocket;

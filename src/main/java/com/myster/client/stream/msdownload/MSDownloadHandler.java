@@ -1,4 +1,4 @@
-package com.myster.client.stream;
+package com.myster.client.stream.msdownload;
 
 import java.awt.Color;
 import java.io.File;

@@ -1,6 +1,6 @@
-package com.myster.client.stream;
+package com.myster.client.stream.msdownload;
 
-import static com.myster.client.stream.MultiSourceDownload.toIoFile;
+import static com.myster.client.stream.msdownload.MultiSourceDownload.toIoFile;
 
 import java.awt.EventQueue;
 
@@ -18,7 +18,7 @@ import java.io.RandomAccessFile;
 import java.util.List;
 
 import com.general.util.AnswerDialog;
-import com.myster.client.stream.MultiSourceDownload.FileMover;
+import com.myster.client.stream.msdownload.MultiSourceDownload.FileMover;
 import com.myster.hash.FileHash;
 import com.myster.hash.SimpleFileHash;
 import com.myster.mml.MMLException;

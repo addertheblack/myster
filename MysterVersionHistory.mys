@@ -1173,7 +1173,6 @@ Need to implement private networks
     need to add private certificate code
     need to find a format for sharing a network file - like public key, primary servers etc.. maybe other public keys too
     need to be able to share the network config file (might be similar to network file.. or a superset)
-Fix hash cache to save things in preferences not on disk in a random file.. might suck because
 it's large for me and I don't have that many files...
 Add reverse connection protocol.
 Add reverse connection using third party protocol.
@@ -1190,3 +1189,5 @@ Probably want to move that stuff into preferences/registry
 fix writeUTF to use write utf-8 instead.. fix data input/outputstreams
 Fix Myster startup to use Preferences
 Unit tests
+Add business card for server ->
+Make port 6669 the offical local Myster server discovery port.

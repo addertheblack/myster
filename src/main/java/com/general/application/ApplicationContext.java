@@ -140,8 +140,10 @@ public class ApplicationContext {
         } catch (BackingStoreException exception) {
             // ignore - it's a best effort thing
         }
-        if (server != null) 
+
+        if (server != null) {
             server.end();
+        }
     }
 
 }

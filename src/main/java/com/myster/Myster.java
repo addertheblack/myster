@@ -136,7 +136,7 @@ public class Myster {
                 e.printStackTrace();
             }
 
-            // this gets awt to start initializing while we initialize Myster's
+            // this gets awt to start initialising while we initialise Myster's
             // backend
             var f = new JFrame();
             f.pack();
@@ -164,18 +164,21 @@ public class Myster {
                 return;
         } catch (IOException e) {
             e.printStackTrace();
-            Frame parent = AnswerDialog.getCenteredFrame();
 
-            AnswerDialog
-                    .simpleAlert(parent,
-                                 "There seems to be another copy of Myster already running but I couldn't"
-                                         + " contact it. If you're sharing the computer with other people, one of them"
-                                         + " might be running Myster already or it might be that that Myster was not"
-                                         + " started from the same place the previous copy was started. Restarting the "
-                                         + " computer will make sure that the other Myster client gets quit.");
-            parent.dispose(); // if this isn't here Myster won't quit.
-            applicationContext.close();
-            System.exit(0);
+            Util.invokeAndWaitNoThrows(() -> {
+                Frame parent = AnswerDialog.getCenteredFrame();
+
+                AnswerDialog
+                        .simpleAlert(parent,
+                                     "There seems to be another copy of Myster already running but I couldn't"
+                                             + " contact it. If you're sharing the computer with other people, one of them"
+                                             + " might be running Myster already or it might be that that Myster was not"
+                                             + " started from the same place the previous copy was started. Restarting the "
+                                             + " computer will make sure that the other Myster client gets quit.");
+                parent.dispose(); // if this isn't here Myster won't quit.
+                applicationContext.close();
+                System.exit(0);
+            });
             return;
         }
 
@@ -326,7 +329,7 @@ public class Myster {
                 }
 
                 try {
-                    com.myster.client.stream.MSPartialFile.restartDownloads(crawlerManager,
+                    com.myster.client.stream.msdownload.MSPartialFile.restartDownloads(crawlerManager,
                                                                             context);
                 } catch (IOException ex) {
                     LOGGER.info("Error in restarting downloads.");
@@ -370,6 +373,15 @@ public class Myster {
         LOGGER.info("isMappedTCP(): " + UPnP.isMappedTCP(MysterGlobals.SERVER_PORT));
         LOGGER.info("External TCP/IP port enabled: " + UPnP.openPortTCP(MysterGlobals.SERVER_PORT));
         LOGGER.info("External UDP/IP port enabled: " + UPnP.openPortUDP(MysterGlobals.SERVER_PORT));
+//        
+//        for (int i = 0; i < 400; i++) {
+//            try {
+//                Thread.sleep(2000);
+//            } catch (InterruptedException exception) {
+//            }
+//            protocol.getDatagram().ping(new MysterAddress("255.255.255.255")).addResultListener((r)-> System.out.println("Got response from " + r.address() + " in " + r.pingTimeMs() + "ms")) ;
+//        }
+        
     } // Utils, globals etc.. //These variables are System wide variables //
 
 

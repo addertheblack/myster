@@ -68,8 +68,8 @@ public class MML implements Serializable {
      * System.out.print(toString()); } catch (Exception ex) { ex.printStackTrace(); } }
      */
     /**
-     * Adds a value for the key path. If the path doesn't exist it is created. Always returns true
-     * or throws an exception.
+     * Adds a value for the key path. If the path doesn't exist it is created. 
+     * @returns true unless the underlying system throws an exception.
      */
     public synchronized boolean put(String path, String value) { //tried to add
         // value to
