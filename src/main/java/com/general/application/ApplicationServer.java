@@ -5,34 +5,41 @@ import java.io.DataOutputStream;
 import java.io.IOException;
 import java.net.ServerSocket;
 import java.net.Socket;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.TimeUnit;
 
-import com.general.thread.SafeThread;
 import com.general.util.Util;
 
-class ApplicationServer extends SafeThread {
+class ApplicationServer {
     private final int password;
-
     private final ServerSocket serverSocket;
-
     private final ApplicationSingletonListener listener;
+    private final ExecutorService excecutor;
 
     public ApplicationServer(int password, ServerSocket serverSocket,
             ApplicationSingletonListener listener) {
         this.password = password;
         this.serverSocket = serverSocket;
         this.listener = listener;
+
+        excecutor =  Executors.newVirtualThreadPerTaskExecutor();
     }
 
-    public void run() {
+    public void start() {
+        excecutor.execute(this::run);
+    }
+
+    private void run() {
         try {
             for (;;) {
-                if (endFlag)
+                if (excecutor.isShutdown())
                     return;
                 Socket socket = serverSocket.accept();
-                if (endFlag)
+                if (excecutor.isShutdown())
                     return;
                 try (DataInputStream in = new DataInputStream(socket.getInputStream());
-                        DataOutputStream out = new DataOutputStream(socket.getOutputStream())) {
+                     DataOutputStream out = new DataOutputStream(socket.getOutputStream())) {
 
                     int password = in.readInt();
                     final String[] args = getArgs(in);
@@ -56,7 +63,7 @@ class ApplicationServer extends SafeThread {
                 }
             }
         } catch (final Exception ex) {
-            if (endFlag)
+            if (excecutor.isShutdown())
                 return;
             Util.invokeLater(new Runnable() {
                 public void run() {
@@ -75,18 +82,21 @@ class ApplicationServer extends SafeThread {
     }
 
     public void flagToEnd() {
-        endFlag = true;
+        excecutor.isShutdown();
         try {
             serverSocket.close();
         } catch (Exception ex) {
+            // nothing
         }
     }
 
     public void end() {
         flagToEnd();
         try {
-            join();
+            excecutor.shutdown();
+            excecutor.awaitTermination(30, TimeUnit.SECONDS);
         } catch (InterruptedException e) {
+            // nothing
         }
     }
 }

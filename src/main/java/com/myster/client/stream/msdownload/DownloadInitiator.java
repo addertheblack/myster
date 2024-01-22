@@ -1,7 +1,7 @@
 
-package com.myster.client.stream;
+package com.myster.client.stream.msdownload;
 
-import static com.myster.client.stream.MultiSourceDownload.toIoFile;
+import static com.myster.client.stream.msdownload.MultiSourceDownload.toIoFile;
 
 import java.io.File;
 import java.io.IOException;
@@ -10,7 +10,8 @@ import java.io.RandomAccessFile;
 import com.general.thread.Cancellable;
 import com.general.util.AnswerDialog;
 import com.general.util.Util;
-import com.myster.client.stream.MultiSourceDownload.FileMover;
+import com.myster.client.stream.StandardSuite;
+import com.myster.client.stream.msdownload.MultiSourceDownload.FileMover;
 import com.myster.hash.FileHash;
 import com.myster.mml.RobustMML;
 import com.myster.net.MysterAddress;
@@ -21,7 +22,7 @@ import com.myster.search.MysterFileStub;
 import com.myster.ui.MysterFrameContext;
 import com.myster.util.FileProgressWindow;
 
-class DownloadInitiator implements Runnable {
+public class DownloadInitiator implements Runnable {
     private final MysterAddress ip;
     private final MysterFileStub stub;
     private final HashCrawlerManager crawlerManager;
@@ -302,7 +303,7 @@ class DownloadInitiator implements Runnable {
     @SuppressWarnings("resource")
     private boolean tryMultiSourceDownload(final MysterFileStub stub,
                                            HashCrawlerManager crawlerManager,
-                                           final MsDownloadListener progress,
+                                           final MsDownloadListener msDownloadListener,
                                            RobustMML mml,
                                            final File theFile)
             throws IOException {
@@ -311,13 +312,13 @@ class DownloadInitiator implements Runnable {
             return false;
 
         long fileLengthFromStats = MultiSourceUtilities.getLengthFromStats(mml);
-        MSPartialFile partialFile = progress
+        MSPartialFile partialFile = msDownloadListener
                 .createMSPartialFile(stub, theFile, fileLengthFromStats, new FileHash[] { hash });
 
         msDownload = new MultiSourceDownload(toIoFile(new RandomAccessFile(theFile, "rw"), theFile),
                                              crawlerManager,
-                                             progress.getMSDownloadHandler(),
-                                             progress,
+                                             msDownloadListener.getMSDownloadHandler(),
+                                             msDownloadListener,
                                              partialFile);
         msDownload.setInitialServers(new MysterFileStub[] { stub });
 

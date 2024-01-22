@@ -6,7 +6,7 @@ import java.util.concurrent.ExecutionException;
 
 class CallResult<T> {
     public static <T> CallResult<T> createResult(T value) {
-        return new CallResult(value, null);
+        return new CallResult<T>(value, null);
     }
     
     public static <T> CallResult<T> createException(Exception exception) {

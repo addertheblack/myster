@@ -2,9 +2,11 @@ package com.myster.client.datagram;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.logging.Logger;
 
 import com.general.events.EventDispatcher;
 import com.general.events.SyncEventDispatcher;
+import com.general.net.AsyncDatagramSocket;
 import com.general.net.ImmutableDatagramPacket;
 import com.general.util.Timer;
 import com.myster.net.BadPacketException;
@@ -18,6 +20,8 @@ public class PongTransport extends DatagramTransport {
     
     private static final int TIMEOUT = 60000;
     private static final int FIRST_TIMEOUT = 10000;
+    
+    private static final Logger LOGGER = Logger.getLogger(AsyncDatagramSocket.class.getName());
 
     private final Map<MysterAddress, PongItemStruct> requests = new HashMap<>();
     private final DatagramSender sender;
@@ -43,6 +47,7 @@ public class PongTransport extends DatagramTransport {
                 if (struct != null) {
                     justBeforeDispatch(param_address, struct);
                 } else {
+                    LOGGER.fine("Got response from a ghost: " + param_address);
                     return;
                 }
             }

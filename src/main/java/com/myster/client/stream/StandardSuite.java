@@ -6,6 +6,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.Executors;
 
+import com.myster.client.stream.msdownload.DownloadInitiator;
 import com.myster.filemanager.FileTypeList;
 import com.myster.hash.FileHash;
 import com.myster.mml.MMLException;
@@ -21,7 +22,7 @@ import com.myster.ui.MysterFrameContext;
 /**
  * Contains many of the more common (simple) stream based connection sections.
  */
-class StandardSuite {
+public class StandardSuite {
     // Vector of strings
     public static List<String> getSearch(MysterSocket socket, MysterType searchType, String searchString)
             throws IOException {

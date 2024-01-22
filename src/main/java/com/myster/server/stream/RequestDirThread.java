@@ -15,7 +15,7 @@ import java.io.DataOutputStream;
 import java.io.IOException;
 import java.util.logging.Logger;
 
-import com.myster.client.stream.MultiSourceUtilities;
+import com.myster.client.stream.msdownload.MultiSourceUtilities;
 import com.myster.filemanager.FileTypeListManager;
 import com.myster.server.ConnectionContext;
 import com.myster.type.MysterType;

@@ -9,7 +9,6 @@ import java.io.InputStream;
 import java.io.RandomAccessFile;
 import java.util.logging.Logger;
 
-import com.myster.client.stream.MultiSourceUtilities;
 import com.myster.filemanager.FileTypeListManager;
 import com.myster.mml.RobustMML;
 import com.myster.net.MysterAddress;
@@ -55,9 +54,10 @@ public class MultiSourceSender extends ServerThread {
     }
 
     public void section(ConnectionContext context) throws IOException {
-        MultiSourceDownloadInstance download = new MultiSourceDownloadInstance(
-                (ServerDownloadDispatcher) (context.sectionObject), context.transferQueue,
-                new MysterAddress(context.socket.getInetAddress()));
+        MultiSourceDownloadInstance download =
+                new MultiSourceDownloadInstance((ServerDownloadDispatcher) (context.sectionObject),
+                                                context.transferQueue,
+                                                new MysterAddress(context.socket.getInetAddress()));
 
         try {
             download.download(context.socket);
@@ -104,7 +104,8 @@ public class MultiSourceSender extends ServerThread {
         private long offset = 0;
 
         public MultiSourceDownloadInstance(ServerDownloadDispatcher dispatcher,
-                TransferQueue transferQueue, MysterAddress remoteIP) {
+                                           TransferQueue transferQueue,
+                                           MysterAddress remoteIP) {
             this.dispatcher = dispatcher;
             this.downloadInfo = new Stats();
             this.transferQueue = transferQueue;
@@ -386,8 +387,8 @@ public class MultiSourceSender extends ServerThread {
                 socket.out.writeLong(length);
 
                 for (long counter = 0; counter < (length);) {
-                    long calcBlockSize = (length - counter < CHUNK_SIZE ? length - counter
-                            : CHUNK_SIZE);
+                    long calcBlockSize =
+                            (length - counter < CHUNK_SIZE ? length - counter : CHUNK_SIZE);
 
                     if (endFlag)
                         throw new DisconnectCommandException();
@@ -418,10 +419,9 @@ public class MultiSourceSender extends ServerThread {
                         + fileLength + " and " + offset);
             }
 
-            //if (fileLength == -1) fileLength = file.length();
-
-            if (myCounter > file.length())
+            if (myCounter > file.length()) {
                 throw new IOException("User has request more bytes than there are in the file!");
+            }
 
             this.offset = offset;
 
