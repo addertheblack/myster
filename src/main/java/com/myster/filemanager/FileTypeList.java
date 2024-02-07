@@ -22,11 +22,8 @@ import java.util.ArrayList;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Set;
-import java.util.concurrent.Executors;
-import java.util.concurrent.Future;
 import java.util.logging.Logger;
 
-import com.general.thread.CallListener;
 import com.general.thread.CancellableCallable;
 import com.general.thread.PromiseFuture;
 import com.general.thread.PromiseFutures;
