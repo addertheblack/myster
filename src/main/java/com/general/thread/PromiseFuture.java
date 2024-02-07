@@ -55,6 +55,15 @@ public interface PromiseFuture<T> extends Cancellable, Future<T> {
         });
     }
 
+    default PromiseFuture<T> addFinallyListener(Runnable runnable) {
+        return addCallListener(new CallAdapter<>() {
+            @Override
+            public void handleFinally() {
+                runnable.run();
+            }
+        });
+    }
+
     default PromiseFuture<T> addCancelLisener(Runnable cancelLisener) {
         return addCallListener(new CallAdapter<>() {
             @Override
@@ -64,8 +73,13 @@ public interface PromiseFuture<T> extends Cancellable, Future<T> {
         });
     }
 
-//    PromiseFuture<R> mapResult(Function<T,R> transform);
-//
-//    PromiseFuture<T> mapException(Exception exception);
+    default PromiseFuture<T> addStandardExceptionHandler() {
+        return addCallListener(new CallAdapter<>() {
+            @Override
+            public void handleException(Exception exception) {
+                exception.printStackTrace();
+            }
+        });
+    }
 }
 

@@ -4,7 +4,6 @@ package com.myster.client.stream.msdownload;
 import java.io.IOException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
-import java.util.concurrent.TimeUnit;
 
 import com.general.events.EventDispatcher;
 import com.general.events.SyncEventThreadDispatcher;
@@ -15,7 +14,7 @@ import com.myster.net.MysterAddress;
 import com.myster.net.MysterSocket;
 import com.myster.search.MysterFileStub;
 
-class InternalSegmentDownloader implements SegmentDownloader, Runnable {
+class InternalSegmentDownloader implements SegmentDownloader {
     // Constants
     public static final int DEFAULT_MULTI_SOURCE_BLOCK_SIZE = 128 * 1024;
 
@@ -93,8 +92,39 @@ class InternalSegmentDownloader implements SegmentDownloader, Runnable {
     public void start() {
         executor.execute(this::run);
     }
+    
+    public boolean isActive() {
+        return isActive;
+    }
 
-    public void run() {
+    public boolean isDead() {
+        return deadFlag;
+    }
+    
+    public void flagToEnd() {
+        executor.shutdownNow();
+
+        try {
+            socket.close();
+        } catch (Exception ex) {
+        }
+    }    public int hashCode() {
+        return stub.getMysterAddress().hashCode();
+    }
+
+    public boolean equals(Object o) {
+        InternalSegmentDownloader other = null;
+        try {
+            other = (InternalSegmentDownloader) o;
+        } catch (ClassCastException ex) {
+            return false;
+        }
+
+        return (stub.getMysterAddress().equals(other.stub.getMysterAddress()));
+    }
+
+    /** Package Protected for unit tests */
+    void run() {
         try {
             socket = socketFactory.makeStreamConnection(stub.getMysterAddress());
 
@@ -117,7 +147,7 @@ class InternalSegmentDownloader implements SegmentDownloader, Runnable {
 
                 WorkSegment workSegment = controller.getNextWorkSegment(idealSegmentSize); // (WorkSegment)workQueue.removeFromHead();
 
-                if (workSegment == null) {
+                if (workSegment.isEndSignal()) {
                     return;
                 }
 
@@ -194,10 +224,6 @@ class InternalSegmentDownloader implements SegmentDownloader, Runnable {
         }
     }
 
-    public boolean isDead() {
-        return deadFlag;
-    }
-
     private boolean doWorkBlock(MysterSocket socket, WorkingSegment workingSegment)
             throws IOException {
         debug("Work Thread " + name + " -> Reading data "
@@ -247,7 +273,7 @@ class InternalSegmentDownloader implements SegmentDownloader, Runnable {
                 break;
             }
         }
-        if (!workingSegment.workSegment.isRecycled) {
+        if (!workingSegment.workSegment.recycled) {
             debug("Work Thread " + name + " -> Took " + (timeTakenToDownloadSegment / 1000)
                     + "s to download " + (workingSegment.workSegment.length / 1024) + "k");
             idealSegmentSize = calculateNextBlockSize(workingSegment.workSegment.length,
@@ -310,11 +336,7 @@ class InternalSegmentDownloader implements SegmentDownloader, Runnable {
         // get the max packet length accounting for int overflow.
         int maxLength = (int) (Math.min(length, Integer.MAX_VALUE / 2) * 2);
         
-        return (int) Math.min(maxLength, (IDEAL_BLOCK_TIME_MS * length) / timeTakenToDownloadSegment);
-    }
-
-    public boolean isActive() {
-        return isActive;
+        return (int) Math.min(maxLength, (IDEAL_BLOCK_TIME_MS * length) / Math.max(1, timeTakenToDownloadSegment));
     }
 
     private byte[] getDataBlock(MysterSocket socket) throws IOException {
@@ -360,46 +382,12 @@ class InternalSegmentDownloader implements SegmentDownloader, Runnable {
         }
     }
 
-    public void flagToEnd() {
-        executor.shutdownNow();
-
-        try {
-            socket.close();
-        } catch (Exception ex) {
-        }
-    }
-
-    public void end() {
-        flagToEnd();
-
-        try {
-            executor.awaitTermination(10, TimeUnit.MINUTES);
-        } catch (InterruptedException ex) {
-            // nothing
-        }
-    }
-
-    public int hashCode() {
-        return stub.getMysterAddress().hashCode();
-    }
-
-    public boolean equals(Object o) {
-        InternalSegmentDownloader other = null;
-        try {
-            other = (InternalSegmentDownloader) o;
-        } catch (ClassCastException ex) {
-            return false;
-        }
-
-        return (stub.getMysterAddress().equals(other.stub.getMysterAddress()));
-    }
-
     private static void debug(String string) {
         MultiSourceUtilities.debug(string);
     }
 
     /**
-     * A workign segment is a work segment with the amount progress throught it.
+     * A working segment is a work segment with the amount progress through it.
      */
     private static class WorkingSegment {
         public final WorkSegment workSegment;

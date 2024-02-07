@@ -25,6 +25,7 @@ import java.net.UnknownHostException;
 import java.util.ArrayList;
 import java.util.Enumeration;
 import java.util.List;
+import java.util.logging.Level;
 import java.util.logging.LogManager;
 import java.util.logging.Logger;
 
@@ -96,7 +97,7 @@ public class Myster {
         final long startTime = System.currentTimeMillis();
 
         final boolean isServer = (args.length > 0 && args[0].equals("-s"));
-
+        
         // ignored by everyone except mac
         System.setProperty("apple.laf.useScreenMenuBar", "true");
 

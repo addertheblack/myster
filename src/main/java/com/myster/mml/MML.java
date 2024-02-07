@@ -71,11 +71,7 @@ public class MML implements Serializable {
      * Adds a value for the key path. If the path doesn't exist it is created. 
      * @returns true unless the underlying system throws an exception.
      */
-    public synchronized boolean put(String path, String value) { //tried to add
-        // value to
-        // branch,
-        // syntax error
-        // (bad path)
+    public synchronized boolean put(String path, String value) { 
         try {
             put(startNode, path, value);
             return true;

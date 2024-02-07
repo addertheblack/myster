@@ -23,7 +23,9 @@ import com.myster.hash.FileHash;
 import com.myster.hash.SimpleFileHash;
 import com.myster.mml.MMLException;
 import com.myster.mml.RobustMML;
+import com.myster.net.MysterAddress;
 import com.myster.search.HashCrawlerManager;
+import com.myster.search.MysterFileStub;
 import com.myster.type.MysterType;
 import com.myster.ui.MysterFrameContext;
 import com.myster.util.FileProgressWindow;
@@ -50,7 +52,7 @@ public class MSPartialFile implements AutoCloseable {
                 .getFilePointer()));
     }
 
-    public static MSPartialFile create(String filename, File path, MysterType type, int blockSize,
+    public static MSPartialFile create(MysterAddress address, String filename, File path, MysterType type, int blockSize,
             FileHash[] hashes, long fileLength) throws IOException {
         File fileReference = new File(MultiSourceUtilities.getIncomingDirectory(), filename + FILE_ENDING);
 
@@ -68,7 +70,7 @@ public class MSPartialFile implements AutoCloseable {
         } catch (IOException ex) {
             throw new IOException("File \"" + fileReference + "\" appears to be read only.");
         }
-        PartialFileHeader header = new PartialFileHeader(filename, path, type, blockSize, hashes,
+        PartialFileHeader header = new PartialFileHeader(address, filename, path, type, blockSize, hashes,
                 fileLength);
 
         maskFile.write(header.toBytes());
@@ -193,10 +195,13 @@ public class MSPartialFile implements AutoCloseable {
                                         fileMover,
                                         partialFile);
 
-        //there are no exceptions after this so that is why we
-        // can
-        // get away
-        // with it.
+        if (partialFile.getServerAddress() != null) {
+        download.setInitialServers(new MysterFileStub[] {
+                new MysterFileStub(new MysterAddress(partialFile.getServerAddress()),
+                                   partialFile.getType(),
+                                   partialFile.getFilename()) });
+        }
+
 
         progress.addWindowListener(new java.awt.event.WindowAdapter() {
             public void windowClosing(java.awt.event.WindowEvent e) {
@@ -245,6 +250,10 @@ public class MSPartialFile implements AutoCloseable {
         return new RobustMML(header.toMML());
     }
 
+    public String getServerAddress() {
+       return header.getServerAddress();
+    }
+    
     public long getBlockSize() {
         return header.getBlockSize();
     }
@@ -380,6 +389,7 @@ public class MSPartialFile implements AutoCloseable {
         private static final String TYPE = "/Type";
         private static final String FILE_LENGTH = "/File Length";
         private static final String PATH = "/File Path";
+        private static final String SERVER_ADDRESS = "/Server Address";
 
         private final String filename;
         private final MysterType type;
@@ -388,10 +398,12 @@ public class MSPartialFile implements AutoCloseable {
         private final long fileLength;
         private final File path;
         private final int headerOffset;
+        private final String address; // might be null
 
         PartialFileHeader(RobustMML mml, int offset) throws IOException {
             this.headerOffset = offset;
             try {
+                address = mml.get(SERVER_ADDRESS);
                 filename = mml.get(FILENAME_PATH);
                 String string_blockSize = mml.get(BLOCK_SIZE_PATH);
                 String string_length = mml.get(FILE_LENGTH);
@@ -413,8 +425,10 @@ public class MSPartialFile implements AutoCloseable {
             }
         }
 
-        PartialFileHeader(String filename, File path, MysterType type, long blockSize,
+        PartialFileHeader(MysterAddress address, String filename, File path, MysterType type, long blockSize,
                 FileHash[] hashes, long fileLength) {
+            
+            this.address = address.toString();
             this.filename = filename;
             this.type = type;
             this.blockSize = blockSize;
@@ -483,6 +497,7 @@ public class MSPartialFile implements AutoCloseable {
             mml.put(FILE_LENGTH, "" + fileLength);
             mml.put(TYPE, "" + type.getAsInt()); //! is encoded as an int
             mml.put(PATH, "" + path.getAbsolutePath());
+            mml.put(SERVER_ADDRESS, address);
             // instead of a string because
             // the string encoding is not
             // exactly equivalent
@@ -513,6 +528,10 @@ public class MSPartialFile implements AutoCloseable {
          */
         public int getOffset() {
             return headerOffset;
+        }
+
+        public String getServerAddress() {
+            return address;
         }
     }
 

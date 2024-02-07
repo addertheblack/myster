@@ -8,16 +8,13 @@ public class SimpleFileHash extends FileHash implements Serializable {
 
     private String hashName;
 
-    private SimpleFileHash() {
-    }
-
-    protected SimpleFileHash(String hashName, byte[] hash) {
+    public SimpleFileHash(String hashName, byte[] hash) {
         this.hashName = hashName.toLowerCase();
-        this.hash = (byte[]) hash.clone();
+        this.hash = hash.clone();
     }
 
     public byte[] getBytes() {
-        return (byte[]) hash.clone();
+        return hash.clone();
     }
 
     public short getHashLength() {

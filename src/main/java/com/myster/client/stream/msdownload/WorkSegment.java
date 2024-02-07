@@ -3,7 +3,7 @@ package com.myster.client.stream.msdownload;
 
 // immutable!
 final class WorkSegment {
-    public final boolean isRecycled;
+    public final boolean recycled;
 
     public final long startOffset, length;
 
@@ -14,7 +14,7 @@ final class WorkSegment {
     private WorkSegment(long startOffset, long length, boolean isRecycled) {
         this.startOffset = startOffset;
         this.length = length;
-        this.isRecycled = isRecycled;
+        this.recycled = isRecycled;
     }
 
     public boolean isEndSignal() {

@@ -64,6 +64,8 @@ public class TestInternalSegmentDownloader {
         }
         out.write(dataToLoad);
 
+        out.writeUTF(mml2.toString());
+        
         // check for sync
         out.writeInt(6669);
         out.write('d');
@@ -80,12 +82,16 @@ public class TestInternalSegmentDownloader {
         WorkSegment[] workSegments =
                 new WorkSegment[] { new WorkSegment(0, SEGMENT_SIZE), new WorkSegment(SEGMENT_SIZE, 3) };
                 int[] workSegmentCounter = new int[1];
-        when(controller.getNextWorkSegment(anyInt()))
-                .thenAnswer((Answer<WorkSegment>) invocation -> {
-                // Custom logic based on the argument
-                return workSegments[workSegmentCounter[0]++]; // Create appropriate WorkSegment based on the argument
-            }
-        );
+                when(controller.getNextWorkSegment(anyInt()))
+                        .thenAnswer((Answer<WorkSegment>) invocation -> {
+                            if (workSegmentCounter[0] > 1) {
+                                return new WorkSegment(0, 0);
+                            }
+                            // Custom logic based on the argument
+                            // Create appropriate WorkSegment based on the
+                            // argument
+                            return workSegments[workSegmentCounter[0]++];
+                        });
         Mockito.doNothing().when(controller).receiveExtraSegments(any(WorkSegment[].class));
         Mockito.doNothing().when(controller).receiveDataBlock(any(DataBlock.class));
         when(controller.isOkToQueue()).thenReturn(true);
@@ -108,7 +114,7 @@ public class TestInternalSegmentDownloader {
                 new InternalSegmentDownloader(controller,
                                               socketFactory,
                                               new MysterFileStub(new MysterAddress("127.0.0.1"),
-                                              mysterType,
+                                                                 mysterType,
                                                                  TEST_FILENAME),
                                               2 * 2014);
 
@@ -131,7 +137,7 @@ public class TestInternalSegmentDownloader {
         assertEquals(dataSendToServer.readLong(), 2097152);
         assertEquals(dataSendToServer.readLong(), 3);
 
-        assertEquals(dataSendToServer.read(), -1);
+        assertEquals(-1, dataSendToServer.read());
     }
 };
 

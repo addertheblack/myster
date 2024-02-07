@@ -49,6 +49,8 @@ public class FileTypeListManager {
     
     public synchronized static void init(HashProvider hashProvider) {
         f = new FileTypeListManager(hashProvider);
+
+        f.initFileTypeListManager();
     }
 
     /**
@@ -69,7 +71,6 @@ public class FileTypeListManager {
      */
     private FileTypeListManager(HashProvider hashProvider) {
         this.hashProvider = hashProvider;
-        initFileTypeListManager();
     }
 
     /*
@@ -82,12 +83,8 @@ public class FileTypeListManager {
         TypeDescription[] list = TypeDescriptionList.getDefault().getEnabledTypes();
         filelist = new FileTypeList[list.length];
         for (int i = 0; i < list.length; i++) {
-            filelist[i] = new FileTypeList(list[i].getType(), PATH, hashProvider); //This
-            // code is
-            // redundent
-            // with...
-            // This
-            // code.
+            filelist[i] = new FileTypeList(list[i].getType(), PATH, hashProvider);
+            filelist[i].getNumOfFiles(); //This forces the list to load.
         }
     }
 

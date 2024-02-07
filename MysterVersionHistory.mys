@@ -909,7 +909,7 @@ Work on DEV 8:
 				This new DEV will not work with previous DEVs.
 	2003/09/11 <- DEV 19.2
 		-> Fixed a typo.
-		-> Moved multi-source download to its new home on conneciton section 90.
+		-> Moved multi-source download to its new home on connection section 90.
 		-> Changed the 6669 firewall image
 	
 	Work on PR 7
@@ -978,8 +978,8 @@ Work on DEV 8:
 
 	
 	Work on Dev 19.6
-		-> Guillaume added code to move the preference file location around on Linux & added an architechture to
-				find the current working folder consistantly.
+		-> Guillaume added code to move the preference file location around on Linux & added an architecture to
+				find the current working folder consistently.
 		-> Added the RING type.
 		-> Guillaume added some code to check INSIDE OF ZIP FILES for files that match the right types..
 				so if you have an ".nes" file but it's inside a .zip file, Myster will now OPEN
@@ -989,7 +989,7 @@ Work on DEV 8:
 		-> Added an "is Archivable" flag to say if the type can be in an archive.
 		
 	Work on DEV 19.7 (PR 7.6)
-		-> Merged Guillame's new MCList sort algorythm.
+		-> Merged Guillame's new MCList sort algorithm.
 		-> Added ability to set types as on/off by default in typedescriptionlist.mml
 		-> Corrected oddities found by FindBugs.
 		-> Changed the tabs in the server stats so they actually look like tabs (thanx rev)
@@ -999,13 +999,13 @@ Work on DEV 8:
 		-> Fixed a problem where the disconnect button wouldn't disconnect a user who
 				was downloading from you.
 		-> The file info getting now doesn't jam as much.
-		-> The file info getting is no longer a seperate thread. Putting it in a seperate thread
+		-> The file info getting is no longer a separate thread. Putting it in a separate thread
 				was causing it to crash in some circumstances. Making the info getting part
 				of the duties of the main search thread should increase the responsiveness
 				of Myster while searching and increase the chances of file meta data
 				being successfully downloaded. (This change might also make
 				cancelling searches faster)
-		-> The search engine now uses 20 searcher threads insteead of 15
+		-> The search engine now uses 20 searcher threads instead of 15
 				This should improve search performance by > 25%.
 		-> Fixed a bug where the PORN type would list no files.
 	
@@ -1038,18 +1038,18 @@ Work on DEV 8:
 	Work on DEV 21.1
 		2004/08/21  4 months with not much happening. wow.
 		-> Got Myster running and compiling under eclipse. Nice.
-		-> Fixed lots of minor bugs and reformated all the code to comply with java coding standard.
+		-> Fixed lots of minor bugs and reformatted all the code to comply with java coding standard.
 		-> Added a bunch of comments. Myster is now 31000+ lines of code.
-		-> Converted the search endgine to search UDP first. 
+		-> Converted the search engine to search UDP first. 
 			- TopTen and SearchRequest are now done in parallel with one packet each.
 			- No limit to number of UDP connections, so Myster can now search everyone on the network
 					at the same time.
-			- For backwards compatability there is a thread pool to do TCP connections if the UDP
+			- For backwards compatibility there is a thread pool to do TCP connections if the UDP
 					request is not understood.
 		-> Fixed a bug where certain japaneese files without "merged punctuation" don't
 				resume. (Thanx "DIALTONE")
 		-> Fixed a bug where no feedback was given after downloading a file because the server was down.
-				A progress dialog now is shown befre connecting to the first server.
+				A progress dialog now is shown before connecting to the first server.
 				
 	Work on DEV 21.2
 		2004/09/14	all this time just to find time to START work wow..
@@ -1063,8 +1063,8 @@ Work on DEV 8:
 				shown/hidden or changes name. This should make Myster faster at opening windows and reduce menu blinking.
 	  	-> Made it so that search and p2p windows are renamed to something more appropriate on the fly.
 	  	-> Wrote a socket pool system so that all stream (TCP based) connection sections can be executed 
-	  	        asychronously from a pool.
-	  	-> Wrote an asychronous function call framework
+	  	        asynchronously from a pool.
+	  	-> Wrote an asynchronous function call framework
 	  	-> re-wrote the Myster search sub system to use said socket pool (now only creates one thread!).
 	  	-> Re-wrote standard datagram callbacks to conform to an asynchronous function call (eclipse rocks
 	  	        for refactoring!)
@@ -1077,7 +1077,7 @@ Work on DEV 8:
 		-> Made FileProgressWindows use far less CPU power.
 		-> Made it so you can navigate MCLists using the keyboard up/down arrows, page up/down and enter to doubleClick
 		-> Fixed a big memory leak when the memory used by windows wasen't being freed.
-		-> For some reasone none-multisource downloads were turned off.. I guess that explains a few things I've been
+		-> For some reason non-multisource downloads were turned off.. I guess that explains a few things I've been
 				seeing on the network.
 		-> Made the MCList look a bit different: column rows appears to be longer...
 		-> Made starting searching faster by not starting any threads when starting a search.
@@ -1164,6 +1164,8 @@ Work on DEV 8:
     -> Added test for min/max heap and AsynchronousDatagramSocket
     -> Added first hints of using the Java logging framework (JUL)
 		
+2023-02-06
+	-> Added unit tests for MS Download
 (Red List)
 to do:
 
@@ -1187,7 +1189,6 @@ add unit tests
 Allow new code to use a server/port instead of and in addition to a md5
 Probably want to move that stuff into preferences/registry
 fix writeUTF to use write utf-8 instead.. fix data input/outputstreams
-Fix Myster startup to use Preferences
 Unit tests
-Add business card for server ->
-Make port 6669 the offical local Myster server discovery port.
+Add business card for server -> basically server stats
+Make port 6669 the official local Myster server discovery port.

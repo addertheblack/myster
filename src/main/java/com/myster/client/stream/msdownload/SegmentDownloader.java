@@ -6,4 +6,10 @@ public interface SegmentDownloader {
     public void removeListener(SegmentDownloaderListener listener);
 
     public boolean isDead();
+    
+    public void start();
+    
+    public boolean isActive();
+    
+    public void flagToEnd();
 }

@@ -211,7 +211,8 @@ public class DownloadInitiator implements Runnable {
                                                  long estimatedFileLength,
                                                  FileHash[] hashes) throws IOException {
             try {
-                return MSPartialFile.create(stub.getName(),
+                return MSPartialFile.create(stub.getMysterAddress(),
+                                            stub.getName(),
                                             new File(fileToDownloadTo.getParent()),
                                             stub.getType(),
                                             MultiSourceDownload.DEFAULT_CHUNK_SIZE,

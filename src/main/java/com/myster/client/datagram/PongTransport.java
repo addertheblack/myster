@@ -110,12 +110,12 @@ public class PongTransport extends DatagramTransport {
 
     private class PongItemStruct {
         public final EventDispatcher dispatcher;
-
         public final long timeStamp;
 
-        public boolean secondPing = false; //used when the connection has
-                                           // timeout on one packet to send a
-                                           // second.
+        /**
+         * used when the connection has timeout on one packet to send a second.
+         */
+        public boolean secondPing = false;
 
         public Timer timer;
 

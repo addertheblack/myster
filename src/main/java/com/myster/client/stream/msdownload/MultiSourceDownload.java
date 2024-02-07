@@ -58,10 +58,10 @@ public class MultiSourceDownload implements Task, Cancellable {
     
     private final MSPartialFile partialFile;
     private final MysterType type;
-    private final FileHash hash; // should be an array at some point!
+    private final FileHash[] hashes; // should be an array at some point!
     private final long fileLength;
     private final HashSearchListener hashSearchListener;
-    private final Set<InternalSegmentDownloader> downloaders;
+    private final Set<SegmentDownloader> downloaders;
     private final IoFile randomAccessFile; // file downloading to!
     private final int chunkSize;
     private final long initialOffset; // how much was downloaded in a previous
@@ -88,7 +88,6 @@ public class MultiSourceDownload implements Task, Cancellable {
     public static final int DEFAULT_CHUNK_SIZE = 2 * 1024;
 
     private long lastProgress;
-    
     interface IoFile {
         void seek(long pos) throws IOException;
         void write(byte[] b) throws IOException;
@@ -116,7 +115,8 @@ public class MultiSourceDownload implements Task, Cancellable {
         this.crawlerManager = crawlerManager;
         this.fileMover = fileMover;
         this.type = partialFile.getType();
-        this.hash = partialFile.getHash(com.myster.hash.HashManager.MD5);
+        this.hashes = partialFile.getFileHashes();
+        // this.hash = partialFile.getHash(com.myster.hash.HashManager.MD5);
         this.fileLength = partialFile.getFileLength();
         this.chunkSize = (int) partialFile.getBlockSize();
         this.partialFile = partialFile;
@@ -127,7 +127,7 @@ public class MultiSourceDownload implements Task, Cancellable {
         this.bytesWrittenOut = fileProgress;
         this.initialOffset = fileProgress;
 
-        this.downloaders = new HashSet<InternalSegmentDownloader>();
+        this.downloaders = new HashSet<SegmentDownloader>();
         this.hashSearchListener = new MSHashSearchListener();
 
         addListener(listener);
@@ -153,27 +153,32 @@ public class MultiSourceDownload implements Task, Cancellable {
         fireEventAsycronously(createMultiSourceEvent(MultiSourceEvent.START_DOWNLOAD));
         Util.invokeLater(() -> {
             MysterFileStub[] stubs = initialFileStubs;
+
             if (stubs != null) {
                 for (int i = 0; i < stubs.length; i++) {
                     newDownload(stubs[i]);
                 }
             }
-            crawlerManager.addHash(type, hash, hashSearchListener);
+
+            for (FileHash hash : hashes) {
+                crawlerManager.addHash(type, hash, hashSearchListener);
+            }
+
+            if ((stubs == null || stubs.length == 0) && hashes.length == 0) {
+                flagToEnd();
+            }
         });
     }
 
-    private synchronized void newDownload(MysterFileStub stub) {
+    /** Package Protected for unit tests */
+    synchronized void newDownload(MysterFileStub stub) {
         if (endFlag)
             return;
 
         if (stub.getMysterAddress() == null)
             return; // cheap hack
 
-        final InternalSegmentDownloader downloader =
-                new InternalSegmentDownloader(controller,
-                                              MysterSocketFactory::makeStreamConnection,
-                                              stub,
-                                              chunkSize);
+        final SegmentDownloader downloader = newSegmentDownloader(stub, controller);
 
         if (downloaders.contains(downloader)) {
             return; // already have a downloader doing this file.
@@ -182,11 +187,19 @@ public class MultiSourceDownload implements Task, Cancellable {
         downloaders.add(downloader);
 
         fireEventAsycronously(new MSSegmentEvent(MSSegmentEvent.START_SEGMENT, downloader) );
-        Util.invokeLater(() -> downloader.start());
+        downloader.start();
+    }
+
+    /** Protected for unit tests */
+    protected SegmentDownloader newSegmentDownloader(MysterFileStub stub, Controller controller) {
+        return new InternalSegmentDownloader(controller,
+                                             MysterSocketFactory::makeStreamConnection,
+                                             stub,
+                                             chunkSize);
     }
 
     private void fireEventAsycronously(final GenericEvent event) {
-        Util.invokeLater(() -> dispatcher.fireEvent(event));
+        Util.invokeNowOrLater(() -> dispatcher.fireEvent(event));
     }
 
     /**
@@ -195,8 +208,8 @@ public class MultiSourceDownload implements Task, Cancellable {
      * download.
      */
     private synchronized boolean isOkToQueue() {
-        for (InternalSegmentDownloader internalSegmentDownloader : downloaders) {
-            if (internalSegmentDownloader.isActive())
+        for (SegmentDownloader SegmentDownloader : downloaders) {
+            if (SegmentDownloader.isActive())
                 return false;
         }
 
@@ -223,7 +236,7 @@ public class MultiSourceDownload implements Task, Cancellable {
      * cleanup routine
      */
     private synchronized boolean endCheckAndCleanup() {
-        if ((endFlag | isDone()) & (downloaders.size() == 0)) {
+        if ((endFlag || isDone()) && (downloaders.size() == 0)) {
             endDownloadCleanUp();
 
             return true;
@@ -324,8 +337,8 @@ public class MultiSourceDownload implements Task, Cancellable {
         endFlag = true;
 
 
-        for (InternalSegmentDownloader internalSegmentDownloader : downloaders) {
-            internalSegmentDownloader.flagToEnd();
+        for (SegmentDownloader SegmentDownloader : downloaders) {
+            SegmentDownloader.flagToEnd();
         }
 
         endCheckAndCleanup(); // just in case there was no downloader threads.
@@ -344,7 +357,7 @@ public class MultiSourceDownload implements Task, Cancellable {
 
         while (!isDead) { // wow, is crap
             try {
-                Thread.sleep(100);
+                Thread.sleep(1);
             } catch (InterruptedException ex) {
                 return;
             }
@@ -354,7 +367,9 @@ public class MultiSourceDownload implements Task, Cancellable {
 
     // This method will only be called once right at the end of the download
     private synchronized void endDownloadCleanUp() {
-        crawlerManager.removeHash(type, hash, hashSearchListener);
+        for (FileHash hash : hashes) {
+            crawlerManager.removeHash(type, hash, hashSearchListener);
+        }
 
         try {
             randomAccessFile.close();
@@ -401,7 +416,7 @@ public class MultiSourceDownload implements Task, Cancellable {
         }
     }
 
-    private class ControllerImpl implements Controller {
+    class ControllerImpl implements Controller {
         /*
          * (non-Javadoc)
          * 
