@@ -28,6 +28,7 @@ import java.util.logging.Logger;
 
 import com.general.thread.CallListener;
 import com.general.thread.CancellableCallable;
+import com.general.thread.PromiseFuture;
 import com.general.thread.PromiseFutures;
 import com.myster.application.MysterGlobals;
 import com.myster.hash.FileHash;
@@ -68,7 +69,7 @@ public class FileTypeList {
     // returnable (doesn't limit ""
     // queries)
 
-    private volatile Future<List<FileItem>> indexingFuture = null; // if true then the list is
+    private volatile PromiseFuture<List<FileItem>> indexingFuture = null; // if true then the list is
 
     private final HashProvider hashProvider;
 
@@ -431,7 +432,7 @@ public class FileTypeList {
             // list, you see...)
 
             if (indexingFuture != null) {
-                indexingFuture.cancel(false);
+                indexingFuture.cancel();
                 indexingFuture = null;
             }
             return;
@@ -449,48 +450,12 @@ public class FileTypeList {
          */
         if (indexingFuture == null && (isOld() || !rootdir.equals(workingdir))) {
             rootdir = workingdir; // in case the dir for this type has changed.
-			indexingFuture = PromiseFutures
-					.execute(new FileListIndexCall(type, new File(rootdir), hashProvider),
-							Executors.newVirtualThreadPerTaskExecutor())
-					.addCallListener(new FileListCallListener()).useEdt();
-		}
-	}
-
-    private class FileListCallListener implements CallListener<List<FileItem>> {
-        /*
-         * (non-Javadoc)
-         * 
-         * @see com.general.thread.CallListener#handleCancel()
-         */
-        public void handleCancel() {
-            // nothing
-        }
-
-        /*
-         * (non-Javadoc)
-         * 
-         * @see com.general.thread.CallListener#handleResult(java.lang.Object)
-         */
-        public void handleResult(List<FileItem> result) {
-            setFileList(  result);
-        }
-
-        /*
-         * (non-Javadoc)
-         * 
-         * @see com.general.thread.CallListener#handleException(java.lang.Exception)
-         */
-        public void handleException(Exception ex) {
-            ex.printStackTrace();
-        }
-
-        /*
-         * (non-Javadoc)
-         * 
-         * @see com.general.thread.CallListener#handleFinally()
-         */
-        public void handleFinally() {
-            resetIndexingVariables();
+            indexingFuture = PromiseFutures
+                    .execute(new FileListIndexCall(type, new File(rootdir), hashProvider))
+                    .addFinallyListener(this::resetIndexingVariables)
+                    .addResultListener(this::setFileList)
+                    .addStandardExceptionHandler()
+                    .useEdt();
         }
     }
 

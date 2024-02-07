@@ -1,8 +1,6 @@
 package com.myster.client.stream.msdownload;
 
 import java.awt.Color;
-import java.io.File;
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
