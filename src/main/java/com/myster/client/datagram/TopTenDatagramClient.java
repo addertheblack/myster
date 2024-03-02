@@ -1,7 +1,7 @@
 package com.myster.client.datagram;
 
 import java.io.ByteArrayInputStream;
-import java.io.DataInputStream;
+import com.myster.client.stream.MysterDataInputStream;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
@@ -23,7 +23,7 @@ public class TopTenDatagramClient implements StandardDatagramClientImpl<String[]
     public String[] getObjectFromTransaction(Transaction transaction)
             throws IOException {
 
-        DataInputStream in = new DataInputStream(new ByteArrayInputStream(
+        MysterDataInputStream in = new MysterDataInputStream(new ByteArrayInputStream(
                 transaction.getData()));
 
         List<String> strings = new ArrayList<>();

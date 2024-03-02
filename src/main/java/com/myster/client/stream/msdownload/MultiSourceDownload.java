@@ -16,7 +16,6 @@ import com.general.util.Util;
 import com.myster.hash.FileHash;
 import com.myster.net.MysterSocketFactory;
 import com.myster.search.HashCrawlerManager;
-import com.myster.search.HashSearchEvent;
 import com.myster.search.HashSearchListener;
 import com.myster.search.MysterFileStub;
 import com.myster.type.MysterType;
@@ -116,7 +115,6 @@ public class MultiSourceDownload implements Task, Cancellable {
         this.fileMover = fileMover;
         this.type = partialFile.getType();
         this.hashes = partialFile.getFileHashes();
-        // this.hash = partialFile.getHash(com.myster.hash.HashManager.MD5);
         this.fileLength = partialFile.getFileLength();
         this.chunkSize = (int) partialFile.getBlockSize();
         this.partialFile = partialFile;
@@ -395,12 +393,8 @@ public class MultiSourceDownload implements Task, Cancellable {
         return new MultiSourceEvent(id, initialOffset, bytesWrittenOut, fileLength, isCancelled);
     }
 
-    private class MSHashSearchListener extends HashSearchListener {
-        public void startSearch(HashSearchEvent event) {
-        }
-
-        public void searchResult(HashSearchEvent event) {
-            MysterFileStub stub = event.getFileStub();
+    private class MSHashSearchListener implements HashSearchListener {
+        public void searchResult(MysterFileStub stub) {
 
             MultiSourceUtilities.debug(stub == null ? "Search Lstnr-> No file with that hash here."
                     : "Search Lstnr-> Got result " + stub);
@@ -410,9 +404,6 @@ public class MultiSourceDownload implements Task, Cancellable {
                 MultiSourceUtilities
                         .debug("Search Lstnr-> Starting another segment downloader (another source)");
             }
-        }
-
-        public void endSearch(HashSearchEvent event) {
         }
     }
 

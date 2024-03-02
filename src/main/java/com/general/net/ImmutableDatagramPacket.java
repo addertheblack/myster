@@ -13,6 +13,8 @@ package com.general.net;
 
 import java.net.DatagramPacket;
 import java.net.InetAddress;
+import java.net.InetSocketAddress;
+import java.net.SocketAddress;
 
 public final class ImmutableDatagramPacket {
     private final InetAddress address;
@@ -89,5 +91,9 @@ public final class ImmutableDatagramPacket {
      */
     public DatagramPacket getDatagramPacket() {
         return new DatagramPacket(getData(), data.length, address, port);
+    }
+
+    public SocketAddress getSocketAddress() {
+        return new InetSocketAddress(address, port);
     }
 }

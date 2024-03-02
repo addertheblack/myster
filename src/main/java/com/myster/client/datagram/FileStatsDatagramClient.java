@@ -2,10 +2,10 @@ package com.myster.client.datagram;
 
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
-import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.io.IOException;
 
+import com.myster.client.stream.MysterDataInputStream;
 import com.myster.mml.MMLException;
 import com.myster.mml.RobustMML;
 import com.myster.net.StandardDatagramClientImpl;
@@ -30,7 +30,7 @@ public class FileStatsDatagramClient implements StandardDatagramClientImpl<Robus
         // constructor..
         //yeah baby... :-)
         try {
-            return new RobustMML((new DataInputStream(new ByteArrayInputStream(
+            return new RobustMML((new MysterDataInputStream(new ByteArrayInputStream(
                     transaction.getData()))).readUTF());
         } catch (MMLException ex) {
             throw new com.myster.net.BadPacketException(

@@ -1,6 +1,5 @@
 package com.general.application;
 
-import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.io.IOException;
 import java.net.InetAddress;
@@ -8,6 +7,9 @@ import java.net.ServerSocket;
 import java.net.Socket;
 import java.util.prefs.BackingStoreException;
 import java.util.prefs.Preferences;
+
+import com.myster.client.stream.MysterDataInputStream;
+import com.myster.client.stream.MysterDataOutputStream;
 
 /**
  * Use this class to assert that there's only one version of the program currently running. Will
@@ -79,8 +81,8 @@ public class ApplicationContext {
 
     private void connectToSelf(int password, String[] args) throws IOException {
         try (Socket socket = new Socket(InetAddress.getLocalHost(), port);
-                DataInputStream in = new DataInputStream(socket.getInputStream());
-                DataOutputStream out = new DataOutputStream(socket.getOutputStream())) {
+                MysterDataInputStream in = new MysterDataInputStream(socket.getInputStream());
+                MysterDataOutputStream out = new MysterDataOutputStream(socket.getOutputStream())) {
 
             out.writeInt(password);
             sendArgs(out, args);
@@ -94,7 +96,7 @@ public class ApplicationContext {
         }
     }
 
-    private static void sendArgs(DataOutputStream out, String[] args) throws IOException {
+    private static void sendArgs(MysterDataOutputStream out, String[] args) throws IOException {
         out.writeInt(args.length);
         for (int i = 0; i < args.length; i++) {
             out.writeUTF(args[i]);

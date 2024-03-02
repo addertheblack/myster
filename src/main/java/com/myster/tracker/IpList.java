@@ -94,24 +94,14 @@ class IpList {
      * cannot be connected to because they are down or the user isn't connected to the internet.
      */
     public synchronized MysterServer[] getTop(int x) {
-        MysterServer[] temp = new MysterServer[x];
+        List <MysterServer> servers = new ArrayList<>();
 
-        //save();
-        //io.writeIPList(getAsArray());
-
-        int counter = 0;
-        
         for (MysterServer value : mapOfServers.values()) {
             if (value.getStatus() && (!value.isUntried())) {
-                temp[counter] = value;
-                counter++;
-            }
-            
-            if (counter >= temp.length) {
-                return temp;
+                servers.add(value);
             }
         }
-        return temp;
+        return servers.toArray(new MysterServer[0]);
     }
 
     /**

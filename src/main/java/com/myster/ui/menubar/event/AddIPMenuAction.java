@@ -34,7 +34,7 @@ public class AddIPMenuAction implements ActionListener {
         }
 
         try {
-            ipListManager.addIP(new MysterAddress(answer));
+            ipListManager.addIp(new MysterAddress(answer));
         } catch (UnknownHostException ex) {
             LOGGER.info("The \"Name\" : " + answer + " is not a valid domain name at all!");
         }

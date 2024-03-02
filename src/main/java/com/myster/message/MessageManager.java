@@ -45,7 +45,7 @@ public class MessageManager {
             }
             
             @Override
-            public void handleException(Exception exception) {
+            public void handleException(Throwable exception) {
                 if (exception instanceof UnknownProtocolException ex) {
                     simpleAlert("Client doesn't know how to receive messages.");
                     return;

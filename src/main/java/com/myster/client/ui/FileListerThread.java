@@ -9,13 +9,13 @@
  */
 package com.myster.client.ui;
 
-import java.io.DataInputStream;
-import java.io.DataOutputStream;
 import java.io.IOException;
 import java.util.logging.Logger;
 
 import com.general.util.TextSpinner;
 import com.general.util.Util;
+import com.myster.client.stream.MysterDataInputStream;
+import com.myster.client.stream.MysterDataOutputStream;
 import com.myster.net.MysterAddress;
 import com.myster.net.MysterSocket;
 import com.myster.net.MysterSocketFactory;
@@ -68,8 +68,8 @@ public class FileListerThread extends MysterThread {
         try (MysterSocket socket =
                 MysterSocketFactory.makeStreamConnection(new MysterAddress(ip))) {
 
-            DataOutputStream out = socket.getOutputStream();
-            DataInputStream in = socket.getInputStream();
+            MysterDataOutputStream out = socket.getOutputStream();
+            MysterDataInputStream in = socket.getInputStream();
 
             msg.say("Requesting File List...");
 

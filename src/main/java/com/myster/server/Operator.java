@@ -12,8 +12,11 @@
 package com.myster.server;
 
 import java.io.IOException;
+import java.net.InetAddress;
 import java.net.ServerSocket;
 import java.net.Socket;
+import java.util.List;
+import java.util.Optional;
 import java.util.function.Consumer;
 import java.util.logging.Logger;
 
@@ -34,14 +37,16 @@ public class Operator implements Runnable {
     private ServerSocket serverSocket;
     private volatile Timer timer;
 
-    protected Operator(Consumer<Socket> socketConsumer, int port) {
+    private final Optional<InetAddress> bindAddress;
+
+    protected Operator(Consumer<Socket> socketConsumer, int port, Optional<InetAddress> bindAddress) {
         Thread.currentThread().setName("Operator Thread port: " + port);
-        this.socketConsumer = socketConsumer; //Communications channel
-        // between operator and
-        // section threads.
+        
+        this.bindAddress = bindAddress;
+        this.socketConsumer = socketConsumer;
         this.port = port;
     }
-        
+
     public void run() {
         Thread.currentThread().setPriority(Thread.MAX_PRIORITY); //to minimize the time it takes to make a
         // connection.
@@ -87,8 +92,7 @@ public class Operator implements Runnable {
                     } catch (IOException ex) {
                     }
 
-                serverSocket = new ServerSocket(getPort(),
-                        5); //bigger buffer
+                serverSocket = new ServerSocket(getPort(), 5, bindAddress.orElse(null)); //bigger buffer
                 break;
             } catch (IOException ex) {
                 try {

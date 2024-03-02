@@ -3,19 +3,27 @@ package com.myster.server;
 import java.awt.Dimension;
 import java.awt.FlowLayout;
 import java.awt.GridLayout;
+import java.net.InetAddress;
 import java.net.Socket;
+import java.net.UnknownHostException;
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
-import java.util.StringTokenizer;
+import java.util.Optional;
 import java.util.concurrent.Executor;
 import java.util.concurrent.Executors;
 import java.util.function.Consumer;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 import javax.swing.JCheckBox;
 import javax.swing.JComboBox;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
+import javax.swing.JSpinner;
 import javax.swing.JTextField;
+import javax.swing.SpinnerNumberModel;
 
 import com.general.thread.BoundedExecutor;
 import com.myster.application.MysterGlobals;
@@ -30,10 +38,10 @@ import com.myster.transaction.TransactionProtocol;
 import com.myster.transferqueue.TransferQueue;
 
 public class ServerFacade {
+    private static final Logger LOGGER = Logger.getLogger(ServerFacade.class.getName());
     private static String IDENTITY_KEY = "ServerIdentityKey/";
-    private static String serverThreadKey = "MysterTCPServerThreads/";
 
-    private boolean b = true;
+    private boolean inited = true;
 
     private final Operator[] operators;
     private final TransferQueue transferQueue;
@@ -57,24 +65,52 @@ public class ServerFacade {
         this.transactionManager = transactionManager;
         this.serverDispatcher = serverDispatcher;
         this.operatorExecutor = Executors.newVirtualThreadPerTaskExecutor();
-        this.connectionExecutor = new BoundedExecutor(getServerThreads(), operatorExecutor);
+        this.connectionExecutor = new BoundedExecutor(120, operatorExecutor);
 
         transferQueue = new ServerQueue();
         transferQueue.setMaxQueueLength(20);
-
+        
         Consumer<Socket> socketConsumer =
                 (socket) -> connectionExecutor.execute(new ConnectionRunnable(socket,
                                                                               serverDispatcher,
                                                                               transferQueue,
                                                                               connectionSections));
 
-        operators = new Operator[2];
-        operators[0] = new Operator(socketConsumer, MysterGlobals.SERVER_PORT);
-        operators[1] = new Operator(socketConsumer, 80); // ..
-                                                         // arrrgghh
+        final var operatorList = new ArrayList<Operator>();
+        operatorList.add( new Operator(socketConsumer, getServerPort(), Optional.empty()));
+
+        if (getServerPort() != MysterGlobals.DEFAULT_SERVER_PORT) {
+            LOGGER.fine("Initializing LAN operator");
+            try {
+                initLanResourceDiscovery(serverDispatcher, operatorList);
+            } catch (UnknownHostException exception) {
+                LOGGER.log(Level.WARNING, "Could not initialize LAN socket", exception);
+            }
+        }
+        
+        this.operators = operatorList.toArray(new Operator[0]);
 
         addStandardStreamConnectionSections();
         initDatagramTransports();
+    }
+
+
+    private void initLanResourceDiscovery(ServerEventDispatcher serverDispatcher,
+                                          ArrayList<Operator> operatorList)
+            throws UnknownHostException {
+        Consumer<Socket> serviceDiscoveryPort =
+                (socket) -> connectionExecutor.execute(new ConnectionRunnable(socket,
+                                                                              serverDispatcher,
+                                                                              transferQueue,
+                                                                              new HashMap<>()));
+        List<InetAddress> publicLandAddresses = ServerUtils.findPublicLandAddress();
+        for (InetAddress publicLandAddress : publicLandAddresses) {
+            operatorList.add(new Operator(serviceDiscoveryPort,
+                                          MysterGlobals.DEFAULT_SERVER_PORT,
+                                          Optional.of( publicLandAddress)));
+        }
+        
+        datagramManager.accessPort(MysterGlobals.DEFAULT_SERVER_PORT, t -> t.addTransport(new PingTransport()));
     }
 
 
@@ -84,8 +120,8 @@ public class ServerFacade {
      * the system startup thread.
      */
     public synchronized void startServer() {
-        if (b) {
-            b = false;
+        if (inited) {
+            inited = false;
 
             for (int i = 0; i < operators.length; i++) {
                 operatorExecutor.execute(operators[i]);
@@ -93,19 +129,16 @@ public class ServerFacade {
         }
     }
 
-    /**
-     * 
-     */
     private void initDatagramTransports() {
-        datagramManager.accessPort(MysterGlobals.SERVER_PORT, t -> t.addTransport(new PingTransport()));
+        datagramManager.accessPort(getServerPort(), t -> t.addTransport(new PingTransport()));
     }
 
-    /**
-     * 
-     */
     public void addDatagramTransactions(TransactionProtocol ... protocols) {
+        addDatagramTransactions(getServerPort(), protocols);
+    }
+    public void addDatagramTransactions(int port, TransactionProtocol ... protocols) {
         for (TransactionProtocol transactionProtocol : protocols) {
-            transactionManager.addTransactionProtocol(MysterGlobals.SERVER_PORT,transactionProtocol);
+            transactionManager.addTransactionProtocol(port,transactionProtocol);
         }
     }
 
@@ -131,25 +164,17 @@ public class ServerFacade {
         connectionSections.put(section.getSectionNumber(), section);
     }
 
-    private int getServerThreads() {
-        String info = preferences.get(serverThreadKey);
-        if (info == null)
-            info = "120"; // default value;
-        try {
-            return Integer.parseInt(info);
-        } catch (NumberFormatException ex) {
-            return 120; // should *NEVER* happen.
-        }
+    private Integer getServerPort() {
+        return preferences.getInt("Server Port", MysterGlobals.DEFAULT_SERVER_PORT);
     }
-
-    private void setServerThreads(int i) {
-        preferences.put(serverThreadKey, "" + i);
+    
+    private void setPort(int value) {
+        preferences.putInt("Server Port", value);
     }
 
     private void addStandardStreamConnectionSections() {
         addConnectionSection(new com.myster.server.stream.IpLister(ipListManager));
         addConnectionSection(new com.myster.server.stream.RequestDirThread());
-//        addConnectionSection(new com.myster.server.stream.FileSenderThread());
         addConnectionSection(new com.myster.server.stream.FileTypeLister());
         addConnectionSection(new com.myster.server.stream.RequestSearchThread());
         addConnectionSection(new com.myster.server.stream.HandshakeThread(this::getIdentity));
@@ -218,7 +243,7 @@ public class ServerFacade {
         private final JLabel serverIdentityLabel;
         private final JComboBox<String> openSlotChoice;
         private final JLabel openSlotLabel;
-        private final JComboBox<String> serverThreadsChoice;
+        private final JSpinner serverThreadsChoice;
         private final JLabel serverThreadsLabel;
         private final JLabel spacerLabel;
         private final JLabel explanation;
@@ -241,15 +266,15 @@ public class ServerFacade {
             serverThreadsLabel = new JLabel("Server Threads: * (expert setting)");
             add(serverThreadsLabel);
 
-            serverThreadsChoice = new JComboBox<String>();
-            serverThreadsChoice.addItem("" + 35);
-            serverThreadsChoice.addItem("" + 40);
-            serverThreadsChoice.addItem("" + 60);
-            serverThreadsChoice.addItem("" + 80);
-            serverThreadsChoice.addItem("" + 120);
+            var spinnerNumberModel = new SpinnerNumberModel();
+            spinnerNumberModel.setMinimum(1024);
+            spinnerNumberModel.setMaximum((int)Math.pow(2, 16) - 1);
+            spinnerNumberModel.setValue(getServerPort());
+            serverThreadsChoice = new JSpinner(spinnerNumberModel);
+            ((JSpinner.DefaultEditor) serverThreadsChoice.getEditor()).getTextField().setEditable(true);
             add(serverThreadsChoice);
 
-            serverIdentityLabel = new JLabel("Server Identity:");
+            serverIdentityLabel = new JLabel("Server Port:");
             add(serverIdentityLabel);
 
             serverIdentityField = new JTextField();
@@ -278,16 +303,14 @@ public class ServerFacade {
         public void save() {
             setIdentity(serverIdentityField.getText());
             setDownloadSpots(Integer.parseInt((String) openSlotChoice.getSelectedItem()));
-            setServerThreads(Integer
-                    .parseInt((new StringTokenizer((String) serverThreadsChoice.getSelectedItem(),
-                                                   " ")).nextToken()));
+            setPort((int) serverThreadsChoice.getModel().getValue());
             leech.save();
         }
 
         public void reset() {
             serverIdentityField.setText(getIdentity());
             openSlotChoice.setSelectedItem("" + getDownloadSpots());
-            serverThreadsChoice.setSelectedItem("" + getServerThreads());
+            serverThreadsChoice.getModel().setValue(getServerPort());
             leech.reset();
         }
     }

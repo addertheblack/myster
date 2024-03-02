@@ -77,6 +77,14 @@ public class MysterPreferences {
     public String get(String key, String defaultValue) {
         return preferences.get(key, defaultValue);
     }
+    
+    public int getInt(String key, int defaultValue) {
+        return preferences.getInt(key, defaultValue);
+    }
+    
+    public void putInt(String key, int value) {
+        preferences.putInt(key, value);
+    }
 
     /**
      * Gets the value for a path. Returns "" if path not inited or invalid.

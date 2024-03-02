@@ -6,6 +6,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import com.myster.client.stream.MysterDataInputStream;
 import com.myster.util.FileProgressWindow;
 
 public class MSDownloadHandler implements MSDownloadListener {
@@ -16,7 +17,7 @@ public class MSDownloadHandler implements MSDownloadListener {
     
     private int maxBarCounter;
     private int segmentCounter = 0;
-
+    
     public MSDownloadHandler(FileProgressWindow progress) {
         this.progress = progress;
 
@@ -227,7 +228,7 @@ class SegmentDownloaderHandler extends SegmentDownloaderListener {
                 final_buffer[i + 2] = temp_buffer[i];
             }
 
-            java.io.DataInputStream in = new java.io.DataInputStream(
+            final var in = new MysterDataInputStream(
                     new java.io.ByteArrayInputStream(final_buffer));
 
             try {
@@ -261,7 +262,7 @@ class ProgressBannerManager implements Runnable {
 
     FileProgressWindow progress;
 
-    com.general.util.LinkedList queue;
+    com.general.util.LinkedList<Banner> queue;
 
     RotatingVector oldBanners;
 
@@ -271,7 +272,7 @@ class ProgressBannerManager implements Runnable {
 
     public ProgressBannerManager(FileProgressWindow progress) {
         this.progress = progress;
-        this.queue = new com.general.util.LinkedList();
+        this.queue = new com.general.util.LinkedList<Banner>();
         this.oldBanners = new RotatingVector();
     }
 

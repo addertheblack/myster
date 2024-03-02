@@ -1,6 +1,5 @@
 package com.myster.client.stream;
 
-import java.io.DataInputStream;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
@@ -176,7 +175,7 @@ public class StandardSuite {
         return FileTypeList.mergePunctuation(socket.in.readUTF());
     }
 
-    public static void checkProtocol(DataInputStream in) throws IOException,
+    public static void checkProtocol(MysterDataInputStream in) throws IOException,
             UnknownProtocolException { // this should have its own exception
         // type
         int err = in.read();

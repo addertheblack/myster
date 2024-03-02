@@ -17,7 +17,6 @@ import java.io.BufferedInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.lang.reflect.InvocationTargetException;
-import java.lang.reflect.Method;
 import java.net.InetAddress;
 import java.net.NetworkInterface;
 import java.net.SocketException;
@@ -25,12 +24,12 @@ import java.net.UnknownHostException;
 import java.util.ArrayList;
 import java.util.Enumeration;
 import java.util.List;
-import java.util.logging.Level;
 import java.util.logging.LogManager;
 import java.util.logging.Logger;
 
 import javax.swing.JFrame;
 import javax.swing.SwingUtilities;
+import javax.swing.UnsupportedLookAndFeelException;
 
 import com.general.application.ApplicationContext;
 import com.general.application.ApplicationSingletonListener;
@@ -58,6 +57,7 @@ import com.myster.search.MultiSourceHashSearch;
 import com.myster.search.ui.SearchWindow;
 import com.myster.server.BannersManager.BannersPreferences;
 import com.myster.server.ServerFacade;
+import com.myster.server.ServerUtils;
 import com.myster.server.datagram.FileStatsDatagramServer;
 import com.myster.server.datagram.SearchDatagramServer;
 import com.myster.server.datagram.SearchHashDatagramServer;
@@ -83,6 +83,8 @@ import com.simtechdata.waifupnp.UPnP;
 
 public class Myster {
     private static final Logger LOGGER = Logger.getLogger(AsyncDatagramSocket.class.getName());
+    private static final Logger INSTRUMENTATION = Logger.getLogger("INSTRUMENTATION");
+    
 
     public static void main(String[] args) throws IOException {
         setupLogging();
@@ -112,39 +114,30 @@ public class Myster {
         LOGGER.info("java.vm.name                 :" + System.getProperty("java.vm.name"));
         LOGGER.info("Desktop.isDesktopSupported() :" + Desktop.isDesktopSupported());
 
-        LOGGER.info("-------->> before javax.swing.UIManager invoke later "
+        INSTRUMENTATION.info("-------->> before javax.swing.UIManager invoke later "
                 + (System.currentTimeMillis() - startTime));
 
         SwingUtilities.invokeLater(() -> {
             try {
-                Class<?> uiClass = Class.forName("javax.swing.UIManager");
-                Method setLookAndFeel = uiClass.getMethod("setLookAndFeel", String.class);
-                Method getSystemLookAndFeelClassName =
-                        uiClass.getMethod("getSystemLookAndFeelClassName");
-                String lookAndFeelName = (String) getSystemLookAndFeelClassName.invoke(null);
-                setLookAndFeel.invoke(null, lookAndFeelName);
-            } catch (ClassNotFoundException e1) {
-                e1.printStackTrace();
-            } catch (SecurityException e) {
-                e.printStackTrace();
-            } catch (NoSuchMethodException e) {
-                e.printStackTrace();
-            } catch (IllegalArgumentException e) {
-                e.printStackTrace();
-            } catch (IllegalAccessException e) {
-                e.printStackTrace();
-            } catch (InvocationTargetException e) {
-                e.printStackTrace();
+                javax.swing.UIManager.setLookAndFeel(javax.swing.UIManager.getSystemLookAndFeelClassName());
+            } catch (InstantiationException exception) {
+                exception.printStackTrace();
+            } catch (UnsupportedLookAndFeelException exception) {
+                exception.printStackTrace();
+            } catch (ClassNotFoundException exception) {
+                exception.printStackTrace();
+            } catch (IllegalAccessException exception) {
+                exception.printStackTrace();
             }
 
-            // this gets awt to start initialising while we initialise Myster's
+            // this gets awt to start initialising on the EDT while we initialise Myster's
             // backend
             var f = new JFrame();
             f.pack();
             f.dispose();
         });
 
-        LOGGER.info("-------->> before Appl init " + (System.currentTimeMillis() - startTime));
+        INSTRUMENTATION.info("-------->> before Appl init " + (System.currentTimeMillis() - startTime));
 
         ApplicationSingletonListener applicationSingletonListener =
                 new ApplicationSingletonListener() {
@@ -187,9 +180,9 @@ public class Myster {
 
         LOGGER.info("MAIN THREAD: Starting loader Thread..");
 
-        LOGGER.info("-------->> before preferences " + (System.currentTimeMillis() - startTime));
+        INSTRUMENTATION.info("-------->> before preferences " + (System.currentTimeMillis() - startTime));
         MysterPreferences preferences = MysterPreferences.getInstance();
-        LOGGER.info("-------->> after preferences " + (System.currentTimeMillis() - startTime));
+        INSTRUMENTATION.info("-------->> after preferences " + (System.currentTimeMillis() - startTime));
 
         ServerEventDispatcher serverDispatcher = new ServerEventDispatcher();
         DatagramProtocolManager datagramManager = new DatagramProtocolManager();
@@ -201,14 +194,14 @@ public class Myster {
                                        new MysterDatagramImpl(transactionManager,
                                                               new UDPPingClient(datagramManager)));
 
-        LOGGER.info("-------->> before IPListManager " + (System.currentTimeMillis() - startTime));
+        INSTRUMENTATION.info("-------->> before IPListManager " + (System.currentTimeMillis() - startTime));
         IpListManager ipListManager =
                 new IpListManager(new MysterIpPoolImpl(java.util.prefs.Preferences.userRoot(),
                                                        protocol),
                                   protocol,
                                   java.util.prefs.Preferences.userRoot()
                                           .node("Tracker.IpListManager"));
-        LOGGER.info("-------->> after IPListManager " + (System.currentTimeMillis() - startTime));
+        INSTRUMENTATION.info("-------->> after IPListManager " + (System.currentTimeMillis() - startTime));
 
         final HashCrawlerManager crawlerManager =
                 new MultiSourceHashSearch(ipListManager, protocol);
@@ -230,17 +223,20 @@ public class Myster {
                                          new FileStatsDatagramServer(),
                                          new SearchHashDatagramServer());
 
+        serverFacade
+                .addDatagramTransactions(new ServerStatsDatagramServer(serverFacade::getIdentity));
+
         final HashManager hashManager = new HashManager();
         FileTypeListManager.init((f, l) -> hashManager.findHash(f, l));
 
         // asynchronously start the server
         serverFacade.startServer();
 
-        LOGGER.info("-------->> before invokeAndWait " + (System.currentTimeMillis() - startTime));
+        INSTRUMENTATION.info("-------->> before invokeAndWait " + (System.currentTimeMillis() - startTime));
 
         try {
             EventQueue.invokeAndWait(() -> {
-                LOGGER.info("-------->> inside  invokeAndWait"
+                INSTRUMENTATION.info("-------->> inside  invokeAndWait"
                         + (System.currentTimeMillis() - startTime));
                 try {
                     if (com.myster.type.TypeDescriptionList.getDefault()
@@ -258,7 +254,7 @@ public class Myster {
                     return; // not reached
                 }
 
-                LOGGER.info("-------->> before menuBarFactory "
+                INSTRUMENTATION.info("-------->> before menuBarFactory "
                         + (System.currentTimeMillis() - startTime));
 
                 MysterMenuBar menuBarFactory = new MysterMenuBar();
@@ -293,13 +289,13 @@ public class Myster {
                 ServerStatsWindow.init(serverFacade.getServerDispatcher().getServerContext(),
                                        context,
                                        protocol);
-                LOGGER.info("-------->> before ServerStatsWindow.getInstance().pack() "
+                INSTRUMENTATION.info("-------->> before ServerStatsWindow.getInstance().pack() "
                         + (System.currentTimeMillis() - startTime));
                 ServerStatsWindow.getInstance().pack();
 
                 SearchWindow.init(protocol, crawlerManager, ipListManager);
 
-                LOGGER.info("-------->> before addPanels "
+                INSTRUMENTATION.info("-------->> before addPanels "
                         + (System.currentTimeMillis() - startTime));
                 preferencesGui.addPanel(BandwidthManager.getPrefsPanel());
                 preferencesGui.addPanel(new BannersPreferences());
@@ -317,7 +313,7 @@ public class Myster {
 
                 com.myster.hash.ui.HashPreferences.init(preferencesGui, hashManager);
 
-                LOGGER.info("-------->> before inits " + (System.currentTimeMillis() - startTime));
+                INSTRUMENTATION.info("-------->> before inits " + (System.currentTimeMillis() - startTime));
 
                 if (isServer) {
                     // nothing
@@ -330,8 +326,8 @@ public class Myster {
                 }
 
                 try {
-                    com.myster.client.stream.msdownload.MSPartialFile.restartDownloads(crawlerManager,
-                                                                            context);
+                    com.myster.client.stream.msdownload.MSPartialFile
+                            .restartDownloads(crawlerManager, context);
                 } catch (IOException ex) {
                     LOGGER.info("Error in restarting downloads.");
                     ex.printStackTrace();
@@ -343,11 +339,11 @@ public class Myster {
 
                 if (Desktop.getDesktop().isSupported(Action.APP_ABOUT)) {
                     Desktop.getDesktop().setAboutHandler(e -> AnswerDialog
-                            .simpleAlert("Myster PR 10\n\nCommon, join the party.."));
+                            .simpleAlert("Myster PR 10\n\nCome on, join the party.."));
                 }
             });
 
-            LOGGER.info("-------->>" + (System.currentTimeMillis() - startTime));
+            INSTRUMENTATION.info("-------->>" + (System.currentTimeMillis() - startTime));
 
 
             Thread.sleep(1);
@@ -371,20 +367,12 @@ public class Myster {
         LOGGER.info("External UPnP gateway: " + UPnP.getDefaultGatewayIP());
         LOGGER.info("External IP: " + UPnP.getExternalIP());
         LOGGER.info("Local IP: " + UPnP.getLocalIP());
-        LOGGER.info("isMappedTCP(): " + UPnP.isMappedTCP(MysterGlobals.SERVER_PORT));
-        LOGGER.info("External TCP/IP port enabled: " + UPnP.openPortTCP(MysterGlobals.SERVER_PORT));
-        LOGGER.info("External UDP/IP port enabled: " + UPnP.openPortUDP(MysterGlobals.SERVER_PORT));
-//        
-//        for (int i = 0; i < 400; i++) {
-//            try {
-//                Thread.sleep(2000);
-//            } catch (InterruptedException exception) {
-//            }
-//            protocol.getDatagram().ping(new MysterAddress("255.255.255.255")).addResultListener((r)-> System.out.println("Got response from " + r.address() + " in " + r.pingTimeMs() + "ms")) ;
-//        }
+        LOGGER.info("isMappedTCP(): " + UPnP.isMappedTCP(MysterGlobals.DEFAULT_SERVER_PORT));
+        LOGGER.info("External TCP/IP port enabled: " + UPnP.openPortTCP(MysterGlobals.DEFAULT_SERVER_PORT));
+        LOGGER.info("External UDP/IP port enabled: " + UPnP.openPortUDP(MysterGlobals.DEFAULT_SERVER_PORT));
         
+        ServerUtils.massPing(protocol, ipListManager);
     } // Utils, globals etc.. //These variables are System wide variables //
-
 
     private static void setupLogging() throws IOException {
         InputStream inputStream =

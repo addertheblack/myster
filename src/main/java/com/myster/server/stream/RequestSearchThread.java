@@ -8,10 +8,10 @@
  */
 package com.myster.server.stream;
 
-import java.io.DataInputStream;
-import java.io.DataOutputStream;
 import java.io.IOException;
 
+import com.myster.client.stream.MysterDataInputStream;
+import com.myster.client.stream.MysterDataOutputStream;
 import com.myster.filemanager.FileTypeListManager;
 import com.myster.net.MysterAddress;
 import com.myster.server.ConnectionContext;
@@ -36,8 +36,8 @@ public class RequestSearchThread extends ServerThread {
      */
 
     public void section(ConnectionContext c) throws IOException {
-        DataInputStream in = c.socket.getInputStream();
-        DataOutputStream out = c.socket.getOutputStream();
+        MysterDataInputStream in = c.socket.getInputStream();
+        MysterDataOutputStream out = c.socket.getOutputStream();
 
         ServerSearchDispatcher dispatcher = (ServerSearchDispatcher) (c.sectionObject);
 

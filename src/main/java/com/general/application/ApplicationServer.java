@@ -1,7 +1,5 @@
 package com.general.application;
 
-import java.io.DataInputStream;
-import java.io.DataOutputStream;
 import java.io.IOException;
 import java.net.ServerSocket;
 import java.net.Socket;
@@ -10,6 +8,8 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 
 import com.general.util.Util;
+import com.myster.client.stream.MysterDataInputStream;
+import com.myster.client.stream.MysterDataOutputStream;
 
 class ApplicationServer {
     private final int password;
@@ -38,8 +38,8 @@ class ApplicationServer {
                 Socket socket = serverSocket.accept();
                 if (excecutor.isShutdown())
                     return;
-                try (DataInputStream in = new DataInputStream(socket.getInputStream());
-                     DataOutputStream out = new DataOutputStream(socket.getOutputStream())) {
+                try (MysterDataInputStream in = new MysterDataInputStream(socket.getInputStream());
+                        MysterDataOutputStream out = new MysterDataOutputStream(socket.getOutputStream())) {
 
                     int password = in.readInt();
                     final String[] args = getArgs(in);
@@ -73,7 +73,7 @@ class ApplicationServer {
         }
     }
 
-    private String[] getArgs(DataInputStream in) throws IOException {
+    private String[] getArgs(MysterDataInputStream in) throws IOException {
         String[] args = new String[in.readInt()];
         for (int i = 0; i < args.length; i++) {
             args[i] = in.readUTF();

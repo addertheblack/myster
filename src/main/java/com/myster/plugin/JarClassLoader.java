@@ -7,7 +7,7 @@
 
 package com.myster.plugin;
 
-import java.io.DataInputStream;
+import com.myster.client.stream.MysterDataInputStream;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
@@ -67,7 +67,7 @@ public class JarClassLoader extends ClassLoader {
                 throw new ClassNotFoundException("Fuck");
             }
             
-            try (DataInputStream dataIn = new DataInputStream(in)) {
+            try (MysterDataInputStream dataIn = new MysterDataInputStream(in)) {
                 byte[] b = new byte[(int) size];
                 dataIn.readFully(b);
                 return b;

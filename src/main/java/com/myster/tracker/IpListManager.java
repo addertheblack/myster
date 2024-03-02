@@ -93,7 +93,7 @@ public class IpListManager { // aka tracker
      * @param ip
      *            The MysterAddress of the server you want to add.
      */
-    public void addIP(MysterAddress ip) {
+    public void addIp(MysterAddress ip) {
         protocol.getDatagram().ping(ip).addCallListener(pingEventListener); // temporary..
     }
 
@@ -155,7 +155,7 @@ public class IpListManager { // aka tracker
      * @return Myster server at that address or null if the tracker doesn't have
      *         any record of a server at that address
      */
-    public synchronized MysterServer getQuickServerStats(MysterAddress address) { //returns
+    public synchronized MysterServer getQuickServerStats(MysterAddress address) { 
         return pool.getCachedMysterIp(address);
     }
 
@@ -338,7 +338,7 @@ public class IpListManager { // aka tracker
                     }
                     
                     if (i >= max) {
-                        addIP(ip); //..
+                        addIp(ip); //..
                     }
                     
                     i++;

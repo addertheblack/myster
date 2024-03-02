@@ -12,18 +12,12 @@ import com.general.net.ImmutableDatagramPacket;
 import com.myster.application.MysterGlobals;
 
 /**
- * This class provides functionality for the Myster Datagram multiplexer protocol. The point of this
- * protocol is to allow for an arbitrary number of methods of interpreting packets on a single
- * Internet Protocol (IP) port. The protocol works by adding the protocol's "number" (aka: transport
- * code) to the start of the datagram. The server/client which receives this packet can use the
- * number to send the packet to the appropriate DatagramTransport object which is responsible for
- * dealing with the packet after that.
- * <p>
- * It's nice and simple.
+ * This manager mediates access to the Datagram socket depending on the port.
  * 
- * @see DatagramTransport
+ * It includes methods to access the {@link TransportManager} in a thread safe way for the correct port
  */
 public class DatagramProtocolManager {
+    // Map<port, TransportManager>
     private final Map<Integer, TransportManager> lookup;
     
     public DatagramProtocolManager() {
@@ -58,6 +52,19 @@ public class DatagramProtocolManager {
     }
 
 
+    /**
+     * This class provides functionality for the Myster Datagram multiplexer protocol. The point of this
+     * protocol is to allow for an arbitrary number of methods of interpreting packets on a single
+     * Internet Protocol (IP) port. The protocol works by adding the protocol's "number" (aka: transport
+     * code) to the start of the datagram. The server/client which receives this packet can use the
+     * number to send the packet to the appropriate DatagramTransport object which is responsible for
+     * dealing with the packet after that.
+     * <p>
+     * It's nice and simple.
+     * <p>
+     * 
+     * @see DatagramProtocolManager
+     */
     public interface TransportManager extends DatagramSender {
         /**
          * Adds transport to port on all addresses.
@@ -135,7 +142,7 @@ public class DatagramProtocolManager {
                 if (t != null) {
                     t.packetReceived(this::sendPacket, p);
                 } else {
-                    if (MysterGlobals.SERVER_PORT == p.getPort()) {
+                    if (MysterGlobals.DEFAULT_SERVER_PORT == p.getPort()) {
                         LOGGER.info("Transport Code not found -> " + getCodeFromPacket(p) + " "
                                     + p.getAddress().toString() + ":" + p.getPort());
                     }

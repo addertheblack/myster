@@ -46,7 +46,7 @@ public interface CallListener<T> {
      * @param ex
      *            Exception thrown by the CancellableCallable
      */
-    public void handleException(Exception ex);
+    public void handleException(Throwable ex);
 
     /**
      * is called after either handleCancel(), handleResult() or handleException().

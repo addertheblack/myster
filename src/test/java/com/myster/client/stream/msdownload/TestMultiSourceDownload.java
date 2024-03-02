@@ -20,7 +20,6 @@ import com.myster.hash.FileHash;
 import com.myster.hash.SimpleFileHash;
 import com.myster.net.MysterAddress;
 import com.myster.search.HashCrawlerManager;
-import com.myster.search.HashSearchEvent;
 import com.myster.search.HashSearchListener;
 import com.myster.search.MysterFileStub;
 import com.myster.type.MysterType;
@@ -134,10 +133,9 @@ class TestMultiSourceDownload {
         assertEquals(1, allValues.size());
 
         allValues.get(0)
-                .searchResult(new HashSearchEvent(HashSearchEvent.SEARCH_RESULT,
-                                                  new MysterFileStub(new MysterAddress("127.0.0.1"),
+                .searchResult( new MysterFileStub(new MysterAddress("127.0.0.1"),
                                                                      new MysterType("MPG3"),
-                                                                     "It doens't matter")));
+                                                                     "It doens't matter"));
 
         Util.invokeAndWaitNoThrows(() -> {});
         

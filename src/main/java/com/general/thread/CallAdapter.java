@@ -29,7 +29,7 @@ public class CallAdapter<T> implements CallListener<T> {
      * 
      * @see com.general.thread.CallListener#handleException(java.lang.Exception)
      */
-    public void handleException(Exception ex) {
+    public void handleException(Throwable ex) {
     }
 
     /*

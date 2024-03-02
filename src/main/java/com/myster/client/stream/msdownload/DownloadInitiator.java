@@ -38,7 +38,10 @@ public class DownloadInitiator implements Runnable {
         this.crawlerManager = crawlerManager;
     }
 
-    interface MsDownloadListener extends FileMover {
+    /**
+     * This is used while the download is still in the process of starting
+     */
+    interface DownloadInitiatorListener extends FileMover {
         // First step
         void setCancellable(Cancellable cancellable);
 
@@ -47,9 +50,7 @@ public class DownloadInitiator implements Runnable {
 
         void setText(String title);
         
-        void setDone();
-        
-        MSDownloadHandler getMSDownloadHandler();
+        MSDownloadHandler getMsDownloadHandler();
 
         File getFileToDownloadTo(MysterFileStub stub);
 
@@ -60,8 +61,8 @@ public class DownloadInitiator implements Runnable {
                 throws IOException;
     }
 
-    private static MsDownloadListener bindToFileProgressWindow(MysterFrameContext context) {
-        return new MsDownloadListener() {
+    private static DownloadInitiatorListener bindToFileProgressWindow(MysterFrameContext context) {
+        return new DownloadInitiatorListener() {
             EdtFileProgressWindow w = null;
             
             private void init() {
@@ -98,20 +99,11 @@ public class DownloadInitiator implements Runnable {
             }
             
             @Override
-            public void setDone() {
-                Util.invokeLater(()-> {
-                    init();
-                    
-                    w.setDone();
-                });
-            }
-            
-            @Override
-            public MSDownloadHandler getMSDownloadHandler() {
+            public MSDownloadHandler getMsDownloadHandler() {
                 return Util.callAndWaitNoThrows(() -> {
                     init();
 
-                    return w.getMSDownloadHandler();
+                    return w.getMsDownloadHandler();
                 });
             }
 
@@ -151,7 +143,7 @@ public class DownloadInitiator implements Runnable {
         };
     }
     
-    private static class EdtFileProgressWindow implements MsDownloadListener {
+    private static class EdtFileProgressWindow implements DownloadInitiatorListener {
         private final FileProgressWindow progress;
         
         private Cancellable cancellable;
@@ -190,14 +182,16 @@ public class DownloadInitiator implements Runnable {
             progress.setText(text);
         }
 
-        @Override
-        public void setDone() {
-            done = true;
-        }
 
         @Override
-        public MSDownloadHandler getMSDownloadHandler() {
-            return new MSDownloadHandler(progress);
+        public MSDownloadHandler getMsDownloadHandler() {
+            return new MSDownloadHandler(progress) {
+                @Override
+                public void doneDownload(MultiSourceEvent event) {
+                    done = true;
+                    super.doneDownload(event);
+                }  
+            };
         }
 
         @Override
@@ -235,7 +229,7 @@ public class DownloadInitiator implements Runnable {
     }
 
     public void run() {
-        final MsDownloadListener progress = bindToFileProgressWindow(context);
+        final DownloadInitiatorListener progress = bindToFileProgressWindow(context);
 
         progress.setCancellable(this::cancel);
         
@@ -253,7 +247,7 @@ public class DownloadInitiator implements Runnable {
         try {
             downloadFile(socket, crawlerManager, stub, progress);
         } catch (IOException ex) {
-            // ..
+            ex.printStackTrace();
         } finally {
             StandardSuite.disconnectWithoutException(socket);
         }
@@ -264,7 +258,7 @@ public class DownloadInitiator implements Runnable {
     private void downloadFile(final MysterSocket socket,
                               final HashCrawlerManager crawlerManager,
                               final MysterFileStub stub,
-                              final MsDownloadListener progress)
+                              final DownloadInitiatorListener progress)
             throws IOException {
 
         try {
@@ -304,7 +298,7 @@ public class DownloadInitiator implements Runnable {
     @SuppressWarnings("resource")
     private boolean tryMultiSourceDownload(final MysterFileStub stub,
                                            HashCrawlerManager crawlerManager,
-                                           final MsDownloadListener msDownloadListener,
+                                           final DownloadInitiatorListener downloadInitListener,
                                            RobustMML mml,
                                            final File theFile)
             throws IOException {
@@ -313,13 +307,13 @@ public class DownloadInitiator implements Runnable {
             return false;
 
         long fileLengthFromStats = MultiSourceUtilities.getLengthFromStats(mml);
-        MSPartialFile partialFile = msDownloadListener
+        MSPartialFile partialFile = downloadInitListener
                 .createMSPartialFile(stub, theFile, fileLengthFromStats, new FileHash[] { hash });
 
         msDownload = new MultiSourceDownload(toIoFile(new RandomAccessFile(theFile, "rw"), theFile),
                                              crawlerManager,
-                                             msDownloadListener.getMSDownloadHandler(),
-                                             msDownloadListener,
+                                             downloadInitListener.getMsDownloadHandler(),
+                                             downloadInitListener,
                                              partialFile);
         msDownload.setInitialServers(new MysterFileStub[] { stub });
 

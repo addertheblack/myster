@@ -120,7 +120,7 @@ public class MultiSourceUtilities {
      * downloads are downloaded.
      */
     public static File getIncomingDirectory() throws IOException {
-        File file = new File(com.myster.application.MysterGlobals.getCurrentDirectory(), "Incoming");
+        File file = new File(com.myster.application.MysterGlobals.getAppDataPath(), "Incoming");
 
         if ((file.exists()) && (file.isDirectory()))
             return file;

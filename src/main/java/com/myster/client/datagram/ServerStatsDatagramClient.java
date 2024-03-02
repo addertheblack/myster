@@ -1,7 +1,7 @@
 package com.myster.client.datagram;
 
 import java.io.ByteArrayInputStream;
-import java.io.DataInputStream;
+import com.myster.client.stream.MysterDataInputStream;
 import java.io.IOException;
 
 import com.myster.mml.MMLException;
@@ -21,7 +21,7 @@ public class ServerStatsDatagramClient implements StandardDatagramClientImpl<Rob
         // constructor..
         // yeah baby... :-)
         try {
-            return new RobustMML((new DataInputStream(new ByteArrayInputStream(transaction
+            return new RobustMML((new MysterDataInputStream(new ByteArrayInputStream(transaction
                     .getData()))).readUTF());
         } catch (MMLException ex) {
             throw new com.myster.net.BadPacketException("Recieved a badly formed MML string from the server : "

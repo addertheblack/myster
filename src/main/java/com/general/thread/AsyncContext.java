@@ -1,7 +1,7 @@
 
 package com.general.thread;
 
-public interface AsyncContext<R> extends Cancellable {
+public interface AsyncContext<R> extends Cancellable, TaskTracker {
     /**
      * You probably want to call {@link AsyncContext#setResult(Object)} or
      * {@link AsyncContext#setException(Exception)} which call this with the right arguments.
@@ -16,7 +16,7 @@ public interface AsyncContext<R> extends Cancellable {
         return setCallResult(CallResult.createResult(result));
     }
 
-    default boolean setException(Exception exception) {
+    default boolean setException(Throwable exception) {
         return setCallResult(CallResult.createException(exception));
     }
     

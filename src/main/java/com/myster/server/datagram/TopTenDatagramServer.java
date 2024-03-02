@@ -2,10 +2,10 @@ package com.myster.server.datagram;
 
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
-import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.io.IOException;
 
+import com.myster.client.stream.MysterDataInputStream;
 import com.myster.net.BadPacketException;
 import com.myster.tracker.IpListManager;
 import com.myster.tracker.MysterServer;
@@ -36,7 +36,7 @@ public class TopTenDatagramServer implements TransactionProtocol {
                                     Object transactionObject)
             throws BadPacketException {
         try {
-            ipListManager.addIP(transaction.getAddress());
+            ipListManager.addIp(transaction.getAddress());
 
             MysterServer[] topTenServers = ipListManager.getTop(
                     getTypeFromTransaction(transaction), NUMBER_OF_SERVERS_TO_RETURN);
@@ -78,12 +78,13 @@ public class TopTenDatagramServer implements TransactionProtocol {
         return byteOutputStream.toByteArray();
     }
 
+    @SuppressWarnings("resource")
     private static MysterType getTypeFromTransaction(Transaction transaction) throws IOException {
         byte[] bytes = transaction.getData();
 
         if (bytes.length != 4)
             throw new IOException("Packet is the wrong length");
 
-        return new MysterType((new DataInputStream(new ByteArrayInputStream(bytes))).readInt());
+        return new MysterType((new MysterDataInputStream(new ByteArrayInputStream(bytes))).readInt());
     }
 }

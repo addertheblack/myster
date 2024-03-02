@@ -1,5 +1,6 @@
 package com.myster.client.stream.msdownload;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.Mockito.mock;
@@ -18,13 +19,14 @@ import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
 import org.mockito.stubbing.Answer;
 
+import com.myster.client.stream.MysterDataInputStream;
+import com.myster.client.stream.MysterDataOutputStream;
 import com.myster.client.stream.msdownload.InternalSegmentDownloader.SocketFactory;
 import com.myster.mml.RobustMML;
 import com.myster.net.MysterAddress;
 import com.myster.net.MysterSocket;
 import com.myster.search.MysterFileStub;
 import com.myster.type.MysterType;
-import static org.junit.jupiter.api.Assertions.assertEquals;
 
 public class TestInternalSegmentDownloader {
     private static final int SEGMENT_SIZE = 1024 * 1024 * 2;
@@ -102,8 +104,8 @@ public class TestInternalSegmentDownloader {
 
         SocketFactory socketFactory = new SocketFactory() {
             public MysterSocket makeStreamConnection(MysterAddress ip) throws IOException {
-                return new FakeMysterSocket(new DataInputStream(new ByteArrayInputStream(data)),
-                                            new DataOutputStream(bout));
+                return new FakeMysterSocket(new MysterDataInputStream(new ByteArrayInputStream(data)),
+                                            new MysterDataOutputStream(bout));
             }
         };
 
@@ -142,7 +144,7 @@ public class TestInternalSegmentDownloader {
 };
 
 class FakeMysterSocket extends MysterSocket {
-    public FakeMysterSocket(DataInputStream i, DataOutputStream o) {
+    public FakeMysterSocket(MysterDataInputStream i, MysterDataOutputStream o) {
         super(i, o);
     }
 
@@ -162,11 +164,11 @@ class FakeMysterSocket extends MysterSocket {
         throw new RuntimeException("Not implemented");
     }
 
-    public DataInputStream getInputStream() throws IOException {
+    public MysterDataInputStream getInputStream() throws IOException {
         return in;
     }
 
-    public DataOutputStream getOutputStream() throws IOException {
+    public MysterDataOutputStream getOutputStream() throws IOException {
         return out;
     }
 
