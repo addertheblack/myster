@@ -1,8 +1,6 @@
 
 package com.general.thread;
 
-import java.util.concurrent.CancellationException;
-import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
 import java.util.function.Consumer;
 
@@ -15,7 +13,21 @@ public interface PromiseFuture<T> extends Cancellable, Future<T> {
         return f;
     }
     
+    PromiseFuture<T> clearInvoker();
+    
     PromiseFuture<T> setInvoker(Invoker invoker);
+    
+    Invoker getInvoker();
+    
+    /**
+     * Similar to {@link #addCallResultListener(Consumer)} but completely
+     * synchronous. Does not use the invoker at all. Will always return the
+     * result immediately on whatever thread caused the result to be set. Useful
+     * for when you need a callback but don't give a crap about the invoker
+     * thread. Also very dangerous because you have no idea what thread upstream
+     * you're using or what locks are held.
+     */
+    void addSynchronousCallback(Consumer<CallResult<T>> c);
 
     default PromiseFuture<T> useEdt() {
         return setInvoker(Invoker.EDT);
@@ -23,63 +35,16 @@ public interface PromiseFuture<T> extends Cancellable, Future<T> {
     
     PromiseFuture<T> addCallResultListener(Consumer<CallResult<T>> c);
 
-    default PromiseFuture<T> addCallListener(CallListener<T> callListener) {
-        return addCallResultListener((c)-> {
-            try {
-                callListener.handleResult(c.get());
-            } catch (CancellationException exception) {
-                callListener.handleCancel();
-            } catch (ExecutionException exception) {
-                callListener.handleException(exception);
-            } finally {
-                callListener.handleFinally();
-            }
-        });
-    }
+    PromiseFuture<T> addCallListener(CallListener<T> callListener);
 
-    default PromiseFuture<T> addResultListener(Consumer<T> resultListener) {
-        return addCallListener(new CallAdapter<>() {
-            @Override
-            public void handleResult(T result) {
-                resultListener.accept(result);
-            }
-        });
-    }
+    PromiseFuture<T> addResultListener(Consumer<T> resultListener);
 
-    default PromiseFuture<T> addExceptionListener(Consumer<Exception> exceptionListener) {
-        return addCallListener(new CallAdapter<>() {
-            @Override
-            public void handleException(Exception exception) {
-                exceptionListener.accept(exception);
-            }
-        });
-    }
+    PromiseFuture<T> addExceptionListener(Consumer<Throwable> exceptionListener);
 
-    default PromiseFuture<T> addFinallyListener(Runnable runnable) {
-        return addCallListener(new CallAdapter<>() {
-            @Override
-            public void handleFinally() {
-                runnable.run();
-            }
-        });
-    }
+    PromiseFuture<T> addFinallyListener(Runnable runnable);
 
-    default PromiseFuture<T> addCancelLisener(Runnable cancelLisener) {
-        return addCallListener(new CallAdapter<>() {
-            @Override
-            public void handleException(Exception exception) {
-                cancelLisener.run();
-            }
-        });
-    }
+    PromiseFuture<T> addCancelLisener(Runnable cancelLisener);
 
-    default PromiseFuture<T> addStandardExceptionHandler() {
-        return addCallListener(new CallAdapter<>() {
-            @Override
-            public void handleException(Exception exception) {
-                exception.printStackTrace();
-            }
-        });
-    }
+    PromiseFuture<T> addStandardExceptionHandler();
 }
 

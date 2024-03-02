@@ -3,10 +3,10 @@ package com.myster.message;
 
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
-import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.io.IOException;
 
+import com.myster.client.stream.MysterDataInputStream;
 import com.myster.mml.MMLException;
 import com.myster.mml.RobustMML;
 import com.myster.net.BadPacketException;
@@ -74,7 +74,7 @@ public class MessagePacket { //Is Immutable
     public MessagePacket(Transaction transaction) throws BadPacketException {
         data = transaction.getData();
 
-        DataInputStream in = new DataInputStream(new ByteArrayInputStream(data));
+        MysterDataInputStream in = new MysterDataInputStream(new ByteArrayInputStream(data));
 
         RobustMML mml;
         try {

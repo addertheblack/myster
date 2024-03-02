@@ -1,6 +1,7 @@
 
 package com.general.thread;
 
+import java.lang.StackWalker.StackFrame;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -10,36 +11,59 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import java.util.function.Consumer;
+import java.util.stream.Collectors;
 
 public class PromiseFutureImpl<T> implements PromiseFuture<T> {
-    private Invoker invoker;
-    private CallResult<T> result = null;
+    private final InvokerContainer invoker;
     private final CountDownLatch latch = new CountDownLatch(1);
     private final List<Cancellable> cancellables = new ArrayList<>();
     private final List<Consumer<CallResult<T>>> listeners = new ArrayList<>();
+    
+    private CallResult<T> result = null;
+    private List<Consumer<CallResult<T>>> synchronousCallbacks = new ArrayList<>();
+    
+    private final List<StackFrame> stackElements;
+    
+    private static final StackWalker stackWalker = StackWalker.getInstance(StackWalker.Option.RETAIN_CLASS_REFERENCE);
+
+
+    PromiseFutureImpl() {
+        invoker = new InvokerContainerImpl();
+        stackElements = stackWalker.walk(stream -> stream
+                                         .limit(10)
+                                         .collect(Collectors.toList()));
+    }
+    
+    PromiseFutureImpl(PromiseFutureImpl<?> parent) {
+        invoker = parent.invoker;
+        
+        stackElements = stackWalker.walk(stream -> stream
+                         .limit(10)
+                         .collect(Collectors.toList()));
+    }
 
     // implement PromiseFuture
-    public synchronized PromiseFutureImpl<T> setInvoker(Invoker invoker) {
-        if (this.invoker != null ) {
+    public synchronized PromiseFuture<T> setInvoker(Invoker invoker) {
+        if (this.invoker.getInvoker() != null ) {
             throw new IllegalStateException("Invoker already set");
         }
         
-        this.invoker = invoker;
+        this.invoker.setInvoker(invoker);
         
         checkForDispatch();
         
         return this;
     }
     
-    public PromiseFutureImpl<T> useEdt() {
+    public PromiseFuture<T> useEdt() {
         return setInvoker(Invoker.EDT);
     }
     
-    public AsyncContext<T> getAsyncContext() {
+    AsyncContext<T> getAsyncContext() {
     	return new AsyncContextImpl();
     }
     
-    private class AsyncContextImpl implements AsyncContext<T> {
+    class AsyncContextImpl implements AsyncContext<T> {
 		@Override
 		public boolean setCallResult(CallResult<T> r) {
             synchronized (PromiseFutureImpl.this) {
@@ -54,6 +78,7 @@ public class PromiseFutureImpl<T> implements PromiseFuture<T> {
                 }
 
                 result = r;
+                result.enhanceExceptionWithContext(stackElements);
 
                 checkForDispatch();
 
@@ -96,21 +121,47 @@ public class PromiseFutureImpl<T> implements PromiseFuture<T> {
             cancellable.cancel();
         }
     }
-
-    private void checkForDispatch() {
-        if (invoker == null) {
+    
+    private void checkForSyncDispatch() {
+        if (this.result == null) {
             return;
         }
+        
+        if (this.synchronousCallbacks.size() == 0) {
+            return;
+        }
+        
+        List<Consumer<CallResult<T>>> toDispatch = null;
+        CallResult<T> resultToDispatch = null;
+        synchronized (PromiseFutureImpl.this) {
+            toDispatch = new ArrayList<>(synchronousCallbacks);
+            synchronousCallbacks.clear();
+            resultToDispatch = result;
+        }
+        
+        dispatchList(toDispatch, resultToDispatch);
+    }
+
+    private void checkForDispatch() {
+        checkForSyncDispatch();
         
         if (this.result == null) {
             return;
         }
         
-        if (listeners.size() == 0) {
+        if (invoker.getInvoker() == null) {
             return;
         }
         
-        invoker.invoke(()-> {
+        // Just so we don't bother the invoker for nothing
+        synchronized (this) {
+            if (listeners.size() == 0) {
+                return;
+            }
+        }
+        
+        
+        invoker.getInvoker().invoke(()-> {
             List<Consumer<CallResult<T>>> toDispatch = null;
             CallResult<T> resultToDispatch = null;
             
@@ -120,16 +171,21 @@ public class PromiseFutureImpl<T> implements PromiseFuture<T> {
                  resultToDispatch = result;
             }
             
-            // it's important that these are get done in one shot so that finalizers execute
-            // without potential for pre-emption
-            for (Consumer<CallResult<T>> consumer : toDispatch) {
-                try {
-                    consumer.accept(resultToDispatch);
-                } catch (Throwable t) {
-                    t.printStackTrace();
-                }
-            }
+            dispatchList(toDispatch, resultToDispatch);
         });
+    }
+
+    private void dispatchList(List<Consumer<CallResult<T>>> toDispatch,
+                              CallResult<T> resultToDispatch) {
+        // it's important that these are get done in one shot so that finalizers execute
+        // without potential for pre-emption
+        for (Consumer<CallResult<T>> consumer : toDispatch) {
+            try {
+                consumer.accept(resultToDispatch);
+            } catch (Throwable t) {
+                t.printStackTrace();
+            }
+        }
     }
 
     @Override
@@ -163,7 +219,7 @@ public class PromiseFutureImpl<T> implements PromiseFuture<T> {
 
     @Override
     public T get() throws InterruptedException, ExecutionException, CancellationException {
-        if (invoker.isInvokerThread()) {
+        if (invoker.getInvoker().isInvokerThread()) {
 			throw new IllegalStateException("get() Called on invoker thread");
 		}
 
@@ -176,7 +232,7 @@ public class PromiseFutureImpl<T> implements PromiseFuture<T> {
 
 	@Override
 	public T get(long timeout, TimeUnit unit) throws InterruptedException, ExecutionException, TimeoutException {
-		if (invoker.isInvokerThread()) {
+		if (invoker.getInvoker().isInvokerThread()) {
 			throw new IllegalStateException("get() Called on invoker thread");
 		}
 
@@ -186,4 +242,91 @@ public class PromiseFutureImpl<T> implements PromiseFuture<T> {
 			return result.get();
 		}
 	}
+
+    @Override
+    public Invoker getInvoker() {
+        return invoker.getInvoker();
+    }
+
+    @Override
+    public void addSynchronousCallback(Consumer<CallResult<T>> c) {
+        synchronized(this) {
+            synchronousCallbacks.add(c);
+        }
+        
+        checkForSyncDispatch();
+    }
+    
+    @Override
+    public PromiseFuture<T> clearInvoker() {
+        return PromiseFuture.newPromiseFuture(c -> {
+            c.registerDependentTask(this);
+            this.addSynchronousCallback(c::setCallResult);
+        });
+    }
+
+    @Override
+    public PromiseFuture<T> addCallListener(CallListener<T> callListener) {
+        return addCallResultListener((c)-> {
+            try {
+                callListener.handleResult(c.get());
+            } catch (CancellationException exception) {
+                callListener.handleCancel();
+            } catch (ExecutionException exception) {
+                callListener.handleException(exception.getCause());
+            } finally {
+                callListener.handleFinally();
+            }
+        });
+    }
+
+    @Override
+    public PromiseFuture<T> addResultListener(Consumer<T> resultListener) {
+        return addCallListener(new CallAdapter<>() {
+            @Override
+            public void handleResult(T result) {
+                resultListener.accept(result);
+            }
+        });
+    }
+
+    @Override
+    public PromiseFuture<T> addExceptionListener(Consumer<Throwable> exceptionListener) {
+        return addCallListener(new CallAdapter<>() {
+            @Override
+            public void handleException(Throwable exception) {
+                exceptionListener.accept(exception);
+            }
+        });
+    }
+
+    @Override
+    public PromiseFuture<T> addFinallyListener(Runnable runnable) {
+        return addCallListener(new CallAdapter<>() {
+            @Override
+            public void handleFinally() {
+                runnable.run();
+            }
+        });
+    }
+
+    @Override
+    public PromiseFuture<T> addCancelLisener(Runnable cancelLisener) {
+        return addCallListener(new CallAdapter<>() {
+            @Override
+            public void handleException(Throwable exception) {
+                cancelLisener.run();
+            }
+        });
+    }
+
+    @Override
+    public PromiseFuture<T> addStandardExceptionHandler() {
+        return addCallListener(new CallAdapter<>() {
+            @Override
+            public void handleException(Throwable exception) {
+                exception.printStackTrace();
+            }
+        });
+    }
 }

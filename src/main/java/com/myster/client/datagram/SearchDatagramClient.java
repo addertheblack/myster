@@ -2,7 +2,7 @@ package com.myster.client.datagram;
 
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
-import java.io.DataInputStream;
+import com.myster.client.stream.MysterDataInputStream;
 import java.io.DataOutputStream;
 import java.io.IOException;
 import java.util.ArrayList;
@@ -35,7 +35,7 @@ public class SearchDatagramClient implements StandardDatagramClientImpl<List<Str
     //returns Vector of Strings
     public List<String> getObjectFromTransaction(Transaction transaction)
             throws IOException {
-        DataInputStream in = new DataInputStream(new ByteArrayInputStream(
+        MysterDataInputStream in = new MysterDataInputStream(new ByteArrayInputStream(
                 transaction.getData()));
 
         List<String> searchResults = new ArrayList<>();

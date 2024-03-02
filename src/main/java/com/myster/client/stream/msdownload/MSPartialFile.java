@@ -15,6 +15,7 @@ import java.io.DataOutputStream;
 import java.io.File;
 import java.io.IOException;
 import java.io.RandomAccessFile;
+import java.util.ArrayList;
 import java.util.List;
 
 import com.general.util.AnswerDialog;
@@ -47,14 +48,28 @@ public class MSPartialFile implements AutoCloseable {
             maskFile.close();
             throw new IOException("MML Meta data was badly formed. This file is corrupt.");
         }
-
-        return new MSPartialFile(file, maskFile, new PartialFileHeader(mml, (int) maskFile
-                .getFilePointer()));
+        try {
+            return new MSPartialFile(file,
+                                     maskFile,
+                                     new PartialFileHeader(mml, (int) maskFile.getFilePointer()));
+        } catch (IOException ex) {
+            file.deleteOnExit();
+            maskFile.close();
+            System.out.println( file.delete());
+            throw ex;
+        }
     }
 
-    public static MSPartialFile create(MysterAddress address, String filename, File path, MysterType type, int blockSize,
-            FileHash[] hashes, long fileLength) throws IOException {
-        File fileReference = new File(MultiSourceUtilities.getIncomingDirectory(), filename + FILE_ENDING);
+    public static MSPartialFile create(MysterAddress address,
+                                       String filename,
+                                       File path,
+                                       MysterType type,
+                                       int blockSize,
+                                       FileHash[] hashes,
+                                       long fileLength)
+            throws IOException {
+        File fileReference =
+                new File(MultiSourceUtilities.getIncomingDirectory(), filename + FILE_ENDING);
 
         if (fileReference.exists()) {
             if (!fileReference.delete()) {
@@ -93,13 +108,16 @@ public class MSPartialFile implements AutoCloseable {
             return true;
         });
 
-        MSPartialFile[] msPartialFiles = new MSPartialFile[file_list.length];
-
+        List<MSPartialFile> msPartialFiles = new ArrayList<>();
         for (int i = 0; i < file_list.length; i++) {
-            msPartialFiles[i] = recreate(new File(incomingDir, file_list[i]));
+            try {
+                msPartialFiles.add(recreate(new File(incomingDir, file_list[i])));
+            } catch (Exception ex ) { 
+                ex.printStackTrace();
+            }
         }
 
-        return msPartialFiles;
+        return msPartialFiles.toArray(new MSPartialFile[0]);
     }
 
     public static void restartDownloads(HashCrawlerManager crawlerManager, MysterFrameContext c) throws IOException {
@@ -196,16 +214,16 @@ public class MSPartialFile implements AutoCloseable {
                                         partialFile);
 
         if (partialFile.getServerAddress() != null) {
-        download.setInitialServers(new MysterFileStub[] {
-                new MysterFileStub(new MysterAddress(partialFile.getServerAddress()),
-                                   partialFile.getType(),
-                                   partialFile.getFilename()) });
+            download.setInitialServers(new MysterFileStub[] {
+                    new MysterFileStub(new MysterAddress(partialFile.getServerAddress()),
+                                       partialFile.getType(),
+                                       partialFile.getFilename()) });
         }
 
 
         progress.addWindowListener(new java.awt.event.WindowAdapter() {
             public void windowClosing(java.awt.event.WindowEvent e) {
-                if (!MultiSourceUtilities.confirmCancel(progress))
+                if (!download.isDone()&& !MultiSourceUtilities.confirmCancel(progress))
                     return;
 
                 download.cancel();

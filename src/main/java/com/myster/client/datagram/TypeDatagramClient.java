@@ -1,7 +1,7 @@
 package com.myster.client.datagram;
 
 import java.io.ByteArrayInputStream;
-import java.io.DataInputStream;
+import com.myster.client.stream.MysterDataInputStream;
 import java.io.IOException;
 
 import com.myster.net.StandardDatagramClientImpl;
@@ -23,7 +23,7 @@ public class TypeDatagramClient implements StandardDatagramClientImpl<MysterType
     //Returns MysterType[]
     public MysterType[] getObjectFromTransaction(Transaction transaction)
             throws IOException {
-        DataInputStream in = new DataInputStream(new ByteArrayInputStream(
+        MysterDataInputStream in = new MysterDataInputStream(new ByteArrayInputStream(
                 transaction.getData()));
 
         int numberOfTypes = in.readInt();

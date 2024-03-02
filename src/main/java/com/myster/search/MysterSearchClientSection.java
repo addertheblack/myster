@@ -15,10 +15,10 @@ public interface MysterSearchClientSection {
     public void search(MysterSocket socket, MysterAddress address, MysterType type)
             throws IOException;
 
-    public void searchedAll(MysterType type); //called when (and only if) all
-
+  //called when (and only if) all
     // servers have been searched. Is
     // called just before endSearch.
+    public void searchedAll(MysterType type); 
 
     public void endSearch(MysterType type); //called when craler dies
 

@@ -2,7 +2,7 @@ package com.myster.server.datagram;
 
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
-import java.io.DataInputStream;
+import com.myster.client.stream.MysterDataInputStream;
 import java.io.DataOutputStream;
 import java.io.IOException;
 
@@ -31,7 +31,7 @@ public class SearchDatagramServer implements TransactionProtocol {
     public void transactionReceived(TransactionSender sender, Transaction transaction, Object transactionObject)
             throws BadPacketException {
         try {
-            DataInputStream in = new DataInputStream(
+            MysterDataInputStream in = new MysterDataInputStream(
                     new ByteArrayInputStream(transaction.getData()));
 
             ByteArrayOutputStream byteOutputStream = new ByteArrayOutputStream();

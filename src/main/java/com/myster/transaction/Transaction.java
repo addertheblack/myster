@@ -23,7 +23,7 @@ package com.myster.transaction;
 
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
-import java.io.DataInputStream;
+import com.myster.client.stream.MysterDataInputStream;
 import java.io.DataOutputStream;
 import java.io.IOException;
 
@@ -64,7 +64,7 @@ public final class Transaction implements DataPacket { //Immutable (Java needs
         byte[] bytes = packet.getData();
 
         ByteArrayInputStream bin = new ByteArrayInputStream(bytes);
-        DataInputStream in = new DataInputStream(bin);
+        MysterDataInputStream in = new MysterDataInputStream(bin);
 
         int fullyQualifiedConnectionNumber;
         try {

@@ -1,18 +1,19 @@
 
 package com.myster.net;
 
-import java.io.DataInputStream;
-import java.io.DataOutputStream;
 import java.io.IOException;
 import java.net.InetAddress;
 import java.net.SocketException;
 
+import com.myster.client.stream.MysterDataInputStream;
+import com.myster.client.stream.MysterDataOutputStream;
+
 public abstract class MysterSocket implements AutoCloseable {
-    public final DataInputStream in;
+    public final MysterDataInputStream in;
 
-    public final DataOutputStream out;
+    public final MysterDataOutputStream out;
 
-    public MysterSocket(DataInputStream i, DataOutputStream o) {
+    public MysterSocket(MysterDataInputStream i, MysterDataOutputStream o) {
         in = i;
         out = o;
     }
@@ -25,9 +26,9 @@ public abstract class MysterSocket implements AutoCloseable {
 
     public abstract int getLocalPort();
 
-    public abstract DataInputStream getInputStream() throws IOException;
+    public abstract MysterDataInputStream getInputStream() throws IOException;
 
-    public abstract DataOutputStream getOutputStream() throws IOException;
+    public abstract MysterDataOutputStream getOutputStream() throws IOException;
 
     public abstract void setSoLinger(boolean on, int val)
             throws SocketException;

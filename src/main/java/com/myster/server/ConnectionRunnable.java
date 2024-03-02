@@ -11,7 +11,7 @@
 
 package com.myster.server;
 
-import java.io.DataInputStream;
+import com.myster.client.stream.MysterDataInputStream;
 import java.io.IOException;
 import java.net.Socket;
 import java.util.Map;
@@ -50,7 +50,7 @@ public class ConnectionRunnable implements Runnable {
     
     private final ConnectionContext context;
     
-    private static volatile AtomicInteger threadCounter = new AtomicInteger(0);
+    private static final AtomicInteger threadCounter = new AtomicInteger(0);
 
     /**
      * Builds a connection section object.
@@ -94,7 +94,7 @@ public class ConnectionRunnable implements Runnable {
             context.transferQueue = transferQueue;
             context.serverAddress = new MysterAddress(socket.getInetAddress());
 
-            DataInputStream i = context.socket.in; //opens the connection
+            MysterDataInputStream i = context.socket.in; //opens the connection
 
             int protocalcode;
             Thread.currentThread().setPriority(Thread.MIN_PRIORITY);

@@ -1,9 +1,9 @@
 package com.myster.server.stream;
 
-import java.io.DataInputStream;
-import java.io.DataOutputStream;
 import java.io.IOException;
 
+import com.myster.client.stream.MysterDataInputStream;
+import com.myster.client.stream.MysterDataOutputStream;
 import com.myster.net.MysterAddress;
 import com.myster.server.ConnectionContext;
 import com.myster.tracker.IpListManager;
@@ -29,16 +29,15 @@ public class IpLister extends ServerThread {
      */
 
     public void section(ConnectionContext context) throws IOException {
-        DataInputStream in = context.socket.in;
-        DataOutputStream out = context.socket
-                .getOutputStream();
+        MysterDataInputStream in = context.socket.in;
+        MysterDataOutputStream out = context.socket.getOutputStream();
 
         MysterServer[] topten;
 
         byte[] type = new byte[4];
         in.readFully(type);
 
-        ipListManager.addIP(
+        ipListManager.addIp(
                 new MysterAddress(context.socket.getInetAddress()));
 
         topten = ipListManager.getTop(

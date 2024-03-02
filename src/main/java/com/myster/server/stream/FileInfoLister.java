@@ -10,10 +10,10 @@
 
 package com.myster.server.stream;
 
-import java.io.DataInputStream;
-import java.io.DataOutputStream;
 import java.io.IOException;
 
+import com.myster.client.stream.MysterDataInputStream;
+import com.myster.client.stream.MysterDataOutputStream;
 import com.myster.filemanager.FileItem;
 import com.myster.filemanager.FileTypeListManager;
 import com.myster.mml.MML;
@@ -33,10 +33,8 @@ public class FileInfoLister extends ServerThread {
 
     public void section(ConnectionContext context) throws IOException {
         try {
-            String[] temp;
-
-            DataInputStream in = context.socket.in;
-            DataOutputStream out = context.socket.out;
+            MysterDataInputStream in = context.socket.in;
+            MysterDataOutputStream out = context.socket.out;
 
             MysterType type = new MysterType(in.readInt());
             String filename = in.readUTF();

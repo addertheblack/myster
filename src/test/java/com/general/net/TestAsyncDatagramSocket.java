@@ -44,7 +44,6 @@ public class TestAsyncDatagramSocket {
             if (System.currentTimeMillis() - waitForBindStartTime > 5000) {
                 throw new RuntimeException("socket didn't bind");
             }
-            Thread.sleep(1);
             usedPort = asyncDatagramSocket.getUsedPort();
         }
 
@@ -90,7 +89,6 @@ public class TestAsyncDatagramSocket {
         /* wait for the socket to close */
         long startTime = System.currentTimeMillis();
         while (asyncDatagramSocket.getUsedPort() != -2) {
-            Thread.sleep(1);
             if (System.currentTimeMillis() - startTime > 5000) {
                 throw new RuntimeException("socket didn't close");
             }
@@ -138,7 +136,6 @@ public class TestAsyncDatagramSocket {
             if (System.currentTimeMillis() - waitForBindStartTime2 > 5000) {
                 throw new RuntimeException("socket didn't bind");
             }
-            Thread.sleep(1);
         }
 
         assertEquals(usedPort, asyncDatagramSocket2.getUsedPort());
@@ -149,7 +146,6 @@ public class TestAsyncDatagramSocket {
         /* wait for the socket to close */
         long startTime = System.currentTimeMillis();
         while (asyncDatagramSocket2.getUsedPort() != -2) {
-            Thread.sleep(1);
             if (System.currentTimeMillis() - startTime > 5000) {
                 throw new RuntimeException("socket didn't close");
             }
@@ -170,7 +166,6 @@ public class TestAsyncDatagramSocket {
             if (System.currentTimeMillis() - waitForBindStartTime > 5000) {
                 throw new RuntimeException("socket didn't bind");
             }
-            Thread.sleep(1);
             usedPort = asyncDatagramSocket.getUsedPort();
         }
 

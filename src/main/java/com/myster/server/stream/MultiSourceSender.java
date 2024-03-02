@@ -1,7 +1,5 @@
 package com.myster.server.stream;
 
-import java.io.DataInputStream;
-import java.io.DataOutputStream;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
@@ -9,6 +7,8 @@ import java.io.InputStream;
 import java.io.RandomAccessFile;
 import java.util.logging.Logger;
 
+import com.myster.client.stream.MysterDataInputStream;
+import com.myster.client.stream.MysterDataOutputStream;
 import com.myster.filemanager.FileTypeListManager;
 import com.myster.mml.RobustMML;
 import com.myster.net.MysterAddress;
@@ -119,8 +119,8 @@ public class MultiSourceSender extends ServerThread {
                 this.socket = socket;//this is so I can disconnect the stupid
                 // socket.
 
-                final DataOutputStream out = socket.out;
-                final DataInputStream in = socket.in;
+                final MysterDataOutputStream out = socket.out;
+                final MysterDataInputStream in = socket.in;
 
                 type = new MysterType(in.readInt());
 
@@ -233,7 +233,7 @@ public class MultiSourceSender extends ServerThread {
         }
 
         //Encapsulates the stuff required to send a queue position
-        private void sendQueuePosition(DataOutputStream out, int queued, String message)
+        private void sendQueuePosition(MysterDataOutputStream out, int queued, String message)
                 throws IOException {
             RobustMML mml = new RobustMML();
 
@@ -275,8 +275,8 @@ public class MultiSourceSender extends ServerThread {
         }
         
         //code 'i'
-        public static void sendImage(DataOutputStream out) throws IOException {
-            DataInputStream in = null;
+        public static void sendImage(MysterDataOutputStream out) throws IOException {
+            MysterDataInputStream in = null;
             File file;
 
             String imageName = BannersManager.getNextImageName();
@@ -291,7 +291,7 @@ public class MultiSourceSender extends ServerThread {
             }
 
             try {
-                in = new DataInputStream(new FileInputStream(file));
+                in = new MysterDataInputStream(new FileInputStream(file));
 
                 byte[] bytearray = new byte[(int) file.length()];
 
@@ -315,7 +315,7 @@ public class MultiSourceSender extends ServerThread {
         
         //A utility method that allows one to send a banner URL from an Image
         // name
-        public static void sendURLFromImageName(DataOutputStream out,
+        public static void sendURLFromImageName(MysterDataOutputStream out,
                 String imageName) throws IOException {
             String url = BannersManager.getURLFromImageName(imageName);
 
@@ -326,7 +326,7 @@ public class MultiSourceSender extends ServerThread {
         }
 
         //code 'u'
-        public static void sendURL(DataOutputStream out, String url)
+        public static void sendURL(MysterDataOutputStream out, String url)
                 throws IOException {
             out.writeInt(6669);
             out.write('u');
@@ -336,7 +336,7 @@ public class MultiSourceSender extends ServerThread {
             out.writeUTF(url);
         }
         
-        public static void freeloaderComplain(DataOutputStream out)
+        public static void freeloaderComplain(MysterDataOutputStream out)
                 throws IOException {
             byte[] queuedImage = new byte[4096];
             int sizeOfImage = 0;

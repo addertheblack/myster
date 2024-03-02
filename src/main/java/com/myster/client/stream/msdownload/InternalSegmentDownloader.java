@@ -164,6 +164,8 @@ class InternalSegmentDownloader implements SegmentDownloader {
 
             // Well, that's bad.
             debug("Server doesn't understand multi-source download.");
+        } catch (DoNotQueueException ex) {
+            debug("Server want to put us in a download queue but we already have an active segment downloader");
         } catch (IOException ex) {
             ex.printStackTrace(); // this code can handle exceptions so this
             // is
@@ -317,8 +319,9 @@ class InternalSegmentDownloader implements SegmentDownloader {
 
                 isActive = false; // blagh! Looks like we're queued!
 
-                if (!controller.isOkToQueue())
-                    throw new IOException("Should not be queued!");
+                if (!controller.isOkToQueue()) {
+                    throw new DoNotQueueException();
+                }
 
                 fireEvent(SegmentDownloaderEvent.QUEUED, 0, 0, queuePosition, 0, message);
             } catch (NumberFormatException ex) {

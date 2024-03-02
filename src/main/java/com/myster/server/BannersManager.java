@@ -64,7 +64,7 @@ public class BannersManager {
     }
 
     public static synchronized File getImagesDirectory() {
-        return new File(MysterGlobals.getCurrentDirectory(), IMAGE_DIRECTORY);
+        return new File(MysterGlobals.getAppDataPath(), IMAGE_DIRECTORY);
     }
 
     public static synchronized File getFileFromImageName(String imageName) {

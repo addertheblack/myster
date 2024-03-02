@@ -594,7 +594,7 @@ public class FileTypeList {
      * getDefaultDirectoryPath();
      */
     private synchronized File getDefaultDirectory() {
-        File empty = new File(MysterGlobals.getCurrentDirectory(), type + " Downloads");
+        File empty = new File(MysterGlobals.getAppDataPath(), type + " Downloads");
         int counter = 1;
         do {
             if (empty.exists()) {

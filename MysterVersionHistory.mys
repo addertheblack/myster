@@ -1154,41 +1154,74 @@ Work on DEV 8:
     -> Put hashcache in java prefs too
     -> Add github actions to build all the binaries we need. More work needs to be done here
 
-2023-01-02
+2024-01-02
     -> Deleted old download code
     -> Made search and connect the default buttons
     -> Made server threads use virtual threads
    
-2023-01-07
+2024-01-07
     -> Added unit testing frameworks to the build
     -> Added test for min/max heap and AsynchronousDatagramSocket
     -> Added first hints of using the Java logging framework (JUL)
 		
-2023-02-06
+2024-02-06
 	-> Added unit tests for MS Download
+	
+2024-03-02
+	-> Rename addIP to addIp
+	-> Use MysterDataIn/outputStreams
+	-> Make concurrency framework use Throwable instead of Exception
+	-> Make AsyncDatagramSocket use async io
+	-> Add AsyncTaskTracker to make tracking many outstanding async tasks easier
+	-> Update CallAdapter to use Throwable not Exception
+	-> Enhance PromiseFutures so that they capture the stack when the task is
+started
+	-> Bunch of modification to the PromiseFuture framework
+	-> Re-write crawler to use UDP and use as many connections as it can
+	-> Server socket is now uses 6669 as the LAN auto discovery port
+	-> Added brute force ping to look for other myster servers on the subnet
+	-> Did first pass of FuturePromiseList (not use anywhere yet)
+	
+
 (Red List)
 to do:
 
-Need to implement private networks
-    need to get rid of old download code
+*Make MSDownload auto-reconnect based on the servers that were being downloaded from at the time.
+    Continues downloads instantly
+*Need to implement private networks
     need to get rid of myster type or otherwise make it as string
     need to add private certificate code
     need to find a format for sharing a network file - like public key, primary servers etc.. maybe other public keys too
     need to be able to share the network config file (might be similar to network file.. or a superset)
-it's large for me and I don't have that many files...
-Add reverse connection protocol.
-Add reverse connection using third party protocol.
-Add onramp servers https://www.dynu.com/en-US/
-Make communication encrypted (keep public key in MysterIP server information)
-Pick a place for downloads in progress by default like homedirectory/mysterdata or something..
+*Add reverse connection protocol.
+*Make communication encrypted (keep public key in MysterIP server information)
+*fix writeUTF to use write utf-8 instead.. fix data input/outputstreams
+*Add business card for server -> basically server stats
+*Pick a place for downloads in progress by default like homedirectory/mysterdata or something..
     Maybe app data on windows?
 Split off concurrency library from Myster and publish to Maven
 Make Myster modules compatible
 fix naming.. We probably want to use myster.org
-add unit tests
-Allow new code to use a server/port instead of and in addition to a md5
 Probably want to move that stuff into preferences/registry
-fix writeUTF to use write utf-8 instead.. fix data input/outputstreams
-Unit tests
-Add business card for server -> basically server stats
 Make port 6669 the official local Myster server discovery port.
+
+
+             <plugin>
+                <groupId>org.graalvm.buildtools</groupId>
+                <artifactId>native-maven-plugin</artifactId>
+                <version>0.10.0</version>
+                <configuration>
+                    <mainClass>${mainclass}</mainClass>
+                    <buildArgs>
+                        <buildArg>-H:+AddAllCharsets</buildArg>
+                    </buildArgs>
+                </configuration>
+                <executions>
+                    <execution>
+                        <goals>
+                            <goal>compile-no-fork</goal>
+                        </goals>
+                        <phase>package</phase>
+                    </execution>
+                </executions>
+            </plugin>

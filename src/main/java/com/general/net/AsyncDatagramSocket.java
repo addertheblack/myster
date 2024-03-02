@@ -1,16 +1,11 @@
 package com.general.net;
 
-/**
- * This Socket can be used if you want to receive packets via an event and not
- * have your main thread blocked on the socket.
- * 
- * This socket needs to be closed or it will leak threads and other resources...
- */
-
 import java.io.IOException;
-import java.io.InterruptedIOException;
-import java.net.DatagramPacket;
-import java.net.DatagramSocket;
+import java.net.InetSocketAddress;
+import java.nio.ByteBuffer;
+import java.nio.channels.DatagramChannel;
+import java.nio.channels.SelectionKey;
+import java.nio.channels.Selector;
 import java.util.Deque;
 import java.util.concurrent.ConcurrentLinkedDeque;
 import java.util.concurrent.Executors;
@@ -21,112 +16,76 @@ import com.general.thread.Invoker;
 public final class AsyncDatagramSocket {
     private static final Logger LOGGER = Logger.getLogger(AsyncDatagramSocket.class.getName());
     
-    // Specify the maximum size of a UDP packet. This is the maximum size of a UDP packet.
     private static final int BIG_BUFFER = 65536;
     
     private final Deque<ImmutableDatagramPacket> queue = new ConcurrentLinkedDeque<>();
     private final SocketRunner socketRunner;
-    private final DatagramPacket bufferPacket;
+    private final ByteBuffer readBuffer = ByteBuffer.allocate(BIG_BUFFER);
     private final int port;
     private final Invoker invoker = Invoker.EDT;
 
     private volatile int usedPort = -1;
-
+    
     /** This is accessed by the thread. All call backs to this listener happen on the invoker */
     private volatile AsyncDatagramListener portListener;
+
+    private volatile Selector selector;
     
-    /**
-     * @param port to user or 0 for any free port
-     */
     public AsyncDatagramSocket(int port) {
         this.port = port;
-
-        bufferPacket = new DatagramPacket(new byte[BIG_BUFFER], BIG_BUFFER);
-
         socketRunner = new SocketRunner();
         Executors.newVirtualThreadPerTaskExecutor().execute(socketRunner);
     }
 
-    public void setPortListener(AsyncDatagramListener p) {
-        portListener = p;
+    public void setPortListener(AsyncDatagramListener listener) {
+        this.portListener = listener;
+        
+        if (selector!=null) {
+            selector.wakeup();
+        }
     }
 
-    /**
-     * Package protected for unit tests
-     * 
-     * @return port used or -1 if not yet known or -2 if socket is closed
-     */
-    int getUsedPort() {
+    public int getUsedPort() {
         return usedPort;
     }
 
-    /**
-     * Asynchronous send. Will never block but consumes memory.
-     */
-    public void sendPacket(ImmutableDatagramPacket p) {
-        queue.addLast(p);
+    public void sendPacket(ImmutableDatagramPacket packet) {
+        queue.addLast(packet);
+        
+        if (selector!=null) {
+            selector.wakeup();
+        }
     }
 
     public void close() {
-        // don't wait for the thread to close. It will be done asynchronously.
         socketRunner.flagToEnd();
-    }
-
-    private void doGetNewPackets(DatagramSocket dsocket) throws IOException {
-        while (true) { 
-            try {
-                bufferPacket.setLength(BIG_BUFFER);
-
-                dsocket.receive(bufferPacket);
-
-                if (portListener != null) {
-                    ImmutableDatagramPacket immutablePacket =
-                            new ImmutableDatagramPacket(bufferPacket);
-                    invoker.invoke(() -> {
-                        portListener.packetReceived(immutablePacket);
-                    });
-                }
-            } catch (InterruptedIOException ex) {
-                return;
-            }
-        }
-    }
-
-    private void doSendNewPackets(DatagramSocket dsocket) throws IOException {
-        int counter = 0;
-        
-        /* 
-         * Only send a tiny number of packets then check for new incoming packets.. 
-         * 
-         * It's ok if we overload the buffer and cause packet loss. But we also want to check for
-         * incoming packets once in a while.
-         */
-        while (queue.peekFirst() != null && counter < 50) {
-            ImmutableDatagramPacket p = queue.removeFirst();
-
-            if (p != null) {
-                dsocket.send(p.getDatagramPacket());
-                counter++;
-            } //grrr..
-        }
     }
 
     private class SocketRunner implements Runnable {
         private volatile boolean endFlag = false;
 
+        @Override
         public void run() {
+
             int counter = 0;
             for (; counter < 3; counter++) {
-                try (DatagramSocket dsocket = open(port)) {
-                    usedPort = dsocket.getLocalPort();
-                    LOGGER.info("Opened dsocket on UDP port " + usedPort + ".");
+                try (DatagramChannel channel = DatagramChannel.open(); Selector s = Selector.open()) {
+                    selector = s;
+                    channel.bind(new InetSocketAddress(port));
+                    channel.configureBlocking(false);
+                    channel.register(selector, SelectionKey.OP_READ);
+                    usedPort = ((InetSocketAddress) channel.getLocalAddress()).getPort();
+                    LOGGER.fine("Opened DatagramChannel on UDP port " + usedPort + (port != usedPort ? " (a random port) " : ""));
 
-                    runMainLoop(dsocket);
+                    mainLoop(channel);
                     
+                    // OK, so we've completed without error.. Skip the rest of the loop and end.
                     break;
                 } catch (IOException ex) {
-                    LOGGER.info("Communication error on UDP port " + port
-                            + " closing dsocket. counter: " + counter + " error: " + ex.getMessage());
+                    LOGGER.warning("Failed to open DatagramChannel on port " + port + ": "
+                            + ex.getMessage());
+                    usedPort = -2;
+                    
                     try {
                         /*
                          * Wait a bit before trying again. This is to prevent a
@@ -135,53 +94,80 @@ public final class AsyncDatagramSocket {
                          * still closing because it is closed by this thread
                          * asynchronously.
                          */
-                        Thread.sleep(100 * (long)Math.pow(5, counter));
+                        Thread.sleep(10 * (long)Math.pow(10, counter));
                     } catch (InterruptedException exception) {
                         exception.printStackTrace();
                     }
                 }
             }
-            //-Djava.util.logging.config.file=src/main/resources/logging.properties
-
+            final int p = usedPort;
             usedPort = -2;
 
             if (counter >= 3) {
-                LOGGER.info("UDP port " + port + " giving up due to too many errors...");
+                LOGGER.fine("Closing AsyncDatagramSocket on " + p
+                        + " giving up due to too many errors...");
+            }
+
+            LOGGER.fine("Closing AsyncDatagramSocket on " + p + "...");
+        }
+
+        private void mainLoop(DatagramChannel channel) throws IOException {
+            // this is to avoid a race condition where the selector might not be
+            // inited by the time the first packet arrives to be sent.
+            // If that happens we might receive a packet but not have a selector to
+            // notify on.
+            while (!endFlag) {
+                // this is to avoid a race condition where the selector might not be
+                // inited by the time the first packet arrives to be sent.
+                // If that happens we might receive a packet but not have a selector to
+                // notify on. If there's nothing on the queue it's harmless
+                sendPackets(channel);
+                readPackets(channel);
+                
+                selector.select();
+                selector.selectedKeys().clear();
             }
         }
 
-        private void runMainLoop(DatagramSocket dsocket) throws IOException {
-            for (;;) {
-                if (endFlag) {
-                    closingHook();
-                    return;
-                }
-
-                doGetNewPackets(dsocket);
-
-                if (endFlag) {
-                    closingHook();
-                    return;
-                }
-
-                doSendNewPackets(dsocket);
+        private void readPackets(DatagramChannel channel) throws IOException {
+            readBuffer.clear();
+            if (portListener == null) {
+                return;
             }
-        }
-
-        
-        private void closingHook() {
-            LOGGER.info("UDP port " + port + " is doing a happy close");
-        }
-
-        private static DatagramSocket open(int port) throws IOException {
-            DatagramSocket dsocket = new DatagramSocket(port);
-            dsocket.setSoTimeout(5);
             
-            return dsocket;
+            for (;;) {
+                InetSocketAddress sourceAddress = (InetSocketAddress) channel.receive(readBuffer);
+                if (sourceAddress == null) {
+                    return;
+                }
+                readBuffer.flip();
+                byte[] data = new byte[readBuffer.remaining()];
+                readBuffer.get(data);
+                ImmutableDatagramPacket packet =
+                        new ImmutableDatagramPacket(sourceAddress.getAddress(), port, data);
+                
+                // switch threads - it's important we don't do the callback on this thread
+                invoker.invoke(() -> portListener.packetReceived(packet));
+            }
+        }
+
+        private void sendPackets(DatagramChannel channel) throws IOException {
+            while (!queue.isEmpty() && !endFlag) {
+                ImmutableDatagramPacket packet = queue.poll();
+                if (packet != null) {
+                    ByteBuffer buffer = ByteBuffer.wrap(packet.getData());
+                    channel.send(buffer, packet.getSocketAddress());
+                }
+            }
         }
 
         public void flagToEnd() {
+            LOGGER.fine("Requesting AsyncDatagramSocket on" + port + " to close...");
             endFlag = true;
+
+            if (selector != null) {
+                selector.wakeup();
+            }
         }
     }
 }

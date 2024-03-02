@@ -8,7 +8,7 @@ import com.general.application.ApplicationContext;
 /**
  */
 public class MysterGlobals {
-    public static final int SERVER_PORT = 6669; // Default port. Changing this now works
+    public static final int DEFAULT_SERVER_PORT = 6669; // Default port. Changing this now works
     public static final String SPEEDPATH = "Globals/speed/";
     public static final String ADDRESSPATH = "Globals/address/";
     public static final String DEFAULT_ENCODING = "ASCII";
@@ -17,10 +17,13 @@ public class MysterGlobals {
     private static final long programLaunchTime = System.currentTimeMillis(); //class load time really..
     
     public static final boolean ON_LINUX = (System.getProperty("os.name") != null ? System
-            .getProperty("os.name").equals("Linux") : false);
+            .getProperty("os.name").toLowerCase().contains("linux") : false);
     
     public static final boolean ON_MAC = (System.getProperty("os.name") != null ? System
-            .getProperty("os.name").toLowerCase().startsWith("mac os") : false);
+            .getProperty("os.name").toLowerCase().contains("mac") : false);
+    
+    public static final boolean ON_WINDOWS = (System.getProperty("os.name") != null ? System
+            .getProperty("os.name").toLowerCase().contains("win") : false);
 
     public static ApplicationContext appSigleton;
     
@@ -47,10 +50,25 @@ public class MysterGlobals {
         return programLaunchTime;
     }
 
-    public static File getCurrentDirectory() {
-            File result = new File(new File(System.getProperty("user.home")), "myster");
-            if (!result.exists())
-                result.mkdir();
-            return result;
+    public static final String APP_NAME = "myster";
+
+    public static File getAppDataPath() {
+        String osName = System.getProperty("os.name").toLowerCase();
+        String appDataDir;
+        if (osName.contains("win")) {
+            // Windows
+            appDataDir = System.getenv("LOCALAPPDATA") + "\\Myster";
+        } else if (osName.contains("mac")) {
+            // macOS
+            appDataDir = System.getProperty("user.home") + "/Library/Application Support/Myster";
+        } else {
+            // Linux and others
+            appDataDir = System.getProperty("user.home") + "/." + APP_NAME;
+        }
+        File result = new File(appDataDir);
+        if (!result.exists()) {
+            result.mkdir();
+        }
+        return result;
     }
 }

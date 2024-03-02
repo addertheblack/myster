@@ -2,10 +2,10 @@ package com.myster.client.datagram;
 
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
-import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.io.IOException;
 
+import com.myster.client.stream.MysterDataInputStream;
 import com.myster.filemanager.FileTypeList;
 import com.myster.hash.FileHash;
 import com.myster.net.StandardDatagramClientImpl;
@@ -13,12 +13,7 @@ import com.myster.transaction.Transaction;
 import com.myster.type.MysterType;
 
 public class SearchHashDatagramClient implements StandardDatagramClientImpl<String> {
-    public static final int SEARCH_HASH_TRANSACTION_CODE = 150; //There is no
-                                                                // UDP version
-                                                                // of the first
-                                                                // version of
-                                                                // get file type
-                                                                // list.
+    public static final int SEARCH_HASH_TRANSACTION_CODE = 150;
 
     private MysterType type;
 
@@ -33,9 +28,10 @@ public class SearchHashDatagramClient implements StandardDatagramClientImpl<Stri
         this.hashes = hashes;
     }
 
+    @SuppressWarnings("resource")
     public String getObjectFromTransaction(Transaction transaction)
             throws IOException {
-        return FileTypeList.mergePunctuation((new DataInputStream(new ByteArrayInputStream(transaction
+        return FileTypeList.mergePunctuation((new MysterDataInputStream(new ByteArrayInputStream(transaction
                 .getData()))).readUTF());
     }
 

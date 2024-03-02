@@ -2,10 +2,10 @@ package com.myster.server.datagram;
 
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
-import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.io.IOException;
 
+import com.myster.client.stream.MysterDataInputStream;
 import com.myster.filemanager.FileItem;
 import com.myster.filemanager.FileTypeListManager;
 import com.myster.mml.MML;
@@ -28,8 +28,8 @@ public class FileStatsDatagramServer implements TransactionProtocol {
                                     Object transactionObject)
             throws BadPacketException {
         try {
-            DataInputStream in =
-                    new DataInputStream(new ByteArrayInputStream(transaction.getData()));
+            MysterDataInputStream in =
+                    new MysterDataInputStream(new ByteArrayInputStream(transaction.getData()));
 
             ByteArrayOutputStream byteOutputStream = new ByteArrayOutputStream();
             DataOutputStream out = new DataOutputStream(byteOutputStream);

@@ -513,7 +513,7 @@ public class MysterSearch {
             dealWithFileStats(address, mysterSearchResults);
         }
 
-        public void handleException(Exception ex) {
+        public void handleException(Throwable ex) {
             queueStreamSearch(address);
         }
 
@@ -538,7 +538,7 @@ public class MysterSearch {
                 try {
                     MysterAddress mysterAddress = MysterAddress.createMysterAddress(addresses[i]);
                     ipQueue.addIP(mysterAddress);
-                    ipListManager.addIP(mysterAddress);
+                    ipListManager.addIp(mysterAddress);
                 } catch (UnknownHostException exception) {
                     addAddressToQueue(ipQueue, addresses[i]);
                 }
@@ -547,7 +547,8 @@ public class MysterSearch {
             processNewAddresses(ipQueue);
         }
 
-        public void handleException(Exception ex) {
+        @Override
+        public void handleException(Throwable ex) {
             processNewAddresses(ipQueue);
         }
     }
@@ -654,7 +655,7 @@ public class MysterSearch {
             // nothing
         }
 
-        public void handleException(Exception ex) {
+        public void handleException(Throwable ex) {
             // nothing
         }
 
