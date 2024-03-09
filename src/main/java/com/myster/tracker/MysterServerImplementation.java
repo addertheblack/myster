@@ -397,8 +397,8 @@ class MysterServerImplementation {
                 temp = "1";
             mysterip.speed = Double.valueOf(temp).doubleValue();
 
-            if (mml.pathExists("/ServerIdentity")) {
-                mysterip.serverIdentity = mml.get("/ServerIdentity");
+            if (mml.pathExists("/ServerName")) {
+                mysterip.serverIdentity = mml.get("/ServerName");
             } else {
                 mysterip.serverIdentity = null;
             }

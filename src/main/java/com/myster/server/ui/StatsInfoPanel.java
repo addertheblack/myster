@@ -31,7 +31,7 @@ import com.myster.server.event.ServerSearchEvent;
 import com.myster.server.event.ServerSearchListener;
 import com.myster.server.stream.FileByHash;
 import com.myster.server.stream.FileInfoLister;
-import com.myster.server.stream.HandshakeThread;
+import com.myster.server.stream.ServerStats;
 import com.myster.server.stream.IpLister;
 import com.myster.server.stream.MultiSourceSender;
 import com.myster.server.stream.RequestSearchThread;
@@ -302,7 +302,7 @@ public class StatsInfoPanel extends JPanel {
             case IpLister.NUMBER:
                 numofTT.increment(isUdp);
                 break;
-            case HandshakeThread.NUMBER:
+            case ServerStats.NUMBER:
                 numofSSR.increment(isUdp);
                 break;
             case FileInfoLister.NUMBER:

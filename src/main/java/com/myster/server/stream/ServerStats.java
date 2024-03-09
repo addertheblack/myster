@@ -19,12 +19,12 @@ import com.myster.pref.MysterPreferences;
 import com.myster.server.ConnectionContext;
 import com.myster.type.MysterType;
 
-public class HandshakeThread extends ServerThread {
+public class ServerStats extends ServerThread {
     public static final int NUMBER = 101;
     
     private final Supplier<String> getIdentity;
 
-    public HandshakeThread(Supplier<String> getIdentity) {
+    public ServerStats(Supplier<String> getIdentity) {
         this.getIdentity = getIdentity;
     }
     
@@ -65,7 +65,7 @@ public class HandshakeThread extends ServerThread {
             String ident = identity;
             if (ident != null) {
                 if (!ident.equals("")) {
-                    mml.put("/ServerIdentity", ident);
+                    mml.put("/ServerName", ident);
                 }
             }
 

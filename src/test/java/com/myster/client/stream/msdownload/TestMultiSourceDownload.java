@@ -24,7 +24,7 @@ import com.myster.search.HashSearchListener;
 import com.myster.search.MysterFileStub;
 import com.myster.type.MysterType;
 
-class TestMultiSourceDownload {
+public class TestMultiSourceDownload {
     private MultiSourceDownload download;
 
     private ArgumentCaptor<HashSearchListener> managerArgumentCaptor;

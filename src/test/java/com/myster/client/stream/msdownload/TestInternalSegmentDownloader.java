@@ -124,8 +124,6 @@ public class TestInternalSegmentDownloader {
 
         byte[] byteArray = bout.toByteArray();
 
-        System.out.println("byteArray.length = " + byteArray.length);
-
         DataInputStream dataSendToServer = new DataInputStream(new ByteArrayInputStream(byteArray));
 
         assertEquals(dataSendToServer.readInt(), com.myster.server.stream.MultiSourceSender.SECTION_NUMBER);
