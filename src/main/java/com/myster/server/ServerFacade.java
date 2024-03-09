@@ -177,7 +177,7 @@ public class ServerFacade {
         addConnectionSection(new com.myster.server.stream.RequestDirThread());
         addConnectionSection(new com.myster.server.stream.FileTypeLister());
         addConnectionSection(new com.myster.server.stream.RequestSearchThread());
-        addConnectionSection(new com.myster.server.stream.HandshakeThread(this::getIdentity));
+        addConnectionSection(new com.myster.server.stream.ServerStats(this::getIdentity));
         addConnectionSection(new com.myster.server.stream.FileInfoLister());
         addConnectionSection(new com.myster.server.stream.FileByHash());
         addConnectionSection(new com.myster.server.stream.MultiSourceSender());

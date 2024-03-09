@@ -31,7 +31,7 @@ public class ServerStatsDatagramServer implements TransactionProtocol {
 
             
             // TODO: pass in getMMLToSend as the supplier
-            out.writeUTF("" + com.myster.server.stream.HandshakeThread.getMMLToSend(getIdentity.get()));
+            out.writeUTF("" + com.myster.server.stream.ServerStats.getMMLToSend(getIdentity.get()));
 
             sender.sendTransaction(new Transaction(transaction, byteOutputStream.toByteArray(),
                     Transaction.NO_ERROR));

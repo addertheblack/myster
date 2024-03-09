@@ -43,6 +43,12 @@
             <version>5.8.0</version>
             <scope>test</scope>
         </dependency>
+
+        <dependency>
+            <groupId>org.bouncycastle</groupId>
+            <artifactId>bcpkix-jdk18on</artifactId>
+            <version>1.77</version>
+        </dependency>
     </dependencies>
 
     <properties>
@@ -247,7 +253,7 @@
                 </plugins>
             </build>
         </profile>
-        
+
         <!-- linux Profile -->
         <profile>
             <id>linux-build</id>
