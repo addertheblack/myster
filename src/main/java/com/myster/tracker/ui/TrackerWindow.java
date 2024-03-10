@@ -48,14 +48,16 @@ public class TrackerWindow extends MysterFrame {
 
     private static MysterFrameContext context;
 
-    public static void initWindowLocations() {
+    public static int initWindowLocations() {
         Rectangle[] rect = com.myster.ui.WindowLocationKeeper.getLastLocs("Tracker");
         if (rect.length > 0) {
             getInstance().setBounds(rect[0]);
             getInstance().setVisible(true);
         }
+
+        return rect.length;
     }
-    
+
     public static void init(IpListManager ipListManager, MysterFrameContext c) {
         TrackerWindow.ipListManager = ipListManager;
         TrackerWindow.context= c;

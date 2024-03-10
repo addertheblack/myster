@@ -163,7 +163,7 @@ public class SearchWindow extends MysterFrame implements SearchResultListener, S
         SearchWindow.manager = manager;
     }
     
-    public static void initWindowLocations(MysterFrameContext c) {
+    public static int initWindowLocations(MysterFrameContext c) {
         Rectangle[] rectangles = WindowLocationKeeper.getLastLocs(PREF_LOCATION_KEY);
 
         keeper = new WindowLocationKeeper(PREF_LOCATION_KEY);
@@ -174,11 +174,7 @@ public class SearchWindow extends MysterFrame implements SearchResultListener, S
             window.setVisible(true);
         }
 
-        if (rectangles.length == 0) {
-            SearchWindow window = new SearchWindow(c);
-            window.setVisible(true);
-        }
-
+        return rectangles.length;
     }
 
     public void addComponent(Component component, int row, int column, int width, int height,

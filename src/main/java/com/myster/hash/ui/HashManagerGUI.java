@@ -28,14 +28,18 @@ public class HashManagerGUI extends MysterFrame {
 
     private static HashManager hashManager;
 
-    public static void initGui() {
+    public static int initGui() {
         Rectangle[] rect = com.myster.ui.WindowLocationKeeper
                 .getLastLocs(WINDOW_LOC_KEY);
         if (rect.length > 0) {
             singleton.setBounds(rect[0]);
             singleton.setVisible(true);
             singleton.pack();
+
+            return 1;
         }
+        
+        return 0;
     }
 
     public static void init(MysterFrameContext context, HashManager hashManager) {
