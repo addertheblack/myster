@@ -318,11 +318,17 @@ public class Myster {
                 if (isServer) {
                     // nothing
                 } else {
-                    com.myster.client.ui.ClientWindow.initWindowLocations(context);
-                    ServerStatsWindow.initWindowLocations();
-                    com.myster.tracker.ui.TrackerWindow.initWindowLocations();
-                    com.myster.hash.ui.HashManagerGUI.initGui();
-                    SearchWindow.initWindowLocations(context);
+                    var count = 0;
+                    count += com.myster.client.ui.ClientWindow.initWindowLocations(context);
+                    count += ServerStatsWindow.initWindowLocations();
+                    count += com.myster.tracker.ui.TrackerWindow.initWindowLocations();
+                    count += com.myster.hash.ui.HashManagerGUI.initGui();
+                    count += SearchWindow.initWindowLocations(context);
+                    
+                    if (count == 0) {
+                        SearchWindow window = new SearchWindow(context);
+                        window.setVisible(true);
+                    }
                 }
 
                 try {

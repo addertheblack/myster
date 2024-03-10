@@ -85,7 +85,7 @@ public class ClientWindow extends MysterFrame implements Sayable {
         ClientWindow.hashManager = hashManager;
     }
     
-    public static void initWindowLocations(MysterFrameContext c) {
+    public static int initWindowLocations(MysterFrameContext c) {
         Rectangle[] rectangles = com.myster.ui.WindowLocationKeeper.getLastLocs(WINDOW_KEEPER_KEY);
 
         keeper = new WindowLocationKeeper(WINDOW_KEEPER_KEY);
@@ -95,6 +95,8 @@ public class ClientWindow extends MysterFrame implements Sayable {
             window.setBounds(rectangles[i]);
             window.show();
         }
+        
+        return rectangles.length;
     }
 
     public ClientWindow(MysterFrameContext c) {
