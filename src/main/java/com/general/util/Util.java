@@ -8,7 +8,21 @@ import java.awt.Toolkit;
 import java.awt.Window;
 import java.lang.reflect.InvocationTargetException;
 import java.net.URL;
+import java.security.KeyFactory;
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
+import java.security.PublicKey;
+import java.security.spec.InvalidKeySpecException;
+import java.security.spec.X509EncodedKeySpec;
+import java.util.ArrayList;
+import java.util.Base64;
+import java.util.Collection;
+import java.util.List;
+import java.util.Optional;
 import java.util.concurrent.Callable;
+import java.util.function.Function;
+import java.util.function.Predicate;
+
 
 public class Util { //This code was taken from an Apple Sample Code package,
     public static Image loadImage(String filename, Component watcher) {
@@ -65,24 +79,24 @@ public class Util { //This code was taken from an Apple Sample Code package,
 
         long kilo = bytes / 1024;
         if (kilo < 1024) {
-            return kilo + "K";
+            return kilo + "KiB";
         }
 
         double megs = (double) kilo / 1024;
         if (megs < 1024) {
             String temp = "" + megs;
-            return temp.substring(0, temp.indexOf(".") + 2) + "MB";
+            return temp.substring(0, temp.indexOf(".") + 2) + "MiB";
         }
 
         double gigs = megs / 1024;
         if (gigs < 1024) {
             String temp = "" + gigs;
-            return temp.substring(0, temp.indexOf(".") + 2) + "GB";
+            return temp.substring(0, temp.indexOf(".") + 2) + "GiB";
         }
 
         double tera = gigs / 1024;
         String temp = "" + tera;
-        return temp.substring(0, temp.indexOf(".") + 2) + "TB";
+        return temp.substring(0, temp.indexOf(".") + 2) + "TiB";
     }
 
     public static byte[] concatenateBytes(byte[] array, byte[] array2) {
@@ -101,17 +115,40 @@ public class Util { //This code was taken from an Apple Sample Code package,
         byte[] bytes = new byte[hash.length() / 2];
 
         for (int i = 0; i < hash.length(); i += 2) {
-            bytes[i / 2] = (byte) (Short.parseShort(hash.substring(i, i + 2), 16)); //hopefully
-            // the
-            // compiler
-            // will
-            // convert
-            // "/2"
-            // into
-            // >> 1
+            bytes[i / 2] = (byte) (Short.parseShort(hash.substring(i, i + 2), 16));
         }
 
         return bytes;
+    }
+
+    public static String asHex(byte hash[]) {
+        StringBuilder buf = new StringBuilder(hash.length * 2);
+    
+        for (int i = 0; i < hash.length; i++) {
+            if ((hash[i] & 0xff) < 0x10)
+                buf.append("0");
+    
+            buf.append(Long.toString(hash[i] & 0xff, 16));
+        }
+    
+        return buf.toString();
+    }
+
+    public static String getMD5Hash(String input) {
+        try {
+            // Create MessageDigest instance for MD5
+            MessageDigest digest = MessageDigest.getInstance("MD5");
+            
+            // Update input string in message digest
+            digest.update(input.getBytes(), 0, input.length());
+
+            // Convert the byte array to hex format
+            return asHex(digest.digest());
+            
+        } catch (NoSuchAlgorithmException e) {
+            e.printStackTrace();
+            return null;
+        }
     }
 
     /**
@@ -123,6 +160,21 @@ public class Util { //This code was taken from an Apple Sample Code package,
         frame.setLocation(tool.getScreenSize().width / 2 - frame.getSize().width / 2 + xOffset,
                 tool.getScreenSize().height / 2 - frame.getSize().height / 2 + yOffset);
     }
+//
+//    public static PublicKey covertToPublicKey(String identity) {
+//        try {
+//            byte[] encodedPublicKey = Base64.getDecoder().decode(identity);
+//            X509EncodedKeySpec keySpec = new X509EncodedKeySpec(encodedPublicKey);
+//            KeyFactory keyFactory = KeyFactory.getInstance("RSA");
+//            
+//            return keyFactory.generatePublic(keySpec);
+//        } catch (NoSuchAlgorithmException | InvalidKeySpecException
+//                | IllegalArgumentException exception) {
+//            exception.printStackTrace();
+//            
+//            return null;
+//        }
+//    }
 
     /**
      * *************************** CRAMMING STUFF ON THE EVENT THREAD SUB SYSTEM START
@@ -201,6 +253,56 @@ public class Util { //This code was taken from an Apple Sample Code package,
         });
 
         return (T) result[0];
+    }
+
+    public static String publicKeyToString(PublicKey publicKey) {
+        return Base64.getEncoder().encodeToString(publicKey.getEncoded());
+    }
+    
+    public static Optional<PublicKey> publicKeyFromString(String publicKeyString) {
+        byte[] encodedPublicKey = Base64.getDecoder().decode(publicKeyString);
+
+        try {
+            X509EncodedKeySpec keySpec = new X509EncodedKeySpec(encodedPublicKey);
+            KeyFactory keyFactory = KeyFactory.getInstance("RSA");
+            return Optional.of(keyFactory.generatePublic(keySpec));
+        } catch (InvalidKeySpecException | NoSuchAlgorithmException exception) {
+            exception.printStackTrace();
+
+            return Optional.empty();
+        }
+    }
+    
+    /**
+     * Because streams are a great concept that's too much of a pain in the ass to use.
+     * 
+     * (also this is faster)
+     */
+    public static <T> List<T> filter(Collection<T> input, Predicate<T> p) {
+        List<T> result = new ArrayList<>(input.size());
+        
+        for (T t : input) {
+            if (p.test(t)) {
+                result.add(t);
+            }
+        }
+        
+        return result;
+    }
+    
+    /**
+     * Because streams are a great concept that's too much of a pain in the ass to use.
+     * 
+     * (also this is faster)
+     */
+    public static <F, T> List<T> map(Collection<F> input, Function<F, T>m) {
+        List<T> result = new ArrayList<>(input.size());
+
+        for (F f : input) {
+            result.add(m.apply(f));
+        }
+
+        return result;
     }
 
     /////////////// time \\\\\\\\\\\

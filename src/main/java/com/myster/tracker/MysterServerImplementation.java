@@ -1,36 +1,30 @@
 /* 
 
  Title:			Myster Open Source
- Author:			Andrew Trumper
+ Author:		Andrew Trumper
  Description:	Generic Myster Code
  
  This code is under GPL
 
- Copyright Andrew Trumper 2000-2001
+ Copyright Andrew Trumper 2000-2024
 
  */
 
 package com.myster.tracker;
 
-import java.io.IOException;
-import java.lang.ref.Cleaner;
-import java.net.UnknownHostException;
+import java.util.Arrays;
 import java.util.List;
-import java.util.concurrent.atomic.AtomicInteger;
+import java.util.Optional;
 import java.util.logging.Logger;
 import java.util.prefs.Preferences;
 
-import com.general.thread.CallAdapter;
-import com.general.util.BlockingQueue;
-import com.myster.client.datagram.PingResponse;
-import com.myster.client.net.MysterProtocol;
-import com.myster.client.net.MysterStream;
+import com.general.util.Util;
 import com.myster.mml.MML;
 import com.myster.mml.MMLException;
 import com.myster.mml.RobustMML;
 import com.myster.net.MysterAddress;
+import com.myster.server.stream.ServerStats;
 import com.myster.type.MysterType;
-import com.myster.util.MysterThread;
 
 /**
  * MysterIP objects are responsible for two things. 1) Saving server statistics information and 2)
@@ -40,20 +34,17 @@ import com.myster.util.MysterThread;
 class MysterServerImplementation {
     private static final Logger LOGGER = Logger.getLogger("com.myster.tracker.MysterServer");
     
-    private MysterAddress ip;
+    private final MysterIdentity identity;
+    
     private double speed;
     private int timeup;
     private int timedown;
     private NumOfFiles numberOfFiles;
     private int numberofhits;
     private boolean upordown = true;
-    private String serverIdentity;
+    private String serverName;
     private long uptime;
     private int lastPingTime = -1; //in millis. (not saved)
-
-    private volatile boolean occupied = false; //used in updating...
-
-    private long lastminiupdate = 0; //This is to keep the value of the last
 
     // time internalRefreshStatus() was last
     // called.
@@ -62,16 +53,21 @@ class MysterServerImplementation {
 
     //These are the paths in the MML peer:
     //ip = root!
-
-    public static final String IP = "/ip_address";
+    public static final String ADDRESSES = "/ipAddresses";
     public static final String SPEED = "/speed";
     public static final String TIMESINCEUPDATE = "/timeSinceUpdate";
     public static final String TIMEUP = "/timeUp";
     public static final String TIMEDOWN = "/timeDown";
     public static final String NUMBEROFHITS = "/numberOfHits";
     public static final String NUMBEROFFILES = "/numberOfFiles";
-    public static final String SERVERIDENTITY = "/serverIdentity";
+    public static final String SERVER_NAME = "/serverName";
     public static final String UPTIME = "/uptime";
+    
+    // value pointed to by this key might be null in which case use IDENTITY_ADDRESS
+    public static final String IDENTITY_PUBLIC_KEY = "/identity";
+    
+    // value pointed to by this key might be null in which case IDENTITY_PUBLIC_KEY must be non null
+    public static final String IDENTITY_ADDRESS = "/identity_address";
 
     //These are weights.
     private static final double SPEEDCONSTANT = 0.5;
@@ -80,49 +76,104 @@ class MysterServerImplementation {
     private static final double UPVSDOWNCONSTANT = 5;
     private static final double STATUSCONSTANT = 1;
 
-    private final MysterProtocol protocol;
+
     private final Preferences preferences;
 
-    private static final long UPDATETIME_MS = 1000 * 60 * 60;
+    private final IdentityProvider addressProvider;
 
-    private static final long MINI_UPDATE_TIME_MS = 10 * 60 * 1000;
-    private static final int NUMBER_OF_UPDATER_THREADS = 1;
-
-    MysterServerImplementation(Preferences node, String ip, MysterProtocol protocol) throws IOException {
+    MysterServerImplementation(Preferences node,
+                               IdentityProvider identityProvider,
+                               MysterIdentity identity) {
         this.preferences = node;
-        if (ip.equals("127.0.0.1"))
-            throw new IOException("IP is local host.");
-        
-        this.protocol = protocol;
-        new MysterAddress(ip); // to see if address is valid.
-        createNewMysterIP(ip, 1, 50, 50, 1, 1, "", null, -1);
-        if (!MysterServerImplementation.internalRefreshAll(protocol, this))
-            throw new IOException("Failed to created new Myster IP");
-        LOGGER.fine("A New MysterIP Object = "+getAddress());
+        this.addressProvider = identityProvider;
+        this.identity = identity;
+        createNewMysterServerImpl(node.get(ADDRESSES, ""),
+                                  Double.valueOf(node.get(SPEED, "")).doubleValue(),
+                                  Integer.valueOf(node.get(TIMEUP, "")).intValue(),
+                                  Integer.valueOf(node.get(TIMEDOWN, "")).intValue(),
+                                  Integer.valueOf(node.get(NUMBEROFHITS, "")).intValue(),
+                                  Long.valueOf(node.get(TIMESINCEUPDATE, "")).longValue(),
+                                  node.get(NUMBEROFFILES, ""),
+                                  node.get(SERVER_NAME, ""),
+                                  (node.get(UPTIME, "") == null ? -1
+                                          : Long.valueOf(node.get(UPTIME, "")).longValue()));
     }
 
-     MysterServerImplementation(Preferences node, MysterProtocol protocol) {
-         this.preferences = node;
-        this.protocol = protocol;
-        createNewMysterIP(node.get(IP, ""),
-                          Double.valueOf(node.get(SPEED, "")).doubleValue(),
-                          Integer.valueOf(node.get(TIMEUP, "")).intValue(),
-                          Integer.valueOf(node.get(TIMEDOWN, "")).intValue(),
-                          Integer.valueOf(node.get(NUMBEROFHITS, "")).intValue(),
-                          Long.valueOf(node.get(TIMESINCEUPDATE, "")).longValue(),
-                          node.get(NUMBEROFFILES, ""),
-                          node.get(SERVERIDENTITY, ""),
-                          (node.get(UPTIME, "") == null ? -1
-                                  : Long.valueOf(node.get(UPTIME, "")).longValue()));
+    
+    public void refreshStats(RobustMML serverStats) {
+        refreshStats(this, serverStats);
     }
+    
+    private static void refreshStats(MysterServerImplementation server,  RobustMML serverStats) {
+        server.timeoflastupdate = System.currentTimeMillis();
+        String temp = serverStats.get(ServerStats.SPEED);
+        if (temp == null)
+            temp = "1";
+        server.speed = Double.valueOf(temp).doubleValue();
 
-    private void createNewMysterIP(String i, double s, int tu, int td, int h, long t, String nof,
-            String si, long u) {
-        try {
-            ip = new MysterAddress(i); //!
-        } catch (UnknownHostException ex) {
-            ip = null; //ho ho... this might be s source of errors later..
+        if (serverStats.pathExists(ServerStats.SERVER_NAME)) {
+            server.serverName = serverStats.get(ServerStats.SERVER_NAME);
+        } else {
+            server.serverName = null;
         }
+
+        try {
+            String uptimeString = serverStats.get(ServerStats.UPTIME);
+            if (uptimeString == null) {
+                server.uptime = -1;
+            } else {
+                server.uptime = Long.valueOf(uptimeString).longValue();
+            }
+        } catch (NumberFormatException ex) {
+            // ignore and keep going
+        }
+
+        NumOfFiles table = new NumOfFiles();
+        List<String> dirList = serverStats.list(ServerStats.NUMBER_OF_FILES);
+
+        try {
+            if (dirList != null) {
+                for (int i = 0; i < dirList.size(); i++) {
+                    String s_temp =
+                            serverStats.get(ServerStats.NUMBER_OF_FILES + "/" + dirList.get(i));
+                    if (s_temp == null)
+                        continue; // <- weird err.
+
+                    table.put("/" + dirList.get(i), s_temp);// <-WARNING
+                    // could
+                    // be a
+                    // number
+                }
+            }
+        } finally {
+            server.numberOfFiles = table;
+        }
+    }
+
+    /**
+     * Refreshes all Stats (Number of files, Speed and upordown) from the IP.
+     * Blocks.
+     */
+    public MysterServerImplementation(Preferences prefs,
+                                      IdentityProvider addressProvider,
+                                      RobustMML serverStats,
+                                      MysterIdentity identity) {
+        preferences = prefs;
+        this.identity = identity;
+        this.addressProvider = addressProvider;
+        
+        refreshStats(this, serverStats);
+    }
+
+    private void createNewMysterServerImpl(String i,
+                                           double s,
+                                           int tu,
+                                           int td,
+                                           int h,
+                                           long t,
+                                           String nof,
+                                           String si,
+                                           long u) {
         upordown = true;
         speed = s;
         timeup = tu;
@@ -130,7 +181,7 @@ class MysterServerImplementation {
         numberofhits = h;
         timeoflastupdate = t;
         uptime = u;
-
+        
         try {
             numberOfFiles = new NumOfFiles(nof);//!
         } catch (MMLException ex) {
@@ -138,33 +189,56 @@ class MysterServerImplementation {
         } catch (NullPointerException ex) {
             ex.printStackTrace();
             numberOfFiles = new NumOfFiles();
-            LOGGER.info("IP: has no num of files " + ip);
         }
-
-        serverIdentity = si;
-
-        toUpdateOrNotToUpdate();
+        
+        serverName = si;
     }
 
     MysterServer getInterface() {
         return new MysterServerReference();
     }
 
-    private final AtomicInteger referenceCounter = new AtomicInteger(0);
-    
+    public MysterIdentity getIdentity() {
+        return identity;
+    }
 
+    public boolean getStatus() {
+        return upordown;
+    }
+
+    @Override
+    public String toString() {
+        return "" + toMML();
+    }
+
+    public Optional<MysterAddress> getAddress() {
+        return addressProvider.getBestAddress(identity);
+    }
+
+    @Override
+    public boolean equals(Object m) {
+        MysterServerImplementation mysterIp;
+        try {
+            mysterIp = (MysterServerImplementation) m;
+        } catch (ClassCastException ex) {
+            return false;
+        }
+
+        return getIdentity().equals(mysterIp.getIdentity());
+    }
+    
+    
+    // I don't think we use the hashCode impl
+    @Override
+    public int hashCode() {
+        return getIdentity().hashCode();
+    }
+    
     /**
      * This private class implements the com.myster interface and allows outside objects to get
      * vital server statistics.
      */
     private class MysterServerReference implements MysterServer {
-        private static final Cleaner cleaner = Cleaner.create();
-        
-        public MysterServerReference() {
-            referenceCounter.incrementAndGet(); //used for garbage collection.
-            cleaner.register(this, () -> referenceCounter.decrementAndGet());
-        }
-
         public boolean getStatus() {
             return MysterServerImplementation.this.getStatus();
         }
@@ -173,8 +247,18 @@ class MysterServerImplementation {
             return upordown;
         }
 
-        public MysterAddress getAddress() {
-            return MysterServerImplementation.this.ip;
+        public Optional<MysterAddress> getBestAddress() {
+            return addressProvider.getBestAddress(identity);
+        }
+
+        public MysterAddress[] getAddresses() {
+            return addressProvider.getAddresses(identity);
+        }
+        
+        public MysterAddress[] getAvailableAddresses() {
+            MysterAddress[] addresses = addressProvider.getAddresses(identity);
+            
+            return Util.filter(Arrays.asList(addresses), a -> addressProvider.isUp(a)).toArray(new MysterAddress[] {});
         }
 
         /**
@@ -190,7 +274,6 @@ class MysterServerImplementation {
          */
 
         public double getSpeed() {
-            toUpdateOrNotToUpdate();
             return speed;
         }
 
@@ -199,7 +282,6 @@ class MysterServerImplementation {
          * Myster IP objects.
          */
         public double getRank(MysterType type) {
-            toUpdateOrNotToUpdate();
             return (SPEEDCONSTANT * Math.log(speed) //
                     + FILESCONSTANT * Math.log(getNumberOfFiles(type)) //
                     + Math.log(HITSCONSTANT + 1) * numberofhits //
@@ -209,9 +291,13 @@ class MysterServerImplementation {
                             : (lastPingTime == -1 ? (0.1 - (double) 5000 / 2500)
                                     : (0.1 - (double) lastPingTime / 2500)));
         }
+        
+        public MysterIdentity getIdentity() {
+            return identity;
+        }
 
-        public String getServerIdentity() {
-            return (serverIdentity == null ? "Unnamed" : serverIdentity);//(serverIdentity.length()>31?serverIdentity.substring(0,31):serverIdentity));
+        public String getServerName() {
+            return (serverName == null ? "Unnamed" : serverName);//(serverIdentity.length()>31?serverIdentity.substring(0,31):serverIdentity));
         }
 
         public int getPingTime() {
@@ -231,55 +317,16 @@ class MysterServerImplementation {
         }
     }
 
-    public boolean getStatus() {
-        toUpdateOrNotToUpdate();
-        return upordown;
-    }
-
-    @Override
-    public String toString() {
-        toUpdateOrNotToUpdate();
-
-        return "" + toMML();
-    }
-
-    public MysterAddress getAddress() {
-        return ip;
-    }
-
-    protected int getMysterCount() {
-        return referenceCounter.get();
-    }
-
-    @Override
-    public boolean equals(Object m) {
-        MysterServerImplementation mysterIp;
-        try {
-            mysterIp = (MysterServerImplementation) m;
-        } catch (ClassCastException ex) {
-            return false;
-        }
-
-        return ip.equals(mysterIp.ip);
-    }
-    
-    
-    // I don't think we use the hashCode impl
-    @Override
-    public int hashCode() {
-        return ip.hashCode();
-    }
-
     void save() {
-        preferences.put(IP, "" + ip.toString());
         preferences.put(SPEED, "" + speed);
         preferences.put(TIMESINCEUPDATE, "" + timeoflastupdate);
         preferences.put(TIMEUP, "" + timeup);
         preferences.put(TIMEDOWN, "" + timedown);
         preferences.put(NUMBEROFHITS, "" + numberofhits);
         preferences.put(UPTIME, "" + uptime);
-        if (serverIdentity != null && !serverIdentity.equals("")) {
-            preferences.put(SERVERIDENTITY, "" + serverIdentity);
+        
+        if (serverName != null && !serverName.equals("")) {
+            preferences.put(SERVER_NAME, "" + serverName);
         }
 
         String s_temp = numberOfFiles.toString();
@@ -294,16 +341,19 @@ class MysterServerImplementation {
         try {
             MML workingmml = new MML();
 
-            // Build MML object!
-            workingmml.put(IP, "" + ip.toString());
             workingmml.put(SPEED, "" + speed);
             workingmml.put(TIMESINCEUPDATE, "" + timeoflastupdate);
             workingmml.put(TIMEUP, "" + timeup);
             workingmml.put(TIMEDOWN, "" + timedown);
             workingmml.put(NUMBEROFHITS, "" + numberofhits);
             workingmml.put(UPTIME, "" + uptime);
-            if (serverIdentity != null && !serverIdentity.equals(""))
-                workingmml.put(SERVERIDENTITY, "" + serverIdentity);
+            
+            if (identity != null) {
+                workingmml.put(IDENTITY_PUBLIC_KEY, ADDRESSES);
+            }
+            
+            if (serverName != null && !serverName.equals(""))
+                workingmml.put(SERVER_NAME, "" + serverName);
 
             String s_temp = numberOfFiles.toString();
             if (!s_temp.equals(""))
@@ -317,185 +367,8 @@ class MysterServerImplementation {
         return null; //NEVER HAPPENS!
     }
 
-    private void setStatus(boolean b) {
-        if (b!=upordown) LOGGER.fine(ip+" is now "+(b?"up":"down"));
-        upordown = b;
-        if (b)
-            timeup++;
-        else
-            timedown++;
-    }
-
     private int getNumberOfFiles(MysterType type) {
-        toUpdateOrNotToUpdate();
         return numberOfFiles.getNumberOfFiles(type);
-    }
-
-    //START OF UPDATER SUB SYSTEM:
-    //NOTICE HOW MOST EVERYTHING IS STATIC.
-
-    /**
-     * Refreshes Status non-blocking. Status is whether this IP is up or down This function doesn't
-     * block which means that it won't stop your program from excecuting while it looks up the
-     * Status. It also means that there is some delay before the stats are updated.
-     */
-
-    private static MysterThread[] updaterThreads;
-
-    private static BlockingQueue<MysterServerImplementation> statusQueue = new BlockingQueue<>();
-
-    private synchronized void toUpdateOrNotToUpdate() {
-        //if an update operation is already queued, return.
-        if (occupied)
-            return;
-
-        if (System.currentTimeMillis()
-                - lastminiupdate < (getMysterCount() > 0 ? MINI_UPDATE_TIME_MS : UPDATETIME_MS)) {
-            return;
-        }
-
-        occupied = true; //note, there is an update in progress on this
-        // MysterIP
-
-        //Make sure all threads and related crap are loaded and running.
-        assertUpdaterThreads();
-
-        // Add this myster IP object to the ones to be updated.
-        protocol.getDatagram().ping(this.getAddress()).addCallListener(new MysterIpPingEventListener());
-    }
-
-    /**
-     * Refreshes all Stats (Number of files, Speed and upordown) from the IP.
-     * Blocks.
-     */
-    private static boolean internalRefreshAll(MysterProtocol  protocol, MysterServerImplementation mysterip) {
-        //Do Status updated
-        //Note, routine checks to see if it's required.
-        //MysterIP.internalRefreshStatus(mysterip);
-
-        long time = System.currentTimeMillis();
-        
-        //Do Statistics update
-        try {
-            //check if the update is needed.
-            if (System.currentTimeMillis() - mysterip.timeoflastupdate < UPDATETIME_MS)
-                throw new MinorProblemException("Too soon after last update");
-
-            if (!(mysterip.upordown))
-                throw new MinorProblemException("Can't update. Server is not up");
-
-            mysterip.timeoflastupdate = System.currentTimeMillis();
-            LOGGER.fine("Getting stats from: "+mysterip.ip);
-
-            MysterStream m = protocol.getStream();
-            RobustMML mml = m.doSection(mysterip.getAddress(), m::getServerStats);
-            if (mml == null)
-                throw new MinorProblemException("Can't get server stats for this server " + mysterip);
-            LOGGER.fine("MML for "+mysterip.ip.toString()+ " is "+mml.toString());
-            String temp = mml.get("/Speed");
-            if (temp == null)
-                temp = "1";
-            mysterip.speed = Double.valueOf(temp).doubleValue();
-
-            if (mml.pathExists("/ServerName")) {
-                mysterip.serverIdentity = mml.get("/ServerName");
-            } else {
-                mysterip.serverIdentity = null;
-            }
-
-            try {
-                String uptimeString = mml.get(UPTIME);
-                if (uptimeString == null) {
-                    mysterip.uptime = -1;
-                } else {
-                    mysterip.uptime = Long.valueOf(uptimeString).longValue();
-                }
-            } catch (NumberFormatException ex) {
-                // ignore and keep going
-            }
-
-            synchronized (mysterip) {
-                NumOfFiles table = new NumOfFiles();
-                List<String> dirList = mml.list("/numberOfFiles/");
-
-                try {
-                    if (dirList != null) {
-                        for (int i = 0; i < dirList.size(); i++) {
-                            String s_temp = mml.get("/numberOfFiles/"
-                                    + dirList.get(i));
-                            if (s_temp == null)
-                                continue; //<- weird err.
-
-                            table.put("/" + dirList.get(i), s_temp);//<-WARNING
-                            // could
-                            // be a
-                            // number
-                        }
-                    }
-                } finally {
-                    mysterip.numberOfFiles = table;
-                }
-            }
-
-            LOGGER.fine("The stats update of " + mysterip.ip + " took "
-                    + (System.currentTimeMillis() - time) + "ms");
-            return true;
-        } catch (IOException ex) {
-            LOGGER.info("MYSTERIP: Error in refresh fuction of MysterIP on IP: " + mysterip.ip
-                    + "  " + ex);
-            //ex.printStackTrace();
-        } catch (MinorProblemException ex) {
-            LOGGER.fine("Some sort of problem stopped "+mysterip.ip+" from being refreshed." + ex);
-        } catch (Exception ex) {
-            LOGGER.warning("Unexpected error occured in internal refresh all " + ex);
-            ex.printStackTrace();
-        } finally {
-            mysterip.occupied = false; //we're done.
-            mysterip.save();
-        }
-        
-        
-        return false;
-    }
-
-    private void assertUpdaterThreads() {
-        if (MysterServerImplementation.updaterThreads == null) { //init threads
-            MysterServerImplementation.updaterThreads = new MysterThread[NUMBER_OF_UPDATER_THREADS];
-            for (int i = 0; i < updaterThreads.length; i++) {
-                MysterServerImplementation.updaterThreads[i] = new IPStatusUpdaterThread(protocol);
-                MysterServerImplementation.updaterThreads[i].start();
-            }
-        }
-    }
-
-    private static class IPStatusUpdaterThread extends MysterThread {
-        private final MysterProtocol protocol;
-        
-        public IPStatusUpdaterThread(MysterProtocol protocol) {
-            super("IPStatusUpdaterThread");
-            
-            this.protocol = protocol;
-        }
-
-        public void run() {
-            try {
-                for (;;) {
-                    MysterServerImplementation.internalRefreshAll(protocol, MysterServerImplementation.statusQueue.get());
-                }
-            } catch (InterruptedException ex) {
-                //nothing.
-            }
-        }
-
-        public void end() {
-            throw new RuntimeException( "This function is not implemented" );
-        }
-    }
-
-    private static class MinorProblemException extends Exception {
-        public MinorProblemException(String s) {
-            super(s);
-        }
     }
 
     private static class NumOfFiles extends RobustMML {
@@ -519,21 +392,6 @@ class MysterServerImplementation {
                 ex.printStackTrace();
                 return 0;
             }
-        }
-    }
-
-    private class MysterIpPingEventListener extends CallAdapter<PingResponse> {
-        public void handleResult(PingResponse pingResponse) {
-            if (pingResponse.isTimeout()) {
-                setStatus(false);
-                lastPingTime = -2;
-                occupied = false;
-            } else {
-                setStatus(true);
-                lastPingTime = pingResponse.pingTimeMs();
-                statusQueue.add(MysterServerImplementation.this); // doesn't block...
-            }
-            lastminiupdate = System.currentTimeMillis();
         }
     }
 }

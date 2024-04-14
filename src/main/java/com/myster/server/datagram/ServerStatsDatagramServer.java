@@ -5,6 +5,7 @@ import java.io.DataOutputStream;
 import java.io.IOException;
 import java.util.function.Supplier;
 
+import com.myster.identity.Identity;
 import com.myster.net.BadPacketException;
 import com.myster.transaction.Transaction;
 import com.myster.transaction.TransactionProtocol;
@@ -13,9 +14,11 @@ import com.myster.transaction.TransactionSender;
 public class ServerStatsDatagramServer implements TransactionProtocol {
     public static final int SERVER_STATS_TRANSACTION_CODE = com.myster.client.datagram.ServerStatsDatagramClient.SERVER_STATS_TRANSACTION_CODE;
     private final Supplier<String> getIdentity;
+    private final Identity identity;
 
-    public ServerStatsDatagramServer(Supplier<String> getIdentity) {
+    public ServerStatsDatagramServer(Supplier<String> getIdentity, Identity identity) {
         this.getIdentity = getIdentity;
+        this.identity = identity;
     }
 
     @Override
@@ -31,7 +34,7 @@ public class ServerStatsDatagramServer implements TransactionProtocol {
 
             
             // TODO: pass in getMMLToSend as the supplier
-            out.writeUTF("" + com.myster.server.stream.ServerStats.getMMLToSend(getIdentity.get()));
+            out.writeUTF("" + com.myster.server.stream.ServerStats.getMMLToSend(getIdentity.get(), identity));
 
             sender.sendTransaction(new Transaction(transaction, byteOutputStream.toByteArray(),
                     Transaction.NO_ERROR));

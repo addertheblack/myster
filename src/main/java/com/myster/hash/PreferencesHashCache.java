@@ -9,6 +9,8 @@ import java.util.prefs.BackingStoreException;
 import java.util.prefs.Preferences;
 import java.util.stream.Collectors;
 
+import com.general.util.Util;
+
 public class PreferencesHashCache implements HashCache {
     private Preferences node;
 
@@ -21,7 +23,7 @@ public class PreferencesHashCache implements HashCache {
             MessageDigest md = MessageDigest.getInstance("MD5");
             md.update(filename.getBytes());
             byte[] digest = md.digest();
-            return SimpleFileHash.asHex(digest);
+            return Util.asHex(digest);
         } catch (NoSuchAlgorithmException e) {
             throw new RuntimeException("Failed to hash the filename", e);
         }

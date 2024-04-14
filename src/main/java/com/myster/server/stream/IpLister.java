@@ -24,7 +24,7 @@ public class IpLister extends ServerThread {
     }
 
     /**
-     * Protocal: Send 10 (done) Send TYPE(4 bytes) get String array (get a bunch
+     * Protocol: Send 10 (done) Send TYPE(4 bytes) get String array (get a bunch
      * of strings) NO length sent
      */
 
@@ -37,18 +37,23 @@ public class IpLister extends ServerThread {
         byte[] type = new byte[4];
         in.readFully(type);
 
-        ipListManager.addIp(
-                new MysterAddress(context.socket.getInetAddress()));
+        ipListManager.addIp(new MysterAddress(context.socket.getInetAddress()));
 
-        topten = ipListManager.getTop(
-                new MysterType(type), 100);
+        topten = ipListManager.getTop(new MysterType(type), 100);
+        
         if (topten != null) {
             for (int i = 0; i < topten.length; i++) {
                 if (topten[i] == null)
                     break;
-                out.writeUTF(topten[i].getAddress().getIP());
+                
+                var addresses = topten[i].getAvailableAddresses();
+                
+                for (MysterAddress address : addresses) {
+                    out.writeUTF(address.toString());
+                }
             }
         }
+        
         out.writeUTF(""); //"" Signals the end of the list!
     }
 

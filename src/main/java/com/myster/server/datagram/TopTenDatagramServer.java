@@ -4,6 +4,7 @@ import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.DataOutputStream;
 import java.io.IOException;
+import java.util.Arrays;
 
 import com.myster.client.stream.MysterDataInputStream;
 import com.myster.net.BadPacketException;
@@ -45,7 +46,7 @@ public class TopTenDatagramServer implements TransactionProtocol {
                     : new String[countServersReturned(topTenServers)]);
 
             for (int i = 0; i < topTenStrings.length; i++) {
-                topTenStrings[i] = topTenServers[i].getAddress().toString();
+                topTenStrings[i] = Arrays.asList(topTenServers[i].getAddresses()).toString();
             }
 
            sender.sendTransaction(new Transaction(transaction, getBytesFromStrings(topTenStrings),

@@ -20,6 +20,7 @@ import java.security.cert.CertificateException;
 import java.security.cert.X509Certificate;
 import java.util.Base64;
 import java.util.Date;
+import java.util.Optional;
 import java.util.UUID;
 import java.util.logging.Logger;
 
@@ -64,7 +65,7 @@ public class Identity {
         return keyStore;
     }
 
-    public KeyPair getMainIdentity() {
+    public Optional<KeyPair> getMainIdentity() {
         KeyStore k = getKeyStore();
         
         ensureIdentity(k);
@@ -76,12 +77,12 @@ public class Identity {
             Certificate certificate = certificateChain[0];
             PublicKey publicKey = certificate.getPublicKey();
 
-            return new KeyPair(publicKey, privateKey);
+            return Optional.of(new KeyPair(publicKey, privateKey));
         } catch (UnrecoverableKeyException | KeyStoreException
                 | NoSuchAlgorithmException exception) {
             exception.printStackTrace();
             
-            throw new RuntimeException();
+            return Optional.empty();
         }
     }
     
@@ -117,8 +118,8 @@ public class Identity {
             String encodedPrivateKey = Base64.getEncoder().encodeToString(privateKey.getEncoded());
             String encodedPublicKey = Base64.getEncoder().encodeToString(publicKey.getEncoded());
 
-            System.out.println("Private Key: " + encodedPrivateKey);
-            System.out.println("Public Key: " + encodedPublicKey);
+            LOGGER.finest("Private Key: " + encodedPrivateKey);
+            LOGGER.fine("Public Key: " + encodedPublicKey);
 
             Certificate certificate = generateSelfSignedCertificate(keyPair);
 
@@ -222,10 +223,13 @@ public class Identity {
         
         try {
             keyStore = KeyStore.getInstance(KeyStore.getDefaultType());
-            try (FileInputStream fin = new FileInputStream(file)) {
-                keyStore.load(fin, KEYSTORE_PASSWORD.toCharArray());
+
+            if (file.exists()) {
+                try (FileInputStream fin = new FileInputStream(file)) {
+                    keyStore.load(fin, KEYSTORE_PASSWORD.toCharArray());
+                }
             }
-            
+
             return true;
         } catch (KeyStoreException exception) {} catch (NoSuchAlgorithmException exception) {
             exception.printStackTrace();
@@ -247,6 +251,11 @@ public class Identity {
     private void save() {
         try {
             final File file = new File(keyStorePath, keystoreNameNew());
+            
+            if (!file.exists()) {
+                file.createNewFile();
+            }
+            
             try (FileOutputStream fout = new FileOutputStream(file)) {
                 keyStore.store(fout, KEYSTORE_PASSWORD.toCharArray());
             }

@@ -19,6 +19,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import com.general.util.AnswerDialog;
+import com.general.util.Util;
 import com.myster.client.stream.msdownload.MultiSourceDownload.FileMover;
 import com.myster.hash.FileHash;
 import com.myster.hash.SimpleFileHash;
@@ -563,7 +564,7 @@ public class MSPartialFile implements AutoCloseable {
             FileHash hash = hashes[i];
 
             String hashName = hash.getHashName();
-            String hashAsString = SimpleFileHash.asHex(hash.getBytes());
+            String hashAsString = Util.asHex(hash.getBytes());
 
             String workingPath = path + i + "/";
 

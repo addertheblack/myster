@@ -2,8 +2,9 @@ package com.myster.hash;
 
 import java.io.Serializable;
 
+import com.general.util.Util;
+
 public class SimpleFileHash extends FileHash implements Serializable {
-    
     private byte[] hash;
 
     private String hashName;
@@ -26,7 +27,7 @@ public class SimpleFileHash extends FileHash implements Serializable {
     }
 
     public String toString() {
-        return asHex(hash);
+        return Util.asHex(hash);
     }
 
     public boolean equals(Object o) {
@@ -45,19 +46,6 @@ public class SimpleFileHash extends FileHash implements Serializable {
         }
 
         return true;
-    }
-
-    public static String asHex(byte hash[]) {
-        StringBuilder buf = new StringBuilder(hash.length * 2);
-
-        for (int i = 0; i < hash.length; i++) {
-            if ((hash[i] & 0xff) < 0x10)
-                buf.append("0");
-
-            buf.append(Long.toString(hash[i] & 0xff, 16));
-        }
-
-        return buf.toString();
     }
 
     public static FileHash buildFileHash(String hashName, byte[] hash) {

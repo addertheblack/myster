@@ -12,6 +12,7 @@ import java.awt.event.ItemListener;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 import javax.swing.JLabel;
@@ -277,10 +278,10 @@ public class TrackerWindow extends MysterFrame {
 //                sortables[5] = new SortableRank(-1);
 //                sortables[6] = new SortableUptime(-1);
 //            } else {
-                sortables[0] = new SortableString(server.getServerIdentity());
+                sortables[0] = new SortableString(server.getServerName());
                 sortables[1] = new SortableLong(server.getNumberOfFiles(type));
                 sortables[2] = new SortableStatus(server.getStatus(), server.isUntried());
-                sortables[3] = new SortableString("" + server.getAddress());
+                sortables[3] = new SortableString("" + Arrays.asList(server.getAddresses()));
                 sortables[4] = new SortablePing(server.getPingTime());
                 sortables[5] = new SortableRank(((long) (100 * server.getRank(type))));
                 sortables[6] = new SortableUptime((server.getStatus() ? server.getUptime() : -2));
@@ -292,7 +293,7 @@ public class TrackerWindow extends MysterFrame {
         }
 
         public String toString() {
-            return "" + server.getAddress();
+            return "" + Arrays.asList(server.getAddresses());
         }
 
         private static class SortablePing extends SortableLong {

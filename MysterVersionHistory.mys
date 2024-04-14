@@ -1181,6 +1181,24 @@ started
 	-> Server socket is now uses 6669 as the LAN auto discovery port
 	-> Added brute force ping to look for other myster servers on the subnet
 	-> Did first pass of FuturePromiseList (not use anywhere yet)
+	-> fix writeUTF to use write utf-8 instead.. fix data input/outputstreams
+	-> Make port 6669 the official local Myster server discovery port.
+	
+2024-04-13
+	Pretty much completely rewrite the tracker again
+The tracker in this case is the the MysterServerPoolImpl.
+Made the pool use conceptual identity instead of just MysterAddress
+This means that a MysterServer might be accessible from several
+addresses like on a LAN with a LAN address or with the public address.
+Also it allows a server to work on multiple ports at once which is potentially useful.
+As part of this work I've continued to work on getting rid of MysterIp which is really
+a MysterServer. It was a bad name when I came up with it's time to kill it.
+    The tracker re-write is part of the effort to implement private networks since having servers
+organized by identity is part of being able to use encryption keys and to further use encryption
+keys for myster types.
+    In other news graalvm experiments in creating a compiled Myster.exe totally failed. graalvm doesn't
+    seem to play nice with swing - it gets stuck on java properties for some reason. 
+    It's also a pain in the ass to setup so f that noise.
 	
 
 (Red List)
@@ -1195,33 +1213,10 @@ to do:
     need to be able to share the network config file (might be similar to network file.. or a superset)
 *Add reverse connection protocol.
 *Make communication encrypted (keep public key in MysterIP server information)
-*fix writeUTF to use write utf-8 instead.. fix data input/outputstreams
 *Add business card for server -> basically server stats
 *Pick a place for downloads in progress by default like homedirectory/mysterdata or something..
     Maybe app data on windows?
 Split off concurrency library from Myster and publish to Maven
 Make Myster modules compatible
 fix naming.. We probably want to use myster.org
-Probably want to move that stuff into preferences/registry
-Make port 6669 the official local Myster server discovery port.
 
-
-             <plugin>
-                <groupId>org.graalvm.buildtools</groupId>
-                <artifactId>native-maven-plugin</artifactId>
-                <version>0.10.0</version>
-                <configuration>
-                    <mainClass>${mainclass}</mainClass>
-                    <buildArgs>
-                        <buildArg>-H:+AddAllCharsets</buildArg>
-                    </buildArgs>
-                </configuration>
-                <executions>
-                    <execution>
-                        <goals>
-                            <goal>compile-no-fork</goal>
-                        </goals>
-                        <phase>package</phase>
-                    </execution>
-                </executions>
-            </plugin>

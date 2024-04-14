@@ -301,7 +301,7 @@ public class ClientWindow extends MysterFrame implements Sayable {
 
         String fallbackWindowName = currentip.equals("") ? "myself" : currentip;
         String windowName =
-                (server == null ? fallbackWindowName : "\"" + server.getServerIdentity() + "\" ("
+                (server == null ? fallbackWindowName : "\"" + server.getServerName() + "\" ("
                         + currentip + ")");
         setTitle(CLIENT_WINDOW_TITLE_PREFIX + "to " + windowName);
     }

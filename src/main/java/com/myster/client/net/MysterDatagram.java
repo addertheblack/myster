@@ -8,7 +8,6 @@ import java.util.concurrent.ExecutionException;
 import com.general.thread.PromiseFuture;
 import com.general.util.UnexpectedException;
 import com.general.util.UnexpectedInterrupt;
-import com.myster.client.datagram.PingEventListener;
 import com.myster.client.datagram.PingResponse;
 import com.myster.hash.FileHash;
 import com.myster.message.MessagePacket;
