@@ -168,13 +168,12 @@ public class MultiSourceHashSearch implements HashCrawlerManager {
         if (top.length==0) {
             top = ipListManager.getAll(type).toArray(new MysterServer[0]);
         }
-        
+
         for (MysterServer s : top) {
-            ipQueue.addIP(s.getAddress());
+            s.getBestAddress().ifPresent(ipQueue::addIP);
         }
 
-        // normally the tracker would be connected to the upstream future so it
-        // could be
+        // normally the tracker would be connected to the upstream future so it could be
         // cancelled but there's not upstream. The tracker is god!
         AsyncTaskTracker tracker = AsyncTaskTracker.create(new SimpleTaskTracker(), INVOKER);
 

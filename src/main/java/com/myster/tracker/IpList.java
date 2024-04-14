@@ -22,7 +22,6 @@ package com.myster.tracker;
 import java.net.UnknownHostException;
 import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -39,7 +38,7 @@ class IpList {
     
     private static final Logger LOGGER = Logger.getLogger(IpList.class.getName());
     
-    private final Map<MysterAddress, MysterServer> mapOfServers = new LinkedHashMap<>();
+    private final Map<MysterIdentity, MysterServer> mapOfServers = new LinkedHashMap<>();
     private final MysterType type;
     private final Preferences preferences;
     
@@ -51,7 +50,7 @@ class IpList {
      * com.myster objects.
      * @param preferences 
      */
-    protected IpList(MysterType type, MysterIpPool pool, Preferences preferences) {
+    protected IpList(MysterType type, MysterServerPool pool, Preferences preferences) {
         this.preferences = preferences;
 
         String s = preferences.get(type.toString(), "");
@@ -63,11 +62,11 @@ class IpList {
                 String workingip = ips.nextToken();
                 if (pool.existsInPool(new MysterAddress(workingip))) {
                     try {
-                        temp = pool.getMysterServer(
-                                new MysterAddress(workingip));
+                        temp = pool.getCachedMysterIp(
+                                new MysterAddressIdentity(new MysterAddress(workingip)));
                     } catch (UnknownHostException ex) {
                         // do nothing
-                    }
+                    }   
                 } // if IP doens't exist in the pool, remove it from the list!
                 if (temp == null) {
                     LOGGER.warning("This server does not existing in the pool: " + workingip
@@ -75,7 +74,7 @@ class IpList {
                     continue;
                 }
 
-                mapOfServers.put(temp.getAddress(), temp);
+                mapOfServers.put(temp.getIdentity(), temp);
             } catch (Exception ex) {
                 LOGGER.warning("Failed to add an IP to an IP list: " + type + " " + ex);
             }
@@ -83,7 +82,6 @@ class IpList {
 
         this.type = type;
         sort();
-        removeCrap();
     }
 
     /**
@@ -122,26 +120,15 @@ class IpList {
         return type;
     }
 
-    private synchronized void removeCrap() {
-        Iterator<Map.Entry<MysterAddress, MysterServer>> iterator = mapOfServers.entrySet().iterator();
-        while (iterator.hasNext()) {
-            Map.Entry<MysterAddress, MysterServer> entry = iterator.next();
-            if (entry.getKey().getIP().equals("127.0.0.1")) {
-                iterator.remove();
-            }
-        }
-
-    }
-
     /**
      * Modifies the preferences and saves the changes.
      */
     private synchronized void save() {
-        removeCrap();
-
-        StringBuffer buffer = new StringBuffer();  
-        for (MysterAddress a: mapOfServers.keySet()) {
-            buffer.append("" + a + " ");
+        StringBuffer buffer = new StringBuffer();
+        for (MysterServer server : mapOfServers.values()) {
+            for (MysterAddress address : server.getAddresses()) {
+                buffer.append("" + address + " ");
+            }
         }
 
         preferences.put(type.toString(), buffer.toString());
@@ -161,7 +148,7 @@ class IpList {
     private synchronized void insertionSort(MysterServer ip) {
         if (ip == null)
             return;
-        if (mapOfServers.containsKey(ip.getAddress())) {
+        if (mapOfServers.containsKey(ip.getIdentity())) {
             return;
         }
         
@@ -177,7 +164,7 @@ class IpList {
             return;
         }
         
-        mapOfServers.put(ip.getAddress(), ip);
+        mapOfServers.put(ip.getIdentity(), ip);
         sort();
         save();
     }
@@ -204,8 +191,8 @@ class IpList {
             if (mapOfServers.size() >= LISTSIZE) {
                 return;
             }
-            mapOfServers.put(s.getAddress(), s);
             
+            mapOfServers.put(s.getIdentity(), s);
             
             worstRank = s;
             worstTime = System.currentTimeMillis();

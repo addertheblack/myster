@@ -16,6 +16,7 @@ import java.io.IOException;
 import java.net.UnknownHostException;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Optional;
 import java.util.Set;
 import java.util.logging.Logger;
 
@@ -367,7 +368,7 @@ public class MysterSearch {
         int i = 0;
 
         for (i = 0; (i < iparray.length) && (iparray[i] != null); i++) {
-            queue.addIP(iparray[i].getAddress());
+            iparray[i].getBestAddress().ifPresent(queue::addIP);
         }
 
         if (i <= 4) {
@@ -377,6 +378,7 @@ public class MysterSearch {
                 addAddressToQueue(queue, lastresort[j]);
             }
         }
+        
         return queue;
     }
 

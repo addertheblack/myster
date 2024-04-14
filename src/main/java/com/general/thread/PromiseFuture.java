@@ -13,6 +13,22 @@ public interface PromiseFuture<T> extends Cancellable, Future<T> {
         return f;
     }
     
+    public static <R> PromiseFuture<R> newPromiseFuture(R r) {
+        PromiseFutureImpl<R> f = new PromiseFutureImpl<>();
+        
+        f.getAsyncContext().setResult(r);
+        
+        return f;
+    }
+    
+    public static <R> PromiseFuture<R> newPromiseFutureException(Exception e) {
+        PromiseFutureImpl<R> f = new PromiseFutureImpl<>();
+        
+        f.getAsyncContext().setException(e);
+        
+        return f;
+    }
+    
     PromiseFuture<T> clearInvoker();
     
     PromiseFuture<T> setInvoker(Invoker invoker);

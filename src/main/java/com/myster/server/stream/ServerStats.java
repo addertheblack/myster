@@ -11,9 +11,11 @@ package com.myster.server.stream;
  */
 
 import java.io.IOException;
+import java.util.Base64;
 import java.util.function.Supplier;
 
 import com.myster.filemanager.FileTypeListManager;
+import com.myster.identity.Identity;
 import com.myster.mml.MML;
 import com.myster.pref.MysterPreferences;
 import com.myster.server.ConnectionContext;
@@ -22,10 +24,21 @@ import com.myster.type.MysterType;
 public class ServerStats extends ServerThread {
     public static final int NUMBER = 101;
     
-    private final Supplier<String> getIdentity;
+    public static final String NUMBER_OF_FILES = "/NumberOfFiles";
+    
+    public static final String MYSTER_VERSION = "/MysterVersion";
+    public static final String SPEED = "/Speed";
+    public static final String ADDRESS = "/Address"; 
+    public static final String SERVER_NAME = "/ServerName";
+    public static final String IDENTITY = "/Identity";
+    public static final String UPTIME = "/Uptime";
+    
+    private final Supplier<String> getServerName;
+    private final Identity identity;
 
-    public ServerStats(Supplier<String> getIdentity) {
-        this.getIdentity = getIdentity;
+    public ServerStats(Supplier<String> getServerName, Identity identity) {
+        this.getServerName = getServerName;
+        this.identity = identity;
     }
     
     public int getSectionNumber() {
@@ -33,11 +46,11 @@ public class ServerStats extends ServerThread {
     }
 
     public void section(ConnectionContext context) throws IOException {
-        context.socket.out.writeUTF("" + getMMLToSend(getIdentity.get()));
+        context.socket.out.writeUTF("" + getMMLToSend(getServerName.get(), identity));
     }
 
     //Returns an MML that would be send as a string via a Handshake.
-    public static MML getMMLToSend(String identity) {
+    public static MML getMMLToSend(String identityName, Identity identity) {
         try {
             MML mml = new MML();
             MysterPreferences prefs;
@@ -45,31 +58,36 @@ public class ServerStats extends ServerThread {
 
             String tempstring = prefs.query(com.myster.application.MysterGlobals.SPEEDPATH);
             if (!(tempstring.equals(""))) {
-                mml.put("/Speed", tempstring);
+                mml.put(SPEED, tempstring);
             }
 
-            //mml.addMML(new MML(""+ftm.getNumberOfFiles(b),"NumberOfFiles"));
-
-            mml.put("/Myster Version", "1.0");
+            mml.put(MYSTER_VERSION, "1.0");
 
             tempstring = prefs.query(com.myster.application.MysterGlobals.ADDRESSPATH);
-            if (!(tempstring.equals(""))) { //If there is no value for the
+            if (!(tempstring.equals(""))) { // If there is no value for the
                                             // address it doesn't send this
                                             // info.
-                mml.put("/Address", tempstring); //Note: "" is no data. see
-                                                 // qweryValue();
+                mml.put(ADDRESS, tempstring); //Note: "" is no data. see qweryValue();
             }
 
             getNumberOfFilesMML(mml); //Adds the number of files data.
 
-            String ident = identity;
+            String ident = identityName;
             if (ident != null) {
                 if (!ident.equals("")) {
-                    mml.put("/ServerName", ident);
+                    mml.put(SERVER_NAME, ident);
                 }
             }
+            
+             identity.getMainIdentity().ifPresent(pair -> {
+                 var publicKey = pair.getPublic();
+                 
+                 mml.put(IDENTITY, Base64.getEncoder().encodeToString(publicKey.getEncoded()));
+             });
+             
+            
 
-            mml.put("/uptime", ""
+            mml.put(UPTIME, ""
                     + (System.currentTimeMillis() - com.myster.application.MysterGlobals
                             .getLaunchedTime()));
 
@@ -85,7 +103,7 @@ public class ServerStats extends ServerThread {
         FileTypeListManager filemanager = FileTypeListManager.getInstance();
 
         MysterType[] filetypelist = filemanager.getFileTypeListing();
-        String dir = "/numberOfFiles/";
+        String dir = NUMBER_OF_FILES + "/";
 
         for (int i = 0; i < filetypelist.length; i++) {
             mml.put(dir + filetypelist[i], ""

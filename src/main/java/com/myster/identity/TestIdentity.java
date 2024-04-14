@@ -44,13 +44,13 @@ class TestIdentity {
         assertNull(keyStore.getKey(Identity.MAIN_IDENTITY_ALIAS, Identity.MAIN_IDENTITY_PW.toCharArray()));
 
         // Create identity and verify it's correctly generated
-        KeyPair generatedKeyPair = identity.getMainIdentity();
+        KeyPair generatedKeyPair = identity.getMainIdentity().get();
         assertNotNull(generatedKeyPair.getPublic(), "Public key should not be null after identity creation");
         assertNotNull(generatedKeyPair.getPrivate(), "Private key should not be null after identity creation");
 
         // Reload identity to verify persistence
         Identity reloadedIdentity = new Identity(keystoreFilename, keystorePath);
-        KeyPair reloadedKeyPair = reloadedIdentity.getMainIdentity();
+        KeyPair reloadedKeyPair = reloadedIdentity.getMainIdentity().get();
         assertNotNull(reloadedKeyPair.getPublic(), "Public key should not be null after reloading identity");
         assertNotNull(reloadedKeyPair.getPrivate(), "Private key should not be null after reloading identity");
 

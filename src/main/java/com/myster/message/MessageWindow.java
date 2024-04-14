@@ -340,8 +340,8 @@ class HeaderPanel extends JPanel {
             if (server == null) {
                 serverName = address.toString();
             } else {
-                serverName = (server.getServerIdentity().equals(address.toString()) ? address
-                        .toString() : server.getServerIdentity() + " (" + address.toString() + ")");
+                serverName = (server.getServerName().equals(address.toString()) ? address
+                        .toString() : server.getServerName() + " (" + address.toString() + ")");
             }
 
             addressField.setText(serverName);

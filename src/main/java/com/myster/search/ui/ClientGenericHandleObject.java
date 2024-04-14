@@ -52,7 +52,7 @@ public class ClientGenericHandleObject implements ClientHandleObject {
             MysterServer server = result.getServer();
             
             serverString = new SortableString(server == null ? "N/A" : server
-                    .getServerIdentity());
+                    .getServerName());
             //The Three lines above can be combined into one really long line.
             // I hope you appreciate this :-)
             ping = new SortablePing(result.getProtocol(), result.getHostAddress());

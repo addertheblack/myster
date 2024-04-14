@@ -47,6 +47,7 @@ import com.myster.client.ui.ClientWindow;
 import com.myster.filemanager.FileTypeListManager;
 import com.myster.filemanager.ui.FmiChooser;
 import com.myster.hash.HashManager;
+import com.myster.identity.Identity;
 import com.myster.message.ImTransactionServer;
 import com.myster.message.MessageWindow;
 import com.myster.message.ui.MessagePreferencesPanel;
@@ -67,7 +68,7 @@ import com.myster.server.datagram.TypeDatagramServer;
 import com.myster.server.event.ServerEventDispatcher;
 import com.myster.server.ui.ServerStatsWindow;
 import com.myster.tracker.IpListManager;
-import com.myster.tracker.MysterIpPoolImpl;
+import com.myster.tracker.MysterServerPoolImpl;
 import com.myster.tracker.ui.TrackerWindow;
 import com.myster.transaction.TransactionManager;
 import com.myster.type.ui.TypeManagerPreferencesGUI;
@@ -176,6 +177,8 @@ public class Myster {
             return;
         }
 
+        Identity identity = Identity.getIdentity();
+        
         I18n.init();
 
         LOGGER.info("MAIN THREAD: Starting loader Thread..");
@@ -196,9 +199,8 @@ public class Myster {
 
         INSTRUMENTATION.info("-------->> before IPListManager " + (System.currentTimeMillis() - startTime));
         IpListManager ipListManager =
-                new IpListManager(new MysterIpPoolImpl(java.util.prefs.Preferences.userRoot(),
+                new IpListManager(new MysterServerPoolImpl(java.util.prefs.Preferences.userRoot(),
                                                        protocol),
-                                  protocol,
                                   java.util.prefs.Preferences.userRoot()
                                           .node("Tracker.IpListManager"));
         INSTRUMENTATION.info("-------->> after IPListManager " + (System.currentTimeMillis() - startTime));
@@ -213,18 +215,19 @@ public class Myster {
                                                      preferences,
                                                      datagramManager,
                                                      transactionManager,
+                                                     identity,
                                                      serverDispatcher);
 
         serverFacade
                 .addDatagramTransactions(new TopTenDatagramServer(ipListManager),
                                          new TypeDatagramServer(),
                                          new SearchDatagramServer(),
-                                         new ServerStatsDatagramServer(serverFacade::getIdentity),
+                                         new ServerStatsDatagramServer(serverFacade::getIdentityName, identity),
                                          new FileStatsDatagramServer(),
                                          new SearchHashDatagramServer());
 
         serverFacade
-                .addDatagramTransactions(new ServerStatsDatagramServer(serverFacade::getIdentity));
+                .addDatagramTransactions(MysterGlobals.DEFAULT_SERVER_PORT, new ServerStatsDatagramServer(serverFacade::getIdentityName, identity));
 
         final HashManager hashManager = new HashManager();
         FileTypeListManager.init((f, l) -> hashManager.findHash(f, l));

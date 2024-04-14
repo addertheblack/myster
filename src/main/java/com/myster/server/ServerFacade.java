@@ -27,6 +27,7 @@ import javax.swing.SpinnerNumberModel;
 
 import com.general.thread.BoundedExecutor;
 import com.myster.application.MysterGlobals;
+import com.myster.identity.Identity;
 import com.myster.net.DatagramProtocolManager;
 import com.myster.pref.MysterPreferences;
 import com.myster.pref.ui.PreferencesPanel;
@@ -39,7 +40,7 @@ import com.myster.transferqueue.TransferQueue;
 
 public class ServerFacade {
     private static final Logger LOGGER = Logger.getLogger(ServerFacade.class.getName());
-    private static String IDENTITY_KEY = "ServerIdentityKey/";
+    private static String IDENTITY_NAME_KEY = "ServerIdentityKey/";
 
     private boolean inited = true;
 
@@ -53,16 +54,19 @@ public class ServerFacade {
     private final TransactionManager transactionManager;
     private final Executor operatorExecutor;
     private final Executor connectionExecutor;
+    private final Identity identity;
 
     public ServerFacade(IpListManager ipListManager,
                         MysterPreferences preferences,
                         DatagramProtocolManager datagramManager,
                         TransactionManager transactionManager,
+                        Identity identity,
                         ServerEventDispatcher serverDispatcher) {
         this.ipListManager = ipListManager;
         this.preferences = preferences;
         this.datagramManager = datagramManager;
         this.transactionManager = transactionManager;
+        this.identity = identity;
         this.serverDispatcher = serverDispatcher;
         this.operatorExecutor = Executors.newVirtualThreadPerTaskExecutor();
         this.connectionExecutor = new BoundedExecutor(120, operatorExecutor);
@@ -150,14 +154,14 @@ public class ServerFacade {
         return serverDispatcher;
     }
 
-    protected void setIdentity(String s) {
+    protected void setIdentityName(String s) {
         if (s == null)
             return;
-        preferences.put(IDENTITY_KEY, s);
+        preferences.put(IDENTITY_NAME_KEY, s);
     }
 
-    public String getIdentity() {
-        return preferences.query(IDENTITY_KEY);
+    public String getIdentityName() {
+        return preferences.query(IDENTITY_NAME_KEY);
     }
     
     public void addConnectionSection(ConnectionSection section) {
@@ -177,7 +181,7 @@ public class ServerFacade {
         addConnectionSection(new com.myster.server.stream.RequestDirThread());
         addConnectionSection(new com.myster.server.stream.FileTypeLister());
         addConnectionSection(new com.myster.server.stream.RequestSearchThread());
-        addConnectionSection(new com.myster.server.stream.ServerStats(this::getIdentity));
+        addConnectionSection(new com.myster.server.stream.ServerStats(this::getIdentityName, identity));
         addConnectionSection(new com.myster.server.stream.FileInfoLister());
         addConnectionSection(new com.myster.server.stream.FileByHash());
         addConnectionSection(new com.myster.server.stream.MultiSourceSender());
@@ -301,14 +305,14 @@ public class ServerFacade {
         }
 
         public void save() {
-            setIdentity(serverIdentityField.getText());
+            setIdentityName(serverIdentityField.getText());
             setDownloadSpots(Integer.parseInt((String) openSlotChoice.getSelectedItem()));
             setPort((int) serverThreadsChoice.getModel().getValue());
             leech.save();
         }
 
         public void reset() {
-            serverIdentityField.setText(getIdentity());
+            serverIdentityField.setText(getIdentityName());
             openSlotChoice.setSelectedItem("" + getDownloadSpots());
             serverThreadsChoice.getModel().setValue(getServerPort());
             leech.reset();

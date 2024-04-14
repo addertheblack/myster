@@ -79,8 +79,26 @@ class CallResult<T> {
         
         return value;
     }
-    
+
+    /**
+     * does not wait until finished. Does not block.
+     * 
+     * @return result if any or null if no result or otherwise not called
+     *         appropriately or if null value
+     */
+    public T getResult() {
+        if (!isResult()) {
+            throw new IllegalStateException("CallResult object was called with getResult() but does not represent a result.");
+        }
+
+        return value;
+    }
+
     public Throwable getException() {
+        if (!isException()) {
+            throw new IllegalStateException("CallResult object was called with getException() but does not represent an exception.");
+        }
+
         return exception;
     }
 }
