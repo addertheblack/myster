@@ -53,6 +53,7 @@ public interface MysterServerPool {
      *            that has just been discovered
      */
     void addNewServerListener(Consumer<MysterServer> server);
+    void removeNewServerListener(Consumer<MysterServer> server);
     
     /**
      * When it's done loading call this

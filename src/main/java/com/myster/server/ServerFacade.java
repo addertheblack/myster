@@ -250,7 +250,6 @@ public class ServerFacade {
         private final JSpinner serverThreadsChoice;
         private final JLabel serverThreadsLabel;
         private final JLabel spacerLabel;
-        private final JLabel explanation;
 
         private final FreeLoaderPref leech;
 
@@ -267,7 +266,7 @@ public class ServerFacade {
             }
             add(openSlotChoice);
 
-            serverThreadsLabel = new JLabel("Server Threads: * (expert setting)");
+            serverThreadsLabel = new JLabel("Server Port:");
             add(serverThreadsLabel);
 
             var spinnerNumberModel = new SpinnerNumberModel();
@@ -278,7 +277,7 @@ public class ServerFacade {
             ((JSpinner.DefaultEditor) serverThreadsChoice.getEditor()).getTextField().setEditable(true);
             add(serverThreadsChoice);
 
-            serverIdentityLabel = new JLabel("Server Port:");
+            serverIdentityLabel = new JLabel("Server Name:");
             add(serverIdentityLabel);
 
             serverIdentityField = new JTextField();
@@ -289,9 +288,6 @@ public class ServerFacade {
 
             leech = new FreeLoaderPref();
             add(leech);
-
-            explanation = new JLabel("          * requires restart");
-            add(explanation);
 
             reset();
         }
