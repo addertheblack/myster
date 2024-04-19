@@ -25,7 +25,7 @@ import com.general.mclist.Sortable;
 import com.general.mclist.SortableLong;
 import com.general.mclist.SortableString;
 import com.general.util.TimerThread;
-import com.myster.client.ui.OpenConnectionHandler;
+import com.myster.net.MysterAddress;
 import com.myster.tracker.IpListManager;
 import com.myster.tracker.MysterServer;
 import com.myster.type.MysterType;
@@ -251,7 +251,7 @@ public class TrackerWindow extends MysterFrame {
         }
     }
 
-    private static class TrackerMCListItem extends MCListItemInterface<TrackerMCListItem> {
+    static class TrackerMCListItem extends MCListItemInterface<TrackerMCListItem> {
         private final MysterServer server;
         private final MysterType type;
 
@@ -290,6 +290,10 @@ public class TrackerWindow extends MysterFrame {
 
         public TrackerMCListItem getObject() {
             return this;
+        }
+        
+        public MysterAddress getBestAddress() {
+            return server.getBestAddress().orElse(server.getAddresses()[0]);
         }
 
         public String toString() {

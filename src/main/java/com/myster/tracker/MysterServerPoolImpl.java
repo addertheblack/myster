@@ -157,6 +157,11 @@ public class MysterServerPoolImpl implements MysterServerPool {
     public synchronized void addNewServerListener(Consumer<MysterServer> serverListener) {
         listeners.add(serverListener);
     }
+    
+    @Override
+    public void removeNewServerListener(Consumer<MysterServer> serverListener) {
+        listeners.remove(serverListener);
+    }
 
     @Override
     public synchronized void suggestAddress(MysterAddress address) {

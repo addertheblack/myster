@@ -219,7 +219,7 @@ public class PromiseFutureImpl<T> implements PromiseFuture<T> {
 
     @Override
     public T get() throws InterruptedException, ExecutionException, CancellationException {
-        if (invoker.getInvoker().isInvokerThread()) {
+        if (invoker.getInvoker() != null && invoker.getInvoker().isInvokerThread()) {
 			throw new IllegalStateException("get() Called on invoker thread");
 		}
 
@@ -232,7 +232,7 @@ public class PromiseFutureImpl<T> implements PromiseFuture<T> {
 
 	@Override
 	public T get(long timeout, TimeUnit unit) throws InterruptedException, ExecutionException, TimeoutException {
-		if (invoker.getInvoker().isInvokerThread()) {
+		if (invoker.getInvoker() != null && invoker.getInvoker().isInvokerThread()) {
 			throw new IllegalStateException("get() Called on invoker thread");
 		}
 
