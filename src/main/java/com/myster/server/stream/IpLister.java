@@ -6,16 +6,16 @@ import com.myster.client.stream.MysterDataInputStream;
 import com.myster.client.stream.MysterDataOutputStream;
 import com.myster.net.MysterAddress;
 import com.myster.server.ConnectionContext;
-import com.myster.tracker.IpListManager;
+import com.myster.tracker.MysterServerManager;
 import com.myster.tracker.MysterServer;
 import com.myster.type.MysterType;
 
 public class IpLister extends ServerThread {
     public static final int NUMBER = 10;
     
-    private final IpListManager ipListManager;
+    private final MysterServerManager ipListManager;
 
-    public IpLister(IpListManager ipListManager) {
+    public IpLister(MysterServerManager ipListManager) {
         this.ipListManager = ipListManager;
     }
 
@@ -46,7 +46,7 @@ public class IpLister extends ServerThread {
                 if (topten[i] == null)
                     break;
                 
-                var addresses = topten[i].getAvailableAddresses();
+                var addresses = topten[i].getUpAddresses();
                 
                 for (MysterAddress address : addresses) {
                     out.writeUTF(address.toString());

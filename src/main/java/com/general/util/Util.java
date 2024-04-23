@@ -268,6 +268,7 @@ public class Util { //This code was taken from an Apple Sample Code package,
             return Optional.of(keyFactory.generatePublic(keySpec));
         } catch (InvalidKeySpecException | NoSuchAlgorithmException exception) {
             exception.printStackTrace();
+            System.out.println(publicKeyString.length() + " vs "  + encodedPublicKey.length);
 
             return Optional.empty();
         }

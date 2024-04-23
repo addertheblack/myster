@@ -16,13 +16,13 @@ import com.myster.net.MysterSocket;
 import com.myster.server.BannersManager;
 import com.myster.server.ConnectionContext;
 import com.myster.server.DownloadInfo;
-import com.myster.server.ServerFacade.FreeLoaderPref;
 import com.myster.server.event.ServerDownloadDispatcher;
 import com.myster.server.event.ServerDownloadEvent;
-import com.myster.transferqueue.Downloader;
-import com.myster.transferqueue.MaxQueueLimitException;
-import com.myster.transferqueue.QueuedStats;
-import com.myster.transferqueue.TransferQueue;
+import com.myster.server.transferqueue.Downloader;
+import com.myster.server.transferqueue.MaxQueueLimitException;
+import com.myster.server.transferqueue.QueuedStats;
+import com.myster.server.transferqueue.TransferQueue;
+import com.myster.server.ui.ServerPreferencesPane.FreeLoaderPref;
 import com.myster.type.MysterType;
 
 //1) read in offset(long) + length(long)
@@ -173,7 +173,7 @@ public class MultiSourceSender extends ServerThread {
                         }
 
                         public void queued(QueuedStats stats) throws IOException {
-                            sendQueuePosition(socket.out, stats.getQueuePosition(),
+                            sendQueuePosition(socket.out, stats.queuePosition(),
                                     "You are in a queue to download..");
                         }
 

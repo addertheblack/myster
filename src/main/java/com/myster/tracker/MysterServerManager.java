@@ -14,7 +14,6 @@ import java.util.List;
 import java.util.logging.Logger;
 import java.util.prefs.Preferences;
 
-import com.general.util.BlockingQueue;
 import com.myster.net.MysterAddress;
 import com.myster.type.MysterType;
 import com.myster.type.TypeDescription;
@@ -36,26 +35,23 @@ import com.myster.type.TypeDescriptionList;
  * 
  * @see com.myster.tracker.IPListManagerSingleton
  */
-public class IpListManager { // aka tracker
-    private static final Logger LOGGER = Logger.getLogger(IpListManager.class.getName());
+public class MysterServerManager { // aka tracker
+    private static final Logger LOGGER = Logger.getLogger(MysterServerManager.class.getName());
     private static final String[] LAST_RESORT = { "myster.ddnsgeek.com" };
     private static final String PATH = "IPLists";
 
-    private final IpList[] list;
+    private final MysterServerList[] list;
     private final TypeDescription[] tdlist;
-    private final BlockingQueue<MysterAddress> blockingQueue = new BlockingQueue<>();
     private final MysterServerPool pool;
     private final Preferences preferences;
 
-    public IpListManager(MysterServerPool pool, Preferences preferences) {
+    public MysterServerManager(MysterServerPool pool, Preferences preferences) {
         this.pool = pool;
         this.preferences = preferences.node(PATH);
 
-        blockingQueue.setRejectDuplicates(true);
-
         tdlist = TypeDescriptionList.getDefault().getEnabledTypes();
 
-        list = new IpList[tdlist.length];
+        list = new MysterServerList[tdlist.length];
         for (int i = 0; i < list.length; i++) {
             assertIndex(i); // loads all lists.
         }
@@ -103,7 +99,7 @@ public class IpListManager { // aka tracker
      *         containing nulls.
      */
     public synchronized MysterServer[] getTop(MysterType type, int x) {
-        IpList iplist;
+        MysterServerList iplist;
         iplist = getListFromType(type);
         if (iplist == null)
             return null;
@@ -129,7 +125,7 @@ public class IpListManager { // aka tracker
      * @return Vector of MysterAddresses in the order of rank.
      */
     public synchronized List<MysterServer> getAll(MysterType type) {
-        IpList iplist;
+        MysterServerList iplist;
         iplist = getListFromType(type);
         if (iplist == null)
             return null;
@@ -173,7 +169,7 @@ public class IpListManager { // aka tracker
      * @return the IPList for the type or null if no list exists for that typ.
      */
 
-    private IpList getListFromType(MysterType type) {
+    private MysterServerList getListFromType(MysterType type) {
         int index;
         index = getIndex(type);
 
@@ -218,8 +214,8 @@ public class IpListManager { // aka tracker
      * Returns an IPList for the type in the tdlist variable for that index.
      * This is a stupid routine.
      */
-    private synchronized IpList createNewList(int index) {
-        return new IpList(tdlist[index].getType(), pool, preferences);
+    private synchronized MysterServerList createNewList(int index) {
+        return new MysterServerList(tdlist[index].getType(), pool, preferences);
     }
 }
 

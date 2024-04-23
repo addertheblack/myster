@@ -8,10 +8,9 @@ import java.net.UnknownHostException;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
-import java.util.Set;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 import java.util.logging.Logger;
@@ -20,6 +19,7 @@ import java.util.prefs.NodeChangeListener;
 import java.util.prefs.PreferenceChangeListener;
 import java.util.prefs.Preferences;
 
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -36,9 +36,11 @@ import com.myster.client.net.MysterDatagram;
 import com.myster.client.net.MysterProtocol;
 import com.myster.client.net.MysterStream;
 import com.myster.identity.Identity;
+import com.myster.mml.MML;
 import com.myster.mml.MMLException;
 import com.myster.mml.RobustMML;
 import com.myster.net.MysterAddress;
+import com.myster.type.MysterType;
 
 class TestMysterServerPoolImpl {
     private static final Logger LOGGER = Logger.getLogger(TestMysterServerPoolImpl.class.getName());
@@ -55,25 +57,41 @@ class TestMysterServerPoolImpl {
     private Preferences pref;
     private MysterProtocol protocol;
 
+    private MysterServerPoolImpl pool;
+
     @BeforeEach
     void setUp() throws UnknownHostException, MMLException {
         keystorePath = tempDir.toFile(); // Convert the Path to File, as your Identity class uses File
         identity = new Identity(keystoreFilename, keystorePath);
         lookup = new HashMap<>();
         
+        String cleanPublicKeyString = MML.cleanString(Util.publicKeyToString(identity.getMainIdentity().get().getPublic()));
         String mml = """
                 <Speed>1</>
                 <ServerName>Mr. Magoo</>
-                <Address></>
                 <MysterVersion>10</>
                 <Identity>%s</>
                 <Uptime>1000</>
-                <NumberOfFiles></>
-                """.formatted(Util.publicKeyToString(identity.getMainIdentity().get().getPublic()));
-        
+                <NumberOfFiles><MPG3>42</></>
+                """.formatted(cleanPublicKeyString);
+
         lookup.put(new MysterAddress("127.0.0.1"), new RobustMML(mml));
         lookup.put(new MysterAddress("192.168.1.2"), new RobustMML(mml));
         lookup.put(new MysterAddress("24.20.25.66"), new RobustMML(mml));
+        
+        String mml2 = """
+                <Speed>1</>
+                <ServerName>Mr. Magoo</>
+                <MysterVersion>10</>
+                <Identity>%s</>
+                <Uptime>1000</>
+                <Port>7000</>
+                <NumberOfFiles><MPG3>42</></>
+                """.formatted(cleanPublicKeyString);
+        
+        lookup.put(new MysterAddress("192.168.1.2:7000"), new RobustMML(mml2));
+        lookup.put(new MysterAddress("24.20.25.66:7000"), new RobustMML(mml2));
+        lookup.put(new MysterAddress("24.20.25.66:6000"), new RobustMML(mml2));
         
         pref = new MapPreferences();
         protocol = new MysterProtocol() {
@@ -119,6 +137,10 @@ class TestMysterServerPoolImpl {
             }
         };
         
+        
+        
+        
+        
 //        public static final String NUMBER_OF_FILES = "/NumberOfFiles";
 //        
 //        public static final String MYSTER_VERSION = "/MysterVersion";
@@ -129,60 +151,74 @@ class TestMysterServerPoolImpl {
 //        public static final String UPTIME = "/Uptime";
     }
     
+    @AfterEach
+    void tearDown() {
+        pool.close();
+    }
+    
     
     @Test
     void test() throws UnknownHostException, InterruptedException {
-        MysterServerPool pool = new MysterServerPoolImpl(pref, protocol);
-        
-        Assertions.assertFalse(pool.existsInPool(new PublicKeyIdentity(identity.getMainIdentity().get().getPublic())));
-        Assertions.assertFalse(pool.existsInPool(new MysterAddressIdentity(new MysterAddress("127.0.0.1"))));
+        pool = new MysterServerPoolImpl(pref, protocol);
+
+        PublicKeyIdentity identity2 =
+                new PublicKeyIdentity(identity.getMainIdentity().get().getPublic());
+        ExternalName externalName =
+                MysterServerImplementation.computeNodeNameFromIdentity(identity2);
+
+        Assertions.assertFalse(pool.existsInPool(identity2));
+        Assertions.assertNull(pool.lookupIdentityFromName(externalName));
+        Assertions.assertFalse(pool
+                .existsInPool(new MysterAddressIdentity(new MysterAddress("127.0.0.1"))));
         Assertions.assertFalse(pool.existsInPool(new MysterAddress("127.0.0.1")));
-        
+
         Object[] moo = new Object[1];
         CountDownLatch latch = new CountDownLatch(1);
         pool.addNewServerListener(s -> {
             moo[0] = s;
-            
+
             latch.countDown();
         });
-        
+
         pool.suggestAddress("127.0.0.1");
-        
+
         latch.await(30, TimeUnit.SECONDS);
-        
+
         Assertions.assertEquals(((MysterServer) moo[0]).getAddresses().length, 1);
-        
-        Assertions.assertTrue(pool.existsInPool(new PublicKeyIdentity(identity.getMainIdentity().get().getPublic())));
-        Assertions.assertFalse(pool.existsInPool(new MysterAddressIdentity(new MysterAddress("127.0.0.1"))));
+
+        Assertions.assertTrue(pool.existsInPool(identity2));
+        Assertions.assertFalse(pool
+                .existsInPool(new MysterAddressIdentity(new MysterAddress("127.0.0.1"))));
         Assertions.assertTrue(pool.existsInPool(new MysterAddress("127.0.0.1")));
-        
+        Assertions.assertTrue(pool.existsInPool(pool.lookupIdentityFromName(externalName)));
+
         moo[0] = null;
 
         for (int i = 0; i < 20; i++) {
-            if (!pool.existsInPool(new PublicKeyIdentity(identity.getMainIdentity().get()
-                    .getPublic()))) {
-                
+            System.gc();System.gc();System.gc();
+            System.gc();System.gc();System.gc();
+            System.gc();System.gc();System.gc();
+            if (!pool.existsInPool(identity2)) {
+
                 LOGGER.info("Myster server is not there.. good.");
-                
+
                 break;
             }
-            
+
             LOGGER.info("Myster server still there.. trying GC: " + (i + 1));
-            
-            System.gc();
         }
 
         Assertions.assertFalse(pool.existsInPool(new MysterAddress("127.0.0.1")));
-        Assertions.assertFalse(pool
-                .existsInPool(new PublicKeyIdentity(identity.getMainIdentity().get().getPublic())));
+        Assertions.assertFalse(pool.existsInPool(identity2));
         Assertions.assertFalse(pool
                 .existsInPool(new MysterAddressIdentity(new MysterAddress("127.0.0.1"))));
+        Assertions.assertNull(pool.lookupIdentityFromName(externalName));
     }
     
 
     @Test
     void test2() throws UnknownHostException, InterruptedException {
-        MysterServerPool pool = new MysterServerPoolImpl(pref, protocol);
+        pool = new MysterServerPoolImpl(pref, protocol);
         
         Object[] moo = new Object[1];
         Semaphore sem = new Semaphore(0);
@@ -208,30 +244,126 @@ class TestMysterServerPoolImpl {
         var localHost = pool.getCachedMysterIp(new MysterAddress("127.0.0.1"));
         var lanHost = pool.getCachedMysterIp(new MysterAddress("192.168.1.2"));
         
-        
         Assertions.assertEquals(localHost.getIdentity(), lanHost.getIdentity());
-//        
-//        moo[0] = null;
-//
-//        for (int i = 0; i < 20; i++) {
-//            if (!pool.existsInPool(new PublicKeyIdentity(identity.getMainIdentity().get()
-//                    .getPublic()))) {
-//                
-//                LOGGER.info("Myster server is not there.. good.");
-//                
-//                break;
-//            }
-//            
-//            LOGGER.info("Myster server still there.. trying GC: " + (i + 1));
-//            
-//            System.gc();
-//        }
-//
-//        Assertions.assertFalse(pool.existsInPool(new MysterAddress("127.0.0.1")));
-//        Assertions.assertFalse(pool
-//                .existsInPool(new PublicKeyIdentity(identity.getMainIdentity().get().getPublic())));
-//        Assertions.assertFalse(pool
-//                .existsInPool(new MysterAddressIdentity(new MysterAddress("127.0.0.1"))));
+    }
+    
+    @Test
+    void testPrefsStorage() throws UnknownHostException, InterruptedException {
+        pool = new MysterServerPoolImpl(pref, protocol);
+        
+        List<MysterServer> captured = new ArrayList<>();
+        Semaphore sem = new Semaphore(0);
+        pool.addNewServerListener(s -> {
+            captured.add(s);
+            
+            sem.signal();
+        });
+        
+        pool.suggestAddress("127.0.0.1");
+        pool.suggestAddress("192.168.1.2");
+        
+        sem.getLock();
+        sem.getLock();
+        
+        Assertions.assertEquals(captured.size(), 2);
+        
+        pool.close();
+        pool = null;
+        
+        pool = new MysterServerPoolImpl(pref, protocol);
+        
+        PublicKeyIdentity identityPublic = new PublicKeyIdentity(identity.getMainIdentity().get().getPublic());
+        Assertions.assertTrue(pool.existsInPool(identityPublic));
+        Assertions.assertFalse(pool.existsInPool(new MysterAddressIdentity(new MysterAddress("127.0.0.1"))));
+        Assertions.assertTrue(pool.existsInPool(new MysterAddress("127.0.0.1")));
+        
+        var localHost = pool.getCachedMysterIp(new MysterAddress("127.0.0.1"));
+        var lanHost = pool.getCachedMysterIp(new MysterAddress("192.168.1.2"));
+        Assertions.assertEquals(localHost.getIdentity(), lanHost.getIdentity());
+        
+        var serverFromCache = pool.getCachedMysterServer(identityPublic);
+        
+        Assertions.assertEquals((int)serverFromCache.getSpeed(), 1);
+        Assertions.assertEquals(serverFromCache.getServerName(), "Mr. Magoo");
+        Assertions.assertEquals(serverFromCache.getUptime(), 1000);
+        Assertions.assertEquals(serverFromCache.getNumberOfFiles(new MysterType("MPG3")), 42);
+    }
+    
+    @Test
+    void testRefresh() throws UnknownHostException, InterruptedException {
+        pool = new MysterServerPoolImpl(pref, protocol);
+        
+        List<MysterServer> captured = new ArrayList<>();
+        Semaphore sem = new Semaphore(0);
+        pool.addNewServerListener(s -> {
+            captured.add(s);
+            
+            sem.signal();
+        });
+        
+        pool.suggestAddress("127.0.0.1");
+        pool.suggestAddress("192.168.1.2");
+        
+        sem.getLock();
+        sem.getLock();
+        
+        Assertions.assertEquals(captured.size(), 2);
+        
+        PublicKeyIdentity identityPublic = new PublicKeyIdentity(identity.getMainIdentity().get().getPublic());
+        Assertions.assertTrue(pool.existsInPool(identityPublic));
+        Assertions.assertTrue(pool.existsInPool(new MysterAddress("127.0.0.1")));
+        Assertions.assertTrue(pool.existsInPool(new MysterAddress("192.168.1.2")));
+        
+        var serverFromCache = pool.getCachedMysterServer(identityPublic);
+        Assertions.assertEquals(serverFromCache.getAddresses().length, 2);
+        
+        pool.suggestAddress("24.20.25.66:7000");
+        pool.suggestAddress("192.168.1.2:7000");
+        
+        sem.getLock();
+        sem.getLock();
+        
+        var serverFromCache2 = pool.getCachedMysterServer(identityPublic);
+        Assertions.assertEquals(serverFromCache2.getAddresses().length, 2);
+        
+        Assertions.assertTrue(pool.existsInPool(new MysterAddress("24.20.25.66:7000")));
+        Assertions.assertTrue(pool.existsInPool(new MysterAddress("192.168.1.2:7000")));
+    }
+    
+    @Test
+    void testAutoPortChangeRefresh() throws UnknownHostException, InterruptedException {
+        pool = new MysterServerPoolImpl(pref, protocol);
+        
+        List<MysterServer> captured = new ArrayList<>();
+        Semaphore sem = new Semaphore(0);
+        pool.addNewServerListener(s -> {
+            captured.add(s);
+            
+            sem.signal();
+        });
+        
+        pool.suggestAddress("127.0.0.1");
+        
+       sem.getLock();
+        
+        Assertions.assertEquals(captured.size(), 1);
+        
+        PublicKeyIdentity identityPublic = new PublicKeyIdentity(identity.getMainIdentity().get().getPublic());
+        Assertions.assertTrue(pool.existsInPool(identityPublic));
+        Assertions.assertTrue(pool.existsInPool(new MysterAddress("127.0.0.1")));
+        
+        var serverFromCache = pool.getCachedMysterServer(identityPublic);
+        Assertions.assertEquals(serverFromCache.getAddresses().length, 1);
+        
+        pool.suggestAddress("24.20.25.66:6000");
+        
+        sem.getLock();
+        
+        var serverFromCache2 = pool.getCachedMysterServer(identityPublic);
+        Assertions.assertEquals(serverFromCache2.getAddresses().length, 1);
+        Assertions.assertEquals(serverFromCache2.getAddresses()[0], new MysterAddress("24.20.25.66:7000"));
+        
+        Assertions.assertTrue(pool.existsInPool(new MysterAddress("24.20.25.66:7000")));
     }
 }
 

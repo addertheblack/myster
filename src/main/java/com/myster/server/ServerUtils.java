@@ -9,7 +9,7 @@ import java.util.logging.Logger;
 
 import com.myster.client.net.MysterProtocol;
 import com.myster.net.MysterAddress;
-import com.myster.tracker.IpListManager;
+import com.myster.tracker.MysterServerManager;
 
 public class ServerUtils {
     private static final Logger LOGGER = Logger.getLogger(ServerUtils.class.getName());
@@ -56,7 +56,7 @@ public class ServerUtils {
         return false;
     }
     
-    public static void massPing(MysterProtocol protocol, IpListManager ipListManager) throws UnknownHostException {
+    public static void massPing(MysterProtocol protocol, MysterServerManager ipListManager) throws UnknownHostException {
         List<InetAddress> allMyIps = ServerUtils.findPublicLandAddress();
         
         LOGGER.info("Pinging all 255 addresses on the 24 bit subnet");

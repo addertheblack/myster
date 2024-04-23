@@ -12,13 +12,16 @@
 
 package com.myster.tracker;
 
+import java.net.UnknownHostException;
 import java.util.Arrays;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Optional;
 import java.util.logging.Logger;
 import java.util.prefs.Preferences;
 
 import com.general.util.Util;
+import com.myster.application.MysterGlobals;
 import com.myster.mml.MML;
 import com.myster.mml.MMLException;
 import com.myster.mml.RobustMML;
@@ -44,7 +47,6 @@ class MysterServerImplementation {
     private boolean upordown = true;
     private String serverName;
     private long uptime;
-    private int lastPingTime = -1; //in millis. (not saved)
 
     // time internalRefreshStatus() was last
     // called.
@@ -53,21 +55,18 @@ class MysterServerImplementation {
 
     //These are the paths in the MML peer:
     //ip = root!
-    public static final String ADDRESSES = "/ipAddresses";
-    public static final String SPEED = "/speed";
-    public static final String TIMESINCEUPDATE = "/timeSinceUpdate";
-    public static final String TIMEUP = "/timeUp";
-    public static final String TIMEDOWN = "/timeDown";
-    public static final String NUMBEROFHITS = "/numberOfHits";
-    public static final String NUMBEROFFILES = "/numberOfFiles";
-    public static final String SERVER_NAME = "/serverName";
-    public static final String UPTIME = "/uptime";
+    public static final String ADDRESSES = "ipAddresses";
+    public static final String SPEED = "speed";
+    public static final String TIMESINCEUPDATE = "timeSinceUpdate";
+    public static final String TIMEUP = "timeUp";
+    public static final String TIMEDOWN = "timeDown";
+    public static final String NUMBEROFHITS = "numberOfHits";
+    public static final String NUMBEROFFILES = "numberOfFiles";
+    public static final String SERVER_NAME = "serverName";
+    public static final String UPTIME = "uptime";
     
     // value pointed to by this key might be null in which case use IDENTITY_ADDRESS
-    public static final String IDENTITY_PUBLIC_KEY = "/identity";
-    
-    // value pointed to by this key might be null in which case IDENTITY_PUBLIC_KEY must be non null
-    public static final String IDENTITY_ADDRESS = "/identity_address";
+    public static final String IDENTITY_PUBLIC_KEY = "identity";
 
     //These are weights.
     private static final double SPEEDCONSTANT = 0.5;
@@ -79,16 +78,15 @@ class MysterServerImplementation {
 
     private final Preferences preferences;
 
-    private final IdentityProvider addressProvider;
+    private final IdentityProvider identityProvider;
 
     MysterServerImplementation(Preferences node,
                                IdentityProvider identityProvider,
                                MysterIdentity identity) {
         this.preferences = node;
-        this.addressProvider = identityProvider;
+        this.identityProvider = identityProvider;
         this.identity = identity;
-        createNewMysterServerImpl(node.get(ADDRESSES, ""),
-                                  Double.valueOf(node.get(SPEED, "")).doubleValue(),
+        createNewMysterServerImpl(Double.valueOf(node.get(SPEED, "")).doubleValue(),
                                   Integer.valueOf(node.get(TIMEUP, "")).intValue(),
                                   Integer.valueOf(node.get(TIMEDOWN, "")).intValue(),
                                   Integer.valueOf(node.get(NUMBEROFHITS, "")).intValue(),
@@ -98,9 +96,27 @@ class MysterServerImplementation {
                                   (node.get(UPTIME, "") == null ? -1
                                           : Long.valueOf(node.get(UPTIME, "")).longValue()));
     }
-
     
-    public void refreshStats(RobustMML serverStats) {
+    /**
+     * Refreshes all Stats (Number of files, Speed and upordown) from the IP.
+     * Blocks.
+     */
+    MysterServerImplementation(Preferences prefs,
+                               IdentityProvider addressProvider,
+                               RobustMML serverStats,
+                               MysterIdentity identity) {
+        preferences = prefs;
+        this.identity = identity;
+        this.identityProvider = addressProvider;
+
+        refreshStats(this, serverStats);
+    }
+
+    static ExternalName computeNodeNameFromIdentity(MysterIdentity key) {
+        return new ExternalName(Util.getMD5Hash(key.toString()));
+    }
+    
+    void refreshStats(RobustMML serverStats) {
         refreshStats(this, serverStats);
     }
     
@@ -135,7 +151,7 @@ class MysterServerImplementation {
             if (dirList != null) {
                 for (int i = 0; i < dirList.size(); i++) {
                     String s_temp =
-                            serverStats.get(ServerStats.NUMBER_OF_FILES + "/" + dirList.get(i));
+                            serverStats.get(ServerStats.NUMBER_OF_FILES  + dirList.get(i));
                     if (s_temp == null)
                         continue; // <- weird err.
 
@@ -148,25 +164,67 @@ class MysterServerImplementation {
         } finally {
             server.numberOfFiles = table;
         }
-    }
-
-    /**
-     * Refreshes all Stats (Number of files, Speed and upordown) from the IP.
-     * Blocks.
-     */
-    public MysterServerImplementation(Preferences prefs,
-                                      IdentityProvider addressProvider,
-                                      RobustMML serverStats,
-                                      MysterIdentity identity) {
-        preferences = prefs;
-        this.identity = identity;
-        this.addressProvider = addressProvider;
         
-        refreshStats(this, serverStats);
+        int port = MysterGlobals.DEFAULT_SERVER_PORT;
+        try {
+            String portString = serverStats.get(ServerStats.PORT);
+            port = Integer.parseInt(portString);
+        } catch (Exception ex) {
+           // nothing 
+        }
+        
+        var addresses = server.identityProvider.getAddresses(server.identity);
+        
+        for (MysterAddress mysterAddress : addresses) {
+            if (mysterAddress.getPort() != port) {
+                server.identityProvider.removeIdentity(server.identity, mysterAddress);
+            }
+        }
+        
+        
+        server.save();
     }
 
-    private void createNewMysterServerImpl(String i,
-                                           double s,
+    static Optional<MysterIdentity> extractIdentity(Preferences serverPrefs, String md5HashOfIdentity) {
+        var publicKeyAsString =
+                serverPrefs.get(MysterServerImplementation.IDENTITY_PUBLIC_KEY, null);
+        if (publicKeyAsString != null) {
+            var identityPublicKey = Util.publicKeyFromString(publicKeyAsString);
+            if (identityPublicKey.isEmpty()) {
+                LOGGER.warning("identityPublicKey in the prefs seem to be corrupt: " + publicKeyAsString);
+                
+                return Optional.empty(); // sigh corruption
+            }
+
+            if (!Util.getMD5Hash(publicKeyAsString).equals(md5HashOfIdentity)) {
+                LOGGER.warning("The md5 of the identity in the prefs and the identity in the server don't match. pref key:"
+                        + md5HashOfIdentity + " vs in server structure: " + identityPublicKey);
+
+                return Optional.empty();
+            }
+            
+            return identityPublicKey.<MysterIdentity> map(PublicKeyIdentity::new);
+        }
+        
+        String concatAddresses = serverPrefs.get(MysterServerImplementation.ADDRESSES, null);
+        if (concatAddresses == null) {
+            return Optional.empty();
+        }
+
+        String[] addresses = concatAddresses.split(" ");
+
+        if (addresses.length > 0) {
+            try {
+                return Optional.of(new MysterAddressIdentity(new MysterAddress(addresses[0])));
+            } catch (UnknownHostException ex) {
+                return Optional.empty();
+            }
+        }
+
+        return Optional.empty();
+    }
+    
+    private void createNewMysterServerImpl(double s,
                                            int tu,
                                            int td,
                                            int h,
@@ -212,7 +270,7 @@ class MysterServerImplementation {
     }
 
     public Optional<MysterAddress> getAddress() {
-        return addressProvider.getBestAddress(identity);
+        return identityProvider.getBestAddress(identity);
     }
 
     @Override
@@ -248,17 +306,17 @@ class MysterServerImplementation {
         }
 
         public Optional<MysterAddress> getBestAddress() {
-            return addressProvider.getBestAddress(identity);
+            return identityProvider.getBestAddress(identity);
         }
 
         public MysterAddress[] getAddresses() {
-            return addressProvider.getAddresses(identity);
+            return identityProvider.getAddresses(identity);
         }
         
-        public MysterAddress[] getAvailableAddresses() {
-            MysterAddress[] addresses = addressProvider.getAddresses(identity);
+        public MysterAddress[] getUpAddresses() {
+            MysterAddress[] addresses = identityProvider.getAddresses(identity);
             
-            return Util.filter(Arrays.asList(addresses), a -> addressProvider.isUp(a)).toArray(new MysterAddress[] {});
+            return Util.filter(Arrays.asList(addresses), a -> identityProvider.isUp(a)).toArray(new MysterAddress[] {});
         }
 
         /**
@@ -282,14 +340,15 @@ class MysterServerImplementation {
          * Myster IP objects.
          */
         public double getRank(MysterType type) {
+            int pingTime = getPingTime();
             return (SPEEDCONSTANT * Math.log(speed) //
                     + FILESCONSTANT * Math.log(getNumberOfFiles(type)) //
                     + Math.log(HITSCONSTANT + 1) * numberofhits //
                     + UPVSDOWNCONSTANT * ((double) timeup / (double) (timeup + timedown)) //up
                     + STATUSCONSTANT * (upordown ? 4 : 0)) //
-                    + (lastPingTime == -2 ? (0.1 - (double) 20000 / 2500)
-                            : (lastPingTime == -1 ? (0.1 - (double) 5000 / 2500)
-                                    : (0.1 - (double) lastPingTime / 2500)));
+                    + (pingTime == -2 ? (0.1 - (double) 20000 / 2500)
+                            : (pingTime == -1 ? (0.1 - (double) 5000 / 2500)
+                                    : (0.1 - (double) pingTime / 2500)));
         }
         
         public MysterIdentity getIdentity() {
@@ -301,7 +360,7 @@ class MysterServerImplementation {
         }
 
         public int getPingTime() {
-            return lastPingTime;
+            return getBestAddress().map(a -> identityProvider.getPing(a)).orElse(-1);
         }
 
         public String toString() {
@@ -309,11 +368,16 @@ class MysterServerImplementation {
         }
 
         public boolean isUntried() {
-            return (lastPingTime == -1);
+            return (getPingTime() == -1);
         }
 
         public long getUptime() {
             return uptime;
+        }
+
+        @Override
+        public ExternalName getExternalName() {
+            return  computeNodeNameFromIdentity(identity);
         }
     }
 
@@ -333,6 +397,18 @@ class MysterServerImplementation {
         if (!s_temp.equals("")) {
             preferences.put(NUMBEROFFILES, numberOfFiles.toString());
         }
+        
+        if (identity instanceof PublicKeyIdentity i) {
+            preferences.put(IDENTITY_PUBLIC_KEY, i.toString());
+        }
+
+        MysterAddress[] addresses = identityProvider.getAddresses(identity);
+        String concatAddresses =
+                String.join(" ",
+                            Util.map(Arrays.asList(addresses), (MysterAddress a) -> a.toString())
+                                    .toArray(new String[] {}));
+        
+        preferences.put(ADDRESSES, concatAddresses);
     }
 
     

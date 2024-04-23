@@ -1,4 +1,4 @@
-package com.myster.transferqueue;
+package com.myster.server.transferqueue;
 
 import java.io.IOException;
 
@@ -41,12 +41,12 @@ public abstract class TransferQueue {
      * <p>
      */
     public abstract void setDownloadSpots(int newSpots);
-
-    /**
-     * returns the number of simutaneous downloads allowed <br>
-     * Will return -1 if the number of simutaneous downloads is not limited
-     */
-    public abstract int getDownloadSpots();
+//
+//    /**
+//     * returns the number of simutaneous downloads allowed <br>
+//     * Will return -1 if the number of simutaneous downloads is not limited
+//     */
+//    public abstract int getDownloadSpots();
 
     /**
      * returns the number of currently active downloads. This number i not

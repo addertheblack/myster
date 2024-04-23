@@ -28,6 +28,7 @@ class TestIdentity {
     @BeforeEach
     void setUp() {
         keystorePath = tempDir.toFile(); // Convert the Path to File, as your Identity class uses File
+        keystorePath = new File(keystorePath, "a-sub-path");
         identity = new Identity(keystoreFilename, keystorePath);
     }
 

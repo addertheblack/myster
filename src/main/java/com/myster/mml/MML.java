@@ -837,7 +837,7 @@ public class MML implements Serializable {
 
     static final String STUFF = "T";
 
-    protected static String cleanString(String s) {
+    public static String cleanString(String s) {
         return replaceGreaterThans(bitStuff(s));
     }
 

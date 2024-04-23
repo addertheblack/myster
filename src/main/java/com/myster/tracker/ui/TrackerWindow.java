@@ -26,7 +26,7 @@ import com.general.mclist.SortableLong;
 import com.general.mclist.SortableString;
 import com.general.util.TimerThread;
 import com.myster.net.MysterAddress;
-import com.myster.tracker.IpListManager;
+import com.myster.tracker.MysterServerManager;
 import com.myster.tracker.MysterServer;
 import com.myster.type.MysterType;
 import com.myster.ui.MysterFrame;
@@ -45,7 +45,7 @@ public class TrackerWindow extends MysterFrame {
     private static com.myster.ui.WindowLocationKeeper keeper = new com.myster.ui.WindowLocationKeeper(
             "Tracker");
 
-    private static IpListManager ipListManager;
+    private static MysterServerManager ipListManager;
 
     private static MysterFrameContext context;
 
@@ -59,7 +59,7 @@ public class TrackerWindow extends MysterFrame {
         return rect.length;
     }
 
-    public static void init(IpListManager ipListManager, MysterFrameContext c) {
+    public static void init(MysterServerManager ipListManager, MysterFrameContext c) {
         TrackerWindow.ipListManager = ipListManager;
         TrackerWindow.context= c;
     }
@@ -301,9 +301,9 @@ public class TrackerWindow extends MysterFrame {
         }
 
         private static class SortablePing extends SortableLong {
-            public static final int UNKNOWN = 1000000;
+            public static final int UNKNOWN = -1;
 
-            public static final int DOWN = 1000001;
+            public static final int DOWN = -2;
 
             public SortablePing(long c) {
                 super(c);

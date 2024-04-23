@@ -36,7 +36,7 @@ import com.general.events.AsyncEventThreadDispatcher;
 import com.general.events.EventDispatcher;
 import com.myster.application.MysterGlobals;
 import com.myster.client.net.MysterProtocol;
-import com.myster.tracker.IpListManager;
+import com.myster.tracker.MysterServerManager;
 import com.myster.ui.MysterFrameContext;
 import com.myster.ui.PreferencesGui;
 import com.myster.ui.WindowManager;
@@ -81,7 +81,7 @@ public class MysterMenuBar {
     }
 
     // note that this is construction time dependencies
-    public void initMenuBar(IpListManager manager, PreferencesGui prefGui, WindowManager windowManager, MysterProtocol protocol) {
+    public void initMenuBar(MysterServerManager manager, PreferencesGui prefGui, WindowManager windowManager, MysterProtocol protocol) {
         file = new ArrayList<>();
         edit = new ArrayList<>();
         special = new ArrayList<>();

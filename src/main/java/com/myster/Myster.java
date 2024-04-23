@@ -26,6 +26,7 @@ import java.util.Enumeration;
 import java.util.List;
 import java.util.logging.LogManager;
 import java.util.logging.Logger;
+import java.util.prefs.Preferences;
 
 import javax.swing.JFrame;
 import javax.swing.SwingUtilities;
@@ -58,6 +59,7 @@ import com.myster.search.MultiSourceHashSearch;
 import com.myster.search.ui.SearchWindow;
 import com.myster.server.BannersManager.BannersPreferences;
 import com.myster.server.ServerFacade;
+import com.myster.server.ServerPreferences;
 import com.myster.server.ServerUtils;
 import com.myster.server.datagram.FileStatsDatagramServer;
 import com.myster.server.datagram.SearchDatagramServer;
@@ -66,8 +68,9 @@ import com.myster.server.datagram.ServerStatsDatagramServer;
 import com.myster.server.datagram.TopTenDatagramServer;
 import com.myster.server.datagram.TypeDatagramServer;
 import com.myster.server.event.ServerEventDispatcher;
+import com.myster.server.ui.ServerPreferencesPane;
 import com.myster.server.ui.ServerStatsWindow;
-import com.myster.tracker.IpListManager;
+import com.myster.tracker.MysterServerManager;
 import com.myster.tracker.MysterServerPoolImpl;
 import com.myster.tracker.ui.TrackerWindow;
 import com.myster.transaction.TransactionManager;
@@ -198,21 +201,22 @@ public class Myster {
                                                               new UDPPingClient(datagramManager)));
 
         INSTRUMENTATION.info("-------->> before IPListManager " + (System.currentTimeMillis() - startTime));
-        IpListManager ipListManager =
-                new IpListManager(new MysterServerPoolImpl(java.util.prefs.Preferences.userRoot(),
+        MysterServerManager ipListManager =
+                new MysterServerManager(new MysterServerPoolImpl(java.util.prefs.Preferences.userRoot(),
                                                        protocol),
                                   java.util.prefs.Preferences.userRoot()
                                           .node("Tracker.IpListManager"));
         INSTRUMENTATION.info("-------->> after IPListManager " + (System.currentTimeMillis() - startTime));
 
+        Preferences serverPreferenceNodes = Preferences.userRoot().node("Myster Server Preferences");
+        ServerPreferences serverPreferences = new ServerPreferences(serverPreferenceNodes);
+        
         final HashCrawlerManager crawlerManager =
                 new MultiSourceHashSearch(ipListManager, protocol);
-        ClientWindow.init(protocol, crawlerManager, ipListManager);
-
-
+        ClientWindow.init(protocol, crawlerManager, ipListManager, serverPreferences);
 
         ServerFacade serverFacade = new ServerFacade(ipListManager,
-                                                     preferences,
+                                                     serverPreferences,
                                                      datagramManager,
                                                      transactionManager,
                                                      identity,
@@ -222,12 +226,12 @@ public class Myster {
                 .addDatagramTransactions(new TopTenDatagramServer(ipListManager),
                                          new TypeDatagramServer(),
                                          new SearchDatagramServer(),
-                                         new ServerStatsDatagramServer(serverFacade::getIdentityName, identity),
+                                         new ServerStatsDatagramServer(serverPreferences::getIdentityName, identity),
                                          new FileStatsDatagramServer(),
                                          new SearchHashDatagramServer());
 
         serverFacade
-                .addDatagramTransactions(MysterGlobals.DEFAULT_SERVER_PORT, new ServerStatsDatagramServer(serverFacade::getIdentityName, identity));
+                .addDatagramTransactions(MysterGlobals.DEFAULT_SERVER_PORT, new ServerStatsDatagramServer(serverPreferences::getIdentityName, identity));
 
         final HashManager hashManager = new HashManager();
         FileTypeListManager.init((f, l) -> hashManager.findHash(f, l));
@@ -302,17 +306,10 @@ public class Myster {
                         + (System.currentTimeMillis() - startTime));
                 preferencesGui.addPanel(BandwidthManager.getPrefsPanel());
                 preferencesGui.addPanel(new BannersPreferences());
-                preferencesGui.addPanel(serverFacade.new ServerPrefPanel());
+                preferencesGui.addPanel(new ServerPreferencesPane(serverPreferences));
                 preferencesGui.addPanel(new FmiChooser(FileTypeListManager.getInstance()));
                 preferencesGui.addPanel(new MessagePreferencesPanel(preferences));
                 preferencesGui.addPanel(new TypeManagerPreferencesGUI());
-
-                // try {
-                // (new com.myster.plugin.PluginLoader(new File(MysterGlobals
-                // .getCurrentDirectory(), "plugins"))).loadPlugins();
-                // } catch (Exception ex) {
-                // // nothing
-                // }
 
                 com.myster.hash.ui.HashPreferences.init(preferencesGui, hashManager);
 

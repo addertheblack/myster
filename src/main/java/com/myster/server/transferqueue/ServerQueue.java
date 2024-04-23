@@ -1,4 +1,4 @@
-package com.myster.transferqueue;
+package com.myster.server.transferqueue;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -6,27 +6,28 @@ import java.util.List;
 
 import com.general.util.LinkedList;
 import com.myster.net.MysterAddress;
+import com.myster.server.ServerPreferences;
 
 /**
  * Provides a generic queue implementation. Most TransferQueue implementator
  * will want to subclass this.
  */
 
-public abstract class AbstractDownloadQueue extends TransferQueue {
+public class ServerQueue extends TransferQueue {
     public static final int UNLIMITED_QUEUE_LENGTH = -1;
 
     private static final int WAIT_TIME = 30 * 1000; //30 secs
 
-    private List<DownloadTicket> downloads = new ArrayList<DownloadTicket>();
+    private List<DownloadTicket> downloads = new ArrayList<>();
 
-    private LinkedList downloadQueue = new LinkedList();
-
-    private int maxDownloads;
+    private LinkedList<DownloadTicket> downloadQueue = new LinkedList<>();
 
     private int maxDownloadQueueLength = UNLIMITED_QUEUE_LENGTH;
 
-    protected AbstractDownloadQueue(int numberOfDownloadSpots) {
-        maxDownloads = numberOfDownloadSpots;
+    private ServerPreferences preferences;
+
+    public ServerQueue(ServerPreferences preferences) {
+        this.preferences = preferences;
     }
 
     public final void doDownload(Downloader download) throws IOException,
@@ -54,24 +55,14 @@ public abstract class AbstractDownloadQueue extends TransferQueue {
         return downloadQueue.getSize();
     }
 
-    public final int getDownloadSpots() {
-        return maxDownloads;
-    }
-
     /**
      * Subsclasses wishing to save their values between program launches should
      * over-ride saveDownloadSpots(int newSpots)
      */
     public final synchronized void setDownloadSpots(int newSpots) {
-        maxDownloads = newSpots;
-
-        saveDownloadSpotsInPrefs(newSpots);
+        preferences.setDownloadSlots(newSpots);
 
         updateQueue();
-    }
-
-    protected void saveDownloadSpotsInPrefs(int newSpots) {
-        // noting
     }
 
     public final int getMaxQueueLength() {
@@ -82,9 +73,14 @@ public abstract class AbstractDownloadQueue extends TransferQueue {
         maxDownloadQueueLength = numberOfAllowedSimutaneousDownloads;
     }
 
-    private synchronized void waitForMyTurn(DownloadTicket ticket)
+    private void waitForMyTurn(DownloadTicket ticket)
             throws IOException {
         while (true) {
+            // this isn't ideal because it might mean that we're waiting on a newly opened d/l slots
+            // but quite frankly it's not going to be for long and it's so rare that the end user
+            // opens up a new slots that I'm happy to live with the tiny delay.
+            updateQueue();
+            
             int lastQueuePosition;
             QueuedStats stats;
             synchronized (this) {
@@ -94,19 +90,21 @@ public abstract class AbstractDownloadQueue extends TransferQueue {
                 stats = getQueuedStats(ticket);
             }
 
-            lastQueuePosition = stats.getQueuePosition();
+            lastQueuePosition = stats.queuePosition();
             ticket.getDownloader().queued(stats);
 
-            if (ticket.isReadyToDownload())
-                return; //just before sleep double check
+            synchronized (this) {
+                if (ticket.isReadyToDownload())
+                    return; // just before sleep double check
 
-            if (lastQueuePosition != getQueuedStats(ticket).getQueuePosition())
-                continue;
+                if (lastQueuePosition != getQueuedStats(ticket).queuePosition())
+                    continue;
 
-            try {
-                wait(WAIT_TIME); //wait on Lock
-            } catch (InterruptedException ex) {
-                // nothing
+                try {
+                    wait(WAIT_TIME); // wait on Lock
+                } catch (InterruptedException ex) {
+                    // nothing
+                }
             }
         }
 
@@ -138,7 +136,7 @@ public abstract class AbstractDownloadQueue extends TransferQueue {
 
     private synchronized DownloadTicket getNextToDownload() {
         for (int i = 0; i < downloadQueue.getSize(); i++) {
-            DownloadTicket ticket = (DownloadTicket) downloadQueue
+            DownloadTicket ticket =  downloadQueue
                     .getElementAt(i);
 
             if (!isAlreadyDownloading(ticket.getDownloader().getAddress())) {
@@ -166,6 +164,7 @@ public abstract class AbstractDownloadQueue extends TransferQueue {
     }
 
     private synchronized boolean isExistFreeSpot() {
+        int maxDownloads = preferences.getDownloadSlots();
         return (maxDownloads == UNLIMITED_QUEUE_LENGTH ? true
                 : (maxDownloads - downloads.size()) > 0);
     }
@@ -198,9 +197,9 @@ public abstract class AbstractDownloadQueue extends TransferQueue {
     }
 
     private static class DownloadTicket {
-        Downloader downloader;
+        private final Downloader downloader;
 
-        volatile boolean readyToDownload = false;
+        private volatile boolean readyToDownload = false;
 
         public DownloadTicket(Downloader downloader) {
             this.downloader = downloader;

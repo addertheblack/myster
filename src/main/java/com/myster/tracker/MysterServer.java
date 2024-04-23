@@ -24,7 +24,7 @@ public interface MysterServer {
      */
     public MysterAddress[] getAddresses();
     
-    public MysterAddress[] getAvailableAddresses();
+    public MysterAddress[] getUpAddresses();
 
     public int getNumberOfFiles(MysterType type);
 
@@ -34,6 +34,9 @@ public interface MysterServer {
 
     public String getServerName();
 
+    /**
+     * @return ping or -1 if not checked or -2 if down
+     */
     public int getPingTime();
 
     public boolean isUntried();
@@ -41,4 +44,6 @@ public interface MysterServer {
     public long getUptime();
     
     public MysterIdentity getIdentity();
+
+    public ExternalName getExternalName();
 }
