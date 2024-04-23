@@ -1199,6 +1199,20 @@ keys for myster types.
     In other news graalvm experiments in creating a compiled Myster.exe totally failed. graalvm doesn't
     seem to play nice with swing - it gets stuck on java properties for some reason. 
     It's also a pain in the ass to setup so f that noise.
+    
+2024-04-22
+    More fixes for server pool
+    Implement save/load from java prefs
+    Fix non-default port support within tracker so that change of port works
+    Also check the port before adding to the tracker to make sure we don't add server addresses that aren't on the correct port
+    Rewrite how the server related settings are set/get in order to allow most settings to be changed on the fly.
+    Note that changing the server port still requires restarting Myster
+    Rename IpList etc.. to MysterServerList etc...
+    Fix double click in the tracker window to choose the right address/port
+    Fix blank p2p window to connect to the correct port for myself
+    Myster should automatically detect other nodes on the LAN and add them to the tracker EVEN if
+    LAN network broadcast is broken - ie broadcast address isn't sent across wi-fi and LAN segments 
+
 	
 
 (Red List)
