@@ -12,14 +12,9 @@
 /**
  * The IP list is a list of com.myster objects. The idea behind it is that the data type ie: Tree or
  * linked list of array can be changed without affecting the rest of the program.
- * 
- * 
- *  
  */
-
 package com.myster.tracker;
 
-import java.net.UnknownHostException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
@@ -30,13 +25,12 @@ import java.util.logging.Logger;
 import java.util.prefs.BackingStoreException;
 import java.util.prefs.Preferences;
 
-import com.myster.net.MysterAddress;
 import com.myster.type.MysterType;
 
-class IpList {
+class MysterServerList {
     public static final int LISTSIZE = 100; //Size of any given list..
     
-    private static final Logger LOGGER = Logger.getLogger(IpList.class.getName());
+    private static final Logger LOGGER = Logger.getLogger(MysterServerList.class.getName());
     
     private final Map<MysterIdentity, MysterServer> mapOfServers = new LinkedHashMap<>();
     private final MysterType type;
@@ -50,26 +44,22 @@ class IpList {
      * com.myster objects.
      * @param preferences 
      */
-    protected IpList(MysterType type, MysterServerPool pool, Preferences preferences) {
+    MysterServerList(MysterType type, MysterServerPool pool, Preferences preferences) {
         this.preferences = preferences;
 
         String s = preferences.get(type.toString(), "");
-        StringTokenizer ips = new StringTokenizer(s);
-        int max = ips.countTokens();
+        StringTokenizer externalNames = new StringTokenizer(s);
+        int max = externalNames.countTokens();
         for (int i = 0; i < max; i++) {
             try {
                 MysterServer temp = null;
-                String workingip = ips.nextToken();
-                if (pool.existsInPool(new MysterAddress(workingip))) {
-                    try {
-                        temp = pool.getCachedMysterIp(
-                                new MysterAddressIdentity(new MysterAddress(workingip)));
-                    } catch (UnknownHostException ex) {
-                        // do nothing
-                    }   
+                ExternalName externalName = new ExternalName(externalNames.nextToken());
+                MysterIdentity identity = pool.lookupIdentityFromName(externalName);
+                if (pool.existsInPool(identity)) {
+                    temp = pool.getCachedMysterServer(identity);
                 } // if IP doens't exist in the pool, remove it from the list!
                 if (temp == null) {
-                    LOGGER.warning("This server does not existing in the pool: " + workingip
+                    LOGGER.warning("This server does not existing in the pool: " + externalName
                             + ". Repairing.");
                     continue;
                 }
@@ -126,9 +116,7 @@ class IpList {
     private synchronized void save() {
         StringBuffer buffer = new StringBuffer();
         for (MysterServer server : mapOfServers.values()) {
-            for (MysterAddress address : server.getAddresses()) {
-                buffer.append("" + address + " ");
-            }
+            buffer.append("" + server.getExternalName() + " ");
         }
 
         preferences.put(type.toString(), buffer.toString());

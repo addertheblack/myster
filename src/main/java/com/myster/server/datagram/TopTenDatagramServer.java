@@ -8,7 +8,7 @@ import java.util.Arrays;
 
 import com.myster.client.stream.MysterDataInputStream;
 import com.myster.net.BadPacketException;
-import com.myster.tracker.IpListManager;
+import com.myster.tracker.MysterServerManager;
 import com.myster.tracker.MysterServer;
 import com.myster.transaction.Transaction;
 import com.myster.transaction.TransactionProtocol;
@@ -20,9 +20,9 @@ public class TopTenDatagramServer implements TransactionProtocol {
 
     public static final int TOP_TEN_TRANSACTION_CODE = com.myster.client.datagram.TopTenDatagramClient.TOP_TEN_TRANSACTION_CODE;
 
-    private final IpListManager ipListManager;
+    private final MysterServerManager ipListManager;
 
-    public TopTenDatagramServer(IpListManager ipListManager) {
+    public TopTenDatagramServer(MysterServerManager ipListManager) {
         this.ipListManager = ipListManager;
     }
 

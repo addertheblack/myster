@@ -16,14 +16,14 @@ import java.util.logging.Logger;
 
 import com.general.util.AskDialog;
 import com.myster.net.MysterAddress;
-import com.myster.tracker.IpListManager;
+import com.myster.tracker.MysterServerManager;
 
 public class AddIPMenuAction implements ActionListener {
     private static final Logger LOGGER = Logger.getLogger(AddIPMenuAction.class.getName());
     
-    private final IpListManager ipListManager;
+    private final MysterServerManager ipListManager;
     
-    public AddIPMenuAction(IpListManager ipListManager) {
+    public AddIPMenuAction(MysterServerManager ipListManager) {
         this.ipListManager = ipListManager;
     }
     

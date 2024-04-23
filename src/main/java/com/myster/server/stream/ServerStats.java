@@ -24,14 +24,14 @@ import com.myster.type.MysterType;
 public class ServerStats extends ServerThread {
     public static final int NUMBER = 101;
     
-    public static final String NUMBER_OF_FILES = "/NumberOfFiles";
+    public static final String NUMBER_OF_FILES = "/NumberOfFiles/";
     
     public static final String MYSTER_VERSION = "/MysterVersion";
     public static final String SPEED = "/Speed";
-    public static final String ADDRESS = "/Address"; 
     public static final String SERVER_NAME = "/ServerName";
     public static final String IDENTITY = "/Identity";
     public static final String UPTIME = "/Uptime";
+    public static final String PORT = "/Port";
     
     private final Supplier<String> getServerName;
     private final Identity identity;
@@ -63,12 +63,14 @@ public class ServerStats extends ServerThread {
 
             mml.put(MYSTER_VERSION, "1.0");
 
-            tempstring = prefs.query(com.myster.application.MysterGlobals.ADDRESSPATH);
-            if (!(tempstring.equals(""))) { // If there is no value for the
-                                            // address it doesn't send this
-                                            // info.
-                mml.put(ADDRESS, tempstring); //Note: "" is no data. see qweryValue();
-            }
+//            tempstring = prefs.query(com.myster.application.MysterGlobals.ADDRESSPATH);
+//            if (!(tempstring.equals(""))) { // If there is no value for the
+//                                            // address it doesn't send this
+//                                            // info.
+//                mml.put(ADDRESS, tempstring); //Note: "" is no data. see qweryValue();
+//            }
+            
+//            prefs.query(com.myster.application.MysterGlobals.DEFAULT_SERVER_PORT);
 
             getNumberOfFilesMML(mml); //Adds the number of files data.
 
@@ -99,15 +101,14 @@ public class ServerStats extends ServerThread {
 
     }
 
-    private static MML getNumberOfFilesMML(MML mml) { //in-line
+    private static MML getNumberOfFilesMML(MML mml) { // in-line
         FileTypeListManager filemanager = FileTypeListManager.getInstance();
 
         MysterType[] filetypelist = filemanager.getFileTypeListing();
-        String dir = NUMBER_OF_FILES + "/";
 
         for (int i = 0; i < filetypelist.length; i++) {
-            mml.put(dir + filetypelist[i], ""
-                    + filemanager.getNumberOfFiles(filetypelist[i]));
+            mml.put(NUMBER_OF_FILES + filetypelist[i],
+                    "" + filemanager.getNumberOfFiles(filetypelist[i]));
         }
 
         return mml;

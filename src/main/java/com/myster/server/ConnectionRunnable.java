@@ -21,7 +21,7 @@ import com.myster.net.MysterAddress;
 import com.myster.server.event.ConnectionManagerEvent;
 import com.myster.server.event.OperatorEvent;
 import com.myster.server.event.ServerEventDispatcher;
-import com.myster.transferqueue.TransferQueue;
+import com.myster.server.transferqueue.TransferQueue;
 
 /**
  * This class takes incoming stream connections and applies the Myster protocol

@@ -37,7 +37,7 @@ import com.myster.search.HashCrawlerManager;
 import com.myster.search.SearchEngine;
 import com.myster.search.SearchResult;
 import com.myster.search.SearchResultListener;
-import com.myster.tracker.IpListManager;
+import com.myster.tracker.MysterServerManager;
 import com.myster.type.MysterType;
 import com.myster.ui.MysterFrame;
 import com.myster.ui.MysterFrameContext;
@@ -155,9 +155,9 @@ public class SearchWindow extends MysterFrame implements SearchResultListener, S
     
     private static HashCrawlerManager hashManager;
     private static MysterProtocol protocol;
-    private static IpListManager manager;
+    private static MysterServerManager manager;
     
-    public static void init(MysterProtocol protocol, HashCrawlerManager hashManager, IpListManager manager) {
+    public static void init(MysterProtocol protocol, HashCrawlerManager hashManager, MysterServerManager manager) {
         SearchWindow.protocol = protocol;
         SearchWindow.hashManager = hashManager;
         SearchWindow.manager = manager;

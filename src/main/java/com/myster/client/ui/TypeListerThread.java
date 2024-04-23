@@ -70,6 +70,7 @@ public class TypeListerThread extends MysterThread {
 
             if (endFlag)
                 return;
+            
             MysterAddress mysterAddress = new MysterAddress(ip);
             listener.refreshIP(mysterAddress);
             com.myster.type.MysterType[] types = protocol.getDatagram().getTypes(mysterAddress).get();

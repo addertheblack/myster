@@ -1,4 +1,4 @@
-package com.myster.transferqueue;
+package com.myster.server.transferqueue;
 
 import java.io.IOException;
 

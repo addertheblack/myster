@@ -250,6 +250,11 @@ public class Identity {
 
     private void save() {
         try {
+
+            boolean success = keyStorePath.mkdirs();
+            if (!success) {
+                LOGGER.severe("Could not make key store path - directories could not be created :"+keyStorePath);
+            }
             final File file = new File(keyStorePath, keystoreNameNew());
             
             if (!file.exists()) {

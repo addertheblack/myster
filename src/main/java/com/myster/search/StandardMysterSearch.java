@@ -10,7 +10,7 @@ import com.myster.mml.RobustMML;
 import com.myster.net.DisconnectException;
 import com.myster.net.MysterAddress;
 import com.myster.net.MysterSocket;
-import com.myster.tracker.IpListManager;
+import com.myster.tracker.MysterServerManager;
 import com.myster.type.MysterType;
 import com.myster.ui.MysterFrameContext;
 
@@ -31,7 +31,7 @@ public class StandardMysterSearch {
     private final String searchString;
     private final SearchResultListener listener;
     private final MysterType type;
-    private final IpListManager manager;
+    private final MysterServerManager manager;
     private final MysterProtocol protocol;
     private final HashCrawlerManager hashCrawler;
     private final MysterFrameContext context;
@@ -41,7 +41,7 @@ public class StandardMysterSearch {
     public StandardMysterSearch(MysterProtocol protocol,
                                 HashCrawlerManager hashCrawler,
                                 MysterFrameContext context,
-                                IpListManager manager,
+                                MysterServerManager manager,
                                 String searchString,
                                 MysterType type,
                                 SearchResultListener listener) {

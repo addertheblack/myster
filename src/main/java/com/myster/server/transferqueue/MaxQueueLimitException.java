@@ -1,4 +1,4 @@
-package com.myster.transferqueue;
+package com.myster.server.transferqueue;
 
 public class MaxQueueLimitException extends Exception {
     public MaxQueueLimitException(String s) {

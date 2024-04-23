@@ -18,7 +18,7 @@ import com.myster.client.stream.msdownload.MultiSourceUtilities;
 import com.myster.hash.FileHash;
 import com.myster.net.MysterAddress;
 import com.myster.search.AsyncNetworkCrawler.SearchIp;
-import com.myster.tracker.IpListManager;
+import com.myster.tracker.MysterServerManager;
 import com.myster.tracker.MysterServer;
 import com.myster.type.MysterType;
 
@@ -34,14 +34,14 @@ public class MultiSourceHashSearch implements HashCrawlerManager {
     private static final int TIME_BETWEEN_CRAWLS = 10 * 60 * 1000;
 
     private final Map<MysterType, BatchedType> typeHashtable = new HashMap<>();
-    private final IpListManager ipListManager;
+    private final MysterServerManager ipListManager;
     private final MysterProtocol protocol;
 
     private int timeInMs;
 
     private final static Invoker INVOKER = Invoker.newVThreadInvoker();
 
-    public MultiSourceHashSearch(IpListManager ipListManager, MysterProtocol protocol) {
+    public MultiSourceHashSearch(MysterServerManager ipListManager, MysterProtocol protocol) {
         this.ipListManager = ipListManager;
         this.protocol = protocol;
 

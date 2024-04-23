@@ -39,7 +39,8 @@ import com.general.util.Util;
 import com.myster.client.net.MysterProtocol;
 import com.myster.net.MysterAddress;
 import com.myster.search.HashCrawlerManager;
-import com.myster.tracker.IpListManager;
+import com.myster.server.ServerPreferences;
+import com.myster.tracker.MysterServerManager;
 import com.myster.tracker.MysterServer;
 import com.myster.type.MysterType;
 import com.myster.ui.MysterFrame;
@@ -58,9 +59,10 @@ public class ClientWindow extends MysterFrame implements Sayable {
 
     private static int counter = 0;
     private static WindowLocationKeeper keeper;
-    private static IpListManager ipListManager;
+    private static MysterServerManager ipListManager;
     private static MysterProtocol protocol;
     private static HashCrawlerManager hashManager;
+    private static ServerPreferences serverPreferences;
     
     private GridBagLayout gblayout;
     private GridBagConstraints gbconstrains;
@@ -79,10 +81,14 @@ public class ClientWindow extends MysterFrame implements Sayable {
     private boolean hasBeenShown = false;
     private MysterType type;
 
-    public static void init(MysterProtocol protocol, HashCrawlerManager hashManager, IpListManager ipListManager) {
+    public static void init(MysterProtocol protocol,
+                            HashCrawlerManager hashManager,
+                            MysterServerManager ipListManager,
+                            ServerPreferences prefs) {
         ClientWindow.protocol = protocol;
         ClientWindow.ipListManager = ipListManager;
         ClientWindow.hashManager = hashManager;
+        serverPreferences = prefs;
     }
     
     public static int initWindowLocations(MysterFrameContext c) {
@@ -122,7 +128,7 @@ public class ClientWindow extends MysterFrame implements Sayable {
     private void init() {
         setBackground(new Color(240, 240, 240));
 
-        //Do interface setup:
+        // Do interface setup:
         gblayout = new GridBagLayout();
         setLayout(gblayout);
         gbconstrains = new GridBagConstraints();
@@ -299,10 +305,10 @@ public class ClientWindow extends MysterFrame implements Sayable {
     public void refreshIP(final MysterAddress address) {
         MysterServer server = ipListManager.getQuickServerStats(address);
 
-        String fallbackWindowName = currentip.equals("") ? "myself" : currentip;
+        String fallbackWindowName = address.getInetAddress().isLoopbackAddress() ? "myself" : currentip;
         String windowName =
                 (server == null ? fallbackWindowName : "\"" + server.getServerName() + "\" ("
-                        + currentip + ")");
+                        + fallbackWindowName + ")");
         setTitle(CLIENT_WINDOW_TITLE_PREFIX + "to " + windowName);
     }
 
@@ -367,6 +373,11 @@ public class ClientWindow extends MysterFrame implements Sayable {
     public void startConnect() {
         stopConnect();
         currentip = ipTextField.getText();
+        
+        if (currentip.isBlank()) {
+            currentip = "127.0.0.1:" + serverPreferences.getServerPort();
+        }
+        
         connectToThread =
                 new TypeListerThread(ClientWindow.protocol, new TypeListerThread.TypeListener() {
                     public void addItemToTypeList(MysterType s) {

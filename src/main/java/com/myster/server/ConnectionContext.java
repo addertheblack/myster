@@ -2,7 +2,7 @@ package com.myster.server;
 
 import com.myster.net.MysterAddress;
 import com.myster.net.MysterSocket;
-import com.myster.transferqueue.TransferQueue;
+import com.myster.server.transferqueue.TransferQueue;
 
 public class ConnectionContext { //struct
     public MysterSocket socket;

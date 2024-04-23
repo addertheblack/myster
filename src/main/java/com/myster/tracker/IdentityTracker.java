@@ -1,6 +1,7 @@
 
 package com.myster.tracker;
 
+import static com.myster.tracker.MysterServerImplementation.computeNodeNameFromIdentity;
 import static com.myster.tracker.TrackerUtils.INVOKER;
 
 import java.util.ArrayList;
@@ -27,6 +28,7 @@ public class IdentityTracker implements IdentityProvider {
 
     private static final long REFRESH_MS = 10 * 60 * 1000;
 
+    private final Map<ExternalName, MysterIdentity> externalNameToIdentity = new HashMap<>();
     private final Map<MysterAddress, AddressState> addressStates = new HashMap<>();
     private final Map<MysterAddress, MysterIdentity> addressToIdentity = new HashMap<>();
     private final Map<MysterIdentity, List<MysterAddress>> identityToAddresses = new HashMap<>();
@@ -43,17 +45,36 @@ public class IdentityTracker implements IdentityProvider {
     }
     
     @Override
-    public boolean exists(MysterAddress address) {
+    public synchronized boolean exists(MysterAddress address) {
         return addressStates.containsKey(address);
     }
-    
+
     @Override
-    public MysterIdentity getIdentity(MysterAddress address) {
+    public synchronized boolean existsMysterIdentity(MysterIdentity identity) {
+        var addresses = identityToAddresses.get(identity);
+        if (addresses == null) {
+            return false;
+        }
+
+        if (addresses.isEmpty()) {
+            return false;
+        }
+
+        return true;
+    }
+
+    @Override
+    public synchronized MysterIdentity getIdentity(MysterAddress address) {
         return addressToIdentity.get(address);
     }
     
     @Override
-    public boolean isUp(MysterAddress address) {
+    public synchronized MysterIdentity getIdentityFromExternalName(ExternalName name) {
+        return externalNameToIdentity.get(name);
+    }
+    
+    @Override
+    public synchronized boolean isUp(MysterAddress address) {
         AddressState addressState = addressStates.get(address);
         if(addressState == null) {
             return false;
@@ -63,7 +84,21 @@ public class IdentityTracker implements IdentityProvider {
     }
     
     @Override
-    public Optional<MysterAddress> getBestAddress(MysterIdentity identity) {
+    public synchronized int getPing(MysterAddress address) {
+        AddressState addressState = addressStates.get(address);
+        if(addressState == null) {
+            return -1;
+        }
+        
+        if (addressState.lastPingTime == -1) {
+            return -1;
+        }
+        
+        return addressState.up ? addressState.lastPingTime : -2;
+    }
+    
+    @Override
+    public synchronized Optional<MysterAddress> getBestAddress(MysterIdentity identity) {
         List<MysterAddress> addresses = identityToAddresses.get(identity);
         
         if (addresses == null) {
@@ -102,7 +137,7 @@ public class IdentityTracker implements IdentityProvider {
     
 
     @Override
-    public MysterAddress[] getAddresses(MysterIdentity identity) {
+    public synchronized MysterAddress[] getAddresses(MysterIdentity identity) {
         List<MysterAddress> addresses = identityToAddresses.get(identity);
         
         if (addresses == null) {
@@ -115,7 +150,7 @@ public class IdentityTracker implements IdentityProvider {
     /**
      * Associates the key with the address and vice versa
      */
-    public void addIdentity(MysterIdentity key, MysterAddress address) {
+    public synchronized void addIdentity(MysterIdentity key, MysterAddress address) {
         if (timer == null) {
             resetTimer();
         }
@@ -129,6 +164,7 @@ public class IdentityTracker implements IdentityProvider {
         }
 
         addressToIdentity.put(address, key);
+        externalNameToIdentity.put(computeNodeNameFromIdentity(key), key);
 
         if (!identityToAddresses.containsKey(key)) {
             identityToAddresses.put(key, new ArrayList<>());
@@ -163,7 +199,7 @@ public class IdentityTracker implements IdentityProvider {
         timer = new Timer(() -> INVOKER.invoke(IdentityTracker.this::update), REFRESH_MS);
     }
 
-    public void removeIdentity(MysterIdentity key, MysterAddress address) {
+    public synchronized void removeIdentity(MysterIdentity key, MysterAddress address) {
         if (addressToIdentity.containsKey(address)) {
             if (addressToIdentity.get(address).equals(key)) {
                 addressToIdentity.remove(address);
@@ -175,10 +211,15 @@ public class IdentityTracker implements IdentityProvider {
             List<MysterAddress> addresses = identityToAddresses.get(key);
 
             addresses.remove(address);
+            
+            if(addresses.size()==0) {
+                externalNameToIdentity.remove(computeNodeNameFromIdentity(key));
+                identityToAddresses.remove(key);
+            }
         }
     }
     
-    private void update() {
+    private synchronized void update() {
         if (!INVOKER.isInvokerThread()) {
             throw new IllegalStateException("Should be called on the invoker thread");
         }
@@ -207,24 +248,30 @@ public class IdentityTracker implements IdentityProvider {
     }
     
     // Package protected for unit test
-    void waitForPing(MysterAddress address) {
+    synchronized  void waitForPing(MysterAddress address) {
         AddressState addressState = addressStates.get(address);
         
         addressState.pingProcess.ifPresent(f -> Util.callAndWaitNoThrows(f::get));
     }
 
     private void updateState(AddressState addressState, PingResponse pingResponse) {
-        addressState.lastPingTime = System.currentTimeMillis();
+        addressState.lastPingTime = pingResponse.pingTimeMs();
         addressState.up = !pingResponse.isTimeout();
     }
      
     static class AddressState {
-        public long lastPingTime = -1;
+        public int lastPingTime = -1;
         public boolean up = false;
         public Optional<PromiseFuture<PingResponse>> pingProcess = Optional.empty();
     }
     
     public interface Pinger {
         public PromiseFuture<PingResponse> ping(MysterAddress address);
+    }
+
+    public synchronized void close() {
+        if (timer != null) {
+            timer.cancelTimer();
+        }
     }
 }
