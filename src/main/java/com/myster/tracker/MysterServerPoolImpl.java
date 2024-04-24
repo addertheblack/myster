@@ -254,7 +254,7 @@ public class MysterServerPoolImpl implements MysterServerPool {
 
     private PromiseFuture<MysterServer> refreshMysterServer(MysterAddress address) {
         if (outstandingServerFutures.containsKey(address)) {
-            return outstandingServerFutures.get(address); // bug invoker already set!!!
+            return outstandingServerFutures.get(address).clearInvoker(); // bug invoker already set!!!
         }
         
         PromiseFuture<MysterServer> getServerFuture = PromiseFuture.newPromiseFuture(context -> {
@@ -280,7 +280,7 @@ public class MysterServerPoolImpl implements MysterServerPool {
     private MysterAddress findRealAddresses(MysterAddress address, RobustMML mml) {
         try {
             String portString = mml.get(ServerStats.PORT);
-            if (portString != null) {
+            if (portString == null) {
                 return address;
             }
             
