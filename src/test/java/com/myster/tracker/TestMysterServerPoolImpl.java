@@ -247,6 +247,47 @@ class TestMysterServerPoolImpl {
         Assertions.assertEquals(localHost.getIdentity(), lanHost.getIdentity());
     }
     
+    /**
+     * This test exists because of a bug found while doing practical tests
+     * 
+     * Essentially we were not adding the IP to the identityTracker until AFTER
+     * the MysterServer had been inited. This isn't allowed as it causes the IP
+     * to not be saved.
+     */
+    @Test
+    void testPrefsStorageWithOnlyOne() throws UnknownHostException, InterruptedException {
+        pool = new MysterServerPoolImpl(pref, protocol);
+        
+        List<MysterServer> captured = new ArrayList<>();
+        Semaphore sem = new Semaphore(0);
+        pool.addNewServerListener(s -> {
+            captured.add(s);
+            
+            sem.signal();
+        });
+        
+        pool.suggestAddress("192.168.1.2");
+        
+        sem.getLock();
+        
+        Assertions.assertEquals(captured.size(), 1);
+        
+        pool.close();
+        pool = null;
+        
+        pool = new MysterServerPoolImpl(pref, protocol);
+        
+        PublicKeyIdentity identityPublic = new PublicKeyIdentity(identity.getMainIdentity().get().getPublic());
+        Assertions.assertTrue(pool.existsInPool(identityPublic));
+        Assertions.assertTrue(pool.existsInPool(new MysterAddress("192.168.1.2")));
+        
+        var localHost = pool.getCachedMysterIp(new MysterAddress("192.168.1.2"));
+        var serverFromCache = pool.getCachedMysterServer(identityPublic);
+        
+        Assertions.assertEquals(localHost.getIdentity(), serverFromCache.getIdentity());
+        Assertions.assertEquals(localHost.getAddresses().length, 1);
+    }
+    
     @Test
     void testPrefsStorage() throws UnknownHostException, InterruptedException {
         pool = new MysterServerPoolImpl(pref, protocol);

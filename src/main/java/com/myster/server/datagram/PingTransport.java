@@ -1,5 +1,7 @@
 package com.myster.server.datagram;
 
+import java.util.Optional;
+
 import com.general.net.ImmutableDatagramPacket;
 import com.myster.net.BadPacketException;
 import com.myster.net.DatagramSender;
@@ -7,9 +9,19 @@ import com.myster.net.DatagramTransport;
 import com.myster.net.MysterAddress;
 import com.myster.net.PingPacket;
 import com.myster.net.PongPacket;
+import com.myster.tracker.MysterServerManager;
 
 public class PingTransport extends DatagramTransport {
     private static final short TRANSPORT_NUMBER = 20553; // 'P', 'I' in network byte order
+    private Optional<MysterServerManager> ipListManager;
+
+    public PingTransport(MysterServerManager ipListManager) {
+        this.ipListManager = Optional.of(ipListManager);
+    }
+    
+    public PingTransport() {
+        this(null);
+    }
 
     public short getTransportCode() {
         return TRANSPORT_NUMBER;
@@ -25,6 +37,12 @@ public class PingTransport extends DatagramTransport {
 
         sender.sendPacket(PongPacket.getImmutablePacket(new MysterAddress(
                 immutablePacket.getAddress(), immutablePacket.getPort())));
+
+        ipListManager.ifPresent(manager -> {
+            if (immutablePacket.getAddress().isSiteLocalAddress()) {
+                manager.addIp(new MysterAddress(immutablePacket.getAddress()));
+            }
+        });
     }
 
     @Override
