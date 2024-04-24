@@ -432,6 +432,33 @@ class TestMysterServerPoolImpl {
         Assertions.assertTrue(pool.existsInPool(new MysterAddress("24.20.25.66:7000")));
         Assertions.assertFalse(pool.existsInPool(new MysterAddress("24.20.25.66:6000")));
     }
+    
+    @Test
+    void testEgad() throws UnknownHostException, InterruptedException {
+        pool = new MysterServerPoolImpl(pref, protocol);
+        
+        List<MysterServer> captured = new ArrayList<>();
+        Semaphore sem = new Semaphore(0);
+        pool.addNewServerListener(s -> {
+            captured.add(s);
+            
+            sem.signal();
+        });
+        
+        pool.suggestAddress("24.20.25.66:7000");
+        pool.suggestAddress("24.20.25.66:7000");
+
+        sem.getLock();
+        
+        Assertions.assertEquals(captured.size(), 1);
+        Assertions.assertEquals(captured.get(0).getAddresses().length, 1);
+        Assertions.assertEquals(captured.get(0).getAddresses()[0], new MysterAddress("24.20.25.66:7000"));
+        
+        PublicKeyIdentity identityPublic = new PublicKeyIdentity(identity.getMainIdentity().get().getPublic());
+        Assertions.assertTrue(pool.existsInPool(identityPublic));
+        Assertions.assertTrue(pool.existsInPool(new MysterAddress("24.20.25.66:7000")));
+        Assertions.assertFalse(pool.existsInPool(new MysterAddress("24.20.25.66:6000")));
+    }
 }
 
 /** This is an in-mem impl of a java pref node. At some point I should make this a util */
