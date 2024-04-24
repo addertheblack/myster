@@ -162,7 +162,7 @@ public final class AsyncDatagramSocket {
         }
 
         public void flagToEnd() {
-            LOGGER.fine("Requesting AsyncDatagramSocket on" + port + " to close...");
+            LOGGER.fine("Requesting AsyncDatagramSocket on " + port + " to close...");
             endFlag = true;
 
             if (selector != null) {
