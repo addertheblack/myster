@@ -17,9 +17,7 @@ public class ServerPreferences {
     }
 
     public void setIdentityName(String s) {
-        if (s == null)
-            preferences.put(IDENTITY_NAME_KEY, s);
-        return;
+        preferences.put(IDENTITY_NAME_KEY, s);
     }
 
     public String getIdentityName() {
