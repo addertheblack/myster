@@ -75,10 +75,7 @@ public class MysterServerPoolImpl implements MysterServerPool {
                 MysterServerImplementation mysterip = create(serverNode, identityTracker, identity.get());
                 hardLinks.add(mysterip);
                 
-                var addresses = extractAddresses(serverNode);
-                for (MysterAddress address : addresses) {
-                    identityTracker.addIdentity(mysterip.getIdentity(), address);
-                }
+                addAddressesToIdentityTracker(serverNode, mysterip.getIdentity());
             }
         } catch (BackingStoreException exception) {
             // ignore
@@ -108,23 +105,7 @@ public class MysterServerPoolImpl implements MysterServerPool {
     }
 
     private void addAddressesToIdentityTracker(Preferences node, MysterIdentity identity) {
-        String[] addresses = node.get(MysterServerImplementation.ADDRESSES, "").split(" ");
-        List<Optional<MysterAddress>> unfiltered =
-                Util.map(Arrays.asList(addresses), addressString -> {
-                    if (addressString.isBlank()) {
-                       return  Optional.empty();
-                    }
-                    
-                    try {
-                        return Optional.of(new MysterAddress(addressString));
-                    } catch (UnknownHostException ex) {
-                        return Optional.empty();
-                    }
-                });
-
-        var filteredAddresses = Util.map(Util.filter(unfiltered, a -> a.isPresent()), a -> a.get());
-
-        filteredAddresses.forEach(a -> identityTracker.addIdentity(identity, a));
+        extractAddresses(node).forEach(a -> identityTracker.addIdentity(identity, a));
     }
 
     private synchronized MysterServerImplementation create(Preferences prefs,
@@ -132,9 +113,9 @@ public class MysterServerPoolImpl implements MysterServerPool {
                                                            RobustMML serverStats,
                                                            MysterIdentity identity,
                                                            MysterAddress address) {
+        identityTracker.addIdentity(identity, address);
         var server = new MysterServerImplementation(prefs, identityTracker, serverStats, identity);
         addToDataStructures(server);
-        identityTracker.addIdentity(server.getIdentity(), address);
 
         return server;
     }
@@ -171,17 +152,21 @@ public class MysterServerPoolImpl implements MysterServerPool {
     }
 
     private List<MysterAddress> extractAddresses(Preferences serverNode) {
-        List<String> stringAddresses = Arrays.asList(serverNode.get(MysterServerImplementation.ADDRESSES, "")
-                .split(" "));
-        
-        // Java streams API is allota words for nuttin
-        return Util.filter(Util.map(stringAddresses, sa -> {
-            try {
-                return new MysterAddress(sa);
-            } catch (UnknownHostException ex) {
-                return null;
-            }
-        }), a -> a != null);
+        String[] addresses = serverNode.get(MysterServerImplementation.ADDRESSES, "").split(" ");
+        List<Optional<MysterAddress>> unfiltered =
+                Util.map(Arrays.asList(addresses), addressString -> {
+                    if (addressString.isBlank()) {
+                       return  Optional.empty();
+                    }
+                    
+                    try {
+                        return Optional.of(new MysterAddress(addressString));
+                    } catch (UnknownHostException ex) {
+                        return Optional.empty();
+                    }
+                });
+
+        return Util.map(Util.filter(unfiltered, a -> a.isPresent()), a -> a.get());
     }
 
     @Override

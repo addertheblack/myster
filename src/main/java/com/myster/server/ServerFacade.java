@@ -100,7 +100,7 @@ public class ServerFacade {
                                           Optional.of( publicLandAddress)));
         }
         
-        datagramManager.accessPort(MysterGlobals.DEFAULT_SERVER_PORT, t -> t.addTransport(new PingTransport()));
+        datagramManager.accessPort(MysterGlobals.DEFAULT_SERVER_PORT, t -> t.addTransport(new PingTransport(ipListManager)));
     }
 
 

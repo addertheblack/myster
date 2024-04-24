@@ -163,7 +163,7 @@ Work on DEV 8:
 		funny that Myster DEV 1 was about this size when I first started testing it. Myster DEV 9
 		is around 12 000 lines if you're wondering.
 		
-	2001/08/04 - 2001/07/05 (12 hour days)
+	2001/08/04 - 2001/08/05 (12 hour days)
 	-> Added the Semaphore class from the Myster Chat sub-project to Myster.
 	-> Made check status in MysterIP.java a static function.
 	-> Guarded this function with a semaphore at 15. So now no more than 
@@ -1116,6 +1116,8 @@ Work on DEV 8:
 	  	-> Fixed a bug where multi-source download wouldn't start a download because of un-merged punctuation
 	  	-> Rewrote the multi-source download error code - so that more errors are reported properly and better
 	  			appropriate corrective action is taken.
+	  
+	  => PR 9
 	  			
 2023-12-01
 
