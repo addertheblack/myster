@@ -35,7 +35,7 @@ public class ServerFacade {
     private final TransferQueue transferQueue;
     private final ServerEventDispatcher serverDispatcher;
     private final Map<Integer, ConnectionSection> connectionSections = new HashMap<>();
-    private final MysterServerManager ipListManager;
+    private final MysterServerManager serverListManager;
     private final ServerPreferences preferences;
     private final DatagramProtocolManager datagramManager;
     private final TransactionManager transactionManager;
@@ -49,7 +49,7 @@ public class ServerFacade {
                         TransactionManager transactionManager,
                         Identity identity,
                         ServerEventDispatcher serverDispatcher) {
-        this.ipListManager = ipListManager;
+        this.serverListManager = ipListManager;
         this.preferences = preferences;
         this.datagramManager = datagramManager;
         this.transactionManager = transactionManager;
@@ -100,7 +100,7 @@ public class ServerFacade {
                                           Optional.of( publicLandAddress)));
         }
         
-        datagramManager.accessPort(MysterGlobals.DEFAULT_SERVER_PORT, t -> t.addTransport(new PingTransport(ipListManager)));
+        datagramManager.accessPort(MysterGlobals.DEFAULT_SERVER_PORT, t -> t.addTransport(new PingTransport(serverListManager)));
     }
 
 
@@ -120,7 +120,7 @@ public class ServerFacade {
     }
 
     private void initDatagramTransports() {
-        datagramManager.accessPort(preferences.getServerPort(), t -> t.addTransport(new PingTransport()));
+        datagramManager.accessPort(preferences.getServerPort(), t -> t.addTransport(new PingTransport(serverListManager)));
     }
 
     public void addDatagramTransactions(TransactionProtocol ... protocols) {
@@ -145,7 +145,7 @@ public class ServerFacade {
     }
 
     private void addStandardStreamConnectionSections() {
-        addConnectionSection(new com.myster.server.stream.IpLister(ipListManager));
+        addConnectionSection(new com.myster.server.stream.IpLister(serverListManager));
         addConnectionSection(new com.myster.server.stream.RequestDirThread());
         addConnectionSection(new com.myster.server.stream.FileTypeLister());
         addConnectionSection(new com.myster.server.stream.RequestSearchThread());
