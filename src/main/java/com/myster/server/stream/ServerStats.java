@@ -19,7 +19,6 @@ import com.myster.identity.Identity;
 import com.myster.mml.MML;
 import com.myster.pref.MysterPreferences;
 import com.myster.server.ConnectionContext;
-import com.myster.tracker.MysterServerManager;
 import com.myster.type.MysterType;
 
 public class ServerStats extends ServerThread {
@@ -36,9 +35,12 @@ public class ServerStats extends ServerThread {
     
     private final Supplier<String> getServerName;
     private final Identity identity;
+    private final Supplier<Integer> getPort;
 
-    public ServerStats(Supplier<String> getServerName, Identity identity) {
+
+    public ServerStats(Supplier<String> getServerName, Supplier<Integer> getPort, Identity identity) {
         this.getServerName = getServerName;
+        this.getPort = getPort;
         this.identity = identity;
     }
     
@@ -47,11 +49,11 @@ public class ServerStats extends ServerThread {
     }
 
     public void section(ConnectionContext context) throws IOException {
-        context.socket.out.writeUTF("" + getMMLToSend(getServerName.get(), identity));
+        context.socket.out.writeUTF("" + getMMLToSend(getServerName.get(), getPort.get(), identity));
     }
 
     //Returns an MML that would be send as a string via a Handshake.
-    public static MML getMMLToSend(String identityName, Identity identity) {
+    public static MML getMMLToSend(String identityName, int port, Identity identity) {
         try {
             MML mml = new MML();
             MysterPreferences prefs;
@@ -93,6 +95,8 @@ public class ServerStats extends ServerThread {
             mml.put(UPTIME, ""
                     + (System.currentTimeMillis() - com.myster.application.MysterGlobals
                             .getLaunchedTime()));
+            
+            mml.put(PORT, "" + port);
 
             return mml;
         } catch (Exception ex) {

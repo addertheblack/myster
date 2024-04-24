@@ -15,8 +15,10 @@ public class ServerStatsDatagramServer implements TransactionProtocol {
     public static final int SERVER_STATS_TRANSACTION_CODE = com.myster.client.datagram.ServerStatsDatagramClient.SERVER_STATS_TRANSACTION_CODE;
     private final Supplier<String> getIdentity;
     private final Identity identity;
+    private Supplier<Integer> getPort;
 
-    public ServerStatsDatagramServer(Supplier<String> getIdentity, Identity identity) {
+    public ServerStatsDatagramServer(Supplier<String> getIdentity, Supplier<Integer> getPort, Identity identity) {
+        this.getPort = getPort;
         this.getIdentity = getIdentity;
         this.identity = identity;
     }
@@ -34,7 +36,7 @@ public class ServerStatsDatagramServer implements TransactionProtocol {
 
             
             // TODO: pass in getMMLToSend as the supplier
-            out.writeUTF("" + com.myster.server.stream.ServerStats.getMMLToSend(getIdentity.get(), identity));
+            out.writeUTF("" + com.myster.server.stream.ServerStats.getMMLToSend(getIdentity.get(), getPort.get(), identity));
 
             sender.sendTransaction(new Transaction(transaction, byteOutputStream.toByteArray(),
                     Transaction.NO_ERROR));

@@ -226,12 +226,12 @@ public class Myster {
                 .addDatagramTransactions(new TopTenDatagramServer(ipListManager),
                                          new TypeDatagramServer(),
                                          new SearchDatagramServer(),
-                                         new ServerStatsDatagramServer(serverPreferences::getIdentityName, identity),
+                                         new ServerStatsDatagramServer(serverPreferences::getIdentityName, serverPreferences::getServerPort , identity),
                                          new FileStatsDatagramServer(),
                                          new SearchHashDatagramServer());
 
         serverFacade
-                .addDatagramTransactions(MysterGlobals.DEFAULT_SERVER_PORT, new ServerStatsDatagramServer(serverPreferences::getIdentityName, identity));
+                .addDatagramTransactions(MysterGlobals.DEFAULT_SERVER_PORT, new ServerStatsDatagramServer(serverPreferences::getIdentityName, serverPreferences::getServerPort, identity));
 
         final HashManager hashManager = new HashManager();
         FileTypeListManager.init((f, l) -> hashManager.findHash(f, l));

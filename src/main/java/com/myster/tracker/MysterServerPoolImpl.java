@@ -72,10 +72,10 @@ public class MysterServerPoolImpl implements MysterServerPool {
                     continue;
                 }
                 
-                MysterServerImplementation mysterip = create(serverNode, identityTracker, identity.get());
-                hardLinks.add(mysterip);
-                
-                addAddressesToIdentityTracker(serverNode, mysterip.getIdentity());
+//                MysterServerImplementation mysterip = create(serverNode, identityTracker, identity.get());
+//                hardLinks.add(mysterip);
+//                
+//                addAddressesToIdentityTracker(serverNode, mysterip.getIdentity());
             }
         } catch (BackingStoreException exception) {
             // ignore
