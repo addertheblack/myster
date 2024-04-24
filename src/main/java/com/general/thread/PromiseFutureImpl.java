@@ -67,12 +67,6 @@ public class PromiseFutureImpl<T> implements PromiseFuture<T> {
 		@Override
 		public boolean setCallResult(CallResult<T> r) {
             synchronized (PromiseFutureImpl.this) {
-                if (r.isCancelled()) {
-                    cancel();
-
-                    return true;
-                }
-
                 if (isDone() || isCancelled()) {
                     return false;
                 }
