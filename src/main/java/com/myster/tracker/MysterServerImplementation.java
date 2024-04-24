@@ -177,6 +177,7 @@ class MysterServerImplementation {
         
         for (MysterAddress mysterAddress : addresses) {
             if (mysterAddress.getPort() != port) {
+                LOGGER.info("Deleting this address: " + mysterAddress);
                 server.identityProvider.removeIdentity(server.identity, mysterAddress);
             }
         }

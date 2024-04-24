@@ -13,14 +13,13 @@ import com.myster.tracker.MysterServerManager;
 
 public class PingTransport extends DatagramTransport {
     private static final short TRANSPORT_NUMBER = 20553; // 'P', 'I' in network byte order
-    private Optional<MysterServerManager> ipListManager;
+    private MysterServerManager manager;
 
-    public PingTransport(MysterServerManager ipListManager) {
-        this.ipListManager = Optional.of(ipListManager);
-    }
-    
-    public PingTransport() {
-        this(null);
+    public PingTransport(MysterServerManager manager) {
+        if (manager == null ) {
+            throw new NullPointerException("ipListManager can't be null");
+        }
+        this.manager = manager;
     }
 
     public short getTransportCode() {
@@ -35,14 +34,13 @@ public class PingTransport extends DatagramTransport {
         // The transport matcher only matches 'P' and 'I'
         new PingPacket(immutablePacket);
 
-        sender.sendPacket(PongPacket.getImmutablePacket(new MysterAddress(
-                immutablePacket.getAddress(), immutablePacket.getPort())));
+        sender.sendPacket(PongPacket
+                .getImmutablePacket(new MysterAddress(immutablePacket.getAddress(),
+                                                      immutablePacket.getPort())));
 
-        ipListManager.ifPresent(manager -> {
-            if (immutablePacket.getAddress().isSiteLocalAddress()) {
-                manager.addIp(new MysterAddress(immutablePacket.getAddress()));
-            }
-        });
+        if (immutablePacket.getAddress().isSiteLocalAddress()) {
+            manager.addIp(new MysterAddress(immutablePacket.getAddress()));
+        }
     }
 
     @Override

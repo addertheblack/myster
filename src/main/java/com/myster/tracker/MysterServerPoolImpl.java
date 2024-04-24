@@ -277,25 +277,32 @@ public class MysterServerPoolImpl implements MysterServerPool {
         return getServerFuture;
     }
 
-    private synchronized void serverStatsCallback(MysterAddress address,
+    private MysterAddress findRealAddresses(MysterAddress address, RobustMML mml) {
+        try {
+            String portString = mml.get(ServerStats.PORT);
+            if (portString != null) {
+                return address;
+            }
+            
+            int port = Integer.parseInt(portString);
+            
+            if (address.getPort() != port) {
+                LOGGER.info("Server at address " + address + " should be on port " + port
+                        + " will retry on that port");
+
+                return new MysterAddress(address.getInetAddress(), port);
+            }
+        } catch (Exception ex) {
+            ex.printStackTrace();
+        }
+
+        return address;
+    }
+
+    private synchronized void serverStatsCallback(MysterAddress addressIn,
                                                   AsyncContext<MysterServer> context,
                                                   RobustMML mml) {
-        try {
-            int port = Integer.parseInt(mml.get(ServerStats.PORT));
-            if (address.getPort() != port) {
-                suggestAddress(new MysterAddress(address.getInetAddress(), port));
-                LOGGER.info("Server at address "
-                        + address + " should be on port "
-                        + port + " will retry on that port");
-                
-                context.setResult(null);
-                return;
-            }
-
-        } catch (Exception ex) {
-            // doesn't matter
-        }
-        
+        final var address = findRealAddresses(addressIn, mml);
         
         var i = extractIdentity(address, mml);
 
@@ -307,7 +314,6 @@ public class MysterServerPoolImpl implements MysterServerPool {
             if ( s != null ) {
                 s.refreshStats(mml);
             }
-            
             
             // this is to make unit tests work - otherwise it's all async and a pain to test
             TrackerUtils.INVOKER.invoke(() -> fireNewServerEvent(s.getInterface()));
