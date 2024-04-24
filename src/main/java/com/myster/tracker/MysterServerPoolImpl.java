@@ -254,7 +254,7 @@ public class MysterServerPoolImpl implements MysterServerPool {
 
     private PromiseFuture<MysterServer> refreshMysterServer(MysterAddress address) {
         if (outstandingServerFutures.containsKey(address)) {
-            return outstandingServerFutures.get(address);
+            return outstandingServerFutures.get(address); // bug invoker already set!!!
         }
         
         PromiseFuture<MysterServer> getServerFuture = PromiseFuture.newPromiseFuture(context -> {
@@ -265,7 +265,11 @@ public class MysterServerPoolImpl implements MysterServerPool {
                         serverStatsCallback(address, context, mml);
                     }).addExceptionListener(context::setException)
                     .addExceptionListener(ex -> deadCache.addDeadAddress(address))
-                    .addFinallyListener(() -> outstandingServerFutures.remove(address));
+                    .addFinallyListener(() -> {
+                        synchronized (MysterServerPoolImpl.this) {
+                            outstandingServerFutures.remove(address);
+                        }
+                    }); // thread bug
         });
 
         outstandingServerFutures.put(address, getServerFuture);
