@@ -48,7 +48,11 @@ public class DatagramProtocolManager {
     }
 
     private TransportManager newTransportManager(int port) {
-        return new GenericTransportManager(port); //magic number;
+        var sigh = new GenericTransportManager(port); //magic number;
+        
+        sigh.initSocket();
+        
+        return sigh;
     }
 
 
@@ -152,6 +156,15 @@ public class DatagramProtocolManager {
                 ex.printStackTrace();
             }
         }
+        
+        private synchronized void initSocket() {
+            if (dsocket == null) {
+                if (System.currentTimeMillis() - lastErrorTime > 5 * 60 * 100) {
+                    dsocket = new AsyncDatagramSocket(port);
+                    dsocket.setPortListener(this);
+                }
+            }
+        }
 
         @Override
         public void close() {
@@ -174,12 +187,6 @@ public class DatagramProtocolManager {
         private static long lastErrorTime = 0;
 
         public synchronized void sendPacket(ImmutableDatagramPacket p) {
-            if (dsocket == null) {
-                if (System.currentTimeMillis() - lastErrorTime > 5 * 60 * 100) {
-                    dsocket = new AsyncDatagramSocket(port);
-                    dsocket.setPortListener(this);
-                }
-            }
             if (dsocket != null) {
                 dsocket.sendPacket(p);
             }
