@@ -328,6 +328,8 @@ class TestMysterServerPoolImpl {
         Assertions.assertEquals(serverFromCache.getServerName(), "Mr. Magoo");
         Assertions.assertEquals(serverFromCache.getUptime(), 1000);
         Assertions.assertEquals(serverFromCache.getNumberOfFiles(new MysterType("MPG3")), 42);
+        
+
     }
     
     @Test
@@ -458,6 +460,25 @@ class TestMysterServerPoolImpl {
         Assertions.assertTrue(pool.existsInPool(identityPublic));
         Assertions.assertTrue(pool.existsInPool(new MysterAddress("24.20.25.66:7000")));
         Assertions.assertFalse(pool.existsInPool(new MysterAddress("24.20.25.66:6000")));
+    }
+    
+    @Test
+    public void testToString() throws InterruptedException, UnknownHostException {
+        pool = new MysterServerPoolImpl(pref, protocol);
+        
+        List<MysterServer> captured = new ArrayList<>();
+        Semaphore sem = new Semaphore(0);
+        pool.addNewServerListener(s -> {
+            captured.add(s);
+            
+            sem.signal();
+        });
+        
+        pool.suggestAddress("24.20.25.66:7000");
+
+        sem.getLock();
+        
+        Assertions.assertNotNull(pool.getCachedMysterIp(new MysterAddress("24.20.25.66:7000")).toString());
     }
 }
 

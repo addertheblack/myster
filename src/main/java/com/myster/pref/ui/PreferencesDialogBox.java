@@ -65,6 +65,8 @@ public class PreferencesDialogBox extends MysterFrame {
         mypanel = new MainPanel();
 
         add(mypanel);
+        
+        getRootPane().setDefaultButton(mypanel.save);
 
         setResizable(false);
 
@@ -236,7 +238,7 @@ public class PreferencesDialogBox extends MysterFrame {
         }
 
         // Tells *panels* to save changes
-        public  void save() {
+        public void save() {
             Enumeration enumeration = hash.elements();
             while (enumeration.hasMoreElements()) {
                 ((PreferencesPanel) (enumeration.nextElement())).save();

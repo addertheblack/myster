@@ -291,8 +291,6 @@ public class Myster {
 
                 TrackerWindow.init(ipListManager, context);
 
-                com.myster.hash.ui.HashManagerGUI.init(context, hashManager);
-
                 ServerStatsWindow.init(serverFacade.getServerDispatcher().getServerContext(),
                                        context,
                                        protocol);
@@ -310,8 +308,6 @@ public class Myster {
                 preferencesGui.addPanel(new FmiChooser(FileTypeListManager.getInstance()));
                 preferencesGui.addPanel(new MessagePreferencesPanel(preferences));
                 preferencesGui.addPanel(new TypeManagerPreferencesGUI());
-
-                com.myster.hash.ui.HashPreferences.init(preferencesGui, hashManager);
 
                 INSTRUMENTATION.info("-------->> before inits " + (System.currentTimeMillis() - startTime));
 
