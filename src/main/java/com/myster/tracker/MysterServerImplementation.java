@@ -14,7 +14,6 @@ package com.myster.tracker;
 
 import java.net.UnknownHostException;
 import java.util.Arrays;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Optional;
 import java.util.logging.Logger;
@@ -44,7 +43,6 @@ class MysterServerImplementation {
     private int timedown;
     private NumOfFiles numberOfFiles;
     private int numberofhits;
-    private boolean upordown = true;
     private String serverName;
     private long uptime;
 
@@ -182,7 +180,6 @@ class MysterServerImplementation {
             }
         }
         
-        
         server.save();
     }
 
@@ -233,7 +230,6 @@ class MysterServerImplementation {
                                            String nof,
                                            String si,
                                            long u) {
-        upordown = true;
         speed = s;
         timeup = tu;
         timedown = td;
@@ -262,7 +258,11 @@ class MysterServerImplementation {
     }
 
     public boolean getStatus() {
-        return upordown;
+        return getBestAddress().map(a -> identityProvider.isUp(a)).orElse(false);
+    }
+    
+    public Optional<MysterAddress> getBestAddress() {
+        return identityProvider.getBestAddress(identity);
     }
 
     @Override
@@ -272,6 +272,10 @@ class MysterServerImplementation {
 
     public Optional<MysterAddress> getAddress() {
         return identityProvider.getBestAddress(identity);
+    }
+    
+    public MysterAddress[] getAddresses() {
+        return identityProvider.getAddresses(identity);
     }
 
     @Override
@@ -294,36 +298,37 @@ class MysterServerImplementation {
     }
     
     /**
-     * This private class implements the com.myster interface and allows outside objects to get
-     * vital server statistics.
+     * This private class implements the com.myster interface and allows outside
+     * objects to get vital server statistics.
      */
     private class MysterServerReference implements MysterServer {
+        @Override
         public boolean getStatus() {
             return MysterServerImplementation.this.getStatus();
         }
 
-        public boolean getStatusPassive() {
-            return upordown;
-        }
-
+        @Override
         public Optional<MysterAddress> getBestAddress() {
-            return identityProvider.getBestAddress(identity);
+            return MysterServerImplementation.this.getBestAddress();
         }
 
+        @Override
         public MysterAddress[] getAddresses() {
-            return identityProvider.getAddresses(identity);
+            return MysterServerImplementation.this.getAddresses();
         }
-        
+
+        @Override
         public MysterAddress[] getUpAddresses() {
             MysterAddress[] addresses = identityProvider.getAddresses(identity);
-            
-            return Util.filter(Arrays.asList(addresses), a -> identityProvider.isUp(a)).toArray(new MysterAddress[] {});
+
+            return Util.filter(Arrays.asList(addresses), a -> identityProvider.isUp(a))
+                    .toArray(new MysterAddress[] {});
         }
 
         /**
          * Returns the Number of Files associated with this MysterIP object.
          */
-
+        @Override
         public int getNumberOfFiles(MysterType type) {
             return MysterServerImplementation.this.getNumberOfFiles(type);
         }
@@ -331,7 +336,7 @@ class MysterServerImplementation {
         /**
          * Returns the Transfer Speed associated with this MysterIP object.
          */
-
+        @Override
         public double getSpeed() {
             return speed;
         }
@@ -340,45 +345,53 @@ class MysterServerImplementation {
          * Ranks self for "goodness" and returns the result. The Rank is for Comparison to other
          * Myster IP objects.
          */
+        @Override
         public double getRank(MysterType type) {
             int pingTime = getPingTime();
             return (SPEEDCONSTANT * Math.log(speed) //
                     + FILESCONSTANT * Math.log(getNumberOfFiles(type)) //
                     + Math.log(HITSCONSTANT + 1) * numberofhits //
-                    + UPVSDOWNCONSTANT * ((double) timeup / (double) (timeup + timedown)) //up
-                    + STATUSCONSTANT * (upordown ? 4 : 0)) //
-                    + (pingTime == -2 ? (0.1 - (double) 20000 / 2500)
+                    + UPVSDOWNCONSTANT * ((double) timeup / (double) (timeup + timedown)) // up
+                    + STATUSCONSTANT * (pingTime >= -1 ? 4 : 0)) //
+                    + (pingTime == -2 ? (0.1
+                            - (double) 20000 / 2500)
                             : (pingTime == -1 ? (0.1 - (double) 5000 / 2500)
                                     : (0.1 - (double) pingTime / 2500)));
         }
         
+        @Override
         public MysterIdentity getIdentity() {
             return identity;
         }
 
+        @Override
         public String getServerName() {
             return (serverName == null ? "Unnamed" : serverName);//(serverIdentity.length()>31?serverIdentity.substring(0,31):serverIdentity));
         }
 
+        @Override
         public int getPingTime() {
             return getBestAddress().map(a -> identityProvider.getPing(a)).orElse(-1);
         }
 
+        @Override
         public String toString() {
             return MysterServerImplementation.this.toString();
         }
 
+        @Override
         public boolean isUntried() {
             return (getPingTime() == -1);
         }
 
+        @Override
         public long getUptime() {
             return uptime;
         }
 
         @Override
         public ExternalName getExternalName() {
-            return  computeNodeNameFromIdentity(identity);
+            return computeNodeNameFromIdentity(identity);
         }
     }
 
@@ -418,23 +431,23 @@ class MysterServerImplementation {
         try {
             MML workingmml = new MML();
 
-            workingmml.put(SPEED, "" + speed);
-            workingmml.put(TIMESINCEUPDATE, "" + timeoflastupdate);
-            workingmml.put(TIMEUP, "" + timeup);
-            workingmml.put(TIMEDOWN, "" + timedown);
-            workingmml.put(NUMBEROFHITS, "" + numberofhits);
-            workingmml.put(UPTIME, "" + uptime);
+            workingmml.put("/"+SPEED, "" + speed);
+            workingmml.put("/"+TIMESINCEUPDATE, "" + timeoflastupdate);
+            workingmml.put("/"+TIMEUP, "" + timeup);
+            workingmml.put("/"+TIMEDOWN, "" + timedown);
+            workingmml.put("/"+NUMBEROFHITS, "" + numberofhits);
+            workingmml.put("/"+UPTIME, "" + uptime);
             
             if (identity != null) {
-                workingmml.put(IDENTITY_PUBLIC_KEY, ADDRESSES);
+                workingmml.put("/"+IDENTITY_PUBLIC_KEY, ADDRESSES);
             }
             
             if (serverName != null && !serverName.equals(""))
-                workingmml.put(SERVER_NAME, "" + serverName);
+                workingmml.put("/"+SERVER_NAME, "" + serverName);
 
             String s_temp = numberOfFiles.toString();
             if (!s_temp.equals(""))
-                workingmml.put(NUMBEROFFILES, numberOfFiles.toString());
+                workingmml.put("/"+NUMBEROFFILES, numberOfFiles.toString());
 
             return workingmml;
         } catch (Exception ex) {

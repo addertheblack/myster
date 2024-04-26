@@ -12,8 +12,6 @@ import com.myster.type.MysterType;
 public interface MysterServer {
     public boolean getStatus();
 
-    public boolean getStatusPassive();
-
     /**
      * @return best address to try and communicate with this server
      */

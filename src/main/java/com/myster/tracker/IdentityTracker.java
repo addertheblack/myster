@@ -120,19 +120,19 @@ public class IdentityTracker implements IdentityProvider {
             candidates = Util.filter(addresses, a -> !a.getInetAddress().isLoopbackAddress() && !ServerUtils.isLanAddress(a.getInetAddress()));
         }
         
-        for (MysterAddress mysterAddress : candidates) {
+        for (MysterAddress mysterAddress : addresses) {
             if (mysterAddress.getInetAddress().isLoopbackAddress()) {
                 return Optional.of(mysterAddress);
             }
         }
         
-        for (MysterAddress mysterAddress : candidates) {
+        for (MysterAddress mysterAddress : addresses) {
             if (ServerUtils.isLanAddress(mysterAddress.getInetAddress())) {
                 return Optional.of(mysterAddress);
             }
         }
         
-        return candidates.size() == 0 ? Optional.empty(): Optional.of(candidates.get(0));
+        return Optional.of(addresses.get(0));
     }
     
 
@@ -239,7 +239,7 @@ public class IdentityTracker implements IdentityProvider {
 
         if (refreshTime < System.currentTimeMillis() - addressState.lastPingTime) {
             addressState.pingProcess.ifPresent(PromiseFuture::cancel);
-            
+
             addressState.pingProcess = Optional.of(pinger.ping(address).clearInvoker()
                     .setInvoker(INVOKER).addStandardExceptionHandler().addResultListener(e -> {
                         updateState(addressState, e);
@@ -248,14 +248,14 @@ public class IdentityTracker implements IdentityProvider {
     }
     
     // Package protected for unit test
-    synchronized  void waitForPing(MysterAddress address) {
+    synchronized void waitForPing(MysterAddress address) {
         AddressState addressState = addressStates.get(address);
         
         addressState.pingProcess.ifPresent(f -> Util.callAndWaitNoThrows(f::get));
     }
 
     private void updateState(AddressState addressState, PingResponse pingResponse) {
-        addressState.lastPingTime = pingResponse.pingTimeMs();
+        addressState.lastPingTime = pingResponse.isTimeout() ? -2 : pingResponse.pingTimeMs();
         addressState.up = !pingResponse.isTimeout();
     }
      
