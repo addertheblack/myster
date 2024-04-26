@@ -13,3 +13,4 @@ mysterprefs.mml
 /pom.xml.versionsBackup
 /settings.json
 .vscode/*
+/.lock
