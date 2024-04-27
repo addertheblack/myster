@@ -113,8 +113,7 @@ public class MysterServerPoolImpl implements MysterServerPool {
                                                            RobustMML serverStats,
                                                            MysterIdentity identity,
                                                            MysterAddress address) {
-        identityTracker.addIdentity(identity, address);
-        var server = new MysterServerImplementation(prefs, identityTracker, serverStats, identity);
+        var server = new MysterServerImplementation(prefs, identityTracker, serverStats, identity, address);
         addToDataStructures(server);
 
         return server;
@@ -130,14 +129,6 @@ public class MysterServerPoolImpl implements MysterServerPool {
     }
 
     private synchronized void removeServer(MysterIdentity identity) {
-        if (!cache.containsKey(identity)) {
-            return;
-        }
-        
-        if (cache.get(identity).get()!= null) {
-            return;
-        }
-        
         cache.remove(identity);
         
         for (MysterAddress address : identityTracker.getAddresses(identity)) {
@@ -277,48 +268,21 @@ public class MysterServerPoolImpl implements MysterServerPool {
         return getServerFuture;
     }
 
-    private MysterAddress findRealAddresses(MysterAddress address, RobustMML mml) {
-        try {
-            String portString = mml.get(ServerStats.PORT);
-            if (portString == null) {
-                return address;
-            }
-            
-            int port = Integer.parseInt(portString);
-            
-            if (address.getPort() != port) {
-                LOGGER.info("Server at address " + address + " should be on port " + port
-                        + " will retry on that port");
-
-                return new MysterAddress(address.getInetAddress(), port);
-            }
-        } catch (Exception ex) {
-            ex.printStackTrace();
-        }
-
-        return address;
-    }
-
     private synchronized void serverStatsCallback(MysterAddress addressIn,
                                                   AsyncContext<MysterServer> context,
                                                   RobustMML mml) {
-        final var address = findRealAddresses(addressIn, mml);
+        MysterAddress address = MysterServerImplementation.extractCorrectedAddress(mml, addressIn);
         
         var i = extractIdentity(address, mml);
 
-        if (identityTracker.existsMysterIdentity(i)) {
-            identityTracker.addIdentity(i, address);
-            
-            WeakReference<MysterServerImplementation> weakReference = cache.get(i);
-            var s = weakReference != null ? weakReference.get() : null;
-            if ( s != null ) {
-                s.refreshStats(mml);
-            }
-            
+        WeakReference<MysterServerImplementation> weakReference = cache.get(i);
+        var s = weakReference != null ? weakReference.get() : null;
+        if (identityTracker.existsMysterIdentity(i) && s != null) {
+            s.refreshStats(mml, address);
+            context.setResult(s.getInterface());
+
             // this is to make unit tests work - otherwise it's all async and a pain to test
             TrackerUtils.INVOKER.invoke(() -> fireNewServerEvent(s.getInterface()));
-            
-            context.setResult(s.getInterface());
             
             return;
         }

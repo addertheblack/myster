@@ -51,4 +51,6 @@ public interface IdentityProvider {
 
 
     void removeIdentity(MysterIdentity key, MysterAddress address);
+
+    void addIdentity(MysterIdentity identity, MysterAddress address);
 }

@@ -98,27 +98,42 @@ class MysterServerImplementation {
     /**
      * Refreshes all Stats (Number of files, Speed and upordown) from the IP.
      * Blocks.
+     * @param address 
      */
     MysterServerImplementation(Preferences prefs,
                                IdentityProvider addressProvider,
                                RobustMML serverStats,
-                               MysterIdentity identity) {
+                               MysterIdentity identity, MysterAddress address) {
         preferences = prefs;
         this.identity = identity;
         this.identityProvider = addressProvider;
 
-        refreshStats(this, serverStats);
+        refreshStats(this, serverStats, address);
     }
 
     static ExternalName computeNodeNameFromIdentity(MysterIdentity key) {
         return new ExternalName(Util.getMD5Hash(key.toString()));
     }
     
-    void refreshStats(RobustMML serverStats) {
-        refreshStats(this, serverStats);
+    void refreshStats(RobustMML serverStats, MysterAddress address) {
+        refreshStats(this, serverStats, address);
+    }
+
+    public static MysterAddress extractCorrectedAddress(RobustMML serverStats,
+                                                        MysterAddress addressIn) {
+        int port = extractPort(serverStats);
+
+        return port == addressIn.getPort() ? addressIn
+                : new MysterAddress(addressIn.getInetAddress(), port);
     }
     
-    private static void refreshStats(MysterServerImplementation server,  RobustMML serverStats) {
+    private void refreshStats(MysterServerImplementation server, RobustMML serverStats, MysterAddress addressIn) {
+        int port = extractPort(serverStats);
+        
+        var address = extractCorrectedAddress(serverStats, addressIn);
+        
+        identityProvider.addIdentity(identity, address);
+        
         server.timeoflastupdate = System.currentTimeMillis();
         String temp = serverStats.get(ServerStats.SPEED);
         if (temp == null)
@@ -163,14 +178,6 @@ class MysterServerImplementation {
             server.numberOfFiles = table;
         }
         
-        int port = MysterGlobals.DEFAULT_SERVER_PORT;
-        try {
-            String portString = serverStats.get(ServerStats.PORT);
-            port = Integer.parseInt(portString);
-        } catch (Exception ex) {
-           // nothing 
-        }
-        
         var addresses = server.identityProvider.getAddresses(server.identity);
         
         for (MysterAddress mysterAddress : addresses) {
@@ -181,6 +188,17 @@ class MysterServerImplementation {
         }
         
         server.save();
+    }
+
+    private static int extractPort(RobustMML serverStats) {
+        int port = MysterGlobals.DEFAULT_SERVER_PORT;
+        try {
+            String portString = serverStats.get(ServerStats.PORT);
+            port = Integer.parseInt(portString);
+        } catch (Exception ex) {
+           // nothing 
+        }
+        return port;
     }
 
     static Optional<MysterIdentity> extractIdentity(Preferences serverPrefs, String md5HashOfIdentity) {
