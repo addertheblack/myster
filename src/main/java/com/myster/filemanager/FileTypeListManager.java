@@ -248,7 +248,7 @@ public class FileTypeListManager {
                 workinglist.add(filelist[i].getType());
         }
 
-        return workinglist.toArray(new MysterType[0]);
+        return workinglist.toArray(MysterType[]::new);
     }
 
     /**
