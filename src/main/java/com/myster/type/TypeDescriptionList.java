@@ -303,7 +303,7 @@ class DefaultTypeDescriptionList extends TypeDescriptionList {
 
             LOGGER.info("Type descriptions length " + list.size());
 
-            return list.toArray(new TypeDescription[0]);
+            return list.toArray(TypeDescription[]::new);
         } catch (Exception ex) {
             ex.printStackTrace();
             throw new RuntimeException("" + ex);

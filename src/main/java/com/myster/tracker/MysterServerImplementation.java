@@ -340,7 +340,7 @@ class MysterServerImplementation {
             MysterAddress[] addresses = identityProvider.getAddresses(identity);
 
             return Util.filter(Arrays.asList(addresses), a -> identityProvider.isUp(a))
-                    .toArray(new MysterAddress[] {});
+                    .toArray(MysterAddress[]::new);
         }
 
         /**
@@ -438,7 +438,7 @@ class MysterServerImplementation {
         String concatAddresses =
                 String.join(" ",
                             Util.map(Arrays.asList(addresses), (MysterAddress a) -> a.toString())
-                                    .toArray(new String[] {}));
+                                    .toArray(String[]::new));
         
         preferences.put(ADDRESSES, concatAddresses);
     }

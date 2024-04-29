@@ -166,7 +166,7 @@ public class MultiSourceHashSearch implements HashCrawlerManager {
         // when Myster is first started, pings have not yet run.. So if we get no up servers then
         // just use everything
         if (top.length==0) {
-            top = ipListManager.getAll(type).toArray(new MysterServer[0]);
+            top = ipListManager.getAll(type).toArray(MysterServer[]::new);
         }
 
         for (MysterServer s : top) {
