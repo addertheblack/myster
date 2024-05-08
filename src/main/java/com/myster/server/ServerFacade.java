@@ -78,7 +78,7 @@ public class ServerFacade {
             }
         }
         
-        this.operators = operatorList.toArray(new Operator[0]);
+        this.operators = operatorList.toArray(Operator[]::new);
 
         addStandardStreamConnectionSections();
         initDatagramTransports();

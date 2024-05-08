@@ -89,7 +89,7 @@ class MysterServerList {
                 servers.add(value);
             }
         }
-        return servers.toArray(new MysterServer[0]);
+        return servers.toArray(MysterServer[]::new);
     }
 
     /**

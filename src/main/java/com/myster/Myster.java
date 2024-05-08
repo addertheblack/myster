@@ -102,6 +102,9 @@ public class Myster {
         } else {
             LOGGER.info("Logging config file not set");
         }
+        
+        // this sets the look and feel to follow the light/dark app prefs on the macos
+        System.setProperty("apple.awt.application.appearance=", "system");
 
         final long startTime = System.currentTimeMillis();
 
