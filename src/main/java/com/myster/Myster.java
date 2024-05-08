@@ -93,6 +93,9 @@ public class Myster {
     public static void main(String[] args) throws IOException {
         setupLogging();
 
+        // this don't work 'cause swing don't support it.
+//        System.setProperty("apple.awt.application.appearance", "system");
+        
         String loggingConfig = System.getProperty("java.util.logging.config.file");
         if (loggingConfig != null) {
             LOGGER.info("Logging config file: " + loggingConfig);
