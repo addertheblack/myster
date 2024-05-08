@@ -8,6 +8,7 @@ import java.util.Arrays;
 import java.util.prefs.BackingStoreException;
 import java.util.prefs.Preferences;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import com.general.util.Util;
 
@@ -43,10 +44,10 @@ public class PreferencesHashCache implements HashCache {
             return null;
         }
 
-        FileHash[] hashes = Arrays.asList(keys).stream()
+        FileHash[] hashes = Stream.of(keys)
                 .filter(k -> hashesForFile.getByteArray(k, null) != null)
                 .map(k -> SimpleFileHash.buildFileHash(k, hashesForFile.getByteArray(k, new byte[0])))
-                .collect(Collectors.toUnmodifiableList()).toArray(new FileHash[0]);
+                .collect(Collectors.toUnmodifiableList()).toArray(FileHash[]::new);
         
         if ( hashes.length == 0) {
             return null;

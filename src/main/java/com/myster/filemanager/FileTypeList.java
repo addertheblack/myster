@@ -285,7 +285,7 @@ public class FileTypeList {
                 break;
         }
 
-        return results.toArray(new String[] {});
+        return results.toArray(String[]::new);
     }
 
     /**

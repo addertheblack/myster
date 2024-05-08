@@ -144,7 +144,7 @@ public class IdentityTracker implements IdentityProvider {
             return new MysterAddress[] {};
         }
         
-        return addresses.toArray(new MysterAddress[] {});
+        return addresses.toArray(MysterAddress[]::new);
     }
 
     /**

@@ -118,7 +118,7 @@ public class MSPartialFile implements AutoCloseable {
             }
         }
 
-        return msPartialFiles.toArray(new MSPartialFile[0]);
+        return msPartialFiles.toArray(MSPartialFile[]::new);
     }
 
     public static void restartDownloads(HashCrawlerManager crawlerManager, MysterFrameContext c) throws IOException {
