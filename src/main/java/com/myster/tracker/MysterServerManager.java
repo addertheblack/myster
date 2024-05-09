@@ -13,7 +13,9 @@ package com.myster.tracker;
 import java.util.List;
 import java.util.logging.Logger;
 import java.util.prefs.Preferences;
+import java.util.stream.Stream;
 
+import com.myster.client.datagram.PingResponse;
 import com.myster.net.MysterAddress;
 import com.myster.type.MysterType;
 import com.myster.type.TypeDescription;
@@ -56,9 +58,32 @@ public class MysterServerManager { // aka tracker
             assertIndex(i); // loads all lists.
         }
 
-        pool.addNewServerListener(this::addServerToAllLists);
+        pool.addServerListener(new MysterServerListener() {
+            @Override
+            public void serverRefresh(MysterServer server) {
+                addServerToAllLists(server);
+            }
+            
+            // severDeleted
+
+            @Override
+            public void serverPing(PingResponse server) {
+                // nothing
+            }
+
+            @Override
+            public void listChanged(MysterType type) {
+                // nothing
+            }
+        });
+        
+        pool.setDeadServerListener(this::notifyAllListsDeadServer);
         
         pool.clearHardLinks();
+    }
+    
+    private void notifyAllListsDeadServer(MysterIdentity identity) {
+        Stream.of(list).forEach(l -> l.notifyDeadServer(identity));
     }
 
     /**
@@ -140,9 +165,11 @@ public class MysterServerManager { // aka tracker
      *         (ip:port or domain name:port format)
      */
     public static String[] getOnRamps() {
-        String[] temp = new String[LAST_RESORT.length];
-        System.arraycopy(LAST_RESORT, 0, temp, 0, LAST_RESORT.length);
-        return temp;
+        return LAST_RESORT.clone();
+    }
+    
+    public void addServerListener(MysterServerListener l) {
+        pool.addServerListener(l);
     }
 
     /**
@@ -215,7 +242,7 @@ public class MysterServerManager { // aka tracker
      * This is a stupid routine.
      */
     private synchronized MysterServerList createNewList(int index) {
-        return new MysterServerList(tdlist[index].getType(), pool, preferences);
+        return new MysterServerList(tdlist[index].getType(), pool, preferences, pool::listChanged);
     }
 }
 

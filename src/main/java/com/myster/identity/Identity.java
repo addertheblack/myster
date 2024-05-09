@@ -36,11 +36,12 @@ import com.myster.application.MysterGlobals;
 
 public class Identity {
     private static final Logger LOGGER = Logger.getLogger(Identity.class.getName());
-    
     private static final String KEYSTORE_PASSWORD = "If I am typing this somethig is terribly wrong.";
-    
+
+    /* Package protected for unit tests */
     static final String MAIN_IDENTITY_ALIAS = "Main Identity";
     
+    /* Package protected for unit tests */
     static final String MAIN_IDENTITY_PW = "Main Identity PW";
 
     private final File keyStorePath;

@@ -6,7 +6,7 @@ import java.util.List;
 import java.util.concurrent.CancellationException;
 import java.util.concurrent.ExecutionException;
 
-class CallResult<T> {
+public class CallResult<T> {
     public static <T> CallResult<T> createResult(T value) {
         return new CallResult<T>(value, null);
     }

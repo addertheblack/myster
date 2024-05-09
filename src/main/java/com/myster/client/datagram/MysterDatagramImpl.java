@@ -19,7 +19,6 @@ import com.myster.search.MysterFileStub;
 import com.myster.transaction.TransactionEvent;
 import com.myster.transaction.TransactionListener;
 import com.myster.transaction.TransactionManager;
-import com.myster.transaction.TransactionSocket;
 import com.myster.type.MysterType;
 
 public class MysterDatagramImpl implements MysterDatagram {

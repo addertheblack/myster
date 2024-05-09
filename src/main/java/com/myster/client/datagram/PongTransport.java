@@ -47,7 +47,7 @@ public class PongTransport extends DatagramTransport {
                 if (struct != null) {
                     justBeforeDispatch(param_address, struct);
                 } else {
-                    LOGGER.fine("Got response from a ghost: " + param_address);
+                    LOGGER.fine("Got response but can't find a request that matches it: " + param_address);
                     return;
                 }
             }
@@ -71,7 +71,7 @@ public class PongTransport extends DatagramTransport {
                           ImmutableDatagramPacket immutablePacket,
                           PongItemStruct pongItem) {
         long pingTime = System.currentTimeMillis() - pongItem.timeStamp;
-
+        
         pongItem.dispatcher.fireEvent(new PingEvent(PingEvent.PING,
                                                     immutablePacket,
                                                     (int) pingTime,
@@ -143,13 +143,7 @@ public class PongTransport extends DatagramTransport {
                 if (struct != null) {
                     if (!struct.secondPing) {
                         sender.sendPacket((new PingPacket(address))
-                                .toImmutableDatagramPacket()); //send two
-                                                               // packet the
-                                                               // second time
-                        sender.sendPacket((new PingPacket(address))
-                                .toImmutableDatagramPacket()); //send two
-                                                               // packet the
-                                                               // second time
+                                .toImmutableDatagramPacket());
                         struct.secondPing = !struct.secondPing;
                         struct.timer = new Timer(new TimeoutClass(address),
                                 TIMEOUT - (curTime - struct.timeStamp)

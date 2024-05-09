@@ -3,6 +3,7 @@ package com.myster.tracker;
 import java.io.File;
 import java.net.UnknownHostException;
 import java.nio.file.Path;
+import java.util.concurrent.Semaphore;
 
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
@@ -32,13 +33,15 @@ class TestMysterServerImplementation {
     
 
     @Test
-    void test() throws UnknownHostException, MMLException {
+    void test() throws UnknownHostException, MMLException, InterruptedException {
         keystorePath = tempDir.toFile(); // Convert the Path to File, as your Identity class uses File
         identity = new Identity(keystoreFilename, keystorePath);
         
         
+        Semaphore sem = new Semaphore(0);
+        
         MapPreferences p = new MapPreferences();
-        IdentityTracker it = new IdentityTracker(a -> PromiseFuture.newPromiseFuture(new PingResponse(a, 1)));
+        IdentityTracker it = new IdentityTracker(a -> PromiseFuture.newPromiseFuture(new PingResponse(a, 1)), (_)->{ sem.release(); });
         MysterAddress address = new MysterAddress("127.0.0.1");
         
         String cleanPublicKeyString = MML.cleanString(Util.publicKeyToString(identity.getMainIdentity().get().getPublic()));
@@ -56,8 +59,20 @@ class TestMysterServerImplementation {
         MysterServerImplementation impl = new MysterServerImplementation(p, it, new RobustMML(mml), id, address);
         var addresses = impl.getAddresses();
         
-        Assertions.assertArrayEquals(addresses, new MysterAddress[]{new MysterAddress("127.0.0.1:1234")});
+        Assertions.assertArrayEquals(new MysterAddress[]{new MysterAddress("127.0.0.1:1234")}, addresses);
         
+        Assertions.assertEquals(new MysterAddress("127.0.0.1:1234"), impl.getBestAddress().get());
+        
+        MysterServer server = impl.getInterface();
+        Assertions.assertEquals("Mr. Magoo", server.getServerName()); 
+        Assertions.assertArrayEquals(new MysterAddress[]{new MysterAddress("127.0.0.1:1234")}, server.getAddresses()); 
+        Assertions.assertEquals(new MysterAddress("127.0.0.1:1234"), server.getBestAddress().get());
+//        Assertions.assertEquals("Mr. Magoo", server.getExternalName()); 
+        Assertions.assertEquals("Mr. Magoo", server.getServerName()); 
+        Assertions.assertArrayEquals(new MysterAddress[]{new MysterAddress("127.0.0.1:1234")},  server.getUpAddresses()); 
+        
+        
+        sem.acquire();
     }
 
 }

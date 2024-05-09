@@ -12,6 +12,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.TimerTask;
 import java.util.function.Consumer;
 import java.util.logging.Logger;
 import java.util.prefs.BackingStoreException;
@@ -25,6 +26,7 @@ import com.myster.client.net.MysterProtocol;
 import com.myster.mml.RobustMML;
 import com.myster.net.MysterAddress;
 import com.myster.server.stream.ServerStats;
+import com.myster.type.MysterType;
 
 /**
  * Given a string address, it returns a com.myster object. com.myster
@@ -34,6 +36,7 @@ import com.myster.server.stream.ServerStats;
  */
 public class MysterServerPoolImpl implements MysterServerPool {
     private static final Logger LOGGER = Logger.getLogger(MysterServerPoolImpl.class.getName());
+    private static final java.util.Timer timer = new java.util.Timer();
 
     // MysterIPPool stores all its ips
     private static final String PREF_NODE_NAME = "Tracker.MysterIPPool";
@@ -47,22 +50,25 @@ public class MysterServerPoolImpl implements MysterServerPool {
     private final Preferences preferences;
     private final IdentityTracker identityTracker;
 
-    private final List<Consumer<MysterServer>> listeners = new ArrayList<>();
+    private final NewGenericDispatcher<MysterServerListener> dispatcher = new NewGenericDispatcher<>(MysterServerListener.class, TrackerUtils.INVOKER);
 
-    private Map<MysterAddress, PromiseFuture<MysterServer>> outstandingServerFutures = new HashMap<>();
+    private final Map<MysterAddress, PromiseFuture<MysterServer>> outstandingServerFutures = new HashMap<>();
     
     private List<MysterServerImplementation> hardLinks = new ArrayList<>();
+    private final TimerTask task;
 
     public MysterServerPoolImpl(Preferences prefs, MysterProtocol mysterProtocol) {
         this.preferences = prefs.node(PREF_NODE_NAME);
         this.protocol = mysterProtocol;
-        LOGGER.info("Loading IPPool.....");
-        cache = new HashMap<>();
-        identityTracker = new IdentityTracker(mysterProtocol.getDatagram()::ping);
         
-        String[] dirList;
+        LOGGER.info("Loading IPPool.....");
+        
+        cache = new HashMap<>();
+        
+        identityTracker = new IdentityTracker(mysterProtocol.getDatagram()::ping, dispatcher.fire()::serverPing);
+        
         try {
-            dirList = preferences.childrenNames();
+            String[] dirList = preferences.childrenNames();
             for (String nodeName : dirList) {
                 var serverNode = preferences.node(nodeName);
                 
@@ -82,8 +88,29 @@ public class MysterServerPoolImpl implements MysterServerPool {
         }
 
         LOGGER.info("Loaded IPPool");
+        task = new TimerTask() {
+            @Override
+            public void run() {
+                refreshAllMysterServers();
+            }
+        };
+        timer.schedule(task, 10000, 1000 * 60 * 10);
     }
-    
+
+    private void refreshAllMysterServers() {
+        List<MysterAddress> copy = new ArrayList<>();
+        synchronized (this) {
+            copy = cache.values().stream()
+                    .map(WeakReference::get)
+                    .filter(s -> s != null)
+                    .map(MysterServerImplementation::getBestAddress)
+                    .map(a -> a.orElse(null))
+                    .filter(a -> a != null).toList();
+        }
+
+        copy.forEach(this::refreshMysterServerPrivate);
+    }
+
     public void clearHardLinks() {
         hardLinks.clear();
     }
@@ -93,6 +120,247 @@ public class MysterServerPoolImpl implements MysterServerPool {
         return identityTracker.getIdentityFromExternalName(externalName);
     }
 
+    @Override
+    public synchronized void addServerListener(MysterServerListener serverListener) {
+        dispatcher.addListener(serverListener);
+    }
+    
+    @Override
+    public void removeNewServerListener(MysterServerListener serverListener) {
+//        listeners.remove(serverListener);
+        throw new IllegalStateException();
+    }
+
+    @Override
+    public synchronized void suggestAddress(MysterAddress address) {
+        getMysterServer(address)
+                .addExceptionListener((e) -> LOGGER.info("Address not a server: " + address))
+                .setInvoker(TrackerUtils.INVOKER);
+    }
+
+    private static MysterIdentity extractIdentity(MysterAddress address, RobustMML serverStats) {
+        if (!serverStats.pathExists(ServerStats.IDENTITY)) {
+            return new MysterAddressIdentity(address);
+        }
+        
+        String publicKeyAsString = serverStats.get(ServerStats.IDENTITY);
+        if (publicKeyAsString == null) {
+            return new MysterAddressIdentity(address);
+        }
+
+        return Util.publicKeyFromString(publicKeyAsString)
+                .<MysterIdentity> map(PublicKeyIdentity::new)
+                .orElse(new MysterAddressIdentity(address));
+    }
+    
+    @Override
+    public synchronized void suggestAddress(String address) {
+        PromiseFutures.execute(() -> new MysterAddress(address))
+                .setInvoker(TrackerUtils.INVOKER)
+                .addResultListener(this::suggestAddress)
+                .addExceptionListener((e) -> {
+                    if (e instanceof UnknownHostException) {
+                        LOGGER.info("Could not add this address to the pool, unknown host: " + address);
+                        return;
+                    }
+                    
+                    e.printStackTrace();
+                });
+    }
+
+    @Override
+    public synchronized boolean existsInPool(MysterAddress address) {
+        return identityTracker.exists(address);
+    }
+    
+    private synchronized PromiseFuture<MysterServer> getMysterServer(MysterAddress address)  {
+        MysterIdentity identity = identityTracker.getIdentity(address);
+
+        if (identity != null) {
+            MysterServer temp = getCachedMysterServer(identity);
+
+            if (temp != null) {
+                return PromiseFuture.newPromiseFuture(temp);
+            }
+        }
+
+        if (deadCache.isDeadAddress(address) || address.getIP().equals("0.0.0.0") || address.getIP().equals("")) {
+            return PromiseFuture.newPromiseFuture(c -> c.setException(new IOException("IP is dead")));
+        }
+
+        return refreshMysterServer(address);
+    }
+
+    /**
+     * In order to avoid having thread problems the two functions below are used.
+     * They are required because the checking the index and getting the object
+     * at that index should be atomic, hence the synchronised! and the two
+     * functions (for two levels of checking
+     */
+    public synchronized MysterServer getCachedMysterServer(MysterIdentity k) {
+        MysterServerImplementation mysterip = getMysterIP(k);
+
+        if (mysterip == null)
+            return null;
+
+        return mysterip.getInterface();
+    }
+    
+    public synchronized MysterServer getCachedMysterIp(MysterAddress address) {
+        var identity = identityTracker.getIdentity(address);
+        if (identity == null) {
+            return null;
+        }
+        
+        MysterServerImplementation mysterip = getMysterIP(identity);
+
+        if (mysterip == null)
+            return null;
+
+        return mysterip.getInterface();
+    }
+
+    public boolean existsInPool(MysterIdentity k) {
+        return (getMysterIP(k) != null);
+    }
+
+    @Override
+    public void listChanged(MysterType type) {
+        dispatcher.fire().listChanged(type);
+    }
+    
+    @Override
+    public void setDeadServerListener(Consumer<MysterIdentity> listener) {
+        identityTracker.setDeadServerListener(listener);
+    }
+    
+    private void refreshMysterServerPrivate(MysterAddress address) {
+        // this is the cheapest way of convincing a Future that we don't care about the result
+        refreshMysterServer(address).addSynchronousCallback(s -> {});
+    }
+    
+    private PromiseFuture<MysterServer> refreshMysterServer(MysterAddress address) {
+        if (outstandingServerFutures.containsKey(address)) {
+            return outstandingServerFutures.get(address).clearInvoker(); // bug invoker already set!!!
+        }
+        
+        PromiseFuture<MysterServer> getServerFuture = PromiseFuture.newPromiseFuture(context -> {
+            // cancel intentionally not hooked up
+
+            protocol.getDatagram().getServerStats(address).clearInvoker()
+                    .setInvoker(TrackerUtils.INVOKER).addResultListener(mml -> {
+                        serverStatsCallback(address, context, mml);
+                    }).addExceptionListener(context::setException)
+                    .addExceptionListener(ex -> deadCache.addDeadAddress(address))
+                    .addFinallyListener(() -> {
+                        synchronized (MysterServerPoolImpl.this) {
+                            outstandingServerFutures.remove(address);
+                        }
+                    }); // thread bug
+        });
+
+        outstandingServerFutures.put(address, getServerFuture);
+
+        return getServerFuture;
+    }
+
+    private synchronized void serverStatsCallback(MysterAddress addressIn,
+                                                  AsyncContext<MysterServer> context,
+                                                  RobustMML mml) {
+        MysterAddress address = MysterServerImplementation.extractCorrectedAddress(mml, addressIn);
+        
+        var i = extractIdentity(address, mml);
+
+        WeakReference<MysterServerImplementation> weakReference = cache.get(i);
+        var s = weakReference != null ? weakReference.get() : null;
+        if (identityTracker.existsMysterIdentity(i) && s != null) {
+            if (!addressIn.equals(address)) {
+                MysterIdentity identity = identityTracker.getIdentity(addressIn);
+                
+                if (identity != null) {
+                    identityTracker.removeIdentity(identity, addressIn);
+                    identityTracker.addIdentity(s.getIdentity(), address);
+                    
+                    WeakReference<MysterServerImplementation> other = cache.get(identity);
+                    if (other!=null) {
+                        MysterServerImplementation otherServer = other.get();
+                        if (otherServer!= null) {
+                            otherServer.save();
+                        }
+                    }
+                }
+            }
+            
+            s.refreshStats(mml, address);
+            context.setResult(s.getInterface());
+
+            // this is to make unit tests work - otherwise it's all async and a pain to test
+            TrackerUtils.INVOKER.invoke(() -> dispatcher.fire().serverRefresh(s.getInterface()));
+            
+            return;
+        }
+
+        MysterServerImplementation server =
+                create(preferences.node(computeNodeNameFromIdentity(i).toString()),
+                       identityTracker,
+                       mml,
+                       i,
+                       address);
+
+        // this is crap
+        context.setResult(newOrGet(address, server));
+
+        MysterServer serverinterface = server.getInterface();
+        
+        dispatcher.fire().serverRefresh(serverinterface);
+    }
+    
+    /**
+     * Intended to be used by unit tests since we don't tend to close myster server pool impls
+     */
+    void close() {
+        identityTracker.close();
+        task.cancel();
+    }
+
+    private synchronized MysterServer newOrGet(MysterAddress address, MysterServerImplementation m) {
+        MysterIdentity key = m.getIdentity(); // possible future bugs here...
+        if (existsInPool(key)) {
+            return getCachedMysterServer(key);
+        }
+
+        return addANewMysterObjectToThePool(address, m);
+    }
+
+    /**
+     * this function adds a new IP to the MysterIPPool data structure.. It's
+     * synchronized so it's thread safe.
+     * 
+     * The function double checks to make sure that there really hasen't been
+     * another myster IP cached during the time it took to check and returns the
+     * appropriate object.
+     * @param address 
+     */
+    private synchronized MysterServer addANewMysterObjectToThePool(MysterAddress address, MysterServerImplementation ip) {
+        if (existsInPool(ip.getIdentity())) {
+            ip = getMysterIP(ip.getIdentity());
+        }
+
+        ip.save();
+        
+        return ip.getInterface();
+    }
+
+    private MysterServerImplementation getMysterIP(MysterIdentity k) {
+        var s = cache.get(k);
+
+        if (s == null) {
+            return null;
+        }
+
+        return s.get();
+    }
+    
     private MysterServerImplementation create(Preferences node,
                                               IdentityProvider identityProvider,
                                               MysterIdentity identity) {
@@ -158,225 +426,5 @@ public class MysterServerPoolImpl implements MysterServerPool {
                 });
 
         return Util.map(Util.filter(unfiltered, a -> a.isPresent()), a -> a.get());
-    }
-
-    @Override
-    public synchronized void addNewServerListener(Consumer<MysterServer> serverListener) {
-        listeners.add(serverListener);
-    }
-    
-    @Override
-    public void removeNewServerListener(Consumer<MysterServer> serverListener) {
-//        listeners.remove(serverListener);
-        throw new IllegalStateException();
-    }
-
-    @Override
-    public synchronized void suggestAddress(MysterAddress address) {
-        getMysterServer(address)
-                .addExceptionListener((e) -> LOGGER.info("Address not a server: " + address))
-                .setInvoker(TrackerUtils.INVOKER);
-    }
-
-    private void fireNewServerEvent(MysterServer mysterServer) {
-        List<Consumer<MysterServer>> l;
-        
-        synchronized (this) {
-            l = new ArrayList<>(listeners);
-        }
-        
-        for (Consumer<MysterServer> consumer : l) {
-            consumer.accept(mysterServer);
-        }
-    }
-
-    private static MysterIdentity extractIdentity(MysterAddress address, RobustMML serverStats) {
-        if (!serverStats.pathExists(ServerStats.IDENTITY)) {
-            return new MysterAddressIdentity(address);
-        }
-        
-        String publicKeyAsString = serverStats.get(ServerStats.IDENTITY);
-        if (publicKeyAsString == null) {
-            return new MysterAddressIdentity(address);
-        }
-
-        return Util.publicKeyFromString(publicKeyAsString)
-                .<MysterIdentity> map(PublicKeyIdentity::new)
-                .orElse(new MysterAddressIdentity(address));
-    }
-    
-    @Override
-    public synchronized void suggestAddress(String address) {
-        PromiseFutures.execute(() -> new MysterAddress(address))
-                .setInvoker(TrackerUtils.INVOKER)
-                .addResultListener(this::suggestAddress)
-                .addExceptionListener((e) -> {
-                    if (e instanceof UnknownHostException) {
-                        LOGGER.info("Could not add this address to the pool, unknown host: " + address);
-                        return;
-                    }
-                    
-                    e.printStackTrace();
-                });
-    }
-
-    @Override
-    public synchronized boolean existsInPool(MysterAddress address) {
-        return identityTracker.exists(address);
-    }
-    
-    public synchronized PromiseFuture<MysterServer> getMysterServer(MysterAddress address)  {
-        MysterIdentity identity = identityTracker.getIdentity(address);
-
-        if (identity != null) {
-            MysterServer temp = getCachedMysterServer(identity);
-
-            if (temp != null) {
-                return PromiseFuture.newPromiseFuture(temp);
-            }
-        }
-
-        if (deadCache.isDeadAddress(address) || address.getIP().equals("0.0.0.0") || address.getIP().equals("")) {
-            return PromiseFuture.newPromiseFuture(c -> c.setException(new IOException("IP is dead")));
-        }
-
-        return refreshMysterServer(address);
-    }
-
-    private PromiseFuture<MysterServer> refreshMysterServer(MysterAddress address) {
-        if (outstandingServerFutures.containsKey(address)) {
-            return outstandingServerFutures.get(address).clearInvoker(); // bug invoker already set!!!
-        }
-        
-        PromiseFuture<MysterServer> getServerFuture = PromiseFuture.newPromiseFuture(context -> {
-            // cancel intentionally not hooked up
-
-            protocol.getDatagram().getServerStats(address).clearInvoker()
-                    .setInvoker(TrackerUtils.INVOKER).addResultListener(mml -> {
-                        serverStatsCallback(address, context, mml);
-                    }).addExceptionListener(context::setException)
-                    .addExceptionListener(ex -> deadCache.addDeadAddress(address))
-                    .addFinallyListener(() -> {
-                        synchronized (MysterServerPoolImpl.this) {
-                            outstandingServerFutures.remove(address);
-                        }
-                    }); // thread bug
-        });
-
-        outstandingServerFutures.put(address, getServerFuture);
-
-        return getServerFuture;
-    }
-
-    private synchronized void serverStatsCallback(MysterAddress addressIn,
-                                                  AsyncContext<MysterServer> context,
-                                                  RobustMML mml) {
-        MysterAddress address = MysterServerImplementation.extractCorrectedAddress(mml, addressIn);
-        
-        var i = extractIdentity(address, mml);
-
-        WeakReference<MysterServerImplementation> weakReference = cache.get(i);
-        var s = weakReference != null ? weakReference.get() : null;
-        if (identityTracker.existsMysterIdentity(i) && s != null) {
-            s.refreshStats(mml, address);
-            context.setResult(s.getInterface());
-
-            // this is to make unit tests work - otherwise it's all async and a pain to test
-            TrackerUtils.INVOKER.invoke(() -> fireNewServerEvent(s.getInterface()));
-            
-            return;
-        }
-
-        MysterServerImplementation server =
-                create(preferences.node(computeNodeNameFromIdentity(i).toString()),
-                       identityTracker,
-                       mml,
-                       i,
-                       address);
-
-        // this is crap
-        context.setResult(newOrGet(address, server));
-
-        MysterServer serverinterface = server.getInterface();
-        
-        TrackerUtils.INVOKER.invoke(() -> fireNewServerEvent(serverinterface));
-    }
-
-    /**
-     * In order to avoid having thread problems the two functions below are used.
-     * They are required because the checking the index and getting the object
-     * at that index should be atomic, hence the synchronised! and the two
-     * functions (for two levels of checking
-     */
-    public synchronized MysterServer getCachedMysterServer(MysterIdentity k) {
-        MysterServerImplementation mysterip = getMysterIP(k);
-
-        if (mysterip == null)
-            return null;
-
-        return mysterip.getInterface();
-    }
-    
-    public synchronized MysterServer getCachedMysterIp(MysterAddress address) {
-        var identity = identityTracker.getIdentity(address);
-        if (identity == null) {
-            return null;
-        }
-        
-        MysterServerImplementation mysterip = getMysterIP(identity);
-
-        if (mysterip == null)
-            return null;
-
-        return mysterip.getInterface();
-    }
-
-    public boolean existsInPool(MysterIdentity k) {
-        return (getMysterIP(k) != null);
-    }
-
-    private synchronized MysterServer newOrGet(MysterAddress address, MysterServerImplementation m) {
-        MysterIdentity key = m.getIdentity(); // possible future bugs here...
-        if (existsInPool(key)) {
-            return getCachedMysterServer(key);
-        }
-
-        return addANewMysterObjectToThePool(address, m);
-    }
-
-    /**
-     * this function adds a new IP to the MysterIPPool data structure.. It's
-     * synchronized so it's thread safe.
-     * 
-     * The function double checks to make sure that there really hasen't been
-     * another myster IP cached during the time it took to check and returns the
-     * appropriate object.
-     * @param address 
-     */
-    private synchronized MysterServer addANewMysterObjectToThePool(MysterAddress address, MysterServerImplementation ip) {
-        if (existsInPool(ip.getIdentity())) {
-            ip = getMysterIP(ip.getIdentity());
-        }
-
-        ip.save();
-        
-        return ip.getInterface();
-    }
-
-    private MysterServerImplementation getMysterIP(MysterIdentity k) {
-        var s = cache.get(k);
-
-        if (s == null) {
-            return null;
-        }
-
-        return s.get();
-    }
-    
-    /**
-     * Intended to be used by unit tests since we don't tend to close myster server pool impls
-     */
-    void close() {
-        identityTracker.close();
     }
 }

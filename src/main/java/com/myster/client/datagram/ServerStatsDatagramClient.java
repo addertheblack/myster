@@ -13,6 +13,7 @@ public class ServerStatsDatagramClient implements StandardDatagramClientImpl<Rob
     public static final int SERVER_STATS_TRANSACTION_CODE = 101;
 
     // returns RobustMML
+    @SuppressWarnings("resource")
     public RobustMML getObjectFromTransaction(Transaction transaction)
             throws IOException {
         // gets the byte[] puts it into a ByteArrayInputStream and puts THAT
@@ -20,9 +21,9 @@ public class ServerStatsDatagramClient implements StandardDatagramClientImpl<Rob
         // DataInputStream then gets a UTF string and puts that into a RobustMML
         // constructor..
         // yeah baby... :-)
-        try {
-            return new RobustMML((new MysterDataInputStream(new ByteArrayInputStream(transaction
-                    .getData()))).readUTF());
+        try (MysterDataInputStream in =
+                new MysterDataInputStream(new ByteArrayInputStream(transaction.getData()))) {
+            return new RobustMML(in.readUTF());
         } catch (MMLException ex) {
             throw new com.myster.net.BadPacketException("Recieved a badly formed MML string from the server : "
                     + transaction.getAddress() + " & " + ex);
