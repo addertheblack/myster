@@ -14,6 +14,8 @@ import java.awt.event.WindowEvent;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.stream.Stream;
 
 import javax.swing.JLabel;
 import javax.swing.JPanel;
@@ -24,26 +26,30 @@ import com.general.mclist.MCListItemInterface;
 import com.general.mclist.Sortable;
 import com.general.mclist.SortableLong;
 import com.general.mclist.SortableString;
-import com.general.util.TimerThread;
+import com.general.util.Timer;
+import com.general.util.Util;
+import com.myster.client.datagram.PingResponse;
 import com.myster.net.MysterAddress;
-import com.myster.tracker.MysterServerManager;
 import com.myster.tracker.MysterServer;
+import com.myster.tracker.MysterServerListener;
+import com.myster.tracker.MysterServerManager;
 import com.myster.type.MysterType;
 import com.myster.ui.MysterFrame;
 import com.myster.ui.MysterFrameContext;
 import com.myster.util.TypeChoice;
 
 public class TrackerWindow extends MysterFrame {
-    private static TrackerWindow me;// = new TrackerWindow();
+    private static TrackerWindow me;
 
-    private MyThread updater;
     private MCList<TrackerMCListItem> list;
     private TypeChoice choice;
     private GridBagLayout gblayout;
     private GridBagConstraints gbconstrains;
-
-    private static com.myster.ui.WindowLocationKeeper keeper = new com.myster.ui.WindowLocationKeeper(
-            "Tracker");
+    
+    private Timer timer = null;
+    
+    private static com.myster.ui.WindowLocationKeeper keeper =
+            new com.myster.ui.WindowLocationKeeper("Tracker");
 
     private static MysterServerManager ipListManager;
 
@@ -91,7 +97,6 @@ public class TrackerWindow extends MysterFrame {
         //Add Event handlers
 
         //other stuff
-
         list.setColumnName(0, "Server Name");
         list.setColumnName(1, "# Files");
         list.setColumnName(2, "Status");
@@ -107,29 +112,56 @@ public class TrackerWindow extends MysterFrame {
         list.setColumnWidth(4, 70);
         list.setColumnWidth(5, 70);
         list.setColumnWidth(6, 70);
-        //loadList();
 
         addWindowListener(new MyWindowHandler());
         list.addMCListEventListener(new OpenConnectionHandler(c));
 
         choice.addItemListener(new ChoiceListener());
 
-        updater = new MyThread();
-        //updater.start();
-
         setSize(600, 400);
         setTitle("Tracker");
-        addComponentListener(new ComponentAdapter() {
-            public void componentShown(ComponentEvent e) {
-                updater.flagToEnd();
-                updater = new MyThread();
-                updater.start();
+        
+        ipListManager.addServerListener(new MysterServerListener() {
+            final AtomicBoolean dirty = new AtomicBoolean(false);
+            
+            @Override
+            public void serverRefresh(MysterServer server) {
+                Util.invokeLater(TrackerWindow.this::resetTimer);
             }
 
-            public void componentHidden(ComponentEvent e) {
-                updater.flagToEnd();
+            @Override
+            public void serverPing(PingResponse server) {
+                Util.invokeLater(TrackerWindow.this::resetTimer);          
+            }
+
+            @Override
+            public void listChanged(MysterType type) {
+                dirty.set(true);
+                Util.invokeLater(() -> {
+                    if (type.equals(getMysterType()) && dirty.compareAndSet(true, false)) {
+                        loadList();
+                    }
+                });
             }
         });
+        
+        addComponentListener(new ComponentAdapter() {
+            public void componentShown(ComponentEvent e) {
+                refreshTheList();
+            }
+        });
+    }
+    
+    private void resetTimer() {
+        if (!list.getPane().isShowing()) {
+            return;
+        }
+        
+        if (timer != null) {
+            return;
+        }
+        
+        timer = new Timer(this::refreshTheList, 2000);
     }
 
     public void show() {
@@ -212,27 +244,10 @@ public class TrackerWindow extends MysterFrame {
             (itemsinlist.get(i)).refresh();
         }
         list.repaint();
-    }
-
-    /**
-     * This thread is responsible for keeping the tracker window updated. It does so by polling the
-     * IPListManager repeatedly. Every once in a while it reloads the information completely.
-     */
-    private class MyThread extends TimerThread {
-        private long counter = 0;
-
-        public MyThread() {
-            super(5000);
-        }
-
-        public void run() {
-            counter++;
-            if (counter % 6 == 5) {
-                loadList();
-                counter = 0;
-            } else {
-                refreshTheList();
-            }
+        
+        if (timer != null) {
+            timer.cancelTimer();
+            timer = null;
         }
     }
 
@@ -269,23 +284,16 @@ public class TrackerWindow extends MysterFrame {
         }
 
         public void refresh() {
-//            if (manager.getQuickServerStats(server.getAddress()) == null) {
-//                sortables[0] = new SortableString("" + server.getAddress());
-//                sortables[1] = new SortableLong(0);
-//                sortables[2] = new SortableStatus(false, true);
-//                sortables[3] = new SortableString("" + server.getAddress());
-//                sortables[4] = new SortablePing(-1);
-//                sortables[5] = new SortableRank(-1);
-//                sortables[6] = new SortableUptime(-1);
-//            } else {
-                sortables[0] = new SortableString(server.getServerName());
-                sortables[1] = new SortableLong(server.getNumberOfFiles(type));
-                sortables[2] = new SortableStatus(server.getStatus(), server.isUntried());
-                sortables[3] = new SortableString("" + Arrays.asList(server.getAddresses()));
-                sortables[4] = new SortablePing(server.getPingTime());
-                sortables[5] = new SortableRank(((long) (100 * server.getRank(type))));
-                sortables[6] = new SortableUptime((server.getStatus() ? server.getUptime() : -2));
-//            }
+            sortables[0] = new SortableString(server.getServerName());
+            sortables[1] = new SortableLong(server.getNumberOfFiles(type));
+            sortables[2] = new SortableStatus(server.getStatus(), server.isUntried());
+            sortables[3] = new SortableString("" + String.join(", ",
+                                                               Stream.of(server.getAddresses())
+                                                                       .map(Object::toString)
+                                                                       .toArray(String[]::new)));
+            sortables[4] = new SortablePing(server.getPingTime());
+            sortables[5] = new SortableRank(((long) (100 * server.getRank(type))));
+            sortables[6] = new SortableUptime((server.getStatus() ? server.getUptime() : -2));
         }
 
         public TrackerMCListItem getObject() {

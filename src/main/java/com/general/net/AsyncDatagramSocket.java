@@ -22,7 +22,7 @@ public final class AsyncDatagramSocket {
     private final SocketRunner socketRunner;
     private final ByteBuffer readBuffer = ByteBuffer.allocate(BIG_BUFFER);
     private final int port;
-    private final Invoker invoker = Invoker.EDT;
+    private final Invoker invoker = Invoker.newVThreadInvoker();
 
     private volatile int usedPort = -1;
     
@@ -66,49 +66,62 @@ public final class AsyncDatagramSocket {
 
         @Override
         public void run() {
+            try {
+                int counter = 0;
+                
+                counter = loop(counter);
+                
+                final int p = usedPort;
+                usedPort = -2;
 
-            int counter = 0;
+                if (counter >= 3) {
+                    LOGGER.fine("Closing AsyncDatagramSocket on " + p
+                            + " giving up due to too many errors...");
+                }
+
+                LOGGER.fine("Closing AsyncDatagramSocket on " + p + "...");
+            } finally {
+                invoker.shutdown();
+            }
+        }
+
+        private int loop(int counter) {
             for (; counter < 3; counter++) {
-                try (DatagramChannel channel = DatagramChannel.open(); Selector s = Selector.open()) {
+                try (DatagramChannel channel = DatagramChannel.open();
+                        Selector s = Selector.open()) {
                     selector = s;
                     channel.bind(new InetSocketAddress(port));
                     channel.configureBlocking(false);
                     channel.register(selector, SelectionKey.OP_READ);
                     usedPort = ((InetSocketAddress) channel.getLocalAddress()).getPort();
-                    LOGGER.fine("Opened DatagramChannel on UDP port " + usedPort + (port != usedPort ? " (a random port) " : ""));
+                    LOGGER.fine("Opened DatagramChannel on UDP port " + usedPort
+                            + (port != usedPort ? " (a random port) " : ""));
 
                     mainLoop(channel);
-                    
-                    // OK, so we've completed without error.. Skip the rest of the loop and end.
+
+                    // OK, so we've completed without error.. Skip the rest
+                    // of the loop and end.
                     break;
                 } catch (IOException ex) {
                     LOGGER.warning("Failed to open DatagramChannel on port " + port + ": "
                             + ex.getMessage());
                     usedPort = -2;
-                    
+
                     try {
                         /*
-                         * Wait a bit before trying again. This is to prevent a
-                         * condition where there is an error because the
-                         * previous instance of this AsyncDatagramSocket is
-                         * still closing because it is closed by this thread
-                         * asynchronously.
+                         * Wait a bit before trying again. This is to
+                         * prevent a condition where there is an error
+                         * because the previous instance of this
+                         * AsyncDatagramSocket is still closing because it
+                         * is closed by this thread asynchronously.
                          */
-                        Thread.sleep(10 * (long)Math.pow(10, counter));
+                        Thread.sleep(10 * (long) Math.pow(10, counter));
                     } catch (InterruptedException exception) {
                         exception.printStackTrace();
                     }
                 }
             }
-            final int p = usedPort;
-            usedPort = -2;
-
-            if (counter >= 3) {
-                LOGGER.fine("Closing AsyncDatagramSocket on " + p
-                        + " giving up due to too many errors...");
-            }
-
-            LOGGER.fine("Closing AsyncDatagramSocket on " + p + "...");
+            return counter;
         }
 
         private void mainLoop(DatagramChannel channel) throws IOException {

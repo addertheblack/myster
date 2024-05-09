@@ -14,6 +14,7 @@ package com.myster.tracker;
 import java.util.function.Consumer;
 
 import com.myster.net.MysterAddress;
+import com.myster.type.MysterType;
 
 /**
  * This class exists to make sure that if a server is listed under many
@@ -54,11 +55,18 @@ public interface MysterServerPool {
      * @param server
      *            that has just been discovered
      */
-    void addNewServerListener(Consumer<MysterServer> server);
-    void removeNewServerListener(Consumer<MysterServer> server);
+    void addServerListener(MysterServerListener listener);
+    void removeNewServerListener(MysterServerListener listener);
     
     /**
      * When it's done loading call this
      */
     void clearHardLinks();
+    
+    /**
+     * Notify
+     */
+    void listChanged(MysterType type);
+    
+    void setDeadServerListener(Consumer<MysterIdentity> l);
 }

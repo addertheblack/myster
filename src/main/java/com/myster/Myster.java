@@ -206,17 +206,17 @@ public class Myster {
                                        new MysterDatagramImpl(transactionManager,
                                                               new UDPPingClient(datagramManager)));
 
-        INSTRUMENTATION.info("-------->> before IPListManager " + (System.currentTimeMillis() - startTime));
+        INSTRUMENTATION.info("-------->> before IPListManager "
+                + (System.currentTimeMillis() - startTime));
         MysterServerManager ipListManager =
-                new MysterServerManager(new MysterServerPoolImpl(java.util.prefs.Preferences.userRoot(),
-                                                       protocol),
-                                  java.util.prefs.Preferences.userRoot()
-                                          .node("Tracker.IpListManager"));
-        INSTRUMENTATION.info("-------->> after IPListManager " + (System.currentTimeMillis() - startTime));
+                new MysterServerManager(new MysterServerPoolImpl(Preferences.userRoot(), protocol),
+                                        Preferences.userRoot().node("Tracker.IpListManager"));
+        INSTRUMENTATION
+                .info("-------->> after IPListManager " + (System.currentTimeMillis() - startTime));
 
         Preferences serverPreferenceNodes = Preferences.userRoot().node("Myster Server Preferences");
         ServerPreferences serverPreferences = new ServerPreferences(serverPreferenceNodes);
-        
+
         final HashCrawlerManager crawlerManager =
                 new MultiSourceHashSearch(ipListManager, protocol);
         ClientWindow.init(protocol, crawlerManager, ipListManager, serverPreferences);
@@ -232,12 +232,17 @@ public class Myster {
                 .addDatagramTransactions(new TopTenDatagramServer(ipListManager),
                                          new TypeDatagramServer(),
                                          new SearchDatagramServer(),
-                                         new ServerStatsDatagramServer(serverPreferences::getIdentityName, serverPreferences::getServerPort , identity),
+                                         new ServerStatsDatagramServer(serverPreferences::getIdentityName,
+                                                                       serverPreferences::getServerPort,
+                                                                       identity),
                                          new FileStatsDatagramServer(),
                                          new SearchHashDatagramServer());
 
         serverFacade
-                .addDatagramTransactions(MysterGlobals.DEFAULT_SERVER_PORT, new ServerStatsDatagramServer(serverPreferences::getIdentityName, serverPreferences::getServerPort, identity));
+                .addDatagramTransactions(MysterGlobals.DEFAULT_SERVER_PORT,
+                                         new ServerStatsDatagramServer(serverPreferences::getIdentityName,
+                                                                       serverPreferences::getServerPort,
+                                                                       identity));
 
         final HashManager hashManager = new HashManager();
         FileTypeListManager.init((f, l) -> hashManager.findHash(f, l));

@@ -10,6 +10,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Optional;
+import java.util.function.Consumer;
 import java.util.logging.Logger;
 
 import com.general.thread.PromiseFuture;
@@ -32,16 +33,23 @@ public class IdentityTracker implements IdentityProvider {
     private final Map<MysterAddress, AddressState> addressStates = new HashMap<>();
     private final Map<MysterAddress, MysterIdentity> addressToIdentity = new HashMap<>();
     private final Map<MysterIdentity, List<MysterAddress>> identityToAddresses = new HashMap<>();
+    
+    private final Consumer<PingResponse> pingListener;
 
     private final Pinger pinger;
     
     private Timer timer;
+    private Consumer<MysterIdentity> deadServerListener;
     
     /**
-     * @param pinger is responsible for "pinging" servers to check if they are up or down
+     * @param pinger
+     *            is responsible for "pinging" servers to check if they are up
+     *            or down
      */
-    public IdentityTracker(Pinger pinger) {
+    public IdentityTracker(Pinger pinger,
+                           Consumer<PingResponse> pingListener) {
         this.pinger = pinger;
+        this.pingListener = pingListener;
     }
     
     @Override
@@ -116,23 +124,27 @@ public class IdentityTracker implements IdentityProvider {
         
         if (candidates.isEmpty()) {
             // If the server is down we should only check the public address since that is the
-            // most likely to be reachable if our laptop is not longer on the LAN
-            candidates = Util.filter(addresses, a -> !a.getInetAddress().isLoopbackAddress() && !ServerUtils.isLanAddress(a.getInetAddress()));
+            // most likely to be reachable if our laptop is not longer on the LAN (or loopback)
+            candidates = Util.filter(addresses, a -> !ServerUtils.isLanAddress(a.getInetAddress()));
         }
         
-        for (MysterAddress mysterAddress : addresses) {
+        for (MysterAddress mysterAddress : candidates) {
             if (mysterAddress.getInetAddress().isLoopbackAddress()) {
                 return Optional.of(mysterAddress);
             }
         }
         
-        for (MysterAddress mysterAddress : addresses) {
+        for (MysterAddress mysterAddress : candidates) {
             if (ServerUtils.isLanAddress(mysterAddress.getInetAddress())) {
                 return Optional.of(mysterAddress);
             }
         }
         
-        return Optional.of(addresses.get(0));
+        if(candidates.isEmpty()) {
+            return Optional.empty();
+        }
+        
+        return Optional.of(candidates.get(0));
     }
     
 
@@ -187,10 +199,10 @@ public class IdentityTracker implements IdentityProvider {
 
         AddressState addressState = new AddressState();
         addressStates.put(address, addressState);
-        
+
         refreshElementIfNeeded(address, addressState);
     }
-    
+
     private void resetTimer() {
         if (timer != null) {
             timer.cancelTimer();
@@ -215,6 +227,11 @@ public class IdentityTracker implements IdentityProvider {
             if(addresses.size()==0) {
                 externalNameToIdentity.remove(computeNodeNameFromIdentity(key));
                 identityToAddresses.remove(key);
+
+                var l = deadServerListener;
+                if (l != null) {
+                    INVOKER.invoke(() -> l.accept(key));
+                }
             }
         }
     }
@@ -242,16 +259,25 @@ public class IdentityTracker implements IdentityProvider {
 
             addressState.pingProcess = Optional.of(pinger.ping(address).clearInvoker()
                     .setInvoker(INVOKER).addStandardExceptionHandler().addResultListener(e -> {
-                        updateState(addressState, e);
+                        Consumer<PingResponse> l;
+                        synchronized (IdentityTracker.this) {
+                            updateState(addressState, e);
+                            l = pingListener;
+                        }
+                        l.accept(e);
                     }));
         }
     }
-    
+
     // Package protected for unit test
-    synchronized void waitForPing(MysterAddress address) {
-        AddressState addressState = addressStates.get(address);
+    void waitForPing(MysterAddress address) throws InterruptedException {
+        synchronized (this) {
+            AddressState addressState = addressStates.get(address);
+
+            addressState.pingProcess.ifPresent(f -> Util.callAndWaitNoThrows(f::get));
+        }
         
-        addressState.pingProcess.ifPresent(f -> Util.callAndWaitNoThrows(f::get));
+        INVOKER.waitForThread();
     }
 
     private void updateState(AddressState addressState, PingResponse pingResponse) {
@@ -273,5 +299,9 @@ public class IdentityTracker implements IdentityProvider {
         if (timer != null) {
             timer.cancelTimer();
         }
+    }
+
+    synchronized void setDeadServerListener(Consumer<MysterIdentity> listener) {
+        deadServerListener = listener;
     }
 }

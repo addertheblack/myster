@@ -1,6 +1,7 @@
 
 package com.general.thread;
 
+import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.atomic.AtomicBoolean;
 
@@ -24,6 +25,23 @@ public interface Invoker {
         }
     };
     
+    public static Invoker SYNCHRONOUS = new Invoker() {
+        @Override
+        public void invoke(Runnable r) {
+            SwingUtilities.invokeLater(r);
+        }
+
+        @Override
+        public boolean isInvokerThread() {
+            return true;
+        }
+
+        @Override
+        public void shutdown() {
+            throw new UnsupportedOperationException();
+        }
+    };
+    
     static final Thread.Builder BUILDER = Thread.ofVirtual().name("Invoker", 0);
     public static Invoker newVThreadInvoker() {
         final LinkedBlockingQueue<Runnable> queue = new LinkedBlockingQueue<>();
@@ -33,10 +51,9 @@ public interface Invoker {
                 try {
                     Runnable r = queue.take();
                     r.run();
-                } catch (Exception ex) {
+                } catch (Throwable ex) {
                     ex.printStackTrace();
                 }
-                
             }
         });
         
@@ -71,4 +88,14 @@ public interface Invoker {
     public boolean isInvokerThread();
     
     public void shutdown();
+    
+    default void waitForThread() throws InterruptedException {
+        CountDownLatch latch = new CountDownLatch(1);
+        
+        this.invoke(() -> {
+            latch.countDown();  
+        });
+        
+        latch.await();
+    }
 }

@@ -1214,6 +1214,13 @@ keys for myster types.
     Fix blank p2p window to connect to the correct port for myself
     Myster should automatically detect other nodes on the LAN and add them to the tracker EVEN if
     LAN network broadcast is broken - ie broadcast address isn't sent across wi-fi and LAN segments 
+    
+2024-05-08
+    Move AsyncDatagramSocket to fire events on its own thread not EDT.
+    Delete MysterServers that have no addresses from the identity tracker.
+    Fire event when deleting happens
+    Remove these MysterServer from server lists when this happens
+    Fixed very old bug in server stats where MML is blank of exception when ServerStats structure is computed
 
 	
 

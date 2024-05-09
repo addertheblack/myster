@@ -21,6 +21,7 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.StringTokenizer;
+import java.util.function.Consumer;
 import java.util.logging.Logger;
 import java.util.prefs.BackingStoreException;
 import java.util.prefs.Preferences;
@@ -35,17 +36,20 @@ class MysterServerList {
     private final Map<MysterIdentity, MysterServer> mapOfServers = new LinkedHashMap<>();
     private final MysterType type;
     private final Preferences preferences;
+    private final Consumer<MysterType> listChanged;
     
     private MysterServer worstRank = null;
     private long worstTime = 0;
+
 
     /**
      * Takes as an argument a list of strings.. These strings are the .toString() product of
      * com.myster objects.
      * @param preferences 
      */
-    MysterServerList(MysterType type, MysterServerPool pool, Preferences preferences) {
+    MysterServerList(MysterType type, MysterServerPool pool, Preferences preferences, Consumer<MysterType> listChanged) {
         this.preferences = preferences;
+        this.listChanged = listChanged;
 
         String s = preferences.get(type.toString(), "");
         StringTokenizer externalNames = new StringTokenizer(s);
@@ -123,7 +127,6 @@ class MysterServerList {
         try {
             preferences.flush();
         } catch (BackingStoreException exception) {
-            // TODO Auto-generated catch block
             exception.printStackTrace();
         }
         
@@ -155,12 +158,12 @@ class MysterServerList {
         mapOfServers.put(ip.getIdentity(), ip);
         sort();
         save();
+        
+        listChanged.accept(type);
     }
 
     private synchronized void sort() {
         List<MysterServer> servers = new ArrayList<>(mapOfServers.values());
-        
-        
         
         // Take a snapshot of the ranks before sorting.
         // getRank() is not stable across invocations. 
@@ -187,4 +190,10 @@ class MysterServerList {
         }
     }
 
+    synchronized void notifyDeadServer(MysterIdentity identity) {
+        if (mapOfServers.remove(identity) != null) {
+            save();
+            listChanged.accept(type);
+        }
+    }
 }

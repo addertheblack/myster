@@ -49,15 +49,15 @@ public class ServerStats extends ServerThread {
     }
 
     public void section(ConnectionContext context) throws IOException {
-        context.socket.out.writeUTF("" + getMMLToSend(getServerName.get(), getPort.get(), identity));
+        MML mmlToSend = getMMLToSend(getServerName.get(), getPort.get(), identity);
+        context.socket.out.writeUTF("" + mmlToSend);
     }
 
     //Returns an MML that would be send as a string via a Handshake.
     public static MML getMMLToSend(String identityName, int port, Identity identity) {
         try {
             MML mml = new MML();
-            MysterPreferences prefs;
-            prefs = MysterPreferences.getInstance();
+            MysterPreferences prefs = MysterPreferences.getInstance();
 
             String tempstring = prefs.query(com.myster.application.MysterGlobals.SPEEDPATH);
             if (!(tempstring.equals(""))) {
@@ -65,15 +65,6 @@ public class ServerStats extends ServerThread {
             }
 
             mml.put(MYSTER_VERSION, "1.0");
-
-//            tempstring = prefs.query(com.myster.application.MysterGlobals.ADDRESSPATH);
-//            if (!(tempstring.equals(""))) { // If there is no value for the
-//                                            // address it doesn't send this
-//                                            // info.
-//                mml.put(ADDRESS, tempstring); //Note: "" is no data. see qweryValue();
-//            }
-            
-//            prefs.query(com.myster.application.MysterGlobals.DEFAULT_SERVER_PORT);
 
             getNumberOfFilesMML(mml); //Adds the number of files data.
 
@@ -101,7 +92,7 @@ public class ServerStats extends ServerThread {
             return mml;
         } catch (Exception ex) {
             ex.printStackTrace();
-            return null;
+            throw new IllegalStateException(ex);
         }
 
     }

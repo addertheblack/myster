@@ -11,6 +11,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
+import java.util.function.Consumer;
 import java.util.logging.Logger;
 import java.util.prefs.Preferences;
 
@@ -170,11 +171,11 @@ class TestMysterServerPoolImpl {
 
         Object[] moo = new Object[1];
         CountDownLatch latch = new CountDownLatch(1);
-        pool.addNewServerListener(s -> {
+        pool.addServerListener(convert(s -> {
             moo[0] = s;
 
             latch.countDown();
-        });
+        }));
 
         pool.suggestAddress("127.0.0.1");
 
@@ -218,11 +219,11 @@ class TestMysterServerPoolImpl {
         
         Object[] moo = new Object[1];
         Semaphore sem = new Semaphore(0);
-        pool.addNewServerListener(s -> {
+        pool.addServerListener(convert(s -> {
             moo[0] = s;
             
             sem.signal();
-        });
+        }));
         
         pool.suggestAddress("127.0.0.1");
         sem.getLock();
@@ -256,11 +257,11 @@ class TestMysterServerPoolImpl {
         
         List<MysterServer> captured = new ArrayList<>();
         Semaphore sem = new Semaphore(0);
-        pool.addNewServerListener(s -> {
+        pool.addServerListener(convert(s -> {
             captured.add(s);
             
             sem.signal();
-        });
+        }));
         
         pool.suggestAddress("192.168.1.2");
         
@@ -290,11 +291,11 @@ class TestMysterServerPoolImpl {
         
         List<MysterServer> captured = new ArrayList<>();
         Semaphore sem = new Semaphore(0);
-        pool.addNewServerListener(s -> {
+        pool.addServerListener(convert(s -> {
             captured.add(s);
             
             sem.signal();
-        });
+        }));
         
         pool.suggestAddress("127.0.0.1");
         pool.suggestAddress("192.168.1.2");
@@ -334,11 +335,11 @@ class TestMysterServerPoolImpl {
         
         List<MysterServer> captured = new ArrayList<>();
         Semaphore sem = new Semaphore(0);
-        pool.addNewServerListener(s -> {
+        pool.addServerListener(convert(s -> {
             captured.add(s);
             
             sem.signal();
-        });
+        }));
         
         pool.suggestAddress("127.0.0.1");
         pool.suggestAddress("192.168.1.2");
@@ -375,11 +376,11 @@ class TestMysterServerPoolImpl {
         
         List<MysterServer> captured = new ArrayList<>();
         Semaphore sem = new Semaphore(0);
-        pool.addNewServerListener(s -> {
+        pool.addServerListener(convert(s -> {
             captured.add(s);
             
             sem.signal();
-        });
+        }));
         
         pool.suggestAddress("127.0.0.1");
         
@@ -411,11 +412,11 @@ class TestMysterServerPoolImpl {
         
         List<MysterServer> captured = new ArrayList<>();
         Semaphore sem = new Semaphore(0);
-        pool.addNewServerListener(s -> {
+        pool.addServerListener(convert(s -> {
             captured.add(s);
             
             sem.signal();
-        });
+        }));
         
         pool.suggestAddress("24.20.25.66:6000");
         
@@ -437,11 +438,11 @@ class TestMysterServerPoolImpl {
         
         List<MysterServer> captured = new ArrayList<>();
         Semaphore sem = new Semaphore(0);
-        pool.addNewServerListener(s -> {
+        pool.addServerListener(convert(s -> {
             captured.add(s);
             
             sem.signal();
-        });
+        }));
         
         pool.suggestAddress("24.20.25.66:7000");
         pool.suggestAddress("24.20.25.66:7000");
@@ -464,16 +465,37 @@ class TestMysterServerPoolImpl {
         
         List<MysterServer> captured = new ArrayList<>();
         Semaphore sem = new Semaphore(0);
-        pool.addNewServerListener(s -> {
+        pool.addServerListener(convert(s -> {
             captured.add(s);
             
             sem.signal();
-        });
+        }));
         
         pool.suggestAddress("24.20.25.66:7000");
 
         sem.getLock();
-        
-        Assertions.assertNotNull(pool.getCachedMysterIp(new MysterAddress("24.20.25.66:7000")).toString());
+
+        Assertions.assertNotNull(pool.getCachedMysterIp(new MysterAddress("24.20.25.66:7000"))
+                .toString());
+    }
+
+    private static MysterServerListener convert(Consumer<MysterServer> c) {
+        return new MysterServerListener() {
+            @Override
+            public void serverRefresh(MysterServer server) {
+                c.accept(server);
+            }
+
+            @Override
+            public void serverPing(PingResponse pingResponse) {
+                LOGGER.info("Ping response from " + pingResponse.address() + " in " + pingResponse.pingTimeMs() +"ms");
+            }
+
+            @Override
+            public void listChanged(MysterType type) {
+                // nothing
+            }
+        };
+
     }
 }
