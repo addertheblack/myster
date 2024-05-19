@@ -2,10 +2,9 @@
 package com.myster.tracker;
 
 import com.myster.client.datagram.PingResponse;
-import com.myster.type.MysterType;
 
-public interface MysterServerListener {
-    void listChanged(MysterType type);
+public interface MysterPoolListener {
     void serverRefresh(MysterServer server);
     void serverPing(PingResponse server);
+    void deadServer(MysterIdentity identity);
 }

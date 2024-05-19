@@ -49,14 +49,20 @@ public class ServerStats extends ServerThread {
     }
 
     public void section(ConnectionContext context) throws IOException {
-        MML mmlToSend = getMMLToSend(getServerName.get(), getPort.get(), identity);
-        context.socket.out.writeUTF("" + mmlToSend);
+        MML mmlToSend;
+        try {
+            mmlToSend = getMMLToSend(getServerName.get(), getPort.get(), identity);
+            context.socket.out.writeUTF("" + mmlToSend);
+        } catch (NotInitializedException exception) {
+            throw new IOException("File list not initialized");
+        }
     }
 
     //Returns an MML that would be send as a string via a Handshake.
-    public static MML getMMLToSend(String identityName, int port, Identity identity) {
+    public static MML getMMLToSend(String identityName, int port, Identity identity) throws NotInitializedException {
         try {
             MML mml = new MML();
+
             MysterPreferences prefs = MysterPreferences.getInstance();
 
             String tempstring = prefs.query(com.myster.application.MysterGlobals.SPEEDPATH);
@@ -86,10 +92,12 @@ public class ServerStats extends ServerThread {
             mml.put(UPTIME, ""
                     + (System.currentTimeMillis() - com.myster.application.MysterGlobals
                             .getLaunchedTime()));
-            
+
             mml.put(PORT, "" + port);
 
             return mml;
+        } catch (NotInitializedException ex) {
+            throw ex;
         } catch (Exception ex) {
             ex.printStackTrace();
             throw new IllegalStateException(ex);
@@ -97,12 +105,16 @@ public class ServerStats extends ServerThread {
 
     }
 
-    private static MML getNumberOfFilesMML(MML mml) { // in-line
+    private static MML getNumberOfFilesMML(MML mml) throws NotInitializedException { // in-line
         FileTypeListManager filemanager = FileTypeListManager.getInstance();
 
         MysterType[] filetypelist = filemanager.getFileTypeListing();
 
         for (int i = 0; i < filetypelist.length; i++) {
+            if (!filemanager.hasInitialized(filetypelist[i])) {
+                throw new NotInitializedException(filetypelist[i]);
+            }
+            
             mml.put(NUMBER_OF_FILES + filetypelist[i],
                     "" + filemanager.getNumberOfFiles(filetypelist[i]));
         }

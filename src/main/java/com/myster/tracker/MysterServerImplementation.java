@@ -98,12 +98,14 @@ class MysterServerImplementation {
     /**
      * Refreshes all Stats (Number of files, Speed and upordown) from the IP.
      * Blocks.
-     * @param address 
+     * 
+     * @param address
      */
     MysterServerImplementation(Preferences prefs,
                                IdentityProvider addressProvider,
                                RobustMML serverStats,
-                               MysterIdentity identity, MysterAddress address) {
+                               MysterIdentity identity,
+                               MysterAddress address) {
         preferences = prefs;
         this.identity = identity;
         this.identityProvider = addressProvider;
@@ -369,11 +371,11 @@ class MysterServerImplementation {
             return (SPEEDCONSTANT * Math.log(speed) //
                     + FILESCONSTANT * Math.log(getNumberOfFiles(type)) //
                     + Math.log(HITSCONSTANT + 1) * numberofhits //
-                    + UPVSDOWNCONSTANT * ((double) timeup / (double) (timeup + timedown)) // up
-                    + STATUSCONSTANT * (pingTime >= -1 ? 4 : 0)) //
-                    + (pingTime == -2 ? (0.1
+//                    + UPVSDOWNCONSTANT * ((double) timeup / (double) (timeup + timedown)) // up
+                    + STATUSCONSTANT * (pingTime >= UNTRIED ? 4 : 0)) //
+                    + (pingTime == DOWN ? (0.1
                             - (double) 20000 / 2500)
-                            : (pingTime == -1 ? (0.1 - (double) 5000 / 2500)
+                            : (pingTime == UNTRIED ? (0.1 - (double) 5000 / 2500)
                                     : (0.1 - (double) pingTime / 2500)));
         }
         
@@ -389,7 +391,7 @@ class MysterServerImplementation {
 
         @Override
         public int getPingTime() {
-            return getBestAddress().map(a -> identityProvider.getPing(a)).orElse(-1);
+            return getBestAddress().map(a -> identityProvider.getPing(a)).orElse(UNTRIED);
         }
 
         @Override
@@ -399,7 +401,7 @@ class MysterServerImplementation {
 
         @Override
         public boolean isUntried() {
-            return (getPingTime() == -1);
+            return (getPingTime() == UNTRIED);
         }
 
         @Override

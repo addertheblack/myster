@@ -7,6 +7,7 @@ import java.util.function.Supplier;
 
 import com.myster.identity.Identity;
 import com.myster.net.BadPacketException;
+import com.myster.server.stream.NotInitializedException;
 import com.myster.transaction.Transaction;
 import com.myster.transaction.TransactionProtocol;
 import com.myster.transaction.TransactionSender;
@@ -43,6 +44,9 @@ public class ServerStatsDatagramServer implements TransactionProtocol {
 
         } catch (IOException ex) {
             throw new BadPacketException("Bad packet " + ex);
+        } catch (NotInitializedException exception) {
+            // nothing..
+            System.out.println("Could not reply server stats, file manager is not inited yet");
         }
     }
 }

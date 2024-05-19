@@ -10,6 +10,9 @@ import com.myster.net.MysterAddress;
 import com.myster.type.MysterType;
 
 public interface MysterServer {
+    public static final int UNTRIED = -1;
+    public static final int DOWN = -2;
+    
     /**
      * @return true if we think this server is "up"
      */
@@ -54,7 +57,7 @@ public interface MysterServer {
     public String getServerName();
 
     /**
-     * @return ping or -1 if not checked or -2 if down
+     * @return ping or {@link MysterServer#UNTRIED} if not checked or {@link MysterServer#DOWN} if down
      */
     public int getPingTime();
 

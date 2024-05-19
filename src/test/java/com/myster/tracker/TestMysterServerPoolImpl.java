@@ -15,11 +15,13 @@ import java.util.function.Consumer;
 import java.util.logging.Logger;
 import java.util.prefs.Preferences;
 
-import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.ValueSource;
 import org.mockito.Mockito;
 import org.mockito.invocation.InvocationOnMock;
 import org.mockito.stubbing.Answer;
@@ -46,20 +48,25 @@ class TestMysterServerPoolImpl {
     
     // JUnit 5 will automatically create and clean up this temporary directory
     @TempDir
-    Path tempDir; 
+    static Path tempDir; 
 
-    private String keystoreFilename = "testIdentity.keystore";
-    private File keystorePath;
-    private Identity identity;
+    private static String keystoreFilename = "testIdentity.keystore";
+    private static File keystorePath;
+    private static Identity identity;
     private Preferences pref;
     private MysterProtocol protocol;
 
     private MysterServerPoolImpl pool;
 
-    @BeforeEach
-    void setUp() throws UnknownHostException, MMLException {
+    @BeforeAll
+    static void beforeAll() {
         keystorePath = tempDir.toFile(); // Convert the Path to File, as your Identity class uses File
         identity = new Identity(keystoreFilename, keystorePath);
+    }
+    
+    @BeforeEach
+    void setUp() throws UnknownHostException, MMLException {
+
         lookup = new HashMap<>();
         
         String cleanPublicKeyString = MML.cleanString(Util.publicKeyToString(identity.getMainIdentity().get().getPublic()));
@@ -148,12 +155,6 @@ class TestMysterServerPoolImpl {
 //        public static final String UPTIME = "/Uptime";
     }
     
-    @AfterEach
-    void tearDown() {
-        pool.close();
-    }
-    
-    
     @Test
     void test() throws UnknownHostException, InterruptedException {
         pool = new MysterServerPoolImpl(pref, protocol);
@@ -171,7 +172,7 @@ class TestMysterServerPoolImpl {
 
         Object[] moo = new Object[1];
         CountDownLatch latch = new CountDownLatch(1);
-        pool.addServerListener(convert(s -> {
+        pool.addPoolListener(convert(s -> {
             moo[0] = s;
 
             latch.countDown();
@@ -219,7 +220,7 @@ class TestMysterServerPoolImpl {
         
         Object[] moo = new Object[1];
         Semaphore sem = new Semaphore(0);
-        pool.addServerListener(convert(s -> {
+        pool.addPoolListener(convert(s -> {
             moo[0] = s;
             
             sem.signal();
@@ -244,6 +245,77 @@ class TestMysterServerPoolImpl {
         Assertions.assertEquals(localHost.getIdentity(), lanHost.getIdentity());
     }
     
+    @ParameterizedTest
+    @ValueSource(booleans = {false, true})
+    void testAddressImplSwicharoo(boolean shouldChangePort) throws Exception {
+        MysterAddress oneTwoSeven = new MysterAddress("127.0.0.1");
+        RobustMML mml = lookup.get(oneTwoSeven);
+        
+        RobustMML copyMml = new RobustMML(mml);
+
+        if (shouldChangePort) {
+            copyMml.put("/Port", "1234");
+        }
+        
+        lookup.put(oneTwoSeven, new RobustMML());
+        
+        pool = new MysterServerPoolImpl(pref, protocol);
+        
+        var refreshedServers = new ArrayList<MysterServer>();
+        var deadServers = new ArrayList<MysterIdentity>();
+        Semaphore sem = new Semaphore(0);
+        pool.addPoolListener(new MysterPoolListener() {
+            @Override
+            public void serverRefresh(MysterServer server) {
+                refreshedServers.add(server);
+                System.out.println("server: " + server);
+                sem.signal();
+            }
+            
+            @Override
+            public void serverPing(PingResponse server) {
+                // nothing
+            }
+            
+            @Override
+            public void deadServer(MysterIdentity identity) {
+                deadServers.add(identity);
+                System.out.println("identity: " + identity);
+                sem.signal();
+            }
+        });
+        
+        pool.suggestAddress("127.0.0.1");
+        sem.getLock();
+
+        PublicKeyIdentity identityPublic = new PublicKeyIdentity(identity.getMainIdentity().get().getPublic());
+        
+        Assertions.assertFalse(pool.existsInPool(identityPublic));
+        Assertions.assertEquals(1, refreshedServers.size());
+        
+        var addressIdentity = new MysterAddressIdentity(oneTwoSeven);
+        Assertions.assertTrue(pool.existsInPool(addressIdentity));
+            
+        lookup.put(oneTwoSeven, copyMml);
+        
+        pool.refreshMysterServerPrivate(oneTwoSeven);
+        
+        var time = System.currentTimeMillis();
+        sem.getLock();
+        sem.getLock();
+        System.out.println("TIme take: " + (System.currentTimeMillis() - time));
+        
+        Assertions.assertEquals(2, refreshedServers.size());
+        Assertions.assertEquals(1, deadServers.size());
+        Assertions.assertEquals(addressIdentity, deadServers.get(0));
+        
+        Assertions.assertTrue(pool.existsInPool(identityPublic));
+        
+        Assertions.assertTrue(pool.existsInPool(addressIdentity));
+        Assertions.assertEquals(0, refreshedServers.get(0).getAddresses().length);
+//        Assertions.assertNull(pool.getCachedMysterIp(oneTwoSeven));
+    }
+    
     /**
      * This test exists because of a bug found while doing practical tests
      * 
@@ -257,7 +329,7 @@ class TestMysterServerPoolImpl {
         
         List<MysterServer> captured = new ArrayList<>();
         Semaphore sem = new Semaphore(0);
-        pool.addServerListener(convert(s -> {
+        pool.addPoolListener(convert(s -> {
             captured.add(s);
             
             sem.signal();
@@ -269,7 +341,6 @@ class TestMysterServerPoolImpl {
         
         Assertions.assertEquals(captured.size(), 1);
         
-        pool.close();
         pool = null;
         
         pool = new MysterServerPoolImpl(pref, protocol);
@@ -291,7 +362,7 @@ class TestMysterServerPoolImpl {
         
         List<MysterServer> captured = new ArrayList<>();
         Semaphore sem = new Semaphore(0);
-        pool.addServerListener(convert(s -> {
+        pool.addPoolListener(convert(s -> {
             captured.add(s);
             
             sem.signal();
@@ -305,7 +376,6 @@ class TestMysterServerPoolImpl {
         
         Assertions.assertEquals(captured.size(), 2);
         
-        pool.close();
         pool = null;
         
         pool = new MysterServerPoolImpl(pref, protocol);
@@ -335,7 +405,7 @@ class TestMysterServerPoolImpl {
         
         List<MysterServer> captured = new ArrayList<>();
         Semaphore sem = new Semaphore(0);
-        pool.addServerListener(convert(s -> {
+        pool.addPoolListener(convert(s -> {
             captured.add(s);
             
             sem.signal();
@@ -376,7 +446,7 @@ class TestMysterServerPoolImpl {
         
         List<MysterServer> captured = new ArrayList<>();
         Semaphore sem = new Semaphore(0);
-        pool.addServerListener(convert(s -> {
+        pool.addPoolListener(convert(s -> {
             captured.add(s);
             
             sem.signal();
@@ -412,7 +482,7 @@ class TestMysterServerPoolImpl {
         
         List<MysterServer> captured = new ArrayList<>();
         Semaphore sem = new Semaphore(0);
-        pool.addServerListener(convert(s -> {
+        pool.addPoolListener(convert(s -> {
             captured.add(s);
             
             sem.signal();
@@ -433,12 +503,12 @@ class TestMysterServerPoolImpl {
     }
     
     @Test
-    void testEgad() throws UnknownHostException, InterruptedException {
+    void testDoubleSuggestCall() throws UnknownHostException, InterruptedException {
         pool = new MysterServerPoolImpl(pref, protocol);
         
         List<MysterServer> captured = new ArrayList<>();
         Semaphore sem = new Semaphore(0);
-        pool.addServerListener(convert(s -> {
+        pool.addPoolListener(convert(s -> {
             captured.add(s);
             
             sem.signal();
@@ -465,7 +535,7 @@ class TestMysterServerPoolImpl {
         
         List<MysterServer> captured = new ArrayList<>();
         Semaphore sem = new Semaphore(0);
-        pool.addServerListener(convert(s -> {
+        pool.addPoolListener(convert(s -> {
             captured.add(s);
             
             sem.signal();
@@ -479,8 +549,8 @@ class TestMysterServerPoolImpl {
                 .toString());
     }
 
-    private static MysterServerListener convert(Consumer<MysterServer> c) {
-        return new MysterServerListener() {
+    private static MysterPoolListener convert(Consumer<MysterServer> c) {
+        return new MysterPoolListener() {
             @Override
             public void serverRefresh(MysterServer server) {
                 c.accept(server);
@@ -492,7 +562,7 @@ class TestMysterServerPoolImpl {
             }
 
             @Override
-            public void listChanged(MysterType type) {
+            public void deadServer(MysterIdentity identity) {
                 // nothing
             }
         };

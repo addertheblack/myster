@@ -6,6 +6,7 @@ import java.nio.file.Path;
 import java.util.concurrent.Semaphore;
 
 import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 
@@ -18,30 +19,31 @@ import com.myster.mml.MML;
 import com.myster.mml.MMLException;
 import com.myster.mml.RobustMML;
 import com.myster.net.MysterAddress;
+import com.myster.type.MysterType;
 
 class TestMysterServerImplementation {
 //   private static final Logger LOGGER = Logger.getLogger(TestMysterServerPoolImpl.class.getName());
     
-    
     // JUnit 5 will automatically create and clean up this temporary directory
     @TempDir
-    Path tempDir; 
+    static Path tempDir; 
 
-    private String keystoreFilename = "testIdentity.keystore";
-    private File keystorePath;
-    private Identity identity;
+    private static String keystoreFilename = "testIdentity.keystore";
+    private static File keystorePath;
+    private static Identity identity;
     
+    @BeforeAll
+    static void setupAll() {
+        keystorePath = tempDir.toFile();
+        identity = new Identity(keystoreFilename, keystorePath);
+    }
 
     @Test
-    void test() throws UnknownHostException, MMLException, InterruptedException {
-        keystorePath = tempDir.toFile(); // Convert the Path to File, as your Identity class uses File
-        identity = new Identity(keystoreFilename, keystorePath);
-        
-        
+    void testBasicsAlsoPing() throws UnknownHostException, MMLException, InterruptedException {
         Semaphore sem = new Semaphore(0);
         
         MapPreferences p = new MapPreferences();
-        IdentityTracker it = new IdentityTracker(a -> PromiseFuture.newPromiseFuture(new PingResponse(a, 1)), (_)->{ sem.release(); });
+        IdentityTracker it = new IdentityTracker(a -> PromiseFuture.newPromiseFuture(new PingResponse(a, 1)), (_)->{ sem.release(); }, (_)->{});
         MysterAddress address = new MysterAddress("127.0.0.1");
         
         String cleanPublicKeyString = MML.cleanString(Util.publicKeyToString(identity.getMainIdentity().get().getPublic()));
@@ -67,12 +69,8 @@ class TestMysterServerImplementation {
         Assertions.assertEquals("Mr. Magoo", server.getServerName()); 
         Assertions.assertArrayEquals(new MysterAddress[]{new MysterAddress("127.0.0.1:1234")}, server.getAddresses()); 
         Assertions.assertEquals(new MysterAddress("127.0.0.1:1234"), server.getBestAddress().get());
-//        Assertions.assertEquals("Mr. Magoo", server.getExternalName()); 
-        Assertions.assertEquals("Mr. Magoo", server.getServerName()); 
-        Assertions.assertArrayEquals(new MysterAddress[]{new MysterAddress("127.0.0.1:1234")},  server.getUpAddresses()); 
-        
-        
         sem.acquire();
+        
+        Assertions.assertArrayEquals(new MysterAddress[]{new MysterAddress("127.0.0.1:1234")},  server.getUpAddresses()); 
     }
-
 }

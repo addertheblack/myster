@@ -46,10 +46,16 @@ public class MysterServerManager { // aka tracker
     private final TypeDescription[] tdlist;
     private final MysterServerPool pool;
     private final Preferences preferences;
+    private final NewGenericDispatcher<ListChangedListener> dispatcher;
 
+    public interface ListChangedListener {
+        public void serverAddedRemoved(MysterType type);
+    }
+    
     public MysterServerManager(MysterServerPool pool, Preferences preferences) {
         this.pool = pool;
         this.preferences = preferences.node(PATH);
+        this.dispatcher = new NewGenericDispatcher<>(ListChangedListener.class, TrackerUtils.INVOKER);
 
         tdlist = TypeDescriptionList.getDefault().getEnabledTypes();
 
@@ -58,7 +64,7 @@ public class MysterServerManager { // aka tracker
             assertIndex(i); // loads all lists.
         }
 
-        pool.addServerListener(new MysterServerListener() {
+        pool.addPoolListener(new MysterPoolListener() {
             @Override
             public void serverRefresh(MysterServer server) {
                 addServerToAllLists(server);
@@ -72,12 +78,10 @@ public class MysterServerManager { // aka tracker
             }
 
             @Override
-            public void listChanged(MysterType type) {
-                // nothing
+            public void deadServer(MysterIdentity identity) {
+                notifyAllListsDeadServer(identity);
             }
         });
-        
-        pool.setDeadServerListener(this::notifyAllListsDeadServer);
         
         pool.clearHardLinks();
     }
@@ -168,8 +172,8 @@ public class MysterServerManager { // aka tracker
         return LAST_RESORT.clone();
     }
     
-    public void addServerListener(MysterServerListener l) {
-        pool.addServerListener(l);
+    public void addPoolListener(MysterPoolListener l) {
+        pool.addPoolListener(l);
     }
 
     /**
@@ -242,7 +246,11 @@ public class MysterServerManager { // aka tracker
      * This is a stupid routine.
      */
     private synchronized MysterServerList createNewList(int index) {
-        return new MysterServerList(tdlist[index].getType(), pool, preferences, pool::listChanged);
+        return new MysterServerList(tdlist[index].getType(), pool, preferences, dispatcher.fire()::serverAddedRemoved);
+    }
+
+    public void addListChangedListener(ListChangedListener l) {
+        dispatcher.addListener(l);
     }
 }
 

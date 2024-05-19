@@ -55,18 +55,11 @@ public interface MysterServerPool {
      * @param server
      *            that has just been discovered
      */
-    void addServerListener(MysterServerListener listener);
-    void removeNewServerListener(MysterServerListener listener);
+    void addPoolListener(MysterPoolListener listener);
+    void removeNewServerListener(MysterPoolListener listener);
     
     /**
      * When it's done loading call this
      */
     void clearHardLinks();
-    
-    /**
-     * Notify
-     */
-    void listChanged(MysterType type);
-    
-    void setDeadServerListener(Consumer<MysterIdentity> l);
 }
