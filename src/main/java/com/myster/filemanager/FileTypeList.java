@@ -668,4 +668,9 @@ public class FileTypeList {
         // }
     }
 
+    public synchronized boolean hasInitialized() {
+        assertFileList();
+        
+        return !(filelist.isEmpty() && isIndexing());
+    }
 }

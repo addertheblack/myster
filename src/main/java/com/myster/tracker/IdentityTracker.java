@@ -1,6 +1,8 @@
 
 package com.myster.tracker;
 
+import static com.myster.tracker.MysterServer.DOWN;
+import static com.myster.tracker.MysterServer.UNTRIED;
 import static com.myster.tracker.MysterServerImplementation.computeNodeNameFromIdentity;
 import static com.myster.tracker.TrackerUtils.INVOKER;
 
@@ -35,11 +37,11 @@ public class IdentityTracker implements IdentityProvider {
     private final Map<MysterIdentity, List<MysterAddress>> identityToAddresses = new HashMap<>();
     
     private final Consumer<PingResponse> pingListener;
+    private final Consumer<MysterIdentity> deadServerListener;
 
     private final Pinger pinger;
     
     private Timer timer;
-    private Consumer<MysterIdentity> deadServerListener;
     
     /**
      * @param pinger
@@ -47,9 +49,11 @@ public class IdentityTracker implements IdentityProvider {
      *            or down
      */
     public IdentityTracker(Pinger pinger,
-                           Consumer<PingResponse> pingListener) {
+                           Consumer<PingResponse> pingListener,
+                           Consumer<MysterIdentity> deadListener) {
         this.pinger = pinger;
         this.pingListener = pingListener;
+        this.deadServerListener = deadListener;
     }
     
     @Override
@@ -95,14 +99,14 @@ public class IdentityTracker implements IdentityProvider {
     public synchronized int getPing(MysterAddress address) {
         AddressState addressState = addressStates.get(address);
         if(addressState == null) {
-            return -1;
+            return UNTRIED;
         }
         
-        if (addressState.lastPingTime == -1) {
-            return -1;
+        if (addressState.lastPingTime == UNTRIED) {
+            return UNTRIED;
         }
         
-        return addressState.up ? addressState.lastPingTime : -2;
+        return addressState.up ? addressState.lastPingTime : DOWN;
     }
     
     @Override
@@ -125,7 +129,12 @@ public class IdentityTracker implements IdentityProvider {
         if (candidates.isEmpty()) {
             // If the server is down we should only check the public address since that is the
             // most likely to be reachable if our laptop is not longer on the LAN (or loopback)
-            candidates = Util.filter(addresses, a -> !ServerUtils.isLanAddress(a.getInetAddress()));
+            candidates = Util.filter(addresses, a -> !a.getInetAddress().isSiteLocalAddress());
+            
+            // this is for the edge case where we only have the LAN address for this server
+            if (candidates.isEmpty()) {
+                candidates = addresses;
+            }
         }
         
         for (MysterAddress mysterAddress : candidates) {
@@ -254,7 +263,7 @@ public class IdentityTracker implements IdentityProvider {
     private void refreshElementIfNeeded(MysterAddress address, AddressState addressState) {
         var refreshTime = REFRESH_MS;
 
-        if (refreshTime < System.currentTimeMillis() - addressState.lastPingTime) {
+        if (refreshTime < System.currentTimeMillis() - addressState.timeOfLastPing) {
             addressState.pingProcess.ifPresent(PromiseFuture::cancel);
 
             addressState.pingProcess = Optional.of(pinger.ping(address).clearInvoker()
@@ -266,6 +275,8 @@ public class IdentityTracker implements IdentityProvider {
                         }
                         l.accept(e);
                     }));
+            
+            addressState.timeOfLastPing = System.currentTimeMillis();
         }
     }
 
@@ -281,12 +292,13 @@ public class IdentityTracker implements IdentityProvider {
     }
 
     private void updateState(AddressState addressState, PingResponse pingResponse) {
-        addressState.lastPingTime = pingResponse.isTimeout() ? -2 : pingResponse.pingTimeMs();
+        addressState.lastPingTime = pingResponse.isTimeout() ? DOWN : pingResponse.pingTimeMs();
         addressState.up = !pingResponse.isTimeout();
     }
      
     static class AddressState {
-        public int lastPingTime = -1;
+        public long timeOfLastPing = 0;
+        public int lastPingTime = UNTRIED;
         public boolean up = false;
         public Optional<PromiseFuture<PingResponse>> pingProcess = Optional.empty();
     }
@@ -299,9 +311,5 @@ public class IdentityTracker implements IdentityProvider {
         if (timer != null) {
             timer.cancelTimer();
         }
-    }
-
-    synchronized void setDeadServerListener(Consumer<MysterIdentity> listener) {
-        deadServerListener = listener;
     }
 }

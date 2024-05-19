@@ -320,7 +320,7 @@ public class FileTypeListManager {
 
     /**
      * Users might want to disable sharing of a type while keeping the same
-     * directory. This function enables of diables sharing of a type. If the
+     * directory. This function enables or disables sharing of a type. If the
      * type doesn't exist, the command is ignored.
      * 
      * @param type
@@ -336,4 +336,12 @@ public class FileTypeListManager {
         return list.isShared();
     }
 
+    
+    public boolean hasInitialized(MysterType type) {
+        FileTypeList list = getFileTypeList(type);
+        if (list == null)
+            return false; //err.
+
+        return list.hasInitialized();
+    }
 }

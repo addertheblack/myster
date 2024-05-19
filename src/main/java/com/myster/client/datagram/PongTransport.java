@@ -144,6 +144,7 @@ public class PongTransport extends DatagramTransport {
                     if (!struct.secondPing) {
                         sender.sendPacket((new PingPacket(address))
                                 .toImmutableDatagramPacket());
+                        
                         struct.secondPing = !struct.secondPing;
                         struct.timer = new Timer(new TimeoutClass(address),
                                 TIMEOUT - (curTime - struct.timeStamp)

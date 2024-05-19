@@ -16,6 +16,7 @@ import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Consumer;
 
 import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
@@ -33,7 +34,15 @@ public class TestIdentityTracker {
         private Pinger mockPinger;
         private MysterAddress testAddress;
         private MysterIdentity testIdentity;
+        
+        private static MysterIdentity mysterIdentity;
 
+        @BeforeAll
+        private static void setUpAll() throws IOException {
+            PublicKey publicKey = createTestPublicKey();
+            mysterIdentity = new PublicKeyIdentity(publicKey);
+        }
+        
         @BeforeEach
         public void setUp() throws UnknownHostException {
             mockPinger = (a) -> {
@@ -41,7 +50,7 @@ public class TestIdentityTracker {
                         .<PingResponse> newPromiseFuture(c -> c.setResult(new PingResponse(a, 1)))
                         .setInvoker(TrackerUtils.INVOKER);
             };
-            identityTracker = new IdentityTracker(mockPinger, (_) -> {});
+            identityTracker = new IdentityTracker(mockPinger, (_) -> {}, (_)->{});
             testAddress = new MysterAddress("127.0.0.1");
             testIdentity = new MysterAddressIdentity(new MysterAddress("127.0.0.1"));
         }
@@ -62,9 +71,6 @@ public class TestIdentityTracker {
 
         @Test
         public void testRemoveFromManyAddresses() throws IOException {
-            PublicKey publicKey = createTestPublicKey();
-            MysterIdentity mysterIdentity = new PublicKeyIdentity(publicKey);
-
             MysterAddress[] addresses = new MysterAddress[10];
             for (int i = 0; i < addresses.length; i++) {
                 addresses[i] = new MysterAddress("169.254.196." + (i + 2));
@@ -89,9 +95,6 @@ public class TestIdentityTracker {
 
         @Test
         public void testAssociateAddressWithAnotherServer() throws IOException {
-            PublicKey publicKey = createTestPublicKey();
-            MysterIdentity mysterIdentity = new PublicKeyIdentity(publicKey);
-
             PublicKey publicKey2 = createTestPublicKey();
             MysterIdentity mysterIdentity2 = new PublicKeyIdentity(publicKey2);
 
@@ -125,9 +128,6 @@ public class TestIdentityTracker {
 
         @Test
         public void testMixNMatch() throws IOException {
-            PublicKey publicKey = createTestPublicKey();
-            MysterIdentity mysterIdentity = new PublicKeyIdentity(publicKey);
-
             PublicKey publicKey2 = createTestPublicKey();
             MysterIdentity mysterIdentity2 = new PublicKeyIdentity(publicKey2);
 
@@ -181,8 +181,6 @@ public class TestIdentityTracker {
 
         @Test
         public void testGetBestAddress() throws IOException, InterruptedException {
-            PublicKey publicKey = createTestPublicKey();
-            MysterIdentity mysterIdentity = new PublicKeyIdentity(publicKey);
             identityTracker.addIdentity(mysterIdentity, new MysterAddress("127.0.0.1"));
             identityTracker.addIdentity(mysterIdentity, new MysterAddress("192.168.1.1"));
             identityTracker.addIdentity(mysterIdentity, new MysterAddress("11.10.10.1"));
@@ -196,10 +194,9 @@ public class TestIdentityTracker {
             assertTrue(bestAddress.isPresent());
             assertEquals(bestAddress.get(), new MysterAddress("127.0.0.1"));
         }
-        
+
         @Test
-        public void testDeadServerListener()
-                throws IOException, InterruptedException {
+        public void testDeadServerListener() throws IOException, InterruptedException {
             AtomicInteger counter = new AtomicInteger();
             CountDownLatch latch = new CountDownLatch(1);
             Consumer<MysterIdentity> deadServerListener = (r) -> {
@@ -207,78 +204,78 @@ public class TestIdentityTracker {
                 latch.countDown();
             };
             
-            identityTracker.setDeadServerListener(deadServerListener);
-            
+            IdentityTracker identityTracker = new IdentityTracker(mockPinger, (_) -> {}, deadServerListener);
+
             identityTracker.addIdentity(testIdentity, new MysterAddress("11.10.10.1"));
             identityTracker.removeIdentity(testIdentity, new MysterAddress("11.10.10.1"));
-            
+
             latch.await();
-            
+
             Assertions.assertEquals(1, counter.get());
         }
-        
+
         @Test
-        public void testDeadServerListenerComplex()
-                throws IOException, InterruptedException {
+        public void testDeadServerListenerComplex() throws IOException, InterruptedException {
             AtomicReference<MysterIdentity> identRef = new AtomicReference<>();
             CountDownLatch latch = new CountDownLatch(1);
             Consumer<MysterIdentity> deadServerListener = (r) -> {
                 identRef.set(r);
                 latch.countDown();
             };
-            
-            identityTracker.setDeadServerListener(deadServerListener);
-            
+
+            IdentityTracker identityTracker = new IdentityTracker(mockPinger, (_) -> {}, deadServerListener);
+
             identityTracker.addIdentity(testIdentity, new MysterAddress("11.10.10.1"));
             identityTracker.addIdentity(testIdentity, new MysterAddress("11.10.10.2"));
             identityTracker.addIdentity(testIdentity, new MysterAddress("11.10.10.3"));
             identityTracker.addIdentity(testIdentity, new MysterAddress("11.10.10.4"));
-            
+
             identityTracker.removeIdentity(testIdentity, new MysterAddress("11.10.10.1"));
             identityTracker.removeIdentity(testIdentity, new MysterAddress("11.10.10.2"));
             identityTracker.removeIdentity(testIdentity, new MysterAddress("11.10.10.4"));
 
             Assertions.assertFalse(latch.await(1, TimeUnit.SECONDS));
             Assertions.assertTrue(identityTracker.existsMysterIdentity(testIdentity));
-            
+
             identityTracker.removeIdentity(testIdentity, new MysterAddress("11.10.10.3"));
-            
+
             Assertions.assertTrue(latch.await(1, TimeUnit.SECONDS));
 
             Assertions.assertEquals(testIdentity, identRef.get());
-            
+
             Assertions.assertFalse(identityTracker.existsMysterIdentity(testIdentity));
         }
-        
+
         @Test
-        public void testDeadServerListenerComplex2()
-                throws IOException, InterruptedException {
+        public void testDeadServerListenerComplex2() throws IOException, InterruptedException {
             AtomicReference<MysterIdentity> identRef = new AtomicReference<>();
             CountDownLatch latch = new CountDownLatch(1);
             Consumer<MysterIdentity> deadServerListener = (r) -> {
                 identRef.set(r);
                 latch.countDown();
             };
-            
-            identityTracker.setDeadServerListener(deadServerListener);
-            
-            MysterAddressIdentity testIdentity2 = new MysterAddressIdentity(new MysterAddress("11.10.10.2")) ;
-            MysterAddressIdentity testIdentity3 = new MysterAddressIdentity(new MysterAddress("11.10.10.3")) ;
-            
+
+            IdentityTracker identityTracker = new IdentityTracker(mockPinger, (_) -> {}, deadServerListener);
+
+            MysterAddressIdentity testIdentity2 =
+                    new MysterAddressIdentity(new MysterAddress("11.10.10.2"));
+            MysterAddressIdentity testIdentity3 =
+                    new MysterAddressIdentity(new MysterAddress("11.10.10.3"));
+
             Assertions.assertFalse(identityTracker.existsMysterIdentity(testIdentity2));
             Assertions.assertFalse(identityTracker.existsMysterIdentity(testIdentity));
             Assertions.assertFalse(identityTracker.existsMysterIdentity(testIdentity3));
-            
+
             identityTracker.addIdentity(testIdentity, new MysterAddress("127.0.0.1"));
             identityTracker.addIdentity(testIdentity2, new MysterAddress("11.10.10.2"));
             identityTracker.addIdentity(testIdentity3, new MysterAddress("11.10.10.3"));
-            
+
             identityTracker.removeIdentity(testIdentity2, new MysterAddress("11.10.10.2"));
 
             Assertions.assertTrue(latch.await(5, TimeUnit.SECONDS));
 
             Assertions.assertEquals(testIdentity2, identRef.get());
-            
+
             Assertions.assertFalse(identityTracker.existsMysterIdentity(testIdentity2));
             Assertions.assertTrue(identityTracker.existsMysterIdentity(testIdentity));
             Assertions.assertTrue(identityTracker.existsMysterIdentity(testIdentity3));
@@ -288,22 +285,27 @@ public class TestIdentityTracker {
     @Nested
     class TestOfflinePinger {
         private IdentityTracker identityTracker;
-        private PublicKeyIdentity mysterIdentity;
+        private static PublicKeyIdentity mysterIdentity;
+
+        @BeforeAll
+        private static void setUpAll() throws IOException {
+            PublicKey publicKey = createTestPublicKey();
+            mysterIdentity = new PublicKeyIdentity(publicKey);
+        }
 
         @BeforeEach
-        private void setup() throws IOException {
+        private void setup() {
             Pinger pinger = (a) -> {
                 return PromiseFuture
                         .<PingResponse> newPromiseFuture(c -> c.setResult(new PingResponse(a, -1)))
                         .setInvoker(TrackerUtils.INVOKER);
             };
-            identityTracker = new IdentityTracker(pinger, (_) -> {});
-            PublicKey publicKey = createTestPublicKey();
-            mysterIdentity = new PublicKeyIdentity(publicKey);
+            identityTracker = new IdentityTracker(pinger, (_) -> {}, (_)->{});
         }
 
         @Test
-        public void testGetBestAddressOfflineWithLoopback() throws IOException, InterruptedException {
+        public void testGetBestAddressOfflineWithLoopback()
+                throws IOException, InterruptedException {
             identityTracker.addIdentity(mysterIdentity, new MysterAddress("127.0.0.1"));
             identityTracker.addIdentity(mysterIdentity, new MysterAddress("192.168.1.1"));
             identityTracker.addIdentity(mysterIdentity, new MysterAddress("11.10.10.1"));
@@ -331,8 +333,34 @@ public class TestIdentityTracker {
             assertTrue(bestAddress.isPresent());
             assertEquals(bestAddress.get(), new MysterAddress("11.10.10.1"));
         }
+
+        @Test
+        public void testGetBestAddressOfflineLanAddressesOnly()
+                throws IOException, InterruptedException {
+            identityTracker.addIdentity(mysterIdentity, new MysterAddress("192.168.1.1"));
+
+            identityTracker.waitForPing(new MysterAddress("192.168.1.1"));
+
+            Optional<MysterAddress> bestAddress = identityTracker.getBestAddress(mysterIdentity);
+
+            assertTrue(bestAddress.isPresent());
+            assertEquals(bestAddress.get(), new MysterAddress("192.168.1.1"));
+        }
+
+        @Test
+        public void testGetBestAddressOfflineLanLoopbackOnly()
+                throws IOException, InterruptedException {
+            identityTracker.addIdentity(mysterIdentity, new MysterAddress("127.0.0.1"));
+
+            identityTracker.waitForPing(new MysterAddress("127.0.0.1"));
+
+            Optional<MysterAddress> bestAddress = identityTracker.getBestAddress(mysterIdentity);
+
+            assertTrue(bestAddress.isPresent());
+            assertEquals(bestAddress.get(), new MysterAddress("127.0.0.1"));
+        }
     }
-    
+
 
     @Nested
     class TestPingEvents {
@@ -352,25 +380,24 @@ public class TestIdentityTracker {
         }
 
         @Test
-        public void testBasicPingEvents()
-                throws IOException, InterruptedException {
+        public void testBasicPingEvents() throws IOException, InterruptedException {
             AtomicInteger counter = new AtomicInteger();
             CountDownLatch latch = new CountDownLatch(1);
             Consumer<PingResponse> pingListener = (r) -> {
                 counter.incrementAndGet();
                 latch.countDown();
             };
-            
-            IdentityTracker identityTracker = new IdentityTracker(pinger, pingListener);
-            
+
+            IdentityTracker identityTracker = new IdentityTracker(pinger, pingListener, (_)->{});
+
             identityTracker.addIdentity(mysterIdentity, new MysterAddress("11.10.10.1"));
-            
+
             latch.await();
-            
+
             Assertions.assertEquals(1, counter.get());
         }
     }
-    
+
 
     private static PublicKey createTestPublicKey() throws IOException {
         File f = File.createTempFile("TestIdentityTracker", null);

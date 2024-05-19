@@ -13,7 +13,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.TimerTask;
-import java.util.function.Consumer;
 import java.util.logging.Logger;
 import java.util.prefs.BackingStoreException;
 import java.util.prefs.Preferences;
@@ -26,7 +25,6 @@ import com.myster.client.net.MysterProtocol;
 import com.myster.mml.RobustMML;
 import com.myster.net.MysterAddress;
 import com.myster.server.stream.ServerStats;
-import com.myster.type.MysterType;
 
 /**
  * Given a string address, it returns a com.myster object. com.myster
@@ -50,12 +48,12 @@ public class MysterServerPoolImpl implements MysterServerPool {
     private final Preferences preferences;
     private final IdentityTracker identityTracker;
 
-    private final NewGenericDispatcher<MysterServerListener> dispatcher = new NewGenericDispatcher<>(MysterServerListener.class, TrackerUtils.INVOKER);
+    private final NewGenericDispatcher<MysterPoolListener> dispatcher = new NewGenericDispatcher<>(MysterPoolListener.class, TrackerUtils.INVOKER);
 
     private final Map<MysterAddress, PromiseFuture<MysterServer>> outstandingServerFutures = new HashMap<>();
     
     private List<MysterServerImplementation> hardLinks = new ArrayList<>();
-    private final TimerTask task;
+    private TimerTask task;
 
     public MysterServerPoolImpl(Preferences prefs, MysterProtocol mysterProtocol) {
         this.preferences = prefs.node(PREF_NODE_NAME);
@@ -65,7 +63,7 @@ public class MysterServerPoolImpl implements MysterServerPool {
         
         cache = new HashMap<>();
         
-        identityTracker = new IdentityTracker(mysterProtocol.getDatagram()::ping, dispatcher.fire()::serverPing);
+        identityTracker = new IdentityTracker(mysterProtocol.getDatagram()::ping, dispatcher.fire()::serverPing, dispatcher.fire()::deadServer);
         
         try {
             String[] dirList = preferences.childrenNames();
@@ -88,6 +86,13 @@ public class MysterServerPoolImpl implements MysterServerPool {
         }
 
         LOGGER.info("Loaded IPPool");
+    }
+    
+    public synchronized void startRefreshTimer() {
+        if(task != null) {
+            task.cancel();
+        }
+        
         task = new TimerTask() {
             @Override
             public void run() {
@@ -121,12 +126,12 @@ public class MysterServerPoolImpl implements MysterServerPool {
     }
 
     @Override
-    public synchronized void addServerListener(MysterServerListener serverListener) {
+    public synchronized void addPoolListener(MysterPoolListener serverListener) {
         dispatcher.addListener(serverListener);
     }
     
     @Override
-    public void removeNewServerListener(MysterServerListener serverListener) {
+    public void removeNewServerListener(MysterPoolListener serverListener) {
 //        listeners.remove(serverListener);
         throw new IllegalStateException();
     }
@@ -224,17 +229,10 @@ public class MysterServerPoolImpl implements MysterServerPool {
         return (getMysterIP(k) != null);
     }
 
-    @Override
-    public void listChanged(MysterType type) {
-        dispatcher.fire().listChanged(type);
-    }
-    
-    @Override
-    public void setDeadServerListener(Consumer<MysterIdentity> listener) {
-        identityTracker.setDeadServerListener(listener);
-    }
-    
-    private void refreshMysterServerPrivate(MysterAddress address) {
+    /**
+     * Package protected for unit tests
+     */
+    void refreshMysterServerPrivate(MysterAddress address) {
         // this is the cheapest way of convincing a Future that we don't care about the result
         refreshMysterServer(address).addSynchronousCallback(s -> {});
     }
@@ -268,29 +266,13 @@ public class MysterServerPoolImpl implements MysterServerPool {
                                                   AsyncContext<MysterServer> context,
                                                   RobustMML mml) {
         MysterAddress address = MysterServerImplementation.extractCorrectedAddress(mml, addressIn);
+        deleteAddressBasedIdentitiesOnWrongPort(addressIn, address);
         
         var i = extractIdentity(address, mml);
 
         WeakReference<MysterServerImplementation> weakReference = cache.get(i);
         var s = weakReference != null ? weakReference.get() : null;
         if (identityTracker.existsMysterIdentity(i) && s != null) {
-            if (!addressIn.equals(address)) {
-                MysterIdentity identity = identityTracker.getIdentity(addressIn);
-                
-                if (identity != null) {
-                    identityTracker.removeIdentity(identity, addressIn);
-                    identityTracker.addIdentity(s.getIdentity(), address);
-                    
-                    WeakReference<MysterServerImplementation> other = cache.get(identity);
-                    if (other!=null) {
-                        MysterServerImplementation otherServer = other.get();
-                        if (otherServer!= null) {
-                            otherServer.save();
-                        }
-                    }
-                }
-            }
-            
             s.refreshStats(mml, address);
             context.setResult(s.getInterface());
 
@@ -314,13 +296,38 @@ public class MysterServerPoolImpl implements MysterServerPool {
         
         dispatcher.fire().serverRefresh(serverinterface);
     }
+
+    private void deleteAddressBasedIdentitiesOnWrongPort(MysterAddress addressIn,
+                                                         MysterAddress address) {
+        if (!addressIn.equals(address)) {
+            MysterIdentity addressInIdentity = identityTracker.getIdentity(addressIn);
+
+            if (addressInIdentity != null) {
+                identityTracker.removeIdentity(addressInIdentity, addressIn);
+                
+                WeakReference<MysterServerImplementation> other = cache.get(addressInIdentity);
+                if (other!=null) {
+                    MysterServerImplementation otherServer = other.get();
+                    if (otherServer!= null) {
+                        otherServer.save();
+                    }
+                }
+            }
+        }
+    }
     
     /**
-     * Intended to be used by unit tests since we don't tend to close myster server pool impls
+     * Intended to be used by unit tests since we don't tend to close myster
+     * server pool impls
+     * 
+     * Note that unit tests don't tend to init the task thread, though.
      */
-    void close() {
+    synchronized void close() {
         identityTracker.close();
-        task.cancel();
+
+        if (task != null) {
+            task.cancel();
+        }
     }
 
     private synchronized MysterServer newOrGet(MysterAddress address, MysterServerImplementation m) {

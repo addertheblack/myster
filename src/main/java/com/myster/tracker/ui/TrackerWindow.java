@@ -1,5 +1,8 @@
 package com.myster.tracker.ui;
 
+import static com.myster.tracker.MysterServer.DOWN;
+import static com.myster.tracker.MysterServer.UNTRIED;
+
 import java.awt.Component;
 import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
@@ -30,8 +33,9 @@ import com.general.util.Timer;
 import com.general.util.Util;
 import com.myster.client.datagram.PingResponse;
 import com.myster.net.MysterAddress;
+import com.myster.tracker.MysterIdentity;
 import com.myster.tracker.MysterServer;
-import com.myster.tracker.MysterServerListener;
+import com.myster.tracker.MysterPoolListener;
 import com.myster.tracker.MysterServerManager;
 import com.myster.type.MysterType;
 import com.myster.ui.MysterFrame;
@@ -121,30 +125,36 @@ public class TrackerWindow extends MysterFrame {
         setSize(600, 400);
         setTitle("Tracker");
         
-        ipListManager.addServerListener(new MysterServerListener() {
-            final AtomicBoolean dirty = new AtomicBoolean(false);
-            
+        refreshList = new AtomicBoolean(false);
+        ipListManager.addPoolListener(new MysterPoolListener() {
             @Override
             public void serverRefresh(MysterServer server) {
+                refreshList.set(true);
                 Util.invokeLater(TrackerWindow.this::resetTimer);
             }
 
             @Override
             public void serverPing(PingResponse server) {
+                refreshList.set(true);
                 Util.invokeLater(TrackerWindow.this::resetTimer);          
             }
 
             @Override
-            public void listChanged(MysterType type) {
-                dirty.set(true);
-                Util.invokeLater(() -> {
-                    if (type.equals(getMysterType()) && dirty.compareAndSet(true, false)) {
-                        loadList();
-                    }
-                });
+            public void deadServer(MysterIdentity identity) {
+                // nothing
             }
         });
-        
+
+        reloadList = new AtomicBoolean(false);
+        ipListManager.addListChangedListener((MysterType type) -> {
+            reloadList.set(true);
+            Util.invokeLater(() -> {
+                if (type.equals(getMysterType())) {
+                    TrackerWindow.this.resetTimer();
+                }
+            });
+        });
+
         addComponentListener(new ComponentAdapter() {
             public void componentShown(ComponentEvent e) {
                 refreshTheList();
@@ -161,11 +171,11 @@ public class TrackerWindow extends MysterFrame {
             return;
         }
         
-        timer = new Timer(this::refreshTheList, 2000);
+        timer = new Timer(this::checkForRefresh, 1000);
     }
 
     public void show() {
-        loadList();
+        loadTheList();
         super.show();
     }
 
@@ -217,11 +227,14 @@ public class TrackerWindow extends MysterFrame {
 
     List<TrackerMCListItem> itemsinlist;
 
+    private final AtomicBoolean refreshList;
+    private final AtomicBoolean reloadList;
+
     /**
      * Remakes the MCList. This routine is called every few minutes to update the tracker window
      * with the status of the tracker.
      */
-    private synchronized void loadList() {
+    private synchronized void loadTheList() {
         int currentIndex = list.getSelectedIndex();
         list.clearAll();
         itemsinlist = new ArrayList<>();
@@ -234,17 +247,37 @@ public class TrackerWindow extends MysterFrame {
         }
         list.addItem(m);
         list.select(currentIndex); //not a problem if out of bounds..
+        
+        cancelTimer();
     }
 
     /**
      * Refreshes the list information with new information from the tracker.
      */
-    private synchronized void refreshTheList() {
+    private synchronized void checkForRefresh() {
+        boolean refresh = refreshList.get();
+        boolean reload = reloadList.get();
+        
+        refreshList.set(false);
+        reloadList.set(false);
+
+        if (reload) {
+            loadTheList();
+        } else if (refresh) {
+            refreshTheList();
+        }
+
+        cancelTimer();
+    }
+
+    private void refreshTheList() {
         for (int i = 0; i < itemsinlist.size(); i++) {
             (itemsinlist.get(i)).refresh();
         }
         list.repaint();
-        
+    }
+
+    private void cancelTimer() {
         if (timer != null) {
             timer.cancelTimer();
             timer = null;
@@ -256,7 +289,7 @@ public class TrackerWindow extends MysterFrame {
         }
 
         public void itemStateChanged(ItemEvent e) {
-            loadList();
+            loadTheList();
         }
     }
 
@@ -309,16 +342,16 @@ public class TrackerWindow extends MysterFrame {
         }
 
         private static class SortablePing extends SortableLong {
-            public static final int UNKNOWN = -1;
+            public static final int UNKNOWN_SORTABLE = 100000;
 
-            public static final int DOWN = -2;
+            public static final int DOWN_SORTABLE = 100001;
 
             public SortablePing(long c) {
                 super(c);
-                if (c == -1) {
-                    number = UNKNOWN;
-                } else if (c == -2) {
-                    number = DOWN;
+                if (c == UNTRIED) {
+                    number = UNKNOWN_SORTABLE;
+                } else if (c == DOWN) {
+                    number = DOWN_SORTABLE;
                 } else {
                     number = c;
                 }
@@ -326,9 +359,9 @@ public class TrackerWindow extends MysterFrame {
 
             public String toString() {
                 switch ((int) number) {
-                case UNKNOWN:
+                case UNKNOWN_SORTABLE:
                     return "-";
-                case DOWN:
+                case DOWN_SORTABLE:
                     return "Timeout";
                 default:
                     return number + "ms";

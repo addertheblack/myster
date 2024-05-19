@@ -48,6 +48,7 @@ import com.myster.client.ui.ClientWindow;
 import com.myster.filemanager.FileTypeListManager;
 import com.myster.filemanager.ui.FmiChooser;
 import com.myster.hash.HashManager;
+import com.myster.hash.ui.HashManagerGUI;
 import com.myster.identity.Identity;
 import com.myster.message.ImTransactionServer;
 import com.myster.message.MessageWindow;
@@ -208,9 +209,11 @@ public class Myster {
 
         INSTRUMENTATION.info("-------->> before IPListManager "
                 + (System.currentTimeMillis() - startTime));
+        MysterServerPoolImpl pool = new MysterServerPoolImpl(Preferences.userRoot(), protocol);
         MysterServerManager ipListManager =
-                new MysterServerManager(new MysterServerPoolImpl(Preferences.userRoot(), protocol),
+                new MysterServerManager(pool,
                                         Preferences.userRoot().node("Tracker.IpListManager"));
+        pool.startRefreshTimer();
         INSTRUMENTATION
                 .info("-------->> after IPListManager " + (System.currentTimeMillis() - startTime));
 
@@ -329,6 +332,9 @@ public class Myster {
                     count += com.myster.client.ui.ClientWindow.initWindowLocations(context);
                     count += ServerStatsWindow.initWindowLocations();
                     count += com.myster.tracker.ui.TrackerWindow.initWindowLocations();
+                    
+                    HashManagerGUI.init(context, hashManager);
+                    
                     count += com.myster.hash.ui.HashManagerGUI.initGui();
                     count += SearchWindow.initWindowLocations(context);
                     
@@ -352,7 +358,7 @@ public class Myster {
 
                 if (Desktop.getDesktop().isSupported(Action.APP_ABOUT)) {
                     Desktop.getDesktop().setAboutHandler(e -> AnswerDialog
-                            .simpleAlert("Myster PR 10\n\nCome on, join the party.."));
+                            .simpleAlert("Myster PR 10\n\nCome on in, join the party.."));
                 }
             });
 
