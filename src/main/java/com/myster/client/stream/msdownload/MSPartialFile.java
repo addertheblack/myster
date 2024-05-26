@@ -56,7 +56,6 @@ public class MSPartialFile implements AutoCloseable {
         } catch (IOException ex) {
             file.deleteOnExit();
             maskFile.close();
-            System.out.println( file.delete());
             throw ex;
         }
     }
