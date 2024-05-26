@@ -4,6 +4,7 @@ import java.io.ByteArrayOutputStream;
 import java.io.DataOutputStream;
 import java.io.IOException;
 import java.util.function.Supplier;
+import java.util.logging.Logger;
 
 import com.myster.identity.Identity;
 import com.myster.net.BadPacketException;
@@ -13,10 +14,13 @@ import com.myster.transaction.TransactionProtocol;
 import com.myster.transaction.TransactionSender;
 
 public class ServerStatsDatagramServer implements TransactionProtocol {
+    private static final Logger LOGGER = Logger.getLogger(ServerStatsDatagramServer.class.getName());
+    
     public static final int SERVER_STATS_TRANSACTION_CODE = com.myster.client.datagram.ServerStatsDatagramClient.SERVER_STATS_TRANSACTION_CODE;
+    
     private final Supplier<String> getIdentity;
     private final Identity identity;
-    private Supplier<Integer> getPort;
+    private final Supplier<Integer> getPort;
 
     public ServerStatsDatagramServer(Supplier<String> getIdentity, Supplier<Integer> getPort, Identity identity) {
         this.getPort = getPort;
@@ -35,7 +39,6 @@ public class ServerStatsDatagramServer implements TransactionProtocol {
             ByteArrayOutputStream byteOutputStream = new ByteArrayOutputStream();
             DataOutputStream out = new DataOutputStream(byteOutputStream);
 
-            
             // TODO: pass in getMMLToSend as the supplier
             out.writeUTF("" + com.myster.server.stream.ServerStats.getMMLToSend(getIdentity.get(), getPort.get(), identity));
 
@@ -46,7 +49,7 @@ public class ServerStatsDatagramServer implements TransactionProtocol {
             throw new BadPacketException("Bad packet " + ex);
         } catch (NotInitializedException exception) {
             // nothing..
-            System.out.println("Could not reply server stats, file manager is not inited yet");
+            LOGGER.info("Could not reply server stats, file manager is not inited yet");
         }
     }
 }

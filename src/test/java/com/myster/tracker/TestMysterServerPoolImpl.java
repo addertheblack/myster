@@ -268,7 +268,6 @@ class TestMysterServerPoolImpl {
             @Override
             public void serverRefresh(MysterServer server) {
                 refreshedServers.add(server);
-                System.out.println("server: " + server);
                 sem.signal();
             }
             
@@ -280,7 +279,6 @@ class TestMysterServerPoolImpl {
             @Override
             public void deadServer(MysterIdentity identity) {
                 deadServers.add(identity);
-                System.out.println("identity: " + identity);
                 sem.signal();
             }
         });
@@ -300,10 +298,8 @@ class TestMysterServerPoolImpl {
         
         pool.refreshMysterServerPrivate(oneTwoSeven);
         
-        var time = System.currentTimeMillis();
         sem.getLock();
         sem.getLock();
-        System.out.println("TIme take: " + (System.currentTimeMillis() - time));
         
         Assertions.assertEquals(2, refreshedServers.size());
         Assertions.assertEquals(1, deadServers.size());
