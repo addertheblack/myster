@@ -19,18 +19,19 @@
 
 package com.myster.server.event;
 
-import com.general.events.EventDispatcher;
-import com.general.events.SyncEventThreadDispatcher;
+import com.general.events.NewGenericDispatcher;
+import com.general.thread.Invoker;
 
 public class ServerEventDispatcher {
-    EventDispatcher connectionlisteners;
-
-    EventDispatcher operatorDispatcher;
+    private final NewGenericDispatcher<ConnectionManagerListener> connectionDispatcher;
+    private final NewGenericDispatcher<OperatorListener> operatorDispatcher;
 
     public ServerEventDispatcher() {
-        connectionlisteners = new SyncEventThreadDispatcher();
-        operatorDispatcher = new SyncEventThreadDispatcher();
-
+        connectionDispatcher =
+                new NewGenericDispatcher<ConnectionManagerListener>(ConnectionManagerListener.class,
+                                                                    Invoker.SYNCHRONOUS);
+        operatorDispatcher = new NewGenericDispatcher<OperatorListener>(OperatorListener.class,
+                                                                        Invoker.SYNCHRONOUS);
     }
 
     public ServerContext getServerContext() {
@@ -39,11 +40,11 @@ public class ServerEventDispatcher {
 
     private class ServerContextImpl  implements ServerContext {
         public void addConnectionManagerListener(ConnectionManagerListener l) {
-            connectionlisteners.addListener(l);
+            connectionDispatcher.addListener(l);
         }
 
         public void removeConnectionManagerListener(ConnectionManagerListener l) {
-            connectionlisteners.removeListener(l);
+            connectionDispatcher.removeListener(l);
         }
 
         public void addOperatorListener(OperatorListener l) {
@@ -54,14 +55,12 @@ public class ServerEventDispatcher {
             operatorDispatcher.removeListener(l);
         }
     }
-
-    // whatever events
-    public void fireCEvent(final ConnectionManagerEvent e) {
-        connectionlisteners.fireEvent(e);
+    
+    public NewGenericDispatcher<ConnectionManagerListener> getConnectionDispatcher() {
+        return connectionDispatcher;
     }
-
-    public void fireOEvent(final OperatorEvent event) { // should be private but
-        operatorDispatcher.fireEvent(event);
+    
+    public NewGenericDispatcher<OperatorListener> getOperationDispatcher() {
+        return operatorDispatcher;
     }
-
 }

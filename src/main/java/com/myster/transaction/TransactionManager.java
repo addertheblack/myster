@@ -218,9 +218,12 @@ public class TransactionManager {
                     return;
                 }
                 Object transactionObject = protocol.getTransactionObject();
-                dispatcher.fireCEvent(new ConnectionManagerEvent(
-                        ConnectionManagerEvent.SECTIONCONNECT, transaction.getAddress(),
-                        transaction.getTransactionCode(), transactionObject, true));
+                dispatcher.getConnectionDispatcher().fire()
+                        .sectionEventConnect(new ConnectionManagerEvent(transaction.getAddress(),
+                                                                        transaction
+                                                                                .getTransactionCode(),
+                                                                        transactionObject,
+                                                                        true));
                 protocol.transactionReceived((t) -> sendTransaction(sender, t), transaction, transactionObject); //fun...
             }
         }

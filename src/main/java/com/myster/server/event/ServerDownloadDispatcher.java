@@ -1,17 +1,21 @@
-/**
- * ...
- */
-
 package com.myster.server.event;
 
-import com.general.events.SyncEventThreadDispatcher;
+import com.general.events.NewGenericDispatcher;
+import com.general.thread.Invoker;
 
-public class ServerDownloadDispatcher extends SyncEventThreadDispatcher {
+public class ServerDownloadDispatcher  {
+    private final NewGenericDispatcher<ServerDownloadListener> dispatcher =
+            new NewGenericDispatcher<>(ServerDownloadListener.class, Invoker.SYNCHRONOUS);
+    
     public void addServerDownloadListener(ServerDownloadListener l) {
-        addListener(l);
+        dispatcher.addListener(l);
     }
 
     public void removeServerSearchListener(ServerDownloadListener l) {
-        removeListener(l);
+        dispatcher.removeListener(l);
+    }
+    
+    public ServerDownloadListener fire() {
+        return dispatcher.fire();
     }
 }

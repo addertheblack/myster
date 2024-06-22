@@ -35,7 +35,6 @@ import com.myster.server.event.ConnectionManagerEvent;
 import com.myster.server.event.ConnectionManagerListener;
 import com.myster.server.event.ServerContext;
 import com.myster.server.event.ServerDownloadDispatcher;
-import com.myster.server.stream.RequestDirThread;
 import com.myster.ui.MysterFrameContext;
 
 public class DownloadInfoPanel extends JPanel {
@@ -46,7 +45,7 @@ public class DownloadInfoPanel extends JPanel {
     private final MysterFrameContext frameContext;
     private final MysterProtocol protocol;
     
-    private MCList list;
+    private MCList<ServerDownloadDispatcher> list;
     private JButton disconnect, browse, clearAll, message;
 
     public DownloadInfoPanel(ServerContext context, MysterFrameContext c, MysterProtocol protocol) {
@@ -185,7 +184,7 @@ public class DownloadInfoPanel extends JPanel {
         message.setEnabled(enable);
     }
 
-    private class ConnectionHandler extends ConnectionManagerListener {
+    private class ConnectionHandler implements ConnectionManagerListener {
 
         public void sectionEventConnect(ConnectionManagerEvent e) {
             if (e.getSection() == com.myster.server.stream.MultiSourceSender.SECTION_NUMBER) {

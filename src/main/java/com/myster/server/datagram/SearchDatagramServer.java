@@ -44,7 +44,7 @@ public class SearchDatagramServer implements TransactionProtocol {
 
             ServerSearchDispatcher dispatcher = (ServerSearchDispatcher) transactionObject;
 
-            dispatcher.fireEvent(new ServerSearchEvent(ServerSearchEvent.REQUESTED, transaction
+            dispatcher.fire().searchRequested(new ServerSearchEvent(transaction
                     .getAddress(), getTransactionCode(), searchstring, type));
 
             String[] stringarray;
@@ -55,7 +55,7 @@ public class SearchDatagramServer implements TransactionProtocol {
             // matching
 
             if (stringarray != null) {
-                dispatcher.fireEvent(new ServerSearchEvent(ServerSearchEvent.RESULTS, transaction
+                dispatcher.fire().searchResult(new ServerSearchEvent(transaction
                         .getAddress(), getTransactionCode(), searchstring, type, stringarray));
                 for (int j = 0; j < stringarray.length; j++) {
                     out.writeUTF(stringarray[j]);

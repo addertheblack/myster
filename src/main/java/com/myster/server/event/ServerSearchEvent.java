@@ -18,17 +18,16 @@ public class ServerSearchEvent extends ServerEvent {
     private String[] results;
     private MysterType type;
 
-    public ServerSearchEvent(int id, MysterAddress ip, int section,
+    public ServerSearchEvent(MysterAddress ip, int section,
             String searchString, MysterType type, String[] results) {
-        super(id, ip, section);
+        super(ip, section);
         this.searchString = searchString;
         this.results = results;
         this.type = type;
     }
 
-    public ServerSearchEvent(int id, MysterAddress ip, int section,
-            String searchString, MysterType type) {
-        this(id, ip, section, searchString, type, null);
+    public ServerSearchEvent(MysterAddress ip, int section, String searchString, MysterType type) {
+        this(ip, section, searchString, type, null);
     }
 
     public String getSearchString() {

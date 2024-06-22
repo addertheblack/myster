@@ -52,16 +52,15 @@ public class RequestSearchThread extends ServerThread {
         stringarray = FileTypeListManager.getInstance().getDirList(new MysterType(type),
                 searchstring);
 
-        dispatcher.fireEvent(new ServerSearchEvent(ServerSearchEvent.REQUESTED, new MysterAddress(
+        dispatcher.fire().searchRequested(new ServerSearchEvent(new MysterAddress(
                 c.socket.getInetAddress()), NUMBER, searchstring, new MysterType(type), null));
 
         if (stringarray != null) {
-            dispatcher.fireEvent(new ServerSearchEvent(ServerSearchEvent.RESULTS,
+            dispatcher.fire().searchResult(new ServerSearchEvent(
                     new MysterAddress(c.socket.getInetAddress()), NUMBER, searchstring, new MysterType(
                             type), stringarray));
             for (int j = 0; j < stringarray.length; j++) {
                 out.writeUTF(stringarray[j]);
-
             }
         }
 

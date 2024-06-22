@@ -284,43 +284,42 @@ public class StatsInfoPanel extends JPanel {
         g.drawString(msg1, 20, 15);
     }
 
-    private class ConnectionHandler extends ConnectionManagerListener {
+    private class ConnectionHandler implements ConnectionManagerListener {
         public void sectionEventConnect(ConnectionManagerEvent e) {
             boolean isUdp = e.isDatagram();
             switch (e.getSection()) {
-            case RequestSearchThread.NUMBER:
-                numsearch.increment(isUdp);
-                searches.addSearch(e.getTimeStamp());
-                ((ServerSearchDispatcher) (e.getSectionObject()))
-                        .addServerSearchListener(new SearchHandler());
-                break;
-            case MultiSourceSender.SECTION_NUMBER:
-                numofld.increment(isUdp);
-                ((ServerDownloadDispatcher) (e.getSectionObject()))
-                        .addServerDownloadListener(new DownloadHandler());
-                break;
-            case IpLister.NUMBER:
-                numofTT.increment(isUdp);
-                break;
-            case ServerStats.NUMBER:
-                numofSSR.increment(isUdp);
-                break;
-            case FileInfoLister.NUMBER:
-                numofFI.increment(isUdp);
-                break;
-            case FileByHash.NUMBER:
-                numberOfHashSearches.increment(isUdp);
-                break;
+                case RequestSearchThread.NUMBER:
+                    numsearch.increment(isUdp);
+                    searches.addSearch(e.getTimeStamp());
+                    ((ServerSearchDispatcher) (e.getSectionObject()))
+                            .addServerSearchListener(new SearchHandler());
+                    break;
+                case MultiSourceSender.SECTION_NUMBER:
+                    numofld.increment(isUdp);
+                    ((ServerDownloadDispatcher) (e.getSectionObject()))
+                            .addServerDownloadListener(new DownloadHandler());
+                    break;
+                case IpLister.NUMBER:
+                    numofTT.increment(isUdp);
+                    break;
+                case ServerStats.NUMBER:
+                    numofSSR.increment(isUdp);
+                    break;
+                case FileInfoLister.NUMBER:
+                    numofFI.increment(isUdp);
+                    break;
+                case FileByHash.NUMBER:
+                    numberOfHashSearches.increment(isUdp);
+                    break;
             }
         }
 
         public void sectionEventDisconnect(ConnectionManagerEvent e) {
-
+            // nothing
         }
     }
 
-    private class SearchHandler extends ServerSearchListener {
-
+    private class SearchHandler implements ServerSearchListener {
         public void searchRequested(ServerSearchEvent e) {
             lastten.add(e.getSearchString() + " (" + e.getType() + ")");
         }
@@ -333,7 +332,7 @@ public class StatsInfoPanel extends JPanel {
     private class SearchPerHour implements Runnable {
         boolean flag = true;
 
-        LinkedList list = new LinkedList();
+        LinkedList<Long> list = new LinkedList<Long>();
 
         public void start() {
             run();
@@ -351,7 +350,7 @@ public class StatsInfoPanel extends JPanel {
         public int calculateSearchesPerHour() {
             if (list.getTail() == null)
                 return 0;
-            while (1000 * 60 * 60 < (System.currentTimeMillis() - ((Long) (list.getTail()))
+            while (1000 * 60 * 60 < (System.currentTimeMillis() - (list.getTail())
                     .longValue())) {
                 list.removeFromTail();
                 if (list.getTail() == null)
@@ -361,7 +360,7 @@ public class StatsInfoPanel extends JPanel {
         }
 
         public void addSearch(long time) {
-            list.addToHead(new Long(time));
+            list.addToHead(time);
         }
 
         public void end() {
@@ -369,10 +368,36 @@ public class StatsInfoPanel extends JPanel {
         }
     }
 
-    private class DownloadHandler extends ServerDownloadListener {
+    private class DownloadHandler implements ServerDownloadListener {
+        @Override
         public void downloadFinished(ServerDownloadEvent e) {
             transfered.setValue(transfered.getValue() + e.dataSoFar()
                     - e.getDownloadInfo().getInititalOffset());
+        }
+
+        @Override
+        public void downloadSectionStarted(ServerDownloadEvent e) {
+            // nothing
+        }
+
+        @Override
+        public void downloadStarted(ServerDownloadEvent e) {
+            // nothing
+        }
+
+        @Override
+        public void blockSent(ServerDownloadEvent e) {
+            // nothing
+        }
+
+        @Override
+        public void queued(ServerDownloadEvent e) {
+            // nothing
+        }
+
+        @Override
+        public void downloadSectionFinished(ServerDownloadEvent e) {
+            // nothing
         }
     }
 

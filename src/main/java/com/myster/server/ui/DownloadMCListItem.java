@@ -182,10 +182,10 @@ public class DownloadMCListItem extends MCListItemInterface<ServerDownloadDispat
     public synchronized boolean isTrivialDownload() {
         if (status != DONE_NO_ERROR)
             return false;
-        return ((Long) doneProgress.getValue()).longValue() == 0;
+        return doneProgress.getValue().longValue() == 0;
     }
 
-    private class DownloadEventHandler extends ServerDownloadListener {
+    private class DownloadEventHandler implements ServerDownloadListener {
         public void downloadSectionFinished(ServerDownloadEvent e) {
             done();
         }
@@ -207,6 +207,16 @@ public class DownloadMCListItem extends MCListItemInterface<ServerDownloadDispat
         public void queued(ServerDownloadEvent e) {
             queuePosition = e.getQueuePosition();
             setStatus(QUEUED);
+        }
+
+        @Override
+        public void blockSent(ServerDownloadEvent e) {
+         // nothing
+        }
+
+        @Override
+        public void downloadFinished(ServerDownloadEvent e) {
+            // nothing
         }
     }
 
