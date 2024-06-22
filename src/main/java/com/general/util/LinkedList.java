@@ -15,7 +15,7 @@ public class LinkedList<T> {
         tail = head = new Element<T>(null);
     }
 
-    //fast
+    //fast O(c)
     public synchronized void addToHead(T o) {
         Element<T> e = new Element<T>(o);
         e.next = head.next;
@@ -37,7 +37,7 @@ public class LinkedList<T> {
         return e.next.value;
     }
 
-    //fast
+    //fast O(c)
     public synchronized void addToTail(T o) {
         Element<T> e = new Element<T>(o);
         tail.next = e;
@@ -45,12 +45,12 @@ public class LinkedList<T> {
         numOfItems++;
     }
 
-    //fast
+    //fast O(c)
     public synchronized T getTail() {
         return tail.value;
     }
 
-    //slow
+    //slow O(n)
     public synchronized T removeFromTail() {
         T o = tail.value;
         tail = head;
@@ -65,14 +65,14 @@ public class LinkedList<T> {
         return o;
     }
 
-    //fast
+    //fast O(n)
     public synchronized T getHead() {
         if (head.next == null)
             return null;
         return head.next.value;
     }
 
-    //fast
+    //fast O(n)
     public synchronized T removeFromHead() {
         if (head.next == null)
             return null;
@@ -83,12 +83,12 @@ public class LinkedList<T> {
         return o;
     }
 
-    //fast
+    //fast O(c)
     public int getSize() {
         return numOfItems;
     }
 
-    //slow
+    //slow O(n)
     //deprecated use getPositionOf
     public boolean contains(T object) {
         return (getPositionOf(object) != -1);
@@ -110,7 +110,7 @@ public class LinkedList<T> {
         return -1;
     }
 
-    //slow
+    //slow O(n)
     public synchronized boolean remove(Object o) {
         Element<T> temp = head;
         while (temp.next != null) {
@@ -127,7 +127,7 @@ public class LinkedList<T> {
         return false;
     }
 
-    //slow
+    //slow O(n)
     private synchronized void findTheEnd() {
         tail = head;
         while (tail.next != null) {

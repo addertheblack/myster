@@ -17,6 +17,7 @@ import java.util.logging.Logger;
 import java.util.prefs.BackingStoreException;
 import java.util.prefs.Preferences;
 
+import com.general.events.NewGenericDispatcher;
 import com.general.thread.AsyncContext;
 import com.general.thread.PromiseFuture;
 import com.general.thread.PromiseFutures;

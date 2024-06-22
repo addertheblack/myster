@@ -9,15 +9,14 @@ package com.myster.server.event;
 import com.general.events.GenericEvent;
 import com.myster.net.MysterAddress;
 
-public abstract class ServerEvent extends GenericEvent {
+public abstract class ServerEvent  {
     private MysterAddress address;
 
     private long time;
 
     private int section;
 
-    public ServerEvent(int id, MysterAddress address, int section) {
-        super(id); //ya!
+    public ServerEvent(MysterAddress address, int section) {
         this.address = address;
         this.section = section;
         this.time = System.currentTimeMillis();

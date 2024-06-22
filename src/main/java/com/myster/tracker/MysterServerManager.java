@@ -15,6 +15,7 @@ import java.util.logging.Logger;
 import java.util.prefs.Preferences;
 import java.util.stream.Stream;
 
+import com.general.events.NewGenericDispatcher;
 import com.myster.client.datagram.PingResponse;
 import com.myster.net.MysterAddress;
 import com.myster.type.MysterType;

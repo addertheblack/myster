@@ -85,8 +85,8 @@ public class ConnectionRunnable implements Runnable {
      *  
      */
     public void run() {
-        eventSender.fireOEvent(new OperatorEvent(OperatorEvent.CONNECT, new MysterAddress(socket
-                .getInetAddress())));
+        eventSender.getOperationDispatcher().fire()
+                .connectEvent(new OperatorEvent(new MysterAddress(socket.getInetAddress())));
 
         int sectioncounter = 0;
         try (var tempTcpSocket = new com.myster.client.stream.TCPSocket(socket)) {
@@ -141,14 +141,13 @@ public class ConnectionRunnable implements Runnable {
         } catch (IOException ex) {
             // nothing
         } finally {
-
-            if (sectioncounter == 0)
-                eventSender.fireOEvent(new OperatorEvent(OperatorEvent.PING, new MysterAddress(
+            if (sectioncounter == 0) {
+                eventSender.getOperationDispatcher().fire().pingEvent(new OperatorEvent(new MysterAddress(
                         socket.getInetAddress())));
+            }
 
-            eventSender.fireOEvent(new OperatorEvent(OperatorEvent.DISCONNECT, new MysterAddress(
+            eventSender.getOperationDispatcher().fire().disconnectEvent(new OperatorEvent(new MysterAddress(
                     socket.getInetAddress())));
-            
             // socket already closed here
         }
 
@@ -156,26 +155,19 @@ public class ConnectionRunnable implements Runnable {
 
     /**
      * Used to turn a REALLY long line of code into a smaller long line of code.
-     * 
-     * @param d
-     * @param remoteAddress
-     * @param o
      */
     private void fireConnectEvent(ConnectionSection d, MysterAddress remoteAddress, Object o) {
-        eventSender.fireCEvent(new ConnectionManagerEvent(ConnectionManagerEvent.SECTIONCONNECT,
-                remoteAddress, d.getSectionNumber(), o));
+        eventSender.getConnectionDispatcher().fire().sectionEventConnect(new ConnectionManagerEvent(remoteAddress, d.getSectionNumber(), o));
     }
 
     /**
      * Used to turn a REALLY long line of code into a smaller long line of code.
-     * 
-     * @param d
-     * @param remoteAddress
-     * @param o
      */
     private void fireDisconnectEvent(ConnectionSection d, MysterAddress remoteAddress, Object o) {
-        eventSender.fireCEvent(new ConnectionManagerEvent(ConnectionManagerEvent.SECTIONDISCONNECT,
-                remoteAddress, d.getSectionNumber(), o));
+        eventSender.getConnectionDispatcher().fire()
+                .sectionEventDisconnect(new ConnectionManagerEvent(remoteAddress,
+                                                                   d.getSectionNumber(),
+                                                                   o));
     }
 
     private void doSection(ConnectionSection d, MysterAddress remoteIP, ConnectionContext context)

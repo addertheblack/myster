@@ -1,30 +1,6 @@
-/**
- * 
- * ...
- *  
- */
-
 package com.myster.server.event;
 
-import com.general.events.EventListener;
-import com.general.events.GenericEvent;
-
-public abstract class ServerSearchListener implements EventListener { //check
-
-    public final void fireEvent(GenericEvent e) {
-        switch (e.getID()) {
-        case ServerSearchEvent.REQUESTED:
-            searchRequested((ServerSearchEvent) e);
-            break;
-        case ServerSearchEvent.RESULTS:
-            searchResult((ServerSearchEvent) e);
-            break;
-        default:
-            err();
-        }
-    }
-
-    public abstract void searchRequested(ServerSearchEvent e);
-
-    public abstract void searchResult(ServerSearchEvent e);
+public interface ServerSearchListener {
+    public void searchRequested(ServerSearchEvent e);
+    public void searchResult(ServerSearchEvent e);
 }

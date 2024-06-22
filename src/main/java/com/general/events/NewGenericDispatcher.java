@@ -1,5 +1,5 @@
 
-package com.myster.tracker;
+package com.general.events;
 
 import java.lang.reflect.InaccessibleObjectException;
 import java.lang.reflect.Method;

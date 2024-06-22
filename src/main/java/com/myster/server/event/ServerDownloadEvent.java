@@ -8,53 +8,53 @@ import com.myster.net.MysterAddress;
 import com.myster.server.DownloadInfo;
 
 public class ServerDownloadEvent extends ServerEvent {
-    public final static int SECTION_STARTED = -1;
+    public static final int NO_QUEUE_POSTION = -1;
+    public static final char NO_BLOCK_TYPE = '?';
 
-    public final static int STARTED = 0;
+    private final String type;
+    private final String filename;
+    private final char blockType;
+    private final long fileSoFar;
+    private final long filelength;
+    private final DownloadInfo downloadInfo;
+    private final int queuePosition;
 
-    public final static int BLOCKSENT = 1;
-
-    public final static int FINISHED = 2;
-
-    public final static int QUEUED = 3;
-
-    public final static int SECTION_FINISHED = 4;
-
-    String type;
-
-    String filename;
-
-    int d; // cryptic one letter naming! Did I do this on purpose? Me: zuh.
-
-    long filesofar;
-
-    long filelength;
-
-    DownloadInfo downloadInfo;
-
-    //if id is 3 (QUEUED) the 'i' argument is queue position.
-    public ServerDownloadEvent(int id, MysterAddress addressOfRemote,
-            int section, String filename, String type, int i, long filesofar,
-            long filelength, DownloadInfo downloadInfo) {
-        super(id, addressOfRemote, section);
+    /**
+     * 
+     * @param id
+     * @param addressOfRemote
+     * @param section
+     * @param filename
+     * @param type
+     * @param blockType or NO_DATA_OFFSET
+     * @param filesofar
+     * @param filelength
+     * @param downloadInfo
+     * @param queuePosition or NO_QUEUE_POSTION
+     */
+    public ServerDownloadEvent(MysterAddress addressOfRemote,
+            int section, String filename, String type, char blockType, long filesofar,
+            long filelength, DownloadInfo downloadInfo, int queuePosition) {
+        super(addressOfRemote, section);
         this.type = type;
         this.filename = filename;
-        this.d = i;
-        this.filesofar = filesofar;
+        this.blockType = blockType;
+        this.fileSoFar = filesofar;
         this.filelength = filelength;
         this.downloadInfo = downloadInfo;
+        this.queuePosition = queuePosition;
     }
 
-    public int getBlockType() {
-        return (getID() == QUEUED ? (int) 'q' : d);
+    public char getBlockType() {
+        return blockType;
     }
 
     public long dataSoFar() {
-        return filesofar;
+        return fileSoFar;
     }
 
     public int getQueuePosition() {
-        return (getID() == QUEUED ? d : 0);
+        return queuePosition;
     }
 
     public String getFileName() {

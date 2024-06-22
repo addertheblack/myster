@@ -18,6 +18,7 @@ import com.myster.server.ConnectionContext;
 import com.myster.server.DownloadInfo;
 import com.myster.server.event.ServerDownloadDispatcher;
 import com.myster.server.event.ServerDownloadEvent;
+import com.myster.server.event.ServerDownloadListener;
 import com.myster.server.transferqueue.Downloader;
 import com.myster.server.transferqueue.MaxQueueLimitException;
 import com.myster.server.transferqueue.QueuedStats;
@@ -111,7 +112,7 @@ public class MultiSourceSender extends ServerThread {
             this.transferQueue = transferQueue;
             this.remoteIP = remoteIP;
 
-            fireEvent(ServerDownloadEvent.SECTION_STARTED, -1);
+            fire().downloadSectionStarted(newEvent(-1));
         }
 
         public void download(final MysterSocket socket) throws IOException {
@@ -156,7 +157,7 @@ public class MultiSourceSender extends ServerThread {
                         public void download() throws IOException {
                             sendQueuePosition(socket.out, 0, "You are ready to download..");
 
-                            fireEvent(ServerDownloadEvent.STARTED, -1);
+                            fire().downloadStarted(newEvent(-1));
 
                             sendImage(socket.out); //sends an "ad"
                             // image and URL
@@ -167,7 +168,7 @@ public class MultiSourceSender extends ServerThread {
                             // first
                             // block
 
-                            fireEvent(ServerDownloadEvent.FINISHED, -1);
+                            fire().downloadFinished(newEvent(-1));
 
                             blockSendingLoop(socket, file);
                         }
@@ -189,7 +190,7 @@ public class MultiSourceSender extends ServerThread {
                 ex.printStackTrace();
                 throw ex;
             } finally {
-                fireEvent(ServerDownloadEvent.FINISHED, -1);
+                fire().downloadFinished(newEvent(-1));
             }
         }
 
@@ -217,18 +218,13 @@ public class MultiSourceSender extends ServerThread {
 
                 sendQueuePosition(socket.out, 0, "Download is starting now..");
 
-                fireEvent(ServerDownloadEvent.STARTED, -1);
+                fire().downloadStarted(newEvent(-1));
 
-                sendImage(socket.out); //sends
-                // an
-                // "ad"
-                // image
-                // and
-                // URL
+                sendImage(socket.out);
 
                 sendFileSection(socket, file, currentBlock);
 
-                fireEvent(ServerDownloadEvent.FINISHED, -1);
+                fire().downloadFinished(newEvent(-1));
             }
         }
 
@@ -245,7 +241,7 @@ public class MultiSourceSender extends ServerThread {
             
             out.flush();
 
-            fireEvent(ServerDownloadEvent.QUEUED, queued);
+            fire().queued(newEvent(queued));
         }
 
         //Throws an IOException if there's a leech.
@@ -368,7 +364,7 @@ public class MultiSourceSender extends ServerThread {
         }
 
         private void endBlock() {
-            fireEvent(ServerDownloadEvent.SECTION_FINISHED, -1);
+            fire().downloadSectionFinished(newEvent(-1));
         }
 
         private void sendFileSection(final MysterSocket socket, final File file_arg,
@@ -429,10 +425,20 @@ public class MultiSourceSender extends ServerThread {
 
         }
 
-        private void fireEvent(int id, int queuePosition) {
-            dispatcher.fireEvent(new ServerDownloadEvent(id, remoteIP, getSectionNumber(),
-                    fileName, type.toString(), queuePosition, offset + amountDownloaded,
-                    fileLength, downloadInfo));
+        private ServerDownloadListener fire() {
+            return dispatcher.fire();
+        }
+
+        private ServerDownloadEvent newEvent(int queuePosition) {
+            return new ServerDownloadEvent(remoteIP,
+                                           getSectionNumber(),
+                                           fileName,
+                                           type.toString(),
+                                           ServerDownloadEvent.NO_BLOCK_TYPE,
+                                           offset + amountDownloaded,
+                                           fileLength,
+                                           downloadInfo,
+                                           queuePosition);
         }
 
         private class Stats implements DownloadInfo {
