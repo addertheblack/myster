@@ -274,8 +274,9 @@ public class TransactionManager {
              */
             Util.invokeLater(new Runnable() {
                 public void run() {
-                    record.listener.fireEvent(new TransactionEvent(TransactionEvent.CANCELLED,
-                            System.currentTimeMillis() - record.timeStamp, record.address, null));
+                    record.listener
+                            .transactionCancelled(new TransactionEvent(System.currentTimeMillis()
+                                    - record.timeStamp, record.address, null));
                 }
             });
 
@@ -314,9 +315,13 @@ public class TransactionManager {
                     return;
             }
 
-            record.listener.fireEvent(new TransactionEvent(
-                    (transaction == null ? TransactionEvent.TIMEOUT : TransactionEvent.REPLY),
-                    System.currentTimeMillis() - record.timeStamp, record.address, transaction));
+            if (transaction == null) {
+                record.listener.transactionTimout(new TransactionEvent(System.currentTimeMillis()
+                        - record.timeStamp, record.address, transaction));
+            } else {
+                record.listener.transactionReply(new TransactionEvent(System.currentTimeMillis()
+                        - record.timeStamp, record.address, transaction));
+            }
         }
 
         int idCounter = 0; //used to generate unique ids.

@@ -130,7 +130,7 @@ public class MSDownloadHandler implements MSDownloadListener {
     }
 }
 
-class SegmentDownloaderHandler extends SegmentDownloaderListener {
+class SegmentDownloaderHandler implements SegmentDownloaderListener {
     private final int bar;
 
     private final FileProgressWindow progress;
@@ -289,7 +289,7 @@ class ProgressBannerManager implements Runnable {
     }
 
     private Banner getNextBannerInQueue() {
-        return (Banner) (queue.removeFromHead());
+        return queue.removeFromHead();
     }
 
     private void setBanner(Banner banner) {

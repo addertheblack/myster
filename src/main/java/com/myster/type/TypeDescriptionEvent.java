@@ -1,7 +1,5 @@
 package com.myster.type;
 
-import com.general.events.GenericEvent;
-
 /**
  * The TypeDescriptionEvent is fired by the TypeDescriptionList.
  * 
@@ -9,19 +7,13 @@ import com.general.events.GenericEvent;
  *
  */
 
-public class TypeDescriptionEvent extends GenericEvent {
-    public static final int DISABLE = 0;
+public class TypeDescriptionEvent  {
+    private final TypeDescriptionList list;
 
-    public static final int ENABLE = 1;
+    private final MysterType type;
 
-    TypeDescriptionList list;
-
-    MysterType type;
-
-    public TypeDescriptionEvent(int id, TypeDescriptionList list,
+    public TypeDescriptionEvent(TypeDescriptionList list,
             MysterType type) {
-        super(id);
-
         this.list = list;
         this.type = type;
     }

@@ -75,6 +75,15 @@ public class NewGenericDispatcher<L> {
         }
     }
     
+    public int getNumberOfListeners() {
+        lock.lock();
+        try {
+            return listeners.size();
+        } finally {
+            lock.unlock();
+        }
+    }
+    
     public L fire() {
         return dispatcher;
     }

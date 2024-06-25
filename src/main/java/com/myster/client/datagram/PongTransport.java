@@ -4,10 +4,10 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.logging.Logger;
 
-import com.general.events.EventDispatcher;
-import com.general.events.SyncEventDispatcher;
+import com.general.events.NewGenericDispatcher;
 import com.general.net.AsyncDatagramSocket;
 import com.general.net.ImmutableDatagramPacket;
+import com.general.thread.Invoker;
 import com.general.util.Timer;
 import com.myster.net.BadPacketException;
 import com.myster.net.DatagramSender;
@@ -65,17 +65,17 @@ public class PongTransport extends DatagramTransport {
     }
 
     /**
-     * Private method for code reuse. should NOT be in any sychronized block.
+     * Private method for code reuse. should NOT be in any synchronized block.
      */
     private void dispatch(MysterAddress param_address,
                           ImmutableDatagramPacket immutablePacket,
                           PongItemStruct pongItem) {
         long pingTime = System.currentTimeMillis() - pongItem.timeStamp;
-        
-        pongItem.dispatcher.fireEvent(new PingEvent(PingEvent.PING,
-                                                    immutablePacket,
-                                                    (int) pingTime,
-                                                    param_address));
+
+        pongItem.dispatcher.fire()
+                .pingReply(new PingEvent(immutablePacket,
+                                         (int) pingTime,
+                                         param_address));
     }
 
     /**
@@ -109,7 +109,7 @@ public class PongTransport extends DatagramTransport {
     }
 
     private class PongItemStruct {
-        public final EventDispatcher dispatcher;
+        public final NewGenericDispatcher<PingEventListener> dispatcher;
         public final long timeStamp;
 
         /**
@@ -121,7 +121,7 @@ public class PongTransport extends DatagramTransport {
 
         public PongItemStruct(MysterAddress param_address) {
             timeStamp = System.currentTimeMillis();
-            dispatcher = new SyncEventDispatcher();
+            dispatcher = new NewGenericDispatcher<PingEventListener>(PingEventListener.class, Invoker.SYNCHRONOUS);
             timer = new Timer(new TimeoutClass(param_address), FIRST_TIMEOUT
                     + (1 * 1000), false);
         }

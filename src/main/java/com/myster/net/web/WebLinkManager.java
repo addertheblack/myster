@@ -2,10 +2,12 @@ package com.myster.net.web;
 
 import java.net.URL;
 
-import com.general.events.SyncEventDispatcher;
+import com.general.events.NewGenericDispatcher;
+import com.general.thread.Invoker;
 
 public class WebLinkManager {
-    private static SyncEventDispatcher dispatcher = new SyncEventDispatcher();
+    private static final NewGenericDispatcher<WebLinkListener> dispatcher =
+            new NewGenericDispatcher<>(WebLinkListener.class, Invoker.SYNCHRONOUS);
 
     public static void addWebLinkListener(WebLinkListener l) {
         dispatcher.addListener(l);
@@ -24,7 +26,7 @@ public class WebLinkManager {
      * @param url
      */
     public static void openURL(URL url) {
-        dispatcher.fireEvent(new WebLinkEvent(WebLinkEvent.LINK, url));
+        dispatcher.fire().openURLLink(new WebLinkEvent(url));
     }
 }
 

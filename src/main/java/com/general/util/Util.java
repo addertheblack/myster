@@ -214,6 +214,18 @@ public class Util { //This code was taken from an Apple Sample Code package,
             e.printStackTrace(); //?
         }
     }
+    
+    public static void invokeAndWaitForAnyThread(final Runnable runnable) throws InterruptedException {
+        try {
+            if (EventQueue.isDispatchThread()) {
+                runnable.run();
+            } else {
+                EventQueue.invokeAndWait(runnable);
+            }
+        } catch (InvocationTargetException e) {
+            e.printStackTrace(); //?
+        }
+    }
 
     /**
      * This method gets around much of the idiocy of invoke and wait. If it's a

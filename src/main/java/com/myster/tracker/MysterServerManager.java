@@ -71,8 +71,6 @@ public class MysterServerManager { // aka tracker
                 addServerToAllLists(server);
             }
             
-            // severDeleted
-
             @Override
             public void serverPing(PingResponse server) {
                 // nothing

@@ -2,19 +2,15 @@ package com.myster.hash;
 
 import java.io.File;
 
-import com.general.events.GenericEvent;
-
 //immutable
-public class FileHashEvent extends GenericEvent {
+public class FileHashEvent {
     public static final int FOUND_HASH = 1;
 
     private FileHash[] hashes;
 
     private File file;
 
-    public FileHashEvent(int id, FileHash[] hashes, File file) {
-        super(id);
-
+    public FileHashEvent(FileHash[] hashes, File file) {
         this.hashes = hashes;
         this.file = file;
     }
