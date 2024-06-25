@@ -5,8 +5,8 @@ import java.io.IOException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
-import com.general.events.EventDispatcher;
-import com.general.events.SyncEventThreadDispatcher;
+import com.general.events.NewGenericDispatcher;
+import com.general.thread.Invoker;
 import com.myster.client.stream.UnknownProtocolException;
 import com.myster.mml.MMLException;
 import com.myster.mml.RobustMML;
@@ -22,7 +22,8 @@ class InternalSegmentDownloader implements SegmentDownloader {
     private static int instanceCounter = 0;
 
     // Utility variables
-    private final EventDispatcher dispatcher = new SyncEventThreadDispatcher();
+    private final NewGenericDispatcher<SegmentDownloaderListener> dispatcher =
+            new NewGenericDispatcher<>(SegmentDownloaderListener.class, Invoker.EDT_NOW_OR_LATER);
 
     // Params
     private final Controller controller;
@@ -128,7 +129,7 @@ class InternalSegmentDownloader implements SegmentDownloader {
         try {
             socket = socketFactory.makeStreamConnection(stub.getMysterAddress());
 
-            fireEvent(SegmentDownloaderEvent.CONNECTED, 0, 0, 0, 0);
+            dispatcher.fire().connected(new SegmentDownloaderEvent( 0,0,0,0, stub, ""));
 
             debug("Work Thread " + name + " -> Sending Section Type");
             socket.out.writeInt(com.myster.server.stream.MultiSourceSender.SECTION_NUMBER);
@@ -181,23 +182,6 @@ class InternalSegmentDownloader implements SegmentDownloader {
         }
     }
 
-    // Offset is offset within the file
-    // lenght is the length of the current segment
-    // progress is the progress through the segment (exclusing offset)
-    private void fireEvent(int id, long offset, long progress, int queuePosition, long length) {
-        fireEvent(id, offset, progress, queuePosition, length, "");
-    }
-
-    private void fireEvent(int id, long offset, long progress, int queuePosition, long length,
-            String queuedMessage) {
-        dispatcher.fireEvent(new SegmentDownloaderEvent(id, offset, progress, queuePosition,
-                length, stub, queuedMessage));
-    }
-
-    private void fireEvent(byte type, byte[] data) {
-        dispatcher.fireEvent(new SegmentMetaDataEvent(type, data));
-    }
-
     private synchronized void finishUp() {
         deadFlag = true;
 
@@ -208,7 +192,7 @@ class InternalSegmentDownloader implements SegmentDownloader {
                     .getRemainingWorkSegment() });
         }
 
-        fireEvent(SegmentDownloaderEvent.END_CONNECTION, 0, 0, 0, 0);
+        dispatcher.fire().endConnection(new SegmentDownloaderEvent(0, 0, 0, 0, stub, ""));
 
         debug("Thread " + name + " -> Finished.");
 
@@ -241,13 +225,13 @@ class InternalSegmentDownloader implements SegmentDownloader {
 
         waitInQueue(socket);
 
-        fireEvent(SegmentDownloaderEvent.START_SEGMENT,
-                  workingSegment.workSegment.startOffset,
-                  0,
-                  0,
-                  workingSegment.workSegment.length);// this isn't in the
-        // right
-        // place
+        dispatcher.fire()
+                .startSegment(new SegmentDownloaderEvent(workingSegment.workSegment.startOffset,
+                                                         0,
+                                                         0,
+                                                         workingSegment.workSegment.length,
+                                                         stub,
+                                                         ""));
 
         long timeTakenToDownloadSegment = 0;
         while (workingSegment.getProgress() < workingSegment.workSegment.length) {
@@ -271,7 +255,7 @@ class InternalSegmentDownloader implements SegmentDownloader {
 
                 break;
             default:
-                fireEvent(type, getDataBlock(socket));
+                dispatcher.fire().downloadedMetaData(new SegmentMetaDataEvent(type, getDataBlock(socket)));
                 break;
             }
         }
@@ -283,10 +267,15 @@ class InternalSegmentDownloader implements SegmentDownloader {
             debug("Work Thread " + name + " -> next block will be " + (idealSegmentSize / 1024)
                     + "k");
         }
-        fireEvent(SegmentDownloaderEvent.END_SEGMENT, workingSegment.workSegment.startOffset,
-                workingSegment.workSegment.startOffset + workingSegment.workSegment.length, 0,
-                workingSegment.workSegment.length);
 
+        dispatcher.fire()
+                .endSegment(new SegmentDownloaderEvent(workingSegment.workSegment.startOffset,
+                                                       workingSegment.workSegment.startOffset
+                                                               + workingSegment.workSegment.length,
+                                                       0,
+                                                       workingSegment.workSegment.length,
+                                                       stub,
+                                                       ""));
         return true;
     }
 
@@ -323,7 +312,9 @@ class InternalSegmentDownloader implements SegmentDownloader {
                     throw new DoNotQueueException();
                 }
 
-                fireEvent(SegmentDownloaderEvent.QUEUED, 0, 0, queuePosition, 0, message);
+                dispatcher.fire()
+                        .queued(new SegmentDownloaderEvent(0, 0, queuePosition, 0, stub, message));
+
             } catch (NumberFormatException ex) {
                 throw new IOException("Server sent garble as queue position -> " + mml);
             }
@@ -377,9 +368,13 @@ class InternalSegmentDownloader implements SegmentDownloader {
             workingSegment.addProgress(calcBlockSize);
 
             if (System.currentTimeMillis() - lastProgressTime > 100) {
-                fireEvent(SegmentDownloaderEvent.DOWNLOADED_BLOCK,
-                        workingSegment.workSegment.startOffset, workingSegment.getProgress(), 0,
-                        workingSegment.workSegment.length); // nor this.
+                dispatcher.fire()
+                        .downloadedBlock(new SegmentDownloaderEvent(workingSegment.workSegment.startOffset,
+                                                                    workingSegment.getProgress(),
+                                                                    0,
+                                                                    workingSegment.workSegment.length,
+                                                                    stub,
+                                                                    ""));
                 lastProgressTime = System.currentTimeMillis();
             }
         }

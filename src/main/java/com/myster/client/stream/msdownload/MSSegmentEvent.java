@@ -1,17 +1,9 @@
 package com.myster.client.stream.msdownload;
 
-import com.general.events.GenericEvent;
+public class MSSegmentEvent {
+    private final SegmentDownloader segmentDownloader;
 
-public class MSSegmentEvent extends GenericEvent {
-    public static final int START_SEGMENT = 100;
-
-    public static final int END_SEGMENT = 101;
-
-    SegmentDownloader segmentDownloader;
-
-    public MSSegmentEvent(int id, SegmentDownloader segmentDownloader) {
-        super(id);
-
+    public MSSegmentEvent(SegmentDownloader segmentDownloader) {
         this.segmentDownloader = segmentDownloader;
     }
 

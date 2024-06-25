@@ -7,10 +7,9 @@ import java.util.HashSet;
 import java.util.Set;
 import java.util.Stack;
 
-import com.general.events.EventDispatcher;
-import com.general.events.GenericEvent;
-import com.general.events.SyncEventDispatcher;
+import com.general.events.NewGenericDispatcher;
 import com.general.thread.Cancellable;
+import com.general.thread.Invoker;
 import com.general.thread.Task;
 import com.general.util.Util;
 import com.myster.hash.FileHash;
@@ -69,7 +68,8 @@ public class MultiSourceDownload implements Task, Cancellable {
     // doens't matter what data structure so long
     // as add and remove are O(C).
     private final Stack<WorkSegment> unfinishedSegments = new Stack<>();
-    private final EventDispatcher dispatcher = new SyncEventDispatcher();
+    private final NewGenericDispatcher<MSDownloadListener> dispatcher =
+            new NewGenericDispatcher<>(MSDownloadListener.class, Invoker.EDT_NOW_OR_LATER);
     private final Controller controller = new ControllerImpl(); // is self
     private final HashCrawlerManager crawlerManager;
     private final FileMover fileMover;
@@ -148,7 +148,7 @@ public class MultiSourceDownload implements Task, Cancellable {
     }
 
     public synchronized void start() {
-        fireEventAsycronously(createMultiSourceEvent(MultiSourceEvent.START_DOWNLOAD));
+        dispatcher.fire().startDownload(createMultiSourceEvent());
         Util.invokeLater(() -> {
             MysterFileStub[] stubs = initialFileStubs;
 
@@ -184,7 +184,7 @@ public class MultiSourceDownload implements Task, Cancellable {
 
         downloaders.add(downloader);
 
-        fireEventAsycronously(new MSSegmentEvent(MSSegmentEvent.START_SEGMENT, downloader) );
+        dispatcher.fire().startSegmentDownloader(new MSSegmentEvent(downloader));
         downloader.start();
     }
 
@@ -194,10 +194,6 @@ public class MultiSourceDownload implements Task, Cancellable {
                                              MysterSocketFactory::makeStreamConnection,
                                              stub,
                                              chunkSize);
-    }
-
-    private void fireEventAsycronously(final GenericEvent event) {
-        Util.invokeNowOrLater(() -> dispatcher.fireEvent(event));
     }
 
     /**
@@ -219,7 +215,7 @@ public class MultiSourceDownload implements Task, Cancellable {
     private synchronized boolean removeDownload(SegmentDownloader downloader) {
         boolean result = downloaders.remove(downloader);
 
-        fireEventAsycronously(new MSSegmentEvent(MSSegmentEvent.END_SEGMENT, downloader) );
+        dispatcher.fire().endSegmentDownloader(new MSSegmentEvent(downloader) );
 
         endCheckAndCleanup(); // check to see if cleanupNeeds to be called.
 
@@ -283,7 +279,7 @@ public class MultiSourceDownload implements Task, Cancellable {
             // events
             if (System.currentTimeMillis() - lastProgress > MIN_TIME_BETWEEN_EVENTS) {
                 lastProgress = System.currentTimeMillis();
-                fireEventAsycronously(createMultiSourceEvent(MultiSourceEvent.PROGRESS) );
+                dispatcher.fire().progress(createMultiSourceEvent());
             }
 
             partialFile.setBit(dataBlock.offset / chunkSize);
@@ -307,7 +303,7 @@ public class MultiSourceDownload implements Task, Cancellable {
 
     // call when download has completed successfully.
     private synchronized void done() {
-        fireEventAsycronously(createMultiSourceEvent(MultiSourceEvent.DONE_DOWNLOAD) );
+        dispatcher.fire().doneDownload(createMultiSourceEvent());
 
         partialFile.done();
 
@@ -377,7 +373,7 @@ public class MultiSourceDownload implements Task, Cancellable {
 
         isDead = true;
 
-        fireEventAsycronously(createMultiSourceEvent(MultiSourceEvent.END_DOWNLOAD) );
+        dispatcher.fire().endDownload(createMultiSourceEvent());
 
         if (isCancelled ) {
             partialFile.done();
@@ -389,8 +385,8 @@ public class MultiSourceDownload implements Task, Cancellable {
         }
     }
 
-    private MultiSourceEvent createMultiSourceEvent(int id) {
-        return new MultiSourceEvent(id, initialOffset, bytesWrittenOut, fileLength, isCancelled);
+    private MultiSourceEvent createMultiSourceEvent() {
+        return new MultiSourceEvent(initialOffset, bytesWrittenOut, fileLength, isCancelled);
     }
 
     private class MSHashSearchListener implements HashSearchListener {

@@ -7,11 +7,53 @@ import java.util.concurrent.atomic.AtomicBoolean;
 
 import javax.swing.SwingUtilities;
 
+import com.general.util.RuntimeInterruptedException;
+import com.general.util.Util;
+
 public interface Invoker {
     public static Invoker EDT = new Invoker() {
         @Override
         public void invoke(Runnable r) {
             SwingUtilities.invokeLater(r);
+        }
+
+        @Override
+        public boolean isInvokerThread() {
+            return SwingUtilities.isEventDispatchThread();
+        }
+
+        @Override
+        public void shutdown() {
+            throw new UnsupportedOperationException();
+        }
+    };
+    
+    public static Invoker SYNCHRONOUS_PUSH_ONTO_EDT = new Invoker() {
+        @Override
+        public void invoke(Runnable r) {
+            try {
+                Util.invokeAndWaitForAnyThread(r);
+            } catch (InterruptedException exception) {
+                Thread.currentThread().interrupt();
+                throw new RuntimeInterruptedException(exception);
+            }
+        }
+
+        @Override
+        public boolean isInvokerThread() {
+            return SwingUtilities.isEventDispatchThread();
+        }
+
+        @Override
+        public void shutdown() {
+            throw new UnsupportedOperationException();
+        }
+    };
+    
+    public static Invoker EDT_NOW_OR_LATER = new Invoker() {
+        @Override
+        public void invoke(Runnable r) {
+            Util.invokeNowOrLater(r);
         }
 
         @Override

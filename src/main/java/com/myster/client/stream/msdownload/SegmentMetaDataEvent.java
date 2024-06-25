@@ -1,17 +1,11 @@
 package com.myster.client.stream.msdownload;
 
-import com.general.events.GenericEvent;
-
-public class SegmentMetaDataEvent extends GenericEvent {
-    public static final int DOWNLOADED_META_DATA = 45;
-
+public class SegmentMetaDataEvent {
     final byte[] data;
 
     final byte type;
 
     public SegmentMetaDataEvent(final byte type, final byte[] data) {
-        super(DOWNLOADED_META_DATA);
-
         this.data = data;
         this.type = type;
     }
@@ -21,6 +15,6 @@ public class SegmentMetaDataEvent extends GenericEvent {
     }
 
     public byte[] getCopyOfData() {
-        return (byte[]) (data.clone());
+        return (data.clone());
     }
 }

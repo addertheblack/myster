@@ -1,21 +1,16 @@
 package com.myster.client.datagram;
 
-import com.general.events.GenericEvent;
 import com.general.net.ImmutableDatagramPacket;
 import com.myster.net.MysterAddress;
 
-public class PingEvent extends GenericEvent {
-    public final static int PING = 1;
-
+public class PingEvent {
     public int pingTime;
 
     private ImmutableDatagramPacket packet;
 
     private MysterAddress address;
 
-    public PingEvent(int id, ImmutableDatagramPacket packet, int pingTime,
-            MysterAddress address) {
-        super(id);
+    public PingEvent(ImmutableDatagramPacket packet, int pingTime, MysterAddress address) {
 
         this.packet = packet;
         this.pingTime = pingTime;

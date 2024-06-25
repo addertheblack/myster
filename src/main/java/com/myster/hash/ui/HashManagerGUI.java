@@ -191,7 +191,7 @@ public class HashManagerGUI extends MysterFrame {
                     progress.setValue(e.getProgress());
                 }
 
-                public void fileHasEnd(HashManagerEvent e) {
+                public void fileHashEnd(HashManagerEvent e) {
                     currentFileLabel.setText("Done Hashing.");
                     progress.setValue(-1);
 

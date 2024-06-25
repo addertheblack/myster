@@ -3,19 +3,15 @@ package com.myster.ui.menubar.event;
 import javax.swing.JFrame;
 import javax.swing.JMenuBar;
 
-import com.general.events.GenericEvent;
 import com.myster.ui.menubar.MysterMenuBarFactory;
 
 /**
  * Contains the events context for MysterMenuBar events.
  */
-public class MenuBarEvent extends GenericEvent {
-    public static final int BAR_CHANGED = 1;
+public class MenuBarEvent {
+    private final MysterMenuBarFactory factory;
 
-    MysterMenuBarFactory factory;
-
-    public MenuBarEvent(int id, MysterMenuBarFactory factory) {
-        super(id);
+    public MenuBarEvent(MysterMenuBarFactory factory) {
         this.factory = factory;
     }
 

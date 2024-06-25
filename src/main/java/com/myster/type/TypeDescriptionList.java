@@ -4,12 +4,13 @@ import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.ArrayList;
-import java.util.Hashtable;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.logging.Logger;
 
-import com.general.events.EventDispatcher;
-import com.general.events.SyncEventDispatcher;
+import com.general.events.NewGenericDispatcher;
+import com.general.thread.Invoker;
 import com.myster.mml.RobustMML;
 import com.myster.pref.PreferencesMML;
 import com.myster.transaction.TransactionManager;
@@ -103,7 +104,7 @@ class DefaultTypeDescriptionList extends TypeDescriptionList {
 
     private final TypeDescriptionElement[] workingTypes;
 
-    private final EventDispatcher dispatcher;
+    private final NewGenericDispatcher<TypeListener> dispatcher;
 
     public DefaultTypeDescriptionList() {
         TypeDescriptionElement[] oldTypes;
@@ -113,10 +114,10 @@ class DefaultTypeDescriptionList extends TypeDescriptionList {
         types = new TypeDescriptionElement[list.length];
         oldTypes = new TypeDescriptionElement[list.length];
 
-        Hashtable hash = getEnabledFromPrefs();
+        Map<String, String> hash = getEnabledFromPrefs();
 
         for (int i = 0; i < list.length; i++) {
-            String string_bool = (String) (hash.get(list[i].getType()
+            String string_bool = (hash.get(list[i].getType()
                     .toString()));
 
             if (string_bool == null) {
@@ -132,7 +133,7 @@ class DefaultTypeDescriptionList extends TypeDescriptionList {
         workingTypes = oldTypes; //set working types to "types" variable to
                                  // enable on the fly changes
 
-        dispatcher = new SyncEventDispatcher();
+        dispatcher = new NewGenericDispatcher<TypeListener>(TypeListener.class, Invoker.SYNCHRONOUS);
     }
 
     private static final String DEFAULT_LIST_KEY = "DefaultTypeDescriptionList saved defaults";
@@ -141,7 +142,7 @@ class DefaultTypeDescriptionList extends TypeDescriptionList {
 
     private static final String TYPE_ENABLED = "/enabled";
 
-    private static Hashtable getEnabledFromPrefs() {
+    private static Map<String, String> getEnabledFromPrefs() {
         com.myster.pref.MysterPreferences pref = com.myster.pref.MysterPreferences
                 .getInstance();
 
@@ -150,7 +151,7 @@ class DefaultTypeDescriptionList extends TypeDescriptionList {
 
         mml.setTrace(true);
 
-        Hashtable hash = new Hashtable();
+        Map<String, String> hash = new HashMap<>();
 
         List<String> list = mml.list("/");
 
@@ -251,9 +252,11 @@ class DefaultTypeDescriptionList extends TypeDescriptionList {
 
         saveEverythingToDisk();
 
-        dispatcher.fireEvent(new TypeDescriptionEvent(
-                (enable ? TypeDescriptionEvent.ENABLE
-                        : TypeDescriptionEvent.DISABLE), this, type));
+        if (enable) {
+            dispatcher.fire().typeEnabled(new TypeDescriptionEvent( this, type));
+        } else {
+            dispatcher.fire().typeDisabled(new TypeDescriptionEvent( this, type));
+        }
     }
 
     private synchronized int getIndexFromType(MysterType type) {
@@ -383,7 +386,7 @@ class DefaultTypeDescriptionList extends TypeDescriptionList {
         private boolean enabled;
 
         public TypeDescriptionElement(TypeDescription typeDescription,
-                boolean enabled) {
+                boolean enabled) { 
             this.typeDescription = typeDescription;
             this.enabled = enabled;
         }

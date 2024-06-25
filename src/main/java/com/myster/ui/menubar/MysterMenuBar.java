@@ -26,14 +26,13 @@ import javax.swing.Action;
 import javax.swing.JFrame;
 import javax.swing.JMenuBar;
 import javax.swing.KeyStroke;
-import javax.swing.SwingUtilities;
 import javax.swing.event.UndoableEditEvent;
 import javax.swing.event.UndoableEditListener;
 import javax.swing.text.JTextComponent;
 import javax.swing.undo.UndoManager;
 
-import com.general.events.AsyncEventThreadDispatcher;
-import com.general.events.EventDispatcher;
+import com.general.events.NewGenericDispatcher;
+import com.general.thread.Invoker;
 import com.myster.application.MysterGlobals;
 import com.myster.client.net.MysterProtocol;
 import com.myster.tracker.MysterServerManager;
@@ -64,7 +63,8 @@ public class MysterMenuBar {
     private static final NullAction NULL = new NullAction();
 
     /** Static sub-system is below */
-    private EventDispatcher dispatcher = new AsyncEventThreadDispatcher();
+    private NewGenericDispatcher<MenuBarListener> dispatcher =
+            new NewGenericDispatcher<>(MenuBarListener.class, Invoker.EDT);
 
     private final MysterMenuBarFactory mysterMenuBarFactory;
     private MysterMenuBarFactory mysterMenuBarFactoryImpl;
@@ -239,7 +239,7 @@ public class MysterMenuBar {
     public  void addMenuListener(MenuBarListener listener) { //Not
         dispatcher.addListener(listener);
 
-        listener.fireEvent(new MenuBarEvent(MenuBarEvent.BAR_CHANGED, mysterMenuBarFactory));
+        listener.stateChanged(new MenuBarEvent(mysterMenuBarFactory));
     }
 
     /**
@@ -321,7 +321,7 @@ public class MysterMenuBar {
      * This routine is not blocking.
      */
     private  void updateMenuBars() {
-        dispatcher.fireEvent(new MenuBarEvent(MenuBarEvent.BAR_CHANGED, mysterMenuBarFactory));
+        dispatcher.fire().stateChanged(new MenuBarEvent(mysterMenuBarFactory));
     }
 
     /**

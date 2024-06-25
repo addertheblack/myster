@@ -6,7 +6,6 @@
 
 package com.myster.server.event;
 
-import com.general.events.GenericEvent;
 import com.myster.net.MysterAddress;
 
 public abstract class ServerEvent  {
@@ -33,5 +32,4 @@ public abstract class ServerEvent  {
     public long getTimeStamp() {
         return time;
     }
-
 }

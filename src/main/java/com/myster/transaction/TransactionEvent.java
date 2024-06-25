@@ -1,28 +1,12 @@
 package com.myster.transaction;
 
-import com.general.events.GenericEvent;
 import com.myster.net.MysterAddress;
 
 /**
  * Event passed to TransactionEventListeners. Contains context information for
  * the event.
  */
-public class TransactionEvent extends GenericEvent {
-    /**
-     * "ID" of the timeout event.
-     */
-    public static final int TIMEOUT = 1;
-
-    /**
-     * "ID" of the reply event.
-     */
-    public static final int REPLY = 2;
-    
-    /**
-     * "IS of the cancel event.
-     */
-    public static final int CANCELLED = 3;
-
+public class TransactionEvent {
     /*
      * Time it took to receive a reply.
      */
@@ -51,9 +35,7 @@ public class TransactionEvent extends GenericEvent {
      * @param transaction
      *            received or null if timeout
      */
-    TransactionEvent(int id, long transactionTime, MysterAddress address, Transaction transaction) {
-        super(id);
-
+    TransactionEvent( long transactionTime, MysterAddress address, Transaction transaction) {
         this.transactionTime = transactionTime;
         this.address = address;
         this.transaction = transaction;
@@ -84,14 +66,4 @@ public class TransactionEvent extends GenericEvent {
     public Transaction getTransaction() {
         return transaction;
     }
-//    
-//    /**
-//     * 
-//     * TODO: Remove me
-//     * @deprecated Why the hell do you need this?
-//     */
-//    @Deprecated
-//    public TransactionSender getTransactionSender() {
-//        return transactionSender;
-//    }
 }
