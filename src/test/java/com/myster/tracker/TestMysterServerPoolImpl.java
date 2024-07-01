@@ -296,7 +296,7 @@ class TestMysterServerPoolImpl {
             
         lookup.put(oneTwoSeven, copyMml);
         
-        pool.refreshMysterServerPrivate(oneTwoSeven);
+//        pool.refreshMysterServerPrivate(oneTwoSeven);
         
         sem.getLock();
         sem.getLock();

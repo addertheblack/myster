@@ -40,7 +40,7 @@ import com.myster.client.net.MysterProtocol;
 import com.myster.net.MysterAddress;
 import com.myster.search.HashCrawlerManager;
 import com.myster.server.ServerPreferences;
-import com.myster.tracker.MysterServerManager;
+import com.myster.tracker.Tracker;
 import com.myster.tracker.MysterServer;
 import com.myster.type.MysterType;
 import com.myster.ui.MysterFrame;
@@ -59,7 +59,7 @@ public class ClientWindow extends MysterFrame implements Sayable {
 
     private static int counter = 0;
     private static WindowLocationKeeper keeper;
-    private static MysterServerManager ipListManager;
+    private static Tracker tracker;
     private static MysterProtocol protocol;
     private static HashCrawlerManager hashManager;
     private static ServerPreferences serverPreferences;
@@ -83,10 +83,10 @@ public class ClientWindow extends MysterFrame implements Sayable {
 
     public static void init(MysterProtocol protocol,
                             HashCrawlerManager hashManager,
-                            MysterServerManager ipListManager,
+                            Tracker tracker,
                             ServerPreferences prefs) {
         ClientWindow.protocol = protocol;
-        ClientWindow.ipListManager = ipListManager;
+        ClientWindow.tracker = tracker;
         ClientWindow.hashManager = hashManager;
         serverPreferences = prefs;
     }
@@ -303,7 +303,7 @@ public class ClientWindow extends MysterFrame implements Sayable {
     }
 
     public void refreshIP(final MysterAddress address) {
-        MysterServer server = ipListManager.getQuickServerStats(address);
+        MysterServer server = tracker.getQuickServerStats(address);
 
         String fallbackWindowName = address.getInetAddress().isLoopbackAddress() ? "myself" : currentip;
         String windowName =

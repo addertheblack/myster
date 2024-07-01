@@ -1,7 +1,5 @@
 package com.myster.server.datagram;
 
-import java.util.Optional;
-
 import com.general.net.ImmutableDatagramPacket;
 import com.myster.net.BadPacketException;
 import com.myster.net.DatagramSender;
@@ -9,15 +7,15 @@ import com.myster.net.DatagramTransport;
 import com.myster.net.MysterAddress;
 import com.myster.net.PingPacket;
 import com.myster.net.PongPacket;
-import com.myster.tracker.MysterServerManager;
+import com.myster.tracker.Tracker;
 
 public class PingTransport extends DatagramTransport {
     private static final short TRANSPORT_NUMBER = 20553; // 'P', 'I' in network byte order
-    private MysterServerManager manager;
+    private Tracker manager;
 
-    public PingTransport(MysterServerManager manager) {
+    public PingTransport(Tracker manager) {
         if (manager == null ) {
-            throw new NullPointerException("ipListManager can't be null");
+            throw new NullPointerException("tracker can't be null");
         }
         this.manager = manager;
     }

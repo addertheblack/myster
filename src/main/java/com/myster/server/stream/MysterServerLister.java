@@ -6,17 +6,17 @@ import com.myster.client.stream.MysterDataInputStream;
 import com.myster.client.stream.MysterDataOutputStream;
 import com.myster.net.MysterAddress;
 import com.myster.server.ConnectionContext;
-import com.myster.tracker.MysterServerManager;
+import com.myster.tracker.Tracker;
 import com.myster.tracker.MysterServer;
 import com.myster.type.MysterType;
 
-public class IpLister extends ServerThread {
+public class MysterServerLister extends ServerStreamHandler {
     public static final int NUMBER = 10;
     
-    private final MysterServerManager ipListManager;
+    private final Tracker tracker;
 
-    public IpLister(MysterServerManager ipListManager) {
-        this.ipListManager = ipListManager;
+    public MysterServerLister(Tracker tracker) {
+        this.tracker = tracker;
     }
 
     public int getSectionNumber() {
@@ -27,7 +27,6 @@ public class IpLister extends ServerThread {
      * Protocol: Send 10 (done) Send TYPE(4 bytes) get String array (get a bunch
      * of strings) NO length sent
      */
-
     public void section(ConnectionContext context) throws IOException {
         MysterDataInputStream in = context.socket.in;
         MysterDataOutputStream out = context.socket.getOutputStream();
@@ -37,9 +36,9 @@ public class IpLister extends ServerThread {
         byte[] type = new byte[4];
         in.readFully(type);
 
-        ipListManager.addIp(new MysterAddress(context.socket.getInetAddress()));
+        tracker.addIp(new MysterAddress(context.socket.getInetAddress()));
 
-        topten = ipListManager.getTop(new MysterType(type), 100);
+        topten = tracker.getTop(new MysterType(type), 100);
         
         if (topten != null) {
             for (int i = 0; i < topten.length; i++) {
@@ -56,5 +55,4 @@ public class IpLister extends ServerThread {
         
         out.writeUTF(""); //"" Signals the end of the list!
     }
-
 }

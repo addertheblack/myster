@@ -19,7 +19,7 @@ import com.myster.filemanager.FileTypeListManager;
 import com.myster.server.ConnectionContext;
 import com.myster.type.MysterType;
 
-public class RequestDirThread extends ServerThread {
+public class RequestDirThread extends ServerStreamHandler {
     public static final int NUMBER = 78;
     
     private static final Logger LOGGER = Logger.getLogger(RequestDirThread.class.getName());

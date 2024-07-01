@@ -22,7 +22,7 @@ import com.myster.server.datagram.PingTransport;
 import com.myster.server.event.ServerEventDispatcher;
 import com.myster.server.transferqueue.ServerQueue;
 import com.myster.server.transferqueue.TransferQueue;
-import com.myster.tracker.MysterServerManager;
+import com.myster.tracker.Tracker;
 import com.myster.transaction.TransactionManager;
 import com.myster.transaction.TransactionProtocol;
 
@@ -35,7 +35,7 @@ public class ServerFacade {
     private final TransferQueue transferQueue;
     private final ServerEventDispatcher serverDispatcher;
     private final Map<Integer, ConnectionSection> connectionSections = new HashMap<>();
-    private final MysterServerManager serverListManager;
+    private final Tracker tracker;
     private final ServerPreferences preferences;
     private final DatagramProtocolManager datagramManager;
     private final TransactionManager transactionManager;
@@ -43,13 +43,13 @@ public class ServerFacade {
     private final Executor connectionExecutor;
     private final Identity identity;
 
-    public ServerFacade(MysterServerManager ipListManager,
+    public ServerFacade(Tracker tracker,
                         ServerPreferences preferences,
                         DatagramProtocolManager datagramManager,
                         TransactionManager transactionManager,
                         Identity identity,
                         ServerEventDispatcher serverDispatcher) {
-        this.serverListManager = ipListManager;
+        this.tracker = tracker;
         this.preferences = preferences;
         this.datagramManager = datagramManager;
         this.transactionManager = transactionManager;
@@ -100,7 +100,7 @@ public class ServerFacade {
                                           Optional.of( publicLandAddress)));
         }
         
-        datagramManager.accessPort(MysterGlobals.DEFAULT_SERVER_PORT, t -> t.addTransport(new PingTransport(serverListManager)));
+        datagramManager.accessPort(MysterGlobals.DEFAULT_SERVER_PORT, t -> t.addTransport(new PingTransport(tracker)));
     }
 
 
@@ -120,7 +120,7 @@ public class ServerFacade {
     }
 
     private void initDatagramTransports() {
-        datagramManager.accessPort(preferences.getServerPort(), t -> t.addTransport(new PingTransport(serverListManager)));
+        datagramManager.accessPort(preferences.getServerPort(), t -> t.addTransport(new PingTransport(tracker)));
     }
 
     public void addDatagramTransactions(TransactionProtocol ... protocols) {
@@ -145,7 +145,7 @@ public class ServerFacade {
     }
 
     private void addStandardStreamConnectionSections() {
-        addConnectionSection(new com.myster.server.stream.IpLister(serverListManager));
+        addConnectionSection(new com.myster.server.stream.MysterServerLister(tracker));
         addConnectionSection(new com.myster.server.stream.RequestDirThread());
         addConnectionSection(new com.myster.server.stream.FileTypeLister());
         addConnectionSection(new com.myster.server.stream.RequestSearchThread());

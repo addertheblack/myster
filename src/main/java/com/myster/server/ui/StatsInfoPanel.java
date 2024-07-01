@@ -32,7 +32,7 @@ import com.myster.server.event.ServerSearchListener;
 import com.myster.server.stream.FileByHash;
 import com.myster.server.stream.FileInfoLister;
 import com.myster.server.stream.ServerStats;
-import com.myster.server.stream.IpLister;
+import com.myster.server.stream.MysterServerLister;
 import com.myster.server.stream.MultiSourceSender;
 import com.myster.server.stream.RequestSearchThread;
 
@@ -299,7 +299,7 @@ public class StatsInfoPanel extends JPanel {
                     ((ServerDownloadDispatcher) (e.getSectionObject()))
                             .addServerDownloadListener(new DownloadHandler());
                     break;
-                case IpLister.NUMBER:
+                case MysterServerLister.NUMBER:
                     numofTT.increment(isUdp);
                     break;
                 case ServerStats.NUMBER:

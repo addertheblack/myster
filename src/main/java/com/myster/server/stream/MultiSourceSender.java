@@ -38,7 +38,7 @@ import com.myster.type.MysterType;
 
 //repeat from 1
 
-public class MultiSourceSender extends ServerThread {
+public class MultiSourceSender extends ServerStreamHandler {
     private static final Logger LOGGER = Logger.getLogger(MultiSourceSender.class.getName());
     
     public static final String QUEUED_PATH = "/queued";

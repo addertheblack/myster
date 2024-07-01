@@ -24,7 +24,7 @@ public interface ConnectionSection {
      * good section" byte has been sent... Mostly because it hasn't. see ServerThread.
      * 
      * @see ConnectionContext for what is sent in the conneciton context.
-     * @see com.myster.server.stream.ServerThread for a more high level ConnectionSection object to
+     * @see com.myster.server.stream.ServerStreamHandler for a more high level ConnectionSection object to
      *      over-ride
      * @param context
      *            the context associated with this stream (includes the "socket"
