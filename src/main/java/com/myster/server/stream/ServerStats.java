@@ -21,7 +21,7 @@ import com.myster.pref.MysterPreferences;
 import com.myster.server.ConnectionContext;
 import com.myster.type.MysterType;
 
-public class ServerStats extends ServerThread {
+public class ServerStats extends ServerStreamHandler {
     public static final int NUMBER = 101;
     
     public static final String NUMBER_OF_FILES = "/NumberOfFiles/";

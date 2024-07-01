@@ -17,7 +17,7 @@ import com.myster.hash.SimpleFileHash;
 import com.myster.server.ConnectionContext;
 import com.myster.type.MysterType;
 
-public class FileByHash extends ServerThread {
+public class FileByHash extends ServerStreamHandler {
     public static final int NUMBER = 150;
 
     public static final String HASH_TYPE = "/Hash Type";

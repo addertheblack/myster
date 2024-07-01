@@ -22,7 +22,7 @@ import com.myster.server.ConnectionSection;
  *  
  */
 
-public abstract class ServerThread implements ConnectionSection {
+public abstract class ServerStreamHandler implements ConnectionSection {
 
     public Object getSectionObject() {//Usefull for sending event Dispatchers
                                       // and possibly other things!

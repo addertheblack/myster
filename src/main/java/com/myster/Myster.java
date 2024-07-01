@@ -71,7 +71,7 @@ import com.myster.server.datagram.TypeDatagramServer;
 import com.myster.server.event.ServerEventDispatcher;
 import com.myster.server.ui.ServerPreferencesPane;
 import com.myster.server.ui.ServerStatsWindow;
-import com.myster.tracker.MysterServerManager;
+import com.myster.tracker.Tracker;
 import com.myster.tracker.MysterServerPoolImpl;
 import com.myster.tracker.ui.TrackerWindow;
 import com.myster.transaction.TransactionManager;
@@ -210,8 +210,8 @@ public class Myster {
         INSTRUMENTATION.info("-------->> before IPListManager "
                 + (System.currentTimeMillis() - startTime));
         MysterServerPoolImpl pool = new MysterServerPoolImpl(Preferences.userRoot(), protocol);
-        MysterServerManager ipListManager =
-                new MysterServerManager(pool,
+        Tracker tracker =
+                new Tracker(pool,
                                         Preferences.userRoot().node("Tracker.IpListManager"));
         pool.startRefreshTimer();
         INSTRUMENTATION
@@ -221,10 +221,10 @@ public class Myster {
         ServerPreferences serverPreferences = new ServerPreferences(serverPreferenceNodes);
 
         final HashCrawlerManager crawlerManager =
-                new MultiSourceHashSearch(ipListManager, protocol);
-        ClientWindow.init(protocol, crawlerManager, ipListManager, serverPreferences);
+                new MultiSourceHashSearch(tracker, protocol);
+        ClientWindow.init(protocol, crawlerManager, tracker, serverPreferences);
 
-        ServerFacade serverFacade = new ServerFacade(ipListManager,
+        ServerFacade serverFacade = new ServerFacade(tracker,
                                                      serverPreferences,
                                                      datagramManager,
                                                      transactionManager,
@@ -232,7 +232,7 @@ public class Myster {
                                                      serverDispatcher);
 
         serverFacade
-                .addDatagramTransactions(new TopTenDatagramServer(ipListManager),
+                .addDatagramTransactions(new TopTenDatagramServer(tracker),
                                          new TypeDatagramServer(),
                                          new SearchDatagramServer(),
                                          new ServerStatsDatagramServer(serverPreferences::getIdentityName,
@@ -289,10 +289,10 @@ public class Myster {
                                                                          (instantMessage) -> (new MessageWindow(context,
                                                                                                                 protocol,
                                                                                                                 instantMessage,
-                                                                                                                ipListManager::getQuickServerStats))
+                                                                                                                tracker::getQuickServerStats))
                                                                                                                         .show()));
 
-                menuBarFactory.initMenuBar(ipListManager, preferencesGui, windowManager, protocol);
+                menuBarFactory.initMenuBar(tracker, preferencesGui, windowManager, protocol);
 
                 String osName = System.getProperty("os.name").toLowerCase();
                 if (osName.startsWith("mac os") && Desktop.isDesktopSupported()) {
@@ -303,7 +303,7 @@ public class Myster {
                     });
                 }
 
-                TrackerWindow.init(ipListManager, context);
+                TrackerWindow.init(tracker, context);
 
                 ServerStatsWindow.init(serverFacade.getServerDispatcher().getServerContext(),
                                        context,
@@ -312,7 +312,7 @@ public class Myster {
                         + (System.currentTimeMillis() - startTime));
                 ServerStatsWindow.getInstance().pack();
 
-                SearchWindow.init(protocol, crawlerManager, ipListManager);
+                SearchWindow.init(protocol, crawlerManager, tracker);
 
                 INSTRUMENTATION.info("-------->> before addPanels "
                         + (System.currentTimeMillis() - startTime));
@@ -390,7 +390,7 @@ public class Myster {
         LOGGER.info("External TCP/IP port enabled: " + UPnP.openPortTCP(MysterGlobals.DEFAULT_SERVER_PORT));
         LOGGER.info("External UDP/IP port enabled: " + UPnP.openPortUDP(MysterGlobals.DEFAULT_SERVER_PORT));
         
-        ServerUtils.massPing(protocol, ipListManager);
+        ServerUtils.massPing(protocol, tracker);
     } // Utils, globals etc.. //These variables are System wide variables //
 
     private static void setupLogging() throws IOException {

@@ -35,11 +35,11 @@ import com.general.events.NewGenericDispatcher;
 import com.general.thread.Invoker;
 import com.myster.application.MysterGlobals;
 import com.myster.client.net.MysterProtocol;
-import com.myster.tracker.MysterServerManager;
+import com.myster.tracker.Tracker;
 import com.myster.ui.MysterFrameContext;
 import com.myster.ui.PreferencesGui;
 import com.myster.ui.WindowManager;
-import com.myster.ui.menubar.event.AddIPMenuAction;
+import com.myster.ui.menubar.event.AddMysterServerMenuAction;
 import com.myster.ui.menubar.event.CloseWindowAction;
 import com.myster.ui.menubar.event.MenuBarEvent;
 import com.myster.ui.menubar.event.MenuBarListener;
@@ -81,7 +81,7 @@ public class MysterMenuBar {
     }
 
     // note that this is construction time dependencies
-    public void initMenuBar(MysterServerManager manager, PreferencesGui prefGui, WindowManager windowManager, MysterProtocol protocol) {
+    public void initMenuBar(Tracker manager, PreferencesGui prefGui, WindowManager windowManager, MysterProtocol protocol) {
         file = new ArrayList<>();
         edit = new ArrayList<>();
         special = new ArrayList<>();
@@ -133,7 +133,7 @@ public class MysterMenuBar {
 
 
         // Myster menu items
-        special.add(new MysterMenuItemFactory("Add IP", new AddIPMenuAction(manager)));
+        special.add(new MysterMenuItemFactory("Add IP", new AddMysterServerMenuAction(manager)));
         special.add(new MysterMenuItemFactory("Show Server Stats",
                                                      new StatsWindowAction(),
                                                      java.awt.event.KeyEvent.VK_S,

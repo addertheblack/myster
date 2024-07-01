@@ -36,7 +36,7 @@ import com.myster.net.MysterAddress;
 import com.myster.tracker.MysterIdentity;
 import com.myster.tracker.MysterServer;
 import com.myster.tracker.MysterPoolListener;
-import com.myster.tracker.MysterServerManager;
+import com.myster.tracker.Tracker;
 import com.myster.type.MysterType;
 import com.myster.ui.MysterFrame;
 import com.myster.ui.MysterFrameContext;
@@ -55,7 +55,7 @@ public class TrackerWindow extends MysterFrame {
     private static com.myster.ui.WindowLocationKeeper keeper =
             new com.myster.ui.WindowLocationKeeper("Tracker");
 
-    private static MysterServerManager ipListManager;
+    private static Tracker tracker;
 
     private static MysterFrameContext context;
 
@@ -69,8 +69,8 @@ public class TrackerWindow extends MysterFrame {
         return rect.length;
     }
 
-    public static void init(MysterServerManager ipListManager, MysterFrameContext c) {
-        TrackerWindow.ipListManager = ipListManager;
+    public static void init(Tracker tracker, MysterFrameContext c) {
+        TrackerWindow.tracker = tracker;
         TrackerWindow.context= c;
     }
 
@@ -126,7 +126,7 @@ public class TrackerWindow extends MysterFrame {
         setTitle("Tracker");
         
         refreshList = new AtomicBoolean(false);
-        ipListManager.addPoolListener(new MysterPoolListener() {
+        tracker.addPoolListener(new MysterPoolListener() {
             @Override
             public void serverRefresh(MysterServer server) {
                 refreshList.set(true);
@@ -146,7 +146,7 @@ public class TrackerWindow extends MysterFrame {
         });
 
         reloadList = new AtomicBoolean(false);
-        ipListManager.addListChangedListener((MysterType type) -> {
+        tracker.addListChangedListener((MysterType type) -> {
             reloadList.set(true);
             Util.invokeLater(() -> {
                 if (type.equals(getMysterType())) {
@@ -238,7 +238,7 @@ public class TrackerWindow extends MysterFrame {
         int currentIndex = list.getSelectedIndex();
         list.clearAll();
         itemsinlist = new ArrayList<>();
-        List<MysterServer> servers = ipListManager.getAll(getMysterType());
+        List<MysterServer> servers = tracker.getAll(getMysterType());
         TrackerMCListItem[] m = new TrackerMCListItem[servers.size()];
 
         for (int i = 0; i < servers.size(); i++) {

@@ -38,10 +38,10 @@ import com.myster.type.TypeDescriptionList;
  * 
  * @see com.myster.tracker.IPListManagerSingleton
  */
-public class MysterServerManager { // aka tracker
-    private static final Logger LOGGER = Logger.getLogger(MysterServerManager.class.getName());
+public class Tracker {
+    private static final Logger LOGGER = Logger.getLogger(Tracker.class.getName());
     private static final String[] LAST_RESORT = { "myster.ddnsgeek.com" };
-    private static final String PATH = "IPLists";
+    private static final String PATH = "ServerLists";
 
     private final MysterServerList[] list;
     private final TypeDescription[] tdlist;
@@ -53,7 +53,7 @@ public class MysterServerManager { // aka tracker
         public void serverAddedRemoved(MysterType type);
     }
     
-    public MysterServerManager(MysterServerPool pool, Preferences preferences) {
+    public Tracker(MysterServerPool pool, Preferences preferences) {
         this.pool = pool;
         this.preferences = preferences.node(PATH);
         this.dispatcher = new NewGenericDispatcher<>(ListChangedListener.class, TrackerUtils.INVOKER);

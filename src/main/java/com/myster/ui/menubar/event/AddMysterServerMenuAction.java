@@ -16,15 +16,15 @@ import java.util.logging.Logger;
 
 import com.general.util.AskDialog;
 import com.myster.net.MysterAddress;
-import com.myster.tracker.MysterServerManager;
+import com.myster.tracker.Tracker;
 
-public class AddIPMenuAction implements ActionListener {
-    private static final Logger LOGGER = Logger.getLogger(AddIPMenuAction.class.getName());
+public class AddMysterServerMenuAction implements ActionListener {
+    private static final Logger LOGGER = Logger.getLogger(AddMysterServerMenuAction.class.getName());
     
-    private final MysterServerManager ipListManager;
+    private final Tracker tracker;
     
-    public AddIPMenuAction(MysterServerManager ipListManager) {
-        this.ipListManager = ipListManager;
+    public AddMysterServerMenuAction(Tracker tracker) {
+        this.tracker = tracker;
     }
     
     public void actionPerformed(ActionEvent e) {
@@ -34,7 +34,7 @@ public class AddIPMenuAction implements ActionListener {
         }
 
         try {
-            ipListManager.addIp(new MysterAddress(answer));
+            tracker.addIp(new MysterAddress(answer));
         } catch (UnknownHostException ex) {
             LOGGER.info("The \"Name\" : " + answer + " is not a valid domain name at all!");
         }

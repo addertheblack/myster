@@ -19,7 +19,7 @@ import com.myster.server.event.ServerSearchDispatcher;
 import com.myster.server.event.ServerSearchEvent;
 import com.myster.type.MysterType;
 
-public class RequestSearchThread extends ServerThread {
+public class RequestSearchThread extends ServerStreamHandler {
 
     public static final int NUMBER = 35;
 

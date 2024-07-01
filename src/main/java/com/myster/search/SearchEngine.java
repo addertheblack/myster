@@ -12,7 +12,7 @@
 package com.myster.search;
 
 import com.myster.client.net.MysterProtocol;
-import com.myster.tracker.MysterServerManager;
+import com.myster.tracker.Tracker;
 import com.myster.type.MysterType;
 import com.myster.ui.MysterFrameContext;
 import com.myster.util.MysterThread;
@@ -29,7 +29,7 @@ public class SearchEngine extends MysterThread {
     public SearchEngine(MysterProtocol protocol,
                         HashCrawlerManager hashManager,
                         MysterFrameContext context,
-                        MysterServerManager ipListManager,
+                        Tracker tracker,
                         SearchResultListener listener,
                         Sayable msg,
                         MysterType type,
@@ -37,7 +37,7 @@ public class SearchEngine extends MysterThread {
         mysterSearch = new MysterSearch(protocol,
                                         hashManager,
                                         context,
-                                        ipListManager,
+                                        tracker,
                                         listener,
                                         msg,
                                         type,

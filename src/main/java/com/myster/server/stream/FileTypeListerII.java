@@ -16,7 +16,7 @@ import com.myster.filemanager.FileTypeListManager;
 import com.myster.server.ConnectionContext;
 import com.myster.type.MysterType;
 
-public class FileTypeListerII extends ServerThread {
+public class FileTypeListerII extends ServerStreamHandler {
     public static final int NUMBER = 74;
 
     public int getSectionNumber() {

@@ -18,7 +18,7 @@ import com.myster.client.stream.msdownload.MultiSourceUtilities;
 import com.myster.hash.FileHash;
 import com.myster.net.MysterAddress;
 import com.myster.search.AsyncNetworkCrawler.SearchIp;
-import com.myster.tracker.MysterServerManager;
+import com.myster.tracker.Tracker;
 import com.myster.tracker.MysterServer;
 import com.myster.type.MysterType;
 
@@ -34,15 +34,15 @@ public class MultiSourceHashSearch implements HashCrawlerManager {
     private static final int TIME_BETWEEN_CRAWLS = 10 * 60 * 1000;
 
     private final Map<MysterType, BatchedType> typeHashtable = new HashMap<>();
-    private final MysterServerManager ipListManager;
+    private final Tracker tracker;
     private final MysterProtocol protocol;
 
     private int timeInMs;
 
     private final static Invoker INVOKER = Invoker.newVThreadInvoker();
 
-    public MultiSourceHashSearch(MysterServerManager ipListManager, MysterProtocol protocol) {
-        this.ipListManager = ipListManager;
+    public MultiSourceHashSearch(Tracker tracker, MysterProtocol protocol) {
+        this.tracker = tracker;
         this.protocol = protocol;
 
         this.timeInMs = TIME_BETWEEN_CRAWLS;
@@ -125,12 +125,12 @@ public class MultiSourceHashSearch implements HashCrawlerManager {
         LOGGER.fine("stopCrawler(" + type + ")");
         BatchedType batchedType = getBatchForType(type);
 
-        if (batchedType.tracker == null)
+        if (batchedType.asyncTracker == null)
             return;
 
-        INVOKER.invoke(batchedType.tracker::cancel);
+        INVOKER.invoke(batchedType.asyncTracker::cancel);
 
-        batchedType.tracker = null;
+        batchedType.asyncTracker = null;
     }
 
     private synchronized void restartCrawler(MysterType type) {
@@ -150,23 +150,24 @@ public class MultiSourceHashSearch implements HashCrawlerManager {
     // is not already running)
     private synchronized void startCrawler(final MysterType type) {
         LOGGER.fine("startCrawler(" + type + ")");
-        if (ipListManager == null)
-            throw new NullPointerException("ipListManager not inited");
+        if (tracker == null) {
+            throw new NullPointerException("tracker not inited");
+        }
 
         BatchedType batchedType = getBatchForType(type);
 
-        if (batchedType.tracker != null) {
+        if (batchedType.asyncTracker != null) {
             throw new IllegalStateException("batchedType.tracker must be null here");
         }
 
         final IPQueue ipQueue = new IPQueue();
 
-        MysterServer[] top = ipListManager.getTop(type, 200);
+        MysterServer[] top = tracker.getTop(type, 200);
         
         // when Myster is first started, pings have not yet run.. So if we get no up servers then
         // just use everything
         if (top.length==0) {
-            top = ipListManager.getAll(type).toArray(MysterServer[]::new);
+            top = tracker.getAll(type).toArray(MysterServer[]::new);
         }
 
         for (MysterServer s : top) {
@@ -175,9 +176,9 @@ public class MultiSourceHashSearch implements HashCrawlerManager {
 
         // normally the tracker would be connected to the upstream future so it could be
         // cancelled but there's not upstream. The tracker is god!
-        AsyncTaskTracker tracker = AsyncTaskTracker.create(new SimpleTaskTracker(), INVOKER);
+        AsyncTaskTracker asyncTaskTracker = AsyncTaskTracker.create(new SimpleTaskTracker(), INVOKER);
 
-        batchedType.tracker = tracker;
+        batchedType.asyncTracker = asyncTaskTracker;
 
         List<SearchEntry> entries = new ArrayList<>(batchedType.entries);
         INVOKER.invoke(() -> {
@@ -204,14 +205,14 @@ public class MultiSourceHashSearch implements HashCrawlerManager {
                 return PromiseFutures.all(f);
             };
 
-            tracker.doAsync(() -> {
+            asyncTaskTracker.doAsync(() -> {
                 return PromiseFuture.newPromiseFuture(context -> {
                     AsyncTaskTracker t = AsyncTaskTracker.create(new SimpleTaskTracker(), INVOKER);
                     t.setDoneListener(() -> context.setResult(null));
                     AsyncNetworkCrawler
-                            .startWork(LOGGER, protocol, searchIp, type, ipQueue, ipListManager::addIp, t);
+                            .startWork(LOGGER, protocol, searchIp, type, ipQueue, tracker::addIp, t);
                 });
-            }).addResultListener((ignore) -> waitForSomeTimeThenRestart(tracker, type));
+            }).addResultListener((ignore) -> waitForSomeTimeThenRestart(asyncTaskTracker, type));
         });
     }
 
@@ -254,7 +255,7 @@ public class MultiSourceHashSearch implements HashCrawlerManager {
     }
 
     private static class BatchedType {
-        public AsyncTaskTracker tracker;
+        public AsyncTaskTracker asyncTracker;
 
         public final List<SearchEntry> entries = new ArrayList<>();
     }

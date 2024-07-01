@@ -20,7 +20,7 @@ import com.myster.mml.MML;
 import com.myster.server.ConnectionContext;
 import com.myster.type.MysterType;
 
-public class FileInfoLister extends ServerThread {
+public class FileInfoLister extends ServerStreamHandler {
     public static final int NUMBER = 77;
 
     public int getSectionNumber() {
