@@ -98,7 +98,7 @@ public class SearchWindow extends MysterFrame implements SearchResultListener, S
         textEntry = new JTextField("", 1);
         textEntry.setEditable(true);
 
-        choice = new TypeChoice();
+        choice = new TypeChoice(c.tdList());
 
         fileList = MCListFactory.buildMCList(1, true, this);
         fileList.getPane().setSize(XDEFAULT, YDEFAULT);

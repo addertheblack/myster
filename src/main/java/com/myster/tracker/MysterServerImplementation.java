@@ -70,7 +70,7 @@ class MysterServerImplementation {
     private static final double SPEEDCONSTANT = 0.5;
     private static final double FILESCONSTANT = 0.5;
     private static final double HITSCONSTANT = 0.25;
-    private static final double UPVSDOWNCONSTANT = 5;
+//    private static final double UPVSDOWNCONSTANT = 5;
     private static final double STATUSCONSTANT = 1;
 
 
@@ -207,7 +207,7 @@ class MysterServerImplementation {
         var publicKeyAsString =
                 serverPrefs.get(MysterServerImplementation.IDENTITY_PUBLIC_KEY, null);
         if (publicKeyAsString != null) {
-            var identityPublicKey = Util.publicKeyFromString(publicKeyAsString);
+            var identityPublicKey = com.myster.identity.Util.publicKeyFromString(publicKeyAsString);
             if (identityPublicKey.isEmpty()) {
                 LOGGER.warning("identityPublicKey in the prefs seem to be corrupt: " + publicKeyAsString);
                 

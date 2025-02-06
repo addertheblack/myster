@@ -200,7 +200,7 @@ class InternalSegmentDownloader implements SegmentDownloader {
     }
 
     private void doHeader(MysterSocket socket) throws IOException {
-        socket.out.writeInt(stub.getType().getAsInt());
+        socket.out.writeType(stub.getType());
         socket.out.writeUTF(stub.getName());
 
         if (socket.in.read() != 1) {

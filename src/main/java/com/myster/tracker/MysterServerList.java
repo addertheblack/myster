@@ -51,7 +51,7 @@ class MysterServerList {
         this.preferences = preferences;
         this.listChanged = listChanged;
 
-        String s = preferences.get(type.toString(), "");
+        String s = preferences.get(type.toHexString(), "");
         StringTokenizer externalNames = new StringTokenizer(s);
         int max = externalNames.countTokens();
         for (int i = 0; i < max; i++) {
@@ -123,7 +123,7 @@ class MysterServerList {
             buffer.append("" + server.getExternalName() + " ");
         }
 
-        preferences.put(type.toString(), buffer.toString());
+        preferences.put(type.toHexString(), buffer.toString());
         try {
             preferences.flush();
         } catch (BackingStoreException exception) {

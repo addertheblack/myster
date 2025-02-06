@@ -7,9 +7,12 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import java.io.File;
 import java.io.IOException;
 import java.net.UnknownHostException;
+import java.nio.file.Path;
 import java.util.List;
 
+import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.io.TempDir;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Mockito;
 
@@ -18,6 +21,7 @@ import com.myster.client.stream.msdownload.MultiSourceDownload.FileMover;
 import com.myster.client.stream.msdownload.MultiSourceDownload.IoFile;
 import com.myster.hash.FileHash;
 import com.myster.hash.SimpleFileHash;
+import com.myster.identity.Identity;
 import com.myster.net.MysterAddress;
 import com.myster.search.HashCrawlerManager;
 import com.myster.search.HashSearchListener;
@@ -31,6 +35,16 @@ public class TestMultiSourceDownload {
     private HashCrawlerManager manager;
     private MSDownloadListener listener;
     private FileMover mover;
+    
+    // JUnit 5 will automatically create and clean up this temporary directory
+    @TempDir
+    static Path tempDir;
+    static Identity identity; 
+    
+    @BeforeAll
+    static void beforeAll() {
+        identity = new Identity("TestMultiSourceDownload", tempDir.toFile());
+    }
 
 
     @Test
@@ -134,7 +148,7 @@ public class TestMultiSourceDownload {
 
         allValues.get(0)
                 .searchResult( new MysterFileStub(new MysterAddress("127.0.0.1"),
-                                                                     new MysterType("MPG3"),
+                                                                     new MysterType(identity.getMainIdentity().get().getPublic()),
                                                                      "It doens't matter"));
 
         Util.invokeAndWaitNoThrows(() -> {});
@@ -240,7 +254,7 @@ public class TestMultiSourceDownload {
         MSPartialFile partialFile = MSPartialFile.create(new MysterAddress("127.0.0.1"),
                                                          "testFilename",
                                                          File.createTempFile("test", suffix + ".p"),
-                                                         new MysterType("TesT"),
+                                                         new MysterType(identity.getMainIdentity().get().getPublic()),
                                                          2048,
                                                          fileHashes,
                                                          fileLength);

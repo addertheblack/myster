@@ -22,16 +22,19 @@ import com.myster.type.TypeDescriptionList;
  */
 
 public class TypeManagerPreferencesGUI extends PreferencesPanel {
-    private final MCList mcList;
+    private final MCList<MysterType> mcList;
     private final MessagePanel message;
+    private final TypeDescriptionList tdList;
 
     private static final int HEADER_Y = 100;
 
 	/**
 	 * Constructor for the TypeManagerPreferencesGUI.
+	 * @param tdList 
 	 *
 	 */
-    public TypeManagerPreferencesGUI() {
+    public TypeManagerPreferencesGUI(TypeDescriptionList tdList) {
+        this.tdList = tdList;
         setLayout(null);
 
         message = new MessagePanel(
@@ -98,12 +101,8 @@ public class TypeManagerPreferencesGUI extends PreferencesPanel {
         }
 
         for (int i = 0; i < mcList.length(); i++) {
-            TypeDescriptionList.getDefault().setEnabledType(
-                    (MysterType) (mcList.getItem(i)),
-                    ((MyMCListItem) (mcList.getMCListItem(i))).getEnabled()); //what
-                                                                              // a
-                                                                              // fun
-                                                                              // line.
+            tdList.setEnabledType((mcList.getItem(i)),
+                                  ((MyMCListItem) (mcList.getMCListItem(i))).getEnabled());
         }
     }
     
@@ -125,18 +124,17 @@ public class TypeManagerPreferencesGUI extends PreferencesPanel {
      */
     public void reset() {
         mcList.clearAll();
-        TypeDescription[] listOfTypes = TypeDescriptionList.getDefault()
-                .getAllTypes();
+        TypeDescription[] listOfTypes = tdList.getAllTypes();
 
-        GenericMCListItem[] items = new GenericMCListItem[listOfTypes.length];
+        GenericMCListItem<MysterType>[] items = new GenericMCListItem[listOfTypes.length];
 
         for (int i = 0; i < listOfTypes.length; i++) {
             String typeDescription = listOfTypes[i].getDescription() + " ("
                     + listOfTypes[i].getType().toString() + ")";
 
             items[i] = new MyMCListItem(listOfTypes[i].getType(),
-                    typeDescription, TypeDescriptionList.getDefault()
-                            .isTypeEnabledInPrefs(listOfTypes[i].getType()));
+                                        typeDescription,
+                                        tdList.isTypeEnabledInPrefs(listOfTypes[i].getType()));
         }
 
         mcList.addItem(items);
@@ -146,7 +144,7 @@ public class TypeManagerPreferencesGUI extends PreferencesPanel {
         return "Types enable/disable";
     }
 
-    private static class MyMCListItem extends GenericMCListItem {
+    private static class MyMCListItem extends GenericMCListItem<MysterType> {
         SortableString description;
 
         boolean enabled;
@@ -158,7 +156,7 @@ public class TypeManagerPreferencesGUI extends PreferencesPanel {
             this.enabled = enabled;
         }
 
-        public Sortable getValueOfColumn(int i) {
+        public Sortable<?> getValueOfColumn(int i) {
             switch (i) {
             case 0:
                 return description; //slightly fast if there's no "new".

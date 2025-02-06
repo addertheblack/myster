@@ -148,6 +148,11 @@ public class MysterServerPoolImpl implements MysterServerPool {
             MysterServer temp = getCachedMysterServer(identity);
 
             if (temp != null) {
+                // If the identity and server are known but someone is
+                // suggesting the IP then maybe we should double check to see if the IP
+                // is up. If it's down it might be worth a re-pingSer
+                identityTracker.suggestPing(address);
+                
                 return;
             }
         }
@@ -173,7 +178,7 @@ public class MysterServerPoolImpl implements MysterServerPool {
             return new MysterAddressIdentity(address);
         }
 
-        return Util.publicKeyFromString(publicKeyAsString)
+        return com.myster.identity.Util.publicKeyFromString(publicKeyAsString)
                 .<MysterIdentity> map(PublicKeyIdentity::new)
                 .orElse(new MysterAddressIdentity(address));
     }
@@ -232,21 +237,16 @@ public class MysterServerPoolImpl implements MysterServerPool {
         return (getMysterIP(k) != null);
     }
 
-//    /**
-//     * Package protected for unit tests
-//     */
-//    void refreshMysterServerPrivate(MysterAddress address) {
-//        // this is the cheapest way of convincing a Future that we don't care about the result
-//        refreshMysterServer(address).addSynchronousCallback(s -> {});
-//    }
-
-    private void refreshMysterServer(MysterAddress address) {
+  /**
+  * Package protected for unit tests
+  */
+    void refreshMysterServer(MysterAddress address) {
         PromiseFuture<RobustMML> getServerStatsFuture = protocol.getDatagram().getServerStats(address)
                 .clearInvoker().setInvoker(TrackerUtils.INVOKER).addResultListener(mml -> {
                     serverStatsCallback(address, mml);
                 })
-                .addExceptionListener((e) -> LOGGER.info("Address not a server: " + address))
-                .addExceptionListener(ex -> deadCache.addDeadAddress(address))
+                .addExceptionListener(_ -> LOGGER.info("Address not a server: " + address))
+                .addExceptionListener(_ -> deadCache.addDeadAddress(address))
                 .addFinallyListener(() -> {
                     synchronized (MysterServerPoolImpl.this) {
                         outstandingServerFutures.remove(address);
@@ -317,34 +317,6 @@ public class MysterServerPoolImpl implements MysterServerPool {
         if (task != null) {
             task.cancel();
         }
-    }
-
-    private synchronized MysterServer newOrGet(MysterAddress address, MysterServerImplementation m) {
-        MysterIdentity key = m.getIdentity(); // possible future bugs here...
-        if (existsInPool(key)) {
-            return getCachedMysterServer(key);
-        }
-
-        return addANewMysterObjectToThePool(address, m);
-    }
-
-    /**
-     * this function adds a new IP to the MysterIPPool data structure.. It's
-     * synchronized so it's thread safe.
-     * 
-     * The function double checks to make sure that there really hasen't been
-     * another myster IP cached during the time it took to check and returns the
-     * appropriate object.
-     * @param address 
-     */
-    private synchronized MysterServer addANewMysterObjectToThePool(MysterAddress address, MysterServerImplementation ip) {
-        if (existsInPool(ip.getIdentity())) {
-            ip = getMysterIP(ip.getIdentity());
-        }
-
-        ip.save();
-        
-        return ip.getInterface();
     }
 
     private MysterServerImplementation getMysterIP(MysterIdentity k) {

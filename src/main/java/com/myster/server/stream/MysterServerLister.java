@@ -6,9 +6,8 @@ import com.myster.client.stream.MysterDataInputStream;
 import com.myster.client.stream.MysterDataOutputStream;
 import com.myster.net.MysterAddress;
 import com.myster.server.ConnectionContext;
-import com.myster.tracker.Tracker;
 import com.myster.tracker.MysterServer;
-import com.myster.type.MysterType;
+import com.myster.tracker.Tracker;
 
 public class MysterServerLister extends ServerStreamHandler {
     public static final int NUMBER = 10;
@@ -33,12 +32,9 @@ public class MysterServerLister extends ServerStreamHandler {
 
         MysterServer[] topten;
 
-        byte[] type = new byte[4];
-        in.readFully(type);
-
         tracker.addIp(new MysterAddress(context.socket.getInetAddress()));
 
-        topten = tracker.getTop(new MysterType(type), 100);
+        topten = tracker.getTop(in.readType(), 100);
         
         if (topten != null) {
             for (int i = 0; i < topten.length; i++) {

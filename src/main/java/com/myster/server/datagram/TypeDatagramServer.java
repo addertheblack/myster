@@ -1,9 +1,9 @@
 package com.myster.server.datagram;
 
 import java.io.ByteArrayOutputStream;
-import java.io.DataOutputStream;
 import java.io.IOException;
 
+import com.myster.client.stream.MysterDataOutputStream;
 import com.myster.filemanager.FileTypeListManager;
 import com.myster.net.BadPacketException;
 import com.myster.transaction.Transaction;
@@ -29,20 +29,17 @@ public class TypeDatagramServer implements TransactionProtocol {
                                     Transaction transaction,
                                     Object transactionObject)
             throws BadPacketException {
-        try {
+        
+        MysterType[] temp;
+        ByteArrayOutputStream byteOutputStream = new ByteArrayOutputStream();
+        try (MysterDataOutputStream out = new MysterDataOutputStream(byteOutputStream)) {
+                temp = FileTypeListManager.getInstance().getFileTypeListing();
 
-            MysterType[] temp;
+                out.writeInt(temp.length);
 
-            ByteArrayOutputStream byteOutputStream = new ByteArrayOutputStream();
-            DataOutputStream out = new DataOutputStream(byteOutputStream);
-
-            temp = FileTypeListManager.getInstance().getFileTypeListing();
-
-            out.writeInt(temp.length);
-
-            for (int i = 0; i < temp.length; i++) {
-                out.writeInt(temp[i].getAsInt()); //BAD protocol
-            }
+                for (int i = 0; i < temp.length; i++) {
+                    out.writeType(temp[i]); //BAD protocol
+                }
 
             sender.sendTransaction(new Transaction(transaction,
                                                    byteOutputStream.toByteArray(),

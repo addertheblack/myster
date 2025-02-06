@@ -5,6 +5,10 @@ import java.util.Optional;
 
 import com.myster.net.MysterAddress;
 
+/**
+ * Exists to allow {@link MysterServerImplementation} access to {@link IdentityTracker} related information without
+ * giving access to the {@link IdentityTracker} which also contains write/modify methods
+ */
 public interface IdentityProvider {
     /**
      * @param address

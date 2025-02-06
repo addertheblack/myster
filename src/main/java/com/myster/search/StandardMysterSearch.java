@@ -143,7 +143,7 @@ public class StandardMysterSearch {
                 SearchResult result = mysterSearchResults[pointer];
                 socket.out.writeInt(77);
 
-                socket.out.writeInt(type.getAsInt());
+                socket.out.writeType(type);
                 socket.out.writeUTF(result.getName());
                 pointer++;
             }

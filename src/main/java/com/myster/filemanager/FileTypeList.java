@@ -31,19 +31,24 @@ import com.myster.application.MysterGlobals;
 import com.myster.hash.FileHash;
 import com.myster.hash.FileHashEvent;
 import com.myster.hash.FileHashListener;
+import com.myster.identity.Identity;
 import com.myster.mml.MML;
 import com.myster.mml.MMLException;
 import com.myster.pref.MysterPreferences;
 import com.myster.type.MysterType;
+import com.myster.type.TypeDescriptionList;
 
 public class FileTypeList {
+    private static final Identity moo = new Identity("mpg3_store.keystore", new File(MysterGlobals.getAppDataPath(), "identity"));
+    
+    private static final MysterType MPG3 = new MysterType(moo.getMainIdentity().get().getPublic());
     private static final Logger LOGGER = Logger.getLogger(FileTypeList.class.getName());
     
     private List<FileItem> filelist; // List of java.io.FileItem objects that are
 
     // shared.
 
-    private MysterType type; // Myster type represented by this List.
+    private final MysterType type; // Myster type represented by this List.
 
     private String rootdir; // The root directory for this list.
 
@@ -51,7 +56,7 @@ public class FileTypeList {
     // preferences data structure! Use isShared() to access!
     private MML local_prefs;
 
-    private String pref_key;
+    private final String pref_key;
 
     private static final String ACTIVE_PREF = "/ActPref"; // Active.. sub dir
 
@@ -69,23 +74,30 @@ public class FileTypeList {
     private volatile PromiseFuture<List<FileItem>> indexingFuture = null; // if true then the list is
 
     private final HashProvider hashProvider;
+    private final TypeDescriptionList tdList;
 
     // indexing...
 
     /**
-     * Creates a new FileTypeList. This shouldn't be called by anybody but the FileItem Manager.
+     * Creates a new FileTypeList. This shouldn't be called by anybody but the
+     * FileItem Manager.
      * 
      * @param type
      *            is the Myster FileItem type to be represented by this object.
      * @param path
-     *            is the root path IN THE PREFERENCES that this FileItem List should store it's
-     *            preferences.
-     * @param hashProvider 
+     *            is the root path IN THE PREFERENCES that this FileItem List
+     *            should store it's preferences.
+     * @param hashProvider
+     * @param tdList
      */
-    public FileTypeList(MysterType type, String path, HashProvider hashProvider) {
+    public FileTypeList(MysterType type,
+                        String path,
+                        HashProvider hashProvider,
+                        TypeDescriptionList tdList) {
         this.type = type;
         this.hashProvider = hashProvider;
-        this.pref_key = PREF_KEY + "." + type;
+        this.tdList = tdList;
+        this.pref_key = PREF_KEY + "." + type.toHexString();
 
         try {
             local_prefs = new MML(MysterPreferences.getInstance().query(pref_key));
@@ -448,7 +460,7 @@ public class FileTypeList {
         if (indexingFuture == null && (isOld() || !rootdir.equals(workingdir))) {
             rootdir = workingdir; // in case the dir for this type has changed.
             indexingFuture = PromiseFutures
-                    .execute(new FileListIndexCall(type, new File(rootdir), hashProvider))
+                    .execute(new FileListIndexCall(type, new File(rootdir), hashProvider, tdList))
                     .addFinallyListener(this::resetIndexingVariables)
                     .addResultListener(this::setFileList)
                     .addStandardExceptionHandler()
@@ -460,13 +472,15 @@ public class FileTypeList {
         private final MysterType type;
         private final File rootDir;
         private final HashProvider hashProvider;
+        private final TypeDescriptionList tdList;
         
         private volatile boolean endFlag = false;
 
-        public FileListIndexCall(MysterType type, File rootFile, HashProvider hashProvider) {
+        public FileListIndexCall(MysterType type, File rootFile, HashProvider hashProvider, TypeDescriptionList tdList) {
             this.type = type;
             this.rootDir = rootFile;
             this.hashProvider = hashProvider;
+            this.tdList = tdList;
         }
 
         /*
@@ -526,7 +540,7 @@ public class FileTypeList {
                     if (temp.isDirectory()) {
                         indexDir(type, temp, filelist, telomere);
                     } else {
-                        if (FileFilter.isCorrectType(type, temp)) {
+                        if (FileFilter.isCorrectType(type, temp, tdList)) {
                             filelist.add(createFileItem(temp));
                         }
                     }
@@ -627,7 +641,6 @@ public class FileTypeList {
         return (local_prefs.get(PATH_PREF) != null);
     }
 
-    private static final MysterType MPG3 = new MysterType("MPG3");
 
     /**
      * This function Merges Japaneese punctuation into a form that displays and matches in JAVA This

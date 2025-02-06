@@ -36,8 +36,15 @@ public class FileListerThread extends MysterThread {
     private final MysterType type;
 
     private MysterSocket socket;
+    
+    private final LookupTypeDescription lookup;
+    
+    interface LookupTypeDescription {
+        String lookup(MysterType type);
+    }
 
-    public FileListerThread(ItemListListener listener, Sayable msg, String ip, MysterType type) {
+    public FileListerThread(ItemListListener listener, Sayable msg, String ip, MysterType type, LookupTypeDescription lookup) {
+        this.lookup = lookup;
         this.listener = (String[] files) -> Util.invokeLater(() -> {
             if (endFlag) {
                 return;
@@ -85,21 +92,19 @@ public class FileListerThread extends MysterThread {
                 return;
             }
 
-            msg.say("Requesting File List: " + type);
+            msg.say("Requesting File List: " + lookup.lookup(type));
 
-            out.write(type.getBytes());
+            out.writeType(type);
             int numberoffiles = in.readInt();
 
             msg.say("Receiving List of Size: " + numberoffiles);
-
-            TextSpinner spinner = new TextSpinner();
 
             final int LIMIT = 500;
             String[] files = new String[numberoffiles > LIMIT ? LIMIT : numberoffiles];
             for (int i = 0; i < numberoffiles; i++) {
                 files[i % LIMIT] = in.readUTF();
                 if (i % 100 == 0)
-                    msg.say("Downloading file list: " + type + " " + ((i * 100) / numberoffiles) + "%");
+                    msg.say("Downloading file list: " + lookup.lookup(type) + " " + ((i * 100) / numberoffiles) + "%");
 
                 if ((i % LIMIT) == (LIMIT - 1)) {
                     listener.addItemsToFileList(files);
@@ -114,7 +119,7 @@ public class FileListerThread extends MysterThread {
 
             in.read();
 
-            msg.say("Requesting File List: " + type + " " + spinner.getSpin() + " Complete.");
+            msg.say("Requesting File List: " + lookup.lookup(type) + " Complete.");
             msg.say("Idle...");
         } catch (IOException ex) {
             msg.say("An unexpected error occurred during the transfer of the file list.");

@@ -2,6 +2,7 @@ package com.myster.filemanager;
 
 import java.io.File;
 import java.util.Enumeration;
+import java.util.Optional;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
 
@@ -24,14 +25,15 @@ class FileFilter {
     //NOTE: I have modified it to get the extensions from the
     // TypeDescriptionList isn't of
     //some statically coded stuff
-    public static boolean isCorrectType(MysterType type, File file) {
+    public static boolean isCorrectType(MysterType type, File file, TypeDescriptionList tdList) {
         if (file.length() == 0)
             return false; //all 0k files are bad.
 
-        TypeDescription typeDescription = TypeDescriptionList.getDefault().get(
-                type);
-        if (typeDescription == null)
+        Optional<TypeDescription> typeDescriptionOptional = tdList.get(type);
+        if (typeDescriptionOptional.isEmpty())
             return true; //no information on this type, allow everything.
+        
+        TypeDescription typeDescription = typeDescriptionOptional.get();
         String[] extensions = typeDescription.getExtensions(); //getExtensions
                                                                // is slow so we
                                                                // only want to
@@ -46,9 +48,9 @@ class FileFilter {
             try {
                 ZipFile zipFile = new ZipFile(file);
                 try {
-                    for (Enumeration entries = zipFile.entries(); entries
+                    for (Enumeration<? extends ZipEntry> entries = zipFile.entries(); entries
                             .hasMoreElements();) {
-                        ZipEntry zipEntry = (ZipEntry) entries.nextElement();
+                        ZipEntry zipEntry = entries.nextElement();
                         if (hasExtension(zipEntry.getName(), extensions))
                             return true;
                     }

@@ -34,6 +34,7 @@ import com.general.util.Timer;
 import com.myster.filemanager.FileTypeListManager;
 import com.myster.pref.ui.PreferencesPanel;
 import com.myster.type.MysterType;
+import com.myster.type.TypeDescriptionList;
 import com.myster.util.TypeChoice;
 
 /**
@@ -62,11 +63,11 @@ public class FmiChooser extends PreferencesPanel {
     private Timer timer = null;
     private String path;
 
-    public FmiChooser(FileTypeListManager manager) {
+    public FmiChooser(FileTypeListManager manager, TypeDescriptionList tdList) {
         this.manager = manager;
         setLayout(null);
 
-        choice = new TypeChoice();
+        choice = new TypeChoice(tdList);
         choice.setLocation(5, 4);
         choice.setSize(STD_XSIZE - XPAD - XPAD - SAB, 20);
         choice.addItemListener((ItemEvent a) -> {

@@ -88,7 +88,7 @@ public class TrackerWindow extends MysterFrame {
         gbconstrains.insets = new Insets(5, 5, 5, 5);
 
         //init objects
-        choice = new TypeChoice();
+        choice = new TypeChoice(c.tdList());
 
         list = MCListFactory.buildMCList(7, true, this);
 

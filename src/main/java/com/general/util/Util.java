@@ -8,17 +8,11 @@ import java.awt.Toolkit;
 import java.awt.Window;
 import java.lang.reflect.InvocationTargetException;
 import java.net.URL;
-import java.security.KeyFactory;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
-import java.security.PublicKey;
-import java.security.spec.InvalidKeySpecException;
-import java.security.spec.X509EncodedKeySpec;
 import java.util.ArrayList;
-import java.util.Base64;
 import java.util.Collection;
 import java.util.List;
-import java.util.Optional;
 import java.util.concurrent.Callable;
 import java.util.function.Function;
 import java.util.function.Predicate;
@@ -144,7 +138,6 @@ public class Util { //This code was taken from an Apple Sample Code package,
 
             // Convert the byte array to hex format
             return asHex(digest.digest());
-            
         } catch (NoSuchAlgorithmException e) {
             e.printStackTrace();
             return null;
@@ -160,21 +153,6 @@ public class Util { //This code was taken from an Apple Sample Code package,
         frame.setLocation(tool.getScreenSize().width / 2 - frame.getSize().width / 2 + xOffset,
                 tool.getScreenSize().height / 2 - frame.getSize().height / 2 + yOffset);
     }
-//
-//    public static PublicKey covertToPublicKey(String identity) {
-//        try {
-//            byte[] encodedPublicKey = Base64.getDecoder().decode(identity);
-//            X509EncodedKeySpec keySpec = new X509EncodedKeySpec(encodedPublicKey);
-//            KeyFactory keyFactory = KeyFactory.getInstance("RSA");
-//            
-//            return keyFactory.generatePublic(keySpec);
-//        } catch (NoSuchAlgorithmException | InvalidKeySpecException
-//                | IllegalArgumentException exception) {
-//            exception.printStackTrace();
-//            
-//            return null;
-//        }
-//    }
 
     /**
      * *************************** CRAMMING STUFF ON THE EVENT THREAD SUB SYSTEM START
@@ -267,24 +245,6 @@ public class Util { //This code was taken from an Apple Sample Code package,
         return (T) result[0];
     }
 
-    public static String publicKeyToString(PublicKey publicKey) {
-        return Base64.getEncoder().encodeToString(publicKey.getEncoded());
-    }
-    
-    public static Optional<PublicKey> publicKeyFromString(String publicKeyString) {
-        byte[] encodedPublicKey = Base64.getDecoder().decode(publicKeyString);
-
-        try {
-            X509EncodedKeySpec keySpec = new X509EncodedKeySpec(encodedPublicKey);
-            KeyFactory keyFactory = KeyFactory.getInstance("RSA");
-            return Optional.of(keyFactory.generatePublic(keySpec));
-        } catch (InvalidKeySpecException | NoSuchAlgorithmException exception) {
-            exception.printStackTrace();
-
-            return Optional.empty();
-        }
-    }
-    
     /**
      * Because streams are a great concept that's too much of a pain in the ass to use.
      * 

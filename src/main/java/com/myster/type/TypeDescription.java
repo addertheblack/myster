@@ -24,15 +24,11 @@ package com.myster.type;
  */
 
 public class TypeDescription {
-    MysterType type;
-
-    String description;
-
-    String[] extensions;
-
-    boolean isArchived;
-
-    boolean isEnabledByDefault;
+    private final MysterType type;
+    private final String description;
+    private final String[] extensions;
+    private final boolean isArchived;
+    private final boolean isEnabledByDefault;
 
     /**
      * Creates a TypeDescription object.
@@ -52,25 +48,7 @@ public class TypeDescription {
      *            default
      */
     public TypeDescription(MysterType type, String description, String[] extensions,
-            boolean isArchived, boolean isEnabledByDefault) {
-        commonInit(type, description, extensions, isArchived, isEnabledByDefault);
-    }
-
-    /**
-     * The older, simpler constructor. Defaults to not enabled by default and
-     * not archived with an extension list of no items.
-     * 
-     * @param type
-     *            The type
-     * @param description
-     *            A short description of the type
-     */
-    public TypeDescription(MysterType type, String description) {
-        commonInit(type, description, new String[] {}, false, false);
-    }
-
-    private void commonInit(MysterType type, String description, String[] extensions,
-            boolean isArchived, boolean isEnabledByDefault) {
+            boolean isArchived, boolean isEnabledByDefault ) {
         this.type = type;
         this.description = description;
         this.extensions = extensions;
@@ -95,7 +73,7 @@ public class TypeDescription {
      * extension
      */
     public String[] getExtensions() {
-        return (String[]) extensions.clone();
+        return extensions.clone();
     }
 
     /**
@@ -124,5 +102,4 @@ public class TypeDescription {
     public String toString() {
         return type + " " + description;
     }
-
 }

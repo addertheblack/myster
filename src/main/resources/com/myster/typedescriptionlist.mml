@@ -35,6 +35,7 @@ your new type.
 <List>
 	<1>
 		<Type>MPG3</Type>
+		<Public Key>MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAqeCD7YhLBJ2qM5/WCyd7CAGJi3OkCAS27riXfS5hmKCpCdVKtUu5sq8pKa53oinsY93kzjm1ex6jGS8NO9qW1GZ2pFdEEpuS6b49lZt6OTi++owFS+XY2GnkYn0PDBSmigdv2pccYS/MkLF21fZ2fvia6gfAl9hgwG21AxQg0kpzzoQVma/L1dk/Wn8a2EaLXjRjwKZ7QkRmlQG0CT1b5HMW2QYU/w0CObZQnorrwT+fZoVZF9U0vyXVTLa1sl1+M7oqkXaN4cDTqezeoybrUxzNshhvZTvZhKF4F7og/illda5lbTCyLoyloaLdEQX28mx0bDfGhGT4dO8LzkogsQIDAQAB</>
 		<Description>Sound</Description>
 		<Extensions>
 		         <0>.mp3</0> <1>.mid</1> <2>.midi</2> <3>.gm</3> <4>.au</4> 
@@ -51,6 +52,7 @@ your new type.
 	</1>
 	<2>
 		<Type>MACS</Type>
+		<Public Key>MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEA8xCXuXoStUaW7R24O0UDj3CoxACYVDhT8jZ83wCrcDzFeOJlmWK+OtuHGzgn6RdF5iOiQE7O8ouMpxhnV/CSnxQOVJVKntAyy1kRV5VFuRPe83EUSF43W9FM8sikfX4Lz7yv3TdX9LiAULejYZSVyaATF0JA2xRP1NA6XD7WMnHtjxq46efWy18XBISi8S12rM+Bj6mqn09Vo7PDA2Qwog2O5c0VKyWV8gGZTfN6QRZcxyjt+IqYsirCXz7zUu/tLMO+eKzf1Qpr330jQOw3dkOihEZylrMWhtb76Qm8RKkp6MijEkwepPmFNCBKEOGQwLSEVIzvP2jacgGVJcwNTwIDAQAB</>
 		<Description>Macintosh</Description>
 		<Extensions>
 		         <0>.bin</0> <1>.hqx</1> <2>.sit</2> <3>.cpt</3> <4>.dmg</4> <5>.sea</5>
@@ -60,6 +62,7 @@ your new type.
 	</2>
 	<3>
 		<Type>WINT</Type>
+		<Public Key>MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAvpU0WoSTGDuRNHa+Pg/GaIz5bYplsmngO48G3YtZnpBKDouB+lwptXkxpIvo3WtN6WypzYc9nFAcYtE5d9i+Lt5aAzKQdK3ufCH36lSIY49nnIvmFPoo+kGPj7NrqbBnKftX5fGQt1269bBTve1w+DEhcbdMLyd4+JyQlj9tdVoWux91WHhZL+IbpzOhQKPFFfGZsA8U/253Ppex4KhNivgStk9AfT/rRrusm5M6ang9To6uzP+GTVyO5uF625MSEIED0VFOIM0qJHbas6YfOCfEpLRrrNw2CDxQ4A2h7ZQJCjsWnnKJs4wg59qKeiSDMbGJtpBOM1ROQOJHsWyg0QIDAQAB</>
 		<Description>PC</Description>
 		<Extensions>
 		         <0>.exe</0> <1>.zip</1> <2>.gz</2> <3>.tar</3> <4>.z</4> <5>.rmj</5> <6>.lqt</6>
@@ -70,6 +73,7 @@ your new type.
 	</3>
 	<4>
 		<Type>PICT</Type>
+		<Public Key>MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAxeZm9ToXTimQ/B0SxgeiOJ425ILGCSyLB5F8+WRkYsmW4SsOnM4XRbCBi9RUatECU4FBzO/L9h173YLnrKWncOdnhFTkmYXdO0f1cHUmsd9zOASA6MygQ54iLm2DiruqTBMCizS+A3nsNPe8DQ0EfvOH/j7Cf07k9KdR2mQiN2vsFjtkuCm8QxLHQca5yA4KvJKYvbtckBOL6EPv+xkwxPTlsE4DyPaC27iwJY4IirivZu7I+8W9VWy1N1b8wpVKdl2Gx8HoQb+UGQ6Oyh2WP1kGL1dgo/axSaxO5qiwseRw1WZWktqQKkXy5b7I0PVGJnAHhsGuB0ls2/xz7df+ZwIDAQAB</>
 		<Description>Pictures</Description>
 		<Extensions>
 		         <0>.jpg</0> <1>.jpeg</1> <2>.png</2> <3>.gif</3> <4>.jpe</4> <5>.tif</5>
@@ -85,6 +89,7 @@ your new type.
 	</5>
 	<6>
 		<Type>MooV</Type>
+		<Public Key>MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAyRj/5YgafAAh9O2OUnudureJO6ynTEDQqlBjkb7eAnPg6QAYsOzLjLR3LhsXlGjWypgkxkzYGIglEdyWuPjmgviF+LePKNETqsmZoG4kDUIKbh0y8IvkSM/JtuCeaJ5Kt9l1javbvjYmENnPbUkrt825s9t9EigA//JpA0gFlLZM+bRA2cNgzNyzAXos0VFPyv37/XY840LWzRtFYeb4G9umG9l+wVCfONqbxi8E99XZg6ngXgVkp7rKkVMdlY+Zx4GAWMsrQY2DCmXNFDgfTy45LQ+rB6aRgH7ypj7HGkkCvpkiwgyWEPkECV6bV4xTaUww5cj49nTNHxx0vgbfGwIDAQAB</>
 		<Description>Video Clips</Description>
 		<Extensions>
 		         <0>.mov</0> <1>.avi</1> <2>.asf</2> <3>.rm</3> <4>.ram</4> <5>.mpg</5>
@@ -97,6 +102,7 @@ your new type.
 	</6>
 	<7>
 		<Type>TEXT</Type>
+		<Public Key>MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAwKIZxn4WrshAjMLz2P3XkV7H4Gh/AAdDElDnG0Xjnhn8iwXBRoPzdFH2JPiW3+6PdVpY/ql+cTQol3h64z4zdBk1TVRzmVrFQZ6/5YmjkaObSkt9qMgFFvB1/E5KkV3/E9nxG9D7W7z+BqTPANTnaMAhXUDczE44uvAUl2NQGuMRBINKNsXT8oHge119fdJZcIAVzMOyMdP6d7roTMNFmL3dvKkjyN8sKEcE1syngjzIOyll9mrE+mxjwLDYoUfTqsSh5bhAHHDBdjNOG2pZ/6kBO8sBVSt0fjIlZDuupsdQkBeXP1exY98dj9kclMUgYbEn58Mr4scIWRKpiUs0UQIDAQAB</>
 		<Description>Documents</Description>
 		<Extensions>
 		         <0>.txt</0> <1>.doc</1> <2>.abw</2> <3>.rtf</3> <4>.pdf</4> <5>.ps</5>
@@ -106,6 +112,7 @@ your new type.
 	</7>
 	<8>
 		<Type>ROMS</Type>
+		<Public Key>MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEArqGuTkFQx5qF1K1zDEIf29EJhRPYpQuPEYzBFERJyQiUe6yIiClUtkXTbB+NPM9JBzCUyiCFxgLhq5bSmtPIIElRMx0E++XUCs7v5I4lQkEVTfWTysfeZQxpz5AIir30SjqNsAa8SyXeWp7TpZBJvggJH4cKUIJEM35wpi45PgjsH5rEcmMzyn3flTagAeUfVX2TxE6zfuodJ1KWcxklKDhEXo6X+Dix7dZN3oMUNDYKYqb6m4O4LMAvjvA28Mt3ei3BGI8rv+APmkN8e53/LRH80qHIQ+X2WfH9g5VpkiF79GOl9QjT+N3ASL3Cm8UDhGaennLu7N4Ep6EwHeBYHQIDAQAB</>
 		<Description>Emulation</Description>
 		<Extensions>
 		         <0>.rom</0> <1>.smc</1> <2>.n64</2> <3>.v64</3> <4>.gba</4> <5>.gb</5>

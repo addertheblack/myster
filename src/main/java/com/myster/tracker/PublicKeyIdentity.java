@@ -3,7 +3,7 @@ package com.myster.tracker;
 
 import java.security.PublicKey;
 
-import com.general.util.Util;
+import com.myster.identity.Util;
 
 class PublicKeyIdentity implements MysterIdentity {
     private final PublicKey key;
@@ -28,6 +28,6 @@ class PublicKeyIdentity implements MysterIdentity {
     
     @Override
     public String toString() {
-        return Util.publicKeyToString(key);
+        return Util.keyToString(key);
     }
 }

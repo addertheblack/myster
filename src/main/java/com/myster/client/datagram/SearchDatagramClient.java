@@ -2,12 +2,12 @@ package com.myster.client.datagram;
 
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
-import com.myster.client.stream.MysterDataInputStream;
-import java.io.DataOutputStream;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
+import com.myster.client.stream.MysterDataInputStream;
+import com.myster.client.stream.MysterDataOutputStream;
 import com.myster.net.StandardDatagramClientImpl;
 import com.myster.transaction.Transaction;
 import com.myster.type.MysterType;
@@ -32,24 +32,23 @@ public class SearchDatagramClient implements StandardDatagramClientImpl<List<Str
     // (ascii) and the
     //		text encoding is different..
 
-    //returns Vector of Strings
-    public List<String> getObjectFromTransaction(Transaction transaction)
-            throws IOException {
-        MysterDataInputStream in = new MysterDataInputStream(new ByteArrayInputStream(
-                transaction.getData()));
+    // returns Vector of Strings
+    public List<String> getObjectFromTransaction(Transaction transaction) throws IOException {
+        try (MysterDataInputStream in =
+                new MysterDataInputStream(new ByteArrayInputStream(transaction.getData()))) {
+            List<String> searchResults = new ArrayList<>();
 
-        List<String> searchResults = new ArrayList<>();
+            for (;;) {
+                String searchResult = in.readUTF();
 
-        for (;;) {
-            String searchResult = in.readUTF();
+                if (searchResult.equals(""))
+                    break;
 
-            if (searchResult.equals(""))
-                break;
+                searchResults.add(searchResult);
+            }
 
-            searchResults.add(searchResult);
+            return searchResults;
         }
-
-        return searchResults;
     }
 
     //returns Vector of Strings
@@ -60,11 +59,8 @@ public class SearchDatagramClient implements StandardDatagramClientImpl<List<Str
     public byte[] getDataForOutgoingPacket() {
         ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
 
-        try {
-
-            DataOutputStream out = new DataOutputStream(byteArrayOutputStream);
-
-            out.writeInt(type.getAsInt());
+        try (var out = new MysterDataOutputStream(byteArrayOutputStream)) {
+            out.writeType(type);
             out.writeUTF(searchString);
         } catch (IOException ex) {
             throw new com.general.util.UnexpectedException(ex);

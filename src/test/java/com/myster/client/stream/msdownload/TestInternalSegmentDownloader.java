@@ -8,20 +8,22 @@ import static org.mockito.Mockito.when;
 
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
-import java.io.DataInputStream;
-import java.io.DataOutputStream;
 import java.io.IOException;
 import java.net.InetAddress;
 import java.net.SocketException;
+import java.nio.file.Path;
 
+import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.io.TempDir;
 import org.mockito.Mockito;
 import org.mockito.stubbing.Answer;
 
 import com.myster.client.stream.MysterDataInputStream;
 import com.myster.client.stream.MysterDataOutputStream;
 import com.myster.client.stream.msdownload.InternalSegmentDownloader.SocketFactory;
+import com.myster.identity.Identity;
 import com.myster.mml.RobustMML;
 import com.myster.net.MysterAddress;
 import com.myster.net.MysterSocket;
@@ -32,49 +34,61 @@ public class TestInternalSegmentDownloader {
     private static final int SEGMENT_SIZE = 1024 * 1024 * 2;
 
     private byte[] data;
+    
+    
+    // JUnit 5 will automatically create and clean up this temporary directory
+    @TempDir
+    static Path tempDir;
+    static Identity identity; 
+    
+    @BeforeAll
+    static void beforeAll() {
+        identity = new Identity("TestMultiSourceDownload", tempDir.toFile());
+    }
+
 
     @BeforeEach
     public void setUp() throws IOException {
-        ByteArrayOutputStream bout = new ByteArrayOutputStream();
-        DataOutputStream out = new DataOutputStream(bout);
-        out.write(1); // protocol is understood
-        out.write(1); // yes we have that file
+        var bout = new ByteArrayOutputStream();
+        try (var out = new MysterDataOutputStream(bout)) {
+            out.write(1); // protocol is understood
+            out.write(1); // yes we have that file
 
 
-        // Your queue position is - 1
-        RobustMML mml = new RobustMML();
-        mml.put(com.myster.server.stream.MultiSourceSender.QUEUED_PATH,"1");
-        mml.put(com.myster.server.stream.MultiSourceSender.MESSAGE_PATH, "You are queued");
-        out.writeUTF(mml.toString());
+            // Your queue position is - 1
+            RobustMML mml = new RobustMML();
+            mml.put(com.myster.server.stream.MultiSourceSender.QUEUED_PATH,"1");
+            mml.put(com.myster.server.stream.MultiSourceSender.MESSAGE_PATH, "You are queued");
+            out.writeUTF(mml.toString());
 
-        // Your queue position is - 0
-        RobustMML mml2 = new RobustMML();
-        mml2.put(com.myster.server.stream.MultiSourceSender.QUEUED_PATH,"0");
-        mml2.put(com.myster.server.stream.MultiSourceSender.MESSAGE_PATH, "You are queued");
-        out.writeUTF(mml2.toString());
+            // Your queue position is - 0
+            RobustMML mml2 = new RobustMML();
+            mml2.put(com.myster.server.stream.MultiSourceSender.QUEUED_PATH,"0");
+            mml2.put(com.myster.server.stream.MultiSourceSender.MESSAGE_PATH, "You are queued");
+            out.writeUTF(mml2.toString());
 
-        // check for sync
-        out.writeInt(6669);
-        out.write('d');
+            // check for sync
+            out.writeInt(6669);
+            out.write('d');
 
-        out.writeLong(SEGMENT_SIZE);
+            out.writeLong(SEGMENT_SIZE);
 
-        // setup data block here
-        byte[] dataToLoad = new byte[SEGMENT_SIZE];
-        for (int i = 0; i < SEGMENT_SIZE; i++) {
-            dataToLoad[i] = (byte) (i % 256);
+            // setup data block here
+            byte[] dataToLoad = new byte[SEGMENT_SIZE];
+            for (int i = 0; i < SEGMENT_SIZE; i++) {
+                dataToLoad[i] = (byte) (i % 256);
+            }
+            out.write(dataToLoad);
+
+            out.writeUTF(mml2.toString());
+            
+            // check for sync
+            out.writeInt(6669);
+            out.write('d');
+
+            out.writeLong(3);
+            out.write(dataToLoad, 0, 3);
         }
-        out.write(dataToLoad);
-
-        out.writeUTF(mml2.toString());
-        
-        // check for sync
-        out.writeInt(6669);
-        out.write('d');
-
-        out.writeLong(3);
-        out.write(dataToLoad, 0, 3);
-
         data = bout.toByteArray();
     }
 
@@ -85,7 +99,7 @@ public class TestInternalSegmentDownloader {
                 new WorkSegment[] { new WorkSegment(0, SEGMENT_SIZE), new WorkSegment(SEGMENT_SIZE, 3) };
                 int[] workSegmentCounter = new int[1];
                 when(controller.getNextWorkSegment(anyInt()))
-                        .thenAnswer((Answer<WorkSegment>) invocation -> {
+                        .thenAnswer((Answer<WorkSegment>) _ -> {
                             if (workSegmentCounter[0] > 1) {
                                 return new WorkSegment(0, 0);
                             }
@@ -110,7 +124,7 @@ public class TestInternalSegmentDownloader {
         };
 
 
-        final MysterType mysterType = new MysterType("TesT");
+        final MysterType mysterType = new MysterType(identity.getMainIdentity().get().getPublic());
         final String TEST_FILENAME = "Filename";
         InternalSegmentDownloader internalSegmentDownloader =
                 new InternalSegmentDownloader(controller,
@@ -124,11 +138,11 @@ public class TestInternalSegmentDownloader {
 
         byte[] byteArray = bout.toByteArray();
 
-        DataInputStream dataSendToServer = new DataInputStream(new ByteArrayInputStream(byteArray));
+        MysterDataInputStream dataSendToServer = new MysterDataInputStream(new ByteArrayInputStream(byteArray));
 
         assertEquals(dataSendToServer.readInt(), com.myster.server.stream.MultiSourceSender.SECTION_NUMBER);
 
-        assertEquals(new MysterType(dataSendToServer.readInt()), mysterType);
+        assertEquals(dataSendToServer.readType(), mysterType);
         assertEquals(dataSendToServer.readUTF(), TEST_FILENAME);
 
         assertEquals(dataSendToServer.readLong(), 0);
@@ -138,6 +152,8 @@ public class TestInternalSegmentDownloader {
         assertEquals(dataSendToServer.readLong(), 3);
 
         assertEquals(-1, dataSendToServer.read());
+        
+        dataSendToServer.close();
     }
 };
 

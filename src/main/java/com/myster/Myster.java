@@ -63,6 +63,7 @@ import com.myster.server.ServerFacade;
 import com.myster.server.ServerPreferences;
 import com.myster.server.ServerUtils;
 import com.myster.server.datagram.FileStatsDatagramServer;
+import com.myster.server.datagram.PingTransport;
 import com.myster.server.datagram.SearchDatagramServer;
 import com.myster.server.datagram.SearchHashDatagramServer;
 import com.myster.server.datagram.ServerStatsDatagramServer;
@@ -71,10 +72,12 @@ import com.myster.server.datagram.TypeDatagramServer;
 import com.myster.server.event.ServerEventDispatcher;
 import com.myster.server.ui.ServerPreferencesPane;
 import com.myster.server.ui.ServerStatsWindow;
-import com.myster.tracker.Tracker;
 import com.myster.tracker.MysterServerPoolImpl;
+import com.myster.tracker.Tracker;
 import com.myster.tracker.ui.TrackerWindow;
 import com.myster.transaction.TransactionManager;
+import com.myster.type.DefaultTypeDescriptionList;
+import com.myster.type.TypeDescriptionList;
 import com.myster.type.ui.TypeManagerPreferencesGUI;
 import com.myster.ui.MysterFrameContext;
 import com.myster.ui.PreferencesGui;
@@ -89,13 +92,9 @@ import com.simtechdata.waifupnp.UPnP;
 public class Myster {
     private static final Logger LOGGER = Logger.getLogger(AsyncDatagramSocket.class.getName());
     private static final Logger INSTRUMENTATION = Logger.getLogger("INSTRUMENTATION");
-    
 
     public static void main(String[] args) throws IOException {
         setupLogging();
-
-        // this don't work 'cause swing don't support it.
-//        System.setProperty("apple.awt.application.appearance", "system");
         
         String loggingConfig = System.getProperty("java.util.logging.config.file");
         if (loggingConfig != null) {
@@ -104,8 +103,17 @@ public class Myster {
             LOGGER.info("Logging config file not set");
         }
         
+        TypeDescriptionList tdList;
+        try {
+            tdList = new DefaultTypeDescriptionList();
+        } catch (Exception ex) {
+            ex.printStackTrace();
+            return;
+        }
+        
         // this sets the look and feel to follow the light/dark app prefs on the macos
-        System.setProperty("apple.awt.application.appearance=", "system");
+        // this don't work 'cause swing don't support it.
+//        System.setProperty("apple.awt.application.appearance", "system");
 
         final long startTime = System.currentTimeMillis();
 
@@ -128,7 +136,10 @@ public class Myster {
         INSTRUMENTATION.info("-------->> before javax.swing.UIManager invoke later "
                 + (System.currentTimeMillis() - startTime));
 
+        // we do this as early as possible since the EDT is not part of this thread so we can get
+        // two threads working at the same time
         SwingUtilities.invokeLater(() -> {
+            INSTRUMENTATION.info("-------->> EDT Started" + (System.currentTimeMillis() - startTime));
             try {
                 javax.swing.UIManager.setLookAndFeel(javax.swing.UIManager.getSystemLookAndFeelClassName());
             } catch (InstantiationException exception) {
@@ -144,8 +155,9 @@ public class Myster {
             // this gets awt to start initialising on the EDT while we initialise Myster's
             // backend
             var f = new JFrame();
-            f.pack();
+            f.pack(); // this starts up the AWT graphics stuff
             f.dispose();
+            INSTRUMENTATION.info("-------->> EDT Basic AWT stuff initialized" + (System.currentTimeMillis() - startTime));
         });
 
         INSTRUMENTATION.info("-------->> before Appl init " + (System.currentTimeMillis() - startTime));
@@ -182,7 +194,7 @@ public class Myster {
                                              + " computer will make sure that the other Myster client gets quit.");
                 parent.dispose(); // if this isn't here Myster won't quit.
                 applicationContext.close();
-                System.exit(0);
+                System.exit(0); // too many weird bugs just force it to quit.
             });
             return;
         }
@@ -210,9 +222,7 @@ public class Myster {
         INSTRUMENTATION.info("-------->> before IPListManager "
                 + (System.currentTimeMillis() - startTime));
         MysterServerPoolImpl pool = new MysterServerPoolImpl(Preferences.userRoot(), protocol);
-        Tracker tracker =
-                new Tracker(pool,
-                                        Preferences.userRoot().node("Tracker.IpListManager"));
+        Tracker tracker = new Tracker(pool, Preferences.userRoot().node("Tracker.IpListManager"), tdList);
         pool.startRefreshTimer();
         INSTRUMENTATION
                 .info("-------->> after IPListManager " + (System.currentTimeMillis() - startTime));
@@ -222,7 +232,7 @@ public class Myster {
 
         final HashCrawlerManager crawlerManager =
                 new MultiSourceHashSearch(tracker, protocol);
-        ClientWindow.init(protocol, crawlerManager, tracker, serverPreferences);
+        ClientWindow.init(protocol, crawlerManager, tracker, serverPreferences, tdList);
 
         ServerFacade serverFacade = new ServerFacade(tracker,
                                                      serverPreferences,
@@ -230,25 +240,10 @@ public class Myster {
                                                      transactionManager,
                                                      identity,
                                                      serverDispatcher);
-
-        serverFacade
-                .addDatagramTransactions(new TopTenDatagramServer(tracker),
-                                         new TypeDatagramServer(),
-                                         new SearchDatagramServer(),
-                                         new ServerStatsDatagramServer(serverPreferences::getIdentityName,
-                                                                       serverPreferences::getServerPort,
-                                                                       identity),
-                                         new FileStatsDatagramServer(),
-                                         new SearchHashDatagramServer());
-
-        serverFacade
-                .addDatagramTransactions(MysterGlobals.DEFAULT_SERVER_PORT,
-                                         new ServerStatsDatagramServer(serverPreferences::getIdentityName,
-                                                                       serverPreferences::getServerPort,
-                                                                       identity));
+        addServerConnectionSettings(serverFacade, tracker, serverPreferences, identity, datagramManager);
 
         final HashManager hashManager = new HashManager();
-        FileTypeListManager.init((f, l) -> hashManager.findHash(f, l));
+        FileTypeListManager.init((f, l) -> hashManager.findHash(f, l), tdList);
 
         // asynchronously start the server
         serverFacade.startServer();
@@ -259,21 +254,23 @@ public class Myster {
             EventQueue.invokeAndWait(() -> {
                 INSTRUMENTATION.info("-------->> inside  invokeAndWait"
                         + (System.currentTimeMillis() - startTime));
-                try {
-                    if (com.myster.type.TypeDescriptionList.getDefault()
-                            .getEnabledTypes().length <= 0) {
-                        AnswerDialog
-                                .simpleAlert("There are not enabled types. This screws up Myster. Please make sure"
-                                        + " the typedescriptionlist.mml is in the right place and correctly"
-                                        + " formated.");
-                        MysterGlobals.quit();
-                        return; // not reached
-                    }
-                } catch (Exception ex) {
-                    AnswerDialog.simpleAlert("Could not load the Type Description List: \n\n" + ex);
-                    MysterGlobals.quit();
-                    return; // not reached
-                }
+                
+                // might move this if I can be bothered
+//                try {
+//                    if (com.myster.type.TypeDescriptionList.getDefault()
+//                            .getEnabledTypes().length <= 0) {
+//                        AnswerDialog
+//                                .simpleAlert("There are not enabled types. This screws up Myster. Please make sure"
+//                                        + " the typedescriptionlist.mml is in the right place and correctly"
+//                                        + " formated.");
+//                        MysterGlobals.quit();
+//                        return; // not reached
+//                    }
+//                } catch (Exception ex) {
+//                    AnswerDialog.simpleAlert("Could not load the Type Description List: \n\n" + ex);
+//                    MysterGlobals.quit();
+//                    return; // not reached
+//                }
 
                 INSTRUMENTATION.info("-------->> before menuBarFactory "
                         + (System.currentTimeMillis() - startTime));
@@ -281,7 +278,7 @@ public class Myster {
                 MysterMenuBar menuBarFactory = new MysterMenuBar();
                 WindowManager windowManager = new WindowManager();
                 final MysterFrameContext context =
-                        new MysterFrameContext(menuBarFactory, windowManager);
+                        new MysterFrameContext(menuBarFactory, windowManager, tdList);
                 PreferencesGui preferencesGui = new PreferencesGui(context);
 
                 serverFacade
@@ -292,7 +289,7 @@ public class Myster {
                                                                                                                 tracker::getQuickServerStats))
                                                                                                                         .show()));
 
-                menuBarFactory.initMenuBar(tracker, preferencesGui, windowManager, protocol);
+                menuBarFactory.initMenuBar(tracker, preferencesGui, windowManager, protocol, tdList);
 
                 String osName = System.getProperty("os.name").toLowerCase();
                 if (osName.startsWith("mac os") && Desktop.isDesktopSupported()) {
@@ -319,9 +316,9 @@ public class Myster {
                 preferencesGui.addPanel(BandwidthManager.getPrefsPanel());
                 preferencesGui.addPanel(new BannersPreferences());
                 preferencesGui.addPanel(new ServerPreferencesPane(serverPreferences));
-                preferencesGui.addPanel(new FmiChooser(FileTypeListManager.getInstance()));
+                preferencesGui.addPanel(new FmiChooser(FileTypeListManager.getInstance(), tdList));
                 preferencesGui.addPanel(new MessagePreferencesPanel(preferences));
-                preferencesGui.addPanel(new TypeManagerPreferencesGUI());
+                preferencesGui.addPanel(new TypeManagerPreferencesGUI(tdList));
 
                 INSTRUMENTATION.info("-------->> before inits " + (System.currentTimeMillis() - startTime));
 
@@ -353,11 +350,11 @@ public class Myster {
                 }
 
                 if (Desktop.getDesktop().isSupported(Action.APP_PREFERENCES)) {
-                    Desktop.getDesktop().setPreferencesHandler(e -> preferencesGui.setGUI(true));
+                    Desktop.getDesktop().setPreferencesHandler(_ -> preferencesGui.setGUI(true));
                 }
 
                 if (Desktop.getDesktop().isSupported(Action.APP_ABOUT)) {
-                    Desktop.getDesktop().setAboutHandler(e -> AnswerDialog
+                    Desktop.getDesktop().setAboutHandler(_ -> AnswerDialog
                             .simpleAlert("Myster PR 10\n\nCome on in, join the party.."));
                 }
             });
@@ -392,6 +389,40 @@ public class Myster {
         
         ServerUtils.massPing(protocol, tracker);
     } // Utils, globals etc.. //These variables are System wide variables //
+    
+
+    private static void addServerConnectionSettings(ServerFacade serverFacade,
+                                                    Tracker tracker,
+                                                    ServerPreferences preferences,
+                                                    Identity identity,
+                                                    DatagramProtocolManager datagramManager) {
+        serverFacade.addConnectionSection(new com.myster.server.stream.MysterServerLister(tracker));
+        serverFacade.addConnectionSection(new com.myster.server.stream.RequestDirThread());
+        serverFacade.addConnectionSection(new com.myster.server.stream.FileTypeLister());
+        serverFacade.addConnectionSection(new com.myster.server.stream.RequestSearchThread());
+        serverFacade
+                .addConnectionSection(new com.myster.server.stream.ServerStats(preferences::getIdentityName,
+                                                                               preferences::getServerPort,
+                                                                               identity));
+        serverFacade.addConnectionSection(new com.myster.server.stream.FileInfoLister());
+        serverFacade.addConnectionSection(new com.myster.server.stream.FileByHash());
+        serverFacade.addConnectionSection(new com.myster.server.stream.MultiSourceSender());
+        serverFacade.addConnectionSection(new com.myster.server.stream.FileTypeLister());
+
+        datagramManager.mutateTransportManager(preferences.getServerPort(),
+                                               t -> t.addTransport(new PingTransport(tracker)));
+
+        serverFacade
+                .addDatagramTransactions(new TopTenDatagramServer(tracker),
+                                         new TypeDatagramServer(),
+                                         new SearchDatagramServer(),
+                                         new ServerStatsDatagramServer(preferences::getIdentityName,
+                                                                       preferences::getServerPort,
+                                                                       identity),
+                                         new FileStatsDatagramServer(),
+                                         new SearchHashDatagramServer());
+
+    }
 
     private static void setupLogging() throws IOException {
         InputStream inputStream =

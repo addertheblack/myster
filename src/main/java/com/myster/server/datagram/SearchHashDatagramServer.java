@@ -2,10 +2,11 @@ package com.myster.server.datagram;
 
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
-import com.myster.client.stream.MysterDataInputStream;
-import java.io.DataOutputStream;
 import java.io.IOException;
 
+import com.myster.client.stream.MysterDataInputStream;
+import com.myster.client.stream.MysterDataOutputStream;
+import com.myster.filemanager.FileItem;
 import com.myster.hash.FileHash;
 import com.myster.hash.SimpleFileHash;
 import com.myster.net.BadPacketException;
@@ -21,19 +22,19 @@ public class SearchHashDatagramServer implements TransactionProtocol {
         return SEARCH_HASH_TRANSACTION_CODE;
     }
 
-    public void transactionReceived(TransactionSender sender, Transaction transaction, Object transactionObject) throws BadPacketException {
-        try {
-            MysterDataInputStream in = new MysterDataInputStream(
-                    new ByteArrayInputStream(transaction.getData()));
+    public void transactionReceived(TransactionSender sender,
+                                    Transaction transaction,
+                                    Object transactionObject)
+            throws BadPacketException {
+        ByteArrayOutputStream byteOutputStream = new ByteArrayOutputStream();
+        try (MysterDataInputStream in =
+                new MysterDataInputStream(new ByteArrayInputStream(transaction.getData()));
+                MysterDataOutputStream out = new MysterDataOutputStream(byteOutputStream)) {
 
-            ByteArrayOutputStream byteOutputStream = new ByteArrayOutputStream();
-            DataOutputStream out = new DataOutputStream(byteOutputStream);
-
-            MysterType type = new MysterType(in.readInt()); //type
-
+            MysterType type = in.readType(); // type
             FileHash md5Hash = null;
 
-            for (;;) { //get hash name, get hash length, get hash data until
+            for (;;) { // get hash name, get hash length, get hash data until
                 // hashname is ""
                 String hashType = in.readUTF();
                 if (hashType.equals("")) {
@@ -49,11 +50,11 @@ public class SearchHashDatagramServer implements TransactionProtocol {
                 }
             }
 
-            com.myster.filemanager.FileItem file = null;
+           FileItem file = null;
 
             if (md5Hash != null) {
-                file = com.myster.filemanager.FileTypeListManager.getInstance().getFileFromHash(
-                        type, md5Hash);
+                file = com.myster.filemanager.FileTypeListManager.getInstance()
+                        .getFileFromHash(type, md5Hash);
             }
 
             if (file == null) {
@@ -65,6 +66,9 @@ public class SearchHashDatagramServer implements TransactionProtocol {
             sender.sendTransaction(new Transaction(transaction,
                                                    byteOutputStream.toByteArray(),
                                                    Transaction.NO_ERROR));
+
+            in.close();
+            out.close();
         } catch (IOException ex) {
             throw new BadPacketException("Bad packet " + ex);
         }

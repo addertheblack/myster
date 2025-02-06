@@ -2,10 +2,10 @@ package com.myster.client.datagram;
 
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
-import java.io.DataOutputStream;
 import java.io.IOException;
 
 import com.myster.client.stream.MysterDataInputStream;
+import com.myster.client.stream.MysterDataOutputStream;
 import com.myster.mml.MMLException;
 import com.myster.mml.RobustMML;
 import com.myster.net.StandardDatagramClientImpl;
@@ -47,15 +47,13 @@ public class FileStatsDatagramClient implements StandardDatagramClientImpl<Robus
     public byte[] getDataForOutgoingPacket() {
         ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
 
-        try {
-            DataOutputStream out = new DataOutputStream(byteArrayOutputStream);
-
-            out.writeInt(stub.getType().getAsInt()); //this protocol sucks
+        try (final var out = new MysterDataOutputStream(byteArrayOutputStream)) {
+            out.writeType(stub.getType());
             out.writeUTF(stub.getName());
         } catch (IOException ex) {
             throw new com.general.util.UnexpectedException(ex);
         }
-
+        
         return byteArrayOutputStream.toByteArray();
     }
 

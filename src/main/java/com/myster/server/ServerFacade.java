@@ -19,6 +19,7 @@ import com.myster.application.MysterGlobals;
 import com.myster.identity.Identity;
 import com.myster.net.DatagramProtocolManager;
 import com.myster.server.datagram.PingTransport;
+import com.myster.server.datagram.ServerStatsDatagramServer;
 import com.myster.server.event.ServerEventDispatcher;
 import com.myster.server.transferqueue.ServerQueue;
 import com.myster.server.transferqueue.TransferQueue;
@@ -57,7 +58,7 @@ public class ServerFacade {
         this.serverDispatcher = serverDispatcher;
         this.operatorExecutor = Executors.newVirtualThreadPerTaskExecutor();
         this.connectionExecutor = new BoundedExecutor(120, operatorExecutor);
-
+        
         transferQueue = new ServerQueue(preferences);
         
         Consumer<Socket> socketConsumer =
@@ -68,25 +69,22 @@ public class ServerFacade {
 
         final var operatorList = new ArrayList<Operator>();
         operatorList.add( new Operator(socketConsumer, preferences.getServerPort(), Optional.empty()));
-
+        
+        
         if (preferences.getServerPort() != MysterGlobals.DEFAULT_SERVER_PORT) {
             LOGGER.fine("Initializing LAN operator");
             try {
-                initLanResourceDiscovery(serverDispatcher, operatorList);
+                initLanResourceDiscovery(operatorList);
             } catch (UnknownHostException exception) {
                 LOGGER.log(Level.WARNING, "Could not initialize LAN socket", exception);
             }
         }
         
         this.operators = operatorList.toArray(Operator[]::new);
-
-        addStandardStreamConnectionSections();
-        initDatagramTransports();
     }
 
 
-    private void initLanResourceDiscovery(ServerEventDispatcher serverDispatcher,
-                                          ArrayList<Operator> operatorList)
+    public void initLanResourceDiscovery(List<Operator> operatorList)
             throws UnknownHostException {
         Consumer<Socket> serviceDiscoveryPort =
                 (socket) -> connectionExecutor.execute(new ConnectionRunnable(socket,
@@ -100,7 +98,10 @@ public class ServerFacade {
                                           Optional.of( publicLandAddress)));
         }
         
-        datagramManager.accessPort(MysterGlobals.DEFAULT_SERVER_PORT, t -> t.addTransport(new PingTransport(tracker)));
+        datagramManager.mutateTransportManager(MysterGlobals.DEFAULT_SERVER_PORT, t -> t.addTransport(new PingTransport(tracker)));
+        addDatagramTransactions(MysterGlobals.DEFAULT_SERVER_PORT,
+                                 new ServerStatsDatagramServer(preferences::getIdentityName,
+                                                               preferences::getServerPort, identity));
     }
 
 
@@ -117,10 +118,6 @@ public class ServerFacade {
                 operatorExecutor.execute(operators[i]);
             }
         }
-    }
-
-    private void initDatagramTransports() {
-        datagramManager.accessPort(preferences.getServerPort(), t -> t.addTransport(new PingTransport(tracker)));
     }
 
     public void addDatagramTransactions(TransactionProtocol ... protocols) {
@@ -142,17 +139,5 @@ public class ServerFacade {
     
     public void addConnectionSection(ConnectionSection section) {
         connectionSections.put(section.getSectionNumber(), section);
-    }
-
-    private void addStandardStreamConnectionSections() {
-        addConnectionSection(new com.myster.server.stream.MysterServerLister(tracker));
-        addConnectionSection(new com.myster.server.stream.RequestDirThread());
-        addConnectionSection(new com.myster.server.stream.FileTypeLister());
-        addConnectionSection(new com.myster.server.stream.RequestSearchThread());
-        addConnectionSection(new com.myster.server.stream.ServerStats(preferences::getIdentityName, preferences::getServerPort, identity));
-        addConnectionSection(new com.myster.server.stream.FileInfoLister());
-        addConnectionSection(new com.myster.server.stream.FileByHash());
-        addConnectionSection(new com.myster.server.stream.MultiSourceSender());
-        addConnectionSection(new com.myster.server.stream.FileTypeListerII());
     }
 }

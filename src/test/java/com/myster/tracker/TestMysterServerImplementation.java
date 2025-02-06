@@ -12,14 +12,13 @@ import org.junit.jupiter.api.io.TempDir;
 
 import com.general.thread.PromiseFuture;
 import com.general.util.MapPreferences;
-import com.general.util.Util;
 import com.myster.client.datagram.PingResponse;
 import com.myster.identity.Identity;
+import com.myster.identity.Util;
 import com.myster.mml.MML;
 import com.myster.mml.MMLException;
 import com.myster.mml.RobustMML;
 import com.myster.net.MysterAddress;
-import com.myster.type.MysterType;
 
 class TestMysterServerImplementation {
 //   private static final Logger LOGGER = Logger.getLogger(TestMysterServerPoolImpl.class.getName());
@@ -46,7 +45,7 @@ class TestMysterServerImplementation {
         IdentityTracker it = new IdentityTracker(a -> PromiseFuture.newPromiseFuture(new PingResponse(a, 1)), (_)->{ sem.release(); }, (_)->{});
         MysterAddress address = new MysterAddress("127.0.0.1");
         
-        String cleanPublicKeyString = MML.cleanString(Util.publicKeyToString(identity.getMainIdentity().get().getPublic()));
+        String cleanPublicKeyString = MML.cleanString(Util.keyToString(identity.getMainIdentity().get().getPublic()));
         MysterIdentity id = new PublicKeyIdentity(identity.getMainIdentity().get().getPublic());
         String mml = """
                 <Speed>1</>

@@ -40,9 +40,11 @@ import com.myster.client.net.MysterProtocol;
 import com.myster.net.MysterAddress;
 import com.myster.search.HashCrawlerManager;
 import com.myster.server.ServerPreferences;
-import com.myster.tracker.Tracker;
 import com.myster.tracker.MysterServer;
+import com.myster.tracker.Tracker;
 import com.myster.type.MysterType;
+import com.myster.type.TypeDescription;
+import com.myster.type.TypeDescriptionList;
 import com.myster.ui.MysterFrame;
 import com.myster.ui.MysterFrameContext;
 import com.myster.ui.WindowLocationKeeper;
@@ -50,12 +52,14 @@ import com.myster.util.Sayable;
 
 public class ClientWindow extends MysterFrame implements Sayable {
     private static final String ENTER_AN_IP_HERE = "Enter a server address";
+    private static final String WINDOW_KEEPER_KEY = "Myster's Client Windows";
+    private static final String CLIENT_WINDOW_TITLE_PREFIX = "Direct Connection ";
+    
     private static final int XDEFAULT = 600;
     private static final int YDEFAULT = 400;
     private static final int SBXDEFAULT = 72; //send button X default
     private static final int GYDEFAULT = 50; //Generic Y default
-    private static final String WINDOW_KEEPER_KEY = "Myster's Client Windows";
-    private static final String CLIENT_WINDOW_TITLE_PREFIX = "Direct Connection ";
+    
 
     private static int counter = 0;
     private static WindowLocationKeeper keeper;
@@ -63,6 +67,7 @@ public class ClientWindow extends MysterFrame implements Sayable {
     private static MysterProtocol protocol;
     private static HashCrawlerManager hashManager;
     private static ServerPreferences serverPreferences;
+    private static TypeDescriptionList typeDescriptionList;
     
     private GridBagLayout gblayout;
     private GridBagConstraints gbconstrains;
@@ -84,10 +89,12 @@ public class ClientWindow extends MysterFrame implements Sayable {
     public static void init(MysterProtocol protocol,
                             HashCrawlerManager hashManager,
                             Tracker tracker,
-                            ServerPreferences prefs) {
+                            ServerPreferences prefs,
+                            TypeDescriptionList typeDescriptionList) {
         ClientWindow.protocol = protocol;
         ClientWindow.tracker = tracker;
         ClientWindow.hashManager = hashManager;
+        ClientWindow.typeDescriptionList = typeDescriptionList;
         serverPreferences = prefs;
     }
     
@@ -281,10 +288,14 @@ public class ClientWindow extends MysterFrame implements Sayable {
         add(c);
     }
 
-    public void addItemToTypeList(MysterType s) {
-        fileTypeList.addItem(new GenericMCListItem<MysterType>(new Sortable[] { new SortableString(s.toString()) }, s));
-        
-        if (s.equals(type)) {
+    public void addItemToTypeList(MysterType t) {
+        fileTypeList
+                .addItem(new GenericMCListItem<MysterType>(new Sortable[] {
+                         new SortableString(typeDescriptionList.get(t)
+                                .map(TypeDescription::getDescription).orElse(t.toString())),
+                         new SortableString(t.toString()) }, t));
+
+        if (t.equals(type)) {
             type = null;
             
             fileTypeList.select(fileTypeList.length()-1);
@@ -396,7 +407,10 @@ public class ClientWindow extends MysterFrame implements Sayable {
         fileListThread = new FileListerThread(this::addItemsToFileList,
                                               this::say,
                                               getCurrentIP(),
-                                              getCurrentType());
+                                              getCurrentType(),
+                                              t -> typeDescriptionList.get(t)
+                                                      .map(TypeDescription::getDescription)
+                                                      .orElse(t.toString()));
         fileListThread.start();
     }
 
