@@ -32,7 +32,7 @@ public class StandardSuite {
 
         checkProtocol(socket.in);
 
-        socket.out.write(searchType.getBytes());
+        socket.out.writeType(searchType);
         socket.out.writeUTF(searchString);
 
         for (String temp = socket.in.readUTF(); !temp.equals(""); temp = socket.in.readUTF())
@@ -52,7 +52,7 @@ public class StandardSuite {
         
         checkProtocol(socket.in);
         
-        socket.out.write(searchType.getBytes());
+        socket.out.writeType(searchType);
 
         for (String temp = socket.in.readUTF(); !temp.equals(""); temp = socket.in.readUTF()) {
             ipList.add(temp);
@@ -72,7 +72,7 @@ public class StandardSuite {
         MysterType[] mysterTypes = new MysterType[numberOfTypes];
 
         for (int i = 0; i < numberOfTypes; i++) {
-            mysterTypes[i] = new MysterType(socket.in.readInt());
+            mysterTypes[i] = socket.in.readType();
         }
 
         return mysterTypes;
@@ -120,7 +120,7 @@ public class StandardSuite {
 
         checkProtocol(socket.in);
 
-        socket.out.writeInt(stub.getType().getAsInt()); // this protocol sucks
+        socket.out.writeType(stub.getType());
         socket.out.writeUTF(stub.getName());
 
         try {
@@ -158,7 +158,7 @@ public class StandardSuite {
 
         checkProtocol(socket.in);
 
-        socket.out.writeInt(type.getAsInt());
+        socket.out.writeType(type);
 
         for (int i = 0; i < hashes.length; i++) {
             socket.out.writeUTF(hashes[i].getHashName());
@@ -205,7 +205,7 @@ public class StandardSuite {
         socket.out.writeInt(78);
         checkProtocol(socket.in);
 
-        socket.out.writeInt(type.getAsInt());
+        socket.out.writeType(type);
 
         String[] fileList = new String[socket.in.readInt()];
         for (int i = 0; i < fileList.length; i++) {

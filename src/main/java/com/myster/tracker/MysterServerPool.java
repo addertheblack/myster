@@ -11,10 +11,7 @@
 
 package com.myster.tracker;
 
-import java.util.function.Consumer;
-
 import com.myster.net.MysterAddress;
-import com.myster.type.MysterType;
 
 /**
  * This class exists to make sure that if a server is listed under many
@@ -26,6 +23,10 @@ import com.myster.type.MysterType;
  */
 public interface MysterServerPool {
     void suggestAddress(MysterAddress address);
+    
+    /**
+     * ONLY UNIT TESTS!
+     */
     void suggestAddress(String address);
     
     MysterIdentity lookupIdentityFromName(ExternalName externalName);

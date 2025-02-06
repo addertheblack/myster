@@ -2,10 +2,10 @@ package com.myster.client.datagram;
 
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
-import java.io.DataOutputStream;
 import java.io.IOException;
 
 import com.myster.client.stream.MysterDataInputStream;
+import com.myster.client.stream.MysterDataOutputStream;
 import com.myster.filemanager.FileTypeList;
 import com.myster.hash.FileHash;
 import com.myster.net.StandardDatagramClientImpl;
@@ -42,10 +42,8 @@ public class SearchHashDatagramClient implements StandardDatagramClientImpl<Stri
     public byte[] getDataForOutgoingPacket() {
         ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
 
-        try {
-            DataOutputStream out = new DataOutputStream(byteArrayOutputStream);
-
-            out.writeInt(type.getAsInt());
+        try (var out = new MysterDataOutputStream(byteArrayOutputStream)) {
+            out.writeType(type);
 
             for (int i = 0; i < hashes.length; i++) {
                 out.writeUTF(hashes[i].getHashName());
@@ -58,6 +56,8 @@ public class SearchHashDatagramClient implements StandardDatagramClientImpl<Stri
             }
 
             out.writeUTF("");
+            
+            out.close();
         } catch (IOException ex) {
             throw new com.general.util.UnexpectedException(ex);
         }

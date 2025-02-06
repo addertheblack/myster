@@ -12,7 +12,7 @@ public class UDPPingClient {
     }
 
     public PromiseFuture<PingResponse> ping(MysterAddress address) {
-        return protocolManager.accessPort(address.getPort(), (transportManager) -> {
+        return protocolManager.mutateTransportManager(address.getPort(), (transportManager) -> {
             PongTransport t = (PongTransport) transportManager.getTransport(PongTransport.TRANSPORT_NUMBER);
             
             if (t == null ) {
@@ -27,7 +27,7 @@ public class UDPPingClient {
                     @Override
                     public void pingReply(PingEvent e) {
                         context.setResult(new PingResponse(address, e.getPingTime()));
-                        protocolManager.accessPort(address.getPort(),
+                        protocolManager.mutateTransportManager(address.getPort(),
                                                    (t) -> transportManager
                                                            .removeTransportIfEmpty(transport));
                     }

@@ -65,7 +65,7 @@ public class TransactionManager {
     public int sendTransaction(DataPacket data, int transactionCode, TransactionListener listener_in) {
         int port = data.getAddress().getPort();
         
-        return datagramManager.accessPort(port, (transportManager) -> {
+        return datagramManager.mutateTransportManager(port, (transportManager) -> {
             TransactionTransportImplementation transactionTransport =
                     extractTransactionTransport(transportManager);
             
@@ -74,7 +74,7 @@ public class TransactionManager {
                 @Override
                 public void transactionTimout(TransactionEvent event) {
                     datagramManager
-                            .accessPort(port,
+                            .mutateTransportManager(port,
                                         (transportManager) -> transportManager
                                                 .removeTransportIfEmpty(transactionTransport));
 
@@ -84,7 +84,7 @@ public class TransactionManager {
                 @Override
                 public void transactionReply(TransactionEvent event) {
                     datagramManager
-                            .accessPort(port,
+                            .mutateTransportManager(port,
                                         (transportManager) -> transportManager
                                                 .removeTransportIfEmpty(transactionTransport));
 
@@ -94,7 +94,7 @@ public class TransactionManager {
                 @Override
                 public void transactionCancelled(TransactionEvent event) {
                     datagramManager
-                            .accessPort(port,
+                            .mutateTransportManager(port,
                                         (transportManager) -> transportManager
                                                 .removeTransportIfEmpty(transactionTransport));
 
@@ -137,7 +137,7 @@ public class TransactionManager {
      * @return true if transaction was cancelled, false otherwise.
      */
     public boolean cancelTransaction(int port, int id) {
-        return datagramManager.accessPort(port, (TransportManager transportManager) -> {
+        return datagramManager.mutateTransportManager(port, (TransportManager transportManager) -> {
             TransactionTransportImplementation transport =
                     (TransactionTransportImplementation) transportManager.getTransport(Transaction.TRANSACTION_PROTOCOL_NUMBER);
             
@@ -156,7 +156,7 @@ public class TransactionManager {
      * @return the same TransactionProtocol but with a valid "sender"
      */
     public TransactionProtocol addTransactionProtocol(int port, TransactionProtocol protocol) {
-        return datagramManager.accessPort(port, (TransportManager transportManager) -> {
+        return datagramManager.mutateTransportManager(port, (TransportManager transportManager) -> {
             TransactionTransportImplementation transactionTransport =
                     extractTransactionTransport(transportManager);
 

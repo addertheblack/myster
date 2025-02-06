@@ -1,11 +1,11 @@
 package com.myster.server.datagram;
 
 import java.io.ByteArrayOutputStream;
-import java.io.DataOutputStream;
 import java.io.IOException;
 import java.util.function.Supplier;
 import java.util.logging.Logger;
 
+import com.myster.client.stream.MysterDataOutputStream;
 import com.myster.identity.Identity;
 import com.myster.net.BadPacketException;
 import com.myster.server.stream.NotInitializedException;
@@ -34,16 +34,18 @@ public class ServerStatsDatagramServer implements TransactionProtocol {
     }
 
     @Override
-    public void transactionReceived(TransactionSender sender, Transaction transaction, Object transactionObject) throws BadPacketException {
-        try {
-            ByteArrayOutputStream byteOutputStream = new ByteArrayOutputStream();
-            DataOutputStream out = new DataOutputStream(byteOutputStream);
+    public void transactionReceived(TransactionSender sender,
+                                    Transaction transaction,
+                                    Object transactionObject)
+            throws BadPacketException {
+        ByteArrayOutputStream byteOutputStream = new ByteArrayOutputStream();
+        try (var out = new MysterDataOutputStream(byteOutputStream)) {
+            out.writeUTF("" + com.myster.server.stream.ServerStats
+                    .getMMLToSend(getIdentity.get(), getPort.get(), identity));
 
-            // TODO: pass in getMMLToSend as the supplier
-            out.writeUTF("" + com.myster.server.stream.ServerStats.getMMLToSend(getIdentity.get(), getPort.get(), identity));
-
-            sender.sendTransaction(new Transaction(transaction, byteOutputStream.toByteArray(),
-                    Transaction.NO_ERROR));
+            sender.sendTransaction(new Transaction(transaction,
+                                                   byteOutputStream.toByteArray(),
+                                                   Transaction.NO_ERROR));
 
         } catch (IOException ex) {
             throw new BadPacketException("Bad packet " + ex);

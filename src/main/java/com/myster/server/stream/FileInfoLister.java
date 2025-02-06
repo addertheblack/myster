@@ -36,7 +36,7 @@ public class FileInfoLister extends ServerStreamHandler {
             MysterDataInputStream in = context.socket.in;
             MysterDataOutputStream out = context.socket.out;
 
-            MysterType type = new MysterType(in.readInt());
+            MysterType type = in.readType();
             String filename = in.readUTF();
 
             FileItem fileItem = FileTypeListManager.getInstance().getFileItem(

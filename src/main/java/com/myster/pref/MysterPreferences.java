@@ -50,7 +50,10 @@ public class MysterPreferences {
      * Needed in order to get an instance of the preference object. This is included Since their
      * should only be one instance of the preferences object but The routines should not have to be
      * static...
+     * 
+     * @deprecated stop using this statically
      */
+    @Deprecated
     public static synchronized MysterPreferences getInstance() {
         if (pref == null) {
             pref = new MysterPreferences();

@@ -30,7 +30,7 @@ public class FileByHash extends ServerStreamHandler {
 
     public void section(ConnectionContext context) throws IOException {
         try {
-            MysterType type = new MysterType(context.socket.in.readInt()); //type
+            MysterType type = context.socket.in.readType();
 
             FileHash md5Hash = null;
 

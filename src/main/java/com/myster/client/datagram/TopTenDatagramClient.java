@@ -1,7 +1,11 @@
 package com.myster.client.datagram;
 
 import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
+
 import com.myster.client.stream.MysterDataInputStream;
+import com.myster.client.stream.MysterDataOutputStream;
+
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
@@ -23,25 +27,27 @@ public class TopTenDatagramClient implements StandardDatagramClientImpl<String[]
     public String[] getObjectFromTransaction(Transaction transaction)
             throws IOException {
 
-        MysterDataInputStream in = new MysterDataInputStream(new ByteArrayInputStream(
-                transaction.getData()));
+        try (MysterDataInputStream in =
+                new MysterDataInputStream(new ByteArrayInputStream(transaction.getData()))) {
+            List<String> strings = new ArrayList<>();
+            for (;;) {
+                String nextString = in.readUTF();
 
-        List<String> strings = new ArrayList<>();
-        for (;;) {
-            String nextString = in.readUTF();
+                if (nextString.equals(""))
+                    break;
 
-            if (nextString.equals(""))
-                break;
+                strings.add(nextString);
+            }
 
-            strings.add(nextString);
+            String[] addresses = new String[strings.size()];
+            for (int i = 0; i < strings.size(); i++) {
+                addresses[i] = strings.get(i);
+            }
+
+            in.close();
+
+            return addresses;
         }
-
-        String[] addresses = new String[strings.size()];
-        for (int i = 0; i < strings.size(); i++) {
-            addresses[i] = strings.get(i);
-        }
-
-        return addresses;
     }
 
     // returns a MysterAddress[]
@@ -54,6 +60,13 @@ public class TopTenDatagramClient implements StandardDatagramClientImpl<String[]
     }
 
     public byte[] getDataForOutgoingPacket() {
-        return type.getBytes();
+        var byteStream = new ByteArrayOutputStream();
+        try (final var out = new MysterDataOutputStream(byteStream )) {
+            out.writeType(type);
+        } catch (IOException exception) {
+            throw new IllegalStateException(exception);
+        }
+        
+        return byteStream.toByteArray();
     }
 }

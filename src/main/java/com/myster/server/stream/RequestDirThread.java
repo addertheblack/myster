@@ -17,7 +17,6 @@ import com.myster.client.stream.MysterDataInputStream;
 import com.myster.client.stream.MysterDataOutputStream;
 import com.myster.filemanager.FileTypeListManager;
 import com.myster.server.ConnectionContext;
-import com.myster.type.MysterType;
 
 public class RequestDirThread extends ServerStreamHandler {
     public static final int NUMBER = 78;
@@ -29,17 +28,15 @@ public class RequestDirThread extends ServerStreamHandler {
     }
 
     public void section(ConnectionContext context) throws IOException {
-        byte[] b = new byte[4];
-
         MysterDataInputStream in = context.socket
                 .getInputStream();
         MysterDataOutputStream out = context.socket
                 .getOutputStream();
 
-        in.readFully(b);
-        LOGGER.info("Reading: " + (new String(b)));
-        String[] array = FileTypeListManager.getInstance().getDirList(
-                new MysterType(b));
+        var type = in.readType();
+        LOGGER.info("Reading: " + type);
+        String[] array = FileTypeListManager.getInstance().getDirList(type);
+        
         if (array == null) {
             LOGGER.info("Null Pointer");
             out.writeInt(0);

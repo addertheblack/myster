@@ -50,7 +50,7 @@
         <dependency>
             <groupId>org.mockito</groupId>
             <artifactId>mockito-core</artifactId>
-            <version>5.8.0</version>
+            <version>5.15.2</version>
             <scope>test</scope>
         </dependency>
 
@@ -63,15 +63,15 @@
 
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-        <maven.compiler.source>22</maven.compiler.source>
-        <maven.compiler.target>22</maven.compiler.target>
+        <maven.compiler.source>23</maven.compiler.source>
+        <maven.compiler.target>23</maven.compiler.target>
         <outputName>MysterBuild</outputName> <!-- Custom property for output filename -->
         <mainclass>com.myster.Myster</mainclass>
       
     </properties>
 
     <build>
-        <finalName>${project.artifactId}-partial</finalName> <!-- Use custom property for output
+        <finalName>${project.artifactId}-fn</finalName> <!-- Use custom property for output
         file name -->
 
         <plugins>
@@ -79,7 +79,7 @@
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-compiler-plugin</artifactId>
-                <version>3.8.1</version>
+                <version>3.13.0</version>
                 <configuration>
                     <source>${maven.compiler.source}</source>
                     <target>${maven.compiler.target}</target>
@@ -106,11 +106,11 @@
                 <artifactId>versions-maven-plugin</artifactId>
                 <version>2.8.1</version>
             </plugin>
-
+            
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-surefire-plugin</artifactId>
-                <version>3.0.0</version>
+                <version>3.5.2</version>
                 <configuration>
                 <useFile>false</useFile>
                 <systemPropertyVariables>
@@ -125,13 +125,13 @@
                 <artifactId>maven-jar-plugin</artifactId>
                 <version>3.2.0</version>
                 <configuration>
-                    <outputDirectory>${project.basedir}/bin</outputDirectory>
+                    <outputDirectory>${project.basedir}/target</outputDirectory>
                 </configuration>
             </plugin>
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-shade-plugin</artifactId>
-                <version>3.2.4</version>
+                <version>3.6.0</version>
                 <executions>
                     <execution>
                         <phase>package</phase>
@@ -140,7 +140,20 @@
                         </goals>
                         <configuration>
                             <createDependencyReducedPom>false</createDependencyReducedPom>
-        
+                            <shadedArtifactAttached>false</shadedArtifactAttached>
+
+                            <filters>
+                                <filter>
+                                    <!-- Wildcard so it applies to all artifacts -->
+                                    <artifact>*:*</artifact>
+                                    <excludes>
+                                        <exclude>META-INF/*.SF</exclude>
+                                        <exclude>META-INF/*.DSA</exclude>
+                                        <exclude>META-INF/*.RSA</exclude>
+                                    </excludes>
+                                </filter>
+                            </filters>
+
                             <transformers>
                                 <transformer
                                     implementation="org.apache.maven.plugins.shade.resource.ManifestResourceTransformer">
@@ -157,7 +170,7 @@
             <plugin>
                 <groupId>org.codehaus.mojo</groupId>
                 <artifactId>exec-maven-plugin</artifactId>
-                <version>3.0.0</version>
+                <version>3.5.0</version>
             </plugin>
         </plugins>
     </build>
@@ -176,7 +189,7 @@
                     <plugin>
                         <groupId>org.codehaus.mojo</groupId>
                         <artifactId>exec-maven-plugin</artifactId>
-                        <version>3.0.0</version>
+                        <version>3.5.0</version>
                         <executions>
                             <execution>
                                 <id>package-app-windows</id>
@@ -187,6 +200,7 @@
                                 <configuration>
                                     <executable>jpackage</executable>
                                     <arguments>
+                                    <!-- jdeps -meow-print-module-deps -meow-ignore-missing-deps MysterBuild.jar !!! -->
                                         <argument>--input</argument>
                                         <argument>${project.basedir}/bin</argument>
                                         <argument>--name</argument>
@@ -194,7 +208,7 @@
                                         <argument>--main-class</argument>
                                         <argument>${mainclass}</argument>
                                         <argument>--add-modules</argument>
-                                        <argument>java.base,java.desktop,java.prefs,java.xml</argument>
+                                        <argument>java.base,java.desktop,java.naming,java.prefs,java.sql</argument>
                                         <argument>--main-jar</argument>
                                         <argument>${project.basedir}/bin/${outputName}.jar</argument>
                                         <argument>--win-menu</argument>
@@ -228,7 +242,7 @@
                     <plugin>
                         <groupId>org.codehaus.mojo</groupId>
                         <artifactId>exec-maven-plugin</artifactId>
-                        <version>3.0.0</version>
+                        <version>3.5.0</version>
                         <executions>
                             <execution>
                                 <id>package-app-macos</id>
@@ -246,7 +260,7 @@
                                         <argument>--main-class</argument>
                                         <argument>${mainclass}</argument>
                                         <argument>--add-modules</argument>
-                                        <argument>java.base,java.desktop,java.prefs,java.xml</argument>
+                                        <argument>java.base,java.desktop,java.naming,java.prefs,java.sql</argument>
                                         <argument>--main-jar</argument>
                                         <argument>${project.basedir}/bin/${outputName}.jar</argument>
                                         <argument>--type</argument>
@@ -277,7 +291,7 @@
                     <plugin>
                         <groupId>org.codehaus.mojo</groupId>
                         <artifactId>exec-maven-plugin</artifactId>
-                        <version>3.0.0</version>
+                        <version>3.5.0</version>
                         <executions>
                             <execution>
                                 <id>package-app-linux</id>
@@ -295,7 +309,7 @@
                                         <argument>--main-class</argument>
                                         <argument>${mainclass}</argument>
                                         <argument>--add-modules</argument>
-                                        <argument>java.base,java.desktop,java.prefs,java.xml</argument>
+                                        <argument>java.base,java.desktop,java.naming,java.prefs,java.sql</argument>
                                         <argument>--main-jar</argument>
                                         <argument>${project.basedir}/bin/${outputName}.jar</argument>
                                         <argument>--type</argument>

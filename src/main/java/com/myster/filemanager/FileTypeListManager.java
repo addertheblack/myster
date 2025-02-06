@@ -40,6 +40,8 @@ public class FileTypeListManager {
 
     public static final String PATH = "/File Lists/"; //Path the File Lists
 
+    private static TypeDescriptionList tdList;
+
 
     // information is stored
     // in the prefs.
@@ -47,7 +49,9 @@ public class FileTypeListManager {
     //Each File List decides what information it will store
     //under this path.
     
-    public synchronized static void init(HashProvider hashProvider) {
+    public synchronized static void init(HashProvider hashProvider, TypeDescriptionList tdList) {
+        FileTypeListManager.tdList = tdList;
+        
         f = new FileTypeListManager(hashProvider);
 
         f.initFileTypeListManager();
@@ -57,6 +61,7 @@ public class FileTypeListManager {
      * Gets an instance of the current File manager. This routine uses a varient
      * of the singleton desing pattern with dynamic loading.
      */
+    @Deprecated
     public synchronized static FileTypeListManager getInstance() {
         if (f == null) {
             throw new IllegalStateException("FileTypeListManager is not initialized yet.");
@@ -80,10 +85,10 @@ public class FileTypeListManager {
      * FileTypeListManager().
      */
     private void initFileTypeListManager() {
-        TypeDescription[] list = TypeDescriptionList.getDefault().getEnabledTypes();
+        TypeDescription[] list = tdList.getEnabledTypes();
         filelist = new FileTypeList[list.length];
         for (int i = 0; i < list.length; i++) {
-            filelist[i] = new FileTypeList(list[i].getType(), PATH, hashProvider);
+            filelist[i] = new FileTypeList(list[i].getType(), PATH, hashProvider, tdList);
             filelist[i].getNumOfFiles(); //This forces the list to load.
         }
     }

@@ -53,12 +53,12 @@ public class Tracker {
         public void serverAddedRemoved(MysterType type);
     }
     
-    public Tracker(MysterServerPool pool, Preferences preferences) {
+    public Tracker(MysterServerPool pool, Preferences preferences, TypeDescriptionList typeDescriptionList) {
         this.pool = pool;
         this.preferences = preferences.node(PATH);
         this.dispatcher = new NewGenericDispatcher<>(ListChangedListener.class, TrackerUtils.INVOKER);
 
-        tdlist = TypeDescriptionList.getDefault().getEnabledTypes();
+        tdlist = typeDescriptionList.getEnabledTypes();
 
         list = new MysterServerList[tdlist.length];
         for (int i = 0; i < list.length; i++) {
@@ -100,7 +100,12 @@ public class Tracker {
      *            The MysterAddress of the server you want to add.
      */
     public void addIp(MysterAddress ip) {
-        if (pool.existsInPool(ip)) {
+        MysterServer s = pool.getCachedMysterIp(ip);
+        if (s != null) {
+            if (!s.isUntried() && s.getUpAddresses().length ==0) {
+                pool.suggestAddress(ip);
+            }
+            
             return;
         }
 

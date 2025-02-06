@@ -36,6 +36,7 @@ import com.general.thread.Invoker;
 import com.myster.application.MysterGlobals;
 import com.myster.client.net.MysterProtocol;
 import com.myster.tracker.Tracker;
+import com.myster.type.TypeDescriptionList;
 import com.myster.ui.MysterFrameContext;
 import com.myster.ui.PreferencesGui;
 import com.myster.ui.WindowManager;
@@ -81,12 +82,12 @@ public class MysterMenuBar {
     }
 
     // note that this is construction time dependencies
-    public void initMenuBar(Tracker manager, PreferencesGui prefGui, WindowManager windowManager, MysterProtocol protocol) {
+    public void initMenuBar(Tracker manager, PreferencesGui prefGui, WindowManager windowManager, MysterProtocol protocol, TypeDescriptionList tdList) {
         file = new ArrayList<>();
         edit = new ArrayList<>();
         special = new ArrayList<>();
 
-        MysterFrameContext context = new MysterFrameContext(this, windowManager);
+        MysterFrameContext context = new MysterFrameContext(this, windowManager, tdList);
 
         // File menu items
         file.add(new MysterMenuItemFactory("New Search",

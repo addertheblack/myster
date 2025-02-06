@@ -24,7 +24,14 @@ public class DatagramProtocolManager {
         lookup = new HashMap<>();
     }
 
-    public synchronized <R> R accessPort(int port, AccessTransportManager<R> function) {
+    /**
+     * Used to access the {@link TransportManager} for a port in a thread safe way.
+     * 
+     * Do not let the transport manager escape.
+     * 
+     * @return the result of AccessTransportManager<R> function
+     */
+    public synchronized <R> R mutateTransportManager(int port, AccessTransportManager<R> function) {
         TransportManager t = lookup.get(port);
 
         if (t == null) {
@@ -48,7 +55,7 @@ public class DatagramProtocolManager {
     }
 
     private TransportManager newTransportManager(int port) {
-        var sigh = new GenericTransportManager(port); //magic number;
+        var sigh = new GenericTransportManager(port);
         
         sigh.initSocket();
         
@@ -99,7 +106,12 @@ public class DatagramProtocolManager {
 
         DatagramTransport getTransport(short transactionProtocolNumber);
     }
-    
+
+    /**
+     * Used to gain access to the {@link TransportManager} in a thread safe way
+     * using
+     * {@link DatagramProtocolManager#mutateTransportManager(int, AccessTransportManager)}
+     */
     public interface AccessTransportManager<R> extends Function<TransportManager, R> {
         R apply(TransportManager transportManager);
     }

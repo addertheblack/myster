@@ -1,11 +1,15 @@
 
 package com.myster.client.stream;
 
+import static com.myster.identity.Util.publicKeyFromBytes;
+
 import java.io.EOFException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.charset.Charset;
 import java.util.Objects;
+
+import com.myster.type.MysterType;
 
 public class MysterDataInputStream extends InputStream {
     private final byte[] readBuffer = new byte[1024];
@@ -160,5 +164,10 @@ public class MysterDataInputStream extends InputStream {
         readFully(buffer);
         
         return new String(buffer, Charset.forName("UTF-8"));
+    }
+    
+    public MysterType readType() throws IOException {
+        byte[] keyInBytes = readNBytes(readUnsignedShort());
+        return new MysterType(keyInBytes);   
     }
 }

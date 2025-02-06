@@ -29,12 +29,12 @@ import org.mockito.stubbing.Answer;
 import com.general.thread.PromiseFuture;
 import com.general.util.MapPreferences;
 import com.general.util.Semaphore;
-import com.general.util.Util;
 import com.myster.client.datagram.PingResponse;
 import com.myster.client.net.MysterDatagram;
 import com.myster.client.net.MysterProtocol;
 import com.myster.client.net.MysterStream;
 import com.myster.identity.Identity;
+import com.myster.identity.Util;
 import com.myster.mml.MML;
 import com.myster.mml.MMLException;
 import com.myster.mml.RobustMML;
@@ -53,6 +53,8 @@ class TestMysterServerPoolImpl {
     private static String keystoreFilename = "testIdentity.keystore";
     private static File keystorePath;
     private static Identity identity;
+    private static MysterType type;
+    
     private Preferences pref;
     private MysterProtocol protocol;
 
@@ -62,6 +64,7 @@ class TestMysterServerPoolImpl {
     static void beforeAll() {
         keystorePath = tempDir.toFile(); // Convert the Path to File, as your Identity class uses File
         identity = new Identity(keystoreFilename, keystorePath);
+        type = new MysterType(identity.getMainIdentity().get().getPublic());
     }
     
     @BeforeEach
@@ -69,15 +72,15 @@ class TestMysterServerPoolImpl {
 
         lookup = new HashMap<>();
         
-        String cleanPublicKeyString = MML.cleanString(Util.publicKeyToString(identity.getMainIdentity().get().getPublic()));
+        String cleanPublicKeyString = MML.cleanString(Util.keyToString(identity.getMainIdentity().get().getPublic()));
         String mml = """
                 <Speed>1</>
                 <ServerName>Mr. Magoo</>
                 <MysterVersion>10</>
                 <Identity>%s</>
                 <Uptime>1000</>
-                <NumberOfFiles><MPG3>42</></>
-                """.formatted(cleanPublicKeyString);
+                <NumberOfFiles><%s>42</></>
+                """.formatted(cleanPublicKeyString, type.toHexString());
 
         lookup.put(new MysterAddress("127.0.0.1"), new RobustMML(mml));
         lookup.put(new MysterAddress("192.168.1.2"), new RobustMML(mml));
@@ -90,8 +93,8 @@ class TestMysterServerPoolImpl {
                 <Identity>%s</>
                 <Uptime>1000</>
                 <Port>7000</>
-                <NumberOfFiles><MPG3>42</></>
-                """.formatted(cleanPublicKeyString);
+                <NumberOfFiles><%s>42</></>
+                """.formatted(cleanPublicKeyString, type.toString());
         
         lookup.put(new MysterAddress("192.168.1.2:7000"), new RobustMML(mml2));
         lookup.put(new MysterAddress("24.20.25.66:7000"), new RobustMML(mml2));
@@ -252,12 +255,14 @@ class TestMysterServerPoolImpl {
         RobustMML mml = lookup.get(oneTwoSeven);
         
         RobustMML copyMml = new RobustMML(mml);
+        String identOld = copyMml.get("/Identity");
+        copyMml.remove("/Identity");
 
         if (shouldChangePort) {
             copyMml.put("/Port", "1234");
         }
         
-        lookup.put(oneTwoSeven, new RobustMML());
+        lookup.put(oneTwoSeven, copyMml);
         
         pool = new MysterServerPoolImpl(pref, protocol);
         
@@ -291,12 +296,14 @@ class TestMysterServerPoolImpl {
         Assertions.assertFalse(pool.existsInPool(identityPublic));
         Assertions.assertEquals(1, refreshedServers.size());
         
-        var addressIdentity = new MysterAddressIdentity(oneTwoSeven);
+        var addressIdentity =  new MysterAddressIdentity(shouldChangePort ? new MysterAddress("127.0.0.1:1234") : new MysterAddress("127.0.0.1"));
         Assertions.assertTrue(pool.existsInPool(addressIdentity));
             
+        
+        copyMml.put("/Identity", identOld);
         lookup.put(oneTwoSeven, copyMml);
         
-//        pool.refreshMysterServerPrivate(oneTwoSeven);
+        pool.refreshMysterServer(oneTwoSeven);
         
         sem.getLock();
         sem.getLock();
@@ -309,7 +316,10 @@ class TestMysterServerPoolImpl {
         
         Assertions.assertTrue(pool.existsInPool(addressIdentity));
         Assertions.assertEquals(0, refreshedServers.get(0).getAddresses().length);
-//        Assertions.assertNull(pool.getCachedMysterIp(oneTwoSeven));
+        Assertions.assertEquals(1, refreshedServers.get(1).getAddresses().length);
+        if (shouldChangePort) {
+            Assertions.assertNull(pool.getCachedMysterIp(oneTwoSeven));
+        }
     }
     
     /**
@@ -390,7 +400,7 @@ class TestMysterServerPoolImpl {
         Assertions.assertEquals((int)serverFromCache.getSpeed(), 1);
         Assertions.assertEquals(serverFromCache.getServerName(), "Mr. Magoo");
         Assertions.assertEquals(serverFromCache.getUptime(), 1000);
-        Assertions.assertEquals(serverFromCache.getNumberOfFiles(new MysterType("MPG3")), 42);
+        Assertions.assertEquals(serverFromCache.getNumberOfFiles(type), 42);
         
 
     }

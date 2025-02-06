@@ -2,10 +2,10 @@ package com.myster.server.datagram;
 
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
-import java.io.DataOutputStream;
 import java.io.IOException;
 
 import com.myster.client.stream.MysterDataInputStream;
+import com.myster.client.stream.MysterDataOutputStream;
 import com.myster.filemanager.FileItem;
 import com.myster.filemanager.FileTypeListManager;
 import com.myster.mml.MML;
@@ -32,9 +32,9 @@ public class FileStatsDatagramServer implements TransactionProtocol {
                     new MysterDataInputStream(new ByteArrayInputStream(transaction.getData()));
 
             ByteArrayOutputStream byteOutputStream = new ByteArrayOutputStream();
-            DataOutputStream out = new DataOutputStream(byteOutputStream);
+            MysterDataOutputStream out = new MysterDataOutputStream(byteOutputStream);
 
-            MysterType type = new MysterType(in.readInt());
+            MysterType type = in.readType();
             String filename = in.readUTF();
 
             FileItem fileItem = FileTypeListManager.getInstance().getFileItem(type, filename);
@@ -47,6 +47,10 @@ public class FileStatsDatagramServer implements TransactionProtocol {
             }
 
             out.writeUTF(mml.toString());
+            
+            // closing not really needed for byte streams but it makes the compiler happy
+            out.close();
+            in.close();
 
             sender.sendTransaction(new Transaction(transaction,
                                                    byteOutputStream.toByteArray(),

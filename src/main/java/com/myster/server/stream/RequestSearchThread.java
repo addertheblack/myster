@@ -41,24 +41,30 @@ public class RequestSearchThread extends ServerStreamHandler {
 
         ServerSearchDispatcher dispatcher = (ServerSearchDispatcher) (c.sectionObject);
 
-        byte[] type = new byte[4];
         String searchstring;
 
-        in.readFully(type);
+        var type = in.readType();
         searchstring = in.readUTF();
 
         String[] stringarray;
 
-        stringarray = FileTypeListManager.getInstance().getDirList(new MysterType(type),
-                searchstring);
+        stringarray = FileTypeListManager.getInstance().getDirList(type, searchstring);
 
-        dispatcher.fire().searchRequested(new ServerSearchEvent(new MysterAddress(
-                c.socket.getInetAddress()), NUMBER, searchstring, new MysterType(type), null));
+        dispatcher.fire()
+                .searchRequested(new ServerSearchEvent(new MysterAddress(c.socket.getInetAddress()),
+                                                       NUMBER,
+                                                       searchstring,
+                                                       type,
+                                                       null));
 
         if (stringarray != null) {
             dispatcher.fire().searchResult(new ServerSearchEvent(
-                    new MysterAddress(c.socket.getInetAddress()), NUMBER, searchstring, new MysterType(
-                            type), stringarray));
+                                                                 new MysterAddress(c.socket
+                                                                         .getInetAddress()),
+                                                                 NUMBER,
+                                                                 searchstring,
+                                                                 type,
+                                                                 stringarray));
             for (int j = 0; j < stringarray.length; j++) {
                 out.writeUTF(stringarray[j]);
             }

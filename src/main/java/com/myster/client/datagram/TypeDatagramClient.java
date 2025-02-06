@@ -30,7 +30,7 @@ public class TypeDatagramClient implements StandardDatagramClientImpl<MysterType
         MysterType[] mysterTypes = new MysterType[numberOfTypes];
 
         for (int i = 0; i < numberOfTypes; i++) {
-            mysterTypes[i] = new MysterType(in.readInt());
+            mysterTypes[i] = in.readType();
         }
 
         return mysterTypes;

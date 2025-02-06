@@ -1,11 +1,15 @@
 
 package com.myster.identity;
 
+import static com.myster.identity.Util.keyToString;
+
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
+import java.io.FileWriter;
 import java.io.IOException;
+import java.io.PrintWriter;
 import java.math.BigInteger;
 import java.security.KeyPair;
 import java.security.KeyPairGenerator;
@@ -20,6 +24,7 @@ import java.security.cert.CertificateException;
 import java.security.cert.X509Certificate;
 import java.util.Base64;
 import java.util.Date;
+import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 import java.util.logging.Logger;
@@ -48,6 +53,32 @@ public class Identity {
     private final String keyStoreFilename;
 
     private KeyStore keyStore;
+    
+    public static void main(String[] args) throws IOException {
+        List<String> types = List.of("MPG3", "MACS", "WINT", "PICT", "MooV", "TEXT", "ROMS");
+        
+        
+        for (String type : types) {
+            File keyStorePath = new File(MysterGlobals.getAppDataPath(), "someNewIdentity");
+            String keyStoreFilename = "tmp_store.keystore";
+            Identity identity = new Identity(keyStoreFilename, 
+                                             keyStorePath);
+            
+            KeyPair mainIdentity = identity.getMainIdentity().get();
+            
+            File outFile = new File("D:\\Documents and Settings\\andrew\\My Documents\\keys", type + ".txt");
+            
+            try (PrintWriter writer = new PrintWriter(new FileWriter(outFile))) {
+                writer.println(type);
+                writer.println("Public Key ----");
+                writer.println(keyToString(mainIdentity.getPublic()));
+                writer.println("Private Key ----");
+                writer.println(keyToString(mainIdentity.getPrivate()));
+            }
+            
+            new File(keyStorePath, keyStoreFilename).delete();
+        }
+    }
     
     public static Identity getIdentity() {
         return new Identity("main_store.keystore", new File(MysterGlobals.getAppDataPath(), "identity"));
@@ -276,7 +307,7 @@ public class Identity {
             if (existing.exists()) {
                 throw new IllegalStateException("keystore file with keystore name still exists somehow");
             }
-            
+
             if (!file.renameTo(new File(keyStorePath, keystoreName()))) {
                 LOGGER.severe("Could not rename new keystore.");
                 return;

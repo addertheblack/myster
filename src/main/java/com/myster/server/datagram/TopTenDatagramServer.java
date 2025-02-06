@@ -2,14 +2,14 @@ package com.myster.server.datagram;
 
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
-import java.io.DataOutputStream;
 import java.io.IOException;
 import java.util.Arrays;
 
 import com.myster.client.stream.MysterDataInputStream;
+import com.myster.client.stream.MysterDataOutputStream;
 import com.myster.net.BadPacketException;
-import com.myster.tracker.Tracker;
 import com.myster.tracker.MysterServer;
+import com.myster.tracker.Tracker;
 import com.myster.transaction.Transaction;
 import com.myster.transaction.TransactionProtocol;
 import com.myster.transaction.TransactionSender;
@@ -68,13 +68,13 @@ public class TopTenDatagramServer implements TransactionProtocol {
 
     public static byte[] getBytesFromStrings(String[] addressesAsStrings) throws IOException {
         ByteArrayOutputStream byteOutputStream = new ByteArrayOutputStream();
-        DataOutputStream out = new DataOutputStream(byteOutputStream);
+        try (var out = new MysterDataOutputStream(byteOutputStream)) {
+            for (int i = 0; i < addressesAsStrings.length; i++) {
+                out.writeUTF(addressesAsStrings[i]);
+            }
 
-        for (int i = 0; i < addressesAsStrings.length; i++) {
-            out.writeUTF(addressesAsStrings[i]);
+            out.writeUTF("");
         }
-
-        out.writeUTF("");
 
         return byteOutputStream.toByteArray();
     }
@@ -83,9 +83,6 @@ public class TopTenDatagramServer implements TransactionProtocol {
     private static MysterType getTypeFromTransaction(Transaction transaction) throws IOException {
         byte[] bytes = transaction.getData();
 
-        if (bytes.length != 4)
-            throw new IOException("Packet is the wrong length");
-
-        return new MysterType((new MysterDataInputStream(new ByteArrayInputStream(bytes))).readInt());
+        return new MysterDataInputStream(new ByteArrayInputStream(bytes)).readType();
     }
 }

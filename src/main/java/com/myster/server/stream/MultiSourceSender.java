@@ -96,7 +96,7 @@ public class MultiSourceSender extends ServerStreamHandler {
 
         private String fileName = "??";
 
-        private MysterType type = new MysterType("????".getBytes());
+        private MysterType type = null;
 
         private long fileLength = 0;
         private long startTime = System.currentTimeMillis();
@@ -122,9 +122,8 @@ public class MultiSourceSender extends ServerStreamHandler {
 
                 final MysterDataOutputStream out = socket.out;
                 final MysterDataInputStream in = socket.in;
-
-                type = new MysterType(in.readInt());
-
+                
+                type = in.readType();
                 fileName = in.readUTF();
 
                 final File file = FileTypeListManager.getInstance().getFile(type, fileName);
@@ -433,7 +432,6 @@ public class MultiSourceSender extends ServerStreamHandler {
             return new ServerDownloadEvent(remoteIP,
                                            getSectionNumber(),
                                            fileName,
-                                           type.toString(),
                                            ServerDownloadEvent.NO_BLOCK_TYPE,
                                            offset + amountDownloaded,
                                            fileLength,

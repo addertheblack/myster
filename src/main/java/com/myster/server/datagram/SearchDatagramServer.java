@@ -2,10 +2,10 @@ package com.myster.server.datagram;
 
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
-import com.myster.client.stream.MysterDataInputStream;
-import java.io.DataOutputStream;
 import java.io.IOException;
 
+import com.myster.client.stream.MysterDataInputStream;
+import com.myster.client.stream.MysterDataOutputStream;
 import com.myster.net.BadPacketException;
 import com.myster.server.event.ServerSearchDispatcher;
 import com.myster.server.event.ServerSearchEvent;
@@ -30,16 +30,13 @@ public class SearchDatagramServer implements TransactionProtocol {
     @Override
     public void transactionReceived(TransactionSender sender, Transaction transaction, Object transactionObject)
             throws BadPacketException {
-        try {
-            MysterDataInputStream in = new MysterDataInputStream(
-                    new ByteArrayInputStream(transaction.getData()));
-
-            ByteArrayOutputStream byteOutputStream = new ByteArrayOutputStream();
-            DataOutputStream out = new DataOutputStream(byteOutputStream);
-
+        ByteArrayOutputStream byteOutputStream = new ByteArrayOutputStream();
+        try (MysterDataInputStream in = new MysterDataInputStream(
+                new ByteArrayInputStream(transaction.getData()));
+                MysterDataOutputStream out = new MysterDataOutputStream(byteOutputStream)) {
             String searchstring;
 
-            MysterType type = new MysterType(in.readInt());
+            MysterType type = in.readType();
             searchstring = in.readUTF();
 
             ServerSearchDispatcher dispatcher = (ServerSearchDispatcher) transactionObject;

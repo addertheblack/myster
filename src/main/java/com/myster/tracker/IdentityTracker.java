@@ -102,11 +102,11 @@ public class IdentityTracker implements IdentityProvider {
             return UNTRIED;
         }
         
-        if (addressState.lastPingTime == UNTRIED) {
+        if (addressState.lastPingDurationMs == UNTRIED) {
             return UNTRIED;
         }
         
-        return addressState.up ? addressState.lastPingTime : DOWN;
+        return addressState.up ? addressState.lastPingDurationMs : DOWN;
     }
     
     @Override
@@ -166,6 +166,35 @@ public class IdentityTracker implements IdentityProvider {
         }
         
         return addresses.toArray(MysterAddress[]::new);
+    }
+
+    /**
+     * This is so that you can suggest that an address should be pinged. This
+     * only works for "down" addresses. Up addresses are skipped.
+     * 
+     * The use case is for when you have an address that we know about, the
+     * address is marked "down" but you start receiving traffic from the
+     * address. Why am I receiving traffic for a "down" address? Suggest the
+     * address to force a check again. This method protects against being called
+     * too many times.
+     * 
+     * @param identity
+     *            to scan for down addresses to check.
+     */
+    public synchronized void suggestPing(MysterAddress a) {
+        AddressState state = addressStates.get(a);
+        if (state == null || state.up) {
+            return;
+        }
+
+        long timeMillis = System.currentTimeMillis();
+        if (REFRESH_MS < timeMillis - state.timeOfLastSuggestPing) {
+            state.timeOfLastSuggestPing = timeMillis;
+            state.timeOfLastPing = 0;
+
+            LOGGER.fine("Trying suggested ping for " + a);
+            refreshElementIfNeeded(a, state);
+        }
     }
 
     /**
@@ -261,23 +290,23 @@ public class IdentityTracker implements IdentityProvider {
     }
 
     private void refreshElementIfNeeded(MysterAddress address, AddressState addressState) {
-        var refreshTime = REFRESH_MS;
-
-        if (refreshTime < System.currentTimeMillis() - addressState.timeOfLastPing) {
-            addressState.pingProcess.ifPresent(PromiseFuture::cancel);
-
-            addressState.pingProcess = Optional.of(pinger.ping(address).clearInvoker()
-                    .setInvoker(INVOKER).addStandardExceptionHandler().addResultListener(e -> {
-                        Consumer<PingResponse> l;
-                        synchronized (IdentityTracker.this) {
-                            updateState(addressState, e);
-                            l = pingListener;
-                        }
-                        l.accept(e);
-                    }));
-            
-            addressState.timeOfLastPing = System.currentTimeMillis();
+        if (REFRESH_MS > System.currentTimeMillis() - addressState.timeOfLastPing) {
+            return;
         }
+        
+        addressState.pingProcess.ifPresent(PromiseFuture::cancel);
+
+        addressState.pingProcess = Optional.of(pinger.ping(address).clearInvoker()
+                .setInvoker(INVOKER).addStandardExceptionHandler().addResultListener(e -> {
+                    Consumer<PingResponse> l;
+                    synchronized (IdentityTracker.this) {
+                        updateState(addressState, e);
+                        l = pingListener;
+                    }
+                    l.accept(e);
+                }));
+
+        addressState.timeOfLastPing = System.currentTimeMillis();
     }
 
     // Package protected for unit test
@@ -292,13 +321,14 @@ public class IdentityTracker implements IdentityProvider {
     }
 
     private void updateState(AddressState addressState, PingResponse pingResponse) {
-        addressState.lastPingTime = pingResponse.isTimeout() ? DOWN : pingResponse.pingTimeMs();
+        addressState.lastPingDurationMs = pingResponse.isTimeout() ? DOWN : pingResponse.pingTimeMs();
         addressState.up = !pingResponse.isTimeout();
     }
      
     static class AddressState {
+        public long timeOfLastSuggestPing = 0;
         public long timeOfLastPing = 0;
-        public int lastPingTime = UNTRIED;
+        public int lastPingDurationMs = UNTRIED;
         public boolean up = false;
         public Optional<PromiseFuture<PingResponse>> pingProcess = Optional.empty();
     }
