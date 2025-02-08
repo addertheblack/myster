@@ -79,38 +79,68 @@ public class MultiSourceUtilities {
 
         return true;
     }
+    
+    public interface SimpleAlert {
+        void simpleAlert(String s);
+    }
 
-    public static void moveFileToFinalDestination(final File sourceFile, Frame parentFrame) {
+    public static void moveFileToFinalDestination(final File sourceFile, SimpleAlert dialogBox) {
         final String FILE_ENDING = ".i";
 
+        // Make sure the file ends with the expected suffix.
         if (!sourceFile.getName().endsWith(FILE_ENDING)) {
-            AnswerDialog.simpleAlert(parentFrame,
-                                     "Could not rename file \"" + sourceFile.getName()
-                                             + "\" because it does not end with " + FILE_ENDING
-                                             + ".");
-            return; // don't display an error, I've already done it
-        }
-
-        String path = sourceFile.getAbsolutePath();
-
-        File someFile = new File(path.substring(0, path.length() - (FILE_ENDING.length())));
-
-        if (someFile.exists()) {
-            AnswerDialog.simpleAlert(parentFrame,
-                                     "Could not rename file from \"" + sourceFile.getName()
-                                             + "\" to \"" + someFile.getName()
-                                             + "\" because a file by that name already exists.");
+            dialogBox.simpleAlert("Could not rename file \"" + sourceFile.getName()
+                    + "\" because it does not end with " + FILE_ENDING + ".");
             return;
         }
 
-        if (!sourceFile.renameTo(someFile)) {
-            AnswerDialog.simpleAlert(parentFrame,
-                                     "Could not rename file from \"" + sourceFile.getName()
-                                             + "\" to \"" + someFile.getName()
-                                             + "\" because an unspecified error occured.");
+        // Remove the extra ending to get the intended final file name.
+        String sourcePath = sourceFile.getAbsolutePath();
+        String finalPath = sourcePath.substring(0, sourcePath.length() - FILE_ENDING.length());
+        File finalFile = findFinalFileName(finalPath);
+        if (finalFile == null) {
+            dialogBox.simpleAlert("Could not rename file from \"" + sourceFile.getName()
+                    + "\" because the final file name already exists.");
             return;
+        }
+
+        // Attempt to rename the file.
+        if (!sourceFile.renameTo(finalFile)) {
+            dialogBox
+                    .simpleAlert("Could not rename file from \"" + sourceFile.getName() + "\" to \""
+                            + finalFile.getName() + "\" because an unspecified error occurred.");
         }
     }
+
+    private static File findFinalFileName(String finalPath) {
+        File candidate = new File(finalPath);
+
+        // If a file by that name already exists, try adding "-1", "-2", etc.
+        if (!candidate.exists()) {
+            return candidate;
+        }
+        // Extract the base name and extension.
+        String fileName = candidate.getName();
+        String baseName = fileName;
+        String extension = "";
+        int dotIndex = fileName.lastIndexOf('.');
+        if (dotIndex != -1) {
+            baseName = fileName.substring(0, dotIndex);
+            extension = fileName.substring(dotIndex); // includes the dot
+        }
+
+        File parentDir = candidate.getParentFile();
+        // Start at 2 (as per your change) and try up to 100 iterations.
+        for (int counter = 2; counter <= 100; counter++) {
+            candidate = new File(parentDir, baseName + "-" + counter + extension);
+            if (!candidate.exists()) {
+                return candidate;
+            }
+        }
+        
+        return null;
+    }
+
 
     /**
      * Returns a file object containing the path that a multi-source object will

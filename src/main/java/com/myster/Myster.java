@@ -90,7 +90,7 @@ import com.myster.util.I18n;
 import com.simtechdata.waifupnp.UPnP;
 
 public class Myster {
-    private static final Logger LOGGER = Logger.getLogger(AsyncDatagramSocket.class.getName());
+    private static final Logger LOGGER = Logger.getLogger(Myster.class.getName());
     private static final Logger INSTRUMENTATION = Logger.getLogger("INSTRUMENTATION");
 
     public static void main(String[] args) throws IOException {
