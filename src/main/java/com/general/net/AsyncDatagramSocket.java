@@ -2,6 +2,7 @@ package com.general.net;
 
 import java.io.IOException;
 import java.net.InetSocketAddress;
+import java.net.StandardSocketOptions;
 import java.nio.ByteBuffer;
 import java.nio.channels.DatagramChannel;
 import java.nio.channels.SelectionKey;
@@ -90,6 +91,12 @@ public final class AsyncDatagramSocket {
                 try (DatagramChannel channel = DatagramChannel.open();
                         Selector s = Selector.open()) {
                     selector = s;
+                    
+                    // It looks like I might be flooding the output buffer..
+                    // Need to double check to see if that's really the case
+                    channel.setOption(StandardSocketOptions.SO_SNDBUF, 128 * 1024);
+//                    channel.setOption(StandardSocketOptions.SO_RCVBUF, 64 * 1024);
+                    
                     channel.bind(new InetSocketAddress(port));
                     channel.configureBlocking(false);
                     channel.register(selector, SelectionKey.OP_READ);
@@ -143,12 +150,12 @@ public final class AsyncDatagramSocket {
         }
 
         private void readPackets(DatagramChannel channel) throws IOException {
-            readBuffer.clear();
             if (portListener == null) {
                 return;
             }
             
             for (;;) {
+                readBuffer.clear();
                 InetSocketAddress sourceAddress = (InetSocketAddress) channel.receive(readBuffer);
                 if (sourceAddress == null) {
                     return;
