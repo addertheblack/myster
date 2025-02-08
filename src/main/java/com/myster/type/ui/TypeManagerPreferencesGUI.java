@@ -129,8 +129,7 @@ public class TypeManagerPreferencesGUI extends PreferencesPanel {
         GenericMCListItem<MysterType>[] items = new GenericMCListItem[listOfTypes.length];
 
         for (int i = 0; i < listOfTypes.length; i++) {
-            String typeDescription = listOfTypes[i].getDescription() + " ("
-                    + listOfTypes[i].getType().toString() + ")";
+            String typeDescription = listOfTypes[i].getDescription();
 
             items[i] = new MyMCListItem(listOfTypes[i].getType(),
                                         typeDescription,

@@ -214,7 +214,7 @@ public class FmiChooser extends PreferencesPanel {
         g.setColor(getBackground());
         g.fillRect(10, 34, 170, 3);
         g.setColor(Color.black);
-        g.drawString("Setting for type: " + choice.getType(), 12, 39);
+        g.drawString("Setting for type: " + choice.getSelectedDescription(), 12, 39);
     }
 
     private void restoreState() {

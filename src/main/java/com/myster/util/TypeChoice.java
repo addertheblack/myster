@@ -17,9 +17,10 @@ import com.myster.type.TypeDescription;
 import com.myster.type.TypeDescriptionList;
 
 public class TypeChoice extends JComboBox<String> {
-    TypeDescription[] types;
+    private final TypeDescription[] types;
 
     public TypeChoice(TypeDescriptionList typeDescriptionList) {
+        types = typeDescriptionList.getEnabledTypes();
         addItemsToChoice(typeDescriptionList);
         setEditable(false);
     }
@@ -31,9 +32,12 @@ public class TypeChoice extends JComboBox<String> {
     public MysterType getType(int i) {
         return types[i].getType();
     }
+    
+    public String getSelectedDescription() {
+        return types[getSelectedIndex()].getDescription();
+    }
 
     private void addItemsToChoice(TypeDescriptionList typeDescriptionList) {
-        types = typeDescriptionList.getEnabledTypes();
         for (int i = 0; i < types.length; i++) {
             addItem(types[i].getDescription());
         }

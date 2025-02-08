@@ -21,6 +21,7 @@ import java.io.File;
 import java.util.ArrayList;
 import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Optional;
 import java.util.Set;
 import java.util.logging.Logger;
 
@@ -36,6 +37,7 @@ import com.myster.mml.MML;
 import com.myster.mml.MMLException;
 import com.myster.pref.MysterPreferences;
 import com.myster.type.MysterType;
+import com.myster.type.TypeDescription;
 import com.myster.type.TypeDescriptionList;
 
 public class FileTypeList {
@@ -604,11 +606,13 @@ public class FileTypeList {
     }
 
     /*
-     * Suggests a default root directory in the fileing system. Should only be used by
+     * Suggests a default root directory in the filing system. Should only be used by
      * getDefaultDirectoryPath();
      */
     private synchronized File getDefaultDirectory() {
-        File empty = new File(MysterGlobals.getAppDataPath(), type + " Downloads");
+        Optional<TypeDescription> td = tdList.get(type);
+        String prefix = td.isEmpty() ? "Misc" : td.get().getDescription();
+        File empty = new File(MysterGlobals.getAppDataPath(), prefix + " Downloads");
         int counter = 1;
         do {
             if (empty.exists()) {
