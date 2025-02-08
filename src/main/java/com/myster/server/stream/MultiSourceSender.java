@@ -404,6 +404,9 @@ public class MultiSourceSender extends ServerStreamHandler {
             }
         }
 
+        // TODO: Make it so we can shutdown cleanly
+        // final long offset = socket.in.readLong(); just fails with a nasty looking exception when client
+        // diconnects.
         private UploadBlock getNextBlockToSend(MysterSocket socket, File file) throws IOException {
             final long offset = socket.in.readLong();
             long fileLength = socket.in.readLong();

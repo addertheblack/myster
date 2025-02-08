@@ -199,7 +199,7 @@ public class MSPartialFile implements AutoCloseable {
 
         FileMover fileMover = (f) -> {
             EventQueue.invokeLater(() -> {
-                MultiSourceUtilities.moveFileToFinalDestination(f, progress);
+                MultiSourceUtilities.moveFileToFinalDestination(f, s -> AnswerDialog.simpleAlert(progress, s));
             });
         };
 
@@ -436,7 +436,10 @@ public class MSPartialFile implements AutoCloseable {
                 blockSize = Integer.parseInt(string_blockSize);
                 hashes = getHashesFromHeader(mml, HASHES_PATH);
                 fileLength = Long.parseLong(string_length);
-                type = new MysterType(com.myster.identity.Util.publicKeyFromString(string_type).get());
+                
+                // throws NumberFormatException
+                byte[] shortBytesType = Util.fromHexString(string_type);
+                type = new MysterType(shortBytesType);
                 path = new File(string_path == null ? "" : string_path);
             } catch (NumberFormatException ex) {
                 throw new IOException("" + ex);
@@ -513,7 +516,7 @@ public class MSPartialFile implements AutoCloseable {
             mml.put(FILENAME_PATH, filename);
             mml.put(BLOCK_SIZE_PATH, "" + blockSize);
             mml.put(FILE_LENGTH, "" + fileLength);
-            mml.put(TYPE, "" + type.toString()); //! is encoded as an int
+            mml.put(TYPE, "" + type.toString());
             mml.put(PATH, "" + path.getAbsolutePath());
             mml.put(SERVER_ADDRESS, address);
             // instead of a string because

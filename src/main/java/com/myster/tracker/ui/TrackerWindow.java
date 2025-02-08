@@ -376,7 +376,7 @@ public class TrackerWindow extends MysterFrame {
 
             public String toString() {
                 if (number < -1000)
-                    return "-inf";
+                    return "low";
                 else
                     return super.toString();
             }

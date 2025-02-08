@@ -3,7 +3,6 @@ package com.myster.server.datagram;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
-import java.util.Arrays;
 
 import com.myster.client.stream.MysterDataInputStream;
 import com.myster.client.stream.MysterDataOutputStream;
@@ -31,6 +30,8 @@ public class TopTenDatagramServer implements TransactionProtocol {
         return TOP_TEN_TRANSACTION_CODE;
     }
 
+    
+    // unittest
     @Override
     public void transactionReceived(TransactionSender sender,
                                     Transaction transaction,
@@ -46,10 +47,12 @@ public class TopTenDatagramServer implements TransactionProtocol {
                     : new String[countServersReturned(topTenServers)]);
 
             for (int i = 0; i < topTenStrings.length; i++) {
-                topTenStrings[i] = Arrays.asList(topTenServers[i].getAddresses()).toString();
+                final var hack = i;
+                topTenStrings[i] = topTenServers[i].getBestAddress()
+                        .orElseGet(() -> topTenServers[hack].getAddresses()[0]).toString();
             }
 
-           sender.sendTransaction(new Transaction(transaction, getBytesFromStrings(topTenStrings),
+            sender.sendTransaction(new Transaction(transaction, getBytesFromStrings(topTenStrings),
                     Transaction.NO_ERROR));
         } catch (IOException ex) {
             throw new BadPacketException("Bad packet " + ex);

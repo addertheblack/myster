@@ -39,14 +39,9 @@ public class TopTenDatagramClient implements StandardDatagramClientImpl<String[]
                 strings.add(nextString);
             }
 
-            String[] addresses = new String[strings.size()];
-            for (int i = 0; i < strings.size(); i++) {
-                addresses[i] = strings.get(i);
-            }
-
             in.close();
 
-            return addresses;
+            return strings.toArray(new String[]{});
         }
     }
 
