@@ -237,7 +237,6 @@ public class DefaultTypeDescriptionList extends TypeDescriptionList {
 
             List<String> typeList = mml.list(LIST);
             for (int i = 0; i < typeList.size(); i++) {
-                System.out.println("Decode " + i);
                 TypeDescription typeDescription = getTypeDescriptionAtPath(mml,
                         LIST + typeList.get(i) + "/");
 
@@ -294,8 +293,6 @@ public class DefaultTypeDescriptionList extends TypeDescriptionList {
             }
         }
 
-        System.out.println(typeAsString);
-        System.out.println(publicKey);
         try {
             return new TypeDescription(new MysterType(Util.publicKeyFromString(publicKey).get()),
                                        description,
