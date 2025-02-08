@@ -224,7 +224,7 @@ public class DownloadInitiator implements Runnable {
 
         @Override
         public void moveFileToFinalDestination(File sourceFile) {
-            MultiSourceUtilities.moveFileToFinalDestination(sourceFile, progress);
+            MultiSourceUtilities.moveFileToFinalDestination(sourceFile, s -> AnswerDialog.simpleAlert(progress, s));
         }
     }
 
