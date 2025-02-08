@@ -17,10 +17,12 @@ public class IPQueue {
      * Also does not add the the queue if the address have EVER been in the queue.
      */
     public synchronized void addIP(MysterAddress m) {
-        if (!set.contains(m)) {
-            set.add(m);
-            list.add(m);
+        if (set.contains(m)) {
+            return;
         }
+            
+        set.add(m);
+        list.add(m);
     }
 
     /**

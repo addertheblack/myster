@@ -27,28 +27,6 @@ public final class ImmutableDatagramPacket {
         data = d;
     }
 
-    public ImmutableDatagramPacket(DatagramPacket p) {
-        address = p.getAddress();
-        port = p.getPort();
-        byte[] temp_data = p.getData();
-        int length = p.getLength();
-
-        byte[] b_temp = new byte[length];
-
-        if (length < temp_data.length) {
-            b_temp = new byte[length];
-
-            for (int i = 0; i < length; i++) {
-                b_temp[i] = temp_data[i];
-            }
-        } else if (length > temp_data.length) { //should not happen.
-            throw new RuntimeException(
-                    "Length is bigger then  message, packet is garbage.");
-        }
-
-        data = b_temp;
-    }
-
     /**
      * Returns a copy of the data contained by this Packet.
      */
