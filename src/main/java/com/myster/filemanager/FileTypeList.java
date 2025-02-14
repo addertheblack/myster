@@ -32,18 +32,16 @@ import com.myster.application.MysterGlobals;
 import com.myster.hash.FileHash;
 import com.myster.hash.FileHashEvent;
 import com.myster.hash.FileHashListener;
-import com.myster.identity.Identity;
+import com.myster.identity.Util;
 import com.myster.mml.MML;
 import com.myster.mml.MMLException;
 import com.myster.pref.MysterPreferences;
 import com.myster.type.MysterType;
+import com.myster.type.StandardTypes;
 import com.myster.type.TypeDescription;
 import com.myster.type.TypeDescriptionList;
 
 public class FileTypeList {
-    private static final Identity moo = new Identity("mpg3_store.keystore", new File(MysterGlobals.getAppDataPath(), "identity"));
-    
-    private static final MysterType MPG3 = new MysterType(moo.getMainIdentity().get().getPublic());
     private static final Logger LOGGER = Logger.getLogger(FileTypeList.class.getName());
     
     private List<FileItem> filelist; // List of java.io.FileItem objects that are
@@ -567,7 +565,7 @@ public class FileTypeList {
          * @return FileItem created from file.
          */
         private FileItem createFileItem(File file) {
-            FileItem fileItem = MPG3.equals(type) ? new MPG3FileItem(file) : new FileItem(file);
+            FileItem fileItem = tdList.getType(StandardTypes.MPG3).equals(type) ? new MPG3FileItem(file) : new FileItem(file);
             
             hashProvider.findHashNonBlocking(file, new FileHashListener() {
                 public void foundHash(FileHashEvent e) {

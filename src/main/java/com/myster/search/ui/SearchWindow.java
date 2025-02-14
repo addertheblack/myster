@@ -32,6 +32,7 @@ import com.general.mclist.MCListFactory;
 import com.general.mclist.MCListItemInterface;
 import com.general.util.MessageField;
 import com.general.util.StandardWindowBehavior;
+import com.general.util.Util;
 import com.myster.client.net.MysterProtocol;
 import com.myster.search.HashCrawlerManager;
 import com.myster.search.SearchEngine;
@@ -39,6 +40,7 @@ import com.myster.search.SearchResult;
 import com.myster.search.SearchResultListener;
 import com.myster.tracker.Tracker;
 import com.myster.type.MysterType;
+import com.myster.type.TypeDescriptionList;
 import com.myster.ui.MysterFrame;
 import com.myster.ui.MysterFrameContext;
 import com.myster.ui.WindowLocationKeeper;
@@ -63,6 +65,7 @@ public class SearchWindow extends MysterFrame implements SearchResultListener, S
     private final JTextField textEntry;
     private final TypeChoice choice;
     private final MessageField msg;
+    private final TypeDescriptionList tdList;
     
     private SearchEngine searchEngine;
     private ClientHandleObject metaDateHandler;
@@ -70,6 +73,8 @@ public class SearchWindow extends MysterFrame implements SearchResultListener, S
     public SearchWindow(MysterFrameContext c) {
         super(c, "Search Window " + (++counter));
 
+        tdList = c.tdList();
+        
         setBackground(new Color(240, 240, 240));
 
         //Do interface setup:
@@ -235,7 +240,7 @@ public class SearchWindow extends MysterFrame implements SearchResultListener, S
     }
 
     public void recolumnize() {
-        metaDateHandler = ClientInfoFactoryUtilities.getHandler(getMysterType());
+        metaDateHandler = ClientInfoFactoryUtilities.getHandler(tdList, getMysterType());
         int max = metaDateHandler.getNumberOfColumns();
         fileList.setNumberOfColumns(max);
 
@@ -257,7 +262,7 @@ public class SearchWindow extends MysterFrame implements SearchResultListener, S
     }
 
     public void searchStats(SearchResult s) {
-        //? dunno.
+        Util.invokeNowOrLater(() -> fileList.getPane().repaint());
     }
 
     public String getSearchString() {

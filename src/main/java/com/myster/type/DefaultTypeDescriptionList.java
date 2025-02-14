@@ -18,7 +18,7 @@ import com.myster.mml.RobustMML;
 import com.myster.pref.PreferencesMML;
 import com.myster.transaction.TransactionManager;
 
-public class DefaultTypeDescriptionList extends TypeDescriptionList {
+public class DefaultTypeDescriptionList implements TypeDescriptionList {
     private static final Logger LOGGER = Logger.getLogger(TransactionManager.class.getName());
     
     //Ok, so here's the situation
@@ -108,6 +108,17 @@ public class DefaultTypeDescriptionList extends TypeDescriptionList {
         }
 
         com.myster.pref.MysterPreferences.getInstance().put(DEFAULT_LIST_KEY, mml);
+    }
+    
+    @Override
+    public MysterType getType(StandardTypes standardType) {
+        for (TypeDescriptionElement t : types) {
+            if (t.getTypeDescription().getInternalName().equals(standardType.toString())) {
+                return t.getType();
+            }
+        }
+        
+        throw new IllegalStateException("Unknown standard type: " + standardType);
     }
 
     @Override
@@ -258,14 +269,14 @@ public class DefaultTypeDescriptionList extends TypeDescriptionList {
         final String TYPE = "Type", DESCRIPTION = "Description", EXTENSIONS = "Extensions/",
                 ARCHIVED = "Archived", ENABLED_BY_DEFAULT = "Enabled By Default", PUBLIC_KEY = "Public Key";
 
-        String typeAsString = mml.get(path + TYPE);
+        String internalName = mml.get(path + TYPE);
         String description = mml.get(path + DESCRIPTION);
         List<String> extensionsDirList = mml.list(path + EXTENSIONS);
         String archived = mml.get(path + ARCHIVED);
         String enabled = mml.get(path + ENABLED_BY_DEFAULT);
         String publicKey = mml.get(path + PUBLIC_KEY);
 
-        if ((publicKey == null) || ((typeAsString == null) & (description == null)))
+        if ((publicKey == null) || ((internalName == null) & (description == null)))
             return null;
 
         boolean isArchived = (archived == null ? false : (archived
@@ -295,6 +306,7 @@ public class DefaultTypeDescriptionList extends TypeDescriptionList {
 
         try {
             return new TypeDescription(new MysterType(Util.publicKeyFromString(publicKey).get()),
+                                       internalName,
                                        description,
                                        extensions,
                                        isArchived,

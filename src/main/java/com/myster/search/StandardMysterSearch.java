@@ -135,7 +135,7 @@ public class StandardMysterSearch {
         int pointer = 0;
         int current = 0;
         final int MAX_OUTSTANDING = 25;
-        while (current < mysterSearchResults.length) { //usefull.
+        while (current < mysterSearchResults.length) { //useful.
             if (endFlag)
                 throw new DisconnectException();
 
@@ -149,7 +149,7 @@ public class StandardMysterSearch {
             }
 
             if (endFlag)
-                throw new DisconnectException();
+                throw new DisconnectException("Flagged to end");
 
             while (socket.in.available() > 0 || (pointer - current > MAX_OUTSTANDING)
                     || pointer >= mysterSearchResults.length) {
@@ -158,6 +158,10 @@ public class StandardMysterSearch {
 
                 if (endFlag)
                     throw new DisconnectException();
+                
+                if (pointer - current > MAX_OUTSTANDING) {
+                    socket.out.flush();
+                }
 
                 RobustMML mml;
                 try {

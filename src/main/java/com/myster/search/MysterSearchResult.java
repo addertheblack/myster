@@ -3,6 +3,7 @@ package com.myster.search;
 import java.util.ArrayList;
 import java.util.List;
 
+import com.general.util.Util;
 import com.myster.client.net.MysterProtocol;
 import com.myster.mml.RobustMML;
 import com.myster.net.MysterAddress;
@@ -15,7 +16,7 @@ public class MysterSearchResult implements SearchResult {
     private final ServerStatsFromCache cache;
     private final MysterProtocol protocol;
     private final HashCrawlerManager hashCrawler;
-    private final  MysterFrameContext context;
+    private final MysterFrameContext context;
     
     private RobustMML mml;
 
@@ -32,7 +33,7 @@ public class MysterSearchResult implements SearchResult {
     }
 
     public void setMML(RobustMML m) {
-        mml = m;
+        Util.invokeNowOrLater(() -> mml = m);
     }
 
     // is called when the user decides to download the item

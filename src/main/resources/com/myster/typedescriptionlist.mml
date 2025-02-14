@@ -88,7 +88,7 @@ your new type.
 		<Description>"Adult" files</Description>
 	</5>
 	<6>
-		<Type>MooV</Type>
+		<Type>MOOV</Type>
 		<Public Key>MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAyRj/5YgafAAh9O2OUnudureJO6ynTEDQqlBjkb7eAnPg6QAYsOzLjLR3LhsXlGjWypgkxkzYGIglEdyWuPjmgviF+LePKNETqsmZoG4kDUIKbh0y8IvkSM/JtuCeaJ5Kt9l1javbvjYmENnPbUkrt825s9t9EigA//JpA0gFlLZM+bRA2cNgzNyzAXos0VFPyv37/XY840LWzRtFYeb4G9umG9l+wVCfONqbxi8E99XZg6ngXgVkp7rKkVMdlY+Zx4GAWMsrQY2DCmXNFDgfTy45LQ+rB6aRgH7ypj7HGkkCvpkiwgyWEPkECV6bV4xTaUww5cj49nTNHxx0vgbfGwIDAQAB</>
 		<Description>Video Clips</Description>
 		<Extensions>
