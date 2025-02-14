@@ -114,7 +114,7 @@ public class FileInfoListerThread extends MysterThread {
             msg.say("Idle...");
 
         } catch (IOException ex) {
-            msg.say("Transmission errorm could not get File Stats.");
+            msg.say("Transmission error could not get File Stats.");
         }
     }
 

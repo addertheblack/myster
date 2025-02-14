@@ -29,6 +29,7 @@ public class TypeDescription {
     private final String[] extensions;
     private final boolean isArchived;
     private final boolean isEnabledByDefault;
+    private final String internalName;
 
     /**
      * Creates a TypeDescription object.
@@ -47,9 +48,10 @@ public class TypeDescription {
      *            a flag to indicate that this file type should be enabled by
      *            default
      */
-    public TypeDescription(MysterType type, String description, String[] extensions,
+    public TypeDescription(MysterType type, String internalName, String description, String[] extensions,
             boolean isArchived, boolean isEnabledByDefault ) {
         this.type = type;
+        this.internalName = internalName;
         this.description = description;
         this.extensions = extensions;
         this.isArchived = isArchived;
@@ -88,6 +90,10 @@ public class TypeDescription {
      */
     public boolean isArchived() {
         return isArchived;
+    }
+    
+    public String getInternalName() {
+        return internalName;
     }
 
     /**
