@@ -2,6 +2,7 @@ package com.myster.server;
 
 import java.net.InetAddress;
 import java.net.Socket;
+import java.net.SocketException;
 import java.net.UnknownHostException;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -75,7 +76,7 @@ public class ServerFacade {
             LOGGER.fine("Initializing LAN operator");
             try {
                 initLanResourceDiscovery(operatorList);
-            } catch (UnknownHostException exception) {
+            } catch (SocketException exception) {
                 LOGGER.log(Level.WARNING, "Could not initialize LAN socket", exception);
             }
         }
@@ -85,7 +86,7 @@ public class ServerFacade {
 
 
     public void initLanResourceDiscovery(List<Operator> operatorList)
-            throws UnknownHostException {
+            throws  SocketException {
         Consumer<Socket> serviceDiscoveryPort =
                 (socket) -> connectionExecutor.execute(new ConnectionRunnable(socket,
                                                                               serverDispatcher,

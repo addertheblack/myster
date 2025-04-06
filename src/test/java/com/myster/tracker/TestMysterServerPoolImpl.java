@@ -195,10 +195,11 @@ class TestMysterServerPoolImpl {
 
         moo[0] = null;
 
-        for (int i = 0; i < 20; i++) {
+        for (int i = 0; i < 200; i++) {
             System.gc();System.gc();System.gc();
             System.gc();System.gc();System.gc();
             System.gc();System.gc();System.gc();
+            Thread.sleep(1); // give some time for the cleanup thread to run..
             if (!pool.existsInPool(identity2)) {
 
                 LOGGER.info("Myster server is not there.. good.");

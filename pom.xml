@@ -1,331 +1,264 @@
-<!-- to update mvn versions:display-plugin-updates -->
-<!-- mvn versions:use-latest-plugin-versions -->
-<!-- update dependencies mvn versions:use-latest-versions -->
-<!-- javadoc mvn javadoc:javadoc -->
-<!-- also javadoc mvn verify -->
 <project xmlns="http://maven.apache.org/POM/4.0.0"
-    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-    xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
-    <modelVersion>4.0.0</modelVersion>
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+  <modelVersion>4.0.0</modelVersion>
 
-    <groupId>com.myster</groupId>
-    <artifactId>Myster</artifactId>
-    <version>10.0.0</version>
+  <groupId>com.myster</groupId>
+  <artifactId>Myster</artifactId>
+  <version>10.0.0</version>
 
-    <dependencies>
-        <dependency>
-            <groupId>com.simtechdata</groupId>
-            <artifactId>WaifUPnP</artifactId>
-            <version>1.0</version>
-        </dependency>
+  <dependencies>
+    <dependency>
+      <groupId>com.simtechdata</groupId>
+      <artifactId>WaifUPnP</artifactId>
+      <version>1.0</version>
+    </dependency>
 
-        <dependency>
-            <groupId>com.mpatric</groupId>
-            <artifactId>mp3agic</artifactId>
-            <version>0.9.1</version>
-        </dependency>
+    <dependency>
+      <groupId>com.mpatric</groupId>
+      <artifactId>mp3agic</artifactId>
+      <version>0.9.1</version>
+    </dependency>
 
-        <dependency>
-            <groupId>org.junit.jupiter</groupId>
-            <artifactId>junit-jupiter-engine</artifactId>
-            <version>5.10.1</version>
-            <scope>test</scope>
-        </dependency>
+    <dependency>
+      <groupId>org.junit.jupiter</groupId>
+      <artifactId>junit-jupiter-engine</artifactId>
+      <version>5.10.1</version>
+      <scope>test</scope>
+    </dependency>
 
-        <dependency>
-            <groupId>org.junit.jupiter</groupId>
-            <artifactId>junit-jupiter-api</artifactId>
-            <version>5.10.1</version>
-            <scope>test</scope>
-        </dependency>
-        
-            <!-- JUnit 5 Parameterized Tests dependency -->
-        <dependency>
-            <groupId>org.junit.jupiter</groupId>
-            <artifactId>junit-jupiter-params</artifactId>
-            <version>5.10.1</version>
-            <scope>test</scope>
-        </dependency>
+    <dependency>
+      <groupId>org.junit.jupiter</groupId>
+      <artifactId>junit-jupiter-api</artifactId>
+      <version>5.10.1</version>
+      <scope>test</scope>
+    </dependency>
 
-        <dependency>
-            <groupId>org.mockito</groupId>
-            <artifactId>mockito-core</artifactId>
-            <version>5.15.2</version>
-            <scope>test</scope>
-        </dependency>
+    <!-- JUnit 5 Parameterized Tests dependency -->
+    <dependency>
+      <groupId>org.junit.jupiter</groupId>
+      <artifactId>junit-jupiter-params</artifactId>
+      <version>5.10.1</version>
+      <scope>test</scope>
+    </dependency>
 
-        <dependency>
-            <groupId>org.bouncycastle</groupId>
-            <artifactId>bcpkix-jdk18on</artifactId>
-            <version>1.77</version>
-        </dependency>
-    </dependencies>
+    <dependency>
+      <groupId>org.mockito</groupId>
+      <artifactId>mockito-core</artifactId>
+      <version>5.15.2</version>
+      <scope>test</scope>
+    </dependency>
 
-    <properties>
-        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-        <maven.compiler.source>23</maven.compiler.source>
-        <maven.compiler.target>23</maven.compiler.target>
-        <outputName>MysterBuild</outputName> <!-- Custom property for output filename -->
-        <mainclass>com.myster.Myster</mainclass>
-      
-    </properties>
+    <dependency>
+      <groupId>org.bouncycastle</groupId>
+      <artifactId>bcpkix-jdk18on</artifactId>
+      <version>1.77</version>
+    </dependency>
+  </dependencies>
 
-    <build>
-        <finalName>${project.artifactId}-fn</finalName> <!-- Use custom property for output
-        file name -->
+  <properties>
+    <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+    <maven.compiler.source>23</maven.compiler.source>
+    <maven.compiler.target>23</maven.compiler.target>
+    <outputName>MysterBuild</outputName> <!-- Custom property for output filename -->
+    <mainclass>com.myster.Myster</mainclass>
+    <!-- Default values for jpackage -->
+    <jpackage.type>exe</jpackage.type>
+    <jpackage.icon>program_icon.ico</jpackage.icon>
+  </properties>
 
-        <plugins>
-            <!-- Compiler Plugin -->
-            <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-compiler-plugin</artifactId>
-                <version>3.13.0</version>
-                <configuration>
-                    <source>${maven.compiler.source}</source>
-                    <target>${maven.compiler.target}</target>
-                </configuration>
-            </plugin>
-            
-            <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-javadoc-plugin</artifactId>
-                <version>3.3.1</version> <!-- Use the latest version -->
-                <executions>
-                    <execution>
-                        <id>generate-javadoc</id>
-                        <phase>verify</phase> <!-- Bind to a lifecycle phase, e.g., 'verify' -->
-                        <goals>
-                            <goal>javadoc</goal>
-                        </goals>
-                    </execution>
-                </executions>
-            </plugin>
-            
-            <plugin>
-                <groupId>org.codehaus.mojo</groupId>
-                <artifactId>versions-maven-plugin</artifactId>
-                <version>2.8.1</version>
-            </plugin>
-            
-            <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-surefire-plugin</artifactId>
-                <version>3.5.2</version>
-                <configuration>
-                <useFile>false</useFile>
-                <systemPropertyVariables>
-                    <java.util.logging.config.file>src/test/resources/test.logging.properties</java.util.logging.config.file>
-                </systemPropertyVariables>
-                </configuration>
-            </plugin>
+  <build>
+    <finalName>${project.artifactId}-fn</finalName>
 
-            <!-- JAR Plugin for packaging -->
-            <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-jar-plugin</artifactId>
-                <version>3.2.0</version>
-                <configuration>
-                    <outputDirectory>${project.basedir}/target</outputDirectory>
-                </configuration>
-            </plugin>
-            <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-shade-plugin</artifactId>
-                <version>3.6.0</version>
-                <executions>
-                    <execution>
-                        <phase>package</phase>
-                        <goals>
-                            <goal>shade</goal>
-                        </goals>
-                        <configuration>
-                            <createDependencyReducedPom>false</createDependencyReducedPom>
-                            <shadedArtifactAttached>false</shadedArtifactAttached>
+    <plugins>
+    <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-enforcer-plugin</artifactId>
+        <version>3.5.0</version>
+        <executions>
+          <execution>
+            <id>enforce-versions</id>
+            <goals>
+              <goal>enforce</goal>
+            </goals>
+            <configuration>
+              <rules>
+                <requireMavenVersion>
+                  <version>3.6.3</version>
+                </requireMavenVersion>>
+              </rules>
+            </configuration>
+          </execution>
+        </executions>
+      </plugin>
+    
+      <!-- Compiler Plugin -->
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-compiler-plugin</artifactId>
+        <version>3.14.0</version>
+        <configuration>
+          <source>${maven.compiler.source}</source>
+          <target>${maven.compiler.target}</target>
+        </configuration>
+      </plugin>
 
-                            <filters>
-                                <filter>
-                                    <!-- Wildcard so it applies to all artifacts -->
-                                    <artifact>*:*</artifact>
-                                    <excludes>
-                                        <exclude>META-INF/*.SF</exclude>
-                                        <exclude>META-INF/*.DSA</exclude>
-                                        <exclude>META-INF/*.RSA</exclude>
-                                    </excludes>
-                                </filter>
-                            </filters>
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-javadoc-plugin</artifactId>
+        <version>3.11.2</version>
+        <executions>
+          <execution>
+            <id>generate-javadoc</id>
+            <phase>verify</phase>
+            <goals>
+              <goal>javadoc</goal>
+            </goals>
+          </execution>
+        </executions>
+      </plugin>
 
-                            <transformers>
-                                <transformer
-                                    implementation="org.apache.maven.plugins.shade.resource.ManifestResourceTransformer">
-                                    <mainClass>${mainclass}</mainClass>
-                                </transformer>
-                            </transformers>
-                            <outputFile>${project.basedir}/bin/${outputName}.jar</outputFile> 
-                        </configuration>
-                    </execution>
-                </executions>
-            </plugin>
+      <!-- Versions Plugin -->
+      <plugin>
+        <groupId>org.codehaus.mojo</groupId>
+        <artifactId>versions-maven-plugin</artifactId>
+        <version>2.18.0</version>
+      </plugin>
 
-            <!-- Exec plugin for jpackage -->
-            <plugin>
-                <groupId>org.codehaus.mojo</groupId>
-                <artifactId>exec-maven-plugin</artifactId>
-                <version>3.5.0</version>
-            </plugin>
-        </plugins>
-    </build>
+      <!-- Surefire Plugin -->
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-surefire-plugin</artifactId>
+        <version>3.5.2</version>
+        <configuration>
+          <useFile>false</useFile>
+          <systemPropertyVariables>
+            <java.util.logging.config.file>src/test/resources/test.logging.properties</java.util.logging.config.file>
+          </systemPropertyVariables>
+        </configuration>
+      </plugin>
 
-    <profiles>
-        <!-- Windows Profile -->
-        <profile>
-            <id>windows-build</id>
-            <activation>
-                <os>
-                    <family>Windows</family>
-                </os>
-            </activation>
-            <build>
-                <plugins>
-                    <plugin>
-                        <groupId>org.codehaus.mojo</groupId>
-                        <artifactId>exec-maven-plugin</artifactId>
-                        <version>3.5.0</version>
-                        <executions>
-                            <execution>
-                                <id>package-app-windows</id>
-                                <phase>package</phase>
-                                <goals>
-                                    <goal>exec</goal>
-                                </goals>
-                                <configuration>
-                                    <executable>jpackage</executable>
-                                    <arguments>
-                                    <!-- jdeps -meow-print-module-deps -meow-ignore-missing-deps MysterBuild.jar !!! -->
-                                        <argument>--input</argument>
-                                        <argument>${project.basedir}/bin</argument>
-                                        <argument>--name</argument>
-                                        <argument>Myster</argument>
-                                        <argument>--main-class</argument>
-                                        <argument>${mainclass}</argument>
-                                        <argument>--add-modules</argument>
-                                        <argument>java.base,java.desktop,java.naming,java.prefs,java.sql</argument>
-                                        <argument>--main-jar</argument>
-                                        <argument>${project.basedir}/bin/${outputName}.jar</argument>
-                                        <argument>--win-menu</argument>
-                                        <argument>--win-menu-group</argument>
-                                        <argument>Myster</argument>
-                                        <argument>--app-version</argument>
-                                        <argument>${project.version}</argument>
-                                        <argument>--icon</argument>
-                                        <argument>program_icon.ico</argument>
-                                        <argument>--type</argument>
-                                        <argument>exe</argument>
-                                    </arguments>
-                                </configuration>
-                            </execution>
-                        </executions>
-                    </plugin>
-                </plugins>
-            </build>
-        </profile>
+      <!-- JAR Plugin for packaging -->
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-jar-plugin</artifactId>
+        <version>3.4.2</version>
+        <configuration>
+          <outputDirectory>${project.basedir}/target</outputDirectory>
+        </configuration>
+      </plugin>
 
-        <!-- macOS Profile -->
-        <profile>
-            <id>macos-build</id>
-            <activation>
-                <os>
-                    <family>mac</family>
-                </os>
-            </activation>
-            <build>
-                <plugins>
-                    <plugin>
-                        <groupId>org.codehaus.mojo</groupId>
-                        <artifactId>exec-maven-plugin</artifactId>
-                        <version>3.5.0</version>
-                        <executions>
-                            <execution>
-                                <id>package-app-macos</id>
-                                <phase>package</phase>
-                                <goals>
-                                    <goal>exec</goal>
-                                </goals>
-                                <configuration>
-                                    <executable>jpackage</executable>
-                                    <arguments>
-                                        <argument>--input</argument>
-                                        <argument>${project.basedir}/bin</argument>
-                                        <argument>--name</argument>
-                                        <argument>Myster</argument>
-                                        <argument>--main-class</argument>
-                                        <argument>${mainclass}</argument>
-                                        <argument>--add-modules</argument>
-                                        <argument>java.base,java.desktop,java.naming,java.prefs,java.sql</argument>
-                                        <argument>--main-jar</argument>
-                                        <argument>${project.basedir}/bin/${outputName}.jar</argument>
-                                        <argument>--type</argument>
-                                        <argument>dmg</argument>
-                                        <argument>--icon</argument>
-                                        <argument>program_icon.icns</argument>
-                                        <argument>--app-version</argument>
-                                        <argument>${project.version}</argument>
-                                    </arguments>
-                                </configuration>
-                            </execution>
-                        </executions>
-                    </plugin>
-                </plugins>
-            </build>
-        </profile>
+      <!-- Shade Plugin -->
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-shade-plugin</artifactId>
+        <version>3.6.0</version>
+        <executions>
+          <execution>
+            <phase>package</phase>
+            <goals>
+              <goal>shade</goal>
+            </goals>
+            <configuration>
+              <createDependencyReducedPom>false</createDependencyReducedPom>
+              <shadedArtifactAttached>false</shadedArtifactAttached>
+              <filters>
+                <filter>
+                  <artifact>*:*</artifact>
+                  <excludes>
+                    <exclude>META-INF/*.SF</exclude>
+                    <exclude>META-INF/*.DSA</exclude>
+                    <exclude>META-INF/*.RSA</exclude>
+                  </excludes>
+                </filter>
+              </filters>
+              <transformers>
+                <transformer implementation="org.apache.maven.plugins.shade.resource.ManifestResourceTransformer">
+                  <mainClass>${mainclass}</mainClass>
+                </transformer>
+              </transformers>
+              <outputFile>${project.basedir}/bin/${outputName}.jar</outputFile>
+            </configuration>
+          </execution>
+        </executions>
+      </plugin>
 
-        <!-- linux Profile -->
-        <profile>
-            <id>linux-build</id>
-            <activation>
-                <os>
-                    <family>linux</family>
-                </os>
-            </activation>
-            <build>
-                <plugins>
-                    <plugin>
-                        <groupId>org.codehaus.mojo</groupId>
-                        <artifactId>exec-maven-plugin</artifactId>
-                        <version>3.5.0</version>
-                        <executions>
-                            <execution>
-                                <id>package-app-linux</id>
-                                <phase>package</phase>
-                                <goals>
-                                    <goal>exec</goal>
-                                </goals>
-                                <configuration>
-                                    <executable>jpackage</executable>
-                                    <arguments>
-                                        <argument>--input</argument>
-                                        <argument>${project.basedir}/bin</argument>
-                                        <argument>--name</argument>
-                                        <argument>Myster</argument>
-                                        <argument>--main-class</argument>
-                                        <argument>${mainclass}</argument>
-                                        <argument>--add-modules</argument>
-                                        <argument>java.base,java.desktop,java.naming,java.prefs,java.sql</argument>
-                                        <argument>--main-jar</argument>
-                                        <argument>${project.basedir}/bin/${outputName}.jar</argument>
-                                        <argument>--type</argument>
-                                        <argument>rpm</argument>
-                                        <argument>--icon</argument>
-                                        <argument>program_icon.png</argument>
-                                        <argument>--app-version</argument>
-                                        <argument>${project.version}</argument>
-                                    </arguments>
-                                </configuration>
-                            </execution>
-                        </executions>
-                    </plugin>
-                </plugins>
-            </build>
-        </profile>
-    </profiles>
+      <!-- jpackage Maven Plugin -->
+      <plugin>
+        <groupId>org.panteleyev</groupId>
+        <artifactId>jpackage-maven-plugin</artifactId>
+        <version>1.6.6</version>
+        <executions>
+          <execution>
+            <id>jpackage</id>
+            <phase>package</phase>
+            <goals>
+              <goal>jpackage</goal>
+            </goals>
+            <configuration>
+              <!-- Directory containing the jar created by the shade plugin -->
+              <input>${project.basedir}/bin</input>
+              <!-- Output directory for the packaged application -->
+              <destination>${project.build.directory}/jpackage</destination>       
+              <name>Myster</name>
+              <mainJar>${outputName}.jar</mainJar>
+              <mainClass>${mainclass}</mainClass>
+              <type>${jpackage.type}</type>
+              <appVersion>${project.version}</appVersion>
+              <icon>${jpackage.icon}</icon>
+              <!-- Pass additional jpackage arguments -->
+              <arguments>
+                <argument>--add-modules</argument>
+                <argument>java.base,java.desktop,java.naming,java.prefs,java.sql</argument>
+              </arguments>
+            </configuration>
+          </execution>
+        </executions>
+      </plugin>
+    </plugins>
+  </build>
+
+  <profiles>
+    <!-- Windows Profile -->
+    <profile>
+      <id>windows-build</id>
+      <activation>
+        <os>
+          <family>Windows</family>
+        </os>
+      </activation>
+      <properties>
+        <jpackage.type>EXE</jpackage.type>
+        <jpackage.icon>program_icon.ico</jpackage.icon>
+      </properties>
+    </profile>
+
+    <!-- macOS Profile -->
+    <profile>
+      <id>macos-build</id>
+      <activation>
+        <os>
+          <family>mac</family>
+        </os>
+      </activation>
+      <properties>
+        <jpackage.type>DMG</jpackage.type>
+        <jpackage.icon>program_icon.icns</jpackage.icon>
+      </properties>
+    </profile>
+
+    <!-- Linux Profile -->
+    <profile>
+      <id>linux-build</id>
+      <activation>
+        <os>
+          <family>linux</family>
+        </os>
+      </activation>
+      <properties>
+        <jpackage.type>DEB</jpackage.type>
+        <jpackage.icon>program_icon.png</jpackage.icon>
+      </properties>
+    </profile>
+  </profiles>
 </project>
-
