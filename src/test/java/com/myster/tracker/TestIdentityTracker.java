@@ -6,9 +6,13 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.io.File;
 import java.io.IOException;
+import java.io.UncheckedIOException;
 import java.net.UnknownHostException;
 import java.security.PublicKey;
+import java.util.Arrays;
+import java.util.HashSet;
 import java.util.Optional;
+import java.util.Set;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -361,6 +365,116 @@ public class TestIdentityTracker {
         }
     }
 
+    @Nested
+    class TestCleanupOld {
+        private PublicKeyIdentity mysterIdentity;
+        private Pinger pinger;        
+        
+        @BeforeEach
+        private void setup() throws IOException {
+            pinger = (a) -> {
+                int responseTime = -1;
+                try {
+                    if (a.equals(new MysterAddress("10.10.10.1"))|| a.equals(new MysterAddress("222.1.2.3"))) {
+                        responseTime = 1;
+                    }
+                } catch (UnknownHostException e) {
+                    throw new UncheckedIOException(e);
+                }
+                
+                final int stupidWorkAround = responseTime;
+                
+                return PromiseFuture
+                        .<PingResponse> newPromiseFuture(c -> c.setResult(new PingResponse(a, stupidWorkAround)))
+                        .setInvoker(TrackerUtils.INVOKER);
+            };
+
+            PublicKey publicKey = createTestPublicKey();
+            mysterIdentity = new PublicKeyIdentity(publicKey);
+        }
+
+        
+        @Test
+        public void testBasicFunctionality() throws IOException, InterruptedException {
+            Consumer<PingResponse> pingListener = (_) -> {
+            };
+
+            IdentityTracker identityTracker = new IdentityTracker(pinger, pingListener, (_)->{});     
+            
+            identityTracker.addIdentity(mysterIdentity, new MysterAddress("10.10.10.1"));
+            identityTracker.addIdentity(mysterIdentity, new MysterAddress("10.10.10.2"));
+            identityTracker.addIdentity(mysterIdentity, new MysterAddress("10.10.10.3"));
+            
+            identityTracker.addIdentity(mysterIdentity, new MysterAddress("12.1.2.3"));
+            identityTracker.addIdentity(mysterIdentity, new MysterAddress("222.1.2.3"));
+            identityTracker.addIdentity(mysterIdentity, new MysterAddress("24.10.10.3"));
+            
+            TrackerUtils.INVOKER.waitForThread();
+            
+            MysterAddress[] addresses = identityTracker.getAddresses(mysterIdentity);
+            Assertions.assertEquals(6, addresses.length);
+            
+            Optional<MysterAddress> best = identityTracker.getBestAddress(mysterIdentity);
+            Assertions.assertTrue(best.isPresent());
+            Assertions.assertEquals(new MysterAddress("10.10.10.1"), best.get());
+            
+            Assertions.assertTrue(identityTracker.isUp(new MysterAddress("10.10.10.1")));
+            Assertions.assertTrue(identityTracker.isUp(new MysterAddress("222.1.2.3")));
+            
+            Assertions.assertFalse(identityTracker.isUp(new MysterAddress("10.10.10.2")));
+            Assertions.assertFalse(identityTracker.isUp(new MysterAddress("10.10.10.3")));
+            Assertions.assertFalse(identityTracker.isUp(new MysterAddress("24.10.10.3")));
+            Assertions.assertFalse(identityTracker.isUp(new MysterAddress("12.1.2.3")));
+            
+            identityTracker.cleanUpOldAddresses(mysterIdentity);
+            Assertions.assertEquals(2, identityTracker.getAddresses(mysterIdentity).length);
+            Assertions.assertTrue(identityTracker.isUp(new MysterAddress("10.10.10.1")));
+            Assertions.assertTrue(identityTracker.isUp(new MysterAddress("222.1.2.3")));
+        }
+        
+        @Test
+        public void testNoCleanupOnEverythingDown() throws IOException, InterruptedException {
+            Consumer<PingResponse> pingListener = (_) -> {
+            };
+
+            IdentityTracker identityTracker = new IdentityTracker(pinger, pingListener, (_)->{});     
+            
+            identityTracker.addIdentity(mysterIdentity, new MysterAddress("10.10.10.2"));
+            identityTracker.addIdentity(mysterIdentity, new MysterAddress("10.10.10.3"));
+            
+            identityTracker.addIdentity(mysterIdentity, new MysterAddress("12.1.2.3"));
+            identityTracker.addIdentity(mysterIdentity, new MysterAddress("24.10.10.3"));
+            
+            TrackerUtils.INVOKER.waitForThread();
+            
+            MysterAddress[] addresses = identityTracker.getAddresses(mysterIdentity);
+            Assertions.assertEquals(4, addresses.length);
+            
+            Assertions.assertFalse(identityTracker.isUp(new MysterAddress("10.10.10.2")));
+            Assertions.assertFalse(identityTracker.isUp(new MysterAddress("10.10.10.3")));
+            Assertions.assertFalse(identityTracker.isUp(new MysterAddress("24.10.10.3")));
+            Assertions.assertFalse(identityTracker.isUp(new MysterAddress("12.1.2.3")));
+            Set<MysterAddress> addressSet = new HashSet<MysterAddress>(Arrays.asList( addresses));
+            Assertions.assertTrue(addressSet.contains(new MysterAddress("10.10.10.2")));
+            Assertions.assertTrue(addressSet.contains(new MysterAddress("10.10.10.3")));
+            Assertions.assertTrue(addressSet.contains(new MysterAddress("24.10.10.3")));
+            Assertions.assertTrue(addressSet.contains(new MysterAddress("12.1.2.3")));
+            
+            identityTracker.cleanUpOldAddresses(mysterIdentity);
+            Assertions.assertEquals(4, identityTracker.getAddresses(mysterIdentity).length);
+            Assertions.assertFalse(identityTracker.isUp(new MysterAddress("10.10.10.2")));
+            Assertions.assertFalse(identityTracker.isUp(new MysterAddress("10.10.10.3")));
+            Assertions.assertFalse(identityTracker.isUp(new MysterAddress("24.10.10.3")));
+            Assertions.assertFalse(identityTracker.isUp(new MysterAddress("12.1.2.3")));
+            
+            Set<MysterAddress> addressSet2 = new HashSet<MysterAddress>(Arrays.asList( identityTracker.getAddresses(mysterIdentity)));
+            Assertions.assertTrue(addressSet2.contains(new MysterAddress("10.10.10.2")));
+            Assertions.assertTrue(addressSet2.contains(new MysterAddress("10.10.10.3")));
+            Assertions.assertTrue(addressSet2.contains(new MysterAddress("24.10.10.3")));
+            Assertions.assertTrue(addressSet2.contains(new MysterAddress("12.1.2.3")));
+        }
+    }
+    
 
     @Nested
     class TestPingEvents {

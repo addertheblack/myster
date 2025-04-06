@@ -189,6 +189,8 @@ class MysterServerImplementation {
             }
         }
         
+        identityProvider.cleanUpOldAddresses(identity);
+        
         server.save();
     }
 
