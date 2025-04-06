@@ -57,4 +57,12 @@ public interface IdentityProvider {
     void removeIdentity(MysterIdentity key, MysterAddress address);
 
     void addIdentity(MysterIdentity identity, MysterAddress address);
+    
+    /**
+     * Called when you want to remove old address that aren't "up". Will NOT remove addresses that
+     * havn't been pinged yet or if there's no UP address in any given category ie: LAN or public address"
+     * 
+     * @param identity - to cleanup
+     */
+    void cleanUpOldAddresses(MysterIdentity identity);
 }

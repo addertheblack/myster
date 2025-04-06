@@ -14,6 +14,7 @@ import java.util.Map.Entry;
 import java.util.Optional;
 import java.util.function.Consumer;
 import java.util.logging.Logger;
+import java.util.stream.Collectors;
 
 import com.general.thread.PromiseFuture;
 import com.general.util.Timer;
@@ -44,6 +45,8 @@ public class IdentityTracker implements IdentityProvider {
     private Timer timer;
     
     /**
+     * @param pingListener add a pingLister to get notified when a server has been pinged.
+     *          You can use this to update your GUI! Note: NOT ON THE EVENT THREAD!
      * @param pinger
      *            is responsible for "pinging" servers to check if they are up
      *            or down
@@ -129,7 +132,7 @@ public class IdentityTracker implements IdentityProvider {
         if (candidates.isEmpty()) {
             // If the server is down we should only check the public address since that is the
             // most likely to be reachable if our laptop is not longer on the LAN (or loopback)
-            candidates = Util.filter(addresses, a -> !a.getInetAddress().isSiteLocalAddress());
+            candidates = Util.filter(addresses, a -> !TrackerUtils.isLanAddress(a.getInetAddress()));
             
             // this is for the edge case where we only have the LAN address for this server
             if (candidates.isEmpty()) {
@@ -324,6 +327,74 @@ public class IdentityTracker implements IdentityProvider {
         addressState.lastPingDurationMs = pingResponse.isTimeout() ? DOWN : pingResponse.pingTimeMs();
         addressState.up = !pingResponse.isTimeout();
     }
+    
+    public synchronized void cleanUpOldAddresses(MysterIdentity key) {
+        if (!Thread.holdsLock(IdentityTracker.this)) {
+            throw new IllegalStateException("Must hold lock");
+        }
+        
+        List<MysterAddress> addresses = identityToAddresses.get(key);
+        if (addresses == null) {
+            return; // that's weird but possible
+        }
+        
+        enum AddressType {
+            PUBLIC, LAN, OTHER
+        }
+        
+        Map<AddressType, List<MysterAddress>> foo = addresses.stream().collect(Collectors.groupingBy((MysterAddress i) -> {
+            if (i.getInetAddress().isLoopbackAddress() ) {
+                return AddressType.OTHER;
+            } else if (TrackerUtils.isLanAddress(i.getInetAddress())) {
+                return AddressType.LAN;
+            } else {
+                return AddressType.PUBLIC;
+            }
+        }));
+        
+        List<MysterAddress> lanAddresses = foo.get(AddressType.LAN);
+        if (lanAddresses != null) {
+            deleteDownAddresses(key, lanAddresses);
+        }
+        
+        List<MysterAddress> publicAddresses = foo.get(AddressType.PUBLIC);
+        if (publicAddresses != null) {
+            deleteDownAddresses(key, publicAddresses);
+        }
+    }
+
+    private void deleteDownAddresses(MysterIdentity key, List<MysterAddress> lanAddresses) {
+        List<MysterAddress> upAddresses =  lanAddresses.stream().filter(a -> {
+            AddressState state = addressStates.get(a);
+            if (state == null) {
+                return false;
+            }
+            
+            return state.up;
+        }).toList();
+        
+        if (upAddresses.size()==0) {
+            return;
+        }
+        
+        List<MysterAddress> downAddresses =  lanAddresses.stream().filter(a -> {
+            AddressState state = addressStates.get(a);
+            if (state == null) {
+                return false;
+            }
+            
+            if (state.lastPingDurationMs == UNTRIED) {
+                return false;
+            }
+            
+            return !state.up;
+        }).toList();
+        
+        for (MysterAddress a: downAddresses) {
+            removeIdentity(key, a);
+        }
+    }
+    
      
     private static class AddressState {
         public long timeOfLastSuggestPing = 0;
