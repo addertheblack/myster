@@ -325,7 +325,7 @@ public class IdentityTracker implements IdentityProvider {
         addressState.up = !pingResponse.isTimeout();
     }
      
-    static class AddressState {
+    private static class AddressState {
         public long timeOfLastSuggestPing = 0;
         public long timeOfLastPing = 0;
         public int lastPingDurationMs = UNTRIED;

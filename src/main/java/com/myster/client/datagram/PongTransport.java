@@ -47,7 +47,7 @@ public class PongTransport extends DatagramTransport {
                 if (struct != null) {
                     justBeforeDispatch(param_address, struct);
                 } else {
-                    LOGGER.fine("Got response but can't find a request that matches it: " + param_address);
+                    LOGGER.fine("Got PONG response but can't find a request that matches it: " + param_address + ":" + immutablePacket.getPort());
                     return;
                 }
             }

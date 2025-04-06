@@ -2,8 +2,11 @@
 package com.myster.server;
 
 import java.net.InetAddress;
+import java.net.NetworkInterface;
+import java.net.SocketException;
 import java.net.UnknownHostException;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.logging.Logger;
 
@@ -14,28 +17,35 @@ import com.myster.tracker.Tracker;
 public class ServerUtils {
     private static final Logger LOGGER = Logger.getLogger(ServerUtils.class.getName());
     
-    public static List<InetAddress> findPublicLandAddress() throws UnknownHostException {
-        List<InetAddress> networkAddresses = new ArrayList<>();
-        
-        var localhostAddress = InetAddress.getLocalHost();
-        InetAddress[] allMyIps = InetAddress.getAllByName(localhostAddress.getCanonicalHostName());
-        if (allMyIps == null) {
-            return networkAddresses;
+    public static List<InetAddress> findPublicLandAddress() throws SocketException {
+        List<InetAddress> allMyIps = new ArrayList<>();
+        for (NetworkInterface networkInterface: Collections.list(NetworkInterface.getNetworkInterfaces())) {
+            
+            // Optionally, filter out interfaces that are down or loopback
+            if (!networkInterface.isUp() || networkInterface.isLoopback()) {
+                continue;
+            }
+            
+            for (InetAddress address: Collections.list(networkInterface.getInetAddresses())) {
+                System.out.println(networkInterface.getDisplayName() + " - " + address.getHostAddress());
+                
+                allMyIps.add(address);
+            }
         }
-
+        
+        List<InetAddress> networkAddresses = new ArrayList<>();
         LOGGER.fine("Looking for LAN address of this machine");
-        for (int i = 0; i < allMyIps.length; i++) {
-            if (isLanAddress(allMyIps[i])) {
-                LOGGER.fine("    Machine LAN address found ->" + allMyIps[i].getHostAddress());
-                networkAddresses.add(allMyIps[i]);
+        for (InetAddress ip: allMyIps) {
+            if (isLanAddress(ip)) {
+                LOGGER.fine("    Machine LAN address found ->" + ip.getHostAddress());
+                networkAddresses.add(ip);
             } else {
-                LOGGER.fine("    Machine Not LAN address   ->" + allMyIps[i].getHostAddress());
+                LOGGER.fine("    Machine Not LAN address   ->" + ip.getHostAddress());
             }
         }
         
         if (networkAddresses.size() == 0 ) {
-            LOGGER.fine("Could not find LAN address.. Addding " + localhostAddress);
-            networkAddresses.add(localhostAddress);
+            LOGGER.fine("Could not find LAN address");
         }
         
         return networkAddresses;
@@ -56,7 +66,7 @@ public class ServerUtils {
         return false;
     }
     
-    public static void massPing(MysterProtocol protocol, Tracker tracker) throws UnknownHostException {
+    public static void massPing(MysterProtocol protocol, Tracker tracker) throws  SocketException {
         List<InetAddress> allMyIps = ServerUtils.findPublicLandAddress();
         
         LOGGER.info("Pinging all 255 addresses on the 24 bit subnet");
