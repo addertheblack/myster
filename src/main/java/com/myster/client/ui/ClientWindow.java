@@ -83,6 +83,8 @@ public class ClientWindow extends MysterFrame implements Sayable {
     
     private boolean hasBeenShown = false;
     private MysterType type;
+    
+    private final MysterFrameContext context;
 
     public static void init(MysterProtocol protocol,
                             HashCrawlerManager hashManager,
@@ -98,7 +100,6 @@ public class ClientWindow extends MysterFrame implements Sayable {
     
     public static int initWindowLocations(MysterFrameContext c) {
         Rectangle[] lastLocs = c.keeper().getLastLocs(WINDOW_KEEPER_KEY);
-
         
         for (int i = 0; i < lastLocs.length; i++) {
             ClientWindow window = new ClientWindow(c);
@@ -111,6 +112,8 @@ public class ClientWindow extends MysterFrame implements Sayable {
 
     public ClientWindow(MysterFrameContext c) {
         super(c, "Direct Connection " + (++counter));
+        
+        context = c;
 
         init();
 
@@ -119,6 +122,9 @@ public class ClientWindow extends MysterFrame implements Sayable {
 
     public ClientWindow(MysterFrameContext c, String ip) {
         super(c, "Direct Connection " + (++counter));
+        
+        context = c;
+        
         init();
         ipTextField.setText(ip);
         ipTextField.setForeground(Color.BLACK);
@@ -130,6 +136,8 @@ public class ClientWindow extends MysterFrame implements Sayable {
     }
 
     private void init() {
+        context.keeper().addFrame(this, WINDOW_KEEPER_KEY);
+        
         setBackground(new Color(240, 240, 240));
 
         // Do interface setup:
