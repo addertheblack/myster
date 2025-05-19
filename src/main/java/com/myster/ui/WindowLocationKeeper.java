@@ -1,21 +1,24 @@
 package com.myster.ui;
 
 import java.awt.Component;
+import java.awt.GraphicsConfiguration;
+import java.awt.GraphicsDevice;
+import java.awt.GraphicsEnvironment;
+import java.awt.Insets;
 import java.awt.Rectangle;
 import java.awt.Toolkit;
 import java.awt.event.ComponentEvent;
 import java.awt.event.ComponentListener;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
-import java.util.List;
 import java.util.NoSuchElementException;
 import java.util.StringTokenizer;
+import java.util.UUID;
 import java.util.logging.Logger;
-
-import javax.swing.JFrame;
+import java.util.prefs.BackingStoreException;
+import java.util.prefs.Preferences;
 
 import com.myster.pref.MysterPreferences;
-import com.myster.pref.PreferencesMML;
 
 /**
  * Creates a window keeper object for your class of window. A window keeper
@@ -27,123 +30,120 @@ import com.myster.pref.PreferencesMML;
  * the locations for every window of that type that was on screen last time
  * Myster was quit. It will even makes sure the previous window locs are all on
  * screen when the routine is called (ie: not too far to the left or right).
- *  
  */
-
 public class WindowLocationKeeper {
+    private static final String PREF_NODE_NAME = "Window Locations and Sizes";
+    
     private static final Logger LOGGER = Logger.getLogger(WindowLocationKeeper.class.getName());
 
-    private String key;
+    private final MysterPreferences prefs;
 
-    private volatile int counter = 0;
-
-    public WindowLocationKeeper(String key) {
-        init();
-        if (key.indexOf("/") != -1)
-            throw new RuntimeException("Key cannot contain a \"/\"!");
-        this.key = "/" + key + "/";
+    public WindowLocationKeeper(MysterPreferences p) {
+        prefs = p;
     }
 
     /**
      * Adds a Frame object to be *tracked*. If the frame is visible it's
      * location is automatically stored in the prefs else it won't be.
      */
-    public void addFrame(JFrame frame) {
-        final int privateID = counter++;
+    public void addFrame(MysterFrame frame, String key) {
+        if (key.indexOf("/") != -1)
+            throw new RuntimeException("Key cannot contain a \"/\"!");
+        
+        final String privateID = UUID.randomUUID().toString();
 
         if (frame.isVisible()) {
-            saveLocation(frame, privateID);
+            saveLocation(frame, key, privateID);
         }
 
         frame.addComponentListener(new ComponentListener() {
             public void componentResized(ComponentEvent e) {
                 if (((Component) (e.getSource())).isVisible())
-                    saveLocation(((Component) (e.getSource())), privateID);
+                    saveLocation(((Component) (e.getSource())), key, privateID);
             }
 
             public void componentMoved(ComponentEvent e) {
                 if (((Component) (e.getSource())).isVisible())
-                    saveLocation(((Component) (e.getSource())), privateID);
+                    saveLocation(((Component) (e.getSource())), key, privateID);
             }
 
             public void componentShown(ComponentEvent e) {
-                saveLocation(((Component) (e.getSource())), privateID);
+                saveLocation(((Component) (e.getSource())), key, privateID);
             }
 
             public void componentHidden(ComponentEvent e) {
-                deleteLocation(((Component) (e.getSource())), privateID);
+                deleteLocation(((Component) (e.getSource())), key, privateID);
             }
 
         });
         
         frame.addWindowListener(new WindowAdapter() {
         	public void windowClosing(WindowEvent e) {
-        		deleteLocation(((Component) (e.getSource())), privateID);
+        		deleteLocation(((Component) (e.getSource())), key, privateID);
         	}
         	
         	public void windowClosed(WindowEvent e) {
-        		deleteLocation(((Component) (e.getSource())), privateID);
+        		deleteLocation(((Component) (e.getSource())), key, privateID);
         	}
         });
     }
 
-    private void saveLocation(Component c, int id) {
-        prefs.put(key + id, rect2String(c.getBounds()));
-
-        MysterPreferences.getInstance().put(PREF_KEY, prefs);
+    private void saveLocation(Component c, String key, String id) {
+        prefs.getPreferences().node(PREF_NODE_NAME).node(key).put(id, rect2String(c.getBounds()));
     }
     
-    private void deleteLocation(Component c, int id) {
-        prefs.remove(key + id);
-        MysterPreferences.getInstance().put(PREF_KEY, prefs);
+    private void deleteLocation(Component c, String key, String id) {
+        prefs.getPreferences().node(PREF_NODE_NAME).node(key).remove(id);
     }
 
     /////////// STATIC SUB SYSTEM
+    public static boolean fitsOnScreen(Rectangle windowBounds) {
+        GraphicsEnvironment ge = GraphicsEnvironment.getLocalGraphicsEnvironment();
+        for (GraphicsDevice gd : ge.getScreenDevices()) {
+            GraphicsConfiguration gc = gd.getDefaultConfiguration();
+            Rectangle bounds = gc.getBounds();
 
-    private static final String PREF_KEY = "Window Locations and Sizes/";
+            // subtract taskbar/menu bar insets
+            Insets insets = Toolkit.getDefaultToolkit().getScreenInsets(gc);
+            Rectangle visible = new Rectangle(
+                bounds.x + insets.left,
+                bounds.y + insets.top,
+                bounds.width  - insets.left - insets.right,
+                bounds.height - insets.top  - insets.bottom
+            );
 
-    private static PreferencesMML prefs = new PreferencesMML();
-
-    private static PreferencesMML oldPrefs;
-
-    private static boolean initFlag = false;
-
-    public static synchronized void init() {
-        if (initFlag)
-            return; //don't init twice.
-
-        initFlag = true;
-        oldPrefs = new PreferencesMML(MysterPreferences.getInstance().getAsMML(
-                PREF_KEY, new PreferencesMML()).copyMML());
-        LOGGER.info("" + MysterPreferences.getInstance().getAsMML(PREF_KEY));
+            if (visible.contains(windowBounds)) {
+                return true;
+            }
+        }
+        return false;
     }
 
-    public static boolean fitsOnScreen(Rectangle rect) {
-        Rectangle screenBorders = new Rectangle(Toolkit.getDefaultToolkit()
-                .getScreenSize());
-        return (rect.x > 0 && rect.y > 0 && (rect.x + 50) < screenBorders.width && rect.y + 50 < screenBorders.height);
-    }
-
-    public static synchronized Rectangle[] getLastLocs(String p_key) {
-        init();
-        
-        String key = "/" + p_key + "/";
-
-        List<String> keyList = oldPrefs.list(key);
-
-        if (keyList == null)
-            return new Rectangle[] {}; //aka Rectangle[0];
-
-        Rectangle[] rectangles = new Rectangle[keyList.size()];
-
-        for (int i = 0; i < keyList.size(); i++) {
-            rectangles[i] = string2Rect(oldPrefs.get(key
-                    + (keyList.get(i)), "0,0,400,400"));
-            if (!fitsOnScreen(rectangles[i]))
-                rectangles[i].setLocation(50, 50);
-            LOGGER.fine("Getting the last window location " + key + keyList.get(i));
+    public synchronized Rectangle[] getLastLocs(String p_key) {
+        Preferences node = prefs.getPreferences().node(PREF_NODE_NAME).node(p_key);
+        String[] keyList;
+        try {
+            keyList = node.keys();
+        } catch (BackingStoreException e) {
+            LOGGER.severe("Could not get list of window locations for key " + p_key + " because of BackingStoreException " + e);
+            
+            return new Rectangle[0];
         }
 
+        Rectangle[] rectangles = new Rectangle[keyList.length];
+        
+        for (int i = 0; i < keyList.length; i++) {
+            Rectangle rectangle = string2Rect(node.get(keyList[i], "0,0,400,400"));
+            if (!fitsOnScreen(rectangle))
+                rectangle.setLocation(50, 50);
+            
+            rectangles[i] = rectangle;
+            
+            node.remove(keyList[i]);
+            
+            LOGGER.fine("Getting the last window location " + p_key + " " + rectangle.toString());
+        }
+        
         return rectangles;
     }
 

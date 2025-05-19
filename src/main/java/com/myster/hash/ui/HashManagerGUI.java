@@ -28,11 +28,11 @@ public class HashManagerGUI extends MysterFrame {
 
     private static HashManager hashManager;
 
-    public static int initGui() {
-        Rectangle[] rect = com.myster.ui.WindowLocationKeeper
-                .getLastLocs(WINDOW_LOC_KEY);
-        if (rect.length > 0) {
-            singleton.setBounds(rect[0]);
+    public static int initGui(MysterFrameContext context) {
+        Rectangle[] lastLocs = context.keeper().getLastLocs(WINDOW_LOC_KEY);
+        
+        if (lastLocs.length > 0) {
+            singleton.setBounds(lastLocs[0]);
             singleton.setVisible(true);
             singleton.pack();
 
@@ -69,8 +69,8 @@ public class HashManagerGUI extends MysterFrame {
 
         setBackground(new Color(240, 240, 240));
 
-        windowKeeper = new WindowLocationKeeper(WINDOW_LOC_KEY);
-        windowKeeper.addFrame(this);
+        windowKeeper = context.keeper();
+        windowKeeper.addFrame(this, WINDOW_LOC_KEY);
 
         final InternalPanel internalPanel = new InternalPanel();
         add(internalPanel);

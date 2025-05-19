@@ -1,8 +1,14 @@
 package com.myster.ui;
 
 import java.awt.Frame;
+import java.awt.GraphicsConfiguration;
+import java.awt.GraphicsDevice;
+import java.awt.GraphicsEnvironment;
 import java.awt.Image;
+import java.awt.Insets;
 import java.awt.Point;
+import java.awt.Rectangle;
+import java.awt.Toolkit;
 import java.awt.event.ComponentEvent;
 import java.awt.event.ComponentListener;
 import java.awt.event.WindowEvent;
@@ -17,14 +23,23 @@ import com.myster.application.MysterGlobals;
 import com.myster.ui.menubar.event.MenuBarListener;
 
 public class MysterFrame extends JFrame {
-    private static int xStart = 5;
-    private static int yStart = 5;
+    // how much to shift each new window
+    private static final int DELTA = 20;
+    // how far out before we wrap
+    private static final int MAX_OFFSET = 250;
+    // extra cushion from the very edge
+    private static final int BUFFER = 10;
+
+    // current offsets from the top-left of the visible area
+    private static int offsetX = 0;
+    private static int offsetY = 0;
+    
+    // end
 
     private final MysterFrameContext context;
 
     private MenuBarListener menuListener;
     private boolean menuBarEnabled = true;
-
 
     public MysterFrame(MysterFrameContext context) {
         this.context = context;
@@ -43,23 +58,42 @@ public class MysterFrame extends JFrame {
     protected final MysterFrameContext getMysterFrameContext() {
         return context;
     }
-
+    
     public void setTitle(String windowName) {
         super.setTitle(MysterGlobals.ON_LINUX ? windowName + " - Myster" : windowName);
         context.windowManager().updateMenu();
     }
 
     private static synchronized Point getWindowStartingLocation() {
-        Point location = new Point(xStart, yStart);
-        xStart += 20;
-        yStart += 20;
+        // 1) Get primary screen's GraphicsConfiguration
+        GraphicsDevice primary = 
+            GraphicsEnvironment.getLocalGraphicsEnvironment()
+                               .getDefaultScreenDevice();
+        GraphicsConfiguration gc = primary.getDefaultConfiguration();
 
-        if (xStart > 250) {
-            xStart = 0;
-            yStart = 0;
+        // 2) Figure out the visible area (subtract OS insets)
+        Rectangle bounds = gc.getBounds();
+        Insets insets = Toolkit.getDefaultToolkit().getScreenInsets(gc);
+        Rectangle visible = new Rectangle(
+            bounds.x + insets.left + BUFFER,
+            bounds.y + insets.top  + BUFFER,
+            bounds.width  - insets.left - insets.right  - 2*BUFFER,
+            bounds.height - insets.top  - insets.bottom - 2*BUFFER
+        );
+
+        // 3) Compute the next origin
+        Point next = new Point(visible.x + offsetX,
+                               visible.y + offsetY);
+
+        // 4) Advance and wrap if past MAX_OFFSET
+        offsetX += DELTA;
+        offsetY += DELTA;
+        if (offsetX > MAX_OFFSET || offsetY > MAX_OFFSET) {
+            offsetX = 0;
+            offsetY = 0;
         }
 
-        return location;
+        return next;
     }
 
     private void initEvents() {

@@ -82,12 +82,10 @@ public class MysterMenuBar {
     }
 
     // note that this is construction time dependencies
-    public void initMenuBar(Tracker manager, PreferencesGui prefGui, WindowManager windowManager, MysterProtocol protocol, TypeDescriptionList tdList) {
+    public void initMenuBar(Tracker manager, PreferencesGui prefGui, MysterProtocol protocol, MysterFrameContext context ) {
         file = new ArrayList<>();
         edit = new ArrayList<>();
         special = new ArrayList<>();
-
-        MysterFrameContext context = new MysterFrameContext(this, windowManager, tdList);
 
         // File menu items
         file.add(new MysterMenuItemFactory("New Search",
@@ -103,7 +101,7 @@ public class MysterMenuBar {
                                                               new com.myster.message.MessageWindow(context, protocol);
                                                       window.setVisible(true);
                                                   }));
-        closeWindowAction = new CloseWindowAction("Close Window", windowManager);
+        closeWindowAction = new CloseWindowAction("Close Window", context.windowManager());
         closeWindowAction.putValue(Action.ACCELERATOR_KEY,
                                    KeyStroke.getKeyStroke(java.awt.event.KeyEvent.VK_W, 0));
         file.add(new MysterMenuItemFactory(closeWindowAction));
@@ -156,7 +154,7 @@ public class MysterMenuBar {
 
         mysterMenuBarFactoryImpl = new DefaultMysterMenuBarFactory(menuBarFactories);
         
-        windowManager.addMenus(this);
+        context.windowManager().addMenus(this);
 
         updateMenuBars();
     }
