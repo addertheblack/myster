@@ -66,17 +66,16 @@ public class ServerStatsWindow extends MysterFrame implements Sayable {
         return singleton;
     }
 
-    public static int initWindowLocations() {
-        Rectangle[] rect = com.myster.ui.WindowLocationKeeper
-                .getLastLocs("Server Stats");
-        if (rect.length > 0) {
+    public static int initWindowLocations(MysterFrameContext c) {
+        Rectangle[] lastLocs = c.keeper().getLastLocs("Server Stats");
+        if (lastLocs.length > 0) {
             Dimension d = singleton.getSize();
-            singleton.setBounds(rect[0]);
+            singleton.setBounds(lastLocs[0]);
             singleton.setSize(d);
             singleton.setVisible(true);
         }
         
-        return rect.length;
+        return lastLocs.length;
     }
 
     public void say(String s) {
@@ -86,8 +85,8 @@ public class ServerStatsWindow extends MysterFrame implements Sayable {
     protected ServerStatsWindow(MysterFrameContext c) {
         super(c, "Server Statistics");
 
-        keeper = new com.myster.ui.WindowLocationKeeper("Server Stats");
-        keeper.addFrame(this); //never remove.
+        keeper = c.keeper();
+        keeper.addFrame(this, "Server Stats"); //never remove.
 
         setResizable(false);
 

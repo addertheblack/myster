@@ -34,7 +34,6 @@ import javax.swing.UnsupportedLookAndFeelException;
 
 import com.general.application.ApplicationContext;
 import com.general.application.ApplicationSingletonListener;
-import com.general.net.AsyncDatagramSocket;
 import com.general.util.AnswerDialog;
 import com.general.util.Util;
 import com.myster.application.MysterGlobals;
@@ -81,6 +80,7 @@ import com.myster.type.TypeDescriptionList;
 import com.myster.type.ui.TypeManagerPreferencesGUI;
 import com.myster.ui.MysterFrameContext;
 import com.myster.ui.PreferencesGui;
+import com.myster.ui.WindowLocationKeeper;
 import com.myster.ui.WindowManager;
 import com.myster.ui.menubar.MysterMenuBar;
 import com.myster.ui.menubar.event.MenuBarEvent;
@@ -140,6 +140,7 @@ public class Myster {
         // two threads working at the same time
         SwingUtilities.invokeLater(() -> {
             INSTRUMENTATION.info("-------->> EDT Started" + (System.currentTimeMillis() - startTime));
+            
             try {
                 javax.swing.UIManager.setLookAndFeel(javax.swing.UIManager.getSystemLookAndFeelClassName());
             } catch (InstantiationException exception) {
@@ -278,7 +279,7 @@ public class Myster {
                 MysterMenuBar menuBarFactory = new MysterMenuBar();
                 WindowManager windowManager = new WindowManager();
                 final MysterFrameContext context =
-                        new MysterFrameContext(menuBarFactory, windowManager, tdList);
+                        new MysterFrameContext(menuBarFactory, windowManager, tdList, new WindowLocationKeeper(preferences));
                 PreferencesGui preferencesGui = new PreferencesGui(context);
 
                 serverFacade
@@ -289,7 +290,7 @@ public class Myster {
                                                                                                                 tracker::getQuickServerStats))
                                                                                                                         .show()));
 
-                menuBarFactory.initMenuBar(tracker, preferencesGui, windowManager, protocol, tdList);
+                menuBarFactory.initMenuBar(tracker, preferencesGui, protocol, context);
 
                 String osName = System.getProperty("os.name").toLowerCase();
                 if (osName.startsWith("mac os") && Desktop.isDesktopSupported()) {
@@ -327,12 +328,12 @@ public class Myster {
                 } else {
                     var count = 0;
                     count += com.myster.client.ui.ClientWindow.initWindowLocations(context);
-                    count += ServerStatsWindow.initWindowLocations();
-                    count += com.myster.tracker.ui.TrackerWindow.initWindowLocations();
+                    count += ServerStatsWindow.initWindowLocations(context);
+                    count += com.myster.tracker.ui.TrackerWindow.initWindowLocations(context);
                     
                     HashManagerGUI.init(context, hashManager);
                     
-                    count += com.myster.hash.ui.HashManagerGUI.initGui();
+                    count += com.myster.hash.ui.HashManagerGUI.initGui(context);
                     count += SearchWindow.initWindowLocations(context);
                     
                     if (count == 0) {
@@ -372,6 +373,7 @@ public class Myster {
         } catch (InvocationTargetException ex) {
             Util.invokeLater(() -> AnswerDialog
                     .simpleAlert("" + ex.getTargetException().toString()));
+            ex.printStackTrace();
         }
 
         hashManager.start();

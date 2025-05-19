@@ -23,22 +23,19 @@ public class PreferencesGui {
 
     static final String WINDOW_KEEPER_KEY = "MysterPrefsGUI";
 
-    static com.myster.ui.WindowLocationKeeper windowKeeper = new com.myster.ui.WindowLocationKeeper(
-            WINDOW_KEEPER_KEY);
-
-    private void initWindowLocations() {
-        Rectangle[] rect = com.myster.ui.WindowLocationKeeper.getLastLocs(WINDOW_KEEPER_KEY);
-        if (rect.length > 0) {
-             prefsWindow.setBounds(rect[0]);
+    private void initWindowLocations(MysterFrameContext c) {
+        Rectangle[] lastLocs = c.keeper().getLastLocs(WINDOW_KEEPER_KEY);
+        if (lastLocs.length > 0) {
+             prefsWindow.setBounds(lastLocs[0]);
              setGUI(true);
         }
     }
     
 
     public void initGui() {
-        windowKeeper.addFrame(prefsWindow);
+        context.keeper().addFrame(prefsWindow, WINDOW_KEEPER_KEY);
         
-        initWindowLocations();
+        initWindowLocations(context);
     }
 
     public void setGUI(boolean b) {

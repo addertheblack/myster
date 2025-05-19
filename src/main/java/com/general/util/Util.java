@@ -2,8 +2,13 @@ package com.general.util;
 
 import java.awt.Component;
 import java.awt.EventQueue;
+import java.awt.GraphicsConfiguration;
+import java.awt.GraphicsDevice;
+import java.awt.GraphicsEnvironment;
 import java.awt.Image;
+import java.awt.Insets;
 import java.awt.MediaTracker;
+import java.awt.Rectangle;
 import java.awt.Toolkit;
 import java.awt.Window;
 import java.lang.reflect.InvocationTargetException;
@@ -149,9 +154,22 @@ public class Util { //This code was taken from an Apple Sample Code package,
      * center. If you want it centered call this with offsets of 0,0
      */
     public static void centerFrame(Window frame, int xOffset, int yOffset) {
-        Toolkit tool = Toolkit.getDefaultToolkit();
-        frame.setLocation(tool.getScreenSize().width / 2 - frame.getSize().width / 2 + xOffset,
-                tool.getScreenSize().height / 2 - frame.getSize().height / 2 + yOffset);
+        GraphicsDevice primary = 
+            GraphicsEnvironment.getLocalGraphicsEnvironment()
+                               .getDefaultScreenDevice();
+        GraphicsConfiguration gc = primary.getDefaultConfiguration();
+
+        Rectangle bounds = gc.getBounds();
+        Insets insets = Toolkit.getDefaultToolkit().getScreenInsets(gc);
+        Rectangle visible = new Rectangle(
+            bounds.x + insets.left,
+            bounds.y + insets.top,
+            bounds.width  - insets.left - insets.right ,
+            bounds.height - insets.top  - insets.bottom 
+        );
+        
+        frame.setLocation(visible.x + visible.width / 2 - frame.getSize().width / 2 + xOffset,
+                          visible.y + visible.height / 2 - frame.getSize().height / 2 + yOffset);
     }
 
     /**

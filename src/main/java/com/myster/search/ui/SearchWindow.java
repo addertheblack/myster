@@ -43,7 +43,6 @@ import com.myster.type.MysterType;
 import com.myster.type.TypeDescriptionList;
 import com.myster.ui.MysterFrame;
 import com.myster.ui.MysterFrameContext;
-import com.myster.ui.WindowLocationKeeper;
 import com.myster.util.Sayable;
 import com.myster.util.TypeChoice;
 
@@ -52,8 +51,6 @@ public class SearchWindow extends MysterFrame implements SearchResultListener, S
     private static final int XDEFAULT = 640;
     private static final int YDEFAULT = 400;
     private static final String PREF_LOCATION_KEY = "Search Window";
-
-    private static WindowLocationKeeper keeper;
 
     private static int counter = 0;
     
@@ -72,7 +69,7 @@ public class SearchWindow extends MysterFrame implements SearchResultListener, S
 
     public SearchWindow(MysterFrameContext c) {
         super(c, "Search Window " + (++counter));
-
+        
         tdList = c.tdList();
         
         setBackground(new Color(240, 240, 240));
@@ -117,7 +114,6 @@ public class SearchWindow extends MysterFrame implements SearchResultListener, S
         addComponent(msg, 2, 0, 4, 1, 1, 0, GridBagConstraints.HORIZONTAL);
 
         setResizable(true);
-        setSize(XDEFAULT, YDEFAULT);
 
         SearchButtonHandler searchButtonHandler = new SearchButtonHandler(this, searchButton);
         searchButton.addActionListener(searchButtonHandler);
@@ -145,19 +141,15 @@ public class SearchWindow extends MysterFrame implements SearchResultListener, S
         fileList.setColumnName(0, "Search Results appear here");
         fileList.setColumnWidth(0, 400);
 
-        keeper.addFrame(this);
+        c.keeper().addFrame(this, PREF_LOCATION_KEY);
 
         textEntry.setSelectionStart(0);
         textEntry.setSelectionEnd(textEntry.getText().length());
 
         pack();
+        setSize(XDEFAULT, YDEFAULT);
     }
 
-    public void show() {
-        super.show();
-        pack();
-    }
-    
     private static HashCrawlerManager hashManager;
     private static MysterProtocol protocol;
     private static Tracker manager;
@@ -169,17 +161,15 @@ public class SearchWindow extends MysterFrame implements SearchResultListener, S
     }
     
     public static int initWindowLocations(MysterFrameContext c) {
-        Rectangle[] rectangles = WindowLocationKeeper.getLastLocs(PREF_LOCATION_KEY);
+        Rectangle[] lastLocs = c.keeper().getLastLocs(PREF_LOCATION_KEY);
 
-        keeper = new WindowLocationKeeper(PREF_LOCATION_KEY);
-
-        for (int i = 0; i < rectangles.length; i++) {
+        for (int i = 0; i < lastLocs.length; i++) {
             SearchWindow window = new SearchWindow(c);
-            window.setBounds(rectangles[i]);
+            window.setBounds(lastLocs[i]);
             window.setVisible(true);
         }
 
-        return rectangles.length;
+        return lastLocs.length;
     }
 
     public void addComponent(Component component, int row, int column, int width, int height,

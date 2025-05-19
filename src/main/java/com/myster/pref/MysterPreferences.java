@@ -61,6 +61,10 @@ public class MysterPreferences {
 
         return pref;
     }
+    
+    public Preferences getPreferences() {
+        return preferences;
+    }
 
     /**
      * Gets the value for a path. returns null if path not initilized or invalid.

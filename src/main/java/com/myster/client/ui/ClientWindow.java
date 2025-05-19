@@ -47,7 +47,6 @@ import com.myster.type.TypeDescription;
 import com.myster.type.TypeDescriptionList;
 import com.myster.ui.MysterFrame;
 import com.myster.ui.MysterFrameContext;
-import com.myster.ui.WindowLocationKeeper;
 import com.myster.util.Sayable;
 
 public class ClientWindow extends MysterFrame implements Sayable {
@@ -62,7 +61,6 @@ public class ClientWindow extends MysterFrame implements Sayable {
     
 
     private static int counter = 0;
-    private static WindowLocationKeeper keeper;
     private static Tracker tracker;
     private static MysterProtocol protocol;
     private static HashCrawlerManager hashManager;
@@ -99,17 +97,16 @@ public class ClientWindow extends MysterFrame implements Sayable {
     }
     
     public static int initWindowLocations(MysterFrameContext c) {
-        Rectangle[] rectangles = com.myster.ui.WindowLocationKeeper.getLastLocs(WINDOW_KEEPER_KEY);
+        Rectangle[] lastLocs = c.keeper().getLastLocs(WINDOW_KEEPER_KEY);
 
-        keeper = new WindowLocationKeeper(WINDOW_KEEPER_KEY);
         
-        for (int i = 0; i < rectangles.length; i++) {
+        for (int i = 0; i < lastLocs.length; i++) {
             ClientWindow window = new ClientWindow(c);
-            window.setBounds(rectangles[i]);
+            window.setBounds(lastLocs[i]);
             window.show();
         }
         
-        return rectangles.length;
+        return lastLocs.length;
     }
 
     public ClientWindow(MysterFrameContext c) {
@@ -117,7 +114,7 @@ public class ClientWindow extends MysterFrame implements Sayable {
 
         init();
 
-        keeper.addFrame(this);
+        c.keeper().addFrame(this, WINDOW_KEEPER_KEY);
     }
 
     public ClientWindow(MysterFrameContext c, String ip) {

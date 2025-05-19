@@ -52,21 +52,18 @@ public class TrackerWindow extends MysterFrame {
     
     private Timer timer = null;
     
-    private static com.myster.ui.WindowLocationKeeper keeper =
-            new com.myster.ui.WindowLocationKeeper("Tracker");
-
     private static Tracker tracker;
 
     private static MysterFrameContext context;
 
-    public static int initWindowLocations() {
-        Rectangle[] rect = com.myster.ui.WindowLocationKeeper.getLastLocs("Tracker");
-        if (rect.length > 0) {
-            getInstance().setBounds(rect[0]);
+    public static int initWindowLocations(MysterFrameContext c) {
+        Rectangle[] lastLocs = c.keeper().getLastLocs("Tracker");
+        if (lastLocs.length > 0) {
+            getInstance().setBounds(lastLocs[0]);
             getInstance().setVisible(true);
         }
 
-        return rect.length;
+        return lastLocs.length;
     }
 
     public static void init(Tracker tracker, MysterFrameContext c) {
@@ -76,7 +73,8 @@ public class TrackerWindow extends MysterFrame {
 
     private TrackerWindow(MysterFrameContext c) {
         super(c);
-        keeper.addFrame(this); //never remove
+        
+        c.keeper().addFrame(this, "Tracker"); //never remove
 
         //Do interface setup:
         gblayout = new GridBagLayout();
