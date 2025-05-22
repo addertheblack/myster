@@ -9,7 +9,7 @@ import com.general.thread.Invoker;
 
 public class ServerSearchDispatcher {
     private final NewGenericDispatcher<ServerSearchListener> dispatcher =
-            new NewGenericDispatcher<>(ServerSearchListener.class, Invoker.SYNCHRONOUS);
+            new NewGenericDispatcher<>(ServerSearchListener.class, Invoker.EDT_NOW_OR_LATER);
 
     public void addServerSearchListener(ServerSearchListener l) {
         dispatcher.addListener(l);

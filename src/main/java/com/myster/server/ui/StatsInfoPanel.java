@@ -32,69 +32,47 @@ import com.myster.server.event.ServerSearchListener;
 import com.myster.server.stream.FileByHash;
 import com.myster.server.stream.FileInfoLister;
 import com.myster.server.stream.ServerStats;
+import com.myster.type.TypeDescriptionList;
+import com.myster.ui.MysterFrameContext;
 import com.myster.server.stream.MysterServerLister;
 import com.myster.server.stream.MultiSourceSender;
 import com.myster.server.stream.RequestSearchThread;
 
 public class StatsInfoPanel extends JPanel {
     private JLabel numsearchlabel, listoflastten;
-
     private CountLabel numsearch;
-
     private JLabel searchperhourlabel;
-
     private CountLabel searchperhour;
-
     private XItemList lastten;
-
     private JLabel numofdllabel;
-
     private CountLabel numofld;
-
     private JLabel numofSSRLabel;
-
     private CountLabel numofSSR; // server stats
-
     private JLabel numofTTLabel;
-
     private CountLabel numofTT; // top ten
-
     private JLabel numofFILabel;
-
     private CountLabel numofFI; // files shared
-
     private JLabel numMatchesLabel;
-
     private CountLabel numMaches;
-
     private JLabel transferedLabel;
-
     private ByteCounter transfered;
 
     //
     private JLabel numberOfHashSearchesLabel;
-
     private CountLabel numberOfHashSearches;
-
     private JLabel numberOfConnectionsLabel;
-
     private CountLabel numberOfConnections;
-
     private JLabel currentConnectionsLabel;
-
     private CountLabel currentConnections;
-
     private JLabel numberOfPingsLabel;
-
     private CountLabel numberOfPings;
-
     private JLabel uptimeLabel;
-
     private JLabel uptime;
 
     private SearchPerHour searches = null;
+    private final TypeDescriptionList tdList;
 
-    public StatsInfoPanel(ServerContext context) {
+    public StatsInfoPanel(ServerContext context, MysterFrameContext c) {
 
         setBackground(new Color(240, 240, 240));
         context.addConnectionManagerListener(new ConnectionHandler());
@@ -116,6 +94,8 @@ public class StatsInfoPanel extends JPanel {
                 numberOfConnections.increment(false);
             }
         });
+        
+        tdList = c.tdList();
 
         searches = new SearchPerHour();
         searches.start();
@@ -321,7 +301,7 @@ public class StatsInfoPanel extends JPanel {
 
     private class SearchHandler implements ServerSearchListener {
         public void searchRequested(ServerSearchEvent e) {
-            lastten.add(e.getSearchString() + " (" + e.getType() + ")");
+            lastten.add(e.getSearchString() + " (" + tdList.get(e.getType()).get().getDescription()  + ")");
         }
 
         public void searchResult(ServerSearchEvent e) {
@@ -382,11 +362,6 @@ public class StatsInfoPanel extends JPanel {
 
         @Override
         public void downloadStarted(ServerDownloadEvent e) {
-            // nothing
-        }
-
-        @Override
-        public void blockSent(ServerDownloadEvent e) {
             // nothing
         }
 

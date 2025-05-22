@@ -27,9 +27,9 @@ public class UDPPingClient {
                     @Override
                     public void pingReply(PingEvent e) {
                         context.setResult(new PingResponse(address, e.getPingTime()));
-                        protocolManager.mutateTransportManager(address.getPort(),
-                                                   (t) -> transportManager
-                                                           .removeTransportIfEmpty(transport));
+                        protocolManager
+                                .mutateTransportManager(address.getPort(),
+                                                        (t) -> t.removeTransportIfEmpty(transport));
                     }
                 }); 
             });

@@ -29,9 +29,9 @@ public class ServerEventDispatcher {
     public ServerEventDispatcher() {
         connectionDispatcher =
                 new NewGenericDispatcher<ConnectionManagerListener>(ConnectionManagerListener.class,
-                                                                    Invoker.SYNCHRONOUS);
+                                                                    Invoker.EDT_NOW_OR_LATER);
         operatorDispatcher = new NewGenericDispatcher<OperatorListener>(OperatorListener.class,
-                                                                        Invoker.SYNCHRONOUS);
+                                                                        Invoker.EDT_NOW_OR_LATER);
     }
 
     public ServerContext getServerContext() {

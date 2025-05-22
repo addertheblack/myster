@@ -70,7 +70,11 @@ public interface Invoker {
     public static Invoker SYNCHRONOUS = new Invoker() {
         @Override
         public void invoke(Runnable r) {
-            SwingUtilities.invokeLater(r);
+            try {
+                r.run();
+            } catch (Exception ex) {
+                ex.printStackTrace();
+            }
         }
 
         @Override
