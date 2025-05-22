@@ -7,7 +7,7 @@ import com.general.thread.Invoker;
 
 public class WebLinkManager {
     private static final NewGenericDispatcher<WebLinkListener> dispatcher =
-            new NewGenericDispatcher<>(WebLinkListener.class, Invoker.SYNCHRONOUS);
+            new NewGenericDispatcher<>(WebLinkListener.class, Invoker.EDT_NOW_OR_LATER);
 
     public static void addWebLinkListener(WebLinkListener l) {
         dispatcher.addListener(l);

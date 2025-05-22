@@ -31,16 +31,14 @@ public class NewGenericDispatcher<L> {
                 // ignore
             }
             
-            // Synchronised is more convenient.. sigh
-            lock.lock();
-            List<L> copy;
-            try {
-                copy = new ArrayList<>(listeners);
-            } finally {
-                lock.unlock();
-            }
-            
             invoker.invoke(() -> {
+                lock.lock();
+                List<L> copy;
+                try {
+                    copy = new ArrayList<>(listeners);
+                } finally {
+                    lock.unlock();
+                }
                 copy.forEach(l -> dispatchListener(l, method, args));
             });
 

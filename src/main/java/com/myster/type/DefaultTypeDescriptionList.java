@@ -66,7 +66,7 @@ public class DefaultTypeDescriptionList implements TypeDescriptionList {
         workingTypes = oldTypes; //set working types to "types" variable to
                                  // enable on the fly changes
 
-        dispatcher = new NewGenericDispatcher<TypeListener>(TypeListener.class, Invoker.SYNCHRONOUS);
+        dispatcher = new NewGenericDispatcher<TypeListener>(TypeListener.class, Invoker.EDT_NOW_OR_LATER);
     }
 
     private static final String DEFAULT_LIST_KEY = "DefaultTypeDescriptionList saved defaults";

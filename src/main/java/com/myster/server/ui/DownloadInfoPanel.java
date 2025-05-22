@@ -240,14 +240,12 @@ public class DownloadInfoPanel extends JPanel {
         }
 
         public class DisconnectHandler implements ActionListener {
-
             public void actionPerformed(ActionEvent e) {
                 disconnectSelected();
             }
         }
 
         public class ConnectHandler implements ActionListener {
-
             public void actionPerformed(ActionEvent e) {
                 newConnectWindow();
             }

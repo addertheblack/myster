@@ -201,17 +201,14 @@ public class DownloadMCListItem extends MCListItemInterface<ServerDownloadDispat
         }
 
         public void downloadStarted(ServerDownloadEvent e) {
+            info = e.getDownloadInfo();
             setStatus(TRANSFERING);
         }
 
         public void queued(ServerDownloadEvent e) {
+            info = e.getDownloadInfo();
             queuePosition = e.getQueuePosition();
             setStatus(QUEUED);
-        }
-
-        @Override
-        public void blockSent(ServerDownloadEvent e) {
-         // nothing
         }
 
         @Override
