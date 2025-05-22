@@ -19,7 +19,7 @@ public class PongTransport extends DatagramTransport {
     public static final short TRANSPORT_NUMBER = 20559;
     
     private static final int TIMEOUT = 60000;
-    private static final int FIRST_TIMEOUT = 10000;
+    private static final int FIRST_TIMEOUT = 1000;
     
     private static final Logger LOGGER = Logger.getLogger(AsyncDatagramSocket.class.getName());
 
@@ -115,19 +115,19 @@ public class PongTransport extends DatagramTransport {
         /**
          * used when the connection has timeout on one packet to send a second.
          */
-        public boolean secondPing = false;
+        public int pingAttempt = 0;
 
         public Timer timer;
 
         public PongItemStruct(MysterAddress param_address) {
             timeStamp = System.currentTimeMillis();
             dispatcher = new NewGenericDispatcher<PingEventListener>(PingEventListener.class, Invoker.SYNCHRONOUS);
-            timer = new Timer(new TimeoutClass(param_address), FIRST_TIMEOUT
-                    + (1 * 1000), false);
+            timer = new Timer(new TimeoutClass(param_address), FIRST_TIMEOUT, false);
         }
     }
 
     private class TimeoutClass implements Runnable {
+        private static final int MAX_PING_ATTEMPTS = 5;
         MysterAddress address;
 
         public TimeoutClass(MysterAddress address) {
@@ -141,14 +141,18 @@ public class PongTransport extends DatagramTransport {
             synchronized (requests) {
                 struct = requests.get(address);
                 if (struct != null) {
-                    if (!struct.secondPing) {
+                    long timeSoFar = (curTime - struct.timeStamp);
+                    
+                    struct.pingAttempt ++;
+                    if (struct.pingAttempt < MAX_PING_ATTEMPTS && timeSoFar < TIMEOUT) {
                         sender.sendPacket((new PingPacket(address))
                                 .toImmutableDatagramPacket());
-                        
-                        struct.secondPing = !struct.secondPing;
+                        long maxTimeoutSize = TIMEOUT - timeSoFar;
+                        int timeoutSizeCandidate = (int)Math.pow(2, struct.pingAttempt) * FIRST_TIMEOUT;
                         struct.timer = new Timer(new TimeoutClass(address),
-                                TIMEOUT - (curTime - struct.timeStamp)
-                                        + (1 * 1000), false);
+                                                 Math.min(maxTimeoutSize, timeoutSizeCandidate));
+                        
+                        System.out.println("Timeout for ping -> address "+ address + " maxTimeoutSize: "+ maxTimeoutSize + " timeoutSizeCandidate " + timeoutSizeCandidate + " retryAttempt: " + struct.pingAttempt );
                         return;
                     } else {
                         justBeforeDispatch(address, struct);
