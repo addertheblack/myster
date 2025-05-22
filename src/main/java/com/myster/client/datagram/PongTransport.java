@@ -151,8 +151,7 @@ public class PongTransport extends DatagramTransport {
                         int timeoutSizeCandidate = (int)Math.pow(2, struct.pingAttempt) * FIRST_TIMEOUT;
                         struct.timer = new Timer(new TimeoutClass(address),
                                                  Math.min(maxTimeoutSize, timeoutSizeCandidate));
-                        
-                        System.out.println("Timeout for ping -> address "+ address + " maxTimeoutSize: "+ maxTimeoutSize + " timeoutSizeCandidate " + timeoutSizeCandidate + " retryAttempt: " + struct.pingAttempt );
+
                         return;
                     } else {
                         justBeforeDispatch(address, struct);

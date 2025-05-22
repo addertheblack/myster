@@ -117,7 +117,6 @@ public class ClientWindow extends MysterFrame implements Sayable {
 
         init();
 
-        c.keeper().addFrame(this, WINDOW_KEEPER_KEY);
     }
 
     public ClientWindow(MysterFrameContext c, String ip) {

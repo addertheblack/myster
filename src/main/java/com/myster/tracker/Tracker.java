@@ -44,10 +44,11 @@ public class Tracker {
     private static final String PATH = "ServerLists";
 
     private final MysterServerList[] list;
-    private final TypeDescription[] tdlist;
+    private final TypeDescription[] enabledTypes;
     private final MysterServerPool pool;
     private final Preferences preferences;
     private final NewGenericDispatcher<ListChangedListener> dispatcher;
+    private final TypeDescriptionList tdList;
 
     public interface ListChangedListener {
         public void serverAddedRemoved(MysterType type);
@@ -58,9 +59,10 @@ public class Tracker {
         this.preferences = preferences.node(PATH);
         this.dispatcher = new NewGenericDispatcher<>(ListChangedListener.class, TrackerUtils.INVOKER);
 
-        tdlist = typeDescriptionList.getEnabledTypes();
+        enabledTypes = typeDescriptionList.getEnabledTypes();
+        tdList = typeDescriptionList;
 
-        list = new MysterServerList[tdlist.length];
+        list = new MysterServerList[enabledTypes.length];
         for (int i = 0; i < list.length; i++) {
             assertIndex(i); // loads all lists.
         }
@@ -189,7 +191,7 @@ public class Tracker {
      *            unworthy of being on the list
      */
     private void addServerToAllLists(MysterServer server) {
-        for (int i = 0; i < tdlist.length; i++) {
+        for (int i = 0; i < enabledTypes.length; i++) {
             assertIndex(i);
             list[i].addIP(server);
         }
@@ -225,7 +227,7 @@ public class Tracker {
     private synchronized void assertIndex(int index) {
         if (list[index] == null) {
             list[index] = createNewList(index);
-            LOGGER.info("Loaded List " + list[index].getType());
+            LOGGER.info("Loaded List " + tdList.get(list[index].getType()).get().toString());
         }
     }
 
@@ -237,8 +239,8 @@ public class Tracker {
      *         list for this type.
      */
     private synchronized int getIndex(MysterType type) {
-        for (int i = 0; i < tdlist.length; i++) {
-            if (tdlist[i].getType().equals(type))
+        for (int i = 0; i < enabledTypes.length; i++) {
+            if (enabledTypes[i].getType().equals(type))
                 return i;
         }
 
@@ -250,7 +252,7 @@ public class Tracker {
      * This is a stupid routine.
      */
     private synchronized MysterServerList createNewList(int index) {
-        return new MysterServerList(tdlist[index].getType(), pool, preferences, dispatcher.fire()::serverAddedRemoved);
+        return new MysterServerList(enabledTypes[index].getType(), pool, preferences, dispatcher.fire()::serverAddedRemoved);
     }
 
     public void addListChangedListener(ListChangedListener l) {
