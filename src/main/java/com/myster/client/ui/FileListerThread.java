@@ -57,7 +57,6 @@ public class FileListerThread extends MysterThread {
             }
             
             msg.say(s);
-            LOGGER.info(s);
         });
 
         this.ip = ip;
