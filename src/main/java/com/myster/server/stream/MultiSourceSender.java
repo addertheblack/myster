@@ -56,12 +56,12 @@ public class MultiSourceSender extends ServerStreamHandler {
 
     public void section(ConnectionContext context) throws IOException {
         MultiSourceDownloadInstance download =
-                new MultiSourceDownloadInstance((ServerDownloadDispatcher) (context.sectionObject),
-                                                context.transferQueue,
-                                                new MysterAddress(context.socket.getInetAddress()));
+                new MultiSourceDownloadInstance((ServerDownloadDispatcher) (context.sectionObject()),
+                                                context.transferQueue(),
+                                                new MysterAddress(context.socket().getInetAddress()));
 
         try {
-            download.download(context.socket);
+            download.download(context.socket(), context.fileManager());
         } finally {
             download.endBlock();
         }
@@ -115,7 +115,7 @@ public class MultiSourceSender extends ServerStreamHandler {
             fire().downloadSectionStarted(newEvent(-1));
         }
 
-        public void download(final MysterSocket socket) throws IOException {
+        public void download(final MysterSocket socket, FileTypeListManager fileManager) throws IOException {
             try {
                 this.socket = socket;//this is so I can disconnect the stupid
                 // socket.
@@ -126,7 +126,7 @@ public class MultiSourceSender extends ServerStreamHandler {
                 type = in.readType();
                 fileName = in.readUTF();
 
-                final File file = FileTypeListManager.getInstance().getFile(type, fileName);
+                final File file = fileManager.getFile(type, fileName);
 
                 if (file == null) {
                     out.write(0);

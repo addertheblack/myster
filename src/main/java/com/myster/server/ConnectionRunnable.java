@@ -12,6 +12,8 @@
 package com.myster.server;
 
 import com.myster.client.stream.MysterDataInputStream;
+import com.myster.filemanager.FileTypeListManager;
+
 import java.io.IOException;
 import java.net.Socket;
 import java.util.Map;
@@ -47,8 +49,7 @@ public class ConnectionRunnable implements Runnable {
     private final TransferQueue transferQueue;
     private final Map<Integer, ConnectionSection> connectionSections;
     private final Socket socket;
-    
-    private final ConnectionContext context;
+    private final FileTypeListManager fileManager;
     
     private static final AtomicInteger threadCounter = new AtomicInteger(0);
 
@@ -67,17 +68,17 @@ public class ConnectionRunnable implements Runnable {
      *            ConnectionSection objects
      */
     protected ConnectionRunnable(Socket socket,
-                                ServerEventDispatcher eventSender,
-                                TransferQueue transferQueue,
-                                Map<Integer, ConnectionSection> connectionSections) {
+                                 ServerEventDispatcher eventSender,
+                                 TransferQueue transferQueue,
+                                 FileTypeListManager fileTypeListManager,    
+                                 Map<Integer, ConnectionSection> connectionSections) {
         Thread.currentThread().setName("Server Thread " + (threadCounter.incrementAndGet()));
 
-        context = new ConnectionContext();
-        
         this.socket = socket;
         this.transferQueue = transferQueue;
         this.eventSender = eventSender;
         this.connectionSections = connectionSections;
+        this.fileManager = fileTypeListManager;
     }
 
     /**
@@ -90,11 +91,10 @@ public class ConnectionRunnable implements Runnable {
 
         int sectioncounter = 0;
         try (var tempTcpSocket = new com.myster.client.stream.TCPSocket(socket)) {
-            context.socket = tempTcpSocket;
-            context.transferQueue = transferQueue;
-            context.serverAddress = new MysterAddress(socket.getInetAddress());
+            ConnectionContext context = new ConnectionContext(tempTcpSocket, new MysterAddress(socket.getInetAddress()), null, transferQueue, fileManager);
+                    
 
-            MysterDataInputStream i = context.socket.in; //opens the connection
+            MysterDataInputStream i = context.socket().in; //opens the connection
 
             int protocalcode;
             Thread.currentThread().setPriority(Thread.MIN_PRIORITY);
@@ -117,11 +117,11 @@ public class ConnectionRunnable implements Runnable {
 
                 switch (protocalcode) {
                 case 1:
-                    context.socket.out.write(1); //Tells the other end that the
+                    context.socket().out.write(1); //Tells the other end that the
                     // command is good  !
                     break;
                 case 2:
-                    context.socket.out.write(1); //Tells the other end that the
+                    context.socket().out.write(1); //Tells the other end that the
                     // command is good  !
                     return;
                 default:
@@ -131,7 +131,7 @@ public class ConnectionRunnable implements Runnable {
                         System.out
                                 .println("!!!System detects unknown protocol number : "
                                 + protocalcode);
-                        context.socket.out.write(0); //Tells the other end that
+                        context.socket().out.write(0); //Tells the other end that
                         // the command is bad!
                     } else {
                         doSection(section, remoteip, context);
@@ -172,13 +172,12 @@ public class ConnectionRunnable implements Runnable {
 
     private void doSection(ConnectionSection d, MysterAddress remoteIP, ConnectionContext context)
             throws IOException {
-        Object o = d.getSectionObject();
-        context.sectionObject = o;
-        fireConnectEvent(d, remoteIP, o);
+        Object sectionObject = d.getSectionObject();
+        fireConnectEvent(d, remoteIP, sectionObject);
         try {
-            d.doSection(context);
+            d.doSection(context.withSectionObject(sectionObject));
         } finally {
-            fireDisconnectEvent(d, remoteIP, o);
+            fireDisconnectEvent(d, remoteIP, sectionObject);
         }
     }
 }

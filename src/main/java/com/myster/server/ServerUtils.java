@@ -27,8 +27,6 @@ public class ServerUtils {
             }
             
             for (InetAddress address: Collections.list(networkInterface.getInetAddresses())) {
-                System.out.println(networkInterface.getDisplayName() + " - " + address.getHostAddress());
-                
                 allMyIps.add(address);
             }
         }

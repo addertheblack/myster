@@ -6,6 +6,7 @@ import java.util.function.Supplier;
 import java.util.logging.Logger;
 
 import com.myster.client.stream.MysterDataOutputStream;
+import com.myster.filemanager.FileTypeListManager;
 import com.myster.identity.Identity;
 import com.myster.net.BadPacketException;
 import com.myster.server.stream.NotInitializedException;
@@ -21,11 +22,13 @@ public class ServerStatsDatagramServer implements TransactionProtocol {
     private final Supplier<String> getIdentity;
     private final Identity identity;
     private final Supplier<Integer> getPort;
+    private final FileTypeListManager fileManager;
 
-    public ServerStatsDatagramServer(Supplier<String> getIdentity, Supplier<Integer> getPort, Identity identity) {
+    public ServerStatsDatagramServer(Supplier<String> getIdentity, Supplier<Integer> getPort, Identity identity, FileTypeListManager fileManager) {
         this.getPort = getPort;
         this.getIdentity = getIdentity;
         this.identity = identity;
+        this.fileManager = fileManager;
     }
 
     @Override
@@ -41,7 +44,7 @@ public class ServerStatsDatagramServer implements TransactionProtocol {
         ByteArrayOutputStream byteOutputStream = new ByteArrayOutputStream();
         try (var out = new MysterDataOutputStream(byteOutputStream)) {
             out.writeUTF("" + com.myster.server.stream.ServerStats
-                    .getMMLToSend(getIdentity.get(), getPort.get(), identity));
+                    .getMMLToSend(getIdentity.get(), getPort.get(), identity, fileManager));
 
             sender.sendTransaction(new Transaction(transaction,
                                                    byteOutputStream.toByteArray(),
@@ -51,7 +54,7 @@ public class ServerStatsDatagramServer implements TransactionProtocol {
             throw new BadPacketException("Bad packet " + ex);
         } catch (NotInitializedException exception) {
             // nothing..
-            LOGGER.info("Could not reply server stats, file manager is not inited yet");
+            LOGGER.info("Could not reply server stats, file manager is not inited yet" + exception);
         }
     }
 }

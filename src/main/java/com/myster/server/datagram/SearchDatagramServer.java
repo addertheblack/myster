@@ -6,6 +6,7 @@ import java.io.IOException;
 
 import com.myster.client.stream.MysterDataInputStream;
 import com.myster.client.stream.MysterDataOutputStream;
+import com.myster.filemanager.FileTypeListManager;
 import com.myster.net.BadPacketException;
 import com.myster.server.event.ServerSearchDispatcher;
 import com.myster.server.event.ServerSearchEvent;
@@ -16,7 +17,13 @@ import com.myster.type.MysterType;
 
 public class SearchDatagramServer implements TransactionProtocol {
     public static final int SEARCH_TRANSACTION_CODE = com.myster.client.datagram.SearchDatagramClient.SEARCH_TRANSACTION_CODE;
+    
+    private final FileTypeListManager fileManager;
 
+    public SearchDatagramServer(FileTypeListManager fileManager) {
+        this.fileManager = fileManager;
+    }
+    
     @Override
     public int getTransactionCode() {
         return SEARCH_TRANSACTION_CODE;
@@ -46,7 +53,7 @@ public class SearchDatagramServer implements TransactionProtocol {
 
             String[] stringarray;
 
-            stringarray = com.myster.filemanager.FileTypeListManager.getInstance().getDirList(type,
+            stringarray = fileManager.getDirList(type,
                     searchstring); //does the
             // search
             // matching

@@ -39,10 +39,10 @@ public abstract class ServerStreamHandler implements ConnectionSection {
                                                                                 // inherit
                                                                                 // from
                                                                                 // ConnectionSection
-        context.socket.out.write(1); //Tells the other end that the command is
+        context.socket().out.write(1); //Tells the other end that the command is
                                      // good! (Standard Myster header)
         
-        context.socket.out.flush(); // no waiting!
+        context.socket().out.flush(); // no waiting!
 
         section(context); //!!!!!
     }

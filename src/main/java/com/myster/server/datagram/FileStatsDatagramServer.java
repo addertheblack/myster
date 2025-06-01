@@ -18,7 +18,13 @@ import com.myster.type.MysterType;
 public class FileStatsDatagramServer implements TransactionProtocol {
     public static final int FILE_STATS_TRANSACTION_CODE =
             com.myster.client.datagram.FileStatsDatagramClient.FILE_STATS_TRANSACTION_CODE;
+    
+    private final FileTypeListManager fileManager;
 
+    public FileStatsDatagramServer(FileTypeListManager fileManager) {
+        this.fileManager = fileManager;
+    }
+    
     public int getTransactionCode() {
         return FILE_STATS_TRANSACTION_CODE;
     }
@@ -37,7 +43,7 @@ public class FileStatsDatagramServer implements TransactionProtocol {
             MysterType type = in.readType();
             String filename = in.readUTF();
 
-            FileItem fileItem = FileTypeListManager.getInstance().getFileItem(type, filename);
+            FileItem fileItem = fileManager.getFileItem(type, filename);
             MML mml;
 
             if (fileItem == null) { //file not found

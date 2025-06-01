@@ -76,6 +76,8 @@ public class FileTypeList {
     private final HashProvider hashProvider;
     private final TypeDescriptionList tdList;
 
+    private volatile boolean initialized = false;
+
     // indexing...
 
     /**
@@ -433,6 +435,8 @@ public class FileTypeList {
             filelist = new ArrayList<FileItem>();
         }
         if (!isShared()) { // if file list is not shared make sure list has
+            initialized = true;
+            
             // length = 0 then continue.
             if (filelist.size() != 0) {
                 filelist = new ArrayList<FileItem>();
@@ -462,6 +466,7 @@ public class FileTypeList {
             indexingFuture = PromiseFutures
                     .execute(new FileListIndexCall(type, new File(rootdir), hashProvider, tdList))
                     .addFinallyListener(this::resetIndexingVariables)
+                    .addFinallyListener(()-> initialized = true)
                     .addResultListener(this::setFileList)
                     .addStandardExceptionHandler()
                     .useEdt();
@@ -683,9 +688,9 @@ public class FileTypeList {
         // }
     }
 
-    public synchronized boolean hasInitialized() {
+    public synchronized boolean isInitialized() {
         assertFileList();
         
-        return !(filelist.isEmpty() && isIndexing());
+        return initialized;
     }
 }

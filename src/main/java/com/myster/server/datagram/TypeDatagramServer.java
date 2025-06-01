@@ -16,9 +16,14 @@ import com.myster.type.MysterType;
  */
 public class TypeDatagramServer implements TransactionProtocol {
     public static final int NUMBER_OF_FILE_TYPE_TO_RETURN = 100;
-
     public static final int TYPE_TRANSACTION_CODE = com.myster.client.datagram.TypeDatagramClient.TYPE_TRANSACTION_CODE;
 
+    private final FileTypeListManager fileManager;
+
+    public TypeDatagramServer(FileTypeListManager fileManager) {
+        this.fileManager = fileManager;
+    }
+    
     @Override
     public int getTransactionCode() {
         return TYPE_TRANSACTION_CODE;
@@ -33,7 +38,7 @@ public class TypeDatagramServer implements TransactionProtocol {
         MysterType[] temp;
         ByteArrayOutputStream byteOutputStream = new ByteArrayOutputStream();
         try (MysterDataOutputStream out = new MysterDataOutputStream(byteOutputStream)) {
-                temp = FileTypeListManager.getInstance().getFileTypeListing();
+                temp = fileManager.getFileTypeListing();
 
                 out.writeInt(temp.length);
 

@@ -51,15 +51,15 @@ public class ServerStats extends ServerStreamHandler {
     public void section(ConnectionContext context) throws IOException {
         MML mmlToSend;
         try {
-            mmlToSend = getMMLToSend(getServerName.get(), getPort.get(), identity);
-            context.socket.out.writeUTF("" + mmlToSend);
+            mmlToSend = getMMLToSend(getServerName.get(), getPort.get(), identity, context.fileManager());
+            context.socket().out.writeUTF("" + mmlToSend);
         } catch (NotInitializedException exception) {
             throw new IOException("File list not initialized");
         }
     }
 
     //Returns an MML that would be send as a string via a Handshake.
-    public static MML getMMLToSend(String identityName, int port, Identity identity) throws NotInitializedException {
+    public static MML getMMLToSend(String identityName, int port, Identity identity, FileTypeListManager fileManager) throws NotInitializedException {
         try {
             MML mml = new MML();
 
@@ -72,7 +72,7 @@ public class ServerStats extends ServerStreamHandler {
 
             mml.put(MYSTER_VERSION, "1.0");
 
-            getNumberOfFilesMML(mml); //Adds the number of files data.
+            getNumberOfFilesMML(mml, fileManager); //Adds the number of files data.
 
             String ident = identityName;
             if (ident != null) {
@@ -105,18 +105,16 @@ public class ServerStats extends ServerStreamHandler {
 
     }
 
-    private static MML getNumberOfFilesMML(MML mml) throws NotInitializedException { // in-line
-        FileTypeListManager filemanager = FileTypeListManager.getInstance();
-
-        MysterType[] filetypelist = filemanager.getFileTypeListing();
+    private static MML getNumberOfFilesMML(MML mml, FileTypeListManager fileManager) throws NotInitializedException { // in-line
+        MysterType[] filetypelist = fileManager.getFileTypeListing();
 
         for (int i = 0; i < filetypelist.length; i++) {
-            if (!filemanager.hasInitialized(filetypelist[i])) {
-                throw new NotInitializedException(filetypelist[i]);
+            if (!fileManager.hasInitialized(filetypelist[i])) {
+                throw new NotInitializedException("File list not inited", filetypelist[i]);
             }
             
             mml.put(NUMBER_OF_FILES + filetypelist[i],
-                    "" + filemanager.getNumberOfFiles(filetypelist[i]));
+                    "" + fileManager.getNumberOfFiles(filetypelist[i]));
         }
 
         return mml;

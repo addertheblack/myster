@@ -19,8 +19,8 @@ public class MultiSourceUtilities {
     private static final String OK_BUTTON = "OK", CANCEL_BUTTON = "Cancel",
             WRITE_OVER = "Write-Over", RENAME = "Rename";
 
-    public static File getFileToDownloadTo(MysterFileStub stub, Frame parentFrame) {
-        String directoryString = FileTypeListManager.getInstance().getPathFromType(stub.getType());
+    public static File getFileToDownloadTo(MysterFileStub stub, Frame parentFrame, FileTypeListManager fileManager) {
+        String directoryString = fileManager.getPathFromType(stub.getType());
         File directory = (directoryString == null ? askUserForANewFile(stub.getName()) : new File(
                 directoryString));
         File file = new File(directory.getPath(), stub.getName() + EXTENSION);

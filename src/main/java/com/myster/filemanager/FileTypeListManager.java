@@ -32,59 +32,23 @@ import com.myster.type.TypeDescription;
 import com.myster.type.TypeDescriptionList;
 
 public class FileTypeListManager {
-    private static FileTypeListManager f; //For singleton.
-
-    private FileTypeList filelist[]; //An array of all file lists. 1 Per type.
-
-    private final HashProvider hashProvider;
+    private final FileTypeList filelist[]; //An array of all file lists. 1 Per type.
 
     public static final String PATH = "/File Lists/"; //Path the File Lists
 
-    private static TypeDescriptionList tdList;
 
-
-    // information is stored
-    // in the prefs.
-
-    //Each File List decides what information it will store
-    //under this path.
-    
-    public synchronized static void init(HashProvider hashProvider, TypeDescriptionList tdList) {
-        FileTypeListManager.tdList = tdList;
-        
-        f = new FileTypeListManager(hashProvider);
-
-        f.initFileTypeListManager();
-    }
-
-    /**
-     * Gets an instance of the current File manager. This routine uses a varient
-     * of the singleton desing pattern with dynamic loading.
-     */
-    @Deprecated
-    public synchronized static FileTypeListManager getInstance() {
-        if (f == null) {
-            throw new IllegalStateException("FileTypeListManager is not initialized yet.");
-        }
-        
-        return f;
-    }
 
     /*
      * Private Constructor. Does nothing except call initFileTypeListManager()
      * routine.
      */
-    private FileTypeListManager(HashProvider hashProvider) {
-        this.hashProvider = hashProvider;
-    }
-
-    /*
-     * Loads the list of types using the loadTypeAndDescriptionList routine and
-     * creates a new FileTypeList for each of the types. So we have a
-     * type->FileList behavior.. This routine is only called by
-     * FileTypeListManager().
-     */
-    private void initFileTypeListManager() {
+    public FileTypeListManager(HashProvider hashProvider, TypeDescriptionList tdList) {
+        /*
+         * Loads the list of types using the loadTypeAndDescriptionList routine and
+         * creates a new FileTypeList for each of the types. So we have a
+         * type->FileList behavior.. This routine is only called by
+         * FileTypeListManager().
+         */
         TypeDescription[] list = tdList.getEnabledTypes();
         filelist = new FileTypeList[list.length];
         for (int i = 0; i < list.length; i++) {
@@ -93,9 +57,10 @@ public class FileTypeListManager {
         }
     }
 
+
     /**
      * Gets a File Type List from a type. This routine is only used internally.
-     * The reasone it is not accessible is to hide implementation details of the
+     * The reason it is not accessible is to hide implementation details of the
      * FileManager. That and to keep the FileManager's interface as simple as
      * possible
      * 
@@ -345,8 +310,8 @@ public class FileTypeListManager {
     public boolean hasInitialized(MysterType type) {
         FileTypeList list = getFileTypeList(type);
         if (list == null)
-            return false; //err.
+            return false; // err.
 
-        return list.hasInitialized();
+        return list.isInitialized();
     }
 }

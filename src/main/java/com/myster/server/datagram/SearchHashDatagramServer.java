@@ -7,6 +7,7 @@ import java.io.IOException;
 import com.myster.client.stream.MysterDataInputStream;
 import com.myster.client.stream.MysterDataOutputStream;
 import com.myster.filemanager.FileItem;
+import com.myster.filemanager.FileTypeListManager;
 import com.myster.hash.FileHash;
 import com.myster.hash.SimpleFileHash;
 import com.myster.net.BadPacketException;
@@ -17,7 +18,13 @@ import com.myster.type.MysterType;
 
 public class SearchHashDatagramServer implements TransactionProtocol {
     public static final int SEARCH_HASH_TRANSACTION_CODE = com.myster.client.datagram.SearchHashDatagramClient.SEARCH_HASH_TRANSACTION_CODE;
+    
+    private final FileTypeListManager fileManager;
 
+    public SearchHashDatagramServer(FileTypeListManager fileManager) {
+        this.fileManager = fileManager;
+    }
+    
     public int getTransactionCode() {
         return SEARCH_HASH_TRANSACTION_CODE;
     }
@@ -50,11 +57,10 @@ public class SearchHashDatagramServer implements TransactionProtocol {
                 }
             }
 
-           FileItem file = null;
+            FileItem file = null;
 
             if (md5Hash != null) {
-                file = com.myster.filemanager.FileTypeListManager.getInstance()
-                        .getFileFromHash(type, md5Hash);
+                file = fileManager.getFileFromHash(type, md5Hash);
             }
 
             if (file == null) {

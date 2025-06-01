@@ -30,20 +30,20 @@ public class FileByHash extends ServerStreamHandler {
 
     public void section(ConnectionContext context) throws IOException {
         try {
-            MysterType type = context.socket.in.readType();
+            MysterType type = context.socket().in.readType();
 
             FileHash md5Hash = null;
 
             for (;;) { //get hash name, get hash length, get hash data until
                 // hashname is ""
-                String hashType = context.socket.in.readUTF();
+                String hashType = context.socket().in.readUTF();
                 if (hashType.equals("")) {
                     break;
                 }
-                int lengthOfHash = 0xffff & context.socket.in.readShort();
+                int lengthOfHash = 0xffff & context.socket().in.readShort();
 
                 byte[] hashBytes = new byte[lengthOfHash];
-                context.socket.in.readFully(hashBytes, 0, hashBytes.length);
+                context.socket().in.readFully(hashBytes, 0, hashBytes.length);
 
                 if (hashType.equalsIgnoreCase(com.myster.hash.HashManager.MD5)) {
                     md5Hash = SimpleFileHash.buildFileHash(hashType, hashBytes);
@@ -53,14 +53,13 @@ public class FileByHash extends ServerStreamHandler {
             com.myster.filemanager.FileItem file = null;
 
             if (md5Hash != null) {
-                file = com.myster.filemanager.FileTypeListManager.getInstance().getFileFromHash(
-                        type, md5Hash);
+                file = context.fileManager().getFileFromHash(type, md5Hash);
             }
 
             if (file == null) {
-                context.socket.out.writeUTF("");
+                context.socket().out.writeUTF("");
             } else {
-                context.socket.out.writeUTF(file.getName());
+                context.socket().out.writeUTF(file.getName());
             }
         } catch (RuntimeException ex) {
             ex.printStackTrace();

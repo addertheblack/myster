@@ -12,6 +12,7 @@ import com.general.util.AnswerDialog;
 import com.general.util.Util;
 import com.myster.client.stream.StandardSuite;
 import com.myster.client.stream.msdownload.MultiSourceDownload.FileMover;
+import com.myster.filemanager.FileTypeListManager;
 import com.myster.hash.FileHash;
 import com.myster.mml.RobustMML;
 import com.myster.net.MysterAddress;
@@ -144,13 +145,16 @@ public class DownloadInitiator implements Runnable {
     }
     
     private static class EdtFileProgressWindow implements DownloadInitiatorListener {
+        private final FileTypeListManager fileManager;
         private final FileProgressWindow progress;
         
         private Cancellable cancellable;
         private boolean done;
+
         
         public EdtFileProgressWindow(MysterFrameContext context) {
             progress = new com.myster.util.FileProgressWindow(context, "Connecting..");
+            fileManager = context.fileManager();
         }
         
         @Override
@@ -196,7 +200,7 @@ public class DownloadInitiator implements Runnable {
 
         @Override
         public File getFileToDownloadTo(MysterFileStub stub) {
-            return MultiSourceUtilities.getFileToDownloadTo(stub, progress);
+            return MultiSourceUtilities.getFileToDownloadTo(stub, progress, fileManager);
         }
 
         @Override
