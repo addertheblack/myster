@@ -24,13 +24,12 @@ public class FileTypeLister extends ServerStreamHandler {
     }
 
     public void section(ConnectionContext context) throws IOException {
-        MysterType[] types = FileTypeListManager.getInstance()
-                .getFileTypeListing();
+        MysterType[] types = context.fileManager().getFileTypeListing();
 
-        context.socket.out.writeInt(types.length);
+        context.socket().out.writeInt(types.length);
 
         for (int i = 0; i < types.length; i++) {
-            context.socket.out.writeType(types[i]);
+            context.socket().out.writeType(types[i]);
         }
     }
 }

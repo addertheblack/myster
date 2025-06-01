@@ -21,6 +21,7 @@ import java.util.List;
 import com.general.util.AnswerDialog;
 import com.general.util.Util;
 import com.myster.client.stream.msdownload.MultiSourceDownload.FileMover;
+import com.myster.filemanager.FileTypeListManager;
 import com.myster.hash.FileHash;
 import com.myster.hash.SimpleFileHash;
 import com.myster.mml.MMLException;
@@ -120,12 +121,15 @@ public class MSPartialFile implements AutoCloseable {
         return msPartialFiles.toArray(MSPartialFile[]::new);
     }
 
-    public static void restartDownloads(HashCrawlerManager crawlerManager, MysterFrameContext c) throws IOException {
+    public static void restartDownloads(FileTypeListManager fileManager,
+                                        HashCrawlerManager crawlerManager,
+                                        MysterFrameContext c)
+            throws IOException {
         MSPartialFile[] files = list();
 
         for (int i = 0; i < files.length; i++) {
             try {
-                startDownload(files[i], crawlerManager, c);
+                startDownload(files[i], fileManager, crawlerManager, c);
             } catch (IOException ex) {
                 ex.printStackTrace();
             }
@@ -139,11 +143,14 @@ public class MSPartialFile implements AutoCloseable {
         return progress;
     }
 
-    //Resumable multisource driver.
-    public static void startDownload(MSPartialFile partialFile, HashCrawlerManager crawlerManager, MysterFrameContext c) throws IOException {
+    // Resumable multisource driver.
+    public static void startDownload(MSPartialFile partialFile,
+                                     FileTypeListManager fileManager,
+                                     HashCrawlerManager crawlerManager,
+                                     MysterFrameContext c)
+            throws IOException {
         final String finalFileName = partialFile.getFilename() + ".i";
-        final String pathToType = com.myster.filemanager.FileTypeListManager.getInstance()
-                .getPathFromType(partialFile.getType());
+        final String pathToType = fileManager.getPathFromType(partialFile.getType());
         final FileProgressWindow progress = showProgres(c, partialFile.getFilename());
         String incompleteFilename = partialFile.getFilename() + ".i";
         File dir = partialFile.getPath();

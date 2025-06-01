@@ -235,17 +235,18 @@ public class Myster {
                 new MultiSourceHashSearch(tracker, protocol);
         ClientWindow.init(protocol, crawlerManager, tracker, serverPreferences, tdList);
 
+
+        final HashManager hashManager = new HashManager();
+        FileTypeListManager fileManager = new FileTypeListManager((f, l) -> hashManager.findHash(f, l), tdList);
+        
         ServerFacade serverFacade = new ServerFacade(tracker,
                                                      serverPreferences,
                                                      datagramManager,
                                                      transactionManager,
                                                      identity,
+                                                     fileManager,
                                                      serverDispatcher);
-        addServerConnectionSettings(serverFacade, tracker, serverPreferences, identity, datagramManager);
-
-        final HashManager hashManager = new HashManager();
-        FileTypeListManager.init((f, l) -> hashManager.findHash(f, l), tdList);
-
+        addServerConnectionSettings(serverFacade, tracker, serverPreferences, identity, datagramManager, fileManager);
         // asynchronously start the server
         serverFacade.startServer();
 
@@ -279,7 +280,7 @@ public class Myster {
                 MysterMenuBar menuBarFactory = new MysterMenuBar();
                 WindowManager windowManager = new WindowManager();
                 final MysterFrameContext context =
-                        new MysterFrameContext(menuBarFactory, windowManager, tdList, new WindowLocationKeeper(preferences));
+                        new MysterFrameContext(menuBarFactory, windowManager, tdList, new WindowLocationKeeper(preferences), fileManager);
                 PreferencesGui preferencesGui = new PreferencesGui(context);
 
                 serverFacade
@@ -317,7 +318,7 @@ public class Myster {
                 preferencesGui.addPanel(BandwidthManager.getPrefsPanel());
                 preferencesGui.addPanel(new BannersPreferences());
                 preferencesGui.addPanel(new ServerPreferencesPane(serverPreferences));
-                preferencesGui.addPanel(new FmiChooser(FileTypeListManager.getInstance(), tdList));
+                preferencesGui.addPanel(new FmiChooser(fileManager, tdList));
                 preferencesGui.addPanel(new MessagePreferencesPanel(preferences));
                 preferencesGui.addPanel(new TypeManagerPreferencesGUI(tdList));
 
@@ -344,7 +345,7 @@ public class Myster {
 
                 try {
                     com.myster.client.stream.msdownload.MSPartialFile
-                            .restartDownloads(crawlerManager, context);
+                            .restartDownloads(fileManager, crawlerManager, context);
                 } catch (IOException ex) {
                     LOGGER.info("Error in restarting downloads.");
                     ex.printStackTrace();
@@ -397,7 +398,9 @@ public class Myster {
                                                     Tracker tracker,
                                                     ServerPreferences preferences,
                                                     Identity identity,
-                                                    DatagramProtocolManager datagramManager) {
+                                                    DatagramProtocolManager datagramManager, 
+                                                    FileTypeListManager fileManager) {
+        
         serverFacade.addConnectionSection(new com.myster.server.stream.MysterServerLister(tracker));
         serverFacade.addConnectionSection(new com.myster.server.stream.RequestDirThread());
         serverFacade.addConnectionSection(new com.myster.server.stream.FileTypeLister());
@@ -416,14 +419,14 @@ public class Myster {
 
         serverFacade
                 .addDatagramTransactions(new TopTenDatagramServer(tracker),
-                                         new TypeDatagramServer(),
-                                         new SearchDatagramServer(),
+                                         new TypeDatagramServer(fileManager),
+                                         new SearchDatagramServer(fileManager),
                                          new ServerStatsDatagramServer(preferences::getIdentityName,
                                                                        preferences::getServerPort,
-                                                                       identity),
-                                         new FileStatsDatagramServer(),
-                                         new SearchHashDatagramServer());
-
+                                                                       identity,
+                                                                       fileManager),
+                                         new FileStatsDatagramServer(fileManager),
+                                         new SearchHashDatagramServer(fileManager));
     }
 
     private static void setupLogging() throws IOException {

@@ -33,13 +33,13 @@ public class FileInfoLister extends ServerStreamHandler {
 
     public void section(ConnectionContext context) throws IOException {
         try {
-            MysterDataInputStream in = context.socket.in;
-            MysterDataOutputStream out = context.socket.out;
+            MysterDataInputStream in = context.socket().in;
+            MysterDataOutputStream out = context.socket().out;
 
             MysterType type = in.readType();
             String filename = in.readUTF();
 
-            FileItem fileItem = FileTypeListManager.getInstance().getFileItem(
+            FileItem fileItem = context.fileManager().getFileItem(
                     type, filename);
             MML mml;
 

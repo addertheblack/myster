@@ -20,7 +20,7 @@ import com.myster.server.ConnectionContext;
 
 public class RequestDirThread extends ServerStreamHandler {
     public static final int NUMBER = 78;
-    
+
     private static final Logger LOGGER = Logger.getLogger(RequestDirThread.class.getName());
 
     public int getSectionNumber() {
@@ -28,15 +28,13 @@ public class RequestDirThread extends ServerStreamHandler {
     }
 
     public void section(ConnectionContext context) throws IOException {
-        MysterDataInputStream in = context.socket
-                .getInputStream();
-        MysterDataOutputStream out = context.socket
-                .getOutputStream();
+        MysterDataInputStream in = context.socket().getInputStream();
+        MysterDataOutputStream out = context.socket().getOutputStream();
 
         var type = in.readType();
         LOGGER.info("Reading: " + type);
-        String[] array = FileTypeListManager.getInstance().getDirList(type);
-        
+        String[] array = context.fileManager().getDirList(type);
+
         if (array == null) {
             LOGGER.info("Null Pointer");
             out.writeInt(0);
@@ -46,7 +44,7 @@ public class RequestDirThread extends ServerStreamHandler {
 
             for (int j = 0; j < array.length; j++) {
                 out.writeUTF(array[j]);
-                LOGGER.fine("Outputting: "+array[j]);
+                LOGGER.fine("Outputting: " + array[j]);
             }
         }
     }

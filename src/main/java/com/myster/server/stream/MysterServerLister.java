@@ -27,12 +27,12 @@ public class MysterServerLister extends ServerStreamHandler {
      * of strings) NO length sent
      */
     public void section(ConnectionContext context) throws IOException {
-        MysterDataInputStream in = context.socket.in;
-        MysterDataOutputStream out = context.socket.getOutputStream();
+        MysterDataInputStream in = context.socket().in;
+        MysterDataOutputStream out = context.socket().getOutputStream();
 
         MysterServer[] topten;
 
-        tracker.addIp(new MysterAddress(context.socket.getInetAddress()));
+        tracker.addIp(new MysterAddress(context.socket().getInetAddress()));
 
         topten = tracker.getTop(in.readType(), 100);
         
