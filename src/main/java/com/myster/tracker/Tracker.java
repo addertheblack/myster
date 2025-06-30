@@ -18,6 +18,7 @@ import java.util.stream.Stream;
 import com.general.events.NewGenericDispatcher;
 import com.myster.client.datagram.PingResponse;
 import com.myster.net.MysterAddress;
+import com.myster.server.ServerUtils;
 import com.myster.type.MysterType;
 import com.myster.type.TypeDescription;
 import com.myster.type.TypeDescriptionList;
@@ -44,6 +45,7 @@ public class Tracker {
     private static final String PATH = "ServerLists";
 
     private final MysterServerList[] list;
+    private final LanMysterServerList lan;
     private final TypeDescription[] enabledTypes;
     private final MysterServerPool pool;
     private final Preferences preferences;
@@ -52,6 +54,8 @@ public class Tracker {
 
     public interface ListChangedListener {
         public void serverAddedRemoved(MysterType type);
+        
+        public void lanServerAddedRemoved();
     }
     
     public Tracker(MysterServerPool pool, Preferences preferences, TypeDescriptionList typeDescriptionList) {
@@ -66,6 +70,8 @@ public class Tracker {
         for (int i = 0; i < list.length; i++) {
             assertIndex(i); // loads all lists.
         }
+        
+        lan = new LanMysterServerList(pool, dispatcher.fire()::lanServerAddedRemoved);
 
         pool.addPoolListener(new MysterPoolListener() {
             @Override
@@ -75,7 +81,7 @@ public class Tracker {
             
             @Override
             public void serverPing(PingResponse server) {
-                // nothing
+                lan.serverPing(server.address(), !server.isTimeout());
             }
 
             @Override
@@ -85,6 +91,19 @@ public class Tracker {
         });
         
         pool.clearHardLinks();
+
+        
+        // since we''ve missed events while the tracker was being constructed
+        // we need to recheck the pool for lan servers
+        pool.filter(server -> {
+            MysterAddress[] upAddresses = server.getUpAddresses();
+            for (MysterAddress address : upAddresses) {
+                if (ServerUtils.isLanAddress(address.getInetAddress())) {
+                    lan.addIP(server);
+                    break; // only add once
+                }
+            }
+        });
     }
     
     private void notifyAllListsDeadServer(MysterIdentity identity) {
@@ -102,18 +121,19 @@ public class Tracker {
      *            The MysterAddress of the server you want to add.
      */
     public void addIp(MysterAddress ip) {
-        MysterServer s = pool.getCachedMysterIp(ip);
-        if (s != null) {
-            if (!s.isUntried() && s.getUpAddresses().length ==0) {
+        pool.getCachedMysterIp(ip).ifPresentOrElse(s -> {
+            if (!s.isUntried() && s.getUpAddresses().length == 0) {
                 pool.suggestAddress(ip);
             }
-            
-            return;
-        }
-
-        pool.suggestAddress(ip);
+        }, () -> pool.suggestAddress(ip));
     }
-
+    
+    public void receivedPing(MysterAddress ip) {
+        if (!pool.receivedPing(ip)) {
+            addIp(ip);
+        }
+    }
+    
     /**
      * Calls getTop(type, 10).
      */
@@ -150,7 +170,7 @@ public class Tracker {
      *         any record of a server at that address
      */
     public synchronized MysterServer getQuickServerStats(MysterAddress address) {
-        return pool.getCachedMysterIp(address);
+        return pool.getCachedMysterIp(address).orElse(null);
     }
 
     /**
@@ -165,6 +185,10 @@ public class Tracker {
         if (iplist == null)
             return null;
         return iplist.getAll();
+    }
+    
+    public synchronized List<MysterServer> getAllLan() {
+        return lan.getAll();
     }
 
     /**
@@ -195,6 +219,8 @@ public class Tracker {
             assertIndex(i);
             list[i].addIP(server);
         }
+        
+        lan.addIP(server);
     }
 
     /**
@@ -252,7 +278,7 @@ public class Tracker {
      * This is a stupid routine.
      */
     private synchronized MysterServerList createNewList(int index) {
-        return new MysterServerList(enabledTypes[index].getType(), pool, preferences, dispatcher.fire()::serverAddedRemoved);
+        return new NormalMysterServerList(enabledTypes[index].getType(), pool, preferences, dispatcher.fire()::serverAddedRemoved);
     }
 
     public void addListChangedListener(ListChangedListener l) {

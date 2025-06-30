@@ -17,6 +17,7 @@ import java.awt.event.WindowEvent;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Optional;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.stream.Stream;
 
@@ -37,6 +38,7 @@ import com.myster.tracker.MysterIdentity;
 import com.myster.tracker.MysterServer;
 import com.myster.tracker.MysterPoolListener;
 import com.myster.tracker.Tracker;
+import com.myster.tracker.Tracker.ListChangedListener;
 import com.myster.type.MysterType;
 import com.myster.ui.MysterFrame;
 import com.myster.ui.MysterFrameContext;
@@ -86,7 +88,7 @@ public class TrackerWindow extends MysterFrame {
         gbconstrains.insets = new Insets(5, 5, 5, 5);
 
         //init objects
-        choice = new TypeChoice(c.tdList());
+        choice = new TypeChoice(c.tdList(), true);
 
         list = MCListFactory.buildMCList(7, true, this);
 
@@ -144,13 +146,26 @@ public class TrackerWindow extends MysterFrame {
         });
 
         reloadList = new AtomicBoolean(false);
-        tracker.addListChangedListener((MysterType type) -> {
-            reloadList.set(true);
-            Util.invokeLater(() -> {
-                if (type.equals(getMysterType())) {
-                    TrackerWindow.this.resetTimer();
-                }
-            });
+        tracker.addListChangedListener(new ListChangedListener() {
+            @Override
+            public void serverAddedRemoved(MysterType type) {
+                reloadList.set(true);
+                Util.invokeLater(() -> {
+                    if (type.equals(getMysterType())) {
+                        TrackerWindow.this.resetTimer();
+                    }
+                });
+            }
+
+            @Override
+            public void lanServerAddedRemoved() {
+                reloadList.set(true);
+                Util.invokeLater(() -> {
+                    if (getMysterType() == null) {
+                        TrackerWindow.this.resetTimer();
+                    }
+                });
+            }
         });
 
         addComponentListener(new ComponentAdapter() {
@@ -212,14 +227,10 @@ public class TrackerWindow extends MysterFrame {
         add(c);
     }
 
-    public MysterType getSelectedType() {
-        return choice.getType();
-    }
-
     /**
      * Returns the selected type.
      */
-    public synchronized MysterType getMysterType() {
+    Optional<MysterType> getMysterType() {
         return choice.getType();
     }
 
@@ -232,11 +243,11 @@ public class TrackerWindow extends MysterFrame {
      * Remakes the MCList. This routine is called every few minutes to update the tracker window
      * with the status of the tracker.
      */
-    private synchronized void loadTheList() {
+    private void loadTheList() {
         int currentIndex = list.getSelectedIndex();
         list.clearAll();
         itemsinlist = new ArrayList<>();
-        List<MysterServer> servers = tracker.getAll(getMysterType());
+        List<MysterServer> servers = choice.isLan() ? tracker.getAllLan() : tracker.getAll(getMysterType().get());
         TrackerMCListItem[] m = new TrackerMCListItem[servers.size()];
 
         for (int i = 0; i < servers.size(); i++) {
@@ -252,7 +263,7 @@ public class TrackerWindow extends MysterFrame {
     /**
      * Refreshes the list information with new information from the tracker.
      */
-    private synchronized void checkForRefresh() {
+    private void checkForRefresh() {
         boolean refresh = refreshList.get();
         boolean reload = reloadList.get();
         
@@ -273,6 +284,8 @@ public class TrackerWindow extends MysterFrame {
             (itemsinlist.get(i)).refresh();
         }
         list.repaint();
+        
+        choice.setSelectedItem("Local Network");
     }
 
     private void cancelTimer() {
@@ -299,11 +312,11 @@ public class TrackerWindow extends MysterFrame {
 
     static class TrackerMCListItem extends MCListItemInterface<TrackerMCListItem> {
         private final MysterServer server;
-        private final MysterType type;
+        private final Optional<MysterType> type;
 
         private final Sortable<?>[] sortables = new Sortable<?>[7];
 
-        public TrackerMCListItem(MysterServer s, MysterType t) {
+        public TrackerMCListItem(MysterServer s, Optional<MysterType> t) {
             server = s;
             type = t;
             refresh();
@@ -316,14 +329,17 @@ public class TrackerWindow extends MysterFrame {
 
         public void refresh() {
             sortables[0] = new SortableString(server.getServerName());
-            sortables[1] = new SortableLong(server.getNumberOfFiles(type));
+            sortables[1] = type.isPresent() ? new SortableLong(server.getNumberOfFiles(type.get()))
+                    : new SortableString("");
             sortables[2] = new SortableStatus(server.getStatus(), server.isUntried());
             sortables[3] = new SortableString("" + String.join(", ",
                                                                Stream.of(server.getAddresses())
                                                                        .map(Object::toString)
                                                                        .toArray(String[]::new)));
             sortables[4] = new SortablePing(server.getPingTime());
-            sortables[5] = new SortableRank(((long) (100 * server.getRank(type))));
+            sortables[5] =
+                    type.isPresent() ? new SortableRank(((long) (100 * server.getRank(type.get()))))
+                            : new SortableString("");
             sortables[6] = new SortableUptime((server.getStatus() ? server.getUptime() : -2));
         }
 

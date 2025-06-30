@@ -202,8 +202,8 @@ public class ClientWindow extends MysterFrame implements Sayable {
         instant.addActionListener(new ActionListener() {
             public void actionPerformed(ActionEvent e) {
                 try {
-                    com.myster.net.MysterAddress address = new com.myster.net.MysterAddress(ipTextField
-                            .getText());
+                    com.myster.net.MysterAddress address =
+                            MysterAddress.createMysterAddress(ipTextField.getText());
                     com.myster.message.MessageWindow window =
                             new com.myster.message.MessageWindow(getMysterFrameContext(),
                                                                  protocol,

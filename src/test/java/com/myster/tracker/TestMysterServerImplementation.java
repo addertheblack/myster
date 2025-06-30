@@ -43,7 +43,7 @@ class TestMysterServerImplementation {
         
         MapPreferences p = new MapPreferences();
         IdentityTracker it = new IdentityTracker(a -> PromiseFuture.newPromiseFuture(new PingResponse(a, 1)), (_)->{ sem.release(); }, (_)->{});
-        MysterAddress address = new MysterAddress("127.0.0.1");
+        MysterAddress address = MysterAddress.createMysterAddress("127.0.0.1");
         
         String cleanPublicKeyString = MML.cleanString(Util.keyToString(identity.getMainIdentity().get().getPublic()));
         MysterIdentity id = new PublicKeyIdentity(identity.getMainIdentity().get().getPublic());
@@ -60,16 +60,16 @@ class TestMysterServerImplementation {
         MysterServerImplementation impl = new MysterServerImplementation(p, it, new RobustMML(mml), id, address);
         var addresses = impl.getAddresses();
         
-        Assertions.assertArrayEquals(new MysterAddress[]{new MysterAddress("127.0.0.1:1234")}, addresses);
+        Assertions.assertArrayEquals(new MysterAddress[]{MysterAddress.createMysterAddress("127.0.0.1:1234")}, addresses);
         
-        Assertions.assertEquals(new MysterAddress("127.0.0.1:1234"), impl.getBestAddress().get());
+        Assertions.assertEquals(MysterAddress.createMysterAddress("127.0.0.1:1234"), impl.getBestAddress().get());
         
         MysterServer server = impl.getInterface();
         Assertions.assertEquals("Mr. Magoo", server.getServerName()); 
-        Assertions.assertArrayEquals(new MysterAddress[]{new MysterAddress("127.0.0.1:1234")}, server.getAddresses()); 
-        Assertions.assertEquals(new MysterAddress("127.0.0.1:1234"), server.getBestAddress().get());
+        Assertions.assertArrayEquals(new MysterAddress[]{MysterAddress.createMysterAddress("127.0.0.1:1234")}, server.getAddresses()); 
+        Assertions.assertEquals(MysterAddress.createMysterAddress("127.0.0.1:1234"), server.getBestAddress().get());
         sem.acquire();
         
-        Assertions.assertArrayEquals(new MysterAddress[]{new MysterAddress("127.0.0.1:1234")},  server.getUpAddresses()); 
+        Assertions.assertArrayEquals(new MysterAddress[]{MysterAddress.createMysterAddress("127.0.0.1:1234")},  server.getUpAddresses()); 
     }
 }

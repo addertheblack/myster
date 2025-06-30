@@ -71,7 +71,7 @@ public class TypeListerThread extends MysterThread {
             if (endFlag)
                 return;
             
-            MysterAddress mysterAddress = new MysterAddress(ip);
+            MysterAddress mysterAddress = MysterAddress.createMysterAddress(ip);
             listener.refreshIP(mysterAddress);
             com.myster.type.MysterType[] types = protocol.getDatagram().getTypes(mysterAddress).get();
             if (endFlag)
@@ -89,7 +89,7 @@ public class TypeListerThread extends MysterThread {
             
             msg.say("Connecting to server...");
             try (MysterSocket socket =
-                    MysterSocketFactory.makeStreamConnection(new MysterAddress(ip))) {
+                    MysterSocketFactory.makeStreamConnection(MysterAddress.createMysterAddress(ip))) {
                 if (endFlag)
                     return;
 

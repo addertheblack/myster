@@ -28,10 +28,11 @@ public class MysterAddress {
      * host name is invalid or the string is badly formated an UnknownHostException is thrown.
      * <p>
      * WARNING: MAY BLOCK ON IO (DNS) FOR A LOOONNNNNGGG TIME!
+     * @return 
      * 
      * @see java.net.UnknownHostException
      */
-    public MysterAddress(String s) throws UnknownHostException {
+    public static MysterAddress createMysterAddress(String s) throws UnknownHostException {
         String ip = s;
         int port = DEFAULT_PORT;
 
@@ -44,49 +45,30 @@ public class MysterAddress {
             }
             ip = s.substring(0, s.indexOf(":"));
         }
-
-        init(InetAddress.getByName(ip), port);
+        
+        return new MysterAddress(InetAddress.getByName(ip), port);
     }
-
-    /**
-     * Will build a MysterAddress from a string without doing any io. The restriction is you cannot
-     * pass a hostname. Only a valid ip address! NOTE: toString() of this object will create such a
-     * string.
-     * 
-     * @param ipAndPort
-     * @return @throws
-     *         UnknownHostException
-     */
-    public static MysterAddress createMysterAddress(String ipAndPort) throws UnknownHostException {
-        if (ipAndPort.charAt(0) != '[' && !Character.isDigit(ipAndPort.charAt(0)))
-            throw new UnknownHostException("String is not an ip address");
-        return new MysterAddress(ipAndPort);
-    }
+    
 
     /**
      * Constructs a MysterAddres object by using an InetAddress. Assumes the default port is the
      * Myster's default port (usually 6669).
      */
     public MysterAddress(InetAddress i) {
-        init(i, DEFAULT_PORT);
+        this(i, DEFAULT_PORT);
     }
 
     /**
      * Constructs a MysterAddres object by using an InetAddress.
      */
     public MysterAddress(InetAddress i, int port) { //should throw a runtime
-        // error.
-        init(i, port);
-    }
-
-    private void init(InetAddress i, int port) {
         fullAddress = i;
         this.port = port; //need some checks here
 
         if (port > 0xFFFF)
             throw new IllegalArgumentException("Port is out of range -> " + port);
     }
-
+    
     /**
      * Returns the IP address associated with this object in textual presentation.
      * 

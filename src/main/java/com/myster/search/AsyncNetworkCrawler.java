@@ -62,7 +62,7 @@ public class AsyncNetworkCrawler {
 
     private static void addIps(Context c, String[] ips) {
         Arrays.asList(ips).forEach(ip -> {
-            c.tracker.doAsync(() -> PromiseFutures.execute(() -> new MysterAddress(ip)))
+            c.tracker.doAsync(() -> PromiseFutures.execute(() -> MysterAddress.createMysterAddress(ip)))
                     .addResultListener(c.ipQueue::addIP).addResultListener(c.addIp)
                     .addStandardExceptionHandler();
         });

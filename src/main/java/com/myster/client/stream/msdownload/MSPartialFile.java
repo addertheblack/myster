@@ -222,7 +222,8 @@ public class MSPartialFile implements AutoCloseable {
 
         if (partialFile.getServerAddress() != null) {
             download.setInitialServers(new MysterFileStub[] {
-                    new MysterFileStub(new MysterAddress(partialFile.getServerAddress()),
+                    new MysterFileStub(MysterAddress
+                            .createMysterAddress(partialFile.getServerAddress()),
                                        partialFile.getType(),
                                        partialFile.getFilename()) });
         }

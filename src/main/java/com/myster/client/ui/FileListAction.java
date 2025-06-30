@@ -32,10 +32,12 @@ public class FileListAction extends MCListEventAdapter {
 
     public void doubleClick(MCListEvent e) {
         try {
-            MysterFileStub stub = new MysterFileStub(new MysterAddress(w.getCurrentIP()),
-                                                     w.getCurrentType(),
-                                                     w.getCurrentFile());
-            protocol.getStream().downloadFile(mysterFrameContext, hashManager, stub.getMysterAddress(), stub);
+            MysterFileStub stub =
+                    new MysterFileStub(MysterAddress.createMysterAddress(w.getCurrentIP()),
+                                       w.getCurrentType(),
+                                       w.getCurrentFile());
+            protocol.getStream()
+                    .downloadFile(mysterFrameContext, hashManager, stub.getMysterAddress(), stub);
         } catch (java.io.IOException ex) {
             com.general.util.AnswerDialog.simpleAlert(w, "Could not connect to server.");
         }

@@ -11,7 +11,9 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
 import java.util.TimerTask;
+import java.util.function.Consumer;
 import java.util.logging.Logger;
 import java.util.prefs.BackingStoreException;
 import java.util.prefs.Preferences;
@@ -23,6 +25,7 @@ import com.general.util.Util;
 import com.myster.client.net.MysterProtocol;
 import com.myster.mml.RobustMML;
 import com.myster.net.MysterAddress;
+import com.myster.server.ServerUtils;
 import com.myster.server.stream.ServerStats;
 
 /**
@@ -135,7 +138,7 @@ public class MysterServerPoolImpl implements MysterServerPool {
     }
     
     @Override
-    public void removeNewServerListener(MysterPoolListener serverListener) {
+    public void removePoolListener(MysterPoolListener serverListener) {
 //        listeners.remove(serverListener);
         throw new IllegalStateException();
     }
@@ -185,7 +188,7 @@ public class MysterServerPoolImpl implements MysterServerPool {
     
     @Override
     public synchronized void suggestAddress(String address) {
-        PromiseFutures.execute(() -> new MysterAddress(address))
+        PromiseFutures.execute(() -> MysterAddress.createMysterAddress(address))
                 .setInvoker(TrackerUtils.INVOKER) // invoker is the CALLBACK thread not the exec thread
                 .addResultListener(this::suggestAddress)
                 .addExceptionListener((e) -> {
@@ -219,39 +222,40 @@ public class MysterServerPoolImpl implements MysterServerPool {
         return mysterip.getInterface();
     }
     
-    public synchronized MysterServer getCachedMysterIp(MysterAddress address) {
+    public synchronized Optional<MysterServer> getCachedMysterIp(MysterAddress address) {
         var identity = identityTracker.getIdentity(address);
         if (identity == null) {
-            return null;
+            return Optional.empty();
         }
         
         MysterServerImplementation mysterip = getMysterIP(identity);
 
         if (mysterip == null)
-            return null;
+            return Optional.empty();
 
-        return mysterip.getInterface();
+        return Optional.of(mysterip.getInterface());
     }
 
     public boolean existsInPool(MysterIdentity k) {
         return (getMysterIP(k) != null);
     }
 
-  /**
-  * Package protected for unit tests
-  */
+    /**
+     * Package protected for unit tests
+     */
     void refreshMysterServer(MysterAddress address) {
-        PromiseFuture<RobustMML> getServerStatsFuture = protocol.getDatagram().getServerStats(address)
-                .clearInvoker().setInvoker(TrackerUtils.INVOKER).addResultListener(mml -> {
-                    serverStatsCallback(address, mml);
-                })
-                .addExceptionListener(_ -> LOGGER.info("Address not a server: " + address))
-                .addExceptionListener(_ -> deadCache.addDeadAddress(address))
-                .addFinallyListener(() -> {
-                    synchronized (MysterServerPoolImpl.this) {
-                        outstandingServerFutures.remove(address);
-                    }
-                }); // thread bug
+        PromiseFuture<RobustMML> getServerStatsFuture =
+                protocol.getDatagram().getServerStats(address).clearInvoker()
+                        .setInvoker(TrackerUtils.INVOKER).addResultListener(mml -> {
+                            serverStatsCallback(address, mml);
+                        })
+                        .addExceptionListener(_ -> LOGGER.info("Address not a server: " + address))
+                        .addExceptionListener(_ -> deadCache.addDeadAddress(address))
+                        .addFinallyListener(() -> {
+                            synchronized (MysterServerPoolImpl.this) {
+                                outstandingServerFutures.remove(address);
+                            }
+                        }); // thread bug
 
         outstandingServerFutures.put(address, getServerStatsFuture);
     }
@@ -387,12 +391,62 @@ public class MysterServerPoolImpl implements MysterServerPool {
                     }
                     
                     try {
-                        return Optional.of(new MysterAddress(addressString));
+                        return Optional.of(MysterAddress.createMysterAddress(addressString));
                     } catch (UnknownHostException ex) {
                         return Optional.empty();
                     }
                 });
 
         return Util.map(Util.filter(unfiltered, a -> a.isPresent()), a -> a.get());
+    }
+
+    @Override
+    public void filter(Consumer<MysterServer> consumer) {
+        synchronized (this) {
+            for (WeakReference<MysterServerImplementation> weakRef : cache.values()) {
+                MysterServerImplementation server = weakRef.get();
+                if (server != null) {
+                    consumer.accept(server.getInterface());
+                }
+            }
+        }        
+    }
+
+    @Override
+    public boolean receivedPing(MysterAddress ip) {
+        // this doens't always work because the ping can come from a port that
+        // isn't the same one
+        // that the server is registered with. In fact this is the normal case
+        // for servers on a different port.
+        // This will cause the cache lookup
+        // to fail. So we ignore this case for servers not on the LAN.
+        // For LAN addresses we look for servers on alternate addresses and
+        // check
+        // which are down and then ping that
+        // This could result in extra pings but whatever. It's on the LAN
+        // anyway.
+        // For servers on a LAN we use the default port to allow servers to be
+        // discoverable.. So this code path is a nice to have.
+        if (!ServerUtils.isLanAddress(ip.getInetAddress())) {
+            return false;
+        }
+
+        // otherwise look for LAN stuff
+
+        Set<MysterAddress> addresses =
+                identityTracker.getServerAddressesForAddress(ip.getInetAddress());
+
+        boolean[] result = new boolean[]{false};
+        for (MysterAddress mysterAddress : addresses) {
+            // only ping the lan address
+            if (ServerUtils.isLanAddress(mysterAddress.getInetAddress())) {
+                getCachedMysterIp(mysterAddress).ifPresent(s -> {
+                    s.tryPingAgain(mysterAddress);
+                    result[0] = true;
+                });
+            }
+        }
+
+        return result[0];
     }
 }

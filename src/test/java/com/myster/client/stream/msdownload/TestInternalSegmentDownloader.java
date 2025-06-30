@@ -129,7 +129,7 @@ public class TestInternalSegmentDownloader {
         InternalSegmentDownloader internalSegmentDownloader =
                 new InternalSegmentDownloader(controller,
                                               socketFactory,
-                                              new MysterFileStub(new MysterAddress("127.0.0.1"),
+                                              new MysterFileStub(MysterAddress.createMysterAddress("127.0.0.1"),
                                                                  mysterType,
                                                                  TEST_FILENAME),
                                               2 * 2014);
