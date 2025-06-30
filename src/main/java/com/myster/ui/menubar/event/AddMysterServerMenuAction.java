@@ -34,7 +34,7 @@ public class AddMysterServerMenuAction implements ActionListener {
         }
 
         try {
-            tracker.addIp(new MysterAddress(answer));
+            tracker.addIp(MysterAddress.createMysterAddress(answer));
         } catch (UnknownHostException ex) {
             LOGGER.info("The \"Name\" : " + answer + " is not a valid domain name at all!");
         }

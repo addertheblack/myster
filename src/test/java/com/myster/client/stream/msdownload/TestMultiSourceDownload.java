@@ -147,7 +147,7 @@ public class TestMultiSourceDownload {
         assertEquals(1, allValues.size());
 
         allValues.get(0)
-                .searchResult( new MysterFileStub(new MysterAddress("127.0.0.1"),
+                .searchResult( new MysterFileStub(MysterAddress.createMysterAddress("127.0.0.1"),
                                                                      new MysterType(identity.getMainIdentity().get().getPublic()),
                                                                      "It doens't matter"));
 
@@ -251,7 +251,7 @@ public class TestMultiSourceDownload {
         mover = Mockito.mock(FileMover.class);
 
         // stub MSPartialFile
-        MSPartialFile partialFile = MSPartialFile.create(new MysterAddress("127.0.0.1"),
+        MSPartialFile partialFile = MSPartialFile.create(MysterAddress.createMysterAddress("127.0.0.1"),
                                                          "testFilename",
                                                          File.createTempFile("test", suffix + ".p"),
                                                          new MysterType(identity.getMainIdentity().get().getPublic()),

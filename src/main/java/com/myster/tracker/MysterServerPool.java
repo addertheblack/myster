@@ -11,6 +11,9 @@
 
 package com.myster.tracker;
 
+import java.util.Optional;
+import java.util.function.Consumer;
+
 import com.myster.net.MysterAddress;
 
 /**
@@ -35,7 +38,7 @@ public interface MysterServerPool {
      * @return The MysterServer for this address assuming it's already in the cache. Null otherwise.
      */
     MysterServer getCachedMysterServer(MysterIdentity identity);
-    MysterServer getCachedMysterIp(MysterAddress address);
+    Optional<MysterServer> getCachedMysterIp(MysterAddress address);
     
     /**
      * @return true if the MysterServer is in the cache, null otherwise. Danger of race condition
@@ -50,17 +53,21 @@ public interface MysterServerPool {
     boolean existsInPool(MysterAddress address);
 
     /**
-     * When a new MysterServer is dicovered the MysterIpPool is so excited it
+     * When a new MysterServer is discovered the MysterIpPool is so excited it
      * has to tell anyone who will listen
      * 
      * @param server
      *            that has just been discovered
      */
     void addPoolListener(MysterPoolListener listener);
-    void removeNewServerListener(MysterPoolListener listener);
+    void removePoolListener(MysterPoolListener listener);
     
     /**
      * When it's done loading call this
      */
     void clearHardLinks();
+    
+    void filter(Consumer<MysterServer> consumer);
+
+    boolean receivedPing(MysterAddress ip);
 }

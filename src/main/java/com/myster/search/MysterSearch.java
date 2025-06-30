@@ -16,7 +16,6 @@ import java.io.IOException;
 import java.net.UnknownHostException;
 import java.util.HashSet;
 import java.util.List;
-import java.util.Optional;
 import java.util.Set;
 import java.util.logging.Logger;
 
@@ -31,8 +30,8 @@ import com.myster.net.MysterAddress;
 import com.myster.net.MysterClientSocketPool;
 import com.myster.net.MysterSocket;
 import com.myster.net.MysterSocketFactory;
-import com.myster.tracker.Tracker;
 import com.myster.tracker.MysterServer;
+import com.myster.tracker.Tracker;
 import com.myster.type.MysterType;
 import com.myster.ui.MysterFrameContext;
 import com.myster.util.Sayable;
@@ -395,10 +394,11 @@ public class MysterSearch {
      * @param address
      */
     private void addAddressToQueue(final IPQueue queue, final String address) {
-        CancellableCallable<MysterAddress> addressLookup = new CancellableCallable<MysterAddress>() {
-            public MysterAddress call() throws Exception {
-                return new MysterAddress(address);
-            }
+        CancellableCallable<MysterAddress> addressLookup =
+                new CancellableCallable<MysterAddress>() {
+                    public MysterAddress call() throws Exception {
+                        return MysterAddress.createMysterAddress(address);
+                    }
 
             public void cancel() {
                 // nothing

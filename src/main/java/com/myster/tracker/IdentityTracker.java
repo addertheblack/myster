@@ -6,12 +6,15 @@ import static com.myster.tracker.MysterServer.UNTRIED;
 import static com.myster.tracker.MysterServerImplementation.computeNodeNameFromIdentity;
 import static com.myster.tracker.TrackerUtils.INVOKER;
 
+import java.net.InetAddress;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Optional;
+import java.util.Set;
 import java.util.function.Consumer;
 import java.util.logging.Logger;
 import java.util.stream.Collectors;
@@ -27,7 +30,7 @@ import com.myster.server.ServerUtils;
  * This is responsible for tracking which internet addresses (MysterAddress) map to which server identities
  * (MysterIdentity).
  */
-public class IdentityTracker implements IdentityProvider {
+class IdentityTracker implements IdentityProvider {
     private static final Logger LOGGER = Logger.getLogger(IdentityTracker.class.getName());
 
     private static final long REFRESH_MS = 10 * 60 * 1000;
@@ -35,6 +38,7 @@ public class IdentityTracker implements IdentityProvider {
     private final Map<ExternalName, MysterIdentity> externalNameToIdentity = new HashMap<>();
     private final Map<MysterAddress, AddressState> addressStates = new HashMap<>();
     private final Map<MysterAddress, MysterIdentity> addressToIdentity = new HashMap<>();
+    private final Map<InetAddress, Set<MysterAddress>> ipToServerAddresses = new HashMap<>();
     private final Map<MysterIdentity, List<MysterAddress>> identityToAddresses = new HashMap<>();
     
     private final Consumer<PingResponse> pingListener;
@@ -62,6 +66,17 @@ public class IdentityTracker implements IdentityProvider {
     @Override
     public synchronized boolean exists(MysterAddress address) {
         return addressStates.containsKey(address);
+    }
+    
+    @Override
+    public synchronized Set<MysterAddress> getServerAddressesForAddress(InetAddress ip) {
+        if (!ipToServerAddresses.containsKey(ip)) {
+            // return an immutable empty collection
+            return Set.of();
+        }
+        
+        // return immutable copy of ipToServerAddresses.get(ip)
+        return Set.copyOf(ipToServerAddresses.get(ip));
     }
 
     @Override
@@ -170,6 +185,30 @@ public class IdentityTracker implements IdentityProvider {
         
         return addresses.toArray(MysterAddress[]::new);
     }
+    
+    @Override
+    public synchronized void repingNow(MysterAddress address) {
+        AddressState addressState = addressStates.get(address);
+        if (addressState == null) {
+            // this can happen due to a race condition where the address is removed
+            // but it's incredibly unlikely
+            LOGGER.warning("Tried to reping an address that doesn't exist: " + address);
+            return;
+        }
+
+
+        // because of the tendency of servers to spaz out and send ping floods
+        // we ignore them if it's been like 10 secs.
+        // this can mean we might miss an event but meh, I prefer not to set
+        // myself up to dos something.
+        if (System.currentTimeMillis() - addressState.timeOfLastPing < 10000) {
+            return;
+        }
+
+        // reset the time so that it will be pinged immediately
+        addressState.timeOfLastPing = 0;
+        refreshElementIfNeeded(address, addressState);        
+    }
 
     /**
      * This is so that you can suggest that an address should be pinged. This
@@ -215,6 +254,9 @@ public class IdentityTracker implements IdentityProvider {
 
             removeIdentity(addressToIdentity.get(address), address);
         }
+        
+        ipToServerAddresses.putIfAbsent(address.getInetAddress(), new HashSet<MysterAddress>());
+        ipToServerAddresses.get(address.getInetAddress()).add(address);
 
         addressToIdentity.put(address, key);
         externalNameToIdentity.put(computeNodeNameFromIdentity(key), key);
@@ -259,6 +301,9 @@ public class IdentityTracker implements IdentityProvider {
                 addressStates.remove(address);
             }
         }
+        
+        ipToServerAddresses.putIfAbsent(address.getInetAddress(), new HashSet<MysterAddress>());
+        ipToServerAddresses.get(address.getInetAddress()).remove(address);
 
         if (identityToAddresses.containsKey(key)) {
             List<MysterAddress> addresses = identityToAddresses.get(key);

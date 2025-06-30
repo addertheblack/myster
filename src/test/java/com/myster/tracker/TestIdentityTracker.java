@@ -55,8 +55,8 @@ public class TestIdentityTracker {
                         .setInvoker(TrackerUtils.INVOKER);
             };
             identityTracker = new IdentityTracker(mockPinger, (_) -> {}, (_)->{});
-            testAddress = new MysterAddress("127.0.0.1");
-            testIdentity = new MysterAddressIdentity(new MysterAddress("127.0.0.1"));
+            testAddress = MysterAddress.createMysterAddress("127.0.0.1");
+            testIdentity = new MysterAddressIdentity(MysterAddress.createMysterAddress("127.0.0.1"));
         }
 
         @Test
@@ -77,7 +77,7 @@ public class TestIdentityTracker {
         public void testRemoveFromManyAddresses() throws IOException {
             MysterAddress[] addresses = new MysterAddress[10];
             for (int i = 0; i < addresses.length; i++) {
-                addresses[i] = new MysterAddress("169.254.196." + (i + 2));
+                addresses[i] = MysterAddress.createMysterAddress("169.254.196." + (i + 2));
             }
 
             for (MysterAddress mysterAddress : addresses) {
@@ -104,7 +104,7 @@ public class TestIdentityTracker {
 
             MysterAddress[] addresses = new MysterAddress[10];
             for (int i = 0; i < addresses.length; i++) {
-                addresses[i] = new MysterAddress("169.254.196." + (i + 2));
+                addresses[i] = MysterAddress.createMysterAddress("169.254.196." + (i + 2));
             }
 
             for (MysterAddress mysterAddress : addresses) {
@@ -136,16 +136,16 @@ public class TestIdentityTracker {
             MysterIdentity mysterIdentity2 = new PublicKeyIdentity(publicKey2);
 
             MysterIdentity mysterIdentity3 =
-                    new MysterAddressIdentity(new MysterAddress("169.254.196.1"));
+                    new MysterAddressIdentity(MysterAddress.createMysterAddress("169.254.196.1"));
 
             MysterAddress[] addresses = new MysterAddress[10];
             for (int i = 0; i < addresses.length; i++) {
-                addresses[i] = new MysterAddress("169.254.196." + (i + 2));
+                addresses[i] = MysterAddress.createMysterAddress("169.254.196." + (i + 2));
             }
 
             MysterAddress[] addresses2 = new MysterAddress[addresses.length];
             for (int i = 0; i < addresses2.length; i++) {
-                addresses2[i] = new MysterAddress("169.254.200." + (i + 2));
+                addresses2[i] = MysterAddress.createMysterAddress("169.254.200." + (i + 2));
             }
 
             for (MysterAddress mysterAddress : addresses) {
@@ -156,7 +156,7 @@ public class TestIdentityTracker {
                 identityTracker.addIdentity(mysterIdentity2, mysterAddress);
             }
 
-            identityTracker.addIdentity(mysterIdentity3, new MysterAddress("169.254.196.1"));
+            identityTracker.addIdentity(mysterIdentity3, MysterAddress.createMysterAddress("169.254.196.1"));
 
 
             assertEquals(addresses.length, identityTracker.getAddresses(mysterIdentity).length);
@@ -172,7 +172,7 @@ public class TestIdentityTracker {
             }
 
             assertEquals(mysterIdentity3,
-                         identityTracker.getIdentity(new MysterAddress("169.254.196.1")));
+                         identityTracker.getIdentity(MysterAddress.createMysterAddress("169.254.196.1")));
         }
 
 
@@ -185,18 +185,18 @@ public class TestIdentityTracker {
 
         @Test
         public void testGetBestAddress() throws IOException, InterruptedException {
-            identityTracker.addIdentity(mysterIdentity, new MysterAddress("127.0.0.1"));
-            identityTracker.addIdentity(mysterIdentity, new MysterAddress("192.168.1.1"));
-            identityTracker.addIdentity(mysterIdentity, new MysterAddress("11.10.10.1"));
+            identityTracker.addIdentity(mysterIdentity, MysterAddress.createMysterAddress("127.0.0.1"));
+            identityTracker.addIdentity(mysterIdentity, MysterAddress.createMysterAddress("192.168.1.1"));
+            identityTracker.addIdentity(mysterIdentity, MysterAddress.createMysterAddress("11.10.10.1"));
 
-            identityTracker.waitForPing(new MysterAddress("127.0.0.1"));
-            identityTracker.waitForPing(new MysterAddress("192.168.1.1"));
-            identityTracker.waitForPing(new MysterAddress("11.10.10.1"));
+            identityTracker.waitForPing(MysterAddress.createMysterAddress("127.0.0.1"));
+            identityTracker.waitForPing(MysterAddress.createMysterAddress("192.168.1.1"));
+            identityTracker.waitForPing(MysterAddress.createMysterAddress("11.10.10.1"));
 
             Optional<MysterAddress> bestAddress = identityTracker.getBestAddress(mysterIdentity);
 
             assertTrue(bestAddress.isPresent());
-            assertEquals(bestAddress.get(), new MysterAddress("127.0.0.1"));
+            assertEquals(bestAddress.get(), MysterAddress.createMysterAddress("127.0.0.1"));
         }
 
         @Test
@@ -210,8 +210,8 @@ public class TestIdentityTracker {
             
             IdentityTracker identityTracker = new IdentityTracker(mockPinger, (_) -> {}, deadServerListener);
 
-            identityTracker.addIdentity(testIdentity, new MysterAddress("11.10.10.1"));
-            identityTracker.removeIdentity(testIdentity, new MysterAddress("11.10.10.1"));
+            identityTracker.addIdentity(testIdentity, MysterAddress.createMysterAddress("11.10.10.1"));
+            identityTracker.removeIdentity(testIdentity, MysterAddress.createMysterAddress("11.10.10.1"));
 
             latch.await();
 
@@ -229,19 +229,19 @@ public class TestIdentityTracker {
 
             IdentityTracker identityTracker = new IdentityTracker(mockPinger, (_) -> {}, deadServerListener);
 
-            identityTracker.addIdentity(testIdentity, new MysterAddress("11.10.10.1"));
-            identityTracker.addIdentity(testIdentity, new MysterAddress("11.10.10.2"));
-            identityTracker.addIdentity(testIdentity, new MysterAddress("11.10.10.3"));
-            identityTracker.addIdentity(testIdentity, new MysterAddress("11.10.10.4"));
+            identityTracker.addIdentity(testIdentity, MysterAddress.createMysterAddress("11.10.10.1"));
+            identityTracker.addIdentity(testIdentity, MysterAddress.createMysterAddress("11.10.10.2"));
+            identityTracker.addIdentity(testIdentity, MysterAddress.createMysterAddress("11.10.10.3"));
+            identityTracker.addIdentity(testIdentity, MysterAddress.createMysterAddress("11.10.10.4"));
 
-            identityTracker.removeIdentity(testIdentity, new MysterAddress("11.10.10.1"));
-            identityTracker.removeIdentity(testIdentity, new MysterAddress("11.10.10.2"));
-            identityTracker.removeIdentity(testIdentity, new MysterAddress("11.10.10.4"));
+            identityTracker.removeIdentity(testIdentity, MysterAddress.createMysterAddress("11.10.10.1"));
+            identityTracker.removeIdentity(testIdentity, MysterAddress.createMysterAddress("11.10.10.2"));
+            identityTracker.removeIdentity(testIdentity, MysterAddress.createMysterAddress("11.10.10.4"));
 
             Assertions.assertFalse(latch.await(1, TimeUnit.SECONDS));
             Assertions.assertTrue(identityTracker.existsMysterIdentity(testIdentity));
 
-            identityTracker.removeIdentity(testIdentity, new MysterAddress("11.10.10.3"));
+            identityTracker.removeIdentity(testIdentity, MysterAddress.createMysterAddress("11.10.10.3"));
 
             Assertions.assertTrue(latch.await(1, TimeUnit.SECONDS));
 
@@ -262,19 +262,19 @@ public class TestIdentityTracker {
             IdentityTracker identityTracker = new IdentityTracker(mockPinger, (_) -> {}, deadServerListener);
 
             MysterAddressIdentity testIdentity2 =
-                    new MysterAddressIdentity(new MysterAddress("11.10.10.2"));
+                    new MysterAddressIdentity(MysterAddress.createMysterAddress("11.10.10.2"));
             MysterAddressIdentity testIdentity3 =
-                    new MysterAddressIdentity(new MysterAddress("11.10.10.3"));
+                    new MysterAddressIdentity(MysterAddress.createMysterAddress("11.10.10.3"));
 
             Assertions.assertFalse(identityTracker.existsMysterIdentity(testIdentity2));
             Assertions.assertFalse(identityTracker.existsMysterIdentity(testIdentity));
             Assertions.assertFalse(identityTracker.existsMysterIdentity(testIdentity3));
 
-            identityTracker.addIdentity(testIdentity, new MysterAddress("127.0.0.1"));
-            identityTracker.addIdentity(testIdentity2, new MysterAddress("11.10.10.2"));
-            identityTracker.addIdentity(testIdentity3, new MysterAddress("11.10.10.3"));
+            identityTracker.addIdentity(testIdentity, MysterAddress.createMysterAddress("127.0.0.1"));
+            identityTracker.addIdentity(testIdentity2, MysterAddress.createMysterAddress("11.10.10.2"));
+            identityTracker.addIdentity(testIdentity3, MysterAddress.createMysterAddress("11.10.10.3"));
 
-            identityTracker.removeIdentity(testIdentity2, new MysterAddress("11.10.10.2"));
+            identityTracker.removeIdentity(testIdentity2, MysterAddress.createMysterAddress("11.10.10.2"));
 
             Assertions.assertTrue(latch.await(5, TimeUnit.SECONDS));
 
@@ -310,58 +310,58 @@ public class TestIdentityTracker {
         @Test
         public void testGetBestAddressOfflineWithLoopback()
                 throws IOException, InterruptedException {
-            identityTracker.addIdentity(mysterIdentity, new MysterAddress("127.0.0.1"));
-            identityTracker.addIdentity(mysterIdentity, new MysterAddress("192.168.1.1"));
-            identityTracker.addIdentity(mysterIdentity, new MysterAddress("11.10.10.1"));
+            identityTracker.addIdentity(mysterIdentity, MysterAddress.createMysterAddress("127.0.0.1"));
+            identityTracker.addIdentity(mysterIdentity, MysterAddress.createMysterAddress("192.168.1.1"));
+            identityTracker.addIdentity(mysterIdentity, MysterAddress.createMysterAddress("11.10.10.1"));
 
-            identityTracker.waitForPing(new MysterAddress("127.0.0.1"));
-            identityTracker.waitForPing(new MysterAddress("192.168.1.1"));
-            identityTracker.waitForPing(new MysterAddress("11.10.10.1"));
+            identityTracker.waitForPing(MysterAddress.createMysterAddress("127.0.0.1"));
+            identityTracker.waitForPing(MysterAddress.createMysterAddress("192.168.1.1"));
+            identityTracker.waitForPing(MysterAddress.createMysterAddress("11.10.10.1"));
 
             Optional<MysterAddress> bestAddress = identityTracker.getBestAddress(mysterIdentity);
 
             assertTrue(bestAddress.isPresent());
-            assertEquals(bestAddress.get(), new MysterAddress("127.0.0.1"));
+            assertEquals(bestAddress.get(), MysterAddress.createMysterAddress("127.0.0.1"));
         }
 
         @Test
         public void testGetBestAddressOffline() throws IOException, InterruptedException {
-            identityTracker.addIdentity(mysterIdentity, new MysterAddress("192.168.1.1"));
-            identityTracker.addIdentity(mysterIdentity, new MysterAddress("11.10.10.1"));
+            identityTracker.addIdentity(mysterIdentity, MysterAddress.createMysterAddress("192.168.1.1"));
+            identityTracker.addIdentity(mysterIdentity, MysterAddress.createMysterAddress("11.10.10.1"));
 
-            identityTracker.waitForPing(new MysterAddress("192.168.1.1"));
-            identityTracker.waitForPing(new MysterAddress("11.10.10.1"));
+            identityTracker.waitForPing(MysterAddress.createMysterAddress("192.168.1.1"));
+            identityTracker.waitForPing(MysterAddress.createMysterAddress("11.10.10.1"));
 
             Optional<MysterAddress> bestAddress = identityTracker.getBestAddress(mysterIdentity);
 
             assertTrue(bestAddress.isPresent());
-            assertEquals(bestAddress.get(), new MysterAddress("11.10.10.1"));
+            assertEquals(bestAddress.get(), MysterAddress.createMysterAddress("11.10.10.1"));
         }
 
         @Test
         public void testGetBestAddressOfflineLanAddressesOnly()
                 throws IOException, InterruptedException {
-            identityTracker.addIdentity(mysterIdentity, new MysterAddress("192.168.1.1"));
+            identityTracker.addIdentity(mysterIdentity, MysterAddress.createMysterAddress("192.168.1.1"));
 
-            identityTracker.waitForPing(new MysterAddress("192.168.1.1"));
+            identityTracker.waitForPing(MysterAddress.createMysterAddress("192.168.1.1"));
 
             Optional<MysterAddress> bestAddress = identityTracker.getBestAddress(mysterIdentity);
 
             assertTrue(bestAddress.isPresent());
-            assertEquals(bestAddress.get(), new MysterAddress("192.168.1.1"));
+            assertEquals(bestAddress.get(), MysterAddress.createMysterAddress("192.168.1.1"));
         }
 
         @Test
         public void testGetBestAddressOfflineLanLoopbackOnly()
                 throws IOException, InterruptedException {
-            identityTracker.addIdentity(mysterIdentity, new MysterAddress("127.0.0.1"));
+            identityTracker.addIdentity(mysterIdentity, MysterAddress.createMysterAddress("127.0.0.1"));
 
-            identityTracker.waitForPing(new MysterAddress("127.0.0.1"));
+            identityTracker.waitForPing(MysterAddress.createMysterAddress("127.0.0.1"));
 
             Optional<MysterAddress> bestAddress = identityTracker.getBestAddress(mysterIdentity);
 
             assertTrue(bestAddress.isPresent());
-            assertEquals(bestAddress.get(), new MysterAddress("127.0.0.1"));
+            assertEquals(bestAddress.get(), MysterAddress.createMysterAddress("127.0.0.1"));
         }
     }
 
@@ -375,7 +375,7 @@ public class TestIdentityTracker {
             pinger = (a) -> {
                 int responseTime = -1;
                 try {
-                    if (a.equals(new MysterAddress("10.10.10.1"))|| a.equals(new MysterAddress("222.1.2.3"))) {
+                    if (a.equals(MysterAddress.createMysterAddress("10.10.10.1"))|| a.equals(MysterAddress.createMysterAddress("222.1.2.3"))) {
                         responseTime = 1;
                     }
                 } catch (UnknownHostException e) {
@@ -401,13 +401,13 @@ public class TestIdentityTracker {
 
             IdentityTracker identityTracker = new IdentityTracker(pinger, pingListener, (_)->{});     
             
-            identityTracker.addIdentity(mysterIdentity, new MysterAddress("10.10.10.1"));
-            identityTracker.addIdentity(mysterIdentity, new MysterAddress("10.10.10.2"));
-            identityTracker.addIdentity(mysterIdentity, new MysterAddress("10.10.10.3"));
+            identityTracker.addIdentity(mysterIdentity, MysterAddress.createMysterAddress("10.10.10.1"));
+            identityTracker.addIdentity(mysterIdentity, MysterAddress.createMysterAddress("10.10.10.2"));
+            identityTracker.addIdentity(mysterIdentity, MysterAddress.createMysterAddress("10.10.10.3"));
             
-            identityTracker.addIdentity(mysterIdentity, new MysterAddress("12.1.2.3"));
-            identityTracker.addIdentity(mysterIdentity, new MysterAddress("222.1.2.3"));
-            identityTracker.addIdentity(mysterIdentity, new MysterAddress("24.10.10.3"));
+            identityTracker.addIdentity(mysterIdentity, MysterAddress.createMysterAddress("12.1.2.3"));
+            identityTracker.addIdentity(mysterIdentity, MysterAddress.createMysterAddress("222.1.2.3"));
+            identityTracker.addIdentity(mysterIdentity, MysterAddress.createMysterAddress("24.10.10.3"));
             
             TrackerUtils.INVOKER.waitForThread();
             
@@ -416,20 +416,20 @@ public class TestIdentityTracker {
             
             Optional<MysterAddress> best = identityTracker.getBestAddress(mysterIdentity);
             Assertions.assertTrue(best.isPresent());
-            Assertions.assertEquals(new MysterAddress("10.10.10.1"), best.get());
+            Assertions.assertEquals(MysterAddress.createMysterAddress("10.10.10.1"), best.get());
             
-            Assertions.assertTrue(identityTracker.isUp(new MysterAddress("10.10.10.1")));
-            Assertions.assertTrue(identityTracker.isUp(new MysterAddress("222.1.2.3")));
+            Assertions.assertTrue(identityTracker.isUp(MysterAddress.createMysterAddress("10.10.10.1")));
+            Assertions.assertTrue(identityTracker.isUp(MysterAddress.createMysterAddress("222.1.2.3")));
             
-            Assertions.assertFalse(identityTracker.isUp(new MysterAddress("10.10.10.2")));
-            Assertions.assertFalse(identityTracker.isUp(new MysterAddress("10.10.10.3")));
-            Assertions.assertFalse(identityTracker.isUp(new MysterAddress("24.10.10.3")));
-            Assertions.assertFalse(identityTracker.isUp(new MysterAddress("12.1.2.3")));
+            Assertions.assertFalse(identityTracker.isUp(MysterAddress.createMysterAddress("10.10.10.2")));
+            Assertions.assertFalse(identityTracker.isUp(MysterAddress.createMysterAddress("10.10.10.3")));
+            Assertions.assertFalse(identityTracker.isUp(MysterAddress.createMysterAddress("24.10.10.3")));
+            Assertions.assertFalse(identityTracker.isUp(MysterAddress.createMysterAddress("12.1.2.3")));
             
             identityTracker.cleanUpOldAddresses(mysterIdentity);
             Assertions.assertEquals(2, identityTracker.getAddresses(mysterIdentity).length);
-            Assertions.assertTrue(identityTracker.isUp(new MysterAddress("10.10.10.1")));
-            Assertions.assertTrue(identityTracker.isUp(new MysterAddress("222.1.2.3")));
+            Assertions.assertTrue(identityTracker.isUp(MysterAddress.createMysterAddress("10.10.10.1")));
+            Assertions.assertTrue(identityTracker.isUp(MysterAddress.createMysterAddress("222.1.2.3")));
         }
         
         @Test
@@ -439,39 +439,39 @@ public class TestIdentityTracker {
 
             IdentityTracker identityTracker = new IdentityTracker(pinger, pingListener, (_)->{});     
             
-            identityTracker.addIdentity(mysterIdentity, new MysterAddress("10.10.10.2"));
-            identityTracker.addIdentity(mysterIdentity, new MysterAddress("10.10.10.3"));
+            identityTracker.addIdentity(mysterIdentity, MysterAddress.createMysterAddress("10.10.10.2"));
+            identityTracker.addIdentity(mysterIdentity, MysterAddress.createMysterAddress("10.10.10.3"));
             
-            identityTracker.addIdentity(mysterIdentity, new MysterAddress("12.1.2.3"));
-            identityTracker.addIdentity(mysterIdentity, new MysterAddress("24.10.10.3"));
+            identityTracker.addIdentity(mysterIdentity, MysterAddress.createMysterAddress("12.1.2.3"));
+            identityTracker.addIdentity(mysterIdentity, MysterAddress.createMysterAddress("24.10.10.3"));
             
             TrackerUtils.INVOKER.waitForThread();
             
             MysterAddress[] addresses = identityTracker.getAddresses(mysterIdentity);
             Assertions.assertEquals(4, addresses.length);
             
-            Assertions.assertFalse(identityTracker.isUp(new MysterAddress("10.10.10.2")));
-            Assertions.assertFalse(identityTracker.isUp(new MysterAddress("10.10.10.3")));
-            Assertions.assertFalse(identityTracker.isUp(new MysterAddress("24.10.10.3")));
-            Assertions.assertFalse(identityTracker.isUp(new MysterAddress("12.1.2.3")));
+            Assertions.assertFalse(identityTracker.isUp(MysterAddress.createMysterAddress("10.10.10.2")));
+            Assertions.assertFalse(identityTracker.isUp(MysterAddress.createMysterAddress("10.10.10.3")));
+            Assertions.assertFalse(identityTracker.isUp(MysterAddress.createMysterAddress("24.10.10.3")));
+            Assertions.assertFalse(identityTracker.isUp(MysterAddress.createMysterAddress("12.1.2.3")));
             Set<MysterAddress> addressSet = new HashSet<MysterAddress>(Arrays.asList( addresses));
-            Assertions.assertTrue(addressSet.contains(new MysterAddress("10.10.10.2")));
-            Assertions.assertTrue(addressSet.contains(new MysterAddress("10.10.10.3")));
-            Assertions.assertTrue(addressSet.contains(new MysterAddress("24.10.10.3")));
-            Assertions.assertTrue(addressSet.contains(new MysterAddress("12.1.2.3")));
+            Assertions.assertTrue(addressSet.contains(MysterAddress.createMysterAddress("10.10.10.2")));
+            Assertions.assertTrue(addressSet.contains(MysterAddress.createMysterAddress("10.10.10.3")));
+            Assertions.assertTrue(addressSet.contains(MysterAddress.createMysterAddress("24.10.10.3")));
+            Assertions.assertTrue(addressSet.contains(MysterAddress.createMysterAddress("12.1.2.3")));
             
             identityTracker.cleanUpOldAddresses(mysterIdentity);
             Assertions.assertEquals(4, identityTracker.getAddresses(mysterIdentity).length);
-            Assertions.assertFalse(identityTracker.isUp(new MysterAddress("10.10.10.2")));
-            Assertions.assertFalse(identityTracker.isUp(new MysterAddress("10.10.10.3")));
-            Assertions.assertFalse(identityTracker.isUp(new MysterAddress("24.10.10.3")));
-            Assertions.assertFalse(identityTracker.isUp(new MysterAddress("12.1.2.3")));
+            Assertions.assertFalse(identityTracker.isUp(MysterAddress.createMysterAddress("10.10.10.2")));
+            Assertions.assertFalse(identityTracker.isUp(MysterAddress.createMysterAddress("10.10.10.3")));
+            Assertions.assertFalse(identityTracker.isUp(MysterAddress.createMysterAddress("24.10.10.3")));
+            Assertions.assertFalse(identityTracker.isUp(MysterAddress.createMysterAddress("12.1.2.3")));
             
             Set<MysterAddress> addressSet2 = new HashSet<MysterAddress>(Arrays.asList( identityTracker.getAddresses(mysterIdentity)));
-            Assertions.assertTrue(addressSet2.contains(new MysterAddress("10.10.10.2")));
-            Assertions.assertTrue(addressSet2.contains(new MysterAddress("10.10.10.3")));
-            Assertions.assertTrue(addressSet2.contains(new MysterAddress("24.10.10.3")));
-            Assertions.assertTrue(addressSet2.contains(new MysterAddress("12.1.2.3")));
+            Assertions.assertTrue(addressSet2.contains(MysterAddress.createMysterAddress("10.10.10.2")));
+            Assertions.assertTrue(addressSet2.contains(MysterAddress.createMysterAddress("10.10.10.3")));
+            Assertions.assertTrue(addressSet2.contains(MysterAddress.createMysterAddress("24.10.10.3")));
+            Assertions.assertTrue(addressSet2.contains(MysterAddress.createMysterAddress("12.1.2.3")));
         }
     }
     
@@ -504,7 +504,7 @@ public class TestIdentityTracker {
 
             IdentityTracker identityTracker = new IdentityTracker(pinger, pingListener, (_)->{});
 
-            identityTracker.addIdentity(mysterIdentity, new MysterAddress("11.10.10.1"));
+            identityTracker.addIdentity(mysterIdentity, MysterAddress.createMysterAddress("11.10.10.1"));
 
             latch.await();
 

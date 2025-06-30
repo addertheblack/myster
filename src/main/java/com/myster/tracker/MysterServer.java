@@ -79,4 +79,10 @@ public interface MysterServer {
      *         really long but this string is much shorter. The hash is based on md5.
      */
     public ExternalName getExternalName();
+
+    /**
+     * We have received a ping request from this server and it is most likely up.
+     * We need to check to make sure that the server is marked as up and if not send a ping request
+     */
+    public void tryPingAgain(MysterAddress address);
 }

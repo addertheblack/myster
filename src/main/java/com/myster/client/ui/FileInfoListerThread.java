@@ -12,7 +12,6 @@ package com.myster.client.ui;
 
 import java.io.IOException;
 import java.net.UnknownHostException;
-import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -80,10 +79,10 @@ public class FileInfoListerThread extends MysterThread {
         msg.say("Looking up address...");
         if (endFlag)
             return;
-        
+
         MysterAddress address;
         try {
-            address = new MysterAddress(addressAsString);
+            address = MysterAddress.createMysterAddress(addressAsString);
         } catch (UnknownHostException exception) {
             msg.say("Could not find address...");
             return;
@@ -118,8 +117,10 @@ public class FileInfoListerThread extends MysterThread {
         }
     }
 
-    private void listDir(RobustMML mml, Map<String, String> keyValue, String directory,
-            String prefix) {
+    private void listDir(RobustMML mml,
+                         Map<String, String> keyValue,
+                         String directory,
+                         String prefix) {
         List<String> dirList = mml.list(directory);
 
         if (dirList == null)
@@ -137,16 +138,14 @@ public class FileInfoListerThread extends MysterThread {
                 keyValue.put(name, " ->");
                 listDir(mml, keyValue, newPath + "/", prefix + "  ");
             } else {
-                keyValue.put(prefix + (dirList.get(i)), mml
-                .get(newPath));
+                keyValue.put(prefix + (dirList.get(i)), mml.get(newPath));
             }
         }
     }
-    
+
     public void flagToEnd() {
         endFlag = true;
-        
-        
+
         interrupt();
     }
   

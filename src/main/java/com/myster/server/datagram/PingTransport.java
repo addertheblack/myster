@@ -36,7 +36,7 @@ public class PingTransport extends DatagramTransport {
                 .getImmutablePacket(new MysterAddress(immutablePacket.getAddress(),
                                                       immutablePacket.getPort())));
 
-        manager.addIp(new MysterAddress(immutablePacket.getAddress()));
+        manager.receivedPing(new MysterAddress(immutablePacket.getAddress()));
     }
 
     @Override

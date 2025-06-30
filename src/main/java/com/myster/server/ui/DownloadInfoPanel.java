@@ -31,6 +31,7 @@ import com.general.util.Timer;
 import com.myster.client.net.MysterProtocol;
 import com.myster.client.ui.ClientWindow;
 import com.myster.message.MessageWindow;
+import com.myster.net.MysterAddress;
 import com.myster.server.event.ConnectionManagerEvent;
 import com.myster.server.event.ConnectionManagerListener;
 import com.myster.server.event.ServerContext;
@@ -114,9 +115,10 @@ public class DownloadInfoPanel extends JPanel {
                         MessageWindow window =
                                 new MessageWindow(frameContext,
                                                   protocol,
-                                                  new com.myster.net.MysterAddress((((DownloadMCListItem) (list
-                                                          .getMCListItem(array[i]))))
-                                                                  .getAddress()));
+                                                  MysterAddress
+                                                          .createMysterAddress((((DownloadMCListItem) (list
+                                                                  .getMCListItem(array[i]))))
+                                                                          .getAddress()));
                         window.setVisible(true);
                     } catch (java.net.UnknownHostException ex) {
 

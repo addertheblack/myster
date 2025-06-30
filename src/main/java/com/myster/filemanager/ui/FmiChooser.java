@@ -67,10 +67,10 @@ public class FmiChooser extends PreferencesPanel {
         this.manager = manager;
         setLayout(null);
 
-        choice = new TypeChoice(tdList);
+        choice = new TypeChoice(tdList, false);
         choice.setLocation(5, 4);
         choice.setSize(STD_XSIZE - XPAD - XPAD - SAB, 20);
-        choice.addItemListener((ItemEvent a) -> {
+        choice.addItemListener((ItemEvent _) -> {
             restoreState();
             repaint();
         });
@@ -79,41 +79,41 @@ public class FmiChooser extends PreferencesPanel {
         setAllButton = new JButton("Set all paths to this path");
         setAllButton.setLocation(STD_XSIZE - XPAD - SAB, 4);
         setAllButton.setSize(SAB, 20);
-        setAllButton.addActionListener((ActionEvent a) -> {
+        setAllButton.addActionListener((ActionEvent _) -> {
             String newPath = path;
 
             for (int i = 0; i < choice.getItemCount(); i++) {
 
                 // Figure out what the bool.. should be (hack)
-                Object o = hash.get(choice.getType(i));
+                Object o = hash.get(choice.getType(i).get());
                 boolean bool_temp;
                 if (o != null) {
                     bool_temp = ((SettingsStruct) (o)).shared;
                 } else {
-                    bool_temp = FmiChooser.this.manager.isShared(choice.getType(i));
+                    bool_temp = FmiChooser.this.manager.isShared(choice.getType(i).get());
                 } // end
 
-                hash.put(choice.getType(i),
-                         new SettingsStruct(choice.getType(i), newPath, bool_temp));
+                hash.put(choice.getType(i).get(),
+                         new SettingsStruct(choice.getType(i).get(), newPath, bool_temp));
             }
         });
         add(setAllButton);
 
-        path = manager.getPathFromType(choice.getType());
+        path = manager.getPathFromType(choice.getType().get());
 
-        checkbox = new JCheckBox("Share this type", manager.isShared(choice.getType()));
+        checkbox = new JCheckBox("Share this type", manager.isShared(choice.getType().get()));
         checkbox.setLocation(10, 55);
         checkbox.setSize(150, 25);
-        checkbox.addItemListener((ItemEvent e) -> {
-            hash.put(choice.getType(),
-                     new SettingsStruct(choice.getType(), path, checkbox.isSelected()));
+        checkbox.addItemListener((ItemEvent _) -> {
+            hash.put(choice.getType().get(),
+                     new SettingsStruct(choice.getType().get(), path, checkbox.isSelected()));
         });
         add(checkbox);
 
         button = new JButton("Set Folder");
         button.setLocation(STD_XSIZE - 100 - XPAD, 55);
         button.setSize(100, 25);
-        button.addActionListener((ActionEvent a) -> {
+        button.addActionListener((ActionEvent _) -> {
             JFileChooser fileChooser = new JFileChooser();
             fileChooser.setFileSelectionMode(JFileChooser.DIRECTORIES_ONLY);
             fileChooser.setDialogTitle("Choose a directory");
@@ -127,8 +127,8 @@ public class FmiChooser extends PreferencesPanel {
                 // Your existing logic after selecting the directory
                 setPathLabel(path);
                 // Assuming 'hash' and 'choice' are accessible here
-                hash.put(choice.getType(),
-                         new SettingsStruct(choice.getType(), path, checkbox.isSelected()));
+                hash.put(choice.getType().get(),
+                         new SettingsStruct(choice.getType().get(), path, checkbox.isSelected()));
             } else {
                 LOGGER.info("User cancelled the action.");
             }
@@ -145,7 +145,7 @@ public class FmiChooser extends PreferencesPanel {
         pathLabel.setLocation(100 + XPAD + 5, 85);
         //textfeild.setEditable(false);
         pathLabel.setSize(STD_XSIZE - 100 - 3 * XPAD - 5, 20);
-        setPathLabel(manager.getPathFromType(choice.getType()));
+        setPathLabel(manager.getPathFromType(choice.getType().get()));
         add(pathLabel);
 
         filelistl = new JLabel("Shared Files (click \"Apply\" to see changes) :");
@@ -192,8 +192,8 @@ public class FmiChooser extends PreferencesPanel {
     }
 
     public void loadStateFromPrefs() {
-        path = manager.getPathFromType(choice.getType());
-        checkbox.setSelected(manager.isShared(choice.getType()));
+        path = manager.getPathFromType(choice.getType().get());
+        checkbox.setSelected(manager.isShared(choice.getType().get()));
     }
 
     public String getKey() {
@@ -218,7 +218,7 @@ public class FmiChooser extends PreferencesPanel {
     }
 
     private void restoreState() {
-        SettingsStruct ss = hash.get(choice.getType());
+        SettingsStruct ss = hash.get(choice.getType().get());
         if (ss != null) {
             path = ss.path;
             checkbox.setSelected(ss.shared);
@@ -228,11 +228,11 @@ public class FmiChooser extends PreferencesPanel {
         }
 
         setPathLabel(path);
-        String[] s = manager.getDirList(choice.getType());
-        boolean isShared = manager.isShared(choice.getType());
+        String[] s = manager.getDirList(choice.getType().get());
+        boolean isShared = manager.isShared(choice.getType().get());
 
         fListModel.removeAllElements();
-        if (manager.getFileTypeList(choice.getType()).isIndexing()) {
+        if (manager.getFileTypeList(choice.getType().get()).isIndexing()) {
             fListModel.addElement("<Indexing files...>");
             pokeTimer();
             return;
@@ -263,7 +263,7 @@ public class FmiChooser extends PreferencesPanel {
     public void pokeTimer() {
         if (timer != null)
             return;
-        if (manager.getFileTypeList(choice.getType()).isIndexing()) {
+        if (manager.getFileTypeList(choice.getType().get()).isIndexing()) {
             timer = new Timer(() -> {
                 timer = null;
                 pokeTimer();

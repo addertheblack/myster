@@ -235,7 +235,8 @@ class MysterServerImplementation {
 
         if (addresses.length > 0) {
             try {
-                return Optional.of(new MysterAddressIdentity(new MysterAddress(addresses[0])));
+                return Optional.of(new MysterAddressIdentity(MysterAddress
+                        .createMysterAddress(addresses[0])));
             } catch (UnknownHostException ex) {
                 return Optional.empty();
             }
@@ -415,6 +416,15 @@ class MysterServerImplementation {
         public ExternalName getExternalName() {
             return computeNodeNameFromIdentity(identity);
         }
+
+        @Override
+        public void tryPingAgain(MysterAddress address) {
+            if (isUntried() || getStatus()) {
+                return; // no need to ping again if we haven't tried or if we are up
+            }
+            
+            identityProvider.repingNow(address);
+        }
     }
 
     void save() {
@@ -447,7 +457,6 @@ class MysterServerImplementation {
         preferences.put(ADDRESSES, concatAddresses);
     }
 
-    
     /** For debugging */
     private MML toMML() {
         try {

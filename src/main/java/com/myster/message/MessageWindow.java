@@ -71,11 +71,11 @@ public class MessageWindow extends MysterFrame {
     }
 
     public MessageWindow(MysterFrameContext context, MysterProtocol protocol, MysterAddress address) {
-        this(context, protocol, NEW_MESSAGE, "", null, address, (a) -> null);
+        this(context, protocol, NEW_MESSAGE, "", null, address, (_) -> null);
     }
 
     public MessageWindow(MysterFrameContext context, MysterProtocol protocol) {
-        this(context, protocol, NEW_MESSAGE, "", null, null, (a) -> null);
+        this(context, protocol, NEW_MESSAGE, "", null, null, (_) -> null);
     }
 
     private MessageWindow(MysterFrameContext context,
@@ -353,7 +353,9 @@ class HeaderPanel extends JPanel {
 
     // TODO: Should not be called on Event Thread
     public MysterAddress getAddress() throws UnknownHostException {
-        return (addressField.isEditable() ? new MysterAddress(addressField.getText()) : address);
+        return (addressField.isEditable()
+                ? MysterAddress.createMysterAddress(addressField.getText())
+                : address);
     }
 
     //This works on mainPanel and not the window itself!

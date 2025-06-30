@@ -113,7 +113,7 @@ public class ConnectionRunnable implements Runnable {
 
                 //Figures out which object to invoke for the connection type:
                 //NOTE: THEY SAY RUN() NOT START()!!!!!!!!!!!!!!!!!!!!!!!!!
-                MysterAddress remoteip = new MysterAddress(socket.getInetAddress().getHostAddress());
+                MysterAddress remoteip = new MysterAddress(socket.getInetAddress());
 
                 switch (protocalcode) {
                 case 1:

@@ -100,7 +100,7 @@ public class SearchWindow extends MysterFrame implements SearchResultListener, S
         textEntry = new JTextField("", 1);
         textEntry.setEditable(true);
 
-        choice = new TypeChoice(c.tdList());
+        choice = new TypeChoice(c.tdList(), false);
 
         fileList = MCListFactory.buildMCList(1, true, this);
         fileList.getPane().setSize(XDEFAULT, YDEFAULT);
@@ -260,7 +260,7 @@ public class SearchWindow extends MysterFrame implements SearchResultListener, S
     }
 
     public MysterType getMysterType() {
-        return choice.getType();
+        return choice.getType().get();
     }
 
     public static void downloadFile(Object s) {

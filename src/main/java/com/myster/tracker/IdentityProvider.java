@@ -1,7 +1,9 @@
 
 package com.myster.tracker;
 
+import java.net.InetAddress;
 import java.util.Optional;
+import java.util.Set;
 
 import com.myster.net.MysterAddress;
 
@@ -42,6 +44,11 @@ public interface IdentityProvider {
      * @return all addresses known to be associated with this server
      */
     MysterAddress[] getAddresses(MysterIdentity identity);
+    
+    /**
+     * Given a InetAddress (no port) return all the server addresses that we know are running on it.
+     */
+    Set<MysterAddress> getServerAddressesForAddress(InetAddress ip);
 
     /**
      * @param address
@@ -65,4 +72,6 @@ public interface IdentityProvider {
      * @param identity - to cleanup
      */
     void cleanUpOldAddresses(MysterIdentity identity);
+    
+    void repingNow(MysterAddress address);
 }
