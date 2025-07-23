@@ -47,6 +47,8 @@ import com.myster.type.TypeDescription;
 import com.myster.type.TypeDescriptionList;
 import com.myster.ui.MysterFrame;
 import com.myster.ui.MysterFrameContext;
+import com.myster.ui.WindowLocationKeeper;
+import com.myster.ui.WindowLocationKeeper.WindowLocation;
 import com.myster.util.Sayable;
 
 public class ClientWindow extends MysterFrame implements Sayable {
@@ -99,11 +101,11 @@ public class ClientWindow extends MysterFrame implements Sayable {
     }
     
     public static int initWindowLocations(MysterFrameContext c) {
-        Rectangle[] lastLocs = c.keeper().getLastLocs(WINDOW_KEEPER_KEY);
+        WindowLocation[] lastLocs = c.keeper().getLastLocs(WINDOW_KEEPER_KEY);
         
         for (int i = 0; i < lastLocs.length; i++) {
             ClientWindow window = new ClientWindow(c);
-            window.setBounds(lastLocs[i]);
+            window.setBounds(lastLocs[i].bounds());
             window.show();
         }
         
@@ -135,7 +137,7 @@ public class ClientWindow extends MysterFrame implements Sayable {
     }
 
     private void init() {
-        context.keeper().addFrame(this, WINDOW_KEEPER_KEY);
+        context.keeper().addFrame(this, WINDOW_KEEPER_KEY, WindowLocationKeeper.MULTIPLE_WINDOWS);
         
         setBackground(new Color(240, 240, 240));
 

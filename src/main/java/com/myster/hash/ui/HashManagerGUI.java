@@ -18,6 +18,7 @@ import com.myster.hash.HashManagerListener;
 import com.myster.ui.MysterFrame;
 import com.myster.ui.MysterFrameContext;
 import com.myster.ui.WindowLocationKeeper;
+import com.myster.ui.WindowLocationKeeper.WindowLocation;
 
 public class HashManagerGUI extends MysterFrame {
     public static final String WINDOW_LOC_KEY = "Hash Manager Gui Window Locations";
@@ -29,11 +30,11 @@ public class HashManagerGUI extends MysterFrame {
     private static HashManager hashManager;
 
     public static int initGui(MysterFrameContext context) {
-        Rectangle[] lastLocs = context.keeper().getLastLocs(WINDOW_LOC_KEY);
+        WindowLocation[] lastLocs = context.keeper().getLastLocs(WINDOW_LOC_KEY);
         
         if (lastLocs.length > 0) {
-            singleton.setBounds(lastLocs[0]);
-            singleton.setVisible(true);
+            singleton.setBounds(lastLocs[0].bounds());
+            singleton.setVisible(lastLocs[0].visible());
             singleton.pack();
 
             return 1;
@@ -70,7 +71,7 @@ public class HashManagerGUI extends MysterFrame {
         setBackground(new Color(240, 240, 240));
 
         windowKeeper = context.keeper();
-        windowKeeper.addFrame(this, WINDOW_LOC_KEY);
+        windowKeeper.addFrame(this, WINDOW_LOC_KEY, WindowLocationKeeper.SINGLETON_WINDOW);
 
         final InternalPanel internalPanel = new InternalPanel();
         add(internalPanel);

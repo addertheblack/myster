@@ -6,6 +6,7 @@ import java.awt.Rectangle;
 import com.general.util.Util;
 import com.myster.pref.ui.PreferencesDialogBox;
 import com.myster.pref.ui.PreferencesPanel;
+import com.myster.ui.WindowLocationKeeper.WindowLocation;
 
 public class PreferencesGui {
     private final PreferencesDialogBox prefsWindow;
@@ -23,28 +24,27 @@ public class PreferencesGui {
 
     static final String WINDOW_KEEPER_KEY = "MysterPrefsGUI";
 
-    private void initWindowLocations(MysterFrameContext c) {
-        Rectangle[] lastLocs = c.keeper().getLastLocs(WINDOW_KEEPER_KEY);
-        if (lastLocs.length > 0) {
-             prefsWindow.setBounds(lastLocs[0]);
-             setGUI(true);
-        }
-    }
-    
 
-    public void initGui() {
-        context.keeper().addFrame(prefsWindow, WINDOW_KEEPER_KEY);
+    public int initGui() {
+        int windowCount = 0;
+        WindowLocation[] lastLocs = context.keeper().getLastLocs(WINDOW_KEEPER_KEY);
+        if (lastLocs.length > 0) {
+             prefsWindow.setBounds(lastLocs[0].bounds());
+             setGUI(lastLocs[0].visible());
         
-        initWindowLocations(context);
+             windowCount++;
+        }
+        
+        context.keeper().addFrame(prefsWindow, WINDOW_KEEPER_KEY, WindowLocationKeeper.SINGLETON_WINDOW);
+        
+        return windowCount;
     }
 
     public void setGUI(boolean b) {
         if (b) {
-            prefsWindow.show();
             prefsWindow.toFrontAndUnminimize();
-        } else {
-            prefsWindow.hide();
         }
+        prefsWindow.setVisible(b);
     }
 
     /**

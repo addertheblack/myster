@@ -24,6 +24,8 @@ import com.myster.client.net.MysterProtocol;
 import com.myster.server.event.ServerContext;
 import com.myster.ui.MysterFrame;
 import com.myster.ui.MysterFrameContext;
+import com.myster.ui.WindowLocationKeeper;
+import com.myster.ui.WindowLocationKeeper.WindowLocation;
 import com.myster.util.Sayable;
 
 public class ServerStatsWindow extends MysterFrame implements Sayable {
@@ -60,12 +62,12 @@ public class ServerStatsWindow extends MysterFrame implements Sayable {
     }
 
     public static int initWindowLocations(MysterFrameContext c) {
-        Rectangle[] lastLocs = c.keeper().getLastLocs("Server Stats");
+        WindowLocation[] lastLocs = c.keeper().getLastLocs("Server Stats");
         if (lastLocs.length > 0) {
             Dimension d = singleton.getSize();
-            singleton.setBounds(lastLocs[0]);
+            singleton.setBounds(lastLocs[0].bounds());
             singleton.setSize(d);
-            singleton.setVisible(true);
+            singleton.setVisible(lastLocs[0].visible());
         }
         
         return lastLocs.length;
@@ -79,7 +81,7 @@ public class ServerStatsWindow extends MysterFrame implements Sayable {
         super(c, "Server Statistics");
 
         keeper = c.keeper();
-        keeper.addFrame(this, "Server Stats"); //never remove.
+        keeper.addFrame(this, "Server Stats", WindowLocationKeeper.SINGLETON_WINDOW); //never remove.
 
         setResizable(false);
 
