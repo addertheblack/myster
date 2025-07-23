@@ -139,7 +139,7 @@ public class Myster {
         // we do this as early as possible since the EDT is not part of this thread so we can get
         // two threads working at the same time
         SwingUtilities.invokeLater(() -> {
-            INSTRUMENTATION.info("-------->> EDT Started" + (System.currentTimeMillis() - startTime));
+            INSTRUMENTATION.info("-------->> !! EDT Started: " + (System.currentTimeMillis() - startTime));
             
             try {
                 javax.swing.UIManager.setLookAndFeel(javax.swing.UIManager.getSystemLookAndFeelClassName());
@@ -157,8 +157,8 @@ public class Myster {
             // backend
             var f = new JFrame();
             f.pack(); // this starts up the AWT graphics stuff
-            f.dispose();
-            INSTRUMENTATION.info("-------->> EDT Basic AWT stuff initialized" + (System.currentTimeMillis() - startTime));
+            f.dispose(); // we just want to warm up the awt stuff.. We don't need to do anything yet.
+            INSTRUMENTATION.info("-------->> !! EDT Basic AWT stuff initialized: " + (System.currentTimeMillis() - startTime));
         });
 
         INSTRUMENTATION.info("-------->> before Appl init " + (System.currentTimeMillis() - startTime));
@@ -199,28 +199,30 @@ public class Myster {
             });
             return;
         }
+        
+        INSTRUMENTATION.info("-------->> Init Identity " + (System.currentTimeMillis() - startTime));
 
         Identity identity = Identity.getIdentity();
         
+        INSTRUMENTATION.info("-------->> Init I18n " + (System.currentTimeMillis() - startTime));
         I18n.init();
 
-        LOGGER.info("MAIN THREAD: Starting loader Thread..");
-
-        INSTRUMENTATION.info("-------->> before preferences " + (System.currentTimeMillis() - startTime));
+        INSTRUMENTATION.info("-------->> Init preferences " + (System.currentTimeMillis() - startTime));
         MysterPreferences preferences = MysterPreferences.getInstance();
-        INSTRUMENTATION.info("-------->> after preferences " + (System.currentTimeMillis() - startTime));
 
+        INSTRUMENTATION.info("-------->> Init datagram server " + (System.currentTimeMillis() - startTime));
         ServerEventDispatcher serverDispatcher = new ServerEventDispatcher();
         DatagramProtocolManager datagramManager = new DatagramProtocolManager();
         TransactionManager transactionManager =
                 new TransactionManager(serverDispatcher, datagramManager);
 
+        INSTRUMENTATION.info("-------->> Init client protocol impl " + (System.currentTimeMillis() - startTime));
         MysterProtocol protocol =
                 new MysterProtocolImpl(new MysterStreamImpl(),
                                        new MysterDatagramImpl(transactionManager,
                                                               new UDPPingClient(datagramManager)));
 
-        INSTRUMENTATION.info("-------->> before IPListManager "
+        INSTRUMENTATION.info("-------->> Init IPListManager "
                 + (System.currentTimeMillis() - startTime));
         MysterServerPoolImpl pool = new MysterServerPoolImpl(Preferences.userRoot(), protocol);
         Tracker tracker = new Tracker(pool, Preferences.userRoot().node("Tracker.IpListManager"), tdList);
@@ -250,11 +252,11 @@ public class Myster {
         // asynchronously start the server
         serverFacade.startServer();
 
-        INSTRUMENTATION.info("-------->> before invokeAndWait " + (System.currentTimeMillis() - startTime));
+        INSTRUMENTATION.info("-------->> Init AWT GUI " + (System.currentTimeMillis() - startTime));
 
         try {
             EventQueue.invokeAndWait(() -> {
-                INSTRUMENTATION.info("-------->> inside  invokeAndWait"
+                INSTRUMENTATION.info("-------->>   EDT Init AWT GUI "
                         + (System.currentTimeMillis() - startTime));
                 
                 // might move this if I can be bothered
@@ -274,9 +276,9 @@ public class Myster {
 //                    return; // not reached
 //                }
 
-                INSTRUMENTATION.info("-------->> before menuBarFactory "
+                
+                INSTRUMENTATION.info("-------->>   EDT init WindowManager "
                         + (System.currentTimeMillis() - startTime));
-
                 MysterMenuBar menuBarFactory = new MysterMenuBar();
                 WindowManager windowManager = new WindowManager();
                 final MysterFrameContext context =
@@ -290,7 +292,8 @@ public class Myster {
                                                                                                                 instantMessage,
                                                                                                                 tracker::getQuickServerStats))
                                                                                                                         .show()));
-
+                INSTRUMENTATION.info("-------->>   EDT init MysterMenuBar "
+                        + (System.currentTimeMillis() - startTime));
                 menuBarFactory.initMenuBar(tracker, preferencesGui, protocol, context);
 
                 String osName = System.getProperty("os.name").toLowerCase();
@@ -302,18 +305,22 @@ public class Myster {
                     });
                 }
 
+                INSTRUMENTATION.info("-------->>   EDT init TrackerWindow "
+                        + (System.currentTimeMillis() - startTime));
                 TrackerWindow.init(tracker, context);
 
+                INSTRUMENTATION.info("-------->>   EDT init ServerStatsWindow "
+                        + (System.currentTimeMillis() - startTime));
                 ServerStatsWindow.init(serverFacade.getServerDispatcher().getServerContext(),
                                        context,
                                        protocol);
-                INSTRUMENTATION.info("-------->> before ServerStatsWindow.getInstance().pack() "
+                INSTRUMENTATION.info("-------->>   EDT init ServerStatsWindow.getInstance().pack() "
                         + (System.currentTimeMillis() - startTime));
                 ServerStatsWindow.getInstance().pack();
 
                 SearchWindow.init(protocol, crawlerManager, tracker);
 
-                INSTRUMENTATION.info("-------->> before addPanels "
+                INSTRUMENTATION.info("-------->>   EDT add panels tor preferences "
                         + (System.currentTimeMillis() - startTime));
                 preferencesGui.addPanel(BandwidthManager.getPrefsPanel());
                 preferencesGui.addPanel(new BannersPreferences());
@@ -322,7 +329,7 @@ public class Myster {
                 preferencesGui.addPanel(new MessagePreferencesPanel(preferences));
                 preferencesGui.addPanel(new TypeManagerPreferencesGUI(tdList));
 
-                INSTRUMENTATION.info("-------->> before inits " + (System.currentTimeMillis() - startTime));
+                INSTRUMENTATION.info("-------->>   EDT init other GUI sub systems " + (System.currentTimeMillis() - startTime));
 
                 if (isServer) {
                     // nothing
@@ -336,6 +343,8 @@ public class Myster {
                     
                     count += com.myster.hash.ui.HashManagerGUI.initGui(context);
                     count += SearchWindow.initWindowLocations(context);
+                    
+                    count += preferencesGui.initGui();
                     
                     if (count == 0) {
                         SearchWindow window = new SearchWindow(context);
@@ -359,16 +368,11 @@ public class Myster {
                     Desktop.getDesktop().setAboutHandler(_ -> AnswerDialog
                             .simpleAlert("Myster PR 10\n\nCome on in, join the party.."));
                 }
+                
+                MysterTray.init();
+                
+                INSTRUMENTATION.info("-------->>   EDT AWT GUID init complete " + (System.currentTimeMillis() - startTime));
             });
-
-            INSTRUMENTATION.info("-------->>" + (System.currentTimeMillis() - startTime));
-
-
-            Thread.sleep(1);
-
-            Util.invokeLater(() -> MysterTray.init());
-
-
         } catch (InterruptedException ex) {
             ex.printStackTrace(); // never reached.
         } catch (InvocationTargetException ex) {
@@ -377,6 +381,7 @@ public class Myster {
             ex.printStackTrace();
         }
 
+        INSTRUMENTATION.info("-------->> Application init complete " + (System.currentTimeMillis() - startTime));
         hashManager.start();
 
         // ugh

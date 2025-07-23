@@ -43,6 +43,8 @@ import com.myster.type.MysterType;
 import com.myster.type.TypeDescriptionList;
 import com.myster.ui.MysterFrame;
 import com.myster.ui.MysterFrameContext;
+import com.myster.ui.WindowLocationKeeper;
+import com.myster.ui.WindowLocationKeeper.WindowLocation;
 import com.myster.util.Sayable;
 import com.myster.util.TypeChoice;
 
@@ -58,7 +60,7 @@ public class SearchWindow extends MysterFrame implements SearchResultListener, S
     private final GridBagConstraints gbconstrains;
 
     private final JButton searchButton;
-    private final MCList fileList;
+    private final MCList<SearchResult> fileList;
     private final JTextField textEntry;
     private final TypeChoice choice;
     private final MessageField msg;
@@ -126,7 +128,7 @@ public class SearchWindow extends MysterFrame implements SearchResultListener, S
 
         fileList.addMCListEventListener(new MCListEventAdapter() {
             public synchronized void doubleClick(MCListEvent a) {
-                MCList list = a.getParent();
+                MCList<SearchResult> list = (MCList<SearchResult>) a.getParent();
                 downloadFile(list.getItem(list.getSelectedIndex()));
             }
         });
@@ -141,7 +143,7 @@ public class SearchWindow extends MysterFrame implements SearchResultListener, S
         fileList.setColumnName(0, "Search Results appear here");
         fileList.setColumnWidth(0, 400);
 
-        c.keeper().addFrame(this, PREF_LOCATION_KEY);
+        c.keeper().addFrame(this, PREF_LOCATION_KEY, WindowLocationKeeper.MULTIPLE_WINDOWS);
 
         textEntry.setSelectionStart(0);
         textEntry.setSelectionEnd(textEntry.getText().length());
@@ -161,11 +163,11 @@ public class SearchWindow extends MysterFrame implements SearchResultListener, S
     }
     
     public static int initWindowLocations(MysterFrameContext c) {
-        Rectangle[] lastLocs = c.keeper().getLastLocs(PREF_LOCATION_KEY);
+        WindowLocation[] lastLocs = c.keeper().getLastLocs(PREF_LOCATION_KEY);
 
         for (int i = 0; i < lastLocs.length; i++) {
             SearchWindow window = new SearchWindow(c);
-            window.setBounds(lastLocs[i]);
+            window.setBounds(lastLocs[i].bounds());
             window.setVisible(true);
         }
 
@@ -241,12 +243,10 @@ public class SearchWindow extends MysterFrame implements SearchResultListener, S
     }
 
     public boolean addSearchResults(SearchResult[] resultArray) {
-        MCListItemInterface[] m = new MCListItemInterface[resultArray.length];
-
-        for (int i = 0; i < resultArray.length; i++) {
-            m[i] = metaDateHandler.getMCListItem(resultArray[i]);
-        }
-
+        @SuppressWarnings("unchecked")
+        MCListItemInterface<SearchResult>[] m = java.util.Arrays.stream(resultArray)
+            .map(metaDateHandler::getMCListItem)
+            .toArray(MCListItemInterface[]::new);
         fileList.addItem(m);
         return true;
     }
