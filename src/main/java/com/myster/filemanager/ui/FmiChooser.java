@@ -13,7 +13,9 @@ package com.myster.filemanager.ui;
 
 import java.awt.Color;
 import java.awt.Dimension;
-import java.awt.Graphics;
+import java.awt.GridBagConstraints;
+import java.awt.GridBagLayout;
+import java.awt.Insets;
 import java.awt.event.ActionEvent;
 import java.awt.event.ItemEvent;
 import java.io.File;
@@ -21,15 +23,19 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.logging.Logger;
 
+import javax.swing.BorderFactory;
 import javax.swing.DefaultListModel;
 import javax.swing.JButton;
 import javax.swing.JCheckBox;
 import javax.swing.JFileChooser;
 import javax.swing.JLabel;
 import javax.swing.JList;
+import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import javax.swing.SwingUtilities;
+import javax.swing.border.TitledBorder;
 
+import com.general.util.GridBagBuilder;
 import com.general.util.Timer;
 import com.myster.filemanager.FileTypeListManager;
 import com.myster.pref.ui.PreferencesPanel;
@@ -46,7 +52,6 @@ import com.myster.util.TypeChoice;
 public class FmiChooser extends PreferencesPanel {
     private static final Logger LOGGER = Logger.getLogger(PreferencesPanel.class.getName());
 	private static final int XPAD = 10;
-	private static final int SAB = 200;
 	private static final int MAX_PATH_LABEL_SIZE = STD_XSIZE - 100 - 3 * XPAD - 5;
 	
     private final FileTypeListManager manager;
@@ -62,23 +67,30 @@ public class FmiChooser extends PreferencesPanel {
 
     private Timer timer = null;
     private String path;
+    private final TitledBorder titledBorder;
 
     public FmiChooser(FileTypeListManager manager, TypeDescriptionList tdList) {
         this.manager = manager;
-        setLayout(null);
+        setLayout(new GridBagLayout());
+
+        GridBagBuilder outterGbc = new GridBagBuilder();
+        outterGbc = outterGbc.withSize(1, 1);
+
+        titledBorder = BorderFactory.createTitledBorder(BorderFactory.createLineBorder(Color.gray));
 
         choice = new TypeChoice(tdList, false);
-        choice.setLocation(5, 4);
-        choice.setSize(STD_XSIZE - XPAD - XPAD - SAB, 20);
         choice.addItemListener((ItemEvent _) -> {
             restoreState();
-            repaint();
+            titledBorder.setTitle(choice.getSelectedDescription());
         });
-        add(choice);
+        add(choice,
+            outterGbc.withGridLoc(0, 0)
+                     .withFill(GridBagConstraints.BOTH)
+                     .withWeight(1, 0)
+                     .withInsets(new Insets(5, 0, 5, 0)));
+        titledBorder.setTitle(choice.getSelectedDescription());
 
         setAllButton = new JButton("Set all paths to this path");
-        setAllButton.setLocation(STD_XSIZE - XPAD - SAB, 4);
-        setAllButton.setSize(SAB, 20);
         setAllButton.addActionListener((ActionEvent _) -> {
             String newPath = path;
 
@@ -97,22 +109,29 @@ public class FmiChooser extends PreferencesPanel {
                          new SettingsStruct(choice.getType(i).get(), newPath, bool_temp));
             }
         });
-        add(setAllButton);
+        add(setAllButton, outterGbc.withGridLoc(1, 0).withInsets(new Insets(5, 5, 5, 5)));
 
         path = manager.getPathFromType(choice.getType().get());
+        
+        JPanel panel = new JPanel();
+        
+        panel.setLayout(new GridBagLayout());
+        var innerGbc = new GridBagBuilder();
+        
+        panel.setBorder(titledBorder);
 
         checkbox = new JCheckBox("Share this type", manager.isShared(choice.getType().get()));
-        checkbox.setLocation(10, 55);
-        checkbox.setSize(150, 25);
         checkbox.addItemListener((ItemEvent _) -> {
             hash.put(choice.getType().get(),
                      new SettingsStruct(choice.getType().get(), path, checkbox.isSelected()));
         });
-        add(checkbox);
+        panel.add(checkbox,
+                  innerGbc.withGridLoc(0, 0)
+                          .withSize(2, 1)
+                          .withWeight(1, 0)
+                          .withAnchor(GridBagConstraints.WEST));
 
-        button = new JButton("Set Folder");
-        button.setLocation(STD_XSIZE - 100 - XPAD, 55);
-        button.setSize(100, 25);
+        button = new JButton("Choose Folder");
         button.addActionListener((ActionEvent _) -> {
             JFileChooser fileChooser = new JFileChooser();
             fileChooser.setFileSelectionMode(JFileChooser.DIRECTORIES_ONLY);
@@ -133,34 +152,49 @@ public class FmiChooser extends PreferencesPanel {
                 LOGGER.info("User cancelled the action.");
             }
         });
-        add(button);
+        panel.add(button, innerGbc.withGridLoc(2, 0).withInsets(new Insets(5, 0, 0, 5)));
 
         folderl = new JLabel("Shared Folder:");
-        folderl.setLocation(10, 85);
-        folderl.setSize(100, 20);
-        add(folderl);
+        panel.add(folderl, innerGbc.withGridLoc(0, 1).withInsets(new Insets(5, 5, 0, 5)));
 
         // choice must be created first
         pathLabel = new JLabel();
-        pathLabel.setLocation(100 + XPAD + 5, 85);
-        //textfeild.setEditable(false);
-        pathLabel.setSize(STD_XSIZE - 100 - 3 * XPAD - 5, 20);
+        // textfeild.setEditable(false);
         setPathLabel(manager.getPathFromType(choice.getType().get()));
-        add(pathLabel);
+        panel.add(pathLabel,
+                  innerGbc.withGridLoc(1, 1)
+                          .withSize(2, 1)
+                          .withWeight(1, 0)
+                          .withAnchor(GridBagConstraints.EAST)
+                          .withInsets(new Insets(5, 5, 0, 5)));
 
         filelistl = new JLabel("Shared Files (click \"Apply\" to see changes) :");
-        filelistl.setLocation(10, 110);
-        filelistl.setSize(STD_XSIZE - 2 * XPAD, 20);
-        add(filelistl);
+        panel.add(filelistl,
+                  innerGbc.withGridLoc(0, 2)
+                          .withSize(3, 1)
+                          .withWeight(1, 0)
+                          .withAnchor(GridBagConstraints.WEST)
+                          .withInsets(new Insets(5, 5, 0, 5)));
 
         fList = new JList<>();
         fListModel = new DefaultListModel<>();
         fList.setModel(fListModel);
         JScrollPane fListScrollPane = new JScrollPane(fList);
         fListScrollPane.setHorizontalScrollBarPolicy(JScrollPane.HORIZONTAL_SCROLLBAR_NEVER);
-        fListScrollPane.setLocation(10, 135);
-        fListScrollPane.setSize(STD_XSIZE - 2 * XPAD, STD_YSIZE - 150);
-        add(fListScrollPane);
+        fListScrollPane.setPreferredSize(new Dimension(1, 1));
+        panel.add(fListScrollPane,
+                  innerGbc.withGridLoc(0, 3)
+                          .withFill(GridBagConstraints.BOTH)
+                          .withWeight(1, 1)
+                          .withSize(3, 1)
+                          .withInsets(new Insets(5, 5, 5, 5)));
+
+        add(panel,
+            outterGbc.withGridLoc(0, 1)
+                    .withSize(2, 1)
+                    .withFill(GridBagConstraints.BOTH)
+                    .withWeight(1, 1)
+                    .withInsets(new Insets(5, 0, 0, 5)));
 
         repaint();
         reset();
@@ -202,19 +236,6 @@ public class FmiChooser extends PreferencesPanel {
 
     public Dimension getPreferredSize() {
         return new Dimension(STD_XSIZE, STD_YSIZE);
-    }
-
-    public void paintComponent(Graphics g) {
-//        g.setColor(getBackground());
-//        Rectangle rectangle = g.getClipBounds();
-//        g.fillRect(rectangle.x, rectangle.y, rectangle.width, rectangle.height);
-        super.paintComponent(g);
-        g.setColor(new Color(150, 150, 150));
-        g.drawRect(5, 35, STD_XSIZE - 10, STD_YSIZE - 40);
-        g.setColor(getBackground());
-        g.fillRect(10, 34, 170, 3);
-        g.setColor(Color.black);
-        g.drawString("Setting for type: " + choice.getSelectedDescription(), 12, 39);
     }
 
     private void restoreState() {

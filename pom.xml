@@ -7,7 +7,22 @@
   <artifactId>Myster</artifactId>
   <version>10.0.0</version>
 
+  <!-- mvn versions:display-dependency-updates -->
   <dependencies>
+    <!-- Flatlaf is for default instead of metal - which happens on linux-->
+    <dependency>
+      <groupId>com.formdev</groupId>
+      <artifactId>flatlaf</artifactId>
+      <version>3.6.1</version><!-- or latest -->
+    </dependency>
+
+    <!-- FlatLaf IntelliJ themes -->
+    <dependency>
+      <groupId>com.formdev</groupId>
+      <artifactId>flatlaf-intellij-themes</artifactId>
+      <version>3.6.1</version>
+    </dependency>
+
     <dependency>
       <groupId>com.simtechdata</groupId>
       <artifactId>WaifUPnP</artifactId>
@@ -52,7 +67,7 @@
     <dependency>
       <groupId>org.bouncycastle</groupId>
       <artifactId>bcpkix-jdk18on</artifactId>
-      <version>1.77</version>
+      <version>1.81</version>
     </dependency>
   </dependencies>
 
@@ -214,7 +229,7 @@
               <arguments>
                 <argument>--add-modules</argument>
                 <argument>
-                  java.base,java.desktop,java.naming,java.prefs,java.sql</argument>
+                  java.base,java.desktop,java.naming,java.prefs,java.sql,com.formdev.flatlaf</argument>
               </arguments>
             </configuration>
           </execution>

@@ -7,8 +7,9 @@ import com.myster.application.MysterGlobals;
 
 public class ServerPreferences {
     private static final String PATH_IN_PREFS = "Server Download Slots";
-    private static String IDENTITY_NAME_KEY = "Server Identity";
+    private static final String IDENTITY_NAME_KEY = "Server Identity";
     private static final String SERVER_PORT = "Server Port";
+    private static final String FREELOAD_KEY = "ServerFreeloaderKey";
 
     private final Preferences preferences;
 
@@ -38,5 +39,13 @@ public class ServerPreferences {
 
     public final int getDownloadSlots() {
         return Math.max(preferences.getInt(PATH_IN_PREFS, 4), 1);
+    }
+
+    public void setKickFreeloaders(boolean set) {
+        preferences.putBoolean(FREELOAD_KEY, set);
+    }
+    
+    public boolean isKickFreeloaders() {
+        return preferences.getBoolean(FREELOAD_KEY, false);
     }
 }

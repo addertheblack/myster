@@ -11,10 +11,14 @@
 
 package com.myster.pref.ui;
 
+import java.awt.BorderLayout;
 import java.awt.Color;
 import java.awt.Dimension;
 import java.awt.Font;
 import java.awt.Graphics;
+import java.awt.GridBagConstraints;
+import java.awt.GridBagLayout;
+import java.awt.Insets;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.ComponentEvent;
@@ -25,6 +29,7 @@ import java.util.Enumeration;
 import java.util.Hashtable;
 import java.util.Iterator;
 
+import javax.swing.Box;
 import javax.swing.DefaultListModel;
 import javax.swing.JButton;
 import javax.swing.JLabel;
@@ -34,6 +39,7 @@ import javax.swing.JScrollPane;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
 
+import com.general.util.GridBagBuilder;
 import com.general.util.Util;
 
 import com.myster.ui.MysterFrame;
@@ -64,11 +70,10 @@ public class PreferencesDialogBox extends MysterFrame {
 
         mypanel = new MainPanel();
 
-        add(mypanel);
+        getContentPane().add(mypanel, BorderLayout.CENTER);
         
         getRootPane().setDefaultButton(mypanel.save);
 
-        setResizable(false);
 
         addWindowListener(new WindowAdapter() {
             public void windowClosing(WindowEvent e) {
@@ -89,7 +94,6 @@ public class PreferencesDialogBox extends MysterFrame {
 
             public void componentShown(ComponentEvent e) {
                 mypanel.restore();
-                pack();
             }
 
             public void componentHidden(ComponentEvent e) {
@@ -114,6 +118,12 @@ public class PreferencesDialogBox extends MysterFrame {
     public void removePanel(String key) {
         mypanel.removePanel(key);
     }
+    
+    @Override
+    public void setBounds(int x, int y, int width, int height) {
+        super.setBounds(x, y, width, height);
+    }
+
 
     private class MainPanel extends JPanel {
         private JList list;
@@ -132,14 +142,18 @@ public class PreferencesDialogBox extends MysterFrame {
         private DefaultListModel listModel;
 
         public MainPanel() {
-            setLayout(null);
+            setLayout(new GridBagLayout());
             //setBackground(new Color(255,255,0));
+            
+            GridBagBuilder layout = new GridBagBuilder();
+            layout = layout.withSize(1, 1);
 
             list = new JList();
+          
             listModel = new DefaultListModel();
             list.setModel(listModel);
             JScrollPane listScrollPane = new JScrollPane(list);
-            listScrollPane.setSize(150 - 5 - 5, YDEFAULT - 50 - 5);
+//            listScrollPane.setSize(150 - 5 - 5, YDEFAULT - 50 - 5);
             listScrollPane.setLocation(5, 5);
             list.getSelectionModel().addListSelectionListener(new ListSelectionListener() {
                 public void valueChanged(ListSelectionEvent e) {
@@ -151,23 +165,30 @@ public class PreferencesDialogBox extends MysterFrame {
                         removePanel((String) list.getSelectedValue());
                     }
                     showPanel(panel);
-                    
+
                 }
             });
-            add(listScrollPane);
+            add(listScrollPane,
+                layout.withGridLoc(0, 0)
+                        .withFill(GridBagConstraints.BOTH)
+                        .withSize(1, 2)
+                        .withWeight(0, 1)
+                        .withInsets(new Insets(5, 5, 5, 5)));
 
+            JPanel buttonPanel = new JPanel();
+            buttonPanel.setLayout(new GridBagLayout());
+            GridBagBuilder buttonLayout = new GridBagBuilder();
+            
             apply = new JButton("Apply");
-            apply.setSize(100, 30);
             apply.setLocation(XDEFAULT - 5 - 100, YDEFAULT - 30 - 7);
             apply.addActionListener(new ActionListener() {
                 public void actionPerformed(ActionEvent e) {
                     save();
                 }
             });
-            add(apply);
+            buttonPanel.add(apply, buttonLayout.withGridLoc(3, 0));
 
-            save = new JButton("OK");
-            save.setSize(100, 30);
+            save = new JButton("    OK    ");
             save.setLocation(XDEFAULT - 100 - 5 - 5 - 100 - 5 - 100 - 5, YDEFAULT - 30 - 7);
             save.addActionListener(new ActionListener() {
                 public void actionPerformed(ActionEvent e) {
@@ -175,38 +196,64 @@ public class PreferencesDialogBox extends MysterFrame {
                     PreferencesDialogBox.this.setVisible(false);
                 }
             });
-            add(save);
+            buttonPanel.add(save, buttonLayout.withGridLoc(1, 0).withInsets(new Insets(0, 0, 0, 5)));
 
             revert = new JButton("Cancel");
-            revert.setSize(100, 30);
-            revert.setLocation(XDEFAULT - 100 - 5 - 5 - 100 - 5, YDEFAULT - 30 - 7);
             revert.addActionListener(new ActionListener() {
                 public void actionPerformed(ActionEvent e) {
                     restore();
                     PreferencesDialogBox.this.setVisible(false);
                 }
             });
-            add(revert);
+            buttonPanel.add(revert, buttonLayout.withGridLoc(2, 0).withInsets(new Insets(0, 0, 0, 10)));
+
+            buttonPanel.add(new JPanel(),
+                            buttonLayout.withGridLoc(0, 0)
+                                    .withFill(GridBagConstraints.HORIZONTAL)
+                                    .withWeight(99, 0));
+
+            JPanel line = new JPanel();
+            line.setBackground(Color.gray);
+            line.setPreferredSize(new Dimension(1, 1));
+            add(line,
+                layout.withGridLoc(0, 2)
+                        .withFill(GridBagConstraints.HORIZONTAL)
+                        .withSize(2, 1)
+                        .withWeight(1, 0)
+                        .withInsets(new Insets(5, 5, 5, 5)));
+
+            add(buttonPanel,
+                layout.withGridLoc(0, 3)
+                        .withSize(2, 1)
+                        .withFill(GridBagConstraints.HORIZONTAL)
+                        .withInsets(new Insets(5, 5, 5, 5)));
 
             showerPanel = new JPanel();
-            showerPanel.setLayout(null);
-            showerPanel.setSize(PreferencesPanel.STD_XSIZE, PreferencesPanel.STD_YSIZE);
-            showerPanel.setLocation(150, 50);
-            add(showerPanel);
+            showerPanel.setLayout(new GridBagLayout());
+            showerPanel.setPreferredSize(new Dimension(1,1));
+            add(showerPanel,
+                layout.withGridLoc(1, 1)
+                        .withFill(GridBagConstraints.BOTH)
+                        .withWeight(1, 1)
+                        .withInsets(new Insets(5, 5, 5, 5)));
 
-            header = new JLabel("");
-            header.setLocation(150, 5);
-            header.setSize(PreferencesPanel.STD_XSIZE - 5, 40);
+            header = new JLabel("") {
+                public Dimension getPreferredSize() {
+                    var d = super.getPreferredSize();
+                    d.width = 1;
+                    return d;
+                }
+            };
+            header.setFont(header.getFont().deriveFont(24f));
             header.setBackground(new Color(225, 225, 225));
-            add(header);
-
-            setResizable(false);
-
-            setSize(XDEFAULT, YDEFAULT);
-//            setDoubleBuffered(true);
+            add(header, 
+                layout.withGridLoc(1, 0)
+                        .withFill(GridBagConstraints.HORIZONTAL)
+                        .withWeight(1, 0)
+                        .withInsets(new Insets(5, 5, 5, 5)));
         }
 
-        //Hide the currently showing panel and shows the new one.
+        // Hide the currently showing panel and shows the new one.
         public void showPanel(PreferencesPanel p) {
             for (Iterator iter = hash.values().iterator(); iter.hasNext();) {
                 PreferencesPanel preferencesPanel = (PreferencesPanel) iter.next();
@@ -225,16 +272,6 @@ public class PreferencesDialogBox extends MysterFrame {
                 }
             }
             showPanel((PreferencesPanel) (hash.get(panelString)));
-        }
-
-        // Draw the seperator line.
-        public void paintComponent(Graphics g) {
-            super.paintComponent(g);
-            g.setColor(new Color(150, 150, 150));
-            g.drawLine(10, YDEFAULT - 45, XDEFAULT - 20, YDEFAULT - 45);
-            if (header.getFont().getSize() != 24) {
-                header.setFont(new Font(getFont().getName(), Font.BOLD, 24));
-            }
         }
 
         // Tells *panels* to save changes
@@ -264,7 +301,7 @@ public class PreferencesDialogBox extends MysterFrame {
                 hash.put(p.getKey(), p);
                 p.setLocation(0, 0);
                 p.setSize(p.getPreferredSize());
-                showerPanel.add(p);
+                showerPanel.add(p, new GridBagBuilder().withFill(GridBagConstraints.BOTH).withWeight(1, 1));
                 showerPanel.doLayout();//java VM bug.
                 selectKey(p.getKey());
             }
@@ -287,10 +324,6 @@ public class PreferencesDialogBox extends MysterFrame {
         }
 
         public Dimension getMinimumSize() {
-            return new Dimension(XDEFAULT, YDEFAULT);
-        }
-
-        public Dimension getMaximumSize() {
             return new Dimension(XDEFAULT, YDEFAULT);
         }
 

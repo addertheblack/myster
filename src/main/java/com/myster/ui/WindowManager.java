@@ -119,6 +119,14 @@ public class WindowManager {
             }
         }
     }
+     
+     public List<MysterFrame> getWindowListCopy() {
+         if (!EventQueue.isDispatchThread()) {
+            throw new IllegalStateException("Should be on the EDT");
+        }
+
+        return new ArrayList<>(windows);
+     }
 
     public void updateMenu() {
         if (!EventQueue.isDispatchThread()) {

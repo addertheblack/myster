@@ -3,7 +3,9 @@ package com.myster.server.ui;
 
 import java.awt.Dimension;
 import java.awt.FlowLayout;
-import java.awt.GridLayout;
+import java.awt.GridBagConstraints;
+import java.awt.GridBagLayout;
+import java.awt.Insets;
 
 import javax.swing.JCheckBox;
 import javax.swing.JComboBox;
@@ -13,7 +15,7 @@ import javax.swing.JSpinner;
 import javax.swing.JTextField;
 import javax.swing.SpinnerNumberModel;
 
-import com.myster.pref.MysterPreferences;
+import com.general.util.GridBagBuilder;
 import com.myster.pref.ui.PreferencesPanel;
 import com.myster.server.ServerPreferences;
 
@@ -28,43 +30,71 @@ public class ServerPreferencesPane extends PreferencesPanel {
     private final ServerPreferences preferences;
 
     private final FreeLoaderPref leech;
+    
+    private final int DISTANCE_BETWEEN_COLUMNS = 15;
 
     public ServerPreferencesPane(ServerPreferences preferences) {
         this.preferences = preferences;
         
-        setLayout(new GridLayout(5, 2, 5, 5));
+        setLayout(new GridBagLayout());
+        var constraints = new GridBagBuilder();
 
         openSlotLabel = new JLabel("Download Spots:");
-        add(openSlotLabel);
+        add(openSlotLabel, constraints.withAnchor(GridBagConstraints.WEST).withInsets(new Insets(5, 0, 0, 0)));
 
         openSlotChoice = new JComboBox<String>();
         for (int i = 2; i <= 10; i++) {
             openSlotChoice.addItem("" + i);
         }
-        add(openSlotChoice);
+        add(openSlotChoice,
+            constraints.withGridLoc(1, 0)
+                    .withAnchor(GridBagConstraints.WEST)
+                    .withInsets(new Insets(5, DISTANCE_BETWEEN_COLUMNS, 0, 0)));
 
         serverThreadsLabel = new JLabel("Server Port:");
-        add(serverThreadsLabel);
+        add(serverThreadsLabel,
+            constraints.withGridLoc(0, 1)
+                    .withAnchor(GridBagConstraints.WEST)
+                    .withInsets(new Insets(5, 0, 0, 0)));
 
         var spinnerNumberModel = new SpinnerNumberModel();
         spinnerNumberModel.setMinimum(1024);
-        spinnerNumberModel.setMaximum((int)Math.pow(2, 16) - 1);
+        spinnerNumberModel.setMaximum((int) Math.pow(2, 16) - 1);
         spinnerNumberModel.setValue(preferences.getServerPort());
         serverThreadsChoice = new JSpinner(spinnerNumberModel);
         ((JSpinner.DefaultEditor) serverThreadsChoice.getEditor()).getTextField().setEditable(true);
-        add(serverThreadsChoice);
+        add(serverThreadsChoice,
+            constraints.withGridLoc(1, 1)
+                    .withAnchor(GridBagConstraints.WEST)
+                    .withInsets(new Insets(5, DISTANCE_BETWEEN_COLUMNS, 0, 0)));
 
         serverIdentityLabel = new JLabel("Server Name:");
-        add(serverIdentityLabel);
+        add(serverIdentityLabel,
+            constraints.withGridLoc(0, 2)
+                    .withAnchor(GridBagConstraints.WEST)
+                    .withInsets(new Insets(5, 0, 0, 0)));
 
-        serverIdentityField = new JTextField();
-        add(serverIdentityField);
+        serverIdentityField = new JTextField(25);
+        add(serverIdentityField,
+            constraints.withGridLoc(1, 2)
+                    .withAnchor(GridBagConstraints.WEST)
+                    .withInsets(new Insets(5, DISTANCE_BETWEEN_COLUMNS, 0, 0)));
 
-        spacerLabel = new JLabel();
-        add(spacerLabel);
+        spacerLabel = new JLabel(" ");
+        add(spacerLabel,
+            constraints.withGridLoc(0, 3)
+                    .withAnchor(GridBagConstraints.WEST)
+                    .withInsets(new Insets(5, 0, 0, 0)));
 
         leech = new FreeLoaderPref();
-        add(leech);
+        add(leech,
+            constraints.withGridLoc(1, 3)
+                    .withAnchor(GridBagConstraints.WEST)
+                    .withInsets(new Insets(5, DISTANCE_BETWEEN_COLUMNS, 0, 0)));
+
+        add(new JPanel(), constraints.withGridLoc(0, 4).withWeight(1, 1).withSize(3, 1));
+
+        add(new JPanel(), constraints.withGridLoc(2, 0).withWeight(1, 0).withSize(1, 4));
 
         reset();
     }
@@ -81,14 +111,14 @@ public class ServerPreferencesPane extends PreferencesPanel {
         preferences.setIdentityName(serverIdentityField.getText());
         preferences.setDownloadSlots(Integer.parseInt((String) openSlotChoice.getSelectedItem()));
         preferences.setPort((int) serverThreadsChoice.getModel().getValue());
-        leech.save();
+        preferences.setKickFreeloaders(leech.isSet());
     }
 
     public void reset() {
         serverIdentityField.setText(preferences.getIdentityName());
         openSlotChoice.setSelectedItem("" + preferences.getDownloadSlots());
         serverThreadsChoice.getModel().setValue(preferences.getServerPort());
-        leech.reset();
+        leech.reset(preferences.isKickFreeloaders());
     }
 
     public static class FreeLoaderPref extends JPanel {
@@ -101,37 +131,12 @@ public class ServerPreferencesPane extends PreferencesPanel {
             add(freeloaderCheckbox);
         }
 
-        public void save() {
-            setKickFreeloaders(freeloaderCheckbox.isSelected());
+        public boolean isSet() {
+            return freeloaderCheckbox.isSelected();
         }
 
-        public void reset() {
-            freeloaderCheckbox.setSelected(kickFreeloaders());
-        }
-
-        public Dimension getPreferredSize() {
-            return new Dimension(100, 1);
-        }
-        
-        private static String freeloadKey = "ServerFreeloaderKey/";
-
-        public static boolean kickFreeloaders() {
-            boolean b_temp = false;
-
-            try {
-                b_temp = Boolean
-                        .valueOf(MysterPreferences.getInstance().get(freeloadKey))
-                        .booleanValue();
-            } catch (NumberFormatException ex) {
-                //nothing
-            } catch (NullPointerException ex) {
-                //nothing
-            }
-            return b_temp;
-        }
-
-        private static void setKickFreeloaders(boolean b) {
-            MysterPreferences.getInstance().put(freeloadKey, "" + b);
+        public void reset(boolean b) {
+            freeloaderCheckbox.setSelected(b);
         }
     }
 }

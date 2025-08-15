@@ -1,5 +1,8 @@
 package com.myster.server;
 
+import java.awt.GridBagConstraints;
+import java.awt.GridBagLayout;
+import java.awt.Insets;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.MouseAdapter;
@@ -8,6 +11,7 @@ import java.io.File;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.logging.Logger;
 
 import javax.swing.DefaultListModel;
 import javax.swing.JButton;
@@ -17,6 +21,8 @@ import javax.swing.JTextArea;
 import javax.swing.text.DefaultCaret;
 
 import com.general.util.AskDialog;
+import com.general.util.GridBagBuilder;
+import com.general.util.MessagePanel;
 import com.myster.application.MysterGlobals;
 import com.myster.pref.MysterPreferences;
 import com.myster.pref.PreferencesMML;
@@ -26,28 +32,19 @@ import com.myster.pref.ui.PreferencesPanel;
  * This code is responsible for managing everything to do with banners. It is
  * quite nasty.
  */
-
 public class BannersManager {
-
     private static final String KEY_IN_PREFS = "/Banners Preferences/";
-
     private static final String PATH_TO_URLS = "/URLs/";
-
     private static final String PARTIAL_PATH_TO_IMAGES = "i";
-
     private static final String PARTIAL_PATH_TO_URLS = "u";
-
     private static final String IMAGE_DIRECTORY = "Images";
-
     private static boolean prefsHasChangedFlag = true; // to get manager to
 
     // initally read the
     // prefs
 
     private static Map<String, String> imageNamesToUrls = new HashMap<>();
-
     private static String[] imageNames;
-
     private static int currentIndex = 0;
 
     public static synchronized String getNextImageName() {
@@ -159,6 +156,8 @@ public class BannersManager {
     }
 
     public static class BannersPreferences extends PreferencesPanel {
+        public static final Logger LOGGER = Logger.getLogger(BannersPreferences.class.getName());
+        
         public static final int LIST_YSIZE = 150;
         public static final int BUTTON_YSIZE = 25;
         public static final int PADDING = 5;
@@ -166,50 +165,56 @@ public class BannersManager {
         private final JList<String> list;
         private final JTextArea msg;
         private final JButton refreshButton;
+        private final JButton openButton;
 
         private Map<String, String> hashtable = new HashMap<>();
 
         public BannersPreferences() {
             setSize(STD_XSIZE, STD_YSIZE);
 
-            setLayout(null);
+            setLayout(new GridBagLayout());
+            
+            GridBagBuilder params = new GridBagBuilder().withSize(1, 1).withInsets(new Insets(5, 0, 0, 5));
 
-            msg = new JTextArea(); // mental
-            // note, put
-            // in I18n
-            msg
-                    .setText("This panel allows you to associate a web page with a banner images to " +
-                            "be sent to people who download files from you. Any images in \""
-                            + getImagesDirectory().getAbsolutePath()
-                            + "\" will appear below. Images of any dimension other than 468 X 60 " +
-                                    "pixels will be squished to fit. Double click"
-                            + " on a image below to " + "associate it with a web address");
-            msg.setWrapStyleWord(true);
-            msg.setLineWrap(true);
-            msg.setEditable(false);
-            msg.setBackground(getBackground());
-            msg.setLocation(PADDING, PADDING);
-            msg.setSize(STD_XSIZE - 2 * PADDING, STD_YSIZE - 4 * PADDING - LIST_YSIZE
-                    - BUTTON_YSIZE);
-            msg.setFont(new JLabel().getFont().deriveFont(new JLabel().getFont().getSize() + 2f));
+            msg =MessagePanel.createNew("This panel allows you to associate a web page with a banner images to " +
+                    "be sent to people who download files from you. Any images in \""
+                    + getImagesDirectory().getAbsolutePath()
+                    + "\" will appear below. Images of any dimension other than 468 X 60 " +
+                            "pixels will be squished to fit. Double click"
+                    + " on a image below to " + "associate it with a web address");
             msg.setCaret(new DefaultCaret() {
                 @Override
                 public void setVisible(boolean v) {
                     super.setVisible(false); // Always keep the caret invisible
                 }
             });
-            add(msg);
+            add(msg, params.withFill(GridBagConstraints.HORIZONTAL).withWeight(1,0).withSize(2, 1));
 
             refreshButton = new JButton(com.myster.util.I18n.tr("Refresh"));
-            refreshButton.setLocation(PADDING, STD_YSIZE - LIST_YSIZE - PADDING - PADDING
-                    - BUTTON_YSIZE);
-            refreshButton.setSize(150, BUTTON_YSIZE);
             refreshButton.addActionListener(new ActionListener() {
                 public void actionPerformed(ActionEvent e) {
                     refreshImagesList();
                 }
             });
-            add(refreshButton);
+            add(refreshButton, params.withGridLoc(0, 1));
+            
+            // now we need to add a button called "Open" that will allow us to open up to the getImagesDirectory().getAbsolutePath()
+            // path using the Finder or File Explorer or whatever Linux uses
+            openButton = new JButton(com.myster.util.I18n.tr("Open Images Folder"));
+            openButton.addActionListener(new ActionListener() {
+                public void actionPerformed(ActionEvent e) {
+                    try {
+                        File dir = getImagesDirectory();
+                        dir.mkdirs();
+                        
+                        java.awt.Desktop.getDesktop().open(dir);
+                    } catch (Exception ex) {
+                        LOGGER.fine("Could not open the file explorer on this path: " + getImagesDirectory());
+                        ex.printStackTrace();
+                    }
+                }
+            });
+            add(openButton, params.withGridLoc(1, 1).withAnchor(GridBagConstraints.WEST).withWeight(1,0));
 
             list = new JList<String>();
             list.setLocation(PADDING, STD_YSIZE - LIST_YSIZE - PADDING);
@@ -236,7 +241,7 @@ public class BannersManager {
                     hashtable.put(list.getSelectedValue(), answerString);
                 }
             });
-            add(list);
+            add(list, params.withGridLoc(0, 2).withFill(GridBagConstraints.BOTH).withWeight(1,1).withSize(2, 1));
         }
 
         public void save() {
