@@ -30,6 +30,7 @@ import java.util.prefs.Preferences;
 
 import javax.swing.JFrame;
 import javax.swing.SwingUtilities;
+import javax.swing.UIManager;
 import javax.swing.UnsupportedLookAndFeelException;
 
 import com.general.application.ApplicationContext;
@@ -54,6 +55,7 @@ import com.myster.message.MessageWindow;
 import com.myster.message.ui.MessagePreferencesPanel;
 import com.myster.net.DatagramProtocolManager;
 import com.myster.pref.MysterPreferences;
+import com.myster.pref.ui.ThemePane;
 import com.myster.search.HashCrawlerManager;
 import com.myster.search.MultiSourceHashSearch;
 import com.myster.search.ui.SearchWindow;
@@ -142,7 +144,25 @@ public class Myster {
             INSTRUMENTATION.info("-------->> !! EDT Started: " + (System.currentTimeMillis() - startTime));
             
             try {
-                javax.swing.UIManager.setLookAndFeel(javax.swing.UIManager.getSystemLookAndFeelClassName());
+                for (var info : UIManager.getInstalledLookAndFeels()) {
+                    LOGGER.info("Installed Look and Feel: " + info.getName() + " - " + info.getClassName());
+                }
+                
+                String systemLookAndFeelClassName = UIManager.getSystemLookAndFeelClassName();
+                LOGGER.info("System Look and feel: " + systemLookAndFeelClassName);
+                
+                // If dark mode is detected, use FlatLaf Dark regardless of platform
+                if (Util.isSystemDarkTheme()) {
+                    LOGGER.info("System is using dark theme, using FlatDarkLaf");
+                    systemLookAndFeelClassName = "com.formdev.flatlaf.FlatDarkLaf";
+                } else if (systemLookAndFeelClassName.equals("javax.swing.plaf.metal.MetalLookAndFeel")) {
+                    // Metal look and feel is ugly, use FlatLaf Light instead
+                    LOGGER.info("MetalLookAndFeel detected, using FlatLightLaf instead");
+                    systemLookAndFeelClassName = "com.formdev.flatlaf.FlatLightLaf";
+                }
+                // else use the native look and feel
+                
+                UIManager.setLookAndFeel(systemLookAndFeelClassName);
             } catch (InstantiationException exception) {
                 exception.printStackTrace();
             } catch (UnsupportedLookAndFeelException exception) {
@@ -152,13 +172,15 @@ public class Myster {
             } catch (IllegalAccessException exception) {
                 exception.printStackTrace();
             }
+            
+            INSTRUMENTATION.info("-------->> !! Set look and feel: " + (System.currentTimeMillis() - startTime));
 
-            // this gets awt to start initialising on the EDT while we initialise Myster's
+            // this gets awt to start initializing on the EDT while we initialize Myster's
             // backend
             var f = new JFrame();
             f.pack(); // this starts up the AWT graphics stuff
             f.dispose(); // we just want to warm up the awt stuff.. We don't need to do anything yet.
-            INSTRUMENTATION.info("-------->> !! EDT Basic AWT stuff initialized: " + (System.currentTimeMillis() - startTime));
+            INSTRUMENTATION.info("-------->> !! EDT Basic AWT libs initialized: " + (System.currentTimeMillis() - startTime));
         });
 
         INSTRUMENTATION.info("-------->> before Appl init " + (System.currentTimeMillis() - startTime));
@@ -328,6 +350,7 @@ public class Myster {
                 preferencesGui.addPanel(new FmiChooser(fileManager, tdList));
                 preferencesGui.addPanel(new MessagePreferencesPanel(preferences));
                 preferencesGui.addPanel(new TypeManagerPreferencesGUI(tdList));
+                preferencesGui.addPanel(new ThemePane());
 
                 INSTRUMENTATION.info("-------->>   EDT init other GUI sub systems " + (System.currentTimeMillis() - startTime));
 
@@ -397,7 +420,6 @@ public class Myster {
         
         ServerUtils.massPing(protocol, tracker);
     } // Utils, globals etc.. //These variables are System wide variables //
-    
 
     private static void addServerConnectionSettings(ServerFacade serverFacade,
                                                     Tracker tracker,
@@ -416,7 +438,7 @@ public class Myster {
                                                                                identity));
         serverFacade.addConnectionSection(new com.myster.server.stream.FileInfoLister());
         serverFacade.addConnectionSection(new com.myster.server.stream.FileByHash());
-        serverFacade.addConnectionSection(new com.myster.server.stream.MultiSourceSender());
+        serverFacade.addConnectionSection(new com.myster.server.stream.MultiSourceSender(preferences));
         serverFacade.addConnectionSection(new com.myster.server.stream.FileTypeLister());
 
         datagramManager.mutateTransportManager(preferences.getServerPort(),
@@ -461,7 +483,7 @@ public class Myster {
                     LOGGER.info("        " + nextAddress.toString());
                 }
             }
-        } catch (SocketException e) {
+        } catch (SocketException _) {
             LOGGER.info(" (error retrieving network interface list)");
         }
     }

@@ -11,18 +11,19 @@
 package com.myster.client.ui;
 
 import java.awt.Color;
-import java.awt.Component;
+import java.awt.Dimension;
 import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
 import java.awt.Insets;
-import java.awt.Rectangle;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.FocusEvent;
 import java.awt.event.FocusListener;
 import java.util.Map;
+import java.util.Map.Entry;
 
 import javax.swing.JButton;
+import javax.swing.JTextArea;
 import javax.swing.JTextField;
 
 import com.general.mclist.GenericMCListItem;
@@ -34,6 +35,7 @@ import com.general.mclist.Sortable;
 import com.general.mclist.SortableString;
 import com.general.util.AnswerDialog;
 import com.general.util.MessageField;
+import com.general.util.MessagePanel;
 import com.general.util.StandardWindowBehavior;
 import com.general.util.Util;
 import com.myster.client.net.MysterProtocol;
@@ -69,13 +71,11 @@ public class ClientWindow extends MysterFrame implements Sayable {
     private static ServerPreferences serverPreferences;
     private static TypeDescriptionList typeDescriptionList;
     
-    private GridBagLayout gblayout;
-    private GridBagConstraints gbconstrains;
     private JButton connect;
     private JTextField ipTextField;
     private MCList<MysterType> fileTypeList;
     private MCList<String> fileList;
-    private FileInfoPane pane;
+    private JTextArea statsPanel;
     private String currentip;
     private JButton instant;
     private MessageField msg;
@@ -142,16 +142,15 @@ public class ClientWindow extends MysterFrame implements Sayable {
         setBackground(new Color(240, 240, 240));
 
         // Do interface setup:
-        gblayout = new GridBagLayout();
-        setLayout(gblayout);
-        gbconstrains = new GridBagConstraints();
-        gbconstrains.fill = GridBagConstraints.BOTH;
-        gbconstrains.insets = new Insets(5, 5, 5, 5);
-        gbconstrains.ipadx = 1;
-        gbconstrains.ipady = 1;
+        setLayout(new GridBagLayout());
+        var builder = new com.general.util.GridBagBuilder()
+            .withFill(GridBagConstraints.BOTH)
+            .withInsets(new Insets(5, 5, 5, 5));
 
-        pane = new FileInfoPane();
-        pane.setSize(XDEFAULT / 3, YDEFAULT - 40);
+        statsPanel = MessagePanel.createNew("");
+        statsPanel.setMinimumSize(new Dimension(1,1));
+        statsPanel.setPreferredSize(new Dimension(1,1));
+        statsPanel.setMaximumSize(new Dimension(1,1));
 
         connect = new JButton("Connect");
         connect.setSize(SBXDEFAULT, GYDEFAULT);
@@ -195,10 +194,8 @@ public class ClientWindow extends MysterFrame implements Sayable {
         fileList = MCListFactory.buildMCList(1, true, this);
         fileList.sortBy(-1);
         fileList.setColumnName(0, "Files");
-        //fileList.setColumnWidth(0, 300);
 
         msg = new MessageField("Idle...");
-        msg.setSize(XDEFAULT, GYDEFAULT);
 
         instant = new JButton("Instant Message");
         instant.addActionListener(new ActionListener() {
@@ -211,22 +208,35 @@ public class ClientWindow extends MysterFrame implements Sayable {
                                                                  protocol,
                                                                  address);
                     window.setVisible(true);
-                } catch (java.net.UnknownHostException ex) {
+                } catch (java.net.UnknownHostException _) {
                     (new AnswerDialog(ClientWindow.this, "The address " + ipTextField.getText()
                             + " does not apear to be a valid internet address.")).answer();
                 }
             }
         });
 
-        //reshape(0, 0, XDEFAULT, YDEFAULT);
+        add(connect, builder.withGridLoc(0, 0).withSize(1, 1).withWeight(0, 0));
+        add(ipTextField, builder.withGridLoc(1, 0).withSize(1, 1).withWeight(1, 0));
+        add(instant,
+            builder.withGridLoc(2, 0)
+                    .withSize(1, 1)
+                    .withWeight(0, 0)
+                    .withFill(GridBagConstraints.NONE)
+                    .withAnchor(GridBagConstraints.WEST));
+        add(fileTypeList.getPane(), builder.withGridLoc(0, 1).withSize(1, 1).withWeight(0, 1));
+        add(fileList.getPane(), builder.withGridLoc(1, 1).withSize(1, 1).withWeight(1, 1));
+        add(statsPanel, builder.withGridLoc(2, 1).withSize(1, 1).withWeight(1, 1));
+        add(msg, builder.withGridLoc(0, 2).withSize(3, 1).withWeight(1, 0));
 
-        addComponent(connect, 0, 0, 1, 1, 1, 0);
-        addComponent(ipTextField, 0, 1, 2, 1, 6, 0);
-        addComponent(instant, 0, 3, 1, 1, 5, 0);
-        addComponent(fileTypeList.getPane(), 1, 0, 1, 1, 1, 99);
-        addComponent(fileList.getPane(), 1, 1, 2, 1, 6, 99);
-        addComponent(pane, 1, 3, 1, 1, 5, 99);
-        addComponent(msg, 2, 0, 4, 1, 99, 0);
+        fileList.getPane().setMinimumSize(new Dimension(1, 1));
+        fileList.getPane().setPreferredSize(new Dimension(1, 1));
+        fileList.getPane().setMaximumSize(new Dimension(1,1));
+        
+        pack();
+
+        Dimension preferredSize = connect.getPreferredSize();
+        preferredSize.width *= 2;
+        fileTypeList.getPane().setPreferredSize(preferredSize);
 
         setResizable(true);
         setSize(XDEFAULT, YDEFAULT);
@@ -278,22 +288,6 @@ public class ClientWindow extends MysterFrame implements Sayable {
         stopConnect();
     }
     
-    private void addComponent(Component c, int row, int column, int width, int height, int weightx,
-            int weighty) {
-        gbconstrains.gridx = column;
-        gbconstrains.gridy = row;
-
-        gbconstrains.gridwidth = width;
-        gbconstrains.gridheight = height;
-
-        gbconstrains.weightx = weightx;
-        gbconstrains.weighty = weighty;
-
-        gblayout.setConstraints(c, gbconstrains);
-
-        add(c);
-    }
-
     public void addItemToTypeList(MysterType t) {
         fileTypeList
                 .addItem(new GenericMCListItem<MysterType>(new Sortable[] {
@@ -361,7 +355,26 @@ public class ClientWindow extends MysterFrame implements Sayable {
     }
 
     public void showFileStats(Map<String, String> k) {
-        pane.display(k);
+        var builder = new StringBuilder();
+        for (Entry<String, String> entry : k.entrySet()) {
+            if (entry.getKey().equals("size")) { // hack to
+                // show
+                // size as
+                // bytes string
+                // like
+                // XXXbytes or
+                // XXXMB
+                try {
+                    builder.append(entry.getKey() + " : " + com.general.util.Util
+                            .getStringFromBytes(Long.parseLong(entry.getValue())) + "\n");
+                } catch (NumberFormatException _) {
+                    builder.append(entry.getKey() + " : " + entry.getValue() + "\n");
+                }
+            } else {
+                builder.append(entry.getKey() + " : " + entry.getValue() + "\n");
+            }
+        }
+        statsPanel.setText(builder.toString());
     }
 
     private void stopConnect() {
@@ -384,7 +397,7 @@ public class ClientWindow extends MysterFrame implements Sayable {
         if (fileInfoListerThread != null) {
             fileInfoListerThread.flagToEnd();
         }
-        pane.clear();
+        statsPanel.setText("");
     }
 
     public void startConnect() {

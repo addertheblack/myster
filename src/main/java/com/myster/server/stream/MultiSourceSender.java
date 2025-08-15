@@ -16,6 +16,7 @@ import com.myster.net.MysterSocket;
 import com.myster.server.BannersManager;
 import com.myster.server.ConnectionContext;
 import com.myster.server.DownloadInfo;
+import com.myster.server.ServerPreferences;
 import com.myster.server.event.ServerDownloadDispatcher;
 import com.myster.server.event.ServerDownloadEvent;
 import com.myster.server.event.ServerDownloadListener;
@@ -23,7 +24,6 @@ import com.myster.server.transferqueue.Downloader;
 import com.myster.server.transferqueue.MaxQueueLimitException;
 import com.myster.server.transferqueue.QueuedStats;
 import com.myster.server.transferqueue.TransferQueue;
-import com.myster.server.ui.ServerPreferencesPane.FreeLoaderPref;
 import com.myster.type.MysterType;
 
 //1) read in offset(long) + length(long)
@@ -45,6 +45,12 @@ public class MultiSourceSender extends ServerStreamHandler {
     public static final String MESSAGE_PATH = "/message";
 
     public static final int SECTION_NUMBER = 90;
+
+    private final ServerPreferences preferences;
+
+    public MultiSourceSender(ServerPreferences preferences) {
+        this.preferences = preferences;
+    }
 
     public int getSectionNumber() {
         return SECTION_NUMBER;
@@ -183,7 +189,7 @@ public class MultiSourceSender extends ServerStreamHandler {
                     });
                 } catch (MaxQueueLimitException ex) {
                     sendQueuePosition(socket.out, transferQueue.getMaxQueueLength()+1, "Too busy to accept downloads right now..");
-                    throw new IOException("Over the queue limit, disconnecting..");
+                    throw new IOException("Over the queue limit, disconnecting..", ex);
                 }
             } catch (IOException ex) {
                 ex.printStackTrace();
@@ -245,7 +251,7 @@ public class MultiSourceSender extends ServerStreamHandler {
 
         //Throws an IOException if there's a leech.
         private void checkForLeechers(MysterSocket socket) throws IOException {
-            if (FreeLoaderPref.kickFreeloaders()) {
+            if (preferences.isKickFreeloaders()) {
                 try {
                     MysterSocket s = com.myster.net.MysterSocketFactory
                             .makeStreamConnection(new com.myster.net.MysterAddress(socket
@@ -253,10 +259,10 @@ public class MultiSourceSender extends ServerStreamHandler {
 
                     try {
                         s.close();
-                    } catch (Exception ex) {
+                    } catch (Exception _) {
                         // nothing
                     }
-                } catch (IOException ex) { 
+                } catch (IOException _) { 
                     // if host is not reachable it will
                     // end up here.
                     sendQueuePosition(socket.out, 0, "You are not reachable from the outside");
@@ -301,7 +307,7 @@ public class MultiSourceSender extends ServerStreamHandler {
             } finally {
                 try {
                     in.close();
-                } catch (Exception ex) {
+                } catch (Exception _) {
                     // nothing
                 }
             }
@@ -486,7 +492,7 @@ public class MultiSourceSender extends ServerStreamHandler {
 
                 try {
                     socket.close();
-                } catch (Exception ex) {
+                } catch (Exception _) {
                     // nothing
                 }
             }

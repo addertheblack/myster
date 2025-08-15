@@ -7,7 +7,6 @@ import java.awt.Component;
 import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
 import java.awt.Insets;
-import java.awt.Rectangle;
 import java.awt.event.ComponentAdapter;
 import java.awt.event.ComponentEvent;
 import java.awt.event.ItemEvent;
@@ -35,8 +34,8 @@ import com.general.util.Util;
 import com.myster.client.datagram.PingResponse;
 import com.myster.net.MysterAddress;
 import com.myster.tracker.MysterIdentity;
-import com.myster.tracker.MysterServer;
 import com.myster.tracker.MysterPoolListener;
+import com.myster.tracker.MysterServer;
 import com.myster.tracker.Tracker;
 import com.myster.tracker.Tracker.ListChangedListener;
 import com.myster.type.MysterType;
@@ -286,8 +285,6 @@ public class TrackerWindow extends MysterFrame {
             (itemsinlist.get(i)).refresh();
         }
         list.repaint();
-        
-        choice.setSelectedItem("Local Network");
     }
 
     private void cancelTimer() {

@@ -55,7 +55,7 @@ public class MysterFrame extends JFrame {
         initEvents();
     }
 
-    protected final MysterFrameContext getMysterFrameContext() {
+    public final MysterFrameContext getMysterFrameContext() {
         return context;
     }
     

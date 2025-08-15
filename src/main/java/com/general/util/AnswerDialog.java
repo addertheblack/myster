@@ -29,25 +29,25 @@ import com.myster.application.MysterGlobals;
 
 public class AnswerDialog extends JDialog {
     protected static final String CANCEL_ACTION = "Cancel";
-    
+
     private List<JButton> buttons;
     private String it; // just like HyperCard :-) You all know HyperCard, right?
 
     private final Frame parent;
     private final String theString;
 
-    private AnswerDialog(Frame f, String q, String ... b) {
+    private AnswerDialog(Frame f, String q, String... b) {
         super(f, "Alert!", true);
         theString = q;
         parent = f;
 
         String[] buttons = b.clone();
         if (b.length == 0) {
-            buttons = new String[]{ "Ok" };
+            buttons = new String[] { "Ok" };
         }
 
         initComponents(buttons);
-        
+
         setResizable(true);
     }
 
@@ -67,39 +67,39 @@ public class AnswerDialog extends JDialog {
         Frame tempframe = new Frame();
         tempframe.setSize(1, 1);
         Toolkit tool = Toolkit.getDefaultToolkit();
-        tempframe.setLocation(tool.getScreenSize().width / 2, tool
-                .getScreenSize().height / 2 - 150);
+        tempframe.setLocation(tool.getScreenSize().width / 2,
+                              tool.getScreenSize().height / 2 - 150);
         tempframe.setTitle("Dialog Box!");
-        //tempframe.show();
+        // tempframe.show();
         return tempframe;
     }
-    
+
     public AnswerDialog(Frame f, String q) {
         this(f, q, new String[0]);
     }
 
     private void initComponents(String[] buttonNames) {
-    	 int padding = 10; // 10 pixels padding
-         ((JComponent)getContentPane()).setBorder(BorderFactory.createEmptyBorder(padding, padding, padding, padding));
+        int padding = 10; // 10 pixels padding
+        ((JComponent) getContentPane())
+                .setBorder(BorderFactory.createEmptyBorder(padding, padding, padding, padding));
 
-         if (buttonNames.length > 3) {
-             throw new IllegalStateException("Can only have 3 buttons max, got " + buttonNames.length);
-         }
-         
+        if (buttonNames.length > 3) {
+            throw new IllegalStateException("Can only have 3 buttons max, got "
+                    + buttonNames.length);
+        }
+
         setLayout(new BorderLayout());
 
-        JTextArea textArea = new JTextArea(theString, 0, theString.length() > 200 ? 80 : 40);
-        textArea.setLineWrap(true);
-        textArea.setWrapStyleWord(true);
-        textArea.setEditable(false);
+        JTextArea textArea = MessagePanel.createNew(theString);
+        textArea.setColumns(theString.length() > 200 ? 80 : 40);
         textArea.setCaret(new DefaultCaret() {
             @Override
             public void setVisible(boolean v) {
                 super.setVisible(false); // Always keep the caret invisible
             }
         });
-       
-        
+
+
         pack(); // font is null if not packed
         textArea.setFont(getFont());
         textArea.setOpaque(false);
@@ -109,7 +109,7 @@ public class AnswerDialog extends JDialog {
         buttonPanel.setLayout(new FlowLayout(FlowLayout.RIGHT));
         buttons = new ArrayList<>();
 
-        for (String buttonName: buttonNames) {
+        for (String buttonName : buttonNames) {
             JButton button = new JButton(buttonName);
             button.addActionListener((e) -> {
                 JButton b = ((JButton) (e.getSource()));
@@ -120,17 +120,17 @@ public class AnswerDialog extends JDialog {
             buttons.add(button);
         }
         getRootPane().setDefaultButton(buttons.get(0));
-        
+
         if (MysterGlobals.ON_MAC) {
             Collections.reverse(buttons);
         }
-        
+
         for (JButton b : buttons) {
             buttonPanel.add(b);
         }
-        
+
         add(buttonPanel, BorderLayout.SOUTH);
-        
+
         // Create an action to dispose of the dialog
         Action escapeAction = new AbstractAction() {
             @Override
@@ -147,11 +147,11 @@ public class AnswerDialog extends JDialog {
         // Bind the escape key to the action
         inputMap.put(KeyStroke.getKeyStroke(KeyEvent.VK_ESCAPE, 0), "ESCAPE");
         actionMap.put("ESCAPE", escapeAction);
-        
+
         // need to pack twice in order to get JTextArea to lay out correctly
         pack();
         pack();
-        
+
         Dimension d = parent.getSize();
         Point l = parent.getLocation();
 

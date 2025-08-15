@@ -30,7 +30,7 @@ import com.myster.application.MysterGlobals;
 public class AskDialog extends JDialog {
     private static final String CANCEL_ACTION = "Cancel";
     private static final String OK_ACTION = "Ok";
-    
+
     private List<JButton> buttons;
     private String it;
     private JTextField messagebox;
@@ -50,39 +50,38 @@ public class AskDialog extends JDialog {
 
     private void initComponents() {
         int padding = 10; // 10 pixels padding
-        ((JComponent)getContentPane()).setBorder(BorderFactory.createEmptyBorder(padding, padding, padding, padding));
+        ((JComponent) getContentPane())
+                .setBorder(BorderFactory.createEmptyBorder(padding, padding, padding, padding));
 
-        
-       setLayout(new BorderLayout());
 
-       JTextArea textArea = new JTextArea(question, 0, question.length() > 200 ? 80 : 40);
-       textArea.setLineWrap(true);
-       textArea.setWrapStyleWord(true);
-       textArea.setEditable(false);
-       textArea.setCaret(new DefaultCaret() {
-           @Override
-           public void setVisible(boolean v) {
-               super.setVisible(false); // Always keep the caret invisible
-           }
-       });
-       
-       pack();
-       textArea.setFont(getFont());
-      
-       textArea.setOpaque(false);
-       textArea.setBorder(BorderFactory.createEmptyBorder(5, 5, 10, 5));
-       add(textArea, BorderLayout.NORTH);
-       
-       JPanel southPanel = new JPanel();
-       
-       southPanel.setLayout(new BorderLayout());
-       
-       messagebox = new JTextField(sample);
-       JPanel justForLayout = new JPanel();
-       justForLayout.setLayout(new BorderLayout());
-       justForLayout.add(messagebox, BorderLayout.CENTER);
-       justForLayout.setBorder( BorderFactory.createEmptyBorder(0, 5, 5, 5));
-       southPanel.add(justForLayout, BorderLayout.NORTH);
+        setLayout(new BorderLayout());
+
+        JTextArea textArea = MessagePanel.createNew(question);
+        textArea.setColumns(question.length() > 200 ? 80 : 40);
+        textArea.setCaret(new DefaultCaret() {
+            @Override
+            public void setVisible(boolean v) {
+                super.setVisible(false); // Always keep the caret invisible
+            }
+        });
+
+        pack();
+        textArea.setFont(getFont());
+
+        textArea.setOpaque(false);
+        textArea.setBorder(BorderFactory.createEmptyBorder(5, 5, 10, 5));
+        add(textArea, BorderLayout.NORTH);
+
+        JPanel southPanel = new JPanel();
+
+        southPanel.setLayout(new BorderLayout());
+
+        messagebox = new JTextField(sample);
+        JPanel justForLayout = new JPanel();
+        justForLayout.setLayout(new BorderLayout());
+        justForLayout.add(messagebox, BorderLayout.CENTER);
+        justForLayout.setBorder(BorderFactory.createEmptyBorder(0, 5, 5, 5));
+        southPanel.add(justForLayout, BorderLayout.NORTH);
 
         JPanel buttonPanel = new JPanel();
         buttonPanel.setLayout(new FlowLayout(FlowLayout.RIGHT));
@@ -90,15 +89,15 @@ public class AskDialog extends JDialog {
         buttons = new ArrayList<>(Arrays
                 .asList(new JButton[] { new JButton(OK_ACTION), new JButton(CANCEL_ACTION) }));
 
-        for (JButton b: buttons) {
+        for (JButton b : buttons) {
             b.addActionListener(new ActionHandler());
         }
         getRootPane().setDefaultButton(buttons.get(0));
-        
+
         if (MysterGlobals.ON_MAC) {
             Collections.reverse(buttons);
         }
-        
+
         for (JButton b : buttons) {
             buttonPanel.add(b);
         }
@@ -106,7 +105,7 @@ public class AskDialog extends JDialog {
         southPanel.add(buttonPanel, BorderLayout.SOUTH);
 
         add(southPanel, BorderLayout.SOUTH);
-        
+
         // Create an action to dispose of the dialog
         Action escapeAction = new AbstractAction() {
             @Override
@@ -123,12 +122,12 @@ public class AskDialog extends JDialog {
         // Bind the escape key to the action
         inputMap.put(KeyStroke.getKeyStroke(KeyEvent.VK_ESCAPE, 0), "ESCAPE");
         actionMap.put("ESCAPE", escapeAction);
-        
+
         pack();
         pack();
-        
+
         Util.centerFrame(this, 0, 0);
-        
+
         messagebox.requestFocus();
     }
 
@@ -146,8 +145,7 @@ public class AskDialog extends JDialog {
     }
 
     public static String simpleAsk(String question, String suggestedAnswer) {
-        return (new AskDialog(AnswerDialog.getCenteredFrame(), question,
-                suggestedAnswer)).ask();
+        return (new AskDialog(AnswerDialog.getCenteredFrame(), question, suggestedAnswer)).ask();
     }
 
     public static String simpleAsk(Frame frame, String question, String suggestedAnswer) {

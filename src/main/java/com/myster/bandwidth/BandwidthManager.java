@@ -1,5 +1,9 @@
 package com.myster.bandwidth;
 
+import java.awt.Component;
+import java.awt.GridBagConstraints;
+import java.awt.GridBagLayout;
+import java.awt.Insets;
 import java.awt.event.ItemEvent;
 import java.awt.event.ItemListener;
 import java.util.ArrayList;
@@ -10,6 +14,7 @@ import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.JTextField;
 
+import com.general.util.GridBagBuilder;
 import com.general.util.MessagePanel;
 import com.myster.mml.RobustMML;
 import com.myster.pref.MysterPreferences;
@@ -274,12 +279,8 @@ class BlockedThread {
 /**
  * Prefs stuff. It's GUI so blah.
  */
-
 class BandwithPrefsPanel extends PreferencesPanel {
-    public static final int STD_XSIZE = 450;
-    public static final int STD_YSIZE = 300;
-
-    private final JPanel explanationPanel = new MessagePanel(
+    private final Component explanationPanel = MessagePanel.createNew(
             "Using the bandwidth preference pannel you can set the maximum rate "
                     + "at which Myster will send and recieve data. This setting is useful "
                     + "if you want to run a Myster server while using the internet, but find "
@@ -298,10 +299,10 @@ class BandwithPrefsPanel extends PreferencesPanel {
     private final JLabel incommingUnitsLabel;
 
     public BandwithPrefsPanel() {
-        setLayout(null);
-        explanationPanel.setLocation(0, 0);
-        explanationPanel.setSize(STD_XSIZE, STD_YSIZE / 3);
-        add(explanationPanel);
+        setLayout(new GridBagLayout());
+        var params = new GridBagBuilder().withInsets(new Insets(0, 0, 5, 5));
+        
+        add(explanationPanel, params.withInsets(new Insets(0, 0, 20, 5)).withSize(3, 1).withFill(GridBagConstraints.HORIZONTAL));
 
         int nextOff = STD_YSIZE / 3;
         nextOff += 10;
@@ -319,30 +320,25 @@ class BandwithPrefsPanel extends PreferencesPanel {
                 setOutgoingEnable(state);
             }
         });
-        add(enableOutgoing);
+        add(enableOutgoing, params.withGridLoc(0, 1).withSize(3, 1).withAnchor(GridBagConstraints.WEST));
 
         nextOff += 25;
 
         outgoingSpeedLabel = new JLabel("Limit speed to: ");
         outgoingSpeedLabel.setLocation(15, nextOff);
         outgoingSpeedLabel.setSize(150, 20);
-        add(outgoingSpeedLabel);
+        add(outgoingSpeedLabel, params.withGridLoc(0, 2).withInsets(new Insets(0, 15, 5, 5)));
 
         outgoingBytesField = new JTextField("10");
         outgoingBytesField.setLocation(15 + 150, nextOff);
         outgoingBytesField.setSize(50, 20);
-        add(outgoingBytesField);
+        add(outgoingBytesField, params.withGridLoc(1, 2));
 
         outgoingUnitsLabel = new JLabel("Kilo BYTES / second");
-        outgoingUnitsLabel.setLocation(15 + 50 + 150, nextOff);
-        outgoingUnitsLabel.setSize(200, 20);
-        add(outgoingUnitsLabel);
+        add(outgoingUnitsLabel, params.withGridLoc(2, 2).withAnchor(GridBagConstraints.WEST));
 
-        nextOff += 40;
 
         enableIncomming = new JCheckBox("Enable Incomming Throttling");
-        enableIncomming.setLocation(10, nextOff);
-        enableIncomming.setSize(200, 20);
         enableIncomming.addItemListener(new ItemListener() {
             public void itemStateChanged(ItemEvent e) {
                 boolean state = false;
@@ -354,7 +350,7 @@ class BandwithPrefsPanel extends PreferencesPanel {
             }
         });
         //enableIncomming.setEnabled(false);
-        add(enableIncomming);
+        add(enableIncomming, params.withGridLoc(0, 3).withSize(3, 1).withAnchor(GridBagConstraints.WEST));
 
         nextOff += 25;
 
@@ -362,19 +358,21 @@ class BandwithPrefsPanel extends PreferencesPanel {
         incommingSpeedLabel.setLocation(15, nextOff);
         incommingSpeedLabel.setSize(150, 20);
         incommingSpeedLabel.setEnabled(false);
-        add(incommingSpeedLabel);
+        add(incommingSpeedLabel, params.withGridLoc(0, 4).withInsets(new Insets(0, 15, 5, 5)));
 
         incommingBytesField = new JTextField("10");
         incommingBytesField.setLocation(15 + 150, nextOff);
         incommingBytesField.setSize(50, 20);
         incommingBytesField.setEnabled(false);
-        add(incommingBytesField);
+        add(incommingBytesField, params.withGridLoc(1, 4));
 
         incommingUnitsLabel = new JLabel("Kilo BYTES / second");
         incommingUnitsLabel.setLocation(15 + 50 + 150, nextOff);
         incommingUnitsLabel.setSize(200, 20);
         incommingUnitsLabel.setEnabled(false);
-        add(incommingUnitsLabel);
+        add(incommingUnitsLabel, params.withGridLoc(2, 4).withAnchor(GridBagConstraints.WEST));
+        
+        add(new JPanel(), params.withGridLoc(0, 5).withSize(3, 1).withWeight(1, 1));
     }
 
     public void save() { //save changes

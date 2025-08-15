@@ -1,5 +1,6 @@
 package com.myster.type.ui;
 
+import java.awt.Component;
 import java.awt.Container;
 
 import com.general.mclist.GenericMCListItem;
@@ -23,7 +24,7 @@ import com.myster.type.TypeDescriptionList;
 
 public class TypeManagerPreferencesGUI extends PreferencesPanel {
     private final MCList<MysterType> mcList;
-    private final MessagePanel message;
+    private final Component message;
     private final TypeDescriptionList tdList;
 
     private static final int HEADER_Y = 100;
@@ -37,7 +38,7 @@ public class TypeManagerPreferencesGUI extends PreferencesPanel {
         this.tdList = tdList;
         setLayout(null);
 
-        message = new MessagePanel(
+        message = MessagePanel.createNew(
                 "Each file type "
                         + "that is enabled adds a constant CPU and bandwidth overhead to your Myster client, however it "
                         + "allows you to search for files of that type. Enable the file types "

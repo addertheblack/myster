@@ -1,8 +1,6 @@
 
 package com.myster.ui;
 
-import java.awt.Rectangle;
-
 import com.general.util.Util;
 import com.myster.pref.ui.PreferencesDialogBox;
 import com.myster.pref.ui.PreferencesPanel;
@@ -18,7 +16,6 @@ public class PreferencesGui {
         prefsWindow = new PreferencesDialogBox(context);
         if ( !Util.isEventDispatchThread() )
             throw new IllegalStateException("Not on event thread!");
-        prefsWindow.pack();
     }
     
 

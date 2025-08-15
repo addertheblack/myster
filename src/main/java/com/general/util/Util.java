@@ -21,9 +21,17 @@ import java.util.List;
 import java.util.concurrent.Callable;
 import java.util.function.Function;
 import java.util.function.Predicate;
+import java.util.logging.Logger;
+
+import javax.swing.DefaultComboBoxModel;
+import javax.swing.JComboBox;
+import javax.swing.JList;
+import javax.swing.ListCellRenderer;
 
 
 public class Util { //This code was taken from an Apple Sample Code package,
+    private static final Logger LOGGER = Logger.getLogger(Util.class.getName());
+    
     public static Image loadImage(String filename, Component watcher) {
         if (filename != null) {
             URL url = watcher.getClass().getResource(filename);
@@ -69,6 +77,109 @@ public class Util { //This code was taken from an Apple Sample Code package,
         }
 
         return image;
+    }
+    
+    public static final String SEPARATOR = "---------------------------------";
+
+    @SuppressWarnings("unchecked")
+    public static JComboBox<String> addSeparatorSupport(JComboBox<String> box) {
+        // Capture the original renderer
+        final ListCellRenderer<String> originalRenderer = ((ListCellRenderer<String>) box.getRenderer());
+        
+        // Create a new renderer that wraps the original one
+        box.setRenderer(new ListCellRenderer<String>() {
+            @Override
+            public Component getListCellRendererComponent(JList<? extends String> list, String value,
+                    int index, boolean isSelected, boolean cellHasFocus) {
+                if (SEPARATOR.equals(value)) {
+                    var separator = new javax.swing.JPopupMenu.Separator();
+                    separator.setEnabled(false); 
+                    return separator;
+                }
+                return originalRenderer.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
+            }
+        });
+        
+        box.setModel(new DefaultComboBoxModel<String>() {
+            public void setSelectedItem(Object anObject) {
+                if (!SEPARATOR.equals(anObject)) {
+                    super.setSelectedItem(anObject);
+                }
+            }
+        });
+        
+        return box;
+    }
+    
+    public static boolean isSystemDarkTheme() {
+        String osName = System.getProperty("os.name").toLowerCase();
+        
+        if (osName.contains("linux")) {
+            // Try to detect GTK dark theme
+            try {
+                Process process = Runtime.getRuntime().exec(new String[] {
+                    "gsettings", 
+                    "get", 
+                    "org.gnome.desktop.interface", 
+                    "gtk-theme"
+                });
+                
+                try (var reader = new java.io.BufferedReader(new java.io.InputStreamReader(process.getInputStream()))) {
+                    String theme = reader.readLine();
+                    if (theme != null) {
+                        theme = theme.toLowerCase();
+                        // Remove quotes if present
+                        theme = theme.replaceAll("'", "");
+                        return theme.contains("dark");
+                    }
+                }
+            } catch (Exception ex) {
+                Util.LOGGER.info("Could not detect GTK theme: " + ex.getMessage());
+            }
+        } else if (osName.contains("mac")) {
+            // For macOS we can check system appearance
+            try {
+                Process process = Runtime.getRuntime().exec(new String[] {
+                    "defaults", 
+                    "read", 
+                    "-g", 
+                    "AppleInterfaceStyle"
+                });
+                
+                try (var reader = new java.io.BufferedReader(new java.io.InputStreamReader(process.getInputStream()))) {
+                    String style = reader.readLine();
+                    return "Dark".equalsIgnoreCase(style);
+                }
+            } catch (Exception ex) {
+                Util.LOGGER.info("Could not detect macOS dark mode: " + ex.getMessage());
+            }
+        } else if (osName.contains("windows")) {
+            // For Windows 10/11
+            try {
+                Process process = Runtime.getRuntime().exec(new String[] {
+                    "reg", 
+                    "query", 
+                    "HKCU\\SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Themes\\Personalize", 
+                    "/v",
+                    "AppsUseLightTheme"
+                });
+                
+                try (var reader = new java.io.BufferedReader(new java.io.InputStreamReader(process.getInputStream()))) {
+                    String result = reader.readLine();
+                    while (result != null) {
+                        if (result.contains("AppsUseLightTheme")) {
+                            // If the value is 0, dark theme is enabled
+                            return result.trim().split("\\s+")[3].equals("0x0");
+                        }
+                        result = reader.readLine();
+                    }
+                }
+            } catch (Exception ex) {
+                Util.LOGGER.info("Could not detect Windows dark mode: " + ex.getMessage());
+            }
+        }
+        
+        return false; // Default to light theme if we can't detect
     }
 
     public static String getStringFromBytes(long bytes) {
