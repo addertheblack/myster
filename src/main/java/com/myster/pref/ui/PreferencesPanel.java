@@ -42,15 +42,13 @@ public abstract class PreferencesPanel extends JPanel {
     }
 
     /**
-     * Tells this panel to commit the changes that ave been made.
-     *  
+     * Tells this panel to commit the changes that have been made AND APPLY THEIR EFFECTS.
      */
     public abstract void save(); //save changes
 
     /**
      * Tells this panel to throw away any changes that have been made and to
      * re-read the state from the prefs.
-     *  
      */
     public abstract void reset(); //discard changes and reset values to their
 

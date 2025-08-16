@@ -30,8 +30,6 @@ import java.util.prefs.Preferences;
 
 import javax.swing.JFrame;
 import javax.swing.SwingUtilities;
-import javax.swing.UIManager;
-import javax.swing.UnsupportedLookAndFeelException;
 
 import com.general.application.ApplicationContext;
 import com.general.application.ApplicationSingletonListener;
@@ -89,6 +87,7 @@ import com.myster.ui.menubar.event.MenuBarEvent;
 import com.myster.ui.menubar.event.MenuBarListener;
 import com.myster.ui.tray.MysterTray;
 import com.myster.util.I18n;
+import com.myster.util.ThemeUtil;
 import com.simtechdata.waifupnp.UPnP;
 
 public class Myster {
@@ -135,44 +134,18 @@ public class Myster {
         LOGGER.info("java.vm.name                 :" + System.getProperty("java.vm.name"));
         LOGGER.info("Desktop.isDesktopSupported() :" + Desktop.isDesktopSupported());
 
+        MysterPreferences preferences = MysterPreferences.getInstance();
+        
         INSTRUMENTATION.info("-------->> before javax.swing.UIManager invoke later "
                 + (System.currentTimeMillis() - startTime));
 
         // we do this as early as possible since the EDT is not part of this thread so we can get
         // two threads working at the same time
         SwingUtilities.invokeLater(() -> {
-            INSTRUMENTATION.info("-------->> !! EDT Started: " + (System.currentTimeMillis() - startTime));
-            
-            try {
-                for (var info : UIManager.getInstalledLookAndFeels()) {
-                    LOGGER.info("Installed Look and Feel: " + info.getName() + " - " + info.getClassName());
-                }
-                
-                String systemLookAndFeelClassName = UIManager.getSystemLookAndFeelClassName();
-                LOGGER.info("System Look and feel: " + systemLookAndFeelClassName);
-                
-                // If dark mode is detected, use FlatLaf Dark regardless of platform
-                if (Util.isSystemDarkTheme()) {
-                    LOGGER.info("System is using dark theme, using FlatDarkLaf");
-                    systemLookAndFeelClassName = "com.formdev.flatlaf.FlatDarkLaf";
-                } else if (systemLookAndFeelClassName.equals("javax.swing.plaf.metal.MetalLookAndFeel")) {
-                    // Metal look and feel is ugly, use FlatLaf Light instead
-                    LOGGER.info("MetalLookAndFeel detected, using FlatLightLaf instead");
-                    systemLookAndFeelClassName = "com.formdev.flatlaf.FlatLightLaf";
-                }
-                // else use the native look and feel
-                
-                UIManager.setLookAndFeel(systemLookAndFeelClassName);
-            } catch (InstantiationException exception) {
-                exception.printStackTrace();
-            } catch (UnsupportedLookAndFeelException exception) {
-                exception.printStackTrace();
-            } catch (ClassNotFoundException exception) {
-                exception.printStackTrace();
-            } catch (IllegalAccessException exception) {
-                exception.printStackTrace();
-            }
-            
+            INSTRUMENTATION
+                    .info("-------->> !! EDT Started: " + (System.currentTimeMillis() - startTime));
+            ThemeUtil.applyThemeFromPreferences(preferences);
+
             INSTRUMENTATION.info("-------->> !! Set look and feel: " + (System.currentTimeMillis() - startTime));
 
             // this gets awt to start initializing on the EDT while we initialize Myster's
@@ -228,9 +201,6 @@ public class Myster {
         
         INSTRUMENTATION.info("-------->> Init I18n " + (System.currentTimeMillis() - startTime));
         I18n.init();
-
-        INSTRUMENTATION.info("-------->> Init preferences " + (System.currentTimeMillis() - startTime));
-        MysterPreferences preferences = MysterPreferences.getInstance();
 
         INSTRUMENTATION.info("-------->> Init datagram server " + (System.currentTimeMillis() - startTime));
         ServerEventDispatcher serverDispatcher = new ServerEventDispatcher();
@@ -350,7 +320,7 @@ public class Myster {
                 preferencesGui.addPanel(new FmiChooser(fileManager, tdList));
                 preferencesGui.addPanel(new MessagePreferencesPanel(preferences));
                 preferencesGui.addPanel(new TypeManagerPreferencesGUI(tdList));
-                preferencesGui.addPanel(new ThemePane());
+                preferencesGui.addPanel(new ThemePane(preferences));
 
                 INSTRUMENTATION.info("-------->>   EDT init other GUI sub systems " + (System.currentTimeMillis() - startTime));
 
