@@ -5,11 +5,13 @@ import java.util.List;
 import java.util.Map;
 import java.util.logging.Logger;
 import java.util.stream.Collectors;
+
 import javax.swing.UIManager;
 import javax.swing.plaf.metal.DefaultMetalTheme;
 import javax.swing.plaf.metal.MetalLookAndFeel;
 import javax.swing.plaf.metal.OceanTheme;
 
+import com.formdev.flatlaf.FlatLaf;
 import com.general.util.Util;
 import com.myster.pref.MysterPreferences;
 
@@ -365,8 +367,13 @@ public class ThemeUtil {
     public static final String THEME_NAME_PREF_KEY = "Theme Name";
     
     public static void applyThemeFromPreferences(MysterPreferences preferences) {
+        String friendlyName = getAppliedThemeFreindlyName(preferences);
+        applyTheme(friendlyName);
+    }
+
+    public static String getAppliedThemeFreindlyName(MysterPreferences preferences) {
         String savedThemeClass = preferences.get(THEME_NAME_PREF_KEY, findDefaultThemeFullyQualifiedName());
         String friendlyName = getFriendlyName(savedThemeClass);
-        applyTheme(friendlyName);
+        return friendlyName;
     }
 }
