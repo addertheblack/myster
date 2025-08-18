@@ -14,8 +14,6 @@ package com.myster.pref.ui;
 import java.awt.BorderLayout;
 import java.awt.Color;
 import java.awt.Dimension;
-import java.awt.Font;
-import java.awt.Graphics;
 import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
 import java.awt.Insets;
@@ -29,7 +27,6 @@ import java.util.Enumeration;
 import java.util.Hashtable;
 import java.util.Iterator;
 
-import javax.swing.Box;
 import javax.swing.DefaultListModel;
 import javax.swing.JButton;
 import javax.swing.JLabel;
@@ -41,7 +38,6 @@ import javax.swing.event.ListSelectionListener;
 
 import com.general.util.GridBagBuilder;
 import com.general.util.Util;
-
 import com.myster.ui.MysterFrame;
 import com.myster.ui.MysterFrameContext;
 
@@ -74,7 +70,8 @@ public class PreferencesDialogBox extends MysterFrame {
         
         getRootPane().setDefaultButton(mypanel.save);
 
-
+        setSize(mypanel.getPreferredSize());
+        
         addWindowListener(new WindowAdapter() {
             public void windowClosing(WindowEvent e) {
                 e.getWindow().setVisible(false);
@@ -119,12 +116,6 @@ public class PreferencesDialogBox extends MysterFrame {
         mypanel.removePanel(key);
     }
     
-    @Override
-    public void setBounds(int x, int y, int width, int height) {
-        super.setBounds(x, y, width, height);
-    }
-
-
     private class MainPanel extends JPanel {
         private JList list;
 

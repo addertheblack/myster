@@ -20,6 +20,8 @@ public class ThemePane extends PreferencesPanel {
     
     private final MysterPreferences preferences;
     private JComboBox<String> themeChoice; // Add this field at class level
+
+    private String appliedTheme;
     
     public ThemePane(MysterPreferences preferences) {
         this.preferences = preferences;
@@ -59,10 +61,17 @@ public class ThemePane extends PreferencesPanel {
                 .withInsets(new java.awt.Insets(10, 10, 10, 10))
                 .withAnchor(GridBagBuilder.WEST));
         
+        appliedTheme = ThemeUtil.getAppliedThemeFreindlyName(preferences);
+        
         // Add themeChoice listener to switch to the theme in question
         themeChoice.addActionListener(e -> {
             String selectedTheme = (String) themeChoice.getSelectedItem();
+            if (appliedTheme.equals(selectedTheme)) {
+                return;
+            }
+            
             applyTheme(selectedTheme);
+            appliedTheme = selectedTheme;
         });
         
         // now add fill pane to  make sure components are moved to top
@@ -71,6 +80,7 @@ public class ThemePane extends PreferencesPanel {
                 .withWeight(1.0, 1.0)
                 .withFill(GridBagBuilder.BOTH)
                 .withInsets(new java.awt.Insets(10, 10, 10, 10)));
+        
     }
 
 
