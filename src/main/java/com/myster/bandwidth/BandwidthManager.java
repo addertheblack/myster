@@ -329,7 +329,7 @@ class BandwithPrefsPanel extends PreferencesPanel {
         outgoingSpeedLabel.setSize(150, 20);
         add(outgoingSpeedLabel, params.withGridLoc(0, 2).withInsets(new Insets(0, 15, 5, 5)));
 
-        outgoingBytesField = new JTextField("10");
+        outgoingBytesField = new JTextField("10", 7);
         outgoingBytesField.setLocation(15 + 150, nextOff);
         outgoingBytesField.setSize(50, 20);
         add(outgoingBytesField, params.withGridLoc(1, 2));
@@ -360,7 +360,7 @@ class BandwithPrefsPanel extends PreferencesPanel {
         incommingSpeedLabel.setEnabled(false);
         add(incommingSpeedLabel, params.withGridLoc(0, 4).withInsets(new Insets(0, 15, 5, 5)));
 
-        incommingBytesField = new JTextField("10");
+        incommingBytesField = new JTextField("10", 7);
         incommingBytesField.setLocation(15 + 150, nextOff);
         incommingBytesField.setSize(50, 20);
         incommingBytesField.setEnabled(false);

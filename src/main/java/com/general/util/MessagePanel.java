@@ -2,6 +2,7 @@ package com.general.util;
 
 import java.awt.Color;
 
+import javax.swing.JTable;
 import javax.swing.JTextArea;
 import javax.swing.border.EmptyBorder;
 import javax.swing.text.DefaultCaret;
@@ -12,7 +13,14 @@ import javax.swing.text.DefaultCaret;
 
 public class MessagePanel extends JTextArea {
     public static JTextArea createNew(String message) {
-        var msg = new JTextArea(message);
+        var msg = new JTextArea(message) {
+          @Override
+        public void updateUI() {
+            super.updateUI();
+            setFont(new JTable().getFont());
+        }  
+            
+        };
         msg.setWrapStyleWord(true);
         msg.setLineWrap(true);
         msg.setEditable(false);
