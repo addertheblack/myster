@@ -113,18 +113,16 @@ public class Util { //This code was taken from an Apple Sample Code package,
     
     public static boolean isSystemDarkTheme() {
         String osName = System.getProperty("os.name").toLowerCase();
-        
+
         if (osName.contains("linux")) {
             // Try to detect GTK dark theme
             try {
-                Process process = Runtime.getRuntime().exec(new String[] {
-                    "gsettings", 
-                    "get", 
-                    "org.gnome.desktop.interface", 
-                    "gtk-theme"
-                });
-                
-                try (var reader = new java.io.BufferedReader(new java.io.InputStreamReader(process.getInputStream()))) {
+                Process process = Runtime.getRuntime()
+                        .exec(new String[] { "gsettings", "get", "org.gnome.desktop.interface",
+                                "gtk-theme" });
+
+                try (var reader = new java.io.BufferedReader(new java.io.InputStreamReader(process
+                        .getInputStream()))) {
                     String theme = reader.readLine();
                     if (theme != null) {
                         theme = theme.toLowerCase();
@@ -139,14 +137,11 @@ public class Util { //This code was taken from an Apple Sample Code package,
         } else if (osName.contains("mac")) {
             // For macOS we can check system appearance
             try {
-                Process process = Runtime.getRuntime().exec(new String[] {
-                    "defaults", 
-                    "read", 
-                    "-g", 
-                    "AppleInterfaceStyle"
-                });
-                
-                try (var reader = new java.io.BufferedReader(new java.io.InputStreamReader(process.getInputStream()))) {
+                Process process = Runtime.getRuntime()
+                        .exec(new String[] { "defaults", "read", "-g", "AppleInterfaceStyle" });
+
+                try (var reader = new java.io.BufferedReader(new java.io.InputStreamReader(process
+                        .getInputStream()))) {
                     String style = reader.readLine();
                     return "Dark".equalsIgnoreCase(style);
                 }
@@ -154,31 +149,35 @@ public class Util { //This code was taken from an Apple Sample Code package,
                 Util.LOGGER.info("Could not detect macOS dark mode: " + ex.getMessage());
             }
         } else if (osName.contains("windows")) {
-            // For Windows 10/11
             try {
-                Process process = Runtime.getRuntime().exec(new String[] {
-                    "reg", 
-                    "query", 
-                    "HKCU\\SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Themes\\Personalize", 
-                    "/v",
-                    "AppsUseLightTheme"
-                });
-                
-                try (var reader = new java.io.BufferedReader(new java.io.InputStreamReader(process.getInputStream()))) {
-                    String result = reader.readLine();
-                    while (result != null) {
-                        if (result.contains("AppsUseLightTheme")) {
-                            // If the value is 0, dark theme is enabled
-                            return result.trim().split("\\s+")[3].equals("0x0");
+                Process process = Runtime.getRuntime()
+                        .exec(new String[] { "reg", "query",
+                                "HKCU\\SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Themes\\Personalize",
+                                "/v", "AppsUseLightTheme" });
+
+                try (var reader = new java.io.BufferedReader(new java.io.InputStreamReader(process
+                        .getInputStream()))) {
+                    String line;
+                    while ((line = reader.readLine()) != null) {
+                        if (line.contains("AppsUseLightTheme")) {
+                            // Output looks like:
+                            // " AppsUseLightTheme REG_DWORD 0x0"
+                            String[] parts = line.trim().split("\\s+");
+                            String value = parts[parts.length - 1]; // last
+                                                                    // token
+                            return value.equalsIgnoreCase("0x0"); // 0 = dark, 1
+                                                                  // = light
                         }
-                        result = reader.readLine();
                     }
                 }
             } catch (Exception ex) {
-                Util.LOGGER.info("Could not detect Windows dark mode: " + ex.getMessage());
+                System.err.println("Could not detect Windows dark mode: " + ex.getMessage());
             }
+            // Default to light theme if unknown
+            return false;
+
         }
-        
+
         return false; // Default to light theme if we can't detect
     }
 
