@@ -64,7 +64,7 @@ public class ThemePane extends PreferencesPanel {
         appliedTheme = ThemeUtil.getAppliedThemeFreindlyName(preferences);
         
         // Add themeChoice listener to switch to the theme in question
-        themeChoice.addActionListener(e -> {
+        themeChoice.addActionListener(_ -> {
             String selectedTheme = (String) themeChoice.getSelectedItem();
             if (appliedTheme.equals(selectedTheme)) {
                 return;
@@ -82,7 +82,6 @@ public class ThemePane extends PreferencesPanel {
                 .withInsets(new java.awt.Insets(10, 10, 10, 10)));
         
     }
-
 
 
     private void addBoldDefaultThemeSupport(JComboBox<String> box) {
