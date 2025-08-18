@@ -114,7 +114,7 @@ public class Myster {
         
         // this sets the look and feel to follow the light/dark app prefs on the macos
         // this don't work 'cause swing don't support it.
-//        System.setProperty("apple.awt.application.appearance", "system");
+        System.setProperty("apple.awt.application.appearance", "system");
 
         final long startTime = System.currentTimeMillis();
 

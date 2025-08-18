@@ -12,6 +12,7 @@ import javax.swing.plaf.metal.MetalLookAndFeel;
 import javax.swing.plaf.metal.OceanTheme;
 
 import com.formdev.flatlaf.FlatLaf;
+import com.formdev.flatlaf.util.SystemInfo;
 import com.general.util.Util;
 import com.myster.pref.MysterPreferences;
 
@@ -131,6 +132,18 @@ public class ThemeUtil {
                                   "com.formdev.flatlaf.FlatDarculaLaf",
                                   () -> com.formdev.flatlaf.FlatDarculaLaf.setup()));
         builder.add(ThemeInfo.separator());
+
+        if (SystemInfo.isMacOS) {
+            builder.add(new ThemeInfo("FlatLaf macOS",
+                                      "com.formdev.flatlaf.themes.FlatMacLightLaf",
+                                      () -> com.formdev.flatlaf.themes.FlatMacLightLaf.setup()));
+            builder.add(new ThemeInfo("FlatLaf macOS Dark",
+                                      "com.formdev.flatlaf.themes.FlatMacDarkLaf",
+                                      () -> com.formdev.flatlaf.themes.FlatMacDarkLaf.setup()));
+
+            builder.add(ThemeInfo.separator());
+        }
+        
 
         // Material Themes
         builder.add(new ThemeInfo("FlatLaf Material Design Dark",
@@ -328,12 +341,17 @@ public class ThemeUtil {
         // If dark mode is detected, use FlatLaf Dark regardless of platform
         if (Util.isSystemDarkTheme()) {
             LOGGER.info("System is using dark theme, using FlatDarkLaf");
-            systemLookAndFeelClassName = "com.formdev.flatlaf.FlatDarkLaf";
+            systemLookAndFeelClassName =
+                    SystemInfo.isMacOS ? "com.formdev.flatlaf.themes.FlatMacDarkLaf"
+                            : "com.formdev.flatlaf.FlatDarkLaf";
         } else if (systemLookAndFeelClassName.equals("javax.swing.plaf.metal.MetalLookAndFeel")) {
             // Metal look and feel is ugly, use FlatLaf Light instead
             LOGGER.info("MetalLookAndFeel detected, using FlatLightLaf instead");
             systemLookAndFeelClassName = "com.formdev.flatlaf.FlatLightLaf";
+        } else if (SystemInfo.isMacOS) {
+            systemLookAndFeelClassName = "com.formdev.flatlaf.themes.FlatMacLightLaf";
         }
+
         return systemLookAndFeelClassName;
     }
     
