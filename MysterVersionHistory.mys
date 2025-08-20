@@ -1215,12 +1215,24 @@ keys for myster types.
     Myster should automatically detect other nodes on the LAN and add them to the tracker EVEN if
     LAN network broadcast is broken - ie broadcast address isn't sent across wi-fi and LAN segments 
     
-2024-05-08
-    Move AsyncDatagramSocket to fire events on its own thread not EDT.
+2024-05-!!!!!!!!#!!    Move AsyncDatagramSocket to fire events on its own thread not EDT.
     Delete MysterServers that have no addresses from the identity tracker.
     Fire event when deleting happens
     Remove these MysterServer from server lists when this happens
     Fixed very old bug in server stats where MML is blank of exception when ServerStats structure is computed
+    
+2025-08-15
+    Continued work on the tracker to allow for things like the list of servers on the LAN
+    Made it so that we mark a server as up if we get a ping packet from it from a LAN address
+    Worked on the UI to make sure all preference panels can be dynamically laid out and resized
+    Added theme support so you can change themes
+    Added support for Windows, MacOS and Linux dark theme preferred - so Myster will automatically choose a dark theme.
+    Fixed Server stats events so that it now shows downloads again.
+    Misc UI fixes to make theming work again.
+    Make singleton windows (like the tracker or server stats or prefs) able to be tracked visibility
+    Fix bug in Async datagram socket that used stale buffer. Improve latency of Async Datagram socket.
+    Use the description of the type/description field for display in all places in the UI
+    Use crypto keys for networks types
 
 	
 

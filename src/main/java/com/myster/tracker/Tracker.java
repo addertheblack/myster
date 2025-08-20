@@ -129,9 +129,7 @@ public class Tracker {
     }
     
     public void receivedPing(MysterAddress ip) {
-        if (!pool.receivedPing(ip)) {
-            addIp(ip);
-        }
+       pool.receivedPing(ip);
     }
     
     /**

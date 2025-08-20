@@ -73,8 +73,6 @@ public class StatsInfoPanel extends JPanel {
     private final TypeDescriptionList tdList;
 
     public StatsInfoPanel(ServerContext context, MysterFrameContext c) {
-
-        setBackground(new Color(240, 240, 240));
         context.addConnectionManagerListener(new ConnectionHandler());
 
         // Load stuff

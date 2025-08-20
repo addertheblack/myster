@@ -413,7 +413,7 @@ public class MysterServerPoolImpl implements MysterServerPool {
     }
 
     @Override
-    public boolean receivedPing(MysterAddress ip) {
+    public void receivedPing(MysterAddress ip) {
         // this doens't always work because the ping can come from a port that
         // isn't the same one
         // that the server is registered with. In fact this is the normal case
@@ -428,25 +428,9 @@ public class MysterServerPoolImpl implements MysterServerPool {
         // For servers on a LAN we use the default port to allow servers to be
         // discoverable.. So this code path is a nice to have.
         if (!ServerUtils.isLanAddress(ip.getInetAddress())) {
-            return false;
+            return;
         }
-
-        // otherwise look for LAN stuff
-
-        Set<MysterAddress> addresses =
-                identityTracker.getServerAddressesForAddress(ip.getInetAddress());
-
-        boolean[] result = new boolean[]{false};
-        for (MysterAddress mysterAddress : addresses) {
-            // only ping the lan address
-            if (ServerUtils.isLanAddress(mysterAddress.getInetAddress())) {
-                getCachedMysterIp(mysterAddress).ifPresent(s -> {
-                    s.tryPingAgain(mysterAddress);
-                    result[0] = true;
-                });
-            }
-        }
-
-        return result[0];
+        
+        suggestAddress(ip);
     }
 }

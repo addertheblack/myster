@@ -228,7 +228,7 @@ class IdentityTracker implements IdentityProvider {
         if (state == null || state.up) {
             return;
         }
-
+        
         long timeMillis = System.currentTimeMillis();
         if (REFRESH_MS < timeMillis - state.timeOfLastSuggestPing) {
             state.timeOfLastSuggestPing = timeMillis;
