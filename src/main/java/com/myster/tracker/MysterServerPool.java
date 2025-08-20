@@ -69,5 +69,12 @@ public interface MysterServerPool {
     
     void filter(Consumer<MysterServer> consumer);
 
-    boolean receivedPing(MysterAddress ip);
+    /**
+     * Call this method if we've received a ping from that server. 
+     * Note this method only does something if the address is a LAN address.
+     * 
+     * @param ip to check
+     * @return false if we didn't retry the server.
+     */
+    void receivedPing(MysterAddress ip);
 }

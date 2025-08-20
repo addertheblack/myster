@@ -7,7 +7,10 @@
 
 package com.myster.server.ui;
 
+import java.awt.CardLayout;
+import java.awt.Color;
 import java.awt.Dimension;
+import java.awt.FlowLayout;
 import java.awt.Rectangle;
 import java.awt.event.ComponentAdapter;
 import java.awt.event.ComponentEvent;
@@ -16,6 +19,7 @@ import java.awt.event.WindowEvent;
 import java.util.logging.Logger;
 
 import javax.swing.JPanel;
+import javax.swing.JTabbedPane;
 
 import com.general.tab.TabEvent;
 import com.general.tab.TabListener;
@@ -31,7 +35,7 @@ import com.myster.util.Sayable;
 public class ServerStatsWindow extends MysterFrame implements Sayable {
     private static final Logger LOGGER = Logger.getLogger(ServerStatsWindow.class.getName());
     
-    private final TabPanel tab;
+    private final JTabbedPane tab;
     private final DownloadInfoPanel downloadPanel;
     private final StatsInfoPanel statsinfopanel;
 
@@ -85,10 +89,7 @@ public class ServerStatsWindow extends MysterFrame implements Sayable {
 
         setResizable(false);
 
-        //load objects:
-        setLayout(null);
-
-        tab = new TabPanel();
+        tab = new JTabbedPane();
 
         downloadPanel = new DownloadInfoPanel(context, c, protocol);
 
@@ -112,9 +113,9 @@ public class ServerStatsWindow extends MysterFrame implements Sayable {
             return; //this should NEVER happen
         inited = true;
         
-        setLayout(null);
+        setLayout(new CardLayout());
         tab.setLocation(0, 0);
-        tab.setSize(XSIZE, TABYSIZE);
+        tab.setSize(XSIZE,   YSIZE);
 
         /*
          * tab.setOverlap(10); tab.addTab("Tab 1"); tab.addTab("Tab 2");
@@ -122,8 +123,8 @@ public class ServerStatsWindow extends MysterFrame implements Sayable {
          */
 
         ///*
-        tab.addCustomTab("outbound.jpg");
-        tab.addCustomTab("serverstats.jpg");
+        tab.addTab("Downloads", downloadPanel);
+        tab.addTab("Server Stats", statsinfopanel);
 
         //tab.addTab("Outbound");
         //tab.addTab("Server Stats");
@@ -139,19 +140,15 @@ public class ServerStatsWindow extends MysterFrame implements Sayable {
 
         //downloadPanel=new DownloadInfoPanel();
         downloadPanel.setLocation(0, TABYSIZE);
-        tab.addTabListener(new TabHandler(0, downloadPanel));
         downloadPanel.setSize(XSIZE, YSIZE - TABYSIZE);
-        add(downloadPanel);
 
         downloadPanel.inited();
 
         //statsinfopanel=new StatsInfoPanel();
         statsinfopanel.setLocation(0, TABYSIZE);
         statsinfopanel.setSize(XSIZE, YSIZE - TABYSIZE);
-        add(statsinfopanel);
         statsinfopanel.setVisible(false);
         //statsinfopanel.init();
-        tab.addTabListener(new TabHandler(1, statsinfopanel));
 
         /*
          * graphinfopanel=new GraphInfoPanel();
@@ -167,25 +164,6 @@ public class ServerStatsWindow extends MysterFrame implements Sayable {
     private class CloseBox extends WindowAdapter {
         public void windowClosing(WindowEvent e) {
             setVisible(false);
-        }
-    }
-
-    private static class TabHandler implements TabListener {
-        private int tabNumber;
-
-        private JPanel panel;
-
-        public TabHandler(int i, JPanel downloadPanel) {
-            tabNumber = i;
-            panel = downloadPanel;
-        }
-
-        public void tabAction(TabEvent e) {
-            int id = e.getTabID();
-            if (id == tabNumber)
-                panel.setVisible(true);
-            else
-                panel.setVisible(false);
         }
     }
 }

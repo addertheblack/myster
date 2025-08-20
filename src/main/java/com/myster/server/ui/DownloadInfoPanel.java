@@ -54,7 +54,6 @@ public class DownloadInfoPanel extends JPanel {
         this.serverContext = context;
         this.protocol = protocol;
 
-        setBackground(new Color(240, 240, 240));
         chandler = new ConnectionHandler();
     }
 

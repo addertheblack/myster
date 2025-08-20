@@ -1,12 +1,14 @@
 package com.myster.server.datagram;
 
 import com.general.net.ImmutableDatagramPacket;
+import com.myster.application.MysterGlobals;
 import com.myster.net.BadPacketException;
 import com.myster.net.DatagramSender;
 import com.myster.net.DatagramTransport;
 import com.myster.net.MysterAddress;
 import com.myster.net.PingPacket;
 import com.myster.net.PongPacket;
+import com.myster.server.ServerUtils;
 import com.myster.tracker.Tracker;
 
 public class PingTransport extends DatagramTransport {
@@ -36,7 +38,13 @@ public class PingTransport extends DatagramTransport {
                 .getImmutablePacket(new MysterAddress(immutablePacket.getAddress(),
                                                       immutablePacket.getPort())));
 
-        manager.receivedPing(new MysterAddress(immutablePacket.getAddress()));
+        // this method call signals the tracker that's we've gotten a ping from
+        // this ip address.
+        // note it doens't mean there's a server on this port but if it's a LAN
+        // address then the tracker might
+        // do something
+        manager.receivedPing(new MysterAddress(immutablePacket.getAddress(),
+                                               MysterGlobals.DEFAULT_SERVER_PORT));
     }
 
     @Override

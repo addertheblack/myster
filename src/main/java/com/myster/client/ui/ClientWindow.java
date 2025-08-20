@@ -128,7 +128,7 @@ public class ClientWindow extends MysterFrame implements Sayable {
         
         init();
         ipTextField.setText(ip);
-        ipTextField.setForeground(Color.BLACK);
+        ipTextField.setForeground(javax.swing.UIManager.getColor("TextField.foreground"));
     }
     
     public ClientWindow(MysterFrameContext c, String ip, MysterType type) {
@@ -139,8 +139,6 @@ public class ClientWindow extends MysterFrame implements Sayable {
     private void init() {
         context.keeper().addFrame(this, WINDOW_KEEPER_KEY, WindowLocationKeeper.MULTIPLE_WINDOWS);
         
-        setBackground(new Color(240, 240, 240));
-
         // Do interface setup:
         setLayout(new GridBagLayout());
         var builder = new com.general.util.GridBagBuilder()
@@ -168,20 +166,24 @@ public class ClientWindow extends MysterFrame implements Sayable {
         };
         ipTextField.setEditable(true);
         ipTextField.setToolTipText(ENTER_AN_IP_HERE);
-        ipTextField.setForeground(Color.GRAY);
+        
+        ipTextField.setForeground(javax.swing.UIManager.getColor("TextField.inactiveForeground"));
+        
+        
         ipTextField.addFocusListener(new FocusListener() {
             @Override
             public void focusLost(FocusEvent e) {
                 if (ipTextField.getText().equals("")) {
                     ipTextField.setText(ENTER_AN_IP_HERE);
-                    ipTextField.setForeground(Color.GRAY);
+                    ipTextField.setForeground(javax.swing.UIManager.getColor("TextField.inactiveForeground"));
                 }
             }
             
             @Override
             public void focusGained(FocusEvent e) {
+                // basically if getText().equals("") it means we're displaying the ENTER_AN_IP_HERE.. so don't get confused
                 if (ipTextField.getText().equals("")) {
-                    ipTextField.setForeground(Color.BLACK);
+                    ipTextField.setForeground(javax.swing.UIManager.getColor("TextField.foreground"));
                     ipTextField.setText("");
                 }
             }
