@@ -75,7 +75,7 @@ public final class AsyncDatagramSocket {
                 final int p = usedPort;
                 usedPort = -2;
 
-                if (counter >= 3) {
+                if (counter >= 5) {
                     LOGGER.fine("Closing AsyncDatagramSocket on " + p
                             + " giving up due to too many errors...");
                 }
@@ -87,7 +87,7 @@ public final class AsyncDatagramSocket {
         }
 
         private int loop(int counter) {
-            for (; counter < 3; counter++) {
+            for (; counter < 5; counter++) {
                 try (DatagramChannel channel = DatagramChannel.open();
                         Selector s = Selector.open()) {
                     selector = s;
@@ -101,7 +101,7 @@ public final class AsyncDatagramSocket {
                     channel.configureBlocking(false);
                     channel.register(selector, SelectionKey.OP_READ);
                     usedPort = ((InetSocketAddress) channel.getLocalAddress()).getPort();
-                    LOGGER.fine("Opened DatagramChannel on UDP port " + usedPort
+                    LOGGER.warning("Opened DatagramChannel on UDP port " + usedPort
                             + (port != usedPort ? " (a random port) " : ""));
 
                     mainLoop(channel);
@@ -122,7 +122,7 @@ public final class AsyncDatagramSocket {
                          * AsyncDatagramSocket is still closing because it
                          * is closed by this thread asynchronously.
                          */
-                        Thread.sleep(10 * (long) Math.pow(10, counter));
+                        Thread.sleep(10 * (long) Math.pow(2, counter));
                     } catch (InterruptedException exception) {
                         exception.printStackTrace();
                     }
