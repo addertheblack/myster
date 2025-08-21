@@ -362,6 +362,14 @@ public class Myster {
                             .simpleAlert("Myster PR 10\n\nCome on in, join the party.."));
                 }
                 
+                if (Desktop.getDesktop().isSupported(Action.APP_QUIT_HANDLER)) {
+                    Desktop.getDesktop().setQuitHandler((_, response) -> {
+                        // Add any cleanup code here before quitting
+                        MysterGlobals.quit();
+                        response.performQuit();
+                    });
+                }
+                
                 MysterTray.init();
                 
                 INSTRUMENTATION.info("-------->>   EDT AWT GUID init complete " + (System.currentTimeMillis() - startTime));
