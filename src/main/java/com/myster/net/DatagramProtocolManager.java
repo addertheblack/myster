@@ -171,10 +171,8 @@ public class DatagramProtocolManager {
         
         private synchronized void initSocket() {
             if (dsocket == null) {
-                if (System.currentTimeMillis() - lastErrorTime > 5 * 60 * 100) {
                     dsocket = new AsyncDatagramSocket(port);
                     dsocket.setPortListener(this);
-                }
             }
         }
 
@@ -196,8 +194,6 @@ public class DatagramProtocolManager {
             return transportProtocols.isEmpty();
         }
         
-        private static long lastErrorTime = 0;
-
         public synchronized void sendPacket(ImmutableDatagramPacket p) {
             if (dsocket != null) {
                 dsocket.sendPacket(p);
