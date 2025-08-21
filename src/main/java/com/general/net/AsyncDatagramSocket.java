@@ -65,6 +65,8 @@ public final class AsyncDatagramSocket {
     private class SocketRunner implements Runnable {
         private volatile boolean endFlag = false;
 
+        private static int RETRIES = 10;
+        
         @Override
         public void run() {
             try {
@@ -75,8 +77,8 @@ public final class AsyncDatagramSocket {
                 final int p = usedPort;
                 usedPort = -2;
 
-                if (counter >= 3) {
-                    LOGGER.fine("Closing AsyncDatagramSocket on " + p
+                if (counter >= RETRIES) {
+                    LOGGER.severe("Closing AsyncDatagramSocket on " + p
                             + " giving up due to too many errors...");
                 }
 
@@ -87,7 +89,7 @@ public final class AsyncDatagramSocket {
         }
 
         private int loop(int counter) {
-            for (; counter < 3; counter++) {
+            for (; counter < RETRIES; counter++) {
                 try (DatagramChannel channel = DatagramChannel.open();
                         Selector s = Selector.open()) {
                     selector = s;
@@ -110,19 +112,23 @@ public final class AsyncDatagramSocket {
                     // of the loop and end.
                     break;
                 } catch (IOException ex) {
-                    LOGGER.warning("Failed to open DatagramChannel on port " + port + ": "
+                    /*
+                     * Wait a bit before trying again. This is to
+                     * prevent a condition where there is an error
+                     * because the previous instance of this
+                     * AsyncDatagramSocket is still closing because it
+                     * is closed by this thread asynchronously.
+                     */
+                    long sleepTimeMs = 10 * (long) Math.pow(2, counter);
+                    
+                    LOGGER.fine("Waiting "+ sleepTimeMs+ "ms before retry.. Failed to open DatagramChannel on port " + port + ": "
                             + ex.getMessage());
+                    ex.printStackTrace();
                     usedPort = -2;
 
                     try {
-                        /*
-                         * Wait a bit before trying again. This is to
-                         * prevent a condition where there is an error
-                         * because the previous instance of this
-                         * AsyncDatagramSocket is still closing because it
-                         * is closed by this thread asynchronously.
-                         */
-                        Thread.sleep(10 * (long) Math.pow(10, counter));
+                       
+                        Thread.sleep(sleepTimeMs);
                     } catch (InterruptedException exception) {
                         exception.printStackTrace();
                     }
@@ -149,7 +155,8 @@ public final class AsyncDatagramSocket {
             }
         }
 
-        private void readPackets(DatagramChannel channel) throws IOException {
+        private void readPackets(DatagramChannel channel) {
+            try {
             if (portListener == null) {
                 return;
             }
@@ -169,6 +176,10 @@ public final class AsyncDatagramSocket {
                 // switch threads - it's important we don't do the callback on this thread
                 invoker.invoke(() -> portListener.packetReceived(packet));
             }
+            } catch (IOException ex) {
+                ex.printStackTrace();
+                // this shouldn't happen
+            }
         }
 
         private void sendPackets(DatagramChannel channel) throws IOException {
@@ -176,7 +187,11 @@ public final class AsyncDatagramSocket {
                 ImmutableDatagramPacket packet = queue.poll();
                 if (packet != null) {
                     ByteBuffer buffer = ByteBuffer.wrap(packet.getData());
-                    channel.send(buffer, packet.getSocketAddress());
+                    try {
+                        channel.send(buffer, packet.getSocketAddress());
+                    } catch (IOException _) {
+                        // nothing! Absolutely nothing!
+                    }
                 }
             }
         }
