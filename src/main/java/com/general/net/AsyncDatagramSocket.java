@@ -123,7 +123,6 @@ public final class AsyncDatagramSocket {
                     
                     LOGGER.fine("Waiting "+ sleepTimeMs+ "ms before retry.. Failed to open DatagramChannel on port " + port + ": "
                             + ex.getMessage());
-                    ex.printStackTrace();
                     usedPort = -2;
 
                     try {
