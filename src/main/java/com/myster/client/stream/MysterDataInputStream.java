@@ -7,6 +7,8 @@ import java.io.InputStream;
 import java.nio.charset.Charset;
 import java.util.Objects;
 
+import com.myster.mml.MessagePack;
+import com.myster.mml.RobustMML;
 import com.myster.type.MysterType;
 
 public class MysterDataInputStream extends InputStream {
@@ -46,42 +48,7 @@ public class MysterDataInputStream extends InputStream {
      * @see java.io.FilterInputStream#in
      */
     public final void readFully(byte[] b) throws IOException {
-        readFully(b, 0, b.length);
-    }
-
-    /**
-     * See the general contract of the {@code readFully} method of
-     * {@code DataInput}.
-     *
-     * @param b
-     *            the buffer into which the data is read.
-     * @param off
-     *            the start offset in the data array {@code b}.
-     * @param len
-     *            the number of bytes to read.
-     * @throws NullPointerException
-     *             if {@code b} is {@code null}.
-     * @throws IndexOutOfBoundsException
-     *             if {@code off} is negative, {@code len} is negative, or
-     *             {@code len} is greater than {@code b.length - off}.
-     * @throws EOFException
-     *             if this input stream reaches the end before reading all the
-     *             bytes.
-     * @throws IOException
-     *             the stream has been closed and the contained input stream
-     *             does not support reading after close, or another I/O error
-     *             occurs.
-     * @see java.io.FilterInputStream#in
-     */
-    public final void readFully(byte[] b, int off, int len) throws IOException {
-        Objects.checkFromIndexSize(off, len, b.length);
-        int n = 0;
-        while (n < len) {
-            int count = read(b, off + n, len - n);
-            if (count < 0)
-                throw new EOFException();
-            n += count;
-        }
+        readNBytes(b, 0, b.length);
     }
 
     /**
@@ -125,7 +92,7 @@ public class MysterDataInputStream extends InputStream {
     }
 
     public short readShort() throws IOException {
-        readFully(readBuffer, 0, 2);
+        readNBytes(readBuffer, 0, 2);
 
         int temp = readBuffer[0] << 8;
         int temp2 = ((0xFF) & readBuffer[1]);
@@ -141,7 +108,7 @@ public class MysterDataInputStream extends InputStream {
     }
 
     public int readInt() throws IOException {
-        readFully(readBuffer, 0, 4);
+        readNBytes(readBuffer, 0, 4);
 
         return ((readBuffer[0] & 0xFF) << 24) | ((readBuffer[1] & 0xFF) << 16)
                 | ((readBuffer[2] & 0xFF) << 8) | (readBuffer[3] & 0xFF);
@@ -177,5 +144,9 @@ public class MysterDataInputStream extends InputStream {
     @Override
     public int available() throws IOException {
         return in.available();
+    }
+
+    public MessagePack readMessagePack() throws IOException {
+        return MessagePack.fromBytes(readNBytes(readInt()));
     }
 }

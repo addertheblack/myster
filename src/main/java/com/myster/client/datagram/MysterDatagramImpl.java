@@ -9,6 +9,7 @@ import com.myster.client.net.MysterDatagram;
 import com.myster.hash.FileHash;
 import com.myster.message.ImClient;
 import com.myster.message.MessagePacket;
+import com.myster.mml.MessagePack;
 import com.myster.mml.RobustMML;
 import com.myster.net.BadPacketException;
 import com.myster.net.DataPacket;
@@ -60,7 +61,7 @@ public class MysterDatagramImpl implements MysterDatagram {
     }
 
     @Override
-    public PromiseFuture<RobustMML> getServerStats(final MysterAddress ip) {
+    public PromiseFuture<MessagePack> getServerStats(final MysterAddress ip) {
         return doSection(ip, new ServerStatsDatagramClient());
     }
 

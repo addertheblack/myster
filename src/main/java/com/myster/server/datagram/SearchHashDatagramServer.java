@@ -50,7 +50,7 @@ public class SearchHashDatagramServer implements TransactionProtocol {
                 int lengthOfHash = 0xffff & in.readShort();
 
                 byte[] hashBytes = new byte[lengthOfHash];
-                in.readFully(hashBytes, 0, hashBytes.length);
+                in.readNBytes(hashBytes, 0, hashBytes.length);
 
                 if (hashType.equalsIgnoreCase(com.myster.hash.HashManager.MD5)) {
                     md5Hash = SimpleFileHash.buildFileHash(hashType, hashBytes);

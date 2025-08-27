@@ -43,8 +43,8 @@ public class ServerStatsDatagramServer implements TransactionProtocol {
             throws BadPacketException {
         ByteArrayOutputStream byteOutputStream = new ByteArrayOutputStream();
         try (var out = new MysterDataOutputStream(byteOutputStream)) {
-            out.writeUTF("" + com.myster.server.stream.ServerStats
-                    .getMMLToSend(getIdentity.get(), getPort.get(), identity, fileManager));
+            out.writeMessagePack( com.myster.server.stream.ServerStats
+                    .getServerStatsMessagePack(getIdentity.get(), getPort.get(), identity, fileManager));
 
             sender.sendTransaction(new Transaction(transaction,
                                                    byteOutputStream.toByteArray(),

@@ -1,4 +1,3 @@
-
 package com.myster.tracker;
 
 import java.io.File;
@@ -35,16 +34,14 @@ import com.myster.client.net.MysterProtocol;
 import com.myster.client.net.MysterStream;
 import com.myster.identity.Identity;
 import com.myster.identity.Util;
-import com.myster.mml.MML;
-import com.myster.mml.MMLException;
-import com.myster.mml.RobustMML;
+import com.myster.mml.MessagePack;
 import com.myster.net.MysterAddress;
 import com.myster.type.MysterType;
 
 class TestMysterServerPoolImpl {
     private static final Logger LOGGER = Logger.getLogger(TestMysterServerPoolImpl.class.getName());
     
-    private Map<MysterAddress, RobustMML> lookup;
+    private Map<MysterAddress, MessagePack> lookup;
     
     // JUnit 5 will automatically create and clean up this temporary directory
     @TempDir
@@ -68,37 +65,33 @@ class TestMysterServerPoolImpl {
     }
     
     @BeforeEach
-    void setUp() throws UnknownHostException, MMLException {
+    void setUp() throws UnknownHostException {
 
         lookup = new HashMap<>();
         
-        String cleanPublicKeyString = MML.cleanString(Util.keyToString(identity.getMainIdentity().get().getPublic()));
-        String mml = """
-                <Speed>1</>
-                <ServerName>Mr. Magoo</>
-                <MysterVersion>10</>
-                <Identity>%s</>
-                <Uptime>1000</>
-                <NumberOfFiles><%s>42</></>
-                """.formatted(cleanPublicKeyString, type.toHexString());
-
-        lookup.put(MysterAddress.createMysterAddress("127.0.0.1"), new RobustMML(mml));
-        lookup.put(MysterAddress.createMysterAddress("192.168.1.2"), new RobustMML(mml));
-        lookup.put(MysterAddress.createMysterAddress("24.20.25.66"), new RobustMML(mml));
+        // Build MessagePack server stats similar to TestMysterServerImplementation
+        var pubKey = identity.getMainIdentity().get().getPublic();
+        byte[] keyBytes = pubKey.getEncoded();
         
-        String mml2 = """
-                <Speed>1</>
-                <ServerName>Mr. Magoo</>
-                <MysterVersion>10</>
-                <Identity>%s</>
-                <Uptime>1000</>
-                <Port>7000</>
-                <NumberOfFiles><%s>42</></>
-                """.formatted(cleanPublicKeyString, type.toString());
+        MessagePack baseStats = MessagePack.newEmpty();
+        baseStats.put(com.myster.server.stream.ServerStats.SERVER_NAME, "Mr. Magoo");
+        baseStats.put(com.myster.server.stream.ServerStats.MYSTER_VERSION, "10");
+        baseStats.putByteArray(com.myster.server.stream.ServerStats.IDENTITY, keyBytes);
+        baseStats.putLong(com.myster.server.stream.ServerStats.UPTIME, 1000L);
+        baseStats.putInt(com.myster.server.stream.ServerStats.NUMBER_OF_FILES + type, 42);
         
-        lookup.put(MysterAddress.createMysterAddress("192.168.1.2:7000"), new RobustMML(mml2));
-        lookup.put(MysterAddress.createMysterAddress("24.20.25.66:7000"), new RobustMML(mml2));
-        lookup.put(MysterAddress.createMysterAddress("24.20.25.66:6000"), new RobustMML(mml2));
+        // Addresses without explicit port
+        lookup.put(MysterAddress.createMysterAddress("127.0.0.1"), copyOf(baseStats));
+        lookup.put(MysterAddress.createMysterAddress("192.168.1.2"), copyOf(baseStats));
+        lookup.put(MysterAddress.createMysterAddress("24.20.25.66"), copyOf(baseStats));
+        
+        // Stats with explicit port 7000
+        MessagePack portStats = copyOf(baseStats);
+        portStats.putInt(com.myster.server.stream.ServerStats.PORT, 7000);
+        
+        lookup.put(MysterAddress.createMysterAddress("192.168.1.2:7000"), copyOf(portStats));
+        lookup.put(MysterAddress.createMysterAddress("24.20.25.66:7000"), copyOf(portStats));
+        lookup.put(MysterAddress.createMysterAddress("24.20.25.66:6000"), copyOf(portStats));
         
         pref = new MapPreferences();
         protocol = new MysterProtocol() {
@@ -125,17 +118,17 @@ class TestMysterServerPoolImpl {
                         });
 
                 Mockito.when(myMock.getServerStats(Mockito.any()))
-                        .thenAnswer(new Answer<PromiseFuture<RobustMML>>() {
+                        .thenAnswer(new Answer<PromiseFuture<MessagePack>>() {
                             @Override
-                            public PromiseFuture<RobustMML> answer(InvocationOnMock invocation)
+                            public PromiseFuture<MessagePack> answer(InvocationOnMock invocation)
                                     throws Throwable {
-                                RobustMML robustMML = lookup.get(invocation.getArgument(0));
+                                MessagePack stats = lookup.get(invocation.getArgument(0));
                                 
-                                if (robustMML==null) {
+                                if (stats==null) {
                                     return PromiseFuture.newPromiseFutureException(new IOException("Fake timeout"));
                                 }
                                 
-                                return PromiseFuture.newPromiseFuture(robustMML);
+                                return PromiseFuture.newPromiseFuture(stats);
                             }
                         });
 
@@ -144,11 +137,7 @@ class TestMysterServerPoolImpl {
             }
         };
         
-        
-        
-        
-        
-//        public static final String NUMBER_OF_FILES = "/NumberOfFiles";
+        // public static final String NUMBER_OF_FILES = "/NumberOfFiles";
 //        
 //        public static final String MYSTER_VERSION = "/MysterVersion";
 //        public static final String SPEED = "/Speed";
@@ -253,14 +242,14 @@ class TestMysterServerPoolImpl {
     @ValueSource(booleans = {false, true})
     void testAddressImplSwicharoo(boolean shouldChangePort) throws Exception {
         MysterAddress oneTwoSeven = MysterAddress.createMysterAddress("127.0.0.1");
-        RobustMML mml = lookup.get(oneTwoSeven);
+        MessagePack mml = lookup.get(oneTwoSeven);
         
-        RobustMML copyMml = new RobustMML(mml);
-        String identOld = copyMml.get("/Identity");
-        copyMml.remove("/Identity");
+        MessagePack copyMml = copyOf(mml);
+        byte[] identOld = copyMml.getByteArray(com.myster.server.stream.ServerStats.IDENTITY).orElse(null);
+        copyMml.remove(com.myster.server.stream.ServerStats.IDENTITY);
 
         if (shouldChangePort) {
-            copyMml.put("/Port", "1234");
+            copyMml.putInt(com.myster.server.stream.ServerStats.PORT, 1234);
         }
         
         lookup.put(oneTwoSeven, copyMml);
@@ -300,9 +289,12 @@ class TestMysterServerPoolImpl {
         var addressIdentity =  new MysterAddressIdentity(shouldChangePort ? MysterAddress.createMysterAddress("127.0.0.1:1234") : MysterAddress.createMysterAddress("127.0.0.1"));
         Assertions.assertTrue(pool.existsInPool(addressIdentity));
             
-        
-        copyMml.put("/Identity", identOld);
-        lookup.put(oneTwoSeven, copyMml);
+        // Restore identity to stats and update lookup
+        MessagePack restored = copyOf(copyMml);
+        if (identOld != null) {
+            restored.putByteArray(com.myster.server.stream.ServerStats.IDENTITY, identOld);
+        }
+        lookup.put(oneTwoSeven, restored);
         
         pool.refreshMysterServer(oneTwoSeven);
         
@@ -574,5 +566,14 @@ class TestMysterServerPoolImpl {
             }
         };
 
+    }
+    
+    // Helper to deep copy a MessagePack (fromBytes(toBytes()))
+    private static MessagePack copyOf(MessagePack src) {
+        try {
+            return MessagePack.fromBytes(src.toBytes());
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
     }
 }
