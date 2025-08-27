@@ -11,6 +11,7 @@ import com.general.util.UnexpectedInterrupt;
 import com.myster.client.datagram.PingResponse;
 import com.myster.hash.FileHash;
 import com.myster.message.MessagePacket;
+import com.myster.mml.MessagePack;
 import com.myster.mml.RobustMML;
 import com.myster.net.MysterAddress;
 import com.myster.search.MysterFileStub;
@@ -30,7 +31,7 @@ public interface MysterDatagram {
 
     public PromiseFuture<MysterType[]> getTypes(final MysterAddress ip);
 
-    public PromiseFuture<RobustMML> getServerStats(final MysterAddress ip);
+    public PromiseFuture<MessagePack> getServerStats(final MysterAddress ip);
 
     public PromiseFuture<RobustMML> getFileStats(final MysterFileStub stub);
 

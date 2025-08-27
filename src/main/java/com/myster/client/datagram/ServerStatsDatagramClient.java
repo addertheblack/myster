@@ -5,16 +5,16 @@ import com.myster.client.stream.MysterDataInputStream;
 import java.io.IOException;
 
 import com.myster.mml.MMLException;
+import com.myster.mml.MessagePack;
 import com.myster.mml.RobustMML;
 import com.myster.net.StandardDatagramClientImpl;
 import com.myster.transaction.Transaction;
 
-public class ServerStatsDatagramClient implements StandardDatagramClientImpl<RobustMML> {
+public class ServerStatsDatagramClient implements StandardDatagramClientImpl<MessagePack> {
     public static final int SERVER_STATS_TRANSACTION_CODE = 101;
 
     // returns RobustMML
-    @SuppressWarnings("resource")
-    public RobustMML getObjectFromTransaction(Transaction transaction)
+    public MessagePack getObjectFromTransaction(Transaction transaction)
             throws IOException {
         // gets the byte[] puts it into a ByteArrayInputStream and puts THAT
         // into a
@@ -23,10 +23,7 @@ public class ServerStatsDatagramClient implements StandardDatagramClientImpl<Rob
         // yeah baby... :-)
         try (MysterDataInputStream in =
                 new MysterDataInputStream(new ByteArrayInputStream(transaction.getData()))) {
-            return new RobustMML(in.readUTF());
-        } catch (MMLException ex) {
-            throw new com.myster.net.BadPacketException("Recieved a badly formed MML string from the server : "
-                    + transaction.getAddress() + " & " + ex);
+            return in.readMessagePack();
         }
     }
 

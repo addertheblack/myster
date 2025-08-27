@@ -69,6 +69,13 @@
       <artifactId>bcpkix-jdk18on</artifactId>
       <version>1.81</version>
     </dependency>
+
+    <!-- MessagePack for Java -->
+    <dependency>
+      <groupId>org.msgpack</groupId>
+      <artifactId>msgpack-core</artifactId>
+      <version>0.9.10</version>
+    </dependency>
   </dependencies>
 
   <properties>
@@ -229,7 +236,7 @@
               <arguments>
                 <argument>--add-modules</argument>
                 <argument>
-                  java.base,java.desktop,java.naming,java.prefs,java.sql,com.formdev.flatlaf</argument>
+                  java.base,java.desktop,java.naming,java.prefs,java.sql</argument>
               </arguments>
             </configuration>
           </execution>

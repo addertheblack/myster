@@ -296,7 +296,7 @@ public class MultiSourceSender extends ServerStreamHandler {
 
                 byte[] bytearray = new byte[(int) file.length()];
 
-                in.readFully(bytearray, 0, (int) file.length());
+                in.readNBytes(bytearray, 0, (int) file.length());
 
                 out.writeInt(6669);
                 out.write('i');

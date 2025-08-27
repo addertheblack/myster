@@ -23,6 +23,7 @@ import com.general.thread.PromiseFuture;
 import com.general.thread.PromiseFutures;
 import com.general.util.Util;
 import com.myster.client.net.MysterProtocol;
+import com.myster.mml.MessagePack;
 import com.myster.mml.RobustMML;
 import com.myster.net.MysterAddress;
 import com.myster.server.ServerUtils;
@@ -52,7 +53,7 @@ public class MysterServerPoolImpl implements MysterServerPool {
 
     private final NewGenericDispatcher<MysterPoolListener> dispatcher = new NewGenericDispatcher<>(MysterPoolListener.class, TrackerUtils.INVOKER);
 
-    private final Map<MysterAddress, PromiseFuture<RobustMML>> outstandingServerFutures = new HashMap<>();
+    private final Map<MysterAddress, PromiseFuture<MessagePack>> outstandingServerFutures = new HashMap<>();
     
     // This is so we can stop the GC for garbage collecting our weakly references stuff until the IP lists have
     // had a change to get references to things
@@ -171,17 +172,13 @@ public class MysterServerPoolImpl implements MysterServerPool {
         refreshMysterServer(address);
     }
 
-    private static MysterIdentity extractIdentity(MysterAddress address, RobustMML serverStats) {
-        if (!serverStats.pathExists(ServerStats.IDENTITY)) {
-            return new MysterAddressIdentity(address);
-        }
-        
-        String publicKeyAsString = serverStats.get(ServerStats.IDENTITY);
-        if (publicKeyAsString == null) {
+    private static MysterIdentity extractIdentity(MysterAddress address, MessagePack serverStats) {
+        Optional<byte[]> publicKeyOpt = serverStats.getByteArray(ServerStats.IDENTITY);
+        if (publicKeyOpt.isEmpty()) {
             return new MysterAddressIdentity(address);
         }
 
-        return com.myster.identity.Util.publicKeyFromString(publicKeyAsString)
+        return com.myster.identity.Util.publicKeyFromBytes(publicKeyOpt.get())
                 .<MysterIdentity> map(PublicKeyIdentity::new)
                 .orElse(new MysterAddressIdentity(address));
     }
@@ -244,10 +241,10 @@ public class MysterServerPoolImpl implements MysterServerPool {
      * Package protected for unit tests
      */
     void refreshMysterServer(MysterAddress address) {
-        PromiseFuture<RobustMML> getServerStatsFuture =
+        PromiseFuture<MessagePack> getServerStatsFuture =
                 protocol.getDatagram().getServerStats(address).clearInvoker()
-                        .setInvoker(TrackerUtils.INVOKER).addResultListener(mml -> {
-                            serverStatsCallback(address, mml);
+                        .setInvoker(TrackerUtils.INVOKER).addResultListener(statsMessage -> {
+                            serverStatsCallback(address, statsMessage);
                         })
                         .addExceptionListener(_ -> LOGGER.info("Address not a server: " + address))
                         .addExceptionListener(_ -> deadCache.addDeadAddress(address))
@@ -261,16 +258,16 @@ public class MysterServerPoolImpl implements MysterServerPool {
     }
 
     private synchronized void serverStatsCallback(MysterAddress addressIn,
-                                                  RobustMML mml) {
-        MysterAddress address = MysterServerImplementation.extractCorrectedAddress(mml, addressIn);
+                                                  MessagePack statsMessage) {
+        MysterAddress address = MysterServerImplementation.extractCorrectedAddress(statsMessage, addressIn);
         deleteAddressBasedIdentitiesOnWrongPort(addressIn, address);
         
-        var i = extractIdentity(address, mml);
+        var i = extractIdentity(address, statsMessage);
 
         WeakReference<MysterServerImplementation> weakReference = cache.get(i);
         var s = weakReference != null ? weakReference.get() : null;
         if (identityTracker.existsMysterIdentity(i) && s != null) {
-            s.refreshStats(mml, address);
+            s.refreshStats(statsMessage, address);
 
             // this is to make unit tests work - otherwise it's all async and a pain to test
             TrackerUtils.INVOKER.invoke(() -> dispatcher.fire().serverRefresh(s.getInterface()));
@@ -280,8 +277,7 @@ public class MysterServerPoolImpl implements MysterServerPool {
 
         MysterServerImplementation server =
                 create(preferences.node(computeNodeNameFromIdentity(i).toString()),
-                       identityTracker,
-                       mml,
+                       statsMessage,
                        i,
                        address);
 
@@ -349,8 +345,7 @@ public class MysterServerPoolImpl implements MysterServerPool {
     }
 
     private synchronized MysterServerImplementation create(Preferences prefs,
-                                                           IdentityProvider addressProvider,
-                                                           RobustMML serverStats,
+                                                           MessagePack serverStats,
                                                            MysterIdentity identity,
                                                            MysterAddress address) {
         var server = new MysterServerImplementation(prefs, identityTracker, serverStats, identity, address);

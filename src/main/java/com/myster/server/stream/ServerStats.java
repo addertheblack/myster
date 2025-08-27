@@ -17,6 +17,7 @@ import java.util.function.Supplier;
 import com.myster.filemanager.FileTypeListManager;
 import com.myster.identity.Identity;
 import com.myster.mml.MML;
+import com.myster.mml.MessagePack;
 import com.myster.pref.MysterPreferences;
 import com.myster.server.ConnectionContext;
 import com.myster.type.MysterType;
@@ -49,53 +50,53 @@ public class ServerStats extends ServerStreamHandler {
     }
 
     public void section(ConnectionContext context) throws IOException {
-        MML mmlToSend;
+        MessagePack mmlToSend;
         try {
-            mmlToSend = getMMLToSend(getServerName.get(), getPort.get(), identity, context.fileManager());
-            context.socket().out.writeUTF("" + mmlToSend);
-        } catch (NotInitializedException exception) {
+            mmlToSend = getServerStatsMessagePack(getServerName.get(), getPort.get(), identity, context.fileManager());
+            context.socket().out.writeMessagePack(mmlToSend);
+        } catch (NotInitializedException _) {
             throw new IOException("File list not initialized");
         }
     }
 
     //Returns an MML that would be send as a string via a Handshake.
-    public static MML getMMLToSend(String identityName, int port, Identity identity, FileTypeListManager fileManager) throws NotInitializedException {
+    public static MessagePack getServerStatsMessagePack(String identityName, int port, Identity identity, FileTypeListManager fileManager) throws NotInitializedException {
         try {
-            MML mml = new MML();
+            MessagePack serverStats = MessagePack.newEmpty();
+            
 
             MysterPreferences prefs = MysterPreferences.getInstance();
 
             String tempstring = prefs.query(com.myster.application.MysterGlobals.SPEEDPATH);
             if (!(tempstring.equals(""))) {
-                mml.put(SPEED, tempstring);
+                serverStats.put(SPEED, tempstring);
             }
 
-            mml.put(MYSTER_VERSION, "1.0");
+            serverStats.put(MYSTER_VERSION, "1.0");
 
-            getNumberOfFilesMML(mml, fileManager); //Adds the number of files data.
+            getNumberOfFilesMML(serverStats, fileManager); //Adds the number of files data.
 
             String ident = identityName;
             if (ident != null) {
                 if (!ident.equals("")) {
-                    mml.put(SERVER_NAME, ident);
+                    serverStats.put(SERVER_NAME, ident);
                 }
             }
             
              identity.getMainIdentity().ifPresent(pair -> {
                  var publicKey = pair.getPublic();
                  
-                 mml.put(IDENTITY, Base64.getEncoder().encodeToString(publicKey.getEncoded()));
+                 serverStats.putByteArray(IDENTITY, publicKey.getEncoded());
              });
              
             
 
-            mml.put(UPTIME, ""
-                    + (System.currentTimeMillis() - com.myster.application.MysterGlobals
+            serverStats.putLong(UPTIME,  (System.currentTimeMillis() - com.myster.application.MysterGlobals
                             .getLaunchedTime()));
 
-            mml.put(PORT, "" + port);
+            serverStats.putInt(PORT, port);
 
-            return mml;
+            return serverStats;
         } catch (NotInitializedException ex) {
             throw ex;
         } catch (Exception ex) {
@@ -105,19 +106,19 @@ public class ServerStats extends ServerStreamHandler {
 
     }
 
-    private static MML getNumberOfFilesMML(MML mml, FileTypeListManager fileManager) throws NotInitializedException { // in-line
+    private static MessagePack getNumberOfFilesMML(MessagePack numOfFileStats, FileTypeListManager fileManager) throws NotInitializedException { // in-line
         MysterType[] filetypelist = fileManager.getFileTypeListing();
 
         for (int i = 0; i < filetypelist.length; i++) {
             if (!fileManager.hasInitialized(filetypelist[i])) {
                 throw new NotInitializedException("File list not inited", filetypelist[i]);
             }
-            
-            mml.put(NUMBER_OF_FILES + filetypelist[i],
-                    "" + fileManager.getNumberOfFiles(filetypelist[i]));
+
+            numOfFileStats.putInt(NUMBER_OF_FILES + filetypelist[i],
+                       fileManager.getNumberOfFiles(filetypelist[i]));
         }
 
-        return mml;
+        return numOfFileStats;
     }
 
 }

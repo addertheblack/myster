@@ -43,7 +43,7 @@ public class FileByHash extends ServerStreamHandler {
                 int lengthOfHash = 0xffff & context.socket().in.readShort();
 
                 byte[] hashBytes = new byte[lengthOfHash];
-                context.socket().in.readFully(hashBytes, 0, hashBytes.length);
+                context.socket().in.readNBytes(hashBytes, 0, hashBytes.length);
 
                 if (hashType.equalsIgnoreCase(com.myster.hash.HashManager.MD5)) {
                     md5Hash = SimpleFileHash.buildFileHash(hashType, hashBytes);

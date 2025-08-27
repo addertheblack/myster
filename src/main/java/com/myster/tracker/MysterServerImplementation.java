@@ -23,6 +23,7 @@ import com.general.util.Util;
 import com.myster.application.MysterGlobals;
 import com.myster.mml.MML;
 import com.myster.mml.MMLException;
+import com.myster.mml.MessagePack;
 import com.myster.mml.RobustMML;
 import com.myster.net.MysterAddress;
 import com.myster.server.stream.ServerStats;
@@ -103,7 +104,7 @@ class MysterServerImplementation {
      */
     MysterServerImplementation(Preferences prefs,
                                IdentityProvider addressProvider,
-                               RobustMML serverStats,
+                               MessagePack serverStats,
                                MysterIdentity identity,
                                MysterAddress address) {
         preferences = prefs;
@@ -117,11 +118,11 @@ class MysterServerImplementation {
         return new ExternalName(Util.getMD5Hash(key.toString()));
     }
     
-    void refreshStats(RobustMML serverStats, MysterAddress address) {
+    void refreshStats(MessagePack serverStats, MysterAddress address) {
         refreshStats(this, serverStats, address);
     }
 
-    public static MysterAddress extractCorrectedAddress(RobustMML serverStats,
+    public static MysterAddress extractCorrectedAddress(MessagePack serverStats,
                                                         MysterAddress addressIn) {
         int port = extractPort(serverStats);
 
@@ -129,7 +130,7 @@ class MysterServerImplementation {
                 : new MysterAddress(addressIn.getInetAddress(), port);
     }
     
-    private void refreshStats(MysterServerImplementation server, RobustMML serverStats, MysterAddress addressIn) {
+    private void refreshStats(MysterServerImplementation server, MessagePack serverStats, MysterAddress addressIn) {
         int port = extractPort(serverStats);
         
         var address = extractCorrectedAddress(serverStats, addressIn);
@@ -137,27 +138,12 @@ class MysterServerImplementation {
         identityProvider.addIdentity(identity, address);
         
         server.timeoflastupdate = System.currentTimeMillis();
-        String temp = serverStats.get(ServerStats.SPEED);
-        if (temp == null)
-            temp = "1";
+        String temp = serverStats.get(ServerStats.SPEED).orElse("1");
         server.speed = Double.valueOf(temp).doubleValue();
 
-        if (serverStats.pathExists(ServerStats.SERVER_NAME)) {
-            server.serverName = serverStats.get(ServerStats.SERVER_NAME);
-        } else {
-            server.serverName = null;
-        }
+        server.serverName = serverStats.get(ServerStats.SERVER_NAME).orElse(null);
 
-        try {
-            String uptimeString = serverStats.get(ServerStats.UPTIME);
-            if (uptimeString == null) {
-                server.uptime = -1;
-            } else {
-                server.uptime = Long.valueOf(uptimeString).longValue();
-            }
-        } catch (NumberFormatException ex) {
-            // ignore and keep going
-        }
+        server.uptime = serverStats.getLong(ServerStats.UPTIME).orElse(-1L);
 
         NumOfFiles table = new NumOfFiles();
         List<String> dirList = serverStats.list(ServerStats.NUMBER_OF_FILES);
@@ -165,15 +151,12 @@ class MysterServerImplementation {
         try {
             if (dirList != null) {
                 for (int i = 0; i < dirList.size(); i++) {
-                    String s_temp =
-                            serverStats.get(ServerStats.NUMBER_OF_FILES  + dirList.get(i));
-                    if (s_temp == null)
+                    Optional<Integer> s_temp =
+                            serverStats.getInt(ServerStats.NUMBER_OF_FILES  + dirList.get(i));
+                    if (s_temp.isEmpty())
                         continue; // <- weird err.
 
-                    table.put("/" + dirList.get(i), s_temp);// <-WARNING
-                    // could
-                    // be a
-                    // number
+                    table.put("/" + dirList.get(i), s_temp.get() + ""); // this is stupid but meh
                 }
             }
         } finally {
@@ -194,15 +177,8 @@ class MysterServerImplementation {
         server.save();
     }
 
-    private static int extractPort(RobustMML serverStats) {
-        int port = MysterGlobals.DEFAULT_SERVER_PORT;
-        try {
-            String portString = serverStats.get(ServerStats.PORT);
-            port = Integer.parseInt(portString);
-        } catch (Exception ex) {
-           // nothing 
-        }
-        return port;
+    private static int extractPort(MessagePack serverStats) {
+        return serverStats.getInt(ServerStats.PORT).orElse(MysterGlobals.DEFAULT_SERVER_PORT);
     }
 
     static Optional<MysterIdentity> extractIdentity(Preferences serverPrefs, String md5HashOfIdentity) {
