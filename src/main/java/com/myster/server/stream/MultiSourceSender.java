@@ -191,6 +191,9 @@ public class MultiSourceSender extends ServerStreamHandler {
                     sendQueuePosition(socket.out, transferQueue.getMaxQueueLength()+1, "Too busy to accept downloads right now..");
                     throw new IOException("Over the queue limit, disconnecting..", ex);
                 }
+            } catch (DoneIoException ex) {
+                // this means the client sent us a signal that he's done and about to close the connection
+                throw ex;
             } catch (IOException ex) {
                 ex.printStackTrace();
                 throw ex;
@@ -296,7 +299,7 @@ public class MultiSourceSender extends ServerStreamHandler {
 
                 byte[] bytearray = new byte[(int) file.length()];
 
-                in.readNBytes(bytearray, 0, (int) file.length());
+                in.readFully(bytearray, 0, (int) file.length());
 
                 out.writeInt(6669);
                 out.write('i');
@@ -409,6 +412,10 @@ public class MultiSourceSender extends ServerStreamHandler {
                     file.close();
             }
         }
+        
+        class DoneIoException extends IOException {
+            // nothing here
+        }
 
         // TODO: Make it so we can shutdown cleanly
         // final long offset = socket.in.readLong(); just fails with a nasty looking exception when client
@@ -416,6 +423,10 @@ public class MultiSourceSender extends ServerStreamHandler {
         private UploadBlock getNextBlockToSend(MysterSocket socket, File file) throws IOException {
             final long offset = socket.in.readLong();
             long fileLength = socket.in.readLong();
+            
+            if (offset == fileLength) {
+                throw new DoneIoException();
+            }
 
             if ((fileLength < 0) | (offset < 0) | ((fileLength == 0) & (offset != 0))
                     | (fileLength + offset > file.length())) {

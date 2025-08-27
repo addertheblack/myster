@@ -48,7 +48,7 @@ public class MysterDataInputStream extends InputStream {
      * @see java.io.FilterInputStream#in
      */
     public final void readFully(byte[] b) throws IOException {
-        readNBytes(b, 0, b.length);
+        readFully(b, 0, b.length);
     }
 
     /**
@@ -106,9 +106,22 @@ public class MysterDataInputStream extends InputStream {
     public char readChar() throws IOException {
         return (char) readShort();
     }
-
+    
+    public void readFully(byte[] b, int off, int len) throws IOException {
+        int i = readNBytes(b, off, len);
+        if (i !=len) {
+            throw new IOException("Stream could not read the required number of bytes.");
+        }
+    }
+    
+    private byte[] readFully(int readSize) throws IOException {
+        byte[] buff = new byte[readSize];
+        readFully(buff);
+        return buff;
+    }
+    
     public int readInt() throws IOException {
-        readNBytes(readBuffer, 0, 4);
+        readFully(readBuffer, 0, 4);
 
         return ((readBuffer[0] & 0xFF) << 24) | ((readBuffer[1] & 0xFF) << 16)
                 | ((readBuffer[2] & 0xFF) << 8) | (readBuffer[3] & 0xFF);
@@ -137,7 +150,7 @@ public class MysterDataInputStream extends InputStream {
     }
 
     public MysterType readType() throws IOException {
-        byte[] keyInBytes = readNBytes(readUnsignedShort());
+        byte[] keyInBytes = readFully(readUnsignedShort());
         return new MysterType(keyInBytes);
     }
 
@@ -147,6 +160,6 @@ public class MysterDataInputStream extends InputStream {
     }
 
     public MessagePack readMessagePack() throws IOException {
-        return MessagePack.fromBytes(readNBytes(readInt()));
+        return MessagePack.fromBytes(readFully(readInt()));
     }
 }
