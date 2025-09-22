@@ -13,13 +13,16 @@ package com.myster.server;
 
 import com.myster.client.stream.MysterDataInputStream;
 import com.myster.filemanager.FileTypeListManager;
+import com.myster.identity.Identity;
 
 import java.io.IOException;
 import java.net.Socket;
+import java.nio.charset.StandardCharsets;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import com.myster.net.MysterAddress;
+import com.myster.net.TLSSocket;
 import com.myster.server.event.ConnectionManagerEvent;
 import com.myster.server.event.OperatorEvent;
 import com.myster.server.event.ServerEventDispatcher;
@@ -82,6 +85,31 @@ public class ConnectionRunnable implements Runnable {
     }
 
     /**
+     * Converts a 32-bit integer to its ASCII string representation in network byte order.
+     * Non-printable characters are replaced with '?'.
+     */
+    private static String intToAsciiString(int value) {
+        // Extract bytes in big-endian (network) order
+        byte[] bytes = new byte[4];
+        bytes[0] = (byte) ((value >>> 24) & 0xFF);  // Most significant byte
+        bytes[1] = (byte) ((value >>> 16) & 0xFF);
+        bytes[2] = (byte) ((value >>> 8) & 0xFF);
+        bytes[3] = (byte) (value & 0xFF);           // Least significant byte
+        
+        // Convert to ASCII string
+        StringBuilder sb = new StringBuilder();
+        for (byte b : bytes) {
+            // Only add printable ASCII characters (32-126)
+            if (b >= 32 && b <= 126) {
+                sb.append((char) b);
+            } else {
+                sb.append('?'); // Non-printable character placeholder
+            }
+        }
+        return sb.toString();
+    }
+
+    /**
      * Does the actual work in this object.
      *  
      */
@@ -92,20 +120,23 @@ public class ConnectionRunnable implements Runnable {
         int sectioncounter = 0;
         try (var tempTcpSocket = new com.myster.client.stream.TCPSocket(socket)) {
             ConnectionContext context = new ConnectionContext(tempTcpSocket, new MysterAddress(socket.getInetAddress()), null, transferQueue, fileManager);
-                    
 
             MysterDataInputStream i = context.socket().in; //opens the connection
 
-            int protocalcode;
+            int protocolCode;
             Thread.currentThread().setPriority(Thread.MIN_PRIORITY);
 
             do {
                 try {
-                    Thread.yield();
-                    protocalcode = i.readInt(); //reads the type of connection
+                    protocolCode = i.readInt(); //reads the type of connection
                     // requested
+                    
+                    // Log the protocol code as both integer and ASCII
+                    String asciiRepresentation = intToAsciiString(protocolCode);
+                    System.out.println("Protocol code received: " + protocolCode + 
+                                     " (0x" + Integer.toHexString(protocolCode).toUpperCase() + 
+                                     ") ASCII: \"" + asciiRepresentation + "\"");
                 } catch (Exception ex) {
-                    Thread.yield();
                     return;
                 }
 
@@ -115,7 +146,32 @@ public class ConnectionRunnable implements Runnable {
                 //NOTE: THEY SAY RUN() NOT START()!!!!!!!!!!!!!!!!!!!!!!!!!
                 MysterAddress remoteip = new MysterAddress(socket.getInetAddress());
 
-                switch (protocalcode) {
+                switch (protocolCode) {
+                case TLSSocket.STLS_CONNECTION_SECTION: // "STLS" - Handle TLS connection section
+                    System.out.println("Client requested STLS (Start TLS) connection section");
+                    try {
+                        // Send acceptance response using Myster protocol (1 = good)
+                        context.socket().out.write(1);
+                        context.socket().out.flush();
+                        
+                        // Upgrade the socket to TLS using server identity
+                        TLSSocket tlsSocket = TLSSocket.upgradeServerSocket(socket, Identity.getIdentity());
+                        
+                        // Update the context with the new encrypted socket
+                        context = new ConnectionContext(tlsSocket, context.serverAddress(), context.sectionObject(), transferQueue, fileManager);
+                        i = context.socket().in; // Update input stream to use encrypted connection
+                        
+                        System.out.println("STLS upgrade successful - connection is now encrypted");
+                        // Continue processing more protocol codes on encrypted connection
+                        break;
+                        
+                    } catch (Exception e) {
+                        System.out.println("Failed to upgrade to TLS: " + e.getMessage());
+                        // Send rejection using Myster protocol (0 = bad)
+                        context.socket().out.write(0);
+                        context.socket().out.flush();
+                        return;
+                    }
                 case 1:
                     context.socket().out.write(1); //Tells the other end that the
                     // command is good  !
@@ -126,11 +182,11 @@ public class ConnectionRunnable implements Runnable {
                     return;
                 default:
                     ConnectionSection section = connectionSections
-                            .get(protocalcode);
+                            .get(protocolCode);
                     if (section == null) {
                         System.out
                                 .println("!!!System detects unknown protocol number : "
-                                + protocalcode);
+                                + protocolCode);
                         context.socket().out.write(0); //Tells the other end that
                         // the command is bad!
                     } else {

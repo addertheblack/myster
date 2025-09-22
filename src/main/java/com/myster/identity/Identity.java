@@ -1,4 +1,3 @@
-
 package com.myster.identity;
 
 import static com.myster.identity.Util.keyToString;
@@ -114,6 +113,24 @@ public class Identity {
                 | NoSuchAlgorithmException exception) {
             exception.printStackTrace();
             
+            return Optional.empty();
+        }
+    }
+    
+    /**
+     * Gets the certificate chain for the main identity.
+     * This is useful for TLS connections where the certificate needs to be sent to the peer.
+     */
+    public Optional<Certificate[]> getMainIdentityCertificateChain() {
+        KeyStore k = getKeyStore();
+        
+        ensureIdentity(k);
+
+        try {
+            Certificate[] certificateChain = k.getCertificateChain(MAIN_IDENTITY_ALIAS);
+            return Optional.ofNullable(certificateChain);
+        } catch (KeyStoreException exception) {
+            exception.printStackTrace();
             return Optional.empty();
         }
     }
@@ -263,7 +280,9 @@ public class Identity {
             }
 
             return true;
-        } catch (KeyStoreException exception) {} catch (NoSuchAlgorithmException exception) {
+        } catch (KeyStoreException _) {
+            // ignore
+        } catch (NoSuchAlgorithmException exception) {
             exception.printStackTrace();
         } catch (CertificateException exception) {
             exception.printStackTrace();
