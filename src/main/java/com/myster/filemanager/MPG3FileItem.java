@@ -6,9 +6,6 @@ import com.mpatric.mp3agic.ID3v1;
 import com.mpatric.mp3agic.ID3v2;
 import com.mpatric.mp3agic.Mp3File;
 
-//import org.farng.mp3.MP3File;
-//import org.farng.mp3.id3.AbstractID3;
-
 import com.myster.mml.MML;
 
 /**

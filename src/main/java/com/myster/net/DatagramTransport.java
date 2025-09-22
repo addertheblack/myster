@@ -14,31 +14,6 @@ import com.general.net.ImmutableDatagramPacket;
  */
 
 public abstract class DatagramTransport {
-//    private DatagramSender sender;
-
-//    /**
-//     * Use this function to send reply packets (or just to send packets) using
-//     * the correct port/address.
-//     */
-//    public void sendPacket(ImmutableDatagramPacket packet) {
-//        if (sender == null) {
-//            throw new IllegalStateException(
-//                    "Transport has not been added to the TransportManager yet!");
-//        }
-//
-//        sender.sendPacket(packet);
-//    }
-
-//    /**
-//     * This routine is so the transport manager can set the mechanism through
-//     * which you are supposed to send your outgoing packets... Assuming you want
-//     * to send packets out on the same port as the one you received them.
-//     */
-//    final void setSender(DatagramSender sender) { //don't over-ride
-//        // (or even access)
-//        this.sender = sender; //weeeee...
-//    }
-
     /**
      * gets the transport code associated with this Datagramransport
      * 
