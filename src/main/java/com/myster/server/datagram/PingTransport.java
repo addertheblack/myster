@@ -11,7 +11,7 @@ import com.myster.net.PongPacket;
 import com.myster.server.ServerUtils;
 import com.myster.tracker.Tracker;
 
-public class PingTransport extends DatagramTransport {
+public class PingTransport implements DatagramTransport {
     private static final short TRANSPORT_NUMBER = 20553; // 'P', 'I' in network byte order
     private Tracker manager;
 

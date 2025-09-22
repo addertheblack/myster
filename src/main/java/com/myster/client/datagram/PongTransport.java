@@ -15,7 +15,7 @@ import com.myster.net.DatagramTransport;
 import com.myster.net.MysterAddress;
 import com.myster.net.PingPacket;
 
-public class PongTransport extends DatagramTransport {
+public class PongTransport implements DatagramTransport {
     public static final short TRANSPORT_NUMBER = 20559;
     
     private static final int TIMEOUT = 60000;
