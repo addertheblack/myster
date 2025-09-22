@@ -172,7 +172,7 @@ public class TransactionManager {
      * 
      * @see DatagramProtocolManager
      */
-    private static class TransactionTransportImplementation extends DatagramTransport {
+    private static class TransactionTransportImplementation implements DatagramTransport {
         private final Map<Integer, TransactionProtocol> serverProtocols = new HashMap<>();
 
         private final Map<Integer, ListenerRecord> outstandingTransactions = new HashMap<>();

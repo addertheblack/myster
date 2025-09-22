@@ -13,13 +13,13 @@ import com.general.net.ImmutableDatagramPacket;
  * Transport Listener
  */
 
-public abstract class DatagramTransport {
+public interface DatagramTransport {
     /**
      * gets the transport code associated with this Datagramransport
      * 
      * @return the transport code.
      */
-    public abstract short getTransportCode();
+    public short getTransportCode();
 
     /**
      * Over-ride this method to receive packets with your transport code.
@@ -29,8 +29,8 @@ public abstract class DatagramTransport {
      * @throws BadPacketException
      *             feel free to throw this if the packet was badly formated.
      */
-    public abstract void packetReceived(DatagramSender sender, ImmutableDatagramPacket packet) throws BadPacketException;
+    public void packetReceived(DatagramSender sender, ImmutableDatagramPacket packet) throws BadPacketException;
 
-    public abstract boolean isEmpty();
+    public boolean isEmpty();
 }
 
