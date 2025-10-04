@@ -30,9 +30,7 @@ import com.myster.identity.Identity;
 public class TLSSocket extends MysterSocket {
     private final SSLSocket sslSocket;
     
-    
     // Custom protocol for explicit TLS negotiation using Myster connection sections
-    public static final int MYSTER_STARTTLS_REQUEST = 0x4D545453; // "MTTS" - Myster TLS Start  
     public static final int STLS_CONNECTION_SECTION = 0x53544C53; // "STLS" - Start TLS connection section
     
     private TLSSocket(SSLSocket socket) throws IOException {
