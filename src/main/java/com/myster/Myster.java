@@ -212,7 +212,9 @@ public class Myster {
         MysterProtocol protocol =
                 new MysterProtocolImpl(new MysterStreamImpl(),
                                        new MysterDatagramImpl(transactionManager,
-                                                              new UDPPingClient(datagramManager)));
+                                                              new UDPPingClient(datagramManager),
+                                                              null, // PublicKeyLookup - placeholder for now
+                                                              null)); // AddressLookup - placeholder for now
 
         INSTRUMENTATION.info("-------->> Init IPListManager "
                 + (System.currentTimeMillis() - startTime));

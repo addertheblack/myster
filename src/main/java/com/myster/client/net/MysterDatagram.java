@@ -1,4 +1,3 @@
-
 package com.myster.client.net;
 
 import java.io.IOException;
@@ -18,28 +17,28 @@ import com.myster.search.MysterFileStub;
 import com.myster.type.MysterType;
 
 public interface MysterDatagram {
-    public PromiseFuture<String[]> getTopServers(final MysterAddress ip, final MysterType type);
+    public PromiseFuture<String[]> getTopServers(final ParamBuilder params, final MysterType type);
 
 
-    public PromiseFuture<List<String>> getSearch(final MysterAddress ip,
+    public PromiseFuture<List<String>> getSearch(final ParamBuilder params,
                                                  final MysterType type,
                                                  final String searchString);
 
-    public PromiseFuture<MessagePacket> sendInstantMessage(MysterAddress address,
+    public PromiseFuture<MessagePacket> sendInstantMessage(ParamBuilder params,
                                                            String msg,
                                                            String reply);
 
-    public PromiseFuture<MysterType[]> getTypes(final MysterAddress ip);
+    public PromiseFuture<MysterType[]> getTypes(final ParamBuilder params);
 
-    public PromiseFuture<MessagePack> getServerStats(final MysterAddress ip);
+    public PromiseFuture<MessagePack> getServerStats(final ParamBuilder params);
 
     public PromiseFuture<RobustMML> getFileStats(final MysterFileStub stub);
 
-    public PromiseFuture<String> getFileFromHash(final MysterAddress ip,
+    public PromiseFuture<String> getFileFromHash(final ParamBuilder params,
                                                  final MysterType type,
                                                  final FileHash hash);
 
-    public PromiseFuture<PingResponse> ping(MysterAddress address);
+    public PromiseFuture<PingResponse> ping(ParamBuilder params);
     
     public static <T> T cleanResult(PromiseFuture<T> f) throws IOException {
         try {

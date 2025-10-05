@@ -7,6 +7,7 @@ import com.general.thread.PromiseFuture;
 import com.general.util.AnswerDialog;
 import com.general.util.Util;
 import com.myster.client.net.MysterDatagram;
+import com.myster.client.net.ParamBuilder;
 import com.myster.client.stream.UnknownProtocolException;
 import com.myster.mml.RobustMML;
 import com.myster.net.BadPacketException;
@@ -25,7 +26,7 @@ public class MessageManager {
                                                                   MysterAddress address,
                                                                   String msg,
                                                                   String quote) {
-        return protocol.sendInstantMessage(address, msg, quote)
+        return protocol.sendInstantMessage(new ParamBuilder(address), msg, quote)
                 .addCallListener(new CallListener<MessagePacket>() {
                     @Override
                     public void handleResult(MessagePacket msgPacket) {
@@ -109,4 +110,3 @@ public class MessageManager {
                 new PreferencesMML()));
     }
 }
-

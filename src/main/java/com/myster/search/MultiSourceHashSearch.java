@@ -14,6 +14,7 @@ import com.general.thread.PromiseFutures;
 import com.general.thread.SimpleTaskTracker;
 import com.general.util.Timer;
 import com.myster.client.net.MysterProtocol;
+import com.myster.client.net.ParamBuilder;
 import com.myster.client.stream.msdownload.MultiSourceUtilities;
 import com.myster.hash.FileHash;
 import com.myster.net.MysterAddress;
@@ -185,7 +186,7 @@ public class MultiSourceHashSearch implements HashCrawlerManager {
             SearchIp searchIp = (MysterAddress address, MysterType localType) -> {
                 List<PromiseFuture<String>> f = entries.stream()
                         .map(searchEntry -> protocol.getDatagram()
-                                .getFileFromHash(address, localType, searchEntry.hash)
+                                .getFileFromHash(new ParamBuilder(address), localType, searchEntry.hash)
                                 .addResultListener(fileName -> {
                                     if (fileName.isEmpty()) {
                                         return;

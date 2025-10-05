@@ -1,4 +1,3 @@
-
 package com.myster.tracker;
 
 import static com.myster.tracker.MysterServerImplementation.computeNodeNameFromIdentity;
@@ -23,6 +22,7 @@ import com.general.thread.PromiseFuture;
 import com.general.thread.PromiseFutures;
 import com.general.util.Util;
 import com.myster.client.net.MysterProtocol;
+import com.myster.client.net.ParamBuilder;
 import com.myster.mml.MessagePack;
 import com.myster.mml.RobustMML;
 import com.myster.net.MysterAddress;
@@ -68,7 +68,7 @@ public class MysterServerPoolImpl implements MysterServerPool {
 
         cache = new HashMap<>();
 
-        identityTracker = new IdentityTracker(mysterProtocol.getDatagram()::ping,
+        identityTracker = new IdentityTracker(address -> mysterProtocol.getDatagram().ping(new ParamBuilder(address)),
                                               dispatcher.fire()::serverPing,
                                               dispatcher.fire()::deadServer);
 
@@ -242,7 +242,7 @@ public class MysterServerPoolImpl implements MysterServerPool {
      */
     void refreshMysterServer(MysterAddress address) {
         PromiseFuture<MessagePack> getServerStatsFuture =
-                protocol.getDatagram().getServerStats(address).clearInvoker()
+                protocol.getDatagram().getServerStats(new ParamBuilder(address)).clearInvoker()
                         .setInvoker(TrackerUtils.INVOKER).addResultListener(statsMessage -> {
                             serverStatsCallback(address, statsMessage);
                         })

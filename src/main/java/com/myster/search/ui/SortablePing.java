@@ -4,6 +4,7 @@ import com.general.mclist.Sortable;
 import com.general.thread.CallAdapter;
 import com.myster.client.datagram.PingResponse;
 import com.myster.client.net.MysterProtocol;
+import com.myster.client.net.ParamBuilder;
 import com.myster.net.MysterAddress;
 
 public class SortablePing implements Sortable<Long> {
@@ -18,7 +19,7 @@ public class SortablePing implements Sortable<Long> {
 
         try {
 
-            protocol.getDatagram().ping(address).addCallListener(new MyPingEventListener());
+            protocol.getDatagram().ping(new ParamBuilder(address)).addCallListener(new MyPingEventListener());
         } catch (Exception ex) {
             ex.printStackTrace();
         }

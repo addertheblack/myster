@@ -32,8 +32,8 @@ import com.myster.client.datagram.PingResponse;
 import com.myster.client.net.MysterDatagram;
 import com.myster.client.net.MysterProtocol;
 import com.myster.client.net.MysterStream;
+import com.myster.client.net.ParamBuilder;
 import com.myster.identity.Identity;
-import com.myster.identity.Util;
 import com.myster.mml.MessagePack;
 import com.myster.net.MysterAddress;
 import com.myster.type.MysterType;
@@ -104,34 +104,35 @@ class TestMysterServerPoolImpl {
             public MysterDatagram getDatagram() {
                 MysterDatagram myMock = Mockito.mock(MysterDatagram.class);
 
-                Mockito.mock(MysterDatagram.class, _ -> {
-                    throw new UnsupportedOperationException("Not implemented");
-                });
-
+                // Fix the ping mock - extract address from ParamBuilder
                 Mockito.when(myMock.ping(Mockito.any()))
                         .thenAnswer(new Answer<PromiseFuture<PingResponse>>() {
                             @Override
                             public PromiseFuture<PingResponse> answer(InvocationOnMock invocation)
                                     throws Throwable {
-                                return PromiseFuture.newPromiseFuture(new PingResponse(invocation.getArgument(0), 1));
+                                ParamBuilder params = invocation.getArgument(0);
+                                MysterAddress address = params.getAddress().orElseThrow();
+                                return PromiseFuture.newPromiseFuture(new PingResponse(address, 1));
                             }
                         });
 
+                // Fix the getServerStats mock - extract address from ParamBuilder  
                 Mockito.when(myMock.getServerStats(Mockito.any()))
                         .thenAnswer(new Answer<PromiseFuture<MessagePack>>() {
                             @Override
                             public PromiseFuture<MessagePack> answer(InvocationOnMock invocation)
                                     throws Throwable {
-                                MessagePack stats = lookup.get(invocation.getArgument(0));
+                                ParamBuilder params = invocation.getArgument(0);
+                                MysterAddress address = params.getAddress().orElseThrow();
+                                MessagePack stats = lookup.get(address);
                                 
-                                if (stats==null) {
+                                if (stats == null) {
                                     return PromiseFuture.newPromiseFutureException(new IOException("Fake timeout"));
                                 }
                                 
                                 return PromiseFuture.newPromiseFuture(stats);
                             }
                         });
-
 
                 return myMock;
             }

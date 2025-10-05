@@ -1,4 +1,3 @@
-
 package com.myster.search;
 
 import java.util.Arrays;
@@ -10,6 +9,7 @@ import com.general.thread.PromiseFuture;
 import com.general.thread.PromiseFutures;
 import com.myster.client.net.MysterDatagram;
 import com.myster.client.net.MysterProtocol;
+import com.myster.client.net.ParamBuilder;
 import com.myster.net.MysterAddress;
 import com.myster.type.MysterType;
 
@@ -46,7 +46,7 @@ public class AsyncNetworkCrawler {
 
             MysterDatagram datagram = c.protocol.getDatagram();
             c.tracker.doAsync(() -> {
-                PromiseFuture<String[]> ff = datagram.getTopServers(address, c.type).clearInvoker();
+                PromiseFuture<String[]> ff = datagram.getTopServers(new ParamBuilder(address), c.type).clearInvoker();
                 return ff.addResultListener(ips -> addIps(c, ips))
                         .addExceptionListener(ex -> c.logger
                                 .fine("Exception while doing UDP hash search crawler getTopServers("
