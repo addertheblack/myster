@@ -1,4 +1,3 @@
-
 package com.myster.server;
 
 import java.net.InetAddress;
@@ -11,6 +10,7 @@ import java.util.List;
 import java.util.logging.Logger;
 
 import com.myster.client.net.MysterProtocol;
+import com.myster.client.net.ParamBuilder;
 import com.myster.net.MysterAddress;
 import com.myster.tracker.Tracker;
 
@@ -85,7 +85,7 @@ public class ServerUtils {
         }
         
         addressesToPing.forEach(address -> protocol.getDatagram()
-                .ping(new MysterAddress(newAddressNoThrows(address), 6669))
+                .ping(new ParamBuilder(new MysterAddress(newAddressNoThrows(address), 6669)))
                 .addResultListener(result -> {
                     if (result.isTimeout()) {
                         LOGGER.finest("LAN ping Timeout: " + result.address());

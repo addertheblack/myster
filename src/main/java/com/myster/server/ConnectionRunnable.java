@@ -154,7 +154,6 @@ public class ConnectionRunnable implements Runnable {
                         context.socket().out.write(1);
                         context.socket().out.flush();
                         
-                        // Upgrade the socket to TLS using server identity
                         TLSSocket tlsSocket = TLSSocket.upgradeServerSocket(socket, Identity.getIdentity());
                         
                         // Update the context with the new encrypted socket
@@ -162,11 +161,13 @@ public class ConnectionRunnable implements Runnable {
                         i = context.socket().in; // Update input stream to use encrypted connection
                         
                         System.out.println("STLS upgrade successful - connection is now encrypted");
+                        
                         // Continue processing more protocol codes on encrypted connection
                         break;
                         
                     } catch (Exception e) {
                         System.out.println("Failed to upgrade to TLS: " + e.getMessage());
+                        
                         // Send rejection using Myster protocol (0 = bad)
                         context.socket().out.write(0);
                         context.socket().out.flush();

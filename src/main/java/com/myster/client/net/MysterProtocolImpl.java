@@ -24,3 +24,4 @@ public class MysterProtocolImpl implements MysterProtocol {
         return stream;
     }
 }
+

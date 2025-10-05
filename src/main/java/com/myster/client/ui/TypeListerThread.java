@@ -15,6 +15,7 @@ import java.util.concurrent.ExecutionException;
 
 import com.general.util.Util;
 import com.myster.client.net.MysterProtocol;
+import com.myster.client.net.ParamBuilder;
 import com.myster.net.MysterAddress;
 import com.myster.net.MysterSocket;
 import com.myster.net.MysterSocketFactory;
@@ -73,7 +74,7 @@ public class TypeListerThread extends MysterThread {
             
             MysterAddress mysterAddress = MysterAddress.createMysterAddress(ip);
             listener.refreshIP(mysterAddress);
-            com.myster.type.MysterType[] types = protocol.getDatagram().getTypes(mysterAddress).get();
+            com.myster.type.MysterType[] types = protocol.getDatagram().getTypes(new ParamBuilder(mysterAddress)).get();
             if (endFlag)
                 return;
 

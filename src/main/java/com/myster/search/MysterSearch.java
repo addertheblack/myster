@@ -26,6 +26,7 @@ import com.general.thread.PromiseFuture;
 import com.general.thread.PromiseFutures;
 import com.general.util.Util;
 import com.myster.client.net.MysterProtocol;
+import com.myster.client.net.ParamBuilder;
 import com.myster.net.MysterAddress;
 import com.myster.net.MysterClientSocketPool;
 import com.myster.net.MysterSocket;
@@ -272,13 +273,13 @@ public class MysterSearch {
 
         // ADD_TOP_TEN
         UdpTopTen  udpTopTenListener = new UdpTopTen(ipQueue);
-        PromiseFuture<String[]> topTenFuture = protocol.getDatagram().getTopServers(address, type).addCallListener(udpTopTenListener);
+        PromiseFuture<String[]> topTenFuture = protocol.getDatagram().getTopServers(new ParamBuilder(address), type).addCallListener(udpTopTenListener);
         udpTopTenListener.setFuture(topTenFuture);
         outStandingFutures.add(topTenFuture);
 
         // ADD_SEARCH
         UdpSearch udpSearchListener = new UdpSearch(address);
-        PromiseFuture<List<String>> searchFuture = protocol.getDatagram().getSearch(address, type, searchString).addCallListener(udpSearchListener);
+        PromiseFuture<List<String>> searchFuture = protocol.getDatagram().getSearch(new ParamBuilder(address), type, searchString).addCallListener(udpSearchListener);
         udpSearchListener.setFuture(searchFuture);
         outStandingFutures.add(searchFuture);
     }
