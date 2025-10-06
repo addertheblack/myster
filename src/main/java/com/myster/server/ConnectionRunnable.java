@@ -6,21 +6,20 @@
  
  This code is under GPL
 
- Copyright Andrew Trumper 2000-2001
+ Copyright Andrew Trumper 2000-2025
  */
 
 package com.myster.server;
 
+import java.io.IOException;
+import java.net.Socket;
+import java.util.Map;
+import java.util.concurrent.atomic.AtomicInteger;
+import java.util.logging.Logger;
+
 import com.myster.client.stream.MysterDataInputStream;
 import com.myster.filemanager.FileTypeListManager;
 import com.myster.identity.Identity;
-
-import java.io.IOException;
-import java.net.Socket;
-import java.nio.charset.StandardCharsets;
-import java.util.Map;
-import java.util.concurrent.atomic.AtomicInteger;
-
 import com.myster.net.MysterAddress;
 import com.myster.net.TLSSocket;
 import com.myster.server.event.ConnectionManagerEvent;
@@ -29,46 +28,41 @@ import com.myster.server.event.ServerEventDispatcher;
 import com.myster.server.transferqueue.TransferQueue;
 
 /**
- * This class takes incoming stream connections and applies the Myster protocol
- * to them. The incomming streams are gotten by waiting on a BlockingQueue
- * object. The ConnectionManager object is made to run as a thread and accessing
- * sockets through a BlockingQueue allows the ConnectionManager to block until a
- * new stream is available. It also allows MULTIPLE ConnectionSection objects to
- * wait on a single BlockingQueue and form a connection pool.
+ * Handles incoming stream connections by applying the Myster protocol.
  * <p>
- * The Myster protocol for stream is made up up connection sections. This class
- * gets the connection and waits for a connection number. When the connection
- * number has been received it then returns 1 or 0 depending on whether or not
- * it has a connection section handle installed that can understand that
- * protocol. Connection sections are passed to this object in its constructor.
- * 
+ * This class processes incoming socket connections as a Runnable, reading protocol
+ * codes and delegating to appropriate ConnectionSection handlers. It supports
+ * connection pooling by allowing multiple instances to process connections
+ * concurrently.
+ * <p>
+ * The Myster protocol consists of connection sections identified by integer codes.
+ * When a protocol code is received, this class either handles it directly (for
+ * built-in protocols like TLS) or delegates to registered ConnectionSection
+ * implementations.
  * 
  * @author Andrew Trumper
- *  
  */
 
 public class ConnectionRunnable implements Runnable {
+    private static final Logger LOGGER = Logger.getLogger(ConnectionRunnable.class.getName());
+    
     private final ServerEventDispatcher eventSender;
     private final TransferQueue transferQueue;
     private final Map<Integer, ConnectionSection> connectionSections;
     private final Socket socket;
     private final FileTypeListManager fileManager;
     
+    /** Counter for generating unique thread names */
     private static final AtomicInteger threadCounter = new AtomicInteger(0);
 
     /**
-     * Builds a connection section object.
+     * Creates a new connection handler for the specified socket.
      * 
-     * @param socketQueue
-     *            a DoubleBlockingQueue containing sockets that should be
-     *            handled.
-     * @param eventSender
-     *            the event dispatcher object
-     * @param transferQueue
-     *            the TransferQueue object to use for queuing downloads
-     * @param connectionSections
-     *            a Hashtable of connection section integers to
-     *            ConnectionSection objects
+     * @param socket the client socket to handle
+     * @param eventSender the event dispatcher for connection events
+     * @param transferQueue the queue for managing file transfers
+     * @param fileTypeListManager the manager for file type operations
+     * @param connectionSections map of protocol codes to their handlers
      */
     protected ConnectionRunnable(Socket socket,
                                  ServerEventDispatcher eventSender,
@@ -87,6 +81,9 @@ public class ConnectionRunnable implements Runnable {
     /**
      * Converts a 32-bit integer to its ASCII string representation in network byte order.
      * Non-printable characters are replaced with '?'.
+     * 
+     * @param value the integer value to convert
+     * @return ASCII representation of the integer bytes
      */
     private static String intToAsciiString(int value) {
         // Extract bytes in big-endian (network) order
@@ -99,142 +96,151 @@ public class ConnectionRunnable implements Runnable {
         // Convert to ASCII string
         StringBuilder sb = new StringBuilder();
         for (byte b : bytes) {
-            // Only add printable ASCII characters (32-126)
+            // Only include printable ASCII characters (32-126)
             if (b >= 32 && b <= 126) {
                 sb.append((char) b);
             } else {
-                sb.append('?'); // Non-printable character placeholder
+                sb.append('?'); // Placeholder for non-printable characters
             }
         }
         return sb.toString();
     }
 
     /**
-     * Does the actual work in this object.
-     *  
+     * Processes the client connection by reading protocol codes and dispatching
+     * to appropriate handlers. This method implements the main Myster protocol
+     * processing loop.
      */
     public void run() {
         eventSender.getOperationDispatcher().fire()
                 .connectEvent(new OperatorEvent(new MysterAddress(socket.getInetAddress())));
 
-        int sectioncounter = 0;
+        int sectionCounter = 0;
         try (var tempTcpSocket = new com.myster.client.stream.TCPSocket(socket)) {
             ConnectionContext context = new ConnectionContext(tempTcpSocket, new MysterAddress(socket.getInetAddress()), null, transferQueue, fileManager);
 
-            MysterDataInputStream i = context.socket().in; //opens the connection
+            MysterDataInputStream inputStream = context.socket().in;
 
             int protocolCode;
             Thread.currentThread().setPriority(Thread.MIN_PRIORITY);
 
             do {
                 try {
-                    protocolCode = i.readInt(); //reads the type of connection
-                    // requested
+                    protocolCode = inputStream.readInt();
                     
-                    // Log the protocol code as both integer and ASCII
+                    // Log the protocol code with multiple representations for debugging
                     String asciiRepresentation = intToAsciiString(protocolCode);
-                    System.out.println("Protocol code received: " + protocolCode + 
+                    LOGGER.info("Protocol code received: " + protocolCode + 
                                      " (0x" + Integer.toHexString(protocolCode).toUpperCase() + 
                                      ") ASCII: \"" + asciiRepresentation + "\"");
-                } catch (Exception ex) {
+                } catch (Exception _) {
                     return;
                 }
 
-                sectioncounter++; //to detect if it was a ping.
+                sectionCounter++; // Track sections to detect ping connections
 
-                //Figures out which object to invoke for the connection type:
-                //NOTE: THEY SAY RUN() NOT START()!!!!!!!!!!!!!!!!!!!!!!!!!
-                MysterAddress remoteip = new MysterAddress(socket.getInetAddress());
+                MysterAddress remoteAddress = new MysterAddress(socket.getInetAddress());
 
                 switch (protocolCode) {
-                case TLSSocket.STLS_CONNECTION_SECTION: // "STLS" - Handle TLS connection section
-                    System.out.println("Client requested STLS (Start TLS) connection section");
+                case TLSSocket.STLS_CONNECTION_SECTION:
+                    LOGGER.info("Client requested STLS (Start TLS) connection section");
                     try {
-                        // Send acceptance response using Myster protocol (1 = good)
+                        // Send acceptance response (1 = success in Myster protocol)
                         context.socket().out.write(1);
                         context.socket().out.flush();
                         
                         TLSSocket tlsSocket = TLSSocket.upgradeServerSocket(socket, Identity.getIdentity());
                         
-                        // Update the context with the new encrypted socket
+                        // Update context to use encrypted connection
                         context = new ConnectionContext(tlsSocket, context.serverAddress(), context.sectionObject(), transferQueue, fileManager);
-                        i = context.socket().in; // Update input stream to use encrypted connection
+                        inputStream = context.socket().in;
                         
-                        System.out.println("STLS upgrade successful - connection is now encrypted");
-                        
-                        // Continue processing more protocol codes on encrypted connection
+                        LOGGER.info("STLS upgrade successful - connection is now encrypted");
                         break;
                         
                     } catch (Exception e) {
-                        System.out.println("Failed to upgrade to TLS: " + e.getMessage());
+                        LOGGER.warning("Failed to upgrade to TLS: " + e.getMessage());
                         
-                        // Send rejection using Myster protocol (0 = bad)
+                        // Send rejection (0 = failure in Myster protocol)
                         context.socket().out.write(0);
                         context.socket().out.flush();
                         return;
                     }
                 case 1:
-                    context.socket().out.write(1); //Tells the other end that the
-                    // command is good  !
+                    // Basic acknowledgment protocol
+                    context.socket().out.write(1);
                     break;
                 case 2:
-                    context.socket().out.write(1); //Tells the other end that the
-                    // command is good  !
+                    // Acknowledgment and disconnect protocol
+                    context.socket().out.write(1);
                     return;
                 default:
-                    ConnectionSection section = connectionSections
-                            .get(protocolCode);
+                    ConnectionSection section = connectionSections.get(protocolCode);
                     if (section == null) {
-                        System.out
-                                .println("!!!System detects unknown protocol number : "
-                                + protocolCode);
-                        context.socket().out.write(0); //Tells the other end that
-                        // the command is bad!
+                        String asciiRepresentation = intToAsciiString(protocolCode);
+                        LOGGER.warning("System detects unknown protocol number: " + protocolCode + 
+                                     " (0x" + Integer.toHexString(protocolCode).toUpperCase() + 
+                                     ") ASCII: \"" + asciiRepresentation + "\"");
+                        context.socket().out.write(0); // Send rejection for unknown protocol
                     } else {
-                        doSection(section, remoteip, context);
+                        doSection(section, remoteAddress, context);
                     }
                 }
             } while (true);
         } catch (IOException ex) {
-            // nothing
+            // Connection terminated normally or by error
         } finally {
-            if (sectioncounter == 0) {
+            if (sectionCounter == 0) {
                 eventSender.getOperationDispatcher().fire().pingEvent(new OperatorEvent(new MysterAddress(
                         socket.getInetAddress())));
             }
 
             eventSender.getOperationDispatcher().fire().disconnectEvent(new OperatorEvent(new MysterAddress(
                     socket.getInetAddress())));
-            // socket already closed here
         }
-
     }
 
     /**
-     * Used to turn a REALLY long line of code into a smaller long line of code.
+     * Fires a connection event for the specified section.
+     * 
+     * @param section the connection section
+     * @param remoteAddress the remote client address
+     * @param sectionObject the section-specific data object
      */
-    private void fireConnectEvent(ConnectionSection d, MysterAddress remoteAddress, Object o) {
-        eventSender.getConnectionDispatcher().fire().sectionEventConnect(new ConnectionManagerEvent(remoteAddress, d.getSectionNumber(), o));
+    private void fireConnectEvent(ConnectionSection section, MysterAddress remoteAddress, Object sectionObject) {
+        eventSender.getConnectionDispatcher().fire().sectionEventConnect(new ConnectionManagerEvent(remoteAddress, section.getSectionNumber(), sectionObject));
     }
 
     /**
-     * Used to turn a REALLY long line of code into a smaller long line of code.
+     * Fires a disconnection event for the specified section.
+     * 
+     * @param section the connection section
+     * @param remoteAddress the remote client address  
+     * @param sectionObject the section-specific data object
      */
-    private void fireDisconnectEvent(ConnectionSection d, MysterAddress remoteAddress, Object o) {
+    private void fireDisconnectEvent(ConnectionSection section, MysterAddress remoteAddress, Object sectionObject) {
         eventSender.getConnectionDispatcher().fire()
                 .sectionEventDisconnect(new ConnectionManagerEvent(remoteAddress,
-                                                                   d.getSectionNumber(),
-                                                                   o));
+                                                                   section.getSectionNumber(),
+                                                                   sectionObject));
     }
 
-    private void doSection(ConnectionSection d, MysterAddress remoteIP, ConnectionContext context)
+    /**
+     * Executes a connection section with proper event handling.
+     * 
+     * @param section the connection section to execute
+     * @param remoteAddress the remote client address
+     * @param context the connection context
+     * @throws IOException if an I/O error occurs during section execution
+     */
+    private void doSection(ConnectionSection section, MysterAddress remoteAddress, ConnectionContext context)
             throws IOException {
-        Object sectionObject = d.getSectionObject();
-        fireConnectEvent(d, remoteIP, sectionObject);
+        Object sectionObject = section.getSectionObject();
+        fireConnectEvent(section, remoteAddress, sectionObject);
         try {
-            d.doSection(context.withSectionObject(sectionObject));
+            section.doSection(context.withSectionObject(sectionObject));
         } finally {
-            fireDisconnectEvent(d, remoteIP, sectionObject);
+            fireDisconnectEvent(section, remoteAddress, sectionObject);
         }
     }
 }
