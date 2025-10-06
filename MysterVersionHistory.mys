@@ -1233,6 +1233,10 @@ keys for myster types.
     Fix bug in Async datagram socket that used stale buffer. Improve latency of Async Datagram socket.
     Use the description of the type/description field for display in all places in the UI
     Use crypto keys for networks types
+    
+2025-10-05
+    Added TLS encryption support to tcp streams in Myster
+    Added encryption support to UDP
 
 	
 
