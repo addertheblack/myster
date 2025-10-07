@@ -10,7 +10,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
-import java.util.Set;
 import java.util.TimerTask;
 import java.util.function.Consumer;
 import java.util.logging.Logger;
@@ -24,7 +23,6 @@ import com.general.util.Util;
 import com.myster.client.net.MysterProtocol;
 import com.myster.client.net.ParamBuilder;
 import com.myster.mml.MessagePack;
-import com.myster.mml.RobustMML;
 import com.myster.net.MysterAddress;
 import com.myster.server.ServerUtils;
 import com.myster.server.stream.ServerStats;
@@ -83,12 +81,12 @@ public class MysterServerPoolImpl implements MysterServerPool {
                     continue;
                 }
                 
-                MysterServerImplementation mysterip = create(serverNode, identityTracker, identity.get());
+                MysterServerImplementation mysterip = create(serverNode, identity.get());
                 hardLinks.add(mysterip);
                 
                 addAddressesToIdentityTracker(serverNode, mysterip.getIdentity());
             }
-        } catch (BackingStoreException exception) {
+        } catch (BackingStoreException _) {
             // ignore
         }
 
@@ -129,7 +127,7 @@ public class MysterServerPoolImpl implements MysterServerPool {
     }
 
     @Override
-    public MysterIdentity lookupIdentityFromName(ExternalName externalName) {
+    public Optional<MysterIdentity> lookupIdentityFromName(ExternalName externalName) {
         return identityTracker.getIdentityFromExternalName(externalName);
     }
 
@@ -146,17 +144,15 @@ public class MysterServerPoolImpl implements MysterServerPool {
 
     @Override
     public synchronized void suggestAddress(MysterAddress address) {
-        MysterIdentity identity = identityTracker.getIdentity(address);
+        Optional<MysterIdentity> identity = identityTracker.getIdentity(address);
 
-        if (identity != null) {
-            MysterServer temp = getCachedMysterServer(identity);
-
-            if (temp != null) {
+        if (identity.isPresent()) {
+            Optional<MysterServer> cachedServer = getCachedMysterServer(identity.get());
+            if (cachedServer.isPresent()) {
                 // If the identity and server are known but someone is
                 // suggesting the IP then maybe we should double check to see if the IP
-                // is up. If it's down it might be worth a re-pingSer
+                // is up. If it's down it might be worth a re-ping
                 identityTracker.suggestPing(address);
-                
                 return;
             }
         }
@@ -207,30 +203,22 @@ public class MysterServerPoolImpl implements MysterServerPool {
     /**
      * In order to avoid having thread problems the two functions below are used.
      * They are required because the checking the index and getting the object
-     * at that index should be atomic, hence the synchronised! and the two
+     * at that index should be atomic, hence the synchronized! and the two
      * functions (for two levels of checking
      */
-    public synchronized MysterServer getCachedMysterServer(MysterIdentity k) {
-        MysterServerImplementation mysterip = getMysterIP(k);
-
-        if (mysterip == null)
-            return null;
-
-        return mysterip.getInterface();
+    @Override
+    public synchronized Optional<MysterServer> getCachedMysterServer(MysterIdentity k) {
+        return getMysterIP(k).map(MysterServerImplementation::getInterface);
     }
     
+    @Override
     public synchronized Optional<MysterServer> getCachedMysterIp(MysterAddress address) {
         var identity = identityTracker.getIdentity(address);
-        if (identity == null) {
+        if (identity.isEmpty()) {
             return Optional.empty();
         }
-        
-        MysterServerImplementation mysterip = getMysterIP(identity);
 
-        if (mysterip == null)
-            return Optional.empty();
-
-        return Optional.of(mysterip.getInterface());
+        return getMysterIP(identity.get()).map(MysterServerImplementation::getInterface);
     }
 
     public boolean existsInPool(MysterIdentity k) {
@@ -288,10 +276,9 @@ public class MysterServerPoolImpl implements MysterServerPool {
 
     private void deleteAddressBasedIdentitiesOnWrongPort(MysterAddress addressIn,
                                                          MysterAddress address) {
+        
         if (!addressIn.equals(address)) {
-            MysterIdentity addressInIdentity = identityTracker.getIdentity(addressIn);
-
-            if (addressInIdentity != null) {
+            identityTracker.getIdentity(addressIn).ifPresent(addressInIdentity -> {
                 identityTracker.removeIdentity(addressInIdentity, addressIn);
                 
                 WeakReference<MysterServerImplementation> other = cache.get(addressInIdentity);
@@ -301,7 +288,7 @@ public class MysterServerPoolImpl implements MysterServerPool {
                         otherServer.save();
                     }
                 }
-            }
+            });
         }
     }
     
@@ -319,18 +306,17 @@ public class MysterServerPoolImpl implements MysterServerPool {
         }
     }
 
-    private MysterServerImplementation getMysterIP(MysterIdentity k) {
+    private Optional<MysterServerImplementation> getMysterIP(MysterIdentity k) {
         var s = cache.get(k);
 
         if (s == null) {
             return null;
         }
 
-        return s.get();
+        return Optional.ofNullable(s.get());
     }
     
     private MysterServerImplementation create(Preferences node,
-                                              IdentityProvider identityProvider,
                                               MysterIdentity identity) {
         var server = new MysterServerImplementation(node, identityTracker, identity);
         addToDataStructures(server);
@@ -372,12 +358,12 @@ public class MysterServerPoolImpl implements MysterServerPool {
 
         try {
             preferences.node(computeNodeNameFromIdentity(identity).toString()).removeNode();
-        } catch (BackingStoreException exception) {
+        } catch (BackingStoreException _) {
             LOGGER.info("Could not delete MysterIP pref node for " + identity.toString());
         }
     }
 
-    private List<MysterAddress> extractAddresses(Preferences serverNode) {
+    private static List<MysterAddress> extractAddresses(Preferences serverNode) {
         String[] addresses = serverNode.get(MysterServerImplementation.ADDRESSES, "").split(" ");
         List<Optional<MysterAddress>> unfiltered =
                 Util.map(Arrays.asList(addresses), addressString -> {
@@ -387,7 +373,7 @@ public class MysterServerPoolImpl implements MysterServerPool {
                     
                     try {
                         return Optional.of(MysterAddress.createMysterAddress(addressString));
-                    } catch (UnknownHostException ex) {
+                    } catch (UnknownHostException _) {
                         return Optional.empty();
                     }
                 });

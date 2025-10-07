@@ -1,4 +1,3 @@
-
 package com.myster.tracker;
 
 import static com.myster.tracker.MysterServer.DOWN;
@@ -94,13 +93,13 @@ class IdentityTracker implements IdentityProvider {
     }
 
     @Override
-    public synchronized MysterIdentity getIdentity(MysterAddress address) {
-        return addressToIdentity.get(address);
+    public synchronized Optional<MysterIdentity> getIdentity(MysterAddress address) {
+        return Optional.ofNullable(addressToIdentity.get(address));
     }
     
     @Override
-    public synchronized MysterIdentity getIdentityFromExternalName(ExternalName name) {
-        return externalNameToIdentity.get(name);
+    public synchronized Optional<MysterIdentity> getIdentityFromExternalName(ExternalName name) {
+        return Optional.ofNullable(externalNameToIdentity.get(name));
     }
     
     @Override
@@ -242,6 +241,7 @@ class IdentityTracker implements IdentityProvider {
     /**
      * Associates the key with the address and vice versa
      */
+    @Override
     public synchronized void addIdentity(MysterIdentity key, MysterAddress address) {
         if (timer == null) {
             resetTimer();
@@ -294,6 +294,7 @@ class IdentityTracker implements IdentityProvider {
         timer = new Timer(() -> INVOKER.invoke(IdentityTracker.this::update), REFRESH_MS);
     }
 
+    @Override
     public synchronized void removeIdentity(MysterIdentity key, MysterAddress address) {
         if (addressToIdentity.containsKey(address)) {
             if (addressToIdentity.get(address).equals(key)) {
@@ -373,6 +374,7 @@ class IdentityTracker implements IdentityProvider {
         addressState.up = !pingResponse.isTimeout();
     }
     
+    @Override
     public synchronized void cleanUpOldAddresses(MysterIdentity key) {
         if (!Thread.holdsLock(IdentityTracker.this)) {
             throw new IllegalStateException("Must hold lock");

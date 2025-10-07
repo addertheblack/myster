@@ -1,9 +1,7 @@
 package com.myster.client.datagram;
 
 import java.io.IOException;
-import java.security.PublicKey;
 import java.util.List;
-import java.util.Optional;
 
 import com.general.thread.PromiseFuture;
 import com.myster.client.net.MysterDatagram;
@@ -19,29 +17,10 @@ import com.myster.net.MysterAddress;
 import com.myster.net.StandardDatagramClientImpl;
 import com.myster.net.TimeoutException;
 import com.myster.search.MysterFileStub;
-import com.myster.tracker.MysterIdentity;
 import com.myster.transaction.TransactionEvent;
 import com.myster.transaction.TransactionListener;
 import com.myster.transaction.TransactionManager;
 import com.myster.type.MysterType;
-
-/**
- * Used to lookup the server PublicKey given an Identity, MysterAddress
- */
-interface PublicKeyLookup {
-    /**
-     * @param identity to convert to a public key
-     * @return the public key for this identity or empty if not found
-     */
-    Optional<PublicKey> convert(MysterIdentity identity);
-    Optional<PublicKey> getCached(MysterAddress address);
-    PromiseFuture<Optional<PublicKey>> fetchPublicKey(MysterAddress address);
-}
-
-interface AddressLookup {
-    Optional<MysterAddress> findAddress(MysterIdentity identity); 
-}
-
 
 /**
  * Implementation of Myster's datagram transactions
@@ -56,16 +35,10 @@ public class MysterDatagramImpl implements MysterDatagram {
      */
     private final PublicKeyLookup lookup;
     
-    /**
-     * In case we've specified a server via its identity
-     */
-    private final AddressLookup addressLookup;
-
-    public MysterDatagramImpl(TransactionManager transactionManager, UDPPingClient pingClient, PublicKeyLookup lookup, AddressLookup addressLookup) {
+    public MysterDatagramImpl(TransactionManager transactionManager, UDPPingClient pingClient, PublicKeyLookup lookup) {
         this.transactionManager = transactionManager;
         this.pingClient = pingClient;
         this.lookup = lookup;
-        this.addressLookup = addressLookup;
     }
     
     @Override
@@ -132,7 +105,7 @@ public class MysterDatagramImpl implements MysterDatagram {
     }
 
     private <T> PromiseFuture<T> doSection(final MysterAddress address,
-            final StandardDatagramClientImpl<T> impl)  {
+                                           final StandardDatagramClientImpl<T> impl) {
 
         return PromiseFuture.<T>newPromiseFuture((context) -> {
             transactionManager.sendTransaction(new DataPacket() { // inline class

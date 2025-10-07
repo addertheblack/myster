@@ -26,9 +26,9 @@ public interface IdentityProvider {
      *            to lookup
      * @return the identity of the server with this address
      */
-    MysterIdentity getIdentity(MysterAddress address);
+    Optional<MysterIdentity> getIdentity(MysterAddress address);
 
-    MysterIdentity getIdentityFromExternalName(ExternalName name);
+    Optional<MysterIdentity> getIdentityFromExternalName(ExternalName name);
 
     /**
      * @param identity
