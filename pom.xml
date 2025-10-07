@@ -246,6 +246,12 @@
   </build>
 
   <profiles>
+  <!--
+    add this stuff later. it makes launch almost but not quite 2X faster..
+  -Xshare:on 
+-XX:+AutoCreateSharedArchive 
+-XX:SharedArchiveFile=/home/andrew/repos/myster/speeduplaunch.jsa
+  -->
     <!-- Windows Profile -->
     <profile>
       <id>windows-build</id>

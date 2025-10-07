@@ -30,4 +30,8 @@ class PublicKeyIdentity implements MysterIdentity {
     public String toString() {
         return Util.keyToString(key);
     }
+    
+    PublicKey getPublicKey() {
+        return key;
+    }
 }

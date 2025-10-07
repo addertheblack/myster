@@ -66,7 +66,7 @@ public class TestIdentityTracker {
             identityTracker.addIdentity(testIdentity, testAddress);
 
             assertTrue(identityTracker.exists(testAddress));
-            assertEquals(testIdentity, identityTracker.getIdentity(testAddress));
+            assertEquals(testIdentity, identityTracker.getIdentity(testAddress).get());
 
             identityTracker.removeIdentity(testIdentity, testAddress);
 
@@ -85,7 +85,7 @@ public class TestIdentityTracker {
             }
 
             assertTrue(identityTracker.exists(addresses[0]));
-            assertEquals(mysterIdentity, identityTracker.getIdentity(addresses[1]));
+            assertEquals(mysterIdentity, identityTracker.getIdentity(addresses[1]).get());
 
             assertEquals(addresses.length, identityTracker.getAddresses(mysterIdentity).length);
 
@@ -112,7 +112,7 @@ public class TestIdentityTracker {
             }
 
             assertTrue(identityTracker.exists(addresses[0]));
-            assertEquals(mysterIdentity, identityTracker.getIdentity(addresses[1]));
+            assertEquals(mysterIdentity, identityTracker.getIdentity(addresses[1]).get());
             assertEquals(addresses.length, identityTracker.getAddresses(mysterIdentity).length);
 
             for (MysterAddress mysterAddress : addresses) {
@@ -126,7 +126,7 @@ public class TestIdentityTracker {
             assertTrue(identityTracker.exists(addresses[0]));
 
             for (MysterAddress mysterAddress : addresses) {
-                assertEquals(mysterIdentity2, identityTracker.getIdentity(mysterAddress));
+                assertEquals(mysterIdentity2, identityTracker.getIdentity(mysterAddress).get());
             }
         }
 
@@ -164,15 +164,15 @@ public class TestIdentityTracker {
             assertEquals(1, identityTracker.getAddresses(mysterIdentity3).length);
 
             for (MysterAddress mysterAddress : addresses) {
-                assertEquals(mysterIdentity, identityTracker.getIdentity(mysterAddress));
+                assertEquals(mysterIdentity, identityTracker.getIdentity(mysterAddress).get());
             }
 
             for (MysterAddress mysterAddress : addresses2) {
-                assertEquals(mysterIdentity2, identityTracker.getIdentity(mysterAddress));
+                assertEquals(mysterIdentity2, identityTracker.getIdentity(mysterAddress).get());
             }
 
             assertEquals(mysterIdentity3,
-                         identityTracker.getIdentity(MysterAddress.createMysterAddress("169.254.196.1")));
+                         identityTracker.getIdentity(MysterAddress.createMysterAddress("169.254.196.1")).get());
         }
 
 

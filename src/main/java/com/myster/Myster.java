@@ -21,9 +21,11 @@ import java.net.InetAddress;
 import java.net.NetworkInterface;
 import java.net.SocketException;
 import java.net.UnknownHostException;
+import java.security.PublicKey;
 import java.util.ArrayList;
 import java.util.Enumeration;
 import java.util.List;
+import java.util.Optional;
 import java.util.logging.LogManager;
 import java.util.logging.Logger;
 import java.util.prefs.Preferences;
@@ -33,11 +35,14 @@ import javax.swing.SwingUtilities;
 
 import com.general.application.ApplicationContext;
 import com.general.application.ApplicationSingletonListener;
+import com.general.thread.PromiseFuture;
 import com.general.util.AnswerDialog;
 import com.general.util.Util;
 import com.myster.application.MysterGlobals;
 import com.myster.bandwidth.BandwidthManager;
 import com.myster.client.datagram.MysterDatagramImpl;
+import com.myster.client.datagram.PublicKeyLookup;
+import com.myster.client.datagram.PublicKeyLookupImpl;
 import com.myster.client.datagram.UDPPingClient;
 import com.myster.client.net.MysterProtocol;
 import com.myster.client.net.MysterProtocolImpl;
@@ -52,6 +57,7 @@ import com.myster.message.ImTransactionServer;
 import com.myster.message.MessageWindow;
 import com.myster.message.ui.MessagePreferencesPanel;
 import com.myster.net.DatagramProtocolManager;
+import com.myster.net.MysterAddress;
 import com.myster.pref.MysterPreferences;
 import com.myster.pref.ui.ThemePane;
 import com.myster.search.HashCrawlerManager;
@@ -71,6 +77,7 @@ import com.myster.server.datagram.TypeDatagramServer;
 import com.myster.server.event.ServerEventDispatcher;
 import com.myster.server.ui.ServerPreferencesPane;
 import com.myster.server.ui.ServerStatsWindow;
+import com.myster.tracker.MysterIdentity;
 import com.myster.tracker.MysterServerPoolImpl;
 import com.myster.tracker.Tracker;
 import com.myster.tracker.ui.TrackerWindow;
@@ -208,18 +215,28 @@ public class Myster {
         TransactionManager transactionManager =
                 new TransactionManager(serverDispatcher, datagramManager);
 
+        
         INSTRUMENTATION.info("-------->> Init client protocol impl " + (System.currentTimeMillis() - startTime));
+        PublicKeyLookupImpl serverLookup = new PublicKeyLookupImpl();
         MysterProtocol protocol =
                 new MysterProtocolImpl(new MysterStreamImpl(),
                                        new MysterDatagramImpl(transactionManager,
                                                               new UDPPingClient(datagramManager),
-                                                              null, // PublicKeyLookup - placeholder for now
-                                                              null)); // AddressLookup - placeholder for now
+                                                              serverLookup)); // AddressLookup - placeholder for now
 
         INSTRUMENTATION.info("-------->> Init IPListManager "
                 + (System.currentTimeMillis() - startTime));
         MysterServerPoolImpl pool = new MysterServerPoolImpl(Preferences.userRoot(), protocol);
         Tracker tracker = new Tracker(pool, Preferences.userRoot().node("Tracker.IpListManager"), tdList);
+        
+        // An annoying circular ref. The tracker uses the protocol to refresh information in its db and the 
+        // protocol stack uses the tracker and friends to lookup a server's public key for encryption.
+        // Ideally a separate thread would do the refresh and requires the protocol stack while the tracker would simply 
+        // be an information repo used for lookups. baby steps
+        serverLookup.setMysterServerPool(pool);
+        
+        // This will cause the tracker sub system to starting pinging and getting server stats for servers in it's in mem db
+        // it's a good idea to make sure the damn  server lookup code, used by the protocol stack is initated first.
         pool.startRefreshTimer();
         INSTRUMENTATION
                 .info("-------->> after IPListManager " + (System.currentTimeMillis() - startTime));

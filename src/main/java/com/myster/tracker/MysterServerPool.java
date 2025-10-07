@@ -32,12 +32,12 @@ public interface MysterServerPool {
      */
     void suggestAddress(String address);
     
-    MysterIdentity lookupIdentityFromName(ExternalName externalName);
+    Optional<MysterIdentity> lookupIdentityFromName(ExternalName externalName);
     
     /**
      * @return The MysterServer for this address assuming it's already in the cache. Null otherwise.
      */
-    MysterServer getCachedMysterServer(MysterIdentity identity);
+    Optional<MysterServer> getCachedMysterServer(MysterIdentity identity);
     Optional<MysterServer> getCachedMysterIp(MysterAddress address);
     
     /**

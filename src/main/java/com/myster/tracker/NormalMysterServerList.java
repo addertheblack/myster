@@ -67,19 +67,14 @@ class NormalMysterServerList implements MysterServerList {
         int max = externalNames.countTokens();
         for (int i = 0; i < max; i++) {
             try {
-                MysterServer temp = null;
                 ExternalName externalName = new ExternalName(externalNames.nextToken());
-                MysterIdentity identity = pool.lookupIdentityFromName(externalName);
-                if (pool.existsInPool(identity)) {
-                    temp = pool.getCachedMysterServer(identity);
-                } // if IP doens't exist in the pool, remove it from the list!
-                if (temp == null) {
-                    LOGGER.warning("This server does not existing in the pool: " + externalName
-                            + ". Repairing.");
-                    continue;
-                }
-
-                mapOfServers.put(temp.getIdentity(), temp);
+                pool.lookupIdentityFromName(externalName)
+                    .filter(identity -> pool.existsInPool(identity))
+                    .flatMap(identity -> pool.getCachedMysterServer(identity))
+                    .ifPresentOrElse(
+                        server -> mapOfServers.put(server.getIdentity(), server),
+                        () -> LOGGER.warning("This server does not exist in the pool: " + externalName + ". Repairing.")
+                    );
             } catch (Exception ex) {
                 LOGGER.warning("Failed to add an IP to an IP list: " + type + " " + ex);
             }
