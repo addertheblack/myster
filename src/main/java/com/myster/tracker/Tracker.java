@@ -16,9 +16,9 @@ import java.util.prefs.Preferences;
 import java.util.stream.Stream;
 
 import com.general.events.NewGenericDispatcher;
-import com.myster.client.datagram.PingResponse;
 import com.myster.net.MysterAddress;
-import com.myster.server.ServerUtils;
+import com.myster.net.datagram.client.PingResponse;
+import com.myster.net.server.ServerUtils;
 import com.myster.type.MysterType;
 import com.myster.type.TypeDescription;
 import com.myster.type.TypeDescriptionList;

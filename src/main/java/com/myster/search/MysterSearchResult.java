@@ -4,9 +4,9 @@ import java.util.ArrayList;
 import java.util.List;
 
 import com.general.util.Util;
-import com.myster.client.net.MysterProtocol;
 import com.myster.mml.RobustMML;
 import com.myster.net.MysterAddress;
+import com.myster.net.client.MysterProtocol;
 import com.myster.search.ui.ServerStatsFromCache;
 import com.myster.tracker.MysterServer;
 import com.myster.ui.MysterFrameContext;

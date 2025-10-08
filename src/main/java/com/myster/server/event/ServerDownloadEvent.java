@@ -5,7 +5,7 @@
 package com.myster.server.event;
 
 import com.myster.net.MysterAddress;
-import com.myster.server.DownloadInfo;
+import com.myster.net.server.DownloadInfo;
 
 public class ServerDownloadEvent extends ServerEvent {
     public static final int NO_QUEUE_POSTION = -1;

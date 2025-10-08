@@ -24,7 +24,7 @@ import javax.swing.JTabbedPane;
 import com.general.tab.TabEvent;
 import com.general.tab.TabListener;
 import com.general.tab.TabPanel;
-import com.myster.client.net.MysterProtocol;
+import com.myster.net.client.MysterProtocol;
 import com.myster.server.event.ServerContext;
 import com.myster.ui.MysterFrame;
 import com.myster.ui.MysterFrameContext;

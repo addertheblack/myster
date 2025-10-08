@@ -19,9 +19,9 @@ import javax.net.ssl.X509TrustManager;
 
 import com.myster.bandwidth.ThrottledInputStream;
 import com.myster.bandwidth.ThrottledOutputStream;
-import com.myster.client.stream.MysterDataInputStream;
-import com.myster.client.stream.MysterDataOutputStream;
 import com.myster.identity.Identity;
+import com.myster.net.stream.client.MysterDataInputStream;
+import com.myster.net.stream.client.MysterDataOutputStream;
 
 /**
  * TLS implementation of MysterSocket that uses explicit TLS negotiation (STARTTLS pattern).

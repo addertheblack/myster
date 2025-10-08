@@ -33,7 +33,7 @@ import com.general.mclist.MCListItemInterface;
 import com.general.util.MessageField;
 import com.general.util.StandardWindowBehavior;
 import com.general.util.Util;
-import com.myster.client.net.MysterProtocol;
+import com.myster.net.client.MysterProtocol;
 import com.myster.search.HashCrawlerManager;
 import com.myster.search.SearchEngine;
 import com.myster.search.SearchResult;

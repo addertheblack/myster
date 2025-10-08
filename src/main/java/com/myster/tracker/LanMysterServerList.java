@@ -5,7 +5,7 @@ import java.util.List;
 import java.util.Optional;
 
 import com.myster.net.MysterAddress;
-import com.myster.server.ServerUtils;
+import com.myster.net.server.ServerUtils;
 
 /**
  * LanMysterServerList is a list of MysterServer objects that are on the local network.

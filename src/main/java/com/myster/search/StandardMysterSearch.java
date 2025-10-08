@@ -5,11 +5,11 @@ import java.util.List;
 
 
 import com.general.util.Util;
-import com.myster.client.net.MysterProtocol;
 import com.myster.mml.RobustMML;
 import com.myster.net.DisconnectException;
 import com.myster.net.MysterAddress;
 import com.myster.net.MysterSocket;
+import com.myster.net.client.MysterProtocol;
 import com.myster.tracker.Tracker;
 import com.myster.type.MysterType;
 import com.myster.ui.MysterFrameContext;

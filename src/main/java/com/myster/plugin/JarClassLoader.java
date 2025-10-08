@@ -7,7 +7,6 @@
 
 package com.myster.plugin;
 
-import com.myster.client.stream.MysterDataInputStream;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
@@ -21,6 +20,8 @@ import java.util.List;
 import java.util.logging.Logger;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
+
+import com.myster.net.stream.client.MysterDataInputStream;
 
 public class JarClassLoader extends ClassLoader {
     private static final Logger LOGGER = Logger.getLogger(JarClassLoader.class.getName());

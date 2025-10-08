@@ -4,12 +4,12 @@ import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 
-import com.myster.client.stream.MysterDataInputStream;
-import com.myster.client.stream.MysterDataOutputStream;
 import com.myster.filemanager.FileItem;
 import com.myster.filemanager.FileTypeListManager;
 import com.myster.mml.MML;
-import com.myster.net.BadPacketException;
+import com.myster.net.datagram.BadPacketException;
+import com.myster.net.stream.client.MysterDataInputStream;
+import com.myster.net.stream.client.MysterDataOutputStream;
 import com.myster.transaction.Transaction;
 import com.myster.transaction.TransactionProtocol;
 import com.myster.transaction.TransactionSender;
@@ -17,7 +17,7 @@ import com.myster.type.MysterType;
 
 public class FileStatsDatagramServer implements TransactionProtocol {
     public static final int FILE_STATS_TRANSACTION_CODE =
-            com.myster.client.datagram.FileStatsDatagramClient.FILE_STATS_TRANSACTION_CODE;
+            com.myster.net.datagram.client.FileStatsDatagramClient.FILE_STATS_TRANSACTION_CODE;
     
     private final FileTypeListManager fileManager;
 

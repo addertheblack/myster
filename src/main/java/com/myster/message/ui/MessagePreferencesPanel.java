@@ -9,7 +9,7 @@ import javax.swing.JCheckBox;
 import javax.swing.JLabel;
 import javax.swing.JTextField;
 
-import com.myster.message.MessageManager;
+import com.myster.net.datagram.message.MessageManager;
 import com.myster.pref.MysterPreferences;
 import com.myster.pref.ui.PreferencesPanel;
 

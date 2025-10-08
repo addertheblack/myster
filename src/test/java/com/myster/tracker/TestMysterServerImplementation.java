@@ -13,12 +13,12 @@ import org.junit.jupiter.api.io.TempDir;
 
 import com.general.thread.PromiseFuture;
 import com.general.util.MapPreferences;
-import com.myster.client.datagram.PingResponse;
 import com.myster.identity.Identity;
 import com.myster.mml.MMLException;
 import com.myster.mml.MessagePack;
 import com.myster.net.MysterAddress;
-import com.myster.server.stream.ServerStats;
+import com.myster.net.datagram.client.PingResponse;
+import com.myster.net.stream.server.ServerStats;
 import com.myster.type.MysterType;
 
 class TestMysterServerImplementation {

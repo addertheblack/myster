@@ -7,8 +7,8 @@ import java.net.Socket;
 import java.util.prefs.BackingStoreException;
 import java.util.prefs.Preferences;
 
-import com.myster.client.stream.MysterDataInputStream;
-import com.myster.client.stream.MysterDataOutputStream;
+import com.myster.net.stream.client.MysterDataInputStream;
+import com.myster.net.stream.client.MysterDataOutputStream;
 
 /**
  * Use this class to assert that there's only one version of the program currently running. Will

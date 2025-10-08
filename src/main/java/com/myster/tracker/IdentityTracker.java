@@ -21,9 +21,9 @@ import java.util.stream.Collectors;
 import com.general.thread.PromiseFuture;
 import com.general.util.Timer;
 import com.general.util.Util;
-import com.myster.client.datagram.PingResponse;
 import com.myster.net.MysterAddress;
-import com.myster.server.ServerUtils;
+import com.myster.net.datagram.client.PingResponse;
+import com.myster.net.server.ServerUtils;
 
 /**
  * This is responsible for tracking which internet addresses (MysterAddress) map to which server identities

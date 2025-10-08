@@ -4,9 +4,9 @@ import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 
-import com.myster.client.stream.MysterDataInputStream;
-import com.myster.client.stream.MysterDataOutputStream;
-import com.myster.net.BadPacketException;
+import com.myster.net.datagram.BadPacketException;
+import com.myster.net.stream.client.MysterDataInputStream;
+import com.myster.net.stream.client.MysterDataOutputStream;
 import com.myster.tracker.MysterServer;
 import com.myster.tracker.Tracker;
 import com.myster.transaction.Transaction;
@@ -17,7 +17,7 @@ import com.myster.type.MysterType;
 public class TopTenDatagramServer implements TransactionProtocol {
     public static final int NUMBER_OF_SERVERS_TO_RETURN = 100;
 
-    public static final int TOP_TEN_TRANSACTION_CODE = com.myster.client.datagram.TopTenDatagramClient.TOP_TEN_TRANSACTION_CODE;
+    public static final int TOP_TEN_TRANSACTION_CODE = com.myster.net.datagram.client.TopTenDatagramClient.TOP_TEN_TRANSACTION_CODE;
 
     private final Tracker tracker;
 

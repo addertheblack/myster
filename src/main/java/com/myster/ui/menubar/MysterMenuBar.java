@@ -34,7 +34,7 @@ import javax.swing.undo.UndoManager;
 import com.general.events.NewGenericDispatcher;
 import com.general.thread.Invoker;
 import com.myster.application.MysterGlobals;
-import com.myster.client.net.MysterProtocol;
+import com.myster.net.client.MysterProtocol;
 import com.myster.tracker.Tracker;
 import com.myster.type.TypeDescriptionList;
 import com.myster.ui.MysterFrameContext;
@@ -97,8 +97,8 @@ public class MysterMenuBar {
                                                   true));
         file.add(new MysterMenuItemFactory("New Instant Message",
                                                   (java.awt.event.ActionEvent e) -> {
-                                                      com.myster.message.MessageWindow window =
-                                                              new com.myster.message.MessageWindow(context, protocol);
+                                                      com.myster.net.datagram.message.MessageWindow window =
+                                                              new com.myster.net.datagram.message.MessageWindow(context, protocol);
                                                       window.setVisible(true);
                                                   }));
         closeWindowAction = new CloseWindowAction("Close Window", context.windowManager());

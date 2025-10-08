@@ -2,10 +2,10 @@ package com.myster.search.ui;
 
 import com.general.mclist.Sortable;
 import com.general.thread.CallAdapter;
-import com.myster.client.datagram.PingResponse;
-import com.myster.client.net.MysterProtocol;
-import com.myster.client.net.ParamBuilder;
 import com.myster.net.MysterAddress;
+import com.myster.net.client.MysterProtocol;
+import com.myster.net.client.ParamBuilder;
+import com.myster.net.datagram.client.PingResponse;
 
 public class SortablePing implements Sortable<Long> {
     public static final int NOTPINGED = 1000000;

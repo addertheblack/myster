@@ -1,6 +1,6 @@
 package com.myster.transaction;
 
-import com.myster.net.BadPacketException;
+import com.myster.net.datagram.BadPacketException;
 
 public class NotATransactionException extends BadPacketException {
     public NotATransactionException(String string) {

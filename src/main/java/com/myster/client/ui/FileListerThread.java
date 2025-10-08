@@ -12,11 +12,11 @@ package com.myster.client.ui;
 import java.io.IOException;
 
 import com.general.util.Util;
-import com.myster.client.stream.MysterDataInputStream;
-import com.myster.client.stream.MysterDataOutputStream;
 import com.myster.net.MysterAddress;
 import com.myster.net.MysterSocket;
-import com.myster.net.MysterSocketFactory;
+import com.myster.net.stream.client.MysterDataInputStream;
+import com.myster.net.stream.client.MysterDataOutputStream;
+import com.myster.net.stream.client.MysterSocketFactory;
 import com.myster.type.MysterType;
 import com.myster.util.MysterThread;
 import com.myster.util.Sayable;

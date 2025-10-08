@@ -7,10 +7,10 @@ import java.util.logging.Logger;
 import com.general.thread.AsyncTaskTracker;
 import com.general.thread.PromiseFuture;
 import com.general.thread.PromiseFutures;
-import com.myster.client.net.MysterDatagram;
-import com.myster.client.net.MysterProtocol;
-import com.myster.client.net.ParamBuilder;
 import com.myster.net.MysterAddress;
+import com.myster.net.client.MysterDatagram;
+import com.myster.net.client.MysterProtocol;
+import com.myster.net.client.ParamBuilder;
 import com.myster.type.MysterType;
 
 public class AsyncNetworkCrawler {

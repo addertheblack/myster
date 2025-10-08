@@ -1,7 +1,7 @@
 package com.myster.search;
 
-import com.myster.client.net.MysterProtocol;
 import com.myster.net.MysterAddress;
+import com.myster.net.client.MysterProtocol;
 import com.myster.tracker.MysterServer;
 
 public interface SearchResult {

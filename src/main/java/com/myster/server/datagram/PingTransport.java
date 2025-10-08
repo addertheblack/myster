@@ -2,13 +2,13 @@ package com.myster.server.datagram;
 
 import com.general.net.ImmutableDatagramPacket;
 import com.myster.application.MysterGlobals;
-import com.myster.net.BadPacketException;
-import com.myster.net.DatagramSender;
-import com.myster.net.DatagramTransport;
 import com.myster.net.MysterAddress;
-import com.myster.net.PingPacket;
-import com.myster.net.PongPacket;
-import com.myster.server.ServerUtils;
+import com.myster.net.datagram.BadPacketException;
+import com.myster.net.datagram.DatagramSender;
+import com.myster.net.datagram.DatagramTransport;
+import com.myster.net.datagram.PingPacket;
+import com.myster.net.datagram.PongPacket;
+import com.myster.net.server.ServerUtils;
 import com.myster.tracker.Tracker;
 
 public class PingTransport implements DatagramTransport {

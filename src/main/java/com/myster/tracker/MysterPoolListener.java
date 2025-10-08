@@ -1,7 +1,7 @@
 
 package com.myster.tracker;
 
-import com.myster.client.datagram.PingResponse;
+import com.myster.net.datagram.client.PingResponse;
 
 public interface MysterPoolListener {
     void serverRefresh(MysterServer server);

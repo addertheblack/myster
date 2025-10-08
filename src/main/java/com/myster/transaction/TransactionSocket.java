@@ -1,6 +1,6 @@
 package com.myster.transaction;
 
-import com.myster.net.DataPacket;
+import com.myster.net.datagram.DataPacket;
 
 /**
  * This class is not thread safe however it doesn't need to be used on the event
