@@ -1,6 +1,6 @@
 package com.myster.transaction;
 
-import com.myster.net.BadPacketException;
+import com.myster.net.datagram.BadPacketException;
 
 public interface TransactionProtocol {
    int getTransactionCode(); //returns the transaction code of

@@ -17,11 +17,11 @@ import java.util.List;
 import java.util.Map;
 
 import com.general.util.Util;
-import com.myster.client.net.MysterProtocol;
 import com.myster.mml.RobustMML;
 import com.myster.net.MysterAddress;
 import com.myster.net.MysterSocket;
-import com.myster.net.MysterSocketFactory;
+import com.myster.net.client.MysterProtocol;
+import com.myster.net.stream.client.MysterSocketFactory;
 import com.myster.search.MysterFileStub;
 import com.myster.type.MysterType;
 import com.myster.util.MysterThread;

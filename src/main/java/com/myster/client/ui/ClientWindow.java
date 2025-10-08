@@ -38,10 +38,10 @@ import com.general.util.MessageField;
 import com.general.util.MessagePanel;
 import com.general.util.StandardWindowBehavior;
 import com.general.util.Util;
-import com.myster.client.net.MysterProtocol;
 import com.myster.net.MysterAddress;
+import com.myster.net.client.MysterProtocol;
+import com.myster.net.server.ServerPreferences;
 import com.myster.search.HashCrawlerManager;
-import com.myster.server.ServerPreferences;
 import com.myster.tracker.MysterServer;
 import com.myster.tracker.Tracker;
 import com.myster.type.MysterType;
@@ -205,8 +205,8 @@ public class ClientWindow extends MysterFrame implements Sayable {
                 try {
                     com.myster.net.MysterAddress address =
                             MysterAddress.createMysterAddress(ipTextField.getText());
-                    com.myster.message.MessageWindow window =
-                            new com.myster.message.MessageWindow(getMysterFrameContext(),
+                    com.myster.net.datagram.message.MessageWindow window =
+                            new com.myster.net.datagram.message.MessageWindow(getMysterFrameContext(),
                                                                  protocol,
                                                                  address);
                     window.setVisible(true);

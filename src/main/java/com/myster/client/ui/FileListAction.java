@@ -11,8 +11,8 @@ package com.myster.client.ui;
 
 import com.general.mclist.MCListEvent;
 import com.general.mclist.MCListEventAdapter;
-import com.myster.client.net.MysterProtocol;
 import com.myster.net.MysterAddress;
+import com.myster.net.client.MysterProtocol;
 import com.myster.search.HashCrawlerManager;
 import com.myster.search.MysterFileStub;
 import com.myster.ui.MysterFrameContext;

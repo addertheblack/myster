@@ -18,6 +18,12 @@ import javax.swing.JScrollPane;
 import com.general.util.LinkedList;
 import com.general.util.Timer;
 import com.general.util.Util;
+import com.myster.net.stream.server.FileByHash;
+import com.myster.net.stream.server.FileInfoLister;
+import com.myster.net.stream.server.MultiSourceSender;
+import com.myster.net.stream.server.MysterServerLister;
+import com.myster.net.stream.server.RequestSearchThread;
+import com.myster.net.stream.server.ServerStats;
 import com.myster.server.event.ConnectionManagerEvent;
 import com.myster.server.event.ConnectionManagerListener;
 import com.myster.server.event.OperatorEvent;
@@ -29,14 +35,8 @@ import com.myster.server.event.ServerDownloadListener;
 import com.myster.server.event.ServerSearchDispatcher;
 import com.myster.server.event.ServerSearchEvent;
 import com.myster.server.event.ServerSearchListener;
-import com.myster.server.stream.FileByHash;
-import com.myster.server.stream.FileInfoLister;
-import com.myster.server.stream.ServerStats;
 import com.myster.type.TypeDescriptionList;
 import com.myster.ui.MysterFrameContext;
-import com.myster.server.stream.MysterServerLister;
-import com.myster.server.stream.MultiSourceSender;
-import com.myster.server.stream.RequestSearchThread;
 
 public class StatsInfoPanel extends JPanel {
     private JLabel numsearchlabel, listoflastten;

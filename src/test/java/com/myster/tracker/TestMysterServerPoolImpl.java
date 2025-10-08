@@ -28,14 +28,14 @@ import org.mockito.stubbing.Answer;
 import com.general.thread.PromiseFuture;
 import com.general.util.MapPreferences;
 import com.general.util.Semaphore;
-import com.myster.client.datagram.PingResponse;
-import com.myster.client.net.MysterDatagram;
-import com.myster.client.net.MysterProtocol;
-import com.myster.client.net.MysterStream;
-import com.myster.client.net.ParamBuilder;
 import com.myster.identity.Identity;
 import com.myster.mml.MessagePack;
 import com.myster.net.MysterAddress;
+import com.myster.net.client.MysterDatagram;
+import com.myster.net.client.MysterProtocol;
+import com.myster.net.client.MysterStream;
+import com.myster.net.client.ParamBuilder;
+import com.myster.net.datagram.client.PingResponse;
 import com.myster.type.MysterType;
 
 class TestMysterServerPoolImpl {
@@ -74,11 +74,11 @@ class TestMysterServerPoolImpl {
         byte[] keyBytes = pubKey.getEncoded();
         
         MessagePack baseStats = MessagePack.newEmpty();
-        baseStats.put(com.myster.server.stream.ServerStats.SERVER_NAME, "Mr. Magoo");
-        baseStats.put(com.myster.server.stream.ServerStats.MYSTER_VERSION, "10");
-        baseStats.putByteArray(com.myster.server.stream.ServerStats.IDENTITY, keyBytes);
-        baseStats.putLong(com.myster.server.stream.ServerStats.UPTIME, 1000L);
-        baseStats.putInt(com.myster.server.stream.ServerStats.NUMBER_OF_FILES + type, 42);
+        baseStats.put(com.myster.net.stream.server.ServerStats.SERVER_NAME, "Mr. Magoo");
+        baseStats.put(com.myster.net.stream.server.ServerStats.MYSTER_VERSION, "10");
+        baseStats.putByteArray(com.myster.net.stream.server.ServerStats.IDENTITY, keyBytes);
+        baseStats.putLong(com.myster.net.stream.server.ServerStats.UPTIME, 1000L);
+        baseStats.putInt(com.myster.net.stream.server.ServerStats.NUMBER_OF_FILES + type, 42);
         
         // Addresses without explicit port
         lookup.put(MysterAddress.createMysterAddress("127.0.0.1"), copyOf(baseStats));
@@ -87,7 +87,7 @@ class TestMysterServerPoolImpl {
         
         // Stats with explicit port 7000
         MessagePack portStats = copyOf(baseStats);
-        portStats.putInt(com.myster.server.stream.ServerStats.PORT, 7000);
+        portStats.putInt(com.myster.net.stream.server.ServerStats.PORT, 7000);
         
         lookup.put(MysterAddress.createMysterAddress("192.168.1.2:7000"), copyOf(portStats));
         lookup.put(MysterAddress.createMysterAddress("24.20.25.66:7000"), copyOf(portStats));
@@ -267,11 +267,11 @@ class TestMysterServerPoolImpl {
         MessagePack mml = lookup.get(oneTwoSeven);
         
         MessagePack copyMml = copyOf(mml);
-        byte[] identOld = copyMml.getByteArray(com.myster.server.stream.ServerStats.IDENTITY).orElse(null);
-        copyMml.remove(com.myster.server.stream.ServerStats.IDENTITY);
+        byte[] identOld = copyMml.getByteArray(com.myster.net.stream.server.ServerStats.IDENTITY).orElse(null);
+        copyMml.remove(com.myster.net.stream.server.ServerStats.IDENTITY);
 
         if (shouldChangePort) {
-            copyMml.putInt(com.myster.server.stream.ServerStats.PORT, 1234);
+            copyMml.putInt(com.myster.net.stream.server.ServerStats.PORT, 1234);
         }
         
         lookup.put(oneTwoSeven, copyMml);
@@ -314,7 +314,7 @@ class TestMysterServerPoolImpl {
         // Restore identity to stats and update lookup
         MessagePack restored = copyOf(copyMml);
         if (identOld != null) {
-            restored.putByteArray(com.myster.server.stream.ServerStats.IDENTITY, identOld);
+            restored.putByteArray(com.myster.net.stream.server.ServerStats.IDENTITY, identOld);
         }
         lookup.put(oneTwoSeven, restored);
         

@@ -14,11 +14,11 @@ import java.io.IOException;
 import java.util.concurrent.ExecutionException;
 
 import com.general.util.Util;
-import com.myster.client.net.MysterProtocol;
-import com.myster.client.net.ParamBuilder;
 import com.myster.net.MysterAddress;
 import com.myster.net.MysterSocket;
-import com.myster.net.MysterSocketFactory;
+import com.myster.net.client.MysterProtocol;
+import com.myster.net.client.ParamBuilder;
+import com.myster.net.stream.client.MysterSocketFactory;
 import com.myster.type.MysterType;
 import com.myster.util.MysterThread;
 import com.myster.util.Sayable;

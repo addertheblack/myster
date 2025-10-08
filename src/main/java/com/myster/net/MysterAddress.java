@@ -40,7 +40,7 @@ public class MysterAddress {
             String portstr = s.substring(s.indexOf(":") + 1);
             try {
                 port = Integer.parseInt(portstr); //need some checks here.
-            } catch (NumberFormatException ex) {
+            } catch (NumberFormatException _) {
                 throw new UnknownHostException("Port value is not a number: " + s);
             }
             ip = s.substring(0, s.indexOf(":"));

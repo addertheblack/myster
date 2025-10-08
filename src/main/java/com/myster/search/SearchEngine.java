@@ -11,7 +11,7 @@
  */
 package com.myster.search;
 
-import com.myster.client.net.MysterProtocol;
+import com.myster.net.client.MysterProtocol;
 import com.myster.tracker.Tracker;
 import com.myster.type.MysterType;
 import com.myster.ui.MysterFrameContext;

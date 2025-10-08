@@ -5,11 +5,11 @@ import java.io.IOException;
 import java.util.function.Supplier;
 import java.util.logging.Logger;
 
-import com.myster.client.stream.MysterDataOutputStream;
 import com.myster.filemanager.FileTypeListManager;
 import com.myster.identity.Identity;
-import com.myster.net.BadPacketException;
-import com.myster.server.stream.NotInitializedException;
+import com.myster.net.datagram.BadPacketException;
+import com.myster.net.stream.client.MysterDataOutputStream;
+import com.myster.net.stream.server.NotInitializedException;
 import com.myster.transaction.Transaction;
 import com.myster.transaction.TransactionProtocol;
 import com.myster.transaction.TransactionSender;
@@ -17,7 +17,7 @@ import com.myster.transaction.TransactionSender;
 public class ServerStatsDatagramServer implements TransactionProtocol {
     private static final Logger LOGGER = Logger.getLogger(ServerStatsDatagramServer.class.getName());
     
-    public static final int SERVER_STATS_TRANSACTION_CODE = com.myster.client.datagram.ServerStatsDatagramClient.SERVER_STATS_TRANSACTION_CODE;
+    public static final int SERVER_STATS_TRANSACTION_CODE = com.myster.net.datagram.client.ServerStatsDatagramClient.SERVER_STATS_TRANSACTION_CODE;
     
     private final Supplier<String> getIdentity;
     private final Identity identity;
@@ -43,7 +43,7 @@ public class ServerStatsDatagramServer implements TransactionProtocol {
             throws BadPacketException {
         ByteArrayOutputStream byteOutputStream = new ByteArrayOutputStream();
         try (var out = new MysterDataOutputStream(byteOutputStream)) {
-            out.writeMessagePack( com.myster.server.stream.ServerStats
+            out.writeMessagePack( com.myster.net.stream.server.ServerStats
                     .getServerStatsMessagePack(getIdentity.get(), getPort.get(), identity, fileManager));
 
             sender.sendTransaction(new Transaction(transaction,

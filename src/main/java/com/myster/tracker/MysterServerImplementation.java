@@ -26,7 +26,7 @@ import com.myster.mml.MMLException;
 import com.myster.mml.MessagePack;
 import com.myster.mml.RobustMML;
 import com.myster.net.MysterAddress;
-import com.myster.server.stream.ServerStats;
+import com.myster.net.stream.server.ServerStats;
 import com.myster.type.MysterType;
 
 /**

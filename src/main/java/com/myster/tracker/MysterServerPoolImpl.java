@@ -20,12 +20,12 @@ import com.general.events.NewGenericDispatcher;
 import com.general.thread.PromiseFuture;
 import com.general.thread.PromiseFutures;
 import com.general.util.Util;
-import com.myster.client.net.MysterProtocol;
-import com.myster.client.net.ParamBuilder;
 import com.myster.mml.MessagePack;
 import com.myster.net.MysterAddress;
-import com.myster.server.ServerUtils;
-import com.myster.server.stream.ServerStats;
+import com.myster.net.client.MysterProtocol;
+import com.myster.net.client.ParamBuilder;
+import com.myster.net.server.ServerUtils;
+import com.myster.net.stream.server.ServerStats;
 
 /**
  * Given a string address, it returns a com.myster object. com.myster

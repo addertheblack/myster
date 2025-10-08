@@ -16,8 +16,8 @@ import javax.swing.JTextField;
 import javax.swing.SpinnerNumberModel;
 
 import com.general.util.GridBagBuilder;
+import com.myster.net.server.ServerPreferences;
 import com.myster.pref.ui.PreferencesPanel;
-import com.myster.server.ServerPreferences;
 
 public class ServerPreferencesPane extends PreferencesPanel {
     private final JTextField serverIdentityField;

@@ -4,10 +4,10 @@ import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 
-import com.myster.client.stream.MysterDataInputStream;
-import com.myster.client.stream.MysterDataOutputStream;
 import com.myster.filemanager.FileTypeListManager;
-import com.myster.net.BadPacketException;
+import com.myster.net.datagram.BadPacketException;
+import com.myster.net.stream.client.MysterDataInputStream;
+import com.myster.net.stream.client.MysterDataOutputStream;
 import com.myster.server.event.ServerSearchDispatcher;
 import com.myster.server.event.ServerSearchEvent;
 import com.myster.transaction.Transaction;
@@ -16,7 +16,7 @@ import com.myster.transaction.TransactionSender;
 import com.myster.type.MysterType;
 
 public class SearchDatagramServer implements TransactionProtocol {
-    public static final int SEARCH_TRANSACTION_CODE = com.myster.client.datagram.SearchDatagramClient.SEARCH_TRANSACTION_CODE;
+    public static final int SEARCH_TRANSACTION_CODE = com.myster.net.datagram.client.SearchDatagramClient.SEARCH_TRANSACTION_CODE;
     
     private final FileTypeListManager fileManager;
 

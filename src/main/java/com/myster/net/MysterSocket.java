@@ -5,8 +5,8 @@ import java.io.IOException;
 import java.net.InetAddress;
 import java.net.SocketException;
 
-import com.myster.client.stream.MysterDataInputStream;
-import com.myster.client.stream.MysterDataOutputStream;
+import com.myster.net.stream.client.MysterDataInputStream;
+import com.myster.net.stream.client.MysterDataOutputStream;
 
 public abstract class MysterSocket implements AutoCloseable {
     public final MysterDataInputStream in;

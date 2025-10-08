@@ -23,14 +23,14 @@ package com.myster.transaction;
 
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
-import com.myster.client.stream.MysterDataInputStream;
 import java.io.DataOutputStream;
 import java.io.IOException;
 
 import com.general.net.ImmutableDatagramPacket;
 import com.general.util.Util;
-import com.myster.net.DataPacket;
 import com.myster.net.MysterAddress;
+import com.myster.net.datagram.DataPacket;
+import com.myster.net.stream.client.MysterDataInputStream;
 
 public final class Transaction implements DataPacket { //Immutable (Java needs
                                                        // some way to enforce

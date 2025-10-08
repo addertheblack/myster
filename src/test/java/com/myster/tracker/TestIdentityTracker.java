@@ -26,9 +26,9 @@ import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 
 import com.general.thread.PromiseFuture;
-import com.myster.client.datagram.PingResponse;
 import com.myster.identity.Identity;
 import com.myster.net.MysterAddress;
+import com.myster.net.datagram.client.PingResponse;
 import com.myster.tracker.IdentityTracker.Pinger;
 
 public class TestIdentityTracker {

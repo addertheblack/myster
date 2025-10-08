@@ -40,33 +40,33 @@ import com.general.util.AnswerDialog;
 import com.general.util.Util;
 import com.myster.application.MysterGlobals;
 import com.myster.bandwidth.BandwidthManager;
-import com.myster.client.datagram.MysterDatagramImpl;
-import com.myster.client.datagram.PublicKeyLookup;
-import com.myster.client.datagram.PublicKeyLookupImpl;
-import com.myster.client.datagram.UDPPingClient;
-import com.myster.client.net.MysterProtocol;
-import com.myster.client.net.MysterProtocolImpl;
-import com.myster.client.stream.MysterStreamImpl;
 import com.myster.client.ui.ClientWindow;
 import com.myster.filemanager.FileTypeListManager;
 import com.myster.filemanager.ui.FmiChooser;
 import com.myster.hash.HashManager;
 import com.myster.hash.ui.HashManagerGUI;
 import com.myster.identity.Identity;
-import com.myster.message.ImTransactionServer;
-import com.myster.message.MessageWindow;
 import com.myster.message.ui.MessagePreferencesPanel;
-import com.myster.net.DatagramProtocolManager;
 import com.myster.net.MysterAddress;
+import com.myster.net.client.MysterProtocol;
+import com.myster.net.client.MysterProtocolImpl;
+import com.myster.net.datagram.DatagramProtocolManager;
+import com.myster.net.datagram.client.MysterDatagramImpl;
+import com.myster.net.datagram.client.PublicKeyLookup;
+import com.myster.net.datagram.client.PublicKeyLookupImpl;
+import com.myster.net.datagram.client.UDPPingClient;
+import com.myster.net.datagram.message.ImTransactionServer;
+import com.myster.net.datagram.message.MessageWindow;
+import com.myster.net.server.ServerFacade;
+import com.myster.net.server.ServerPreferences;
+import com.myster.net.server.ServerUtils;
+import com.myster.net.server.BannersManager.BannersPreferences;
+import com.myster.net.stream.client.MysterStreamImpl;
 import com.myster.pref.MysterPreferences;
 import com.myster.pref.ui.ThemePane;
 import com.myster.search.HashCrawlerManager;
 import com.myster.search.MultiSourceHashSearch;
 import com.myster.search.ui.SearchWindow;
-import com.myster.server.BannersManager.BannersPreferences;
-import com.myster.server.ServerFacade;
-import com.myster.server.ServerPreferences;
-import com.myster.server.ServerUtils;
 import com.myster.server.datagram.FileStatsDatagramServer;
 import com.myster.server.datagram.PingTransport;
 import com.myster.server.datagram.SearchDatagramServer;
@@ -120,7 +120,7 @@ public class Myster {
         }
         
         // this sets the look and feel to follow the light/dark app prefs on the macos
-        // this don't work 'cause swing don't support it.
+        // It does some areas that the theme can't access
         System.setProperty("apple.awt.application.appearance", "system");
 
         final long startTime = System.currentTimeMillis();
@@ -365,7 +365,7 @@ public class Myster {
                 }
 
                 try {
-                    com.myster.client.stream.msdownload.MSPartialFile
+                    com.myster.net.stream.client.msdownload.MSPartialFile
                             .restartDownloads(fileManager, crawlerManager, context);
                 } catch (IOException ex) {
                     LOGGER.info("Error in restarting downloads.");
@@ -425,18 +425,18 @@ public class Myster {
                                                     DatagramProtocolManager datagramManager, 
                                                     FileTypeListManager fileManager) {
         
-        serverFacade.addConnectionSection(new com.myster.server.stream.MysterServerLister(tracker));
-        serverFacade.addConnectionSection(new com.myster.server.stream.RequestDirThread());
-        serverFacade.addConnectionSection(new com.myster.server.stream.FileTypeLister());
-        serverFacade.addConnectionSection(new com.myster.server.stream.RequestSearchThread());
+        serverFacade.addConnectionSection(new com.myster.net.stream.server.MysterServerLister(tracker));
+        serverFacade.addConnectionSection(new com.myster.net.stream.server.RequestDirThread());
+        serverFacade.addConnectionSection(new com.myster.net.stream.server.FileTypeLister());
+        serverFacade.addConnectionSection(new com.myster.net.stream.server.RequestSearchThread());
         serverFacade
-                .addConnectionSection(new com.myster.server.stream.ServerStats(preferences::getIdentityName,
+                .addConnectionSection(new com.myster.net.stream.server.ServerStats(preferences::getIdentityName,
                                                                                preferences::getServerPort,
                                                                                identity));
-        serverFacade.addConnectionSection(new com.myster.server.stream.FileInfoLister());
-        serverFacade.addConnectionSection(new com.myster.server.stream.FileByHash());
-        serverFacade.addConnectionSection(new com.myster.server.stream.MultiSourceSender(preferences));
-        serverFacade.addConnectionSection(new com.myster.server.stream.FileTypeLister());
+        serverFacade.addConnectionSection(new com.myster.net.stream.server.FileInfoLister());
+        serverFacade.addConnectionSection(new com.myster.net.stream.server.FileByHash());
+        serverFacade.addConnectionSection(new com.myster.net.stream.server.MultiSourceSender(preferences));
+        serverFacade.addConnectionSection(new com.myster.net.stream.server.FileTypeLister());
 
         datagramManager.mutateTransportManager(preferences.getServerPort(),
                                                t -> t.addTransport(new PingTransport(tracker)));
