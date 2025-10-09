@@ -19,7 +19,17 @@ import com.myster.net.MysterAddress;
 public interface DataPacket { //ImmutablePacket should have this too? no
     public MysterAddress getAddress();
 
+    /**
+     * @return the payload of this data packet
+     */
     public byte[] getData(); //returns ONLY& the data part
 
-    public byte[] getBytes(); //returns data + header
+    /**
+     * This method is used when a protocol is adding its own header to a packet.
+     * 
+     * @return the header and the  the payload of this data packet combined.
+     */
+    public default byte[] getBytes() {
+        return getData();
+    }
 }
