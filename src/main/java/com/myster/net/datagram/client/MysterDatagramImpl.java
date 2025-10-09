@@ -92,7 +92,7 @@ public class MysterDatagramImpl implements MysterDatagram {
      * Extract MysterAddress from ParamBuilder. For now, just handles the address case.
      * TODO: Add support for identity lookup and encryption options later.
      */
-    private MysterAddress extractAddress(ParamBuilder params) {
+    private static MysterAddress extractAddress(ParamBuilder params) {
         // For now, just extract the address - we'll add identity and encryption support later
         return params.getAddress().orElseThrow(() -> 
             new IllegalArgumentException("ParamBuilder must contain an address"));

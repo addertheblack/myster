@@ -20,6 +20,8 @@ import com.general.util.ProtectedForUnitTests;
  * A MessagePack-based serialization utility that provides an interface similar to MML
  * for easier migration. This class uses a more efficient binary format while maintaining
  * a similar tree-like structure for data storage.
+ * 
+ * Use this class when you are writing a data structure.
  */
 public class MessagePackSerializer implements com.myster.mml.MessagePack {
     private Map<String, Object> root;
