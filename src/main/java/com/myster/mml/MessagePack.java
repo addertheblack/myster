@@ -11,7 +11,6 @@ import java.util.Optional;
  * a similar tree-like structure for data storage.
  */
 public interface MessagePack {
-    
     public static MessagePack newEmpty() {
         return new MessagePackSerializer();
     }

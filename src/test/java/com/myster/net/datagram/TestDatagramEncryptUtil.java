@@ -150,7 +150,7 @@ class TestDatagramEncryptUtil {
     }
     
     @Test
-    void testResponseEncryptionDecryption() {
+    void testResponseEncryptionDecryption() throws DecryptionException {
         byte[] responsePayload = "This is a server response".getBytes();
         byte[] symmetricKey = new byte[32];
         // Fill with test data
@@ -179,7 +179,7 @@ class TestDatagramEncryptUtil {
     }
     
     @Test
-    void testResponseEncryptionDecryptionUnsigned() {
+    void testResponseEncryptionDecryptionUnsigned() throws DecryptionException {
         byte[] responsePayload = "Unsigned server response".getBytes();
         byte[] symmetricKey = new byte[32];
         // Fill with different test data
