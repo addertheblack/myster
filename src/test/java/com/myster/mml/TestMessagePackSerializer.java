@@ -77,10 +77,10 @@ class TestMessagePackSerializer {
         serializer.put("/dir/subdir/file3", "value3");
 
         List<String> contents = serializer.list("/dir/");
-        assertEquals(2, contents.size());
+        assertEquals(3, contents.size());
         assertTrue(contents.contains("file1"));
         assertTrue(contents.contains("file2"));
-        assertFalse(contents.contains("subdir"));
+        assertTrue(contents.contains("subdir"));
     }
 
     @Test

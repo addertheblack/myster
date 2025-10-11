@@ -1,9 +1,13 @@
 package com.myster.mml;
 
 import java.io.IOException;
+import java.text.SimpleDateFormat;
+import java.util.Arrays;
 import java.util.Date;
 import java.util.List;
 import java.util.Optional;
+
+import com.general.util.Util;
 
 /**
  * Interface for MessagePack-based serialization utilities that provide an interface similar to MML
@@ -39,6 +43,33 @@ public interface MessagePack {
     Optional<Float> getFloat(String path);
     Optional<Double> getDouble(String path);
     Optional<Date> getDate(String path);
+    
+    Optional<Object> getValue(String path);
+    
+    /**
+     * @return a string representation of whatever is in that path
+     */
+    default Optional<String> getToString(String path) {
+        return getValue(path).map(i -> convertToString(i));
+    }
+
+    private static String convertToString(Object i) {
+        return switch (i) {
+            case String s -> s;
+            case Long l -> Long.toString(l);
+            case Double d -> Double.toString(d);
+            case Integer n -> Integer.toString(n);
+            case Short s -> Short.toString(s);
+            case Float f -> Float.toString(f);
+            case Boolean b -> Boolean.toString(b);
+            case Date date -> new SimpleDateFormat().format(date);
+            case byte[] bytes -> Util.asHex(bytes);
+            case Object[] array -> "["
+                    + String.join(", ", Util.map(Arrays.asList(array), e -> convertToString(e)))
+                    + "]";
+            default -> "?";
+        };
+    }
     
     // Array types
     void putByteArray(String path, byte[] value);

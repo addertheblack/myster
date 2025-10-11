@@ -1,12 +1,10 @@
-
 package com.myster.net.stream.client;
 
 import java.io.IOException;
 import java.util.List;
 
 import com.myster.hash.FileHash;
-import com.myster.identity.Identity;
-import com.myster.mml.RobustMML;
+import com.myster.mml.MessagePack;
 import com.myster.net.MysterAddress;
 import com.myster.net.MysterSocket;
 import com.myster.net.client.MysterStream;
@@ -39,7 +37,7 @@ public class MysterStreamImpl implements MysterStream {
     }
 
     @Override
-    public RobustMML getServerStats(MysterSocket socket) throws IOException {
+    public MessagePack getServerStats(MysterSocket socket) throws IOException {
         return StandardSuite.getServerStats(socket);
     }
     
@@ -50,7 +48,7 @@ public class MysterStreamImpl implements MysterStream {
     }
 
     @Override
-    public RobustMML getFileStats(MysterSocket socket, MysterFileStub stub) throws IOException {
+    public MessagePack getFileStats(MysterSocket socket, MysterFileStub stub) throws IOException {
         return StandardSuite.getFileStats(socket, stub);
     }
 

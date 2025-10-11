@@ -16,7 +16,6 @@ import java.util.function.Supplier;
 
 import com.myster.filemanager.FileTypeListManager;
 import com.myster.identity.Identity;
-import com.myster.mml.MML;
 import com.myster.mml.MessagePack;
 import com.myster.net.server.ConnectionContext;
 import com.myster.pref.MysterPreferences;
@@ -50,16 +49,16 @@ public class ServerStats extends ServerStreamHandler {
     }
 
     public void section(ConnectionContext context) throws IOException {
-        MessagePack mmlToSend;
+        MessagePack messagePackToSend;
         try {
-            mmlToSend = getServerStatsMessagePack(getServerName.get(), getPort.get(), identity, context.fileManager());
-            context.socket().out.writeMessagePack(mmlToSend);
+            messagePackToSend = getServerStatsMessagePack(getServerName.get(), getPort.get(), identity, context.fileManager());
+            context.socket().out.writeMessagePack(messagePackToSend);
         } catch (NotInitializedException _) {
             throw new IOException("File list not initialized");
         }
     }
 
-    //Returns an MML that would be send as a string via a Handshake.
+    //Returns a MessagePack that would be sent as bytes via a connection.
     public static MessagePack getServerStatsMessagePack(String identityName, int port, Identity identity, FileTypeListManager fileManager) throws NotInitializedException {
         try {
             MessagePack serverStats = MessagePack.newEmpty();
@@ -74,7 +73,7 @@ public class ServerStats extends ServerStreamHandler {
 
             serverStats.put(MYSTER_VERSION, "1.0");
 
-            getNumberOfFilesMML(serverStats, fileManager); //Adds the number of files data.
+            getNumberOfFilesMessagePack(serverStats, fileManager); //Adds the number of files data.
 
             String ident = identityName;
             if (ident != null) {
@@ -106,7 +105,7 @@ public class ServerStats extends ServerStreamHandler {
 
     }
 
-    private static MessagePack getNumberOfFilesMML(MessagePack numOfFileStats, FileTypeListManager fileManager) throws NotInitializedException { // in-line
+    private static MessagePack getNumberOfFilesMessagePack(MessagePack numOfFileStats, FileTypeListManager fileManager) throws NotInitializedException { // in-line
         MysterType[] filetypelist = fileManager.getFileTypeListing();
 
         for (int i = 0; i < filetypelist.length; i++) {

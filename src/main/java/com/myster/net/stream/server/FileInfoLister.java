@@ -14,7 +14,7 @@ import java.io.IOException;
 
 import com.myster.filemanager.FileItem;
 import com.myster.filemanager.FileTypeListManager;
-import com.myster.mml.MML;
+import com.myster.mml.MessagePack;
 import com.myster.net.server.ConnectionContext;
 import com.myster.net.stream.client.MysterDataInputStream;
 import com.myster.net.stream.client.MysterDataOutputStream;
@@ -41,15 +41,17 @@ public class FileInfoLister extends ServerStreamHandler {
 
             FileItem fileItem = context.fileManager().getFileItem(
                     type, filename);
-            MML mml;
+            MessagePack messagePack;
 
             if (fileItem == null) { //file not found
-                mml = new MML();
+                messagePack = MessagePack.newEmpty();
             } else {
-                mml = fileItem.getMMLRepresentation();
+                messagePack = fileItem.getMessagePackRepresentation();
             }
 
-            out.writeUTF(mml.toString());
+            byte[] messagePackBytes = messagePack.toBytes();
+            out.writeInt(messagePackBytes.length);
+            out.write(messagePackBytes);
         } catch (IOException ex) {
             ex.printStackTrace();
             throw ex;

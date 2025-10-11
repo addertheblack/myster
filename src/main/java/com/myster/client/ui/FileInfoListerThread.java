@@ -15,9 +15,11 @@ import java.net.UnknownHostException;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.ExecutionException;
+import java.util.logging.Logger;
 
 import com.general.util.Util;
-import com.myster.mml.RobustMML;
+import com.myster.mml.MessagePack;
 import com.myster.net.MysterAddress;
 import com.myster.net.MysterSocket;
 import com.myster.net.client.MysterProtocol;
@@ -28,6 +30,8 @@ import com.myster.util.MysterThread;
 import com.myster.util.Sayable;
 
 public class FileInfoListerThread extends MysterThread {
+    private static final Logger LOGGER = Logger.getLogger(FileInfoListerThread.class.getName());
+    
     public interface FileStatsListener {
         void showFileStats(final Map<String, String> keyValue);   
     }
@@ -83,7 +87,7 @@ public class FileInfoListerThread extends MysterThread {
         MysterAddress address;
         try {
             address = MysterAddress.createMysterAddress(addressAsString);
-        } catch (UnknownHostException exception) {
+        } catch (UnknownHostException _) {
             msg.say("Could not find address...");
             return;
         }
@@ -92,36 +96,53 @@ public class FileInfoListerThread extends MysterThread {
         if (endFlag)
             return;
         
+        MysterFileStub stub = new MysterFileStub(address, type, file);
+        try {
+            LOGGER.info("Doing get files stats UDP");
+            parseResult(protocol.getDatagram().getFileStats(stub).get());
+            
+            return;
+        } catch (InterruptedException _) {
+            return;
+        } catch (ExecutionException ex) {
+            LOGGER.warning("Unexpected exception from calling protocol.getDatagram().getFileStats(stub): "
+                    + ex.getCause());
+        }
+
         try (MysterSocket socket = MysterSocketFactory.makeStreamConnection(address)) {
             msg.say("Getting file information...");
 
             if (endFlag)
                 return;
             
-            RobustMML mml = new RobustMML(protocol.getStream().getFileStats(socket,
-                    new MysterFileStub(address, type, file)));
+            MessagePack fileStats = protocol.getStream().getFileStats(socket,
+                    stub);
 
-            msg.say("Parsing file information...");
+            parseResult(fileStats);
 
-            Map<String, String> keyvalue = new LinkedHashMap<String, String>();
-            keyvalue.put("File Name", file);
-
-            listDir(mml, keyvalue, "/", "");
-
-            listener.showFileStats(keyvalue);
-
-            msg.say("Idle...");
-
-        } catch (IOException ex) {
+        } catch (IOException _) {
             msg.say("Transmission error could not get File Stats.");
         }
     }
 
-    private void listDir(RobustMML mml,
+    private void parseResult(MessagePack fileStats) {
+        msg.say("Parsing file information...");
+
+        Map<String, String> keyvalue = new LinkedHashMap<String, String>();
+        keyvalue.put("File Name", file);
+
+        listDir(fileStats, keyvalue, "/", "");
+
+        listener.showFileStats(keyvalue);
+
+        msg.say("Idle...");
+    }
+
+    private void listDir(MessagePack fileStats,
                          Map<String, String> keyValue,
                          String directory,
                          String prefix) {
-        List<String> dirList = mml.list(directory);
+        List<String> dirList = fileStats.list(directory);
 
         if (dirList == null)
             return;
@@ -134,11 +155,11 @@ public class FileInfoListerThread extends MysterThread {
 
             String newPath = directory + name;
 
-            if (mml.isADirectory(newPath + "/")) {
+            if (fileStats.isADirectory(newPath + "/")) {
                 keyValue.put(name, " ->");
-                listDir(mml, keyValue, newPath + "/", prefix + "  ");
+                listDir(fileStats, keyValue, newPath + "/", prefix + "  ");
             } else {
-                keyValue.put(prefix + (dirList.get(i)), mml.get(newPath));
+                keyValue.put(prefix + (dirList.get(i)), fileStats.getToString(newPath).orElse(null));
             }
         }
     }
@@ -153,7 +174,7 @@ public class FileInfoListerThread extends MysterThread {
         flagToEnd();
         try {
             join();
-        } catch (InterruptedException ex) {
+        } catch (InterruptedException _) {
             Thread.currentThread().interrupt();
             
             throw new IllegalStateException("Unexpected InterruptedException");

@@ -6,10 +6,9 @@ import java.io.IOException;
 
 import com.myster.filemanager.FileItem;
 import com.myster.filemanager.FileTypeListManager;
-import com.myster.mml.MML;
+import com.myster.mml.MessagePack;
 import com.myster.net.datagram.BadPacketException;
 import com.myster.net.stream.client.MysterDataInputStream;
-import com.myster.net.stream.client.MysterDataOutputStream;
 import com.myster.transaction.Transaction;
 import com.myster.transaction.TransactionProtocol;
 import com.myster.transaction.TransactionSender;
@@ -37,29 +36,25 @@ public class FileStatsDatagramServer implements TransactionProtocol {
             MysterDataInputStream in =
                     new MysterDataInputStream(new ByteArrayInputStream(transaction.getData()));
 
-            ByteArrayOutputStream byteOutputStream = new ByteArrayOutputStream();
-            MysterDataOutputStream out = new MysterDataOutputStream(byteOutputStream);
-
             MysterType type = in.readType();
             String filename = in.readUTF();
 
             FileItem fileItem = fileManager.getFileItem(type, filename);
-            MML mml;
+            MessagePack messagePack;
 
             if (fileItem == null) { //file not found
-                mml = new MML();
+                messagePack = MessagePack.newEmpty();
             } else {
-                mml = fileItem.getMMLRepresentation();
+                messagePack = fileItem.getMessagePackRepresentation();
             }
 
-            out.writeUTF(mml.toString());
+            byte[] messagePackBytes = messagePack.toBytes();
             
             // closing not really needed for byte streams but it makes the compiler happy
-            out.close();
             in.close();
 
             sender.sendTransaction(new Transaction(transaction,
-                                                   byteOutputStream.toByteArray(),
+                                                   messagePackBytes,
                                                    Transaction.NO_ERROR));
         } catch (IOException ex) {
             throw new BadPacketException("Bad packet " + ex);

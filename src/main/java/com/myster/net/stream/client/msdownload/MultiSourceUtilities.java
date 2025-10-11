@@ -3,12 +3,13 @@ package com.myster.net.stream.client.msdownload;
 import java.awt.Frame;
 import java.io.File;
 import java.io.IOException;
+import java.util.Optional;
 import java.util.logging.Logger;
 
 import com.general.util.AnswerDialog;
 import com.myster.filemanager.FileTypeListManager;
 import com.myster.hash.FileHash;
-import com.myster.mml.RobustMML;
+import com.myster.mml.MessagePack;
 import com.myster.search.MysterFileStub;
 
 public class MultiSourceUtilities {
@@ -181,31 +182,23 @@ public class MultiSourceUtilities {
         return new File(directory + File.separator + dialog.getFile() + EXTENSION);
     }
 
-    public static FileHash getHashFromStats(RobustMML mml) throws IOException {
-        String hashString = mml.get("/hash/" + com.myster.hash.HashManager.MD5);
+    public static FileHash getHashFromStats(MessagePack fileStats) throws IOException {
+        Optional<byte[]> hashBytes =
+                fileStats.getByteArray("/hash/" + com.myster.hash.HashManager.MD5);
 
-        if (hashString == null)
-            return null;
-
-        try {
-            return com.myster.hash.SimpleFileHash.buildFromHexString(
-                    com.myster.hash.HashManager.MD5, hashString);
-        } catch (NumberFormatException ex) {
-            throw new IOException("Stats MML is corrupt.");
-        }
+        return hashBytes
+                .map(hash -> com.myster.hash.SimpleFileHash
+                        .buildFileHash(com.myster.hash.HashManager.MD5, hash))
+                .orElse(null);
     }
 
-    public static long getLengthFromStats(RobustMML mml) throws IOException {
-        String fileLengthString = mml.get("/size");
+    public static long getLengthFromStats(MessagePack fileStats) throws IOException {
+        Optional<Long> fileLengthString = fileStats.getLong("/size");
 
-        if (fileLengthString == null)
+        if (fileLengthString.isEmpty())
             throw new IOException("Stats MML does not contain the wanted info.");
 
-        try {
-            return Long.parseLong(fileLengthString);
-        } catch (NumberFormatException ex) {
-            throw new IOException("Stats MML is corrupt.");
-        }
+        return fileLengthString.get();
     }
 
     public static void debug(String msg) {

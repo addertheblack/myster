@@ -212,6 +212,19 @@ class RobustMessagePackSerializer implements com.myster.mml.MessagePack {
             return Optional.empty();
         }
     }
+    
+    @Override
+    public Optional<Object> getValue(String path) {
+        try {
+            return delegate.getValue(path);
+        } catch (ClassCastException | BranchAsALeafException | LeafAsABranchException ex) {
+            if (trace) {
+                LOGGER.fine("Failed to get object array at " + path + ": " + ex.getMessage());
+                ex.printStackTrace();
+            }
+            return Optional.empty();
+        }
+    }
 
     @Override
     public synchronized Optional<String> get(String path) {
