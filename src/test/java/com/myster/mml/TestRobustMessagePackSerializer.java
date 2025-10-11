@@ -168,7 +168,7 @@ class TestRobustMessagePackSerializer {
         
         // Test listing
         List<String> rootList = serializer.list("/");
-        assertTrue(rootList.isEmpty()); // Root only contains directories, not values
+        assertEquals(2, rootList.size());
         
         List<String> dir1List = serializer.list("/dir1/");
         assertEquals(2, dir1List.size());

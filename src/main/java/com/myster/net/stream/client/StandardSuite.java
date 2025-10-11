@@ -7,8 +7,7 @@ import java.util.concurrent.Executors;
 
 import com.myster.filemanager.FileTypeList;
 import com.myster.hash.FileHash;
-import com.myster.mml.MMLException;
-import com.myster.mml.RobustMML;
+import com.myster.mml.MessagePack;
 import com.myster.net.MysterAddress;
 import com.myster.net.MysterSocket;
 import com.myster.net.stream.client.msdownload.DownloadInitiator;
@@ -18,7 +17,8 @@ import com.myster.type.MysterType;
 import com.myster.ui.MysterFrameContext;
 
 /**
- * Contains many of the more common (simple) stream based connection sections.
+ * Contains many of the more common (simple) stream based connection sections. Most of these
+ * connection sections have UDP transaction equivalents.
  */
 public class StandardSuite {
     // Vector of strings
@@ -78,7 +78,7 @@ public class StandardSuite {
     }
 
     
-    public static RobustMML getServerStats(MysterSocket socket) throws IOException {
+    public static MessagePack getServerStats(MysterSocket socket) throws IOException {
         socket.setSoTimeout(90000); // ? Probably important in some way or
         // other.
 
@@ -87,11 +87,7 @@ public class StandardSuite {
 
         checkProtocol(socket.in);
 
-        try {
-            return new RobustMML(socket.in.readUTF());
-        } catch (MMLException ex) {
-            throw new ProtocolException("Server sent a corrupt MML String");
-        }
+        return socket.in.readMessagePack();
     }
 
     /**
@@ -107,13 +103,17 @@ public class StandardSuite {
         Executors.newVirtualThreadPerTaskExecutor().execute(new DownloadInitiator(c, crawlerManager, ip, stub));
     }
 
-    public static RobustMML getFileStats(MysterAddress ip, MysterFileStub stub) throws IOException {
+    public static MessagePack getFileStats(MysterAddress ip, MysterFileStub stub) throws IOException {
         try (MysterSocket socket = MysterSocketFactory.makeStreamConnection(ip)) {
             return getFileStats(socket, stub);
         }
     }
 
-    public static RobustMML getFileStats(MysterSocket socket, MysterFileStub stub)
+    /**
+     * Gets the file stats for a particular file on a particular server.
+     * Now uses MessagePack instead of MML
+     */
+    public static MessagePack getFileStats(MysterSocket socket, MysterFileStub stub)
             throws IOException {
         socket.out.writeInt(77);
 
@@ -122,10 +122,15 @@ public class StandardSuite {
         socket.out.writeType(stub.getType());
         socket.out.writeUTF(stub.getName());
 
+        // Read the MessagePack data length and bytes
+        int messagePackLength = socket.in.readInt();
+        byte[] messagePackBytes = new byte[messagePackLength];
+        socket.in.readFully(messagePackBytes);
+
         try {
-            return new RobustMML(socket.in.readUTF());
-        } catch (MMLException ex) {
-            throw new ProtocolException("Server sent a corrupt MML String.");
+            return MessagePack.fromBytes(messagePackBytes);
+        } catch (IOException ex) {
+            throw new ProtocolException("Server sent corrupt MessagePack data.");
         }
     }
 

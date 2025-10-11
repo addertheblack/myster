@@ -1,17 +1,14 @@
 package com.myster.net.datagram.client;
 
-import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 
-import com.myster.mml.MMLException;
-import com.myster.mml.RobustMML;
-import com.myster.net.stream.client.MysterDataInputStream;
+import com.myster.mml.MessagePack;
 import com.myster.net.stream.client.MysterDataOutputStream;
 import com.myster.search.MysterFileStub;
 import com.myster.transaction.Transaction;
 
-public class FileStatsDatagramClient implements StandardDatagramClientImpl<RobustMML> {
+public class FileStatsDatagramClient implements StandardDatagramClientImpl<MessagePack> {
     public static final int FILE_STATS_TRANSACTION_CODE = 77;
 
     private MysterFileStub stub;
@@ -20,20 +17,15 @@ public class FileStatsDatagramClient implements StandardDatagramClientImpl<Robus
         this.stub = stub;
     }
 
-    // returns RobustMML
-    public RobustMML getObjectFromTransaction(Transaction transaction)
+    // returns MessagePack
+    public MessagePack getObjectFromTransaction(Transaction transaction)
             throws IOException {
-        //gets the byte[] puts it into a ByteArrayInputStream and puts THAT
-        // into a
-        //DataInputStream then gets a UTF string and puts that into a RobustMML
-        // constructor..
-        //yeah baby... :-)
+        // Parse the MessagePack bytes from the transaction using the robust variant
         try {
-            return new RobustMML((new MysterDataInputStream(new ByteArrayInputStream(
-                    transaction.getData()))).readUTF());
-        } catch (MMLException ex) {
+            return MessagePack.fromBytes(transaction.getData());
+        } catch (IOException ex) {
             throw new com.myster.net.datagram.BadPacketException(
-                    "Recieved a badly formed MML string from the server : "
+                    "Received a badly formed MessagePack from the server : "
                             + transaction.getAddress() + " & " + ex);
         }
     }

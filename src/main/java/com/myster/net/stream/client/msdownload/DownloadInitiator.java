@@ -12,7 +12,7 @@ import com.general.util.AnswerDialog;
 import com.general.util.Util;
 import com.myster.filemanager.FileTypeListManager;
 import com.myster.hash.FileHash;
-import com.myster.mml.RobustMML;
+import com.myster.mml.MessagePack;
 import com.myster.net.MysterAddress;
 import com.myster.net.MysterSocket;
 import com.myster.net.stream.client.MysterSocketFactory;
@@ -270,7 +270,7 @@ public class DownloadInitiator implements Runnable {
 
             if (endFlag)
                 return;
-            RobustMML mml = StandardSuite.getFileStats(socket, stub);
+            MessagePack fileStats = StandardSuite.getFileStats(socket, stub);
 
             progress.setText("Trying to use multi-source download...");
 
@@ -289,7 +289,7 @@ public class DownloadInitiator implements Runnable {
             if (endFlag)
                 return;
 
-            if (!tryMultiSourceDownload(stub, crawlerManager, progress, mml, theFile)) {
+            if (!tryMultiSourceDownload(stub, crawlerManager, progress, fileStats, theFile)) {
                 throw new IOException("MultiSourceDownload failed");
             }
         } catch (IOException ex) {
@@ -303,14 +303,14 @@ public class DownloadInitiator implements Runnable {
     private boolean tryMultiSourceDownload(final MysterFileStub stub,
                                            HashCrawlerManager crawlerManager,
                                            final DownloadInitiatorListener downloadInitListener,
-                                           RobustMML mml,
+                                           MessagePack fileStats,
                                            final File theFile)
             throws IOException {
-        FileHash hash = MultiSourceUtilities.getHashFromStats(mml);
+        FileHash hash = MultiSourceUtilities.getHashFromStats(fileStats);
         if (hash == null)
             return false;
 
-        long fileLengthFromStats = MultiSourceUtilities.getLengthFromStats(mml);
+        long fileLengthFromStats = MultiSourceUtilities.getLengthFromStats(fileStats);
         MSPartialFile partialFile = downloadInitListener
                 .createMSPartialFile(stub, theFile, fileLengthFromStats, new FileHash[] { hash });
 

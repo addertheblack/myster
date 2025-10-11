@@ -6,30 +6,30 @@ import com.mpatric.mp3agic.ID3v1;
 import com.mpatric.mp3agic.ID3v2;
 import com.mpatric.mp3agic.Mp3File;
 
-import com.myster.mml.MML;
+import com.myster.mml.MessagePack;
 
 /**
  * This class implements the different data needed by the MPG3 files.
  */
 public class MPG3FileItem extends FileItem {
-    private MML mmlRepresentation;
+    private MessagePack messagePackRepresentation;
 
     public MPG3FileItem(File file) {
         super(file);
     }
 
-    public synchronized MML getMMLRepresentation() {
-        if (mmlRepresentation != null)
-            return mmlRepresentation;
+    public synchronized MessagePack getMessagePackRepresentation() {
+        if (messagePackRepresentation != null)
+            return messagePackRepresentation;
 
-        mmlRepresentation = super.getMMLRepresentation();
+        messagePackRepresentation = super.getMessagePackRepresentation();
 
-        patchFunction2(mmlRepresentation, getFile());
-        return mmlRepresentation;
+        patchFunction2(messagePackRepresentation, getFile());
+        return messagePackRepresentation;
     }
 
     // ugh.. for Mp3 stuff
-    public static void patchFunction2(MML mml, File file) {
+    public static void patchFunction2(MessagePack messagePack, File file) {
         Mp3File mp3File = null;
         try {
             mp3File = new Mp3File(file, 4096, false);
@@ -39,9 +39,10 @@ public class MPG3FileItem extends FileItem {
         }
 
         if (file.getName().endsWith(".mp3")) {
-            mml.put("/BitRate", "" + (mp3File.getBitrate() * 1000));
-            mml.put("/Hz", "" + mp3File.getSampleRate());
-            mml.put("/Vbr", "" + mp3File.isVbr());
+            // Use appropriate numeric types instead of strings for better efficiency
+            messagePack.putLong("/BitRate", mp3File.getBitrate() * 1000L);
+            messagePack.putLong("/Hz", mp3File.getSampleRate());
+            messagePack.putBoolean("/Vbr", mp3File.isVbr());
         }
 
         ID3v1 id3Tag = mp3File.getId3v2Tag();
@@ -54,23 +55,23 @@ public class MPG3FileItem extends FileItem {
         
         String temp = id3Tag.getTitle();
         if (temp != null && !temp.equals("")) {
-            mml.put("/ID3Name", temp);
+            messagePack.put("/ID3Name", temp);
         }
 
         String temp2 = id3Tag.getArtist();
         if (temp2 != null && !temp2.equals("")) {
-            mml.put("/Artist", temp2);
+            messagePack.put("/Artist", temp2);
         }
 
         String temp1 = id3Tag.getAlbum();
         if (temp1 != null && !temp1.equals("")) {
-            mml.put("/Album", temp1);
+            messagePack.put("/Album", temp1);
         }
         
         if (id3Tag instanceof ID3v2 id3v2Tag) {
             temp2 = id3v2Tag.getOriginalArtist();
             if (temp2 != null && !temp2.equals("")) {
-                mml.put("/OriginalArtist", temp2);
+                messagePack.put("/OriginalArtist", temp2);
             }
         }
     }

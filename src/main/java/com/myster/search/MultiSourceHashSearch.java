@@ -213,14 +213,14 @@ public class MultiSourceHashSearch implements HashCrawlerManager {
                     AsyncNetworkCrawler
                             .startWork(LOGGER, protocol, searchIp, type, ipQueue, tracker::addIp, t);
                 });
-            }).addResultListener((ignore) -> waitForSomeTimeThenRestart(asyncTaskTracker, type));
+            }).addResultListener((_) -> waitForSomeTimeThenRestart(asyncTaskTracker, type));
         });
     }
 
     private void waitForSomeTimeThenRestart(AsyncTaskTracker tracker, MysterType type) {
         tracker.doAsync(() -> {
             LOGGER.fine("Crawler sleeping for " + timeInMs + "ms for type " + type);
-            return sleep(timeInMs).addResultListener((ignore) -> restartCrawler(type));
+            return sleep(timeInMs).addResultListener((_) -> restartCrawler(type));
         });
     }
 
@@ -247,7 +247,7 @@ public class MultiSourceHashSearch implements HashCrawlerManager {
 
             try {
                 other = (SearchEntry) o;
-            } catch (ClassCastException ex) {
+            } catch (ClassCastException _) {
                 return false;
             }
 

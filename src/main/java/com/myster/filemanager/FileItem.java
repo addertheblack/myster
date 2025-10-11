@@ -4,7 +4,7 @@ import java.io.File;
 import java.util.logging.Logger;
 
 import com.myster.hash.FileHash;
-import com.myster.mml.MML;
+import com.myster.mml.MessagePack;
 
 public class FileItem {
     private static final Logger LOGGER = Logger.getLogger(FileItem.class.getName());
@@ -81,21 +81,22 @@ public class FileItem {
 
     public static final String HASH_PATH = "/hash/";
 
-    public MML getMMLRepresentation() {
-        MML mml = new MML();
+    public MessagePack getMessagePackRepresentation() {
+        MessagePack messagePack = MessagePack.newEmpty();
 
         if (file != null) {
-            mml.put("/size", "" + file.length());
+            messagePack.putLong("/size", file.length());
 
             if (fileHashes != null) {
                 for (int i = 0; i < fileHashes.length; i++) {
-                    mml.put(HASH_PATH + fileHashes[i].getHashName().toLowerCase(), fileHashes[i]
-                            .toString());
+                    // Use byte arrays for hashes instead of strings for better compactness
+                    messagePack.putByteArray(HASH_PATH + fileHashes[i].getHashName().toLowerCase(), 
+                                           fileHashes[i].getBytes());
                 }
             }
         }
 
-        return mml;
+        return messagePack;
     }
 
     /*

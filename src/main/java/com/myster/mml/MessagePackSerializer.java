@@ -115,9 +115,9 @@ public class MessagePackSerializer implements com.myster.mml.MessagePack {
     }
 
     public synchronized Optional<String> get(String path) {
-        return Optional.ofNullable((String) getValue(path));
+        return getValue(path).map(i -> (String) i);
     }
-
+    
     public synchronized void putBoolean(String path, boolean value) {
         putValue(path, value);
     }
@@ -167,6 +167,7 @@ public class MessagePackSerializer implements com.myster.mml.MessagePack {
     public synchronized void putLongArray(String path, long[] value) {
         if (value == null) {
             putValue(path, null);
+            return;
         }
         Object[] objectArray = new Object[value.length];
         for (int i = 0; i < value.length; i++) {
@@ -178,6 +179,7 @@ public class MessagePackSerializer implements com.myster.mml.MessagePack {
     public synchronized void putDoubleArray(String path, double[] value) {
         if (value == null) {
             putValue(path, null);
+            return;
         }
         Object[] objectArray = new Object[value.length];
         for (int i = 0; i < value.length; i++) {
@@ -189,6 +191,7 @@ public class MessagePackSerializer implements com.myster.mml.MessagePack {
     public synchronized void putShortArray(String path, short[] value) {
         if (value == null) {
             putValue(path, null);
+            return;
         }
         Object[] objectArray = new Object[value.length];
         for (int i = 0; i < value.length; i++) {
@@ -203,159 +206,145 @@ public class MessagePackSerializer implements com.myster.mml.MessagePack {
     }
 
     public synchronized Optional<Boolean> getBoolean(String path) {
-        return Optional.ofNullable((Boolean) getValue(path));
+        return getValue(path).map(i -> (Boolean) i);
     }
 
     public synchronized Optional<Integer> getInt(String path) {
-        Object value = getValue(path);
-        if (value == null) {
-            return Optional.empty();
-        }
-        if (!(value instanceof Long)) {
-            throw new ClassCastException("Value at path '" + path + "' is not an integer, it's a " + value.getClass().getSimpleName());
-        }
-        Long longValue = (Long) value;
-        if (longValue < Integer.MIN_VALUE || longValue > Integer.MAX_VALUE) {
-            throw new ClassCastException("Value at path '" + path + "' (" + longValue + ") does not fit in an Integer");
-        }
-        return Optional.of(longValue.intValue());
+        return getValue(path).map(value -> {
+            if (!(value instanceof Long)) {
+                throw new ClassCastException("Value at path '" + path + "' is not an integer, it's a " + value.getClass().getSimpleName());
+            }
+            Long longValue = (Long) value;
+            if (longValue < Integer.MIN_VALUE || longValue > Integer.MAX_VALUE) {
+                throw new ClassCastException("Value at path '" + path + "' (" + longValue + ") does not fit in an Integer");
+            }
+            return longValue.intValue();
+        });
     }
 
     public synchronized Optional<Long> getLong(String path) {
-        return Optional.ofNullable((Long) getValue(path));
+        return getValue(path).map(i -> (Long) i);
     }
 
     public synchronized Optional<Short> getShort(String path) {
-        Object value = getValue(path);
-        if (value == null) {
-            return Optional.empty();
-        }
-        if (!(value instanceof Long)) {
-            throw new ClassCastException("Value at path '" + path + "' is not an integer, it's a " + value.getClass().getSimpleName());
-        }
-        Long longValue = (Long) value;
-        if (longValue < Short.MIN_VALUE || longValue > Short.MAX_VALUE) {
-            throw new ClassCastException("Value at path '" + path + "' (" + longValue + ") does not fit in a Short");
-        }
-        return Optional.of(longValue.shortValue());
+        return getValue(path).map(value -> {
+            if (!(value instanceof Long)) {
+                throw new ClassCastException("Value at path '" + path + "' is not an integer, it's a " + value.getClass().getSimpleName());
+            }
+            Long longValue = (Long) value;
+            if (longValue < Short.MIN_VALUE || longValue > Short.MAX_VALUE) {
+                throw new ClassCastException("Value at path '" + path + "' (" + longValue + ") does not fit in a Short");
+            }
+            return longValue.shortValue();
+        });
     }
 
     public synchronized Optional<Float> getFloat(String path) {
-        Double value = (Double) getValue(path);
-        double d = value;
-        return Optional.ofNullable((float)d);
+        return getValue(path).map(i -> (float)(double)(Double) i);
     }
 
     public synchronized Optional<Double> getDouble(String path) {
-        return Optional.ofNullable((Double) getValue(path));
+        return getValue(path).map(i -> (Double) i);
     }
 
     public synchronized Optional<Date> getDate(String path) {
-        return Optional.ofNullable((Date) getValue(path));
+        return getValue(path).map(i -> (Date) i);
     }
 
     public synchronized Optional<byte[]> getByteArray(String path) {
-        return Optional.ofNullable((byte[]) getValue(path));
+        return getValue(path).map(i -> (byte[]) i);
     }
 
     public synchronized Optional<int[]> getIntArray(String path) {
-        Object value = getValue(path);
-        if (value == null) {
-            return Optional.empty();
-        }
-        if (!(value instanceof Object[])) {
-            throw new ClassCastException("Value at path '" + path + "' is not an array, it's a " + value.getClass().getSimpleName());
-        }
-        
-        Object[] objectArray = (Object[]) value;
-        int[] intArray = new int[objectArray.length];
-        
-        for (int i = 0; i < objectArray.length; i++) {
-            if (!(objectArray[i] instanceof Long)) {
-                throw new ClassCastException("Array element at index " + i + " is not an integer, it's a " + objectArray[i].getClass().getSimpleName());
+        return getValue(path).map(value -> {
+            if (!(value instanceof Object[])) {
+                throw new ClassCastException("Value at path '" + path + "' is not an array, it's a " + value.getClass().getSimpleName());
             }
-            Long longValue = (Long) objectArray[i];
-            if (longValue < Integer.MIN_VALUE || longValue > Integer.MAX_VALUE) {
-                throw new ClassCastException("Array element at index " + i + " (" + longValue + ") does not fit in an Integer");
+            
+            Object[] objectArray = (Object[]) value;
+            int[] intArray = new int[objectArray.length];
+            
+            for (int i = 0; i < objectArray.length; i++) {
+                if (!(objectArray[i] instanceof Long)) {
+                    throw new ClassCastException("Array element at index " + i + " is not an integer, it's a " + objectArray[i].getClass().getSimpleName());
+                }
+                Long longValue = (Long) objectArray[i];
+                if (longValue < Integer.MIN_VALUE || longValue > Integer.MAX_VALUE) {
+                    throw new ClassCastException("Array element at index " + i + " (" + longValue + ") does not fit in an Integer");
+                }
+                intArray[i] = longValue.intValue();
             }
-            intArray[i] = longValue.intValue();
-        }
-        
-        return Optional.of(intArray);
+            
+            return intArray;
+        });
     }
 
     public synchronized Optional<long[]> getLongArray(String path) {
-        Object value = getValue(path);
-        if (value == null) {
-            return Optional.empty();
-        }
-        if (!(value instanceof Object[])) {
-            throw new ClassCastException("Value at path '" + path + "' is not an array, it's a " + value.getClass().getSimpleName());
-        }
-        
-        Object[] objectArray = (Object[]) value;
-        long[] longArray = new long[objectArray.length];
-        
-        for (int i = 0; i < objectArray.length; i++) {
-            if (!(objectArray[i] instanceof Long)) {
-                throw new ClassCastException("Array element at index " + i + " is not an integer, it's a " + objectArray[i].getClass().getSimpleName());
+        return getValue(path).map(value -> {
+            if (!(value instanceof Object[])) {
+                throw new ClassCastException("Value at path '" + path + "' is not an array, it's a " + value.getClass().getSimpleName());
             }
-            longArray[i] = (Long) objectArray[i];
-        }
-        
-        return Optional.of(longArray);
+            
+            Object[] objectArray = (Object[]) value;
+            long[] longArray = new long[objectArray.length];
+            
+            for (int i = 0; i < objectArray.length; i++) {
+                if (!(objectArray[i] instanceof Long)) {
+                    throw new ClassCastException("Array element at index " + i + " is not an integer, it's a " + objectArray[i].getClass().getSimpleName());
+                }
+                longArray[i] = (Long) objectArray[i];
+            }
+            
+            return longArray;
+        });
     }
 
     public synchronized Optional<short[]> getShortArray(String path) {
-        Object value = getValue(path);
-        if (value == null) {
-            return Optional.empty();
-        }
-        if (!(value instanceof Object[])) {
-            throw new ClassCastException("Value at path '" + path + "' is not an array, it's a " + value.getClass().getSimpleName());
-        }
-        
-        Object[] objectArray = (Object[]) value;
-        short[] shortArray = new short[objectArray.length];
-        
-        for (int i = 0; i < objectArray.length; i++) {
-            if (!(objectArray[i] instanceof Long)) {
-                throw new ClassCastException("Array element at index " + i + " is not an integer, it's a " + objectArray[i].getClass().getSimpleName());
+        return getValue(path).map(value -> {
+            if (!(value instanceof Object[])) {
+                throw new ClassCastException("Value at path '" + path + "' is not an array, it's a " + value.getClass().getSimpleName());
             }
-            Long longValue = (Long) objectArray[i];
-            if (longValue < Short.MIN_VALUE || longValue > Short.MAX_VALUE) {
-                throw new ClassCastException("Array element at index " + i + " (" + longValue + ") does not fit in a Short");
+            
+            Object[] objectArray = (Object[]) value;
+            short[] shortArray = new short[objectArray.length];
+            
+            for (int i = 0; i < objectArray.length; i++) {
+                if (!(objectArray[i] instanceof Long)) {
+                    throw new ClassCastException("Array element at index " + i + " is not an integer, it's a " + objectArray[i].getClass().getSimpleName());
+                }
+                Long longValue = (Long) objectArray[i];
+                if (longValue < Short.MIN_VALUE || longValue > Short.MAX_VALUE) {
+                    throw new ClassCastException("Array element at index " + i + " (" + longValue + ") does not fit in a Short");
+                }
+                shortArray[i] = longValue.shortValue();
             }
-            shortArray[i] = longValue.shortValue();
-        }
-        
-        return Optional.of(shortArray);
+            
+            return shortArray;
+        });
     }
 
     public synchronized Optional<double[]> getDoubleArray(String path) {
-        Object value = getValue(path);
-        if (value == null) {
-            return Optional.empty();
-        }
-        if (!(value instanceof Object[])) {
-            throw new ClassCastException("Value at path '" + path + "' is not an array, it's a " + value.getClass().getSimpleName());
-        }
-        
-        Object[] objectArray = (Object[]) value;
-        double[] doubleArray = new double[objectArray.length];
-        
-        for (int i = 0; i < objectArray.length; i++) {
-            if (!(objectArray[i] instanceof Double)) {
-                throw new ClassCastException("Array element at index " + i + " is not a float, it's a " + objectArray[i].getClass().getSimpleName());
+        return getValue(path).map(value -> {
+            if (!(value instanceof Object[])) {
+                throw new ClassCastException("Value at path '" + path + "' is not an array, it's a " + value.getClass().getSimpleName());
             }
-            doubleArray[i] = ((Double) objectArray[i]).doubleValue();
-        }
-        
-        return Optional.of(doubleArray);
+            
+            Object[] objectArray = (Object[]) value;
+            double[] doubleArray = new double[objectArray.length];
+            
+            for (int i = 0; i < objectArray.length; i++) {
+                if (!(objectArray[i] instanceof Double)) {
+                    throw new ClassCastException("Array element at index " + i + " is not a float, it's a " + objectArray[i].getClass().getSimpleName());
+                }
+                doubleArray[i] = ((Double) objectArray[i]).doubleValue();
+            }
+            
+            return doubleArray;
+        });
     }
 
     public synchronized Optional<Object[]> getObjectArray(String path) {
-        return Optional.ofNullable((Object[]) getValue(path));
+        return getValue(path).map(i -> (Object[]) i);
     }
 
     private void putValue(String path, Object value) {
@@ -366,13 +355,13 @@ public class MessagePackSerializer implements com.myster.mml.MessagePack {
         parent.put(parts[parts.length - 1], value);
     }
 
-    private Object getValue(String path) {
+    public Optional<Object> getValue(String path) {
         assertLeafPath(path);
         
         try {
             String[] parts = parsePath(path);
             if (parts.length == 0) {
-                return null;
+                return Optional.empty();
             }
             
             Map<String, Object> parent = navigateToParent(path);
@@ -380,9 +369,9 @@ public class MessagePackSerializer implements com.myster.mml.MessagePack {
             if (value instanceof Map) {
                 throw new BranchAsALeafException("Trying to get value from a branch at: " + path);
             }
-            return value;
+            return Optional.ofNullable(value);
         } catch (NonExistantPathException ex) {
-            return null;
+            return Optional.empty();
         }
     }
     
@@ -404,7 +393,6 @@ public class MessagePackSerializer implements com.myster.mml.MessagePack {
 
         return current.entrySet()
                 .stream()
-                .filter(e -> !(e.getValue() instanceof Map))
                 .map(e -> e.getKey())
                 .toList();
     }

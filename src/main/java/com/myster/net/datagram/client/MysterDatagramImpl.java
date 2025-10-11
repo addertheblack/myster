@@ -1,7 +1,6 @@
 package com.myster.net.datagram.client;
 
 import java.io.IOException;
-import java.nio.ByteBuffer;
 import java.security.PublicKey;
 import java.util.List;
 import java.util.Optional;
@@ -10,18 +9,15 @@ import com.general.thread.PromiseFuture;
 import com.myster.hash.FileHash;
 import com.myster.identity.Identity;
 import com.myster.mml.MessagePack;
-import com.myster.mml.RobustMML;
 import com.myster.net.MysterAddress;
 import com.myster.net.client.MysterDatagram;
 import com.myster.net.client.ParamBuilder;
 import com.myster.net.datagram.BadPacketException;
 import com.myster.net.datagram.DataPacket;
-import com.myster.net.datagram.DatagramEncryptUtil;
 import com.myster.net.datagram.TimeoutException;
 import com.myster.net.datagram.message.ImClient;
 import com.myster.net.datagram.message.MessagePacket;
 import com.myster.search.MysterFileStub;
-import com.myster.transaction.Transaction;
 import com.myster.transaction.TransactionEvent;
 import com.myster.transaction.TransactionListener;
 import com.myster.transaction.TransactionManager;
@@ -84,7 +80,7 @@ public class MysterDatagramImpl implements MysterDatagram {
     }
 
     @Override
-    public PromiseFuture<RobustMML> getFileStats(final MysterFileStub stub) {
+    public PromiseFuture<MessagePack> getFileStats(final MysterFileStub stub) {
         return doSection(new ParamBuilder(stub.getMysterAddress()), new FileStatsDatagramClient(stub));
     }
 

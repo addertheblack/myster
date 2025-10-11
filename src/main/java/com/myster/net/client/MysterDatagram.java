@@ -9,8 +9,6 @@ import com.general.util.UnexpectedException;
 import com.general.util.UnexpectedInterrupt;
 import com.myster.hash.FileHash;
 import com.myster.mml.MessagePack;
-import com.myster.mml.RobustMML;
-import com.myster.net.MysterAddress;
 import com.myster.net.datagram.client.PingResponse;
 import com.myster.net.datagram.message.MessagePacket;
 import com.myster.search.MysterFileStub;
@@ -32,7 +30,7 @@ public interface MysterDatagram {
 
     public PromiseFuture<MessagePack> getServerStats(final ParamBuilder params);
 
-    public PromiseFuture<RobustMML> getFileStats(final MysterFileStub stub);
+    public PromiseFuture<MessagePack> getFileStats(final MysterFileStub stub);
 
     public PromiseFuture<String> getFileFromHash(final ParamBuilder params,
                                                  final MysterType type,

@@ -5,7 +5,7 @@ import java.io.IOException;
 import java.util.List;
 
 import com.myster.hash.FileHash;
-import com.myster.mml.RobustMML;
+import com.myster.mml.MessagePack;
 import com.myster.net.MysterAddress;
 import com.myster.net.MysterSocket;
 import com.myster.net.stream.client.MysterSocketFactory;
@@ -29,10 +29,10 @@ public interface MysterStream {
 
     MysterType[] getTypes(MysterSocket socket) throws IOException;
 
-    RobustMML getServerStats(MysterSocket socket) throws IOException;
+    MessagePack getServerStats(MysterSocket socket) throws IOException;
     
     String getFileFromHash(MysterSocket socket, MysterType type, FileHash[] hashes) throws IOException;
-    RobustMML getFileStats(MysterSocket socket, MysterFileStub stub)
+    MessagePack getFileStats(MysterSocket socket, MysterFileStub stub)
             throws IOException;
 
     /**
