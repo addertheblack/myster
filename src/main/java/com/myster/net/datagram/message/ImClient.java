@@ -1,9 +1,9 @@
-
 package com.myster.net.datagram.message;
 
 import java.io.IOException;
 
 import com.myster.net.MysterAddress;
+import com.myster.net.datagram.DatagramConstants;
 import com.myster.net.datagram.client.StandardDatagramClientImpl;
 import com.myster.transaction.Transaction;
 
@@ -26,7 +26,6 @@ public class ImClient implements StandardDatagramClientImpl<MessagePacket> {
 
     @Override
     public int getCode() {
-        return ImTransactionServer.TRANSACTION_CODE;
+        return DatagramConstants.IM_TRANSACTION_CODE;
     }
-    
 }

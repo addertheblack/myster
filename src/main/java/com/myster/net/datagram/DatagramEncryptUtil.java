@@ -40,9 +40,6 @@ public class DatagramEncryptUtil {
     private static final int KEY_SIZE = 32;
     private static final int CID_SIZE = 16;
     
-    // Transaction code for encrypted packets - "STLS" as 32-bit int
-    public static final int STLS_CODE = 0x53544C53; // "STLS" - Start TLS connection section
-    
     private static final SecureRandom random = new SecureRandom();
     
     static {

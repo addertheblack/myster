@@ -6,6 +6,7 @@ import java.security.PublicKey;
 import java.util.Optional;
 
 import com.myster.identity.Identity;
+import com.myster.net.datagram.DatagramConstants;
 import com.myster.net.datagram.DatagramEncryptUtil;
 import com.myster.transaction.Transaction;
 
@@ -61,7 +62,7 @@ public class EncryptingStandardDatagramClientImpl<T> implements StandardDatagram
     @Override
     public int getCode() {
         // Always return STLS code for encrypted packets - the original code is embedded in the payload
-        return DatagramEncryptUtil.STLS_CODE;
+        return DatagramConstants.STLS_CODE;
     }
     
     @Override

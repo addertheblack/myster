@@ -5,6 +5,7 @@ import java.util.Queue;
 
 import com.myster.net.MysterAddress;
 import com.myster.net.datagram.BadPacketException;
+import com.myster.net.datagram.DatagramConstants;
 import com.myster.pref.MysterPreferences;
 import com.myster.transaction.Transaction;
 import com.myster.transaction.TransactionProtocol;
@@ -12,9 +13,6 @@ import com.myster.transaction.TransactionSender;
 
 public class ImTransactionServer implements TransactionProtocol {
     private static final long EXPIRE_TIME = 60 * 60 * 1000; //1 hour.. (wow!)
-
-    // package protected on purpose
-    static final int TRANSACTION_CODE = 1111;
 
     private final Queue<ReceivedMessage> recentlyReceivedMessages = new ArrayDeque<>();
     private final MysterPreferences preferences;
@@ -32,7 +30,7 @@ public class ImTransactionServer implements TransactionProtocol {
     
     @Override
     public int getTransactionCode() {
-        return TRANSACTION_CODE;
+        return DatagramConstants.IM_TRANSACTION_CODE;
     }
 
     private boolean messageReceived(MessagePacket msg) {
@@ -59,7 +57,7 @@ public class ImTransactionServer implements TransactionProtocol {
                                                    (new MessagePacket(transaction.getAddress(),
                                                                       0,
                                                                       "")).getData(),
-                                                   Transaction.NO_ERROR));
+                                                   DatagramConstants.NO_ERROR));
             return; // if it's one we've seen before ignore it.
         }
 
@@ -71,7 +69,7 @@ public class ImTransactionServer implements TransactionProtocol {
                                                    (new MessagePacket(transaction.getAddress(),
                                                                       0,
                                                                       "")).getData(),
-                                                   Transaction.NO_ERROR));
+                                                   DatagramConstants.NO_ERROR));
         } else {
             sender.sendTransaction(new Transaction(transaction,
                                                    (new MessagePacket(transaction.getAddress(),
@@ -79,7 +77,7 @@ public class ImTransactionServer implements TransactionProtocol {
                                                                       MessageManager
                                                                               .getRefusingMessage(preferences)))
                                                                                       .getData(),
-                                                   Transaction.NO_ERROR));
+                                                   DatagramConstants.NO_ERROR));
         }
 
         // reply with err or not

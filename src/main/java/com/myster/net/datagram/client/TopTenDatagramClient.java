@@ -6,14 +6,13 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
+import com.myster.net.datagram.DatagramConstants;
 import com.myster.net.stream.client.MysterDataInputStream;
 import com.myster.net.stream.client.MysterDataOutputStream;
 import com.myster.transaction.Transaction;
 import com.myster.type.MysterType;
 
 public class TopTenDatagramClient implements StandardDatagramClientImpl<String[]> {
-    public static final int TOP_TEN_TRANSACTION_CODE = 10;
-
     private final MysterType type;
 
     public TopTenDatagramClient(MysterType type) {
@@ -43,7 +42,7 @@ public class TopTenDatagramClient implements StandardDatagramClientImpl<String[]
     }
 
     public int getCode() {
-        return TOP_TEN_TRANSACTION_CODE;
+        return DatagramConstants.TOP_TEN_TRANSACTION_CODE;
     }
 
     public byte[] getDataForOutgoingPacket() {

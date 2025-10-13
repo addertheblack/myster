@@ -4,20 +4,19 @@ import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 
 import com.myster.mml.MessagePack;
+import com.myster.net.datagram.DatagramConstants;
 import com.myster.net.stream.client.MysterDataOutputStream;
 import com.myster.search.MysterFileStub;
 import com.myster.transaction.Transaction;
 
 public class FileStatsDatagramClient implements StandardDatagramClientImpl<MessagePack> {
-    public static final int FILE_STATS_TRANSACTION_CODE = 77;
-
-    private MysterFileStub stub;
-
-    public FileStatsDatagramClient(MysterFileStub stub) {
-        this.stub = stub;
+    private final MysterFileStub stub;
+    
+    public FileStatsDatagramClient(MysterFileStub fileStub) {
+        this.stub = fileStub;
     }
-
-    // returns MessagePack
+    
+    @Override
     public MessagePack getObjectFromTransaction(Transaction transaction)
             throws IOException {
         // Parse the MessagePack bytes from the transaction using the robust variant
@@ -30,6 +29,7 @@ public class FileStatsDatagramClient implements StandardDatagramClientImpl<Messa
         }
     }
 
+    @Override
     public byte[] getDataForOutgoingPacket() {
         ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
 
@@ -44,6 +44,6 @@ public class FileStatsDatagramClient implements StandardDatagramClientImpl<Messa
     }
 
     public int getCode() {
-        return FILE_STATS_TRANSACTION_CODE;
+        return DatagramConstants.FILE_STATS_TRANSACTION_CODE;
     }
 }

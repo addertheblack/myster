@@ -1,4 +1,4 @@
-package com.myster.server.datagram;
+package com.myster.net.server.datagram;
 
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
@@ -8,6 +8,7 @@ import com.myster.filemanager.FileItem;
 import com.myster.filemanager.FileTypeListManager;
 import com.myster.mml.MessagePack;
 import com.myster.net.datagram.BadPacketException;
+import com.myster.net.datagram.DatagramConstants;
 import com.myster.net.stream.client.MysterDataInputStream;
 import com.myster.transaction.Transaction;
 import com.myster.transaction.TransactionProtocol;
@@ -15,9 +16,6 @@ import com.myster.transaction.TransactionSender;
 import com.myster.type.MysterType;
 
 public class FileStatsDatagramServer implements TransactionProtocol {
-    public static final int FILE_STATS_TRANSACTION_CODE =
-            com.myster.net.datagram.client.FileStatsDatagramClient.FILE_STATS_TRANSACTION_CODE;
-    
     private final FileTypeListManager fileManager;
 
     public FileStatsDatagramServer(FileTypeListManager fileManager) {
@@ -25,7 +23,7 @@ public class FileStatsDatagramServer implements TransactionProtocol {
     }
     
     public int getTransactionCode() {
-        return FILE_STATS_TRANSACTION_CODE;
+        return DatagramConstants.FILE_STATS_TRANSACTION_CODE;
     }
 
     public void transactionReceived(TransactionSender sender,
@@ -55,7 +53,7 @@ public class FileStatsDatagramServer implements TransactionProtocol {
 
             sender.sendTransaction(new Transaction(transaction,
                                                    messagePackBytes,
-                                                   Transaction.NO_ERROR));
+                                                   DatagramConstants.NO_ERROR));
         } catch (IOException ex) {
             throw new BadPacketException("Bad packet " + ex);
         }

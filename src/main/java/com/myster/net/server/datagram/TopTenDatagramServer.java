@@ -1,10 +1,11 @@
-package com.myster.server.datagram;
+package com.myster.net.server.datagram;
 
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 
 import com.myster.net.datagram.BadPacketException;
+import com.myster.net.datagram.DatagramConstants;
 import com.myster.net.stream.client.MysterDataInputStream;
 import com.myster.net.stream.client.MysterDataOutputStream;
 import com.myster.tracker.MysterServer;
@@ -17,8 +18,6 @@ import com.myster.type.MysterType;
 public class TopTenDatagramServer implements TransactionProtocol {
     public static final int NUMBER_OF_SERVERS_TO_RETURN = 100;
 
-    public static final int TOP_TEN_TRANSACTION_CODE = com.myster.net.datagram.client.TopTenDatagramClient.TOP_TEN_TRANSACTION_CODE;
-
     private final Tracker tracker;
 
     public TopTenDatagramServer(Tracker tracker) {
@@ -27,7 +26,7 @@ public class TopTenDatagramServer implements TransactionProtocol {
 
     @Override
     public int getTransactionCode() {
-        return TOP_TEN_TRANSACTION_CODE;
+        return DatagramConstants.TOP_TEN_TRANSACTION_CODE;
     }
 
     
@@ -53,7 +52,7 @@ public class TopTenDatagramServer implements TransactionProtocol {
             }
 
             sender.sendTransaction(new Transaction(transaction, getBytesFromStrings(topTenStrings),
-                    Transaction.NO_ERROR));
+                    DatagramConstants.NO_ERROR));
         } catch (IOException ex) {
             throw new BadPacketException("Bad packet " + ex);
         }

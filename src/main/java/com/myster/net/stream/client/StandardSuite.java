@@ -21,7 +21,6 @@ import com.myster.ui.MysterFrameContext;
  * connection sections have UDP transaction equivalents.
  */
 public class StandardSuite {
-    // Vector of strings
     public static List<String> getSearch(MysterSocket socket, MysterType searchType, String searchString)
             throws IOException {
         List<String> searchResults = new ArrayList<>();
@@ -129,7 +128,7 @@ public class StandardSuite {
 
         try {
             return MessagePack.fromBytes(messagePackBytes);
-        } catch (IOException ex) {
+        } catch (IOException _) {
             throw new ProtocolException("Server sent corrupt MessagePack data.");
         }
     }
@@ -193,14 +192,12 @@ public class StandardSuite {
     }
 
     public static void disconnect(MysterSocket socket) throws IOException {
-        // try {
         socket.out.writeInt(2);
         socket.in.read();
-        // } catch (IOException ex) {}
 
         try {
             socket.close();
-        } catch (Exception ex) {
+        } catch (Exception _) {
             // nothing
         }
     }
@@ -222,13 +219,13 @@ public class StandardSuite {
         try {
             socket.out.writeInt(2);
             socket.in.read();
-        } catch (Exception ex) {
+        } catch (Exception _) {
             // nothing
         }
 
         try {
             socket.close();
-        } catch (Exception ex) {
+        } catch (Exception _) {
             // nothing
         }
     }
