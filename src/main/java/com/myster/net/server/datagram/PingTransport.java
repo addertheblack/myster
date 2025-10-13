@@ -4,6 +4,7 @@ import com.general.net.ImmutableDatagramPacket;
 import com.myster.application.MysterGlobals;
 import com.myster.net.MysterAddress;
 import com.myster.net.datagram.BadPacketException;
+import com.myster.net.datagram.DatagramConstants;
 import com.myster.net.datagram.DatagramSender;
 import com.myster.net.datagram.DatagramTransport;
 import com.myster.net.datagram.PingPacket;
@@ -11,7 +12,6 @@ import com.myster.net.datagram.PongPacket;
 import com.myster.tracker.Tracker;
 
 public class PingTransport implements DatagramTransport {
-    private static final short TRANSPORT_NUMBER = 20553; // 'P', 'I' in network byte order
     private Tracker manager;
 
     public PingTransport(Tracker manager) {
@@ -22,7 +22,7 @@ public class PingTransport implements DatagramTransport {
     }
 
     public short getTransportCode() {
-        return TRANSPORT_NUMBER;
+        return DatagramConstants.PING_TRANSPORT_CODE;
     }
 
     @SuppressWarnings("unused")

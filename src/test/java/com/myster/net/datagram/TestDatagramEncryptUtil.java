@@ -211,14 +211,14 @@ class TestDatagramEncryptUtil {
     void testSTLSCodeConstant() {
         // Verify the STLS code is correct ("STLS" as 32-bit int)
         int expected = 0x53544C53; // "STLS" in ASCII
-        Assertions.assertEquals(expected, DatagramEncryptUtil.STLS_CODE);
+        Assertions.assertEquals(expected, DatagramConstants.STLS_CODE);
         
         // Verify it converts back to the right string
         byte[] bytes = new byte[4];
-        bytes[0] = (byte) ((DatagramEncryptUtil.STLS_CODE >> 24) & 0xFF);
-        bytes[1] = (byte) ((DatagramEncryptUtil.STLS_CODE >> 16) & 0xFF);
-        bytes[2] = (byte) ((DatagramEncryptUtil.STLS_CODE >> 8) & 0xFF);
-        bytes[3] = (byte) (DatagramEncryptUtil.STLS_CODE & 0xFF);
+        bytes[0] = (byte) ((DatagramConstants.STLS_CODE >> 24) & 0xFF);
+        bytes[1] = (byte) ((DatagramConstants.STLS_CODE >> 16) & 0xFF);
+        bytes[2] = (byte) ((DatagramConstants.STLS_CODE >> 8) & 0xFF);
+        bytes[3] = (byte) (DatagramConstants.STLS_CODE & 0xFF);
         String reconstructed = new String(bytes);
         Assertions.assertEquals("STLS", reconstructed);
     }
