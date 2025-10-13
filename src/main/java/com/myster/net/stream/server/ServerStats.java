@@ -59,7 +59,7 @@ public class ServerStats extends ServerStreamHandler {
     }
 
     //Returns a MessagePack that would be sent as bytes via a connection.
-    public static MessagePack getServerStatsMessagePack(String identityName, int port, Identity identity, FileTypeListManager fileManager) throws NotInitializedException {
+    public static MessagePack getServerStatsMessagePack(String serverName, int port, Identity identity, FileTypeListManager fileManager) throws NotInitializedException {
         try {
             MessagePack serverStats = MessagePack.newEmpty();
             
@@ -75,7 +75,7 @@ public class ServerStats extends ServerStreamHandler {
 
             getNumberOfFilesMessagePack(serverStats, fileManager); //Adds the number of files data.
 
-            String ident = identityName;
+            String ident = serverName;
             if (ident != null) {
                 if (!ident.equals("")) {
                     serverStats.put(SERVER_NAME, ident);

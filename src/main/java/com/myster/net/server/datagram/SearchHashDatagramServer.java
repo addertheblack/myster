@@ -1,4 +1,4 @@
-package com.myster.server.datagram;
+package com.myster.net.server.datagram;
 
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
@@ -9,6 +9,7 @@ import com.myster.filemanager.FileTypeListManager;
 import com.myster.hash.FileHash;
 import com.myster.hash.SimpleFileHash;
 import com.myster.net.datagram.BadPacketException;
+import com.myster.net.datagram.DatagramConstants;
 import com.myster.net.stream.client.MysterDataInputStream;
 import com.myster.net.stream.client.MysterDataOutputStream;
 import com.myster.transaction.Transaction;
@@ -17,7 +18,6 @@ import com.myster.transaction.TransactionSender;
 import com.myster.type.MysterType;
 
 public class SearchHashDatagramServer implements TransactionProtocol {
-    public static final int SEARCH_HASH_TRANSACTION_CODE = com.myster.net.datagram.client.SearchHashDatagramClient.SEARCH_HASH_TRANSACTION_CODE;
     
     private final FileTypeListManager fileManager;
 
@@ -26,7 +26,7 @@ public class SearchHashDatagramServer implements TransactionProtocol {
     }
     
     public int getTransactionCode() {
-        return SEARCH_HASH_TRANSACTION_CODE;
+        return DatagramConstants.SEARCH_HASH_TRANSACTION_CODE;
     }
 
     public void transactionReceived(TransactionSender sender,
@@ -71,7 +71,7 @@ public class SearchHashDatagramServer implements TransactionProtocol {
 
             sender.sendTransaction(new Transaction(transaction,
                                                    byteOutputStream.toByteArray(),
-                                                   Transaction.NO_ERROR));
+                                                   DatagramConstants.NO_ERROR));
 
             in.close();
             out.close();

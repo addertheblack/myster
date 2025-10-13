@@ -6,14 +6,13 @@ import java.io.IOException;
 
 import com.myster.filemanager.FileTypeList;
 import com.myster.hash.FileHash;
+import com.myster.net.datagram.DatagramConstants;
 import com.myster.net.stream.client.MysterDataInputStream;
 import com.myster.net.stream.client.MysterDataOutputStream;
 import com.myster.transaction.Transaction;
 import com.myster.type.MysterType;
 
 public class SearchHashDatagramClient implements StandardDatagramClientImpl<String> {
-    public static final int SEARCH_HASH_TRANSACTION_CODE = 150;
-
     private MysterType type;
 
     private FileHash[] hashes;
@@ -61,6 +60,6 @@ public class SearchHashDatagramClient implements StandardDatagramClientImpl<Stri
     }
 
     public int getCode() {
-        return SEARCH_HASH_TRANSACTION_CODE;
+        return DatagramConstants.SEARCH_HASH_TRANSACTION_CODE;
     }
 }

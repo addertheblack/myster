@@ -4,12 +4,11 @@ import java.io.ByteArrayInputStream;
 import java.io.IOException;
 
 import com.myster.mml.MessagePack;
+import com.myster.net.datagram.DatagramConstants;
 import com.myster.net.stream.client.MysterDataInputStream;
 import com.myster.transaction.Transaction;
 
 public class ServerStatsDatagramClient implements StandardDatagramClientImpl<MessagePack> {
-    public static final int SERVER_STATS_TRANSACTION_CODE = 101;
-
     // returns MessagePack
     public MessagePack getObjectFromTransaction(Transaction transaction)
             throws IOException {
@@ -26,6 +25,6 @@ public class ServerStatsDatagramClient implements StandardDatagramClientImpl<Mes
     }
 
     public int getCode() {
-        return SERVER_STATS_TRANSACTION_CODE;
+        return DatagramConstants.SERVER_STATS_TRANSACTION_CODE;
     }
 }

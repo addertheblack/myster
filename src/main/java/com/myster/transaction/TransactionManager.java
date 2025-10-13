@@ -10,6 +10,7 @@ import com.general.util.Timer;
 import com.general.util.Util;
 import com.myster.net.datagram.BadPacketException;
 import com.myster.net.datagram.DataPacket;
+import com.myster.net.datagram.DatagramConstants;
 import com.myster.net.datagram.DatagramProtocolManager;
 import com.myster.net.datagram.DatagramSender;
 import com.myster.net.datagram.DatagramTransport;
@@ -109,7 +110,7 @@ public class TransactionManager {
     private TransactionTransportImplementation extractTransactionTransport(TransportManager transportManager) {
         TransactionTransportImplementation transactionTransport =
                 (TransactionTransportImplementation) transportManager
-                        .getTransport(Transaction.TRANSACTION_PROTOCOL_NUMBER);
+                        .getTransport(DatagramConstants.TRANSACTION_PROTOCOL_NUMBER);
         
         if (transactionTransport == null) {
             transactionTransport = new TransactionTransportImplementation(transportManager::sendPacket, dispatcher);
@@ -139,7 +140,7 @@ public class TransactionManager {
     public boolean cancelTransaction(int port, int id) {
         return datagramManager.mutateTransportManager(port, (TransportManager transportManager) -> {
             TransactionTransportImplementation transport =
-                    (TransactionTransportImplementation) transportManager.getTransport(Transaction.TRANSACTION_PROTOCOL_NUMBER);
+                    (TransactionTransportImplementation) transportManager.getTransport(DatagramConstants.TRANSACTION_PROTOCOL_NUMBER);
             
             return transport.cancelTransaction(id);
         });
@@ -194,7 +195,7 @@ public class TransactionManager {
         }
 
         public short getTransportCode() {
-            return Transaction.TRANSACTION_PROTOCOL_NUMBER;
+            return DatagramConstants.TRANSACTION_PROTOCOL_NUMBER;
         }
 
         @Override
@@ -213,7 +214,7 @@ public class TransactionManager {
                             + transaction.getTransactionCode());
 
                     sendTransaction(sender, new Transaction(transaction, new byte[0],
-                            Transaction.TRANSACTION_TYPE_UNKNOWN));
+                            DatagramConstants.TRANSACTION_TYPE_UNKNOWN));
 
                     return;
                 }

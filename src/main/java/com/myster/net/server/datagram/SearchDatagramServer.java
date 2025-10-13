@@ -1,4 +1,4 @@
-package com.myster.server.datagram;
+package com.myster.net.server.datagram;
 
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
@@ -6,6 +6,7 @@ import java.io.IOException;
 
 import com.myster.filemanager.FileTypeListManager;
 import com.myster.net.datagram.BadPacketException;
+import com.myster.net.datagram.DatagramConstants;
 import com.myster.net.stream.client.MysterDataInputStream;
 import com.myster.net.stream.client.MysterDataOutputStream;
 import com.myster.server.event.ServerSearchDispatcher;
@@ -16,7 +17,6 @@ import com.myster.transaction.TransactionSender;
 import com.myster.type.MysterType;
 
 public class SearchDatagramServer implements TransactionProtocol {
-    public static final int SEARCH_TRANSACTION_CODE = com.myster.net.datagram.client.SearchDatagramClient.SEARCH_TRANSACTION_CODE;
     
     private final FileTypeListManager fileManager;
 
@@ -26,9 +26,9 @@ public class SearchDatagramServer implements TransactionProtocol {
     
     @Override
     public int getTransactionCode() {
-        return SEARCH_TRANSACTION_CODE;
+        return DatagramConstants.SEARCH_TRANSACTION_CODE;
     }
-
+    
     @Override
     public Object getTransactionObject() {
         return new ServerSearchDispatcher();
@@ -72,7 +72,7 @@ public class SearchDatagramServer implements TransactionProtocol {
 
             sender.sendTransaction(new Transaction(transaction,
                                                    byteOutputStream.toByteArray(),
-                                                   Transaction.NO_ERROR));
+                                                   DatagramConstants.NO_ERROR));
         } catch (IOException ex) {
             throw new BadPacketException("Bad packet " + ex);
         }

@@ -1,10 +1,11 @@
-package com.myster.server.datagram;
+package com.myster.net.server.datagram;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 
 import com.myster.filemanager.FileTypeListManager;
 import com.myster.net.datagram.BadPacketException;
+import com.myster.net.datagram.DatagramConstants;
 import com.myster.net.stream.client.MysterDataOutputStream;
 import com.myster.transaction.Transaction;
 import com.myster.transaction.TransactionProtocol;
@@ -16,7 +17,6 @@ import com.myster.type.MysterType;
  */
 public class TypeDatagramServer implements TransactionProtocol {
     public static final int NUMBER_OF_FILE_TYPE_TO_RETURN = 100;
-    public static final int TYPE_TRANSACTION_CODE = com.myster.net.datagram.client.TypeDatagramClient.TYPE_TRANSACTION_CODE;
 
     private final FileTypeListManager fileManager;
 
@@ -26,7 +26,7 @@ public class TypeDatagramServer implements TransactionProtocol {
     
     @Override
     public int getTransactionCode() {
-        return TYPE_TRANSACTION_CODE;
+        return DatagramConstants.TYPE_TRANSACTION_CODE;
     }
 
     @Override
@@ -48,7 +48,7 @@ public class TypeDatagramServer implements TransactionProtocol {
 
             sender.sendTransaction(new Transaction(transaction,
                                                    byteOutputStream.toByteArray(),
-                                                   Transaction.NO_ERROR));
+                                                   DatagramConstants.NO_ERROR));
         } catch (IOException ex) {
             throw new BadPacketException("Bad packet " + ex);
         }

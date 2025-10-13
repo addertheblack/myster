@@ -1,4 +1,4 @@
-package com.myster.server.datagram;
+package com.myster.net.server.datagram;
 
 import com.general.net.ImmutableDatagramPacket;
 import com.myster.application.MysterGlobals;
@@ -8,7 +8,6 @@ import com.myster.net.datagram.DatagramSender;
 import com.myster.net.datagram.DatagramTransport;
 import com.myster.net.datagram.PingPacket;
 import com.myster.net.datagram.PongPacket;
-import com.myster.net.server.ServerUtils;
 import com.myster.tracker.Tracker;
 
 public class PingTransport implements DatagramTransport {

@@ -3,7 +3,7 @@ package com.myster.net.stream.server;
 
 import com.myster.type.MysterType;
 
-public class NotInitializedException extends Exception {
+public class NotInitializedException extends RuntimeException {
     public final MysterType mysterType;
 
     public NotInitializedException(String string, MysterType mysterType) {

@@ -30,6 +30,7 @@ import com.general.net.ImmutableDatagramPacket;
 import com.general.util.Util;
 import com.myster.net.MysterAddress;
 import com.myster.net.datagram.DataPacket;
+import com.myster.net.datagram.DatagramConstants;
 import com.myster.net.stream.client.MysterDataInputStream;
 
 public final class Transaction implements DataPacket { //Immutable (Java needs
@@ -38,9 +39,6 @@ public final class Transaction implements DataPacket { //Immutable (Java needs
                                                        // classes)
     // reply packets are 1 byte longer
     private final static int HEADER_SIZE = 10; 
-    public final static short TRANSACTION_PROTOCOL_NUMBER = 1234;
-    public final static byte NO_ERROR = 0;
-    public final static byte TRANSACTION_TYPE_UNKNOWN = 1;
     
     private final MysterAddress address; //immutable
     private final int transactionCode;
@@ -69,11 +67,11 @@ public final class Transaction implements DataPacket { //Immutable (Java needs
         int fullyQualifiedConnectionNumber;
         try {
             int int_temp = in.readShort();
-            if (int_temp != TRANSACTION_PROTOCOL_NUMBER)
+            if (int_temp != DatagramConstants.TRANSACTION_PROTOCOL_NUMBER)
                 throw new NotATransactionException(
                         "Tried to make a transaction from a packet of type "
                                 + int_temp + " instead of type "
-                                + TRANSACTION_PROTOCOL_NUMBER + ".");
+                                + DatagramConstants.TRANSACTION_PROTOCOL_NUMBER + ".");
             transactionCode = in.readInt();
             fullyQualifiedConnectionNumber = in.readInt();
 
@@ -121,7 +119,7 @@ public final class Transaction implements DataPacket { //Immutable (Java needs
     protected Transaction(MysterAddress transaction, int transactionCode,
             int connectionNumber, byte[] bytes) {
         this(transaction, transactionCode, connectionNumber, bytes, false,
-                NO_ERROR);
+                DatagramConstants.NO_ERROR);
     }
 
     protected Transaction(MysterAddress address, int transactionCode,
@@ -165,7 +163,7 @@ public final class Transaction implements DataPacket { //Immutable (Java needs
     }
 
     public boolean isError() {
-        return (errorByte != NO_ERROR);
+        return (errorByte != DatagramConstants.NO_ERROR);
     }
 
     public ImmutableDatagramPacket toImmutableDatagramPacket() {
@@ -182,7 +180,7 @@ public final class Transaction implements DataPacket { //Immutable (Java needs
         DataOutputStream out = new DataOutputStream(byteOut);
 
         try {
-            out.writeShort(TRANSACTION_PROTOCOL_NUMBER);
+            out.writeShort(DatagramConstants.TRANSACTION_PROTOCOL_NUMBER);
             out.writeInt(transactionCode);
             out.writeInt(getFullyQualifiedConnectionNumber());
             if (isForClient())
@@ -226,4 +224,3 @@ public final class Transaction implements DataPacket { //Immutable (Java needs
     }
 
 }
-
