@@ -4,7 +4,6 @@ package com.myster.net.datagram;
  * This class contains all the transport codes, transaction codes and datagram packet error codes. 
  */
 public class DatagramConstants {
-    
     // ========== TRANSPORT CODES ==========
     
     /**
