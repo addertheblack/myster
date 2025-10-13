@@ -2,6 +2,7 @@ package com.myster.net.datagram.client;
 
 import com.general.thread.PromiseFuture;
 import com.myster.net.MysterAddress;
+import com.myster.net.datagram.DatagramConstants;
 import com.myster.net.datagram.DatagramProtocolManager;
 
 public class UDPPingClient {
@@ -13,7 +14,7 @@ public class UDPPingClient {
 
     public PromiseFuture<PingResponse> ping(MysterAddress address) {
         return protocolManager.mutateTransportManager(address.getPort(), (transportManager) -> {
-            PongTransport t = (PongTransport) transportManager.getTransport(PongTransport.TRANSPORT_NUMBER);
+            PongTransport t = (PongTransport) transportManager.getTransport(DatagramConstants.PONG_TRANSPORT_CODE);
             
             if (t == null ) {
                 t = new PongTransport(transportManager::sendPacket);

@@ -11,13 +11,12 @@ import com.general.thread.Invoker;
 import com.general.util.Timer;
 import com.myster.net.MysterAddress;
 import com.myster.net.datagram.BadPacketException;
+import com.myster.net.datagram.DatagramConstants;
 import com.myster.net.datagram.DatagramSender;
 import com.myster.net.datagram.DatagramTransport;
 import com.myster.net.datagram.PingPacket;
 
 public class PongTransport implements DatagramTransport {
-    public static final short TRANSPORT_NUMBER = 20559;
-    
     private static final int TIMEOUT = 60000;
     private static final int FIRST_TIMEOUT = 1000;
     
@@ -32,7 +31,7 @@ public class PongTransport implements DatagramTransport {
 
     @Override
     public short getTransportCode() {
-        return TRANSPORT_NUMBER;
+        return DatagramConstants.PONG_TRANSPORT_CODE;
     }
 
     @Override
