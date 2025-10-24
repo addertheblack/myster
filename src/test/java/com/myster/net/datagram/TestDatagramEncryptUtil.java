@@ -92,11 +92,10 @@ class TestDatagramEncryptUtil {
     void testRoundTripWithClientIdentity() throws DecryptionException {
         byte[] originalPayload = "Round trip test with signature".getBytes();
         PublicKey serverPublicKey = serverKeyPair.getPublic();
-        PrivateKey serverPrivateKey = serverKeyPair.getPrivate();
         Optional<Identity> clientIdentityOpt = Optional.of(clientIdentity);
         
         // Create a mock lookup service
-        Lookup mockLookup = createMockLookup(serverPrivateKey);
+        Lookup mockLookup = createMockLookup(serverKeyPair);
         
         // Encrypt
         EncryptedRequest encryptedRequest = DatagramEncryptUtil.encryptPacket(
@@ -123,11 +122,10 @@ class TestDatagramEncryptUtil {
     void testRoundTripWithoutClientIdentity() throws DecryptionException {
         byte[] originalPayload = "Round trip test unsigned".getBytes();
         PublicKey serverPublicKey = serverKeyPair.getPublic();
-        PrivateKey serverPrivateKey = serverKeyPair.getPrivate();
         Optional<Identity> noClientIdentity = Optional.empty();
         
         // Create a mock lookup service
-        Lookup mockLookup = createMockLookup(serverPrivateKey);
+        Lookup mockLookup = createMockLookup(serverKeyPair);
         
         // Encrypt
         EncryptedRequest encryptedRequest = DatagramEncryptUtil.encryptPacket(
@@ -157,7 +155,7 @@ class TestDatagramEncryptUtil {
         for (int i = 0; i < symmetricKey.length; i++) {
             symmetricKey[i] = (byte) i;
         }
-        Optional<Identity> serverIdentityOpt = Optional.of(serverIdentity);
+        Optional<KeyPair> serverIdentityOpt = serverIdentity.getMainIdentity();
         
         // Encrypt response
         byte[] encryptedResponse = DatagramEncryptUtil.encryptResponsePacket(
@@ -186,7 +184,7 @@ class TestDatagramEncryptUtil {
         for (int i = 0; i < symmetricKey.length; i++) {
             symmetricKey[i] = (byte) (i * 2);
         }
-        Optional<Identity> noServerIdentity = Optional.empty();
+        Optional<KeyPair> noServerIdentity = Optional.empty();
         
         // Encrypt response without signature
         byte[] encryptedResponse = DatagramEncryptUtil.encryptResponsePacket(
@@ -232,10 +230,9 @@ class TestDatagramEncryptUtil {
         }
         
         PublicKey serverPublicKey = serverKeyPair.getPublic();
-        PrivateKey serverPrivateKey = serverKeyPair.getPrivate();
         Optional<Identity> clientIdentityOpt = Optional.of(clientIdentity);
         
-        Lookup mockLookup = createMockLookup(serverPrivateKey);
+        Lookup mockLookup = createMockLookup(serverKeyPair);
         
         // Encrypt
         EncryptedRequest encryptedRequest = DatagramEncryptUtil.encryptPacket(
@@ -258,10 +255,9 @@ class TestDatagramEncryptUtil {
     void testEmptyPayload() throws DecryptionException {
         byte[] emptyPayload = new byte[0];
         PublicKey serverPublicKey = serverKeyPair.getPublic();
-        PrivateKey serverPrivateKey = serverKeyPair.getPrivate();
         Optional<Identity> clientIdentityOpt = Optional.of(clientIdentity);
         
-        Lookup mockLookup = createMockLookup(serverPrivateKey);
+        Lookup mockLookup = createMockLookup(serverKeyPair);
         
         // Encrypt
         EncryptedRequest encryptedRequest = DatagramEncryptUtil.encryptPacket(
@@ -288,7 +284,7 @@ class TestDatagramEncryptUtil {
         
         // Create another server identity with different keys
         Identity otherServerIdentity = new Identity("otherServer.keystore", keystorePath);
-        PrivateKey wrongPrivateKey = otherServerIdentity.getMainIdentity().get().getPrivate();
+        KeyPair keyPair = otherServerIdentity.getMainIdentity().get();
         
         Optional<Identity> clientIdentityOpt = Optional.of(clientIdentity);
         
@@ -300,7 +296,7 @@ class TestDatagramEncryptUtil {
         );
         
         // Try to decrypt with wrong key
-        Lookup mockLookupWithWrongKey = createMockLookup(wrongPrivateKey);
+        Lookup mockLookupWithWrongKey = createMockLookup(keyPair);
         
         // Should throw DecryptionException
         Assertions.assertThrows(DecryptionException.class, () -> {
@@ -315,10 +311,9 @@ class TestDatagramEncryptUtil {
     void testDecryptionWithCorruptedData() {
         byte[] testPayload = "Test message".getBytes();
         PublicKey serverPublicKey = serverKeyPair.getPublic();
-        PrivateKey serverPrivateKey = serverKeyPair.getPrivate();
         Optional<Identity> clientIdentityOpt = Optional.of(clientIdentity);
         
-        Lookup mockLookup = createMockLookup(serverPrivateKey);
+        Lookup mockLookup = createMockLookup(serverKeyPair);
         
         // Encrypt
         EncryptedRequest encryptedRequest = DatagramEncryptUtil.encryptPacket(
@@ -342,7 +337,7 @@ class TestDatagramEncryptUtil {
     /**
      * Create a mock lookup service for testing
      */
-    private Lookup createMockLookup(PrivateKey serverPrivateKey) {
+    private Lookup createMockLookup(KeyPair serverKeyPair) {
         return new Lookup() {
             @Override
             public Optional<PublicKey> findPublicKey(byte[] keyHash) {
@@ -352,11 +347,11 @@ class TestDatagramEncryptUtil {
                 }
                 return Optional.empty();
             }
-            
+
             @Override
-            public Optional<PrivateKey> getServerPrivateKey(Object serverId) {
+            public Optional<KeyPair> getServerKeyPair(Object serverId) {
                 // For testing, always return our server private key
-                return Optional.of(serverPrivateKey);
+                return Optional.of(serverKeyPair);
             }
         };
     }

@@ -11,9 +11,11 @@
 
 package com.myster.tracker;
 
+import java.security.PublicKey;
 import java.util.Optional;
 import java.util.function.Consumer;
 
+import com.myster.identity.Cid128;
 import com.myster.net.MysterAddress;
 
 /**
@@ -33,6 +35,7 @@ public interface MysterServerPool {
     void suggestAddress(String address);
     
     Optional<MysterIdentity> lookupIdentityFromName(ExternalName externalName);
+    Optional<PublicKey> lookupIdentityFromCid(Cid128 cid);
     
     /**
      * @return The MysterServer for this address assuming it's already in the cache. Null otherwise.

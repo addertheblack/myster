@@ -1,6 +1,8 @@
 
 package com.myster.identity;
 
+import static com.myster.net.datagram.MSDConstants.CID_SIZE;
+
 import java.security.Key;
 import java.security.KeyFactory;
 import java.security.NoSuchAlgorithmException;
@@ -10,8 +12,9 @@ import java.security.spec.X509EncodedKeySpec;
 import java.util.Base64;
 import java.util.Optional;
 
-public class Util {
+import com.myster.net.datagram.DatagramEncryptUtil;
 
+public class Util {
     public static String keyToString(Key key) {
         return Base64.getEncoder().encodeToString(key.getEncoded());
     }
@@ -33,7 +36,15 @@ public class Util {
             return Optional.empty();
         }
     }
+
+    public static byte[] generateNakedCid(PublicKey publicKey) {
+        byte[] hash = DatagramEncryptUtil.hashBytes(publicKey.getEncoded());
+        byte[] cid = new byte[CID_SIZE];
+        System.arraycopy(hash, 0, cid, 0, CID_SIZE);
+        return cid;
+    }
     
-    
-    //////////////////
+    public static Cid128 generateCid(PublicKey publicKey) {
+        return new Cid128(generateNakedCid(publicKey));
+    }
 }

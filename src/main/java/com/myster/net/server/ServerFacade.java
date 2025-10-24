@@ -18,6 +18,7 @@ import com.general.thread.BoundedExecutor;
 import com.myster.application.MysterGlobals;
 import com.myster.filemanager.FileTypeListManager;
 import com.myster.identity.Identity;
+import com.myster.net.datagram.DatagramEncryptUtil;
 import com.myster.net.datagram.DatagramProtocolManager;
 import com.myster.net.server.datagram.PingTransport;
 import com.myster.net.server.datagram.ServerStatsDatagramServer;
@@ -131,10 +132,15 @@ public class ServerFacade {
     public void addDatagramTransactions(TransactionProtocol ... protocols) {
         addDatagramTransactions(preferences.getServerPort(), protocols);
     }
+    
     public void addDatagramTransactions(int port, TransactionProtocol ... protocols) {
         for (TransactionProtocol transactionProtocol : protocols) {
             transactionManager.addTransactionProtocol(port,transactionProtocol);
         }
+    }
+
+    public void addEncryptionSupport(DatagramEncryptUtil.Lookup serverLookup) {
+        transactionManager.addEncryptionSupport(preferences.getServerPort(), serverLookup);
     }
 
     /**

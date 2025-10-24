@@ -133,7 +133,7 @@ public final class Transaction implements DataPacket { //Immutable (Java needs
         this.errorByte = errorByte;
     }
 
-    public Transaction withDecryptedPayload(byte[] bytes, int transactionCode) {
+    public Transaction withDifferentPayload(byte[] bytes, int transactionCode) {
         return new Transaction(getAddress(),
                                transactionCode,
                                getConnectionNumber(),
@@ -141,7 +141,7 @@ public final class Transaction implements DataPacket { //Immutable (Java needs
                                isForClient(),
                                errorByte);
     }
-
+    
     public MysterAddress getAddress() {
         return address;
     }

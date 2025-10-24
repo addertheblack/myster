@@ -21,9 +21,12 @@ import java.net.InetAddress;
 import java.net.NetworkInterface;
 import java.net.SocketException;
 import java.net.UnknownHostException;
+import java.security.KeyPair;
+import java.security.PublicKey;
 import java.util.ArrayList;
 import java.util.Enumeration;
 import java.util.List;
+import java.util.Optional;
 import java.util.logging.LogManager;
 import java.util.logging.Logger;
 import java.util.prefs.Preferences;
@@ -42,10 +45,12 @@ import com.myster.filemanager.FileTypeListManager;
 import com.myster.filemanager.ui.FmiChooser;
 import com.myster.hash.HashManager;
 import com.myster.hash.ui.HashManagerGUI;
+import com.myster.identity.Cid128;
 import com.myster.identity.Identity;
 import com.myster.message.ui.MessagePreferencesPanel;
 import com.myster.net.client.MysterProtocol;
 import com.myster.net.client.MysterProtocolImpl;
+import com.myster.net.datagram.DatagramEncryptUtil.Lookup;
 import com.myster.net.datagram.DatagramProtocolManager;
 import com.myster.net.datagram.client.MysterDatagramImpl;
 import com.myster.net.datagram.client.PublicKeyLookupImpl;
@@ -53,6 +58,9 @@ import com.myster.net.datagram.client.UDPPingClient;
 import com.myster.net.datagram.message.ImTransactionServer;
 import com.myster.net.datagram.message.MessageWindow;
 import com.myster.net.server.BannersManager.BannersPreferences;
+import com.myster.net.server.ServerFacade;
+import com.myster.net.server.ServerPreferences;
+import com.myster.net.server.ServerUtils;
 import com.myster.net.server.datagram.FileStatsDatagramServer;
 import com.myster.net.server.datagram.PingTransport;
 import com.myster.net.server.datagram.SearchDatagramServer;
@@ -60,9 +68,6 @@ import com.myster.net.server.datagram.SearchHashDatagramServer;
 import com.myster.net.server.datagram.ServerStatsDatagramServer;
 import com.myster.net.server.datagram.TopTenDatagramServer;
 import com.myster.net.server.datagram.TypeDatagramServer;
-import com.myster.net.server.ServerFacade;
-import com.myster.net.server.ServerPreferences;
-import com.myster.net.server.ServerUtils;
 import com.myster.net.stream.client.MysterStreamImpl;
 import com.myster.pref.MysterPreferences;
 import com.myster.pref.ui.ThemePane;
@@ -254,6 +259,19 @@ public class Myster {
                                                      fileManager,
                                                      serverDispatcher);
         addServerConnectionSettings(serverFacade, tracker, serverPreferences, identity, datagramManager, fileManager);
+        
+        serverFacade.addEncryptionSupport(new Lookup() {
+            @Override
+            public Optional<KeyPair> getServerKeyPair(Object serverId) {
+                return Identity.getIdentity().getMainIdentity();
+            }
+            
+            @Override
+            public Optional<PublicKey> findPublicKey(byte[] keyHash) {
+                return pool.lookupIdentityFromCid(new Cid128(keyHash));
+            }
+        });
+        
         // asynchronously start the server
         serverFacade.startServer();
 

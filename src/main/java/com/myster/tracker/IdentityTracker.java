@@ -21,6 +21,7 @@ import java.util.stream.Collectors;
 import com.general.thread.PromiseFuture;
 import com.general.util.Timer;
 import com.general.util.Util;
+import com.myster.identity.Cid128;
 import com.myster.net.MysterAddress;
 import com.myster.net.datagram.client.PingResponse;
 import com.myster.net.server.ServerUtils;
@@ -39,6 +40,7 @@ class IdentityTracker implements IdentityProvider {
     private final Map<MysterAddress, MysterIdentity> addressToIdentity = new HashMap<>();
     private final Map<InetAddress, Set<MysterAddress>> ipToServerAddresses = new HashMap<>();
     private final Map<MysterIdentity, List<MysterAddress>> identityToAddresses = new HashMap<>();
+    private final Map<Cid128, MysterIdentity> cid128ToIdentity = new HashMap<>();
     
     private final Consumer<PingResponse> pingListener;
     private final Consumer<MysterIdentity> deadServerListener;
@@ -100,6 +102,11 @@ class IdentityTracker implements IdentityProvider {
     @Override
     public synchronized Optional<MysterIdentity> getIdentityFromExternalName(ExternalName name) {
         return Optional.ofNullable(externalNameToIdentity.get(name));
+    }
+    
+    @Override
+    public synchronized Optional<MysterIdentity> getIdentityFromCid(Cid128 cid128) {
+        return Optional.ofNullable(cid128ToIdentity.get(cid128));
     }
     
     @Override
@@ -233,7 +240,7 @@ class IdentityTracker implements IdentityProvider {
             state.timeOfLastSuggestPing = timeMillis;
             state.timeOfLastPing = 0;
 
-            LOGGER.fine("Trying suggested ping for " + a);
+            LOGGER.fine("getPublicKeyTrying suggested ping for " + a);
             refreshElementIfNeeded(a, state);
         }
     }
@@ -257,9 +264,9 @@ class IdentityTracker implements IdentityProvider {
         
         ipToServerAddresses.putIfAbsent(address.getInetAddress(), new HashSet<MysterAddress>());
         ipToServerAddresses.get(address.getInetAddress()).add(address);
-
         addressToIdentity.put(address, key);
         externalNameToIdentity.put(computeNodeNameFromIdentity(key), key);
+        computerCidFromIdentity(key).ifPresent(k ->  cid128ToIdentity.put(k, key));
 
         if (!identityToAddresses.containsKey(key)) {
             identityToAddresses.put(key, new ArrayList<>());
@@ -284,6 +291,14 @@ class IdentityTracker implements IdentityProvider {
         addressStates.put(address, addressState);
 
         refreshElementIfNeeded(address, addressState);
+    }
+    
+    private static Optional<Cid128> computerCidFromIdentity(MysterIdentity key) {
+        if (key instanceof PublicKeyIdentity pki) {
+            return Optional.of(com.myster.identity.Util.generateCid(pki.getPublicKey()));
+        }
+        
+        return Optional.empty();
     }
 
     private void resetTimer() {
@@ -313,6 +328,7 @@ class IdentityTracker implements IdentityProvider {
             
             if(addresses.size()==0) {
                 externalNameToIdentity.remove(computeNodeNameFromIdentity(key));
+                computerCidFromIdentity(key).ifPresent(k ->  cid128ToIdentity.remove(k, key));
                 identityToAddresses.remove(key);
 
                 var l = deadServerListener;

@@ -1,8 +1,19 @@
 package com.myster.net.datagram;
 
+import static com.myster.net.datagram.MSDConstants.HASH_ALGORITHM;
+import static com.myster.net.datagram.MSDConstants.KEY_SIZE;
+import static com.myster.net.datagram.MSDConstants.MSD_REQUEST_CONTEXT;
+import static com.myster.net.datagram.MSDConstants.MSD_RESPONSE_CONTEXT;
+import static com.myster.net.datagram.MSDConstants.NONCE_SIZE;
+import static com.myster.net.datagram.MSDConstants.SECTION2_CLIENT_ID;
+import static com.myster.net.datagram.MSDConstants.SECTION2_SIGNATURE;
+import static com.myster.net.datagram.MSDConstants.SECTION2_SIG_ALG;
+
 import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.security.InvalidKeyException;
+import java.security.KeyFactory;
+import java.security.KeyPair;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.security.NoSuchProviderException;
@@ -12,6 +23,8 @@ import java.security.SecureRandom;
 import java.security.Security;
 import java.security.Signature;
 import java.security.SignatureException;
+import java.security.spec.InvalidKeySpecException;
+import java.security.spec.X509EncodedKeySpec;
 import java.util.Optional;
 
 import javax.crypto.BadPaddingException;
@@ -26,6 +39,7 @@ import org.bouncycastle.crypto.params.ParametersWithIV;
 import org.bouncycastle.jce.provider.BouncyCastleProvider;
 
 import com.myster.identity.Identity;
+import com.myster.identity.Util;
 import com.myster.mml.MessagePack;
 
 /**
@@ -33,13 +47,6 @@ import com.myster.mml.MessagePack;
  * Implements the MSD (Myster Secure Datagram) Rev C protocol
  */
 public class DatagramEncryptUtil {
-    private static final String MSD_REQUEST_CONTEXT = "MSD-REQ";
-    private static final String MSD_RESPONSE_CONTEXT = "MSD-RES";
-    private static final String HASH_ALGORITHM = "SHA-256";
-    private static final int NONCE_SIZE = 12;
-    private static final int KEY_SIZE = 32;
-    private static final int CID_SIZE = 16;
-    
     private static final SecureRandom random = new SecureRandom();
     
     static {
@@ -106,7 +113,7 @@ public class DatagramEncryptUtil {
      */
     public static byte[] encryptResponsePacket(byte[] responsePayload,
                                                byte[] symmetricKey,
-                                               Optional<Identity> serverIdentity) {
+                                               Optional<KeyPair> serverIdentity) {
         // Generate new nonce for response (never reuse nonces)
         byte[] nonce = new byte[NONCE_SIZE];
         random.nextBytes(nonce);
@@ -129,9 +136,9 @@ public class DatagramEncryptUtil {
 
     private static byte[] buildSection1Plaintext(byte[] key, byte[] nonce) {
         MessagePack section1 = MessagePack.newEmpty();
-        section1.put("/alg", "chacha20poly1305");
-        section1.putByteArray("/key", key);
-        section1.putByteArray("/nonce", nonce);
+        section1.put(MSDConstants.SECTION1_ALG, MSDConstants.DEFAULT_SYMMETRIC_ALG);
+        section1.putByteArray(MSDConstants.SECTION1_KEY, key);
+        section1.putByteArray(MSDConstants.SECTION1_NONCE, nonce);
         try {
             return section1.toBytes();
         } catch (IOException ex) {
@@ -141,8 +148,8 @@ public class DatagramEncryptUtil {
     
     private static byte[] buildResponseSection1Plaintext(byte[] nonce) {
         MessagePack section1 = MessagePack.newEmpty();
-        section1.put("/alg", "chacha20poly1305");
-        section1.putByteArray("/nonce", nonce);
+        section1.put(MSDConstants.SECTION1_ALG, MSDConstants.DEFAULT_SYMMETRIC_ALG);
+        section1.putByteArray(MSDConstants.SECTION1_NONCE, nonce);
         // Note: No key field for responses since client already has it
         try {
             return section1.toBytes();
@@ -200,7 +207,7 @@ public class DatagramEncryptUtil {
         MessagePack section2 = MessagePack.newEmpty();
         long timestamp = System.currentTimeMillis();
         
-        section2.putLong("/ts", timestamp);
+        section2.putLong(MSDConstants.SECTION2_TIMESTAMP, timestamp);
         
         if (clientIdentity.isPresent()) {
             Identity identity = clientIdentity.get();
@@ -209,12 +216,12 @@ public class DatagramEncryptUtil {
             
             // Create signature with appropriate algorithm
             byte[] signature = createSignature(section1Ciphertext, section3Ciphertext, timestamp, privateKey, MSD_REQUEST_CONTEXT);
-            byte[] cid = generateCid(publicKey);
+            byte[] cid = Util.generateNakedCid(publicKey);
             
-            section2.putByteArray("/sig", signature);
-            section2.putByteArray("/pub", publicKey.getEncoded());
-            section2.putByteArray("/cid", cid);
-            section2.put("/sig_alg", getSignatureAlgorithm(privateKey));
+            section2.putByteArray(SECTION2_SIGNATURE, signature);
+//            section2.putByteArray(SECTION2_PUBLIC_KEY, publicKey.getEncoded());
+            section2.putByteArray(SECTION2_CLIENT_ID, cid);
+            section2.put(SECTION2_SIG_ALG, getSignatureAlgorithm(privateKey));
         }
         
         try {
@@ -226,25 +233,24 @@ public class DatagramEncryptUtil {
 
     private static byte[] buildResponseSection2(byte[] section1Plaintext,
                                                 byte[] section3Ciphertext,
-                                                Optional<Identity> serverIdentity) {
+                                                Optional<KeyPair> serverKeyPair) {
         MessagePack section2 = MessagePack.newEmpty();
         long timestamp = System.currentTimeMillis();
 
-        section2.putLong("/ts", timestamp);
+        section2.putLong(MSDConstants.SECTION2_TIMESTAMP, timestamp);
         
-        if (serverIdentity.isPresent()) {
-            Identity identity = serverIdentity.get();
-            PublicKey publicKey = identity.getMainIdentity().get().getPublic();
-            PrivateKey privateKey = identity.getMainIdentity().get().getPrivate();
+        if (serverKeyPair.isPresent()) {
+            PublicKey publicKey = serverKeyPair.get().getPublic();
+            PrivateKey privateKey = serverKeyPair.get().getPrivate();
             
             // Create response signature
             byte[] signature = createSignature(section1Plaintext, section3Ciphertext, timestamp, privateKey, MSD_RESPONSE_CONTEXT);
-            byte[] cid = generateCid(publicKey);
+            byte[] cid = Util.generateNakedCid(publicKey);
             
-            section2.putByteArray("/sig", signature);
-            section2.putByteArray("/pub", publicKey.getEncoded());
-            section2.putByteArray("/cid", cid);
-            section2.put("/sig_alg", getSignatureAlgorithm(privateKey));
+            section2.putByteArray(MSDConstants.SECTION2_SIGNATURE, signature);
+//            section2.putByteArray(MSDConstants.SECTION2_PUBLIC_KEY, publicKey.getEncoded());
+            section2.putByteArray(MSDConstants.SECTION2_CLIENT_ID, cid);
+            section2.put(MSDConstants.SECTION2_SIG_ALG, getSignatureAlgorithm(privateKey));
         }
         
         try {
@@ -329,14 +335,7 @@ public class DatagramEncryptUtil {
         }
     }
     
-    private static byte[] generateCid(PublicKey publicKey) {
-        byte[] hash = hashBytes(publicKey.getEncoded());
-        byte[] cid = new byte[CID_SIZE];
-        System.arraycopy(hash, 0, cid, 0, CID_SIZE);
-        return cid;
-    }
-    
-    private static byte[] hashBytes(byte[] data) {
+    public static byte[] hashBytes(byte[] data) {
         try {
             return MessageDigest.getInstance(HASH_ALGORITHM).digest(data);
         } catch (NoSuchAlgorithmException ex) {
@@ -375,39 +374,21 @@ public class DatagramEncryptUtil {
                 throw new DecryptionException("Packet too short to contain headers");
             }
             
-            // Read Section 1 length and data (plaintext for responses)
-            int len1 = buffer.getShort() & 0xFFFF;
-            if (buffer.remaining() < len1 + 4) {
-                throw new DecryptionException("Malformed packet: section 1 length invalid");
-            }
-            byte[] section1 = new byte[len1];
-            buffer.get(section1);
+            byte[] section1 = extractSection(buffer, 1);
             
-            // Read Section 2 length and data (signature - optional)
-            int len2 = buffer.getShort() & 0xFFFF;
-            if (buffer.remaining() < len2 + 2) {
-                throw new DecryptionException("Malformed packet: section 2 length invalid");
-            }
-            byte[] section2 = new byte[len2];
-            buffer.get(section2);
+            extractSection(buffer, 2); // TBD check the server sig
             
-            // Read Section 3 length and data (encrypted payload)
-            int len3 = buffer.getShort() & 0xFFFF;
-            if (buffer.remaining() < len3) {
-                throw new DecryptionException("Malformed packet: section 3 length invalid");
-            }
-            byte[] section3 = new byte[len3];
-            buffer.get(section3);
+            byte[] section3 = extractSection(buffer, 3);
             
             // Parse Section 1 to get decryption parameters
             MessagePack section1Data = MessagePack.fromBytes(section1);
-            String algorithm = section1Data.get("/alg").orElse("chacha20poly1305");
+            String algorithm = section1Data.get(MSDConstants.SECTION1_ALG).orElse(MSDConstants.DEFAULT_SYMMETRIC_ALG);
             
-            if (!"chacha20poly1305".equals(algorithm)) {
+            if (!MSDConstants.ALG_CHACHA20_POLY1305.equals(algorithm)) {
                 throw new DecryptionException("Unsupported encryption algorithm in packet: " + algorithm);
             }
             
-            byte[] nonce = section1Data.getByteArray("/nonce").orElseThrow(
+            byte[] nonce = section1Data.getByteArray(MSDConstants.SECTION1_NONCE).orElseThrow(
                 () -> new DecryptionException("Missing nonce in response Section 1"));
             
             // Decrypt Section 3 using the symmetric key from the original request
@@ -488,9 +469,21 @@ public class DatagramEncryptUtil {
         }
     }
     
+    /**
+     * This is typically implemented by looking up the keyHash in the MysterServerPool which contains a cache of all the servers we "know".
+     * If we "know" the server we have its public key.. assuming it has one..
+     */
     public interface Lookup {
+        /**
+         * @param keyHash The key of the client sending the transaction
+         * @return the public key of the client sending us the transaction if we know it. If we don't know it that's fine we just won't verify the sig.
+         */
         Optional<PublicKey> findPublicKey(byte[]  keyHash); // Changed to byte[] for CID
-        Optional<PrivateKey> getServerPrivateKey(Object serverId); // For decryption
+        
+        /**
+         * Private key of the server handling
+         */
+        Optional<KeyPair> getServerKeyPair(Object serverId); // For decryption
     }
     
     /**
@@ -508,60 +501,45 @@ public class DatagramEncryptUtil {
             }
             
             // Parse Section 1 (Encrypted Keying Info)
-            int len1 = buffer.getShort() & 0xFFFF;
-            if (buffer.remaining() < len1 + 4) {
-                throw new DecryptionException("Malformed packet: section 1 length invalid");
-            }
-            byte[] section1Ciphertext = new byte[len1];
-            buffer.get(section1Ciphertext);
+            byte[] section1Ciphertext = extractSection(buffer, 1);
             
             // Parse Section 2 (Client Signature Block)
-            int len2 = buffer.getShort() & 0xFFFF;
-            if (buffer.remaining() < len2 + 2) {
-                throw new DecryptionException("Malformed packet: section 2 length invalid");
-            }
-            byte[] section2 = new byte[len2];
-            buffer.get(section2);
+            byte[] section2 = extractSection(buffer, 2);
             
             // Parse Section 3 (Encrypted Payload)
-            int len3 = buffer.getShort() & 0xFFFF;
-            if (buffer.remaining() < len3) {
-                throw new DecryptionException("Malformed packet: section 3 length invalid");
-            }
-            byte[] section3Ciphertext = new byte[len3];
-            buffer.get(section3Ciphertext);
+            byte[] section3Ciphertext = extractSection(buffer, 3);
             
             // Parse Section 2 to get signature info
             MessagePack section2Data = MessagePack.fromBytes(section2);
-            Optional<Integer> srvKid = section2Data.getInt("/srv_kid");
+            Optional<Integer> serverKeyId = section2Data.getInt(MSDConstants.SECTION2_SERVER_KEY_ID); 
             
             // Get server private key for decryption
-            Optional<PrivateKey> serverPrivateKey = lookup.getServerPrivateKey(srvKid.orElse(null));
-            if (serverPrivateKey.isEmpty()) {
-                throw new DecryptionException("Server private key not found for srv_kid: " + srvKid);
+            Optional<KeyPair> keyPair = lookup.getServerKeyPair(serverKeyId.orElse(null));
+            if (keyPair.isEmpty()) {
+                throw new DecryptionException("Server private key not found for srv_kid: " + serverKeyId);
             }
             
             // Decrypt Section 1 to get symmetric key
-            byte[] section1Plaintext = decryptWithPrivateKey(section1Ciphertext, serverPrivateKey.get());
+            byte[] section1Plaintext = decryptWithPrivateKey(section1Ciphertext, keyPair.get().getPrivate());
             MessagePack section1Data = MessagePack.fromBytes(section1Plaintext);
             
-            String algorithm = section1Data.get("/alg").orElse("chacha20poly1305");
-            if (!"chacha20poly1305".equals(algorithm)) {
+            String algorithm = section1Data.get(MSDConstants.SECTION1_ALG).orElse(MSDConstants.DEFAULT_SYMMETRIC_ALG);
+            if (!MSDConstants.ALG_CHACHA20_POLY1305.equals(algorithm)) {
                 throw new DecryptionException("Unsupported encryption algorithm in packet: " + algorithm);
             }
             
-            byte[] symmetricKey = section1Data.getByteArray("/key").orElseThrow(
+            byte[] symmetricKey = section1Data.getByteArray(MSDConstants.SECTION1_KEY).orElseThrow(
                 () -> new DecryptionException("Missing symmetric key in Section 1"));
-            byte[] nonce = section1Data.getByteArray("/nonce").orElseThrow(
+            byte[] nonce = section1Data.getByteArray(MSDConstants.SECTION1_NONCE).orElseThrow(
                 () -> new DecryptionException("Missing nonce in Section 1"));
             
             // Verify signature if present
             Optional<PublicKey> clientPublicKey = Optional.empty();
             Optional<byte[]> cid = Optional.empty();
             
-            if (section2Data.getByteArray("/sig").isPresent()) {
-                clientPublicKey = verifySignature(section1Ciphertext, section3Ciphertext, section2Data, lookup, MSD_REQUEST_CONTEXT);
-                cid = section2Data.getByteArray("/cid");
+            if (section2Data.getByteArray(MSDConstants.SECTION2_SIGNATURE).isPresent()) {
+                clientPublicKey = verifySignature(section1Ciphertext, section3Ciphertext, section2Data, lookup, MSDConstants.MSD_REQUEST_CONTEXT);
+                cid = section2Data.getByteArray(MSDConstants.SECTION2_CLIENT_ID);
             }
             
             // Decrypt Section 3 payload
@@ -581,6 +559,18 @@ public class DatagramEncryptUtil {
             throw new DecryptionException("Failed to decrypt request packet", e);
         }
         // Note: IllegalStateException and other RuntimeExceptions will bubble up unchanged
+    }
+
+    private static byte[] extractSection(ByteBuffer buffer, int section)
+            throws DecryptionException {
+        int len1 = buffer.getShort() & 0xFFFF;
+        if (buffer.remaining() < len1) {
+            throw new DecryptionException("Malformed packet: section " + section
+                    + " length invalid");
+        }
+        byte[] encryptedSectionData = new byte[len1];
+        buffer.get(encryptedSectionData);
+        return encryptedSectionData;
     }
     
     private static byte[] decryptWithPrivateKey(byte[] ciphertext, PrivateKey privateKey) 
@@ -609,26 +599,25 @@ public class DatagramEncryptUtil {
                                                       MessagePack section2Data, Lookup lookup, String context) 
             throws DecryptionException, NoSuchAlgorithmException, InvalidKeyException, SignatureException {
         
-        byte[] signature = section2Data.getByteArray("/sig").orElseThrow(
+        byte[] signature = section2Data.getByteArray(MSDConstants.SECTION2_SIGNATURE).orElseThrow(
             () -> new DecryptionException("Missing signature"));
-        long timestamp = section2Data.getLong("/ts").orElseThrow(
+        long timestamp = section2Data.getLong(MSDConstants.SECTION2_TIMESTAMP).orElseThrow(
             () -> new DecryptionException("Missing timestamp"));
         
         PublicKey publicKey = null;
         
         // Try to get public key from the packet or lookup
-        Optional<byte[]> pubKeyBytes = section2Data.getByteArray("/pub");
+        Optional<byte[]> pubKeyBytes = section2Data.getByteArray(MSDConstants.SECTION2_PUBLIC_KEY);
         if (pubKeyBytes.isPresent()) {
-            // Convert bytes to PublicKey (implementation depends on key format)
-            // For now, we'll use the CID lookup method
-            // publicKey = KeyFactory.getInstance("Ed25519").generatePublic(new X509EncodedKeySpec(pubKeyBytes.get()));
-        }
-        
-        Optional<byte[]> cidOpt = section2Data.getByteArray("/cid");
-        if (cidOpt.isPresent()) {
-            Optional<PublicKey> foundKey = lookup.findPublicKey(cidOpt.get());
-            if (foundKey.isPresent()) {
-                publicKey = foundKey.get();
+            // Try to decode the X.509-encoded public key using several common algorithms
+            publicKey = tryDecodePublicKey(pubKeyBytes.get());
+        } else {
+            Optional<byte[]> cidOpt = section2Data.getByteArray(MSDConstants.SECTION2_CLIENT_ID);
+            if (cidOpt.isPresent()) {
+                Optional<PublicKey> foundKey = lookup.findPublicKey(cidOpt.get());
+                if (foundKey.isPresent()) {
+                    publicKey = foundKey.get();
+                }
             }
         }
         
@@ -648,7 +637,7 @@ public class DatagramEncryptUtil {
         toVerify.put(h3);
         toVerify.putLong(timestamp);
         
-        String signatureAlgorithm = section2Data.get("/sig_alg").orElse(getSignatureAlgorithm(publicKey));
+        String signatureAlgorithm = section2Data.get(MSDConstants.SECTION2_SIG_ALG).orElse(getSignatureAlgorithm(publicKey));
         
         Signature verifier;
         try {
@@ -665,5 +654,32 @@ public class DatagramEncryptUtil {
         }
         
         return Optional.of(publicKey);
+    }
+
+    /**
+     * Attempt to decode an X.509 SubjectPublicKeyInfo byte[] into a PublicKey by
+     * trying a list of common algorithms. Returns null if none succeed.
+     */
+    private static PublicKey tryDecodePublicKey(byte[] pubKeyBytes) {
+        String[] algs = new String[] {"RSA", "EC", "Ed25519", "EdDSA"};
+        X509EncodedKeySpec spec = new X509EncodedKeySpec(pubKeyBytes);
+
+        for (String alg : algs) {
+            try {
+                KeyFactory kf = KeyFactory.getInstance(alg);
+                return kf.generatePublic(spec);
+            } catch (NoSuchAlgorithmException | InvalidKeySpecException e) {
+                // try next algorithm
+            }
+        }
+
+        // As a last resort, try with BouncyCastle provider hints for EC/Ed25519
+        try {
+            KeyFactory kf = KeyFactory.getInstance("Ed25519", "BC");
+            return kf.generatePublic(spec);
+        } catch (Exception _) {
+        }
+
+        return null;
     }
 }

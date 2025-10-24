@@ -5,6 +5,7 @@ import java.net.InetAddress;
 import java.util.Optional;
 import java.util.Set;
 
+import com.myster.identity.Cid128;
 import com.myster.net.MysterAddress;
 
 /**
@@ -29,6 +30,8 @@ public interface IdentityProvider {
     Optional<MysterIdentity> getIdentity(MysterAddress address);
 
     Optional<MysterIdentity> getIdentityFromExternalName(ExternalName name);
+    
+    Optional<MysterIdentity> getIdentityFromCid(Cid128 cid128);
 
     /**
      * @param identity
