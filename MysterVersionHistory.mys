@@ -1211,11 +1211,12 @@ keys for myster types.
     Note that changing the server port still requires restarting Myster
     Rename IpList etc.. to MysterServerList etc...
     Fix double click in the tracker window to choose the right address/port
-    Fix blank p2p window to connect to the correct port for myself
+    Fix blank p2p window to connect to the correct port for myself*Make communication encrypted (keep public key in MysterIP server information)
     Myster should automatically detect other nodes on the LAN and add them to the tracker EVEN if
     LAN network broadcast is broken - ie broadcast address isn't sent across wi-fi and LAN segments 
     
-2024-05-!!!!!!!!#!!    Move AsyncDatagramSocket to fire events on its own thread not EDT.
+2024-05-??    
+    Move AsyncDatagramSocket to fire events on its own thread not EDT.
     Delete MysterServers that have no addresses from the identity tracker.
     Fire event when deleting happens
     Remove these MysterServer from server lists when this happens
@@ -1236,7 +1237,13 @@ keys for myster types.
     
 2025-10-05
     Added TLS encryption support to tcp streams in Myster
-    Added encryption support to UDP
+    Added basic foundation for UDP encryption support
+    
+2025-10-23
+    Added encryption support to UDP transaction protocols. UDP is finally encrypted!
+    Removed MML from protocols. Now using MessagePack.
+    Renamed some network related packages to hopefully be easier to remember and cluster around each other
+     when listed by name
 
 	
 
@@ -1251,7 +1258,6 @@ to do:
     need to find a format for sharing a network file - like public key, primary servers etc.. maybe other public keys too
     need to be able to share the network config file (might be similar to network file.. or a superset)
 *Add reverse connection protocol.
-*Make communication encrypted (keep public key in MysterIP server information)
 *Add business card for server -> basically server stats
 *Pick a place for downloads in progress by default like homedirectory/mysterdata or something..
     Maybe app data on windows?
