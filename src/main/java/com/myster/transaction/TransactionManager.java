@@ -11,9 +11,11 @@ import com.general.util.Util;
 import com.myster.net.datagram.BadPacketException;
 import com.myster.net.datagram.DataPacket;
 import com.myster.net.datagram.DatagramConstants;
+import com.myster.net.datagram.DatagramEncryptUtil;
 import com.myster.net.datagram.DatagramProtocolManager;
 import com.myster.net.datagram.DatagramSender;
 import com.myster.net.datagram.DatagramTransport;
+import com.myster.net.server.datagram.EncryptedDatagramServer;
 import com.myster.net.datagram.DatagramProtocolManager.TransportManager;
 import com.myster.net.MysterAddress;
 import com.myster.server.event.ConnectionManagerEvent;
@@ -164,6 +166,19 @@ public class TransactionManager {
             return transactionTransport.addTransactionProtocol(protocol);
         });
     }
+    
+    public void addEncryptionSupport(int port, DatagramEncryptUtil.Lookup keyLookup) {
+        Objects.requireNonNull(keyLookup, "Key lookup cannot be null");
+        
+        datagramManager.mutateTransportManager(port, (TransportManager transportManager) -> {
+            TransactionTransportImplementation transactionTransport =
+                    extractTransactionTransport(transportManager);
+            
+            transactionTransport.addTransactionProtocol(new EncryptedDatagramServer(transactionTransport::resendTransaction, keyLookup));
+            
+            return null;
+        });
+    }
 
     /**
      * This class implements the DatagramTransport which means it implements a listener for all
@@ -206,27 +221,36 @@ public class TransactionManager {
             if (transaction.isForClient()) {
                 fireEvents(transaction.getConnectionNumber(), transaction);
             } else {
-                TransactionProtocol protocol = serverProtocols
-                        .get(transaction.getTransactionCode());
-
-                if (protocol == null) {
-                    LOGGER.info("No Transaction protocol registered under type: "
-                            + transaction.getTransactionCode());
-
-                    sendTransaction(sender, new Transaction(transaction, new byte[0],
-                            DatagramConstants.TRANSACTION_TYPE_UNKNOWN));
-
-                    return;
-                }
-                Object transactionObject = protocol.getTransactionObject();
-                dispatcher.getConnectionDispatcher().fire()
-                        .sectionEventConnect(new ConnectionManagerEvent(transaction.getAddress(),
-                                                                        transaction
-                                                                                .getTransactionCode(),
-                                                                        transactionObject,
-                                                                        true));
-                protocol.transactionReceived((t) -> sendTransaction(sender, t), transaction, transactionObject); //fun...
+                handleServerSidePacket((t) -> sendTransaction(sender, t), transaction);
             }
+        }
+
+        private void handleServerSidePacket(TransactionSender sender, Transaction transaction)
+                throws BadPacketException {
+            TransactionProtocol protocol = serverProtocols
+                    .get(transaction.getTransactionCode());
+
+            if (protocol == null) {
+                LOGGER.info("No Transaction protocol registered under type: "
+                        + transaction.getTransactionCode());
+
+                sender.sendTransaction(new Transaction(transaction, new byte[0],
+                        DatagramConstants.TRANSACTION_TYPE_UNKNOWN));
+
+                return;
+            }
+            Object transactionObject = protocol.getTransactionObject();
+            dispatcher.getConnectionDispatcher().fire()
+                    .sectionEventConnect(new ConnectionManagerEvent(transaction.getAddress(),
+                                                                    transaction
+                                                                            .getTransactionCode(),
+                                                                    transactionObject,
+                                                                    true));
+            protocol.transactionReceived(sender, transaction, transactionObject); //fun...
+        }
+
+        private void resendTransaction(TransactionSender sender, Transaction transaction) throws BadPacketException {
+            handleServerSidePacket(sender, transaction);
         }
 
         public int sendTransaction(DataPacket packet, int transactionCode,

@@ -75,16 +75,10 @@ public class EncryptingStandardDatagramClientImpl<T> implements StandardDatagram
                 lastEncryptedRequest.symmetricKey
             );
             
-            // Extract original transaction code from the first 32 bits of decrypted payload
-            ByteBuffer buffer = ByteBuffer.wrap(decryptedResponse);
-            int originalTransactionCode = buffer.getInt();  // First 32 bits
-            byte[] originalPayload = new byte[buffer.remaining()];
-            buffer.get(originalPayload);                    // Rest of the payload
-            
             // Create new transaction with decrypted data and original transaction code
-            Transaction decryptedTransaction = encryptedReply.withDecryptedPayload(
-                originalPayload, 
-                originalTransactionCode
+            Transaction decryptedTransaction = encryptedReply.withDifferentPayload(
+                decryptedResponse, 
+                delegate.getCode()
             );
             
             // Forward to original implementation with the decrypted transaction

@@ -114,7 +114,7 @@ public class TypeListerThread extends MysterThread {
     
     public void flagToEnd() {
         endFlag = true;
-        try { socket.close(); } catch (Exception ex) {}
+        try { socket.close(); } catch (Exception _) {}
         interrupt();
     }
     

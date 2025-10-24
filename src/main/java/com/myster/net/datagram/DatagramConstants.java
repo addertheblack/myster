@@ -80,4 +80,9 @@ public class DatagramConstants {
      * Transaction type is unknown/unsupported by the server
      */
     public static final byte TRANSACTION_TYPE_UNKNOWN = 1;
+    
+    /**
+     * Packet decryption failed - malformed or invalid encrypted packet
+     */
+    public static final byte DECRYPTION_ERROR = 2;
 }

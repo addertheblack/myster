@@ -4,6 +4,7 @@ import static com.myster.tracker.MysterServerImplementation.computeNodeNameFromI
 
 import java.lang.ref.WeakReference;
 import java.net.UnknownHostException;
+import java.security.PublicKey;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
@@ -20,6 +21,7 @@ import com.general.events.NewGenericDispatcher;
 import com.general.thread.PromiseFuture;
 import com.general.thread.PromiseFutures;
 import com.general.util.Util;
+import com.myster.identity.Cid128;
 import com.myster.mml.MessagePack;
 import com.myster.net.MysterAddress;
 import com.myster.net.client.MysterProtocol;
@@ -129,6 +131,17 @@ public class MysterServerPoolImpl implements MysterServerPool {
     @Override
     public Optional<MysterIdentity> lookupIdentityFromName(ExternalName externalName) {
         return identityTracker.getIdentityFromExternalName(externalName);
+    }
+    
+    @Override
+    public Optional<PublicKey> lookupIdentityFromCid(Cid128 cid) {
+        var identity = identityTracker.getIdentityFromCid(cid);
+        if (identity.isEmpty()) {
+            return Optional.empty();
+        }
+        
+        return identity.map(k -> ((PublicKeyIdentity) k).getPublicKey());
+
     }
 
     @Override
