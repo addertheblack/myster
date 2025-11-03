@@ -57,7 +57,7 @@ public class ProgressWindow extends MysterFrame {
 
         setResizable(false);
 
-        Image adImage = com.general.util.Util.loadImage("defaultProgressImage.gif", adPanel);
+        Image adImage = com.general.util.IconLoader.loadImage("defaultProgressImage.gif", adPanel);
 
         if (adImage != null)
             adPanel.addImage(adImage);

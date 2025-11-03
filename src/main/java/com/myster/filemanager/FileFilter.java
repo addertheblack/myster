@@ -26,8 +26,12 @@ class FileFilter {
     // TypeDescriptionList isn't of
     //some statically coded stuff
     public static boolean isCorrectType(MysterType type, File file, TypeDescriptionList tdList) {
-        if (file.length() == 0)
+        if (file.length() == 0) {
             return false; //all 0k files are bad.
+        }
+        if (file.getName().startsWith(".")) {
+            return false; // hidden files should stay hidden
+        }
 
         Optional<TypeDescription> typeDescriptionOptional = tdList.get(type);
         if (typeDescriptionOptional.isEmpty())

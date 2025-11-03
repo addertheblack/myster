@@ -20,7 +20,7 @@ import com.myster.net.stream.client.MysterDataInputStream;
 import com.myster.net.stream.client.MysterDataOutputStream;
 import com.myster.type.MysterType;
 
-public class FileInfoLister extends ServerStreamHandler {
+public class FileStatsStreamServer extends ServerStreamHandler {
     public static final int NUMBER = 77;
 
     public int getSectionNumber() {
@@ -30,7 +30,6 @@ public class FileInfoLister extends ServerStreamHandler {
     /**
      * in Filetype in FileName
      */
-
     public void section(ConnectionContext context) throws IOException {
         try {
             MysterDataInputStream in = context.socket().in;
@@ -49,9 +48,7 @@ public class FileInfoLister extends ServerStreamHandler {
                 messagePack = fileItem.getMessagePackRepresentation();
             }
 
-            byte[] messagePackBytes = messagePack.toBytes();
-            out.writeInt(messagePackBytes.length);
-            out.write(messagePackBytes);
+            out.writeMessagePack(messagePack);
         } catch (IOException ex) {
             ex.printStackTrace();
             throw ex;

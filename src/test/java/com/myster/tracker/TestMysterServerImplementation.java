@@ -52,8 +52,8 @@ class TestMysterServerImplementation {
         byte[] key = publicKey.getEncoded(); // this is the Full key now
         MysterIdentity id = new PublicKeyIdentity(publicKey);
         MessagePack stats = MessagePack.newEmpty();
-        stats.put(ServerStats.SERVER_NAME, "Mr. Magoo");
-        stats.put(ServerStats.MYSTER_VERSION, "10");
+        stats.putString(ServerStats.SERVER_NAME, "Mr. Magoo");
+        stats.putString(ServerStats.MYSTER_VERSION, "10");
         stats.putByteArray(ServerStats.IDENTITY, key);
         stats.putLong(ServerStats.UPTIME, 1000l);
         stats.putInt(ServerStats.PORT, 1234);

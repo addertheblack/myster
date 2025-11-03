@@ -570,7 +570,7 @@ public class FileTypeList {
          * @return FileItem created from file.
          */
         private FileItem createFileItem(File file) {
-            FileItem fileItem = tdList.getType(StandardTypes.MPG3).equals(type) ? new MPG3FileItem(file) : new FileItem(file);
+            FileItem fileItem = tdList.getType(StandardTypes.MPG3).equals(type) ? new MPG3FileItem(rootDir, file) : new FileItem(rootDir, file);
             
             hashProvider.findHashNonBlocking(file, new FileHashListener() {
                 public void foundHash(FileHashEvent e) {

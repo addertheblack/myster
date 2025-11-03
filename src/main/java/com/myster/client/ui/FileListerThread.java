@@ -10,13 +10,22 @@
 package com.myster.client.ui;
 
 import java.io.IOException;
+import java.net.UnknownHostException;
+import java.util.Arrays;
+import java.util.concurrent.ExecutionException;
+import java.util.logging.Logger;
 
+import com.general.thread.Invoker;
+import com.general.util.UnexpectedException;
 import com.general.util.Util;
+import com.myster.mml.MessagePack;
 import com.myster.net.MysterAddress;
 import com.myster.net.MysterSocket;
 import com.myster.net.stream.client.MysterDataInputStream;
 import com.myster.net.stream.client.MysterDataOutputStream;
 import com.myster.net.stream.client.MysterSocketFactory;
+import com.myster.net.stream.client.StandardSuiteStream;
+import com.myster.search.MysterFileStub;
 import com.myster.type.MysterType;
 import com.myster.util.MysterThread;
 import com.myster.util.Sayable;
@@ -24,12 +33,18 @@ import com.myster.util.Sayable;
 public class FileListerThread extends MysterThread {
 //    private static final Logger LOGGER = Logger.getLogger(FileListerThread.class.getName());
     
-    public interface ItemListListener {
-        public void addItemsToFileList(String[] files);
-    }
+    public record FileRecord(String file, MessagePack metaData) {}
     
+    public interface ItemListListener {
+        public void addItemsToFileList(FileRecord[] files);
+    }
+
+    // must be called on EDT!
     private final ItemListListener listener;
+
+    // must be called on EDT!
     private final Sayable msg;
+
     private final String ip;
     private final MysterType type;
 
@@ -41,21 +56,14 @@ public class FileListerThread extends MysterThread {
         String lookup(MysterType type);
     }
 
-    public FileListerThread(ItemListListener listener, Sayable msg, String ip, MysterType type, LookupTypeDescription lookup) {
+    public FileListerThread(ItemListListener listener,
+                            Sayable msg,
+                            String ip,
+                            MysterType type,
+                            LookupTypeDescription lookup) {
         this.lookup = lookup;
-        this.listener = (String[] files) -> Util.invokeLater(() -> {
-            if (endFlag) {
-                return;
-            }
-            listener.addItemsToFileList(files);
-        });
-        this.msg = (String s) -> Util.invokeLater(() -> {
-            if (endFlag) {
-                return;
-            }
-            
-            msg.say(s);
-        });
+        this.listener = listener;
+        this.msg = msg;
 
         this.ip = ip;
         this.type = type;
@@ -69,8 +77,14 @@ public class FileListerThread extends MysterThread {
         if (type == null)
             return;
 
-        try (MysterSocket socket =
-                MysterSocketFactory.makeStreamConnection(MysterAddress.createMysterAddress(ip))) {
+        MysterAddress mysterAddress;
+        try {
+            mysterAddress = MysterAddress.createMysterAddress(ip);
+        } catch (UnknownHostException ex) {
+            throw new UnexpectedException(ex);
+        }
+        
+        try (MysterSocket socket = MysterSocketFactory.makeStreamConnection(mysterAddress)) {
 
             MysterDataOutputStream out = socket.getOutputStream();
             MysterDataInputStream in = socket.getInputStream();
@@ -96,24 +110,57 @@ public class FileListerThread extends MysterThread {
 
             msg.say("Receiving List of Size: " + numberoffiles);
 
-            final int LIMIT = 500;
-            String[] files = new String[numberoffiles > LIMIT ? LIMIT : numberoffiles];
+            final int listFileProportion = 5;
+            String[] files = new String[numberoffiles];
             for (int i = 0; i < numberoffiles; i++) {
-                files[i % LIMIT] = in.readUTF();
-                if (i % 100 == 0)
-                    msg.say("Downloading file list: " + lookup.lookup(type) + " " + ((i * 100) / numberoffiles) + "%");
+                files[i] = in.readUTF();
+                if (i % 100 == 0) {
+                    msg.say("Downloading file names: " + lookup.lookup(type) + " " + ((i * listFileProportion) / numberoffiles) + "%");
+                }
 
-                if ((i % LIMIT) == (LIMIT - 1)) {
-                    listener.addItemsToFileList(files);
-                    if ((numberoffiles - i) < LIMIT)
-                        files = new String[numberoffiles - i - 1];
+            }
+
+            try {
+                final int[] counter = new int[] { 0 };
+                StandardSuiteStream
+                        .getFileStatsBatch(socket,
+                                           Util.map(Arrays.asList(files),
+                                                    fileName -> new MysterFileStub(mysterAddress,
+                                                                                   type,
+                                                                                   fileName))
+                                                   .toArray(new MysterFileStub[] {}))
+                        .setInvoker(Invoker.EDT)
+                        .addResultListener(messagePacks -> {
+                            FileRecord[] records = new FileRecord[files.length];
+
+                            for (int i = 0; i < files.length; i++) {
+                                records[i] = new FileRecord(files[i], messagePacks.get(i));
+                            }
+
+                            listener.addItemsToFileList(records);
+                        })
+                        .addPartialResultListener(r -> {
+                            var c = counter[0]++;
+                            if ( c %10 != 0) {
+                                return;
+                            }
+                            msg.say("Downloading file metadata: " + lookup.lookup(type) + " "
+                                    + ((listFileProportion+( c* (100-listFileProportion)) / numberoffiles)) + "%");})
+                        .get();
+            } catch (InterruptedException ex) {
+                return;
+            } catch (ExecutionException ex) {
+                var cause = ex.getCause();
+                
+                if (cause instanceof IOException ioException) {
+                    throw ioException;
+                } else {
+                    throw new UnexpectedException(ex);
                 }
             }
 
-            out.writeInt(2);
-
-            listener.addItemsToFileList(files);
-
+            
+            out.writeInt(2); // 2 is disconnect
             in.read();
 
             msg.say("Requesting File List: " + lookup.lookup(type) + " Complete.");

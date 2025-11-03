@@ -1,5 +1,6 @@
 package com.myster.search.ui;
 
+import com.general.mclist.AbstractMCListItemInterface;
 import com.general.mclist.MCListItemInterface;
 import com.general.mclist.Sortable;
 import com.general.mclist.SortableByte;
@@ -34,7 +35,7 @@ public class ClientGenericHandleObject implements ClientHandleObject {
         return new GenericSearchItem(s);
     }
 
-    protected class GenericSearchItem extends MCListItemInterface<SearchResult> {
+    protected class GenericSearchItem extends AbstractMCListItemInterface<SearchResult> {
         private static final SortableByte NOT_IN = new SortableByte(-1);
         private static final SortableByte NUMBER_ERR = new SortableByte(-2);
         

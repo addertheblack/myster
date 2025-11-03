@@ -38,9 +38,9 @@ class RobustMessagePackSerializer implements com.myster.mml.MessagePack {
     }
 
     @Override
-    public synchronized void put(String path, String value) {
+    public synchronized void putString(String path, String value) {
         clearAPath(path);
-        delegate.put(path, value);
+        delegate.putString(path, value);
     }
 
     // Getter methods with robust error handling
@@ -201,6 +201,19 @@ class RobustMessagePackSerializer implements com.myster.mml.MessagePack {
     }
 
     @Override
+    public synchronized Optional<String[]> getStringArray(String path) {
+        try {
+            return delegate.getStringArray(path);
+        } catch (ClassCastException | BranchAsALeafException | LeafAsABranchException ex) {
+            if (trace) {
+                LOGGER.fine("Failed to get string array at " + path + ": " + ex.getMessage());
+                ex.printStackTrace();
+            }
+            return Optional.empty();
+        }
+    }
+
+    @Override
     public synchronized Optional<Object[]> getObjectArray(String path) {
         try {
             return delegate.getObjectArray(path);
@@ -227,9 +240,9 @@ class RobustMessagePackSerializer implements com.myster.mml.MessagePack {
     }
 
     @Override
-    public synchronized Optional<String> get(String path) {
+    public synchronized Optional<String> getString(String path) {
         try {
-            return delegate.get(path);
+            return delegate.getString(path);
         } catch (ClassCastException | BranchAsALeafException | LeafAsABranchException ex) {
             if (trace) {
                 LOGGER.fine("Failed to get value at " + path + ": " + ex.getMessage());
@@ -321,6 +334,13 @@ class RobustMessagePackSerializer implements com.myster.mml.MessagePack {
         clearAPath(path);
 
         delegate.putShortArray(path, value);
+    }
+
+    @Override
+    public synchronized void putStringArray(String path, String... values) {
+        clearAPath(path);
+
+        delegate.putStringArray(path, values);
     }
 
     @Override

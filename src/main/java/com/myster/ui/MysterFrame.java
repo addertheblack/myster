@@ -97,7 +97,7 @@ public class MysterFrame extends JFrame {
     }
 
     private void initEvents() {
-        Image image =  com.general.util.Util.loadImage("myster_logo.gif", this, MysterFrame.class.getResource("myster_logo.gif"));
+        Image image =  com.general.util.IconLoader.loadImage("myster_logo.gif", MysterFrame.class.getResource("myster_logo.gif"));
         if (image != null) {
             setIconImage(image);
         }

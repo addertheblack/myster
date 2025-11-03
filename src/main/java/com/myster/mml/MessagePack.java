@@ -24,8 +24,8 @@ public interface MessagePack {
     }
     
     // String operations
-    void put(String path, String value);
-    Optional<String> get(String path);
+    void putString(String path, String value);
+    Optional<String> getString(String path);
     
     // Primitive types
     void putBoolean(String path, boolean value);
@@ -49,7 +49,7 @@ public interface MessagePack {
     /**
      * @return a string representation of whatever is in that path
      */
-    default Optional<String> getToString(String path) {
+    default Optional<String> get(String path) {
         return getValue(path).map(i -> convertToString(i));
     }
 
@@ -72,11 +72,12 @@ public interface MessagePack {
     }
     
     // Array types
-    void putByteArray(String path, byte[] value);
-    void putIntArray(String path, int[] value);
-    void putLongArray(String path, long[] value);
-    void putDoubleArray(String path, double[] value);
-    void putShortArray(String path, short[] value);
+    void putByteArray(String path, byte ... value);
+    void putIntArray(String path, int ... value);
+    void putLongArray(String path, long ... value);
+    void putDoubleArray(String path, double ... value);
+    void putShortArray(String path, short ... value);
+    void putStringArray(String path, String ... values);
     void putObjectArray(String path, Object[] value);
     
     Optional<byte[]> getByteArray(String path);
@@ -84,6 +85,7 @@ public interface MessagePack {
     Optional<long[]> getLongArray(String path);
     Optional<double[]> getDoubleArray(String path);
     Optional<short[]> getShortArray(String path);
+    Optional<String[]> getStringArray(String path);
     Optional<Object[]> getObjectArray(String path);
     
     // Directory operations

@@ -30,6 +30,7 @@ import com.general.mclist.MCListEvent;
 import com.general.mclist.MCListEventAdapter;
 import com.general.mclist.MCListFactory;
 import com.general.mclist.MCListItemInterface;
+import com.general.util.IconLoader;
 import com.general.util.MessageField;
 import com.general.util.StandardWindowBehavior;
 import com.general.util.Util;
@@ -95,6 +96,7 @@ public class SearchWindow extends MysterFrame implements SearchResultListener, S
                 return getPreferredSize();
             }
         };
+        searchButton.setIcon(IconLoader.loadSvg(getClass(), "search"));
 
         searchButton.setSize(50, 25);
         getRootPane().setDefaultButton(searchButton);

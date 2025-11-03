@@ -445,7 +445,7 @@ public class Myster {
                 .addConnectionSection(new com.myster.net.stream.server.ServerStats(preferences::getIdentityName,
                                                                                preferences::getServerPort,
                                                                                identity));
-        serverFacade.addConnectionSection(new com.myster.net.stream.server.FileInfoLister());
+        serverFacade.addConnectionSection(new com.myster.net.stream.server.FileStatsStreamServer());
         serverFacade.addConnectionSection(new com.myster.net.stream.server.FileByHash());
         serverFacade.addConnectionSection(new com.myster.net.stream.server.MultiSourceSender(preferences));
         serverFacade.addConnectionSection(new com.myster.net.stream.server.FileTypeLister());

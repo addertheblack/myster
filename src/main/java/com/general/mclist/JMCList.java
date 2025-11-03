@@ -9,8 +9,6 @@ import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.lang.reflect.InvocationTargetException;
 import java.util.ArrayList;
-import java.util.Collections;
-import java.util.Comparator;
 import java.util.Iterator;
 import java.util.List;
 
@@ -24,7 +22,7 @@ import javax.swing.WindowConstants;
 import javax.swing.event.EventListenerList;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
-import javax.swing.table.AbstractTableModel;
+import javax.swing.event.TableModelEvent;
 import javax.swing.table.JTableHeader;
 import javax.swing.table.TableCellRenderer;
 
@@ -35,15 +33,19 @@ public class JMCList<E> extends JTable implements MCList<E> {
     public JMCList() {
         this(1, true);
     }
+    
+    public JMCList(int numberOfColumns, boolean singleSelect) {
+        this(numberOfColumns, singleSelect, new DefaultMCListTableModel<E>());
+    }
 
-    public JMCList(int numberOfColumns, boolean singleselect) {
+    public JMCList(int numberOfColumns, boolean singleSelect, MCListTableModel<E> model) {
         listeners = new ArrayList<>();
-        setModel(new MCListTableModel<E>());
+        setModel(model);
         scrollPane = new JScrollPane(this);
         scrollPane.setDoubleBuffered(true);
         setShowHorizontalLines(false);
         setShowVerticalLines(false);
-
+        
         ListSelectionListener internalSelectionListener = new ListSelectionListener() {
             public void valueChanged(ListSelectionEvent e) {
                 if (listeners == null)
@@ -63,7 +65,8 @@ public class JMCList<E> extends JTable implements MCList<E> {
         };
         
         setSelectionModel(new MCListSelectionModel<E>(getMCTableModel(), internalSelectionListener));
-
+        getSelectionModel().setSelectionMode(singleSelect ? ListSelectionModel.SINGLE_SELECTION : ListSelectionModel.MULTIPLE_INTERVAL_SELECTION);
+        
         setColumnSelectionAllowed(false);
         getTableHeader().setReorderingAllowed(false);
 
@@ -240,15 +243,6 @@ public class JMCList<E> extends JTable implements MCList<E> {
     /*
      * (non-Javadoc)
      * 
-     * @see com.general.jmclist.MCList#clearAllSelected()
-     */
-    public void clearAllSelected() {
-        getMCTableModel().removeRows(getMCListSelectionModel().getSelectedIndexes());
-    }
-
-    /*
-     * (non-Javadoc)
-     * 
      * @see com.general.jmclist.MCList#toggle(int)
      */
     public void toggle(int i) {
@@ -276,6 +270,27 @@ public class JMCList<E> extends JTable implements MCList<E> {
     @SuppressWarnings("unchecked")
     private MCListSelectionModel<E> getMCListSelectionModel() {
         return (MCListSelectionModel<E>) getSelectionModel();
+    }
+    
+    
+    // Yeah it's great that JTable has a bug because it keeps track of indexes in its selection
+    // but I don't.. so don't clear the dang selection when you rebuild.. You can clear the anchor
+    // because that's maybe wrong.. but not the selection please.
+    boolean ignoreClearSelection = false;
+    @Override
+    public void tableChanged(TableModelEvent e) {
+        ignoreClearSelection = true;
+        super.tableChanged(e);
+        ignoreClearSelection = false;
+    }
+    
+    @Override
+    public void clearSelection() {
+        if (ignoreClearSelection) {
+            return;
+        }
+        
+        super.clearSelection();
     }
 
     /*
@@ -331,15 +346,6 @@ public class JMCList<E> extends JTable implements MCList<E> {
      */
     public void removeItem(int i) {
         getMCTableModel().removeRow(i);
-    }
-
-    /*
-     * (non-Javadoc)
-     * 
-     * @see com.general.jmclist.MCList#removeItem(com.general.mclist.MCListItemInterface)
-     */
-    public void removeItem(MCListItemInterface<E> o) {
-        getMCTableModel().removeRow(o);
     }
 
     /*
@@ -436,155 +442,6 @@ public class JMCList<E> extends JTable implements MCList<E> {
     }
 }
 
-class MCListTableModel<E> extends AbstractTableModel {
-    private final List<String> columnNames = new ArrayList<>();
-    private final List<MCListItemInterface<E>> rowValues = new ArrayList<>();
-
-    private  int sortByIndex = -1;
-
-    private boolean lessThan = true;
-
-    public String getColumnName(int column) {
-        return columnNames.get(column);
-    }
-
-    public void setColumnName(int columnIndex, String columnName) {
-        columnNames.set(columnIndex, columnName);
-    }
-
-    public int getSortByIndex() {
-        return sortByIndex;
-    }
-
-    /**
-     * @param column
-     */
-    public void sortByIndex(int column) {
-        sortByIndex = column;
-        resort();
-        fireTableRowsUpdated(0, rowValues.size());
-    }
-
-    public void reverseSortOrder() {
-        lessThan = !lessThan;
-        resort();
-        fireTableRowsUpdated(0, rowValues.size());
-    }
-
-    private void resort() {
-        if (sortByIndex == -1 || sortByIndex >= columnNames.size()) {
-            sortByIndex = -1;
-            return;
-        }
-
-        Collections.sort(rowValues,
-                new Comparator<MCListItemInterface<E>>() {
-                    public int compare(MCListItemInterface<E> a, MCListItemInterface<E> b) {
-                        Sortable<?> sa = a.getValueOfColumn(sortByIndex);
-                        Sortable<?> sb = b.getValueOfColumn(sortByIndex);
-
-                        if (sa.equals(sb))
-                            return 0;
-
-                        int cmp = (sa.isLessThan(sb) ? -1 : 1);
-                        return (lessThan ? cmp : -cmp);
-                    }
-                });
-    }
-
-    /**
-     *  
-     */
-    public void clearAll() {
-        rowValues.clear();
-        fireTableRowsDeleted(0, rowValues.size());
-    }
-
-    /**
-     * @param i
-     */
-    public void removeRow(int i) {
-        rowValues.remove(i);
-        fireTableRowsDeleted(i, i);
-    }
-
-    /**
-     * @param o
-     */
-    public void removeRow(MCListItemInterface<E> o) {
-        int index = rowValues.indexOf(o);
-        removeRow(index);
-
-    }
-
-    /**
-     * @param indexes
-     */
-    public void removeRows(int[] indexes) {
-        for (int i = rowValues.size(); i >= 0; i++) {
-            rowValues.remove(i);
-        }
-        fireTableRowsDeleted(0, rowValues.size());
-    }
-
-    public void setColumnIdentifiers(String[] names) {
-        columnNames.clear();
-        for (int i = 0; i < names.length; i++) {
-            columnNames.add(names[i]);
-        }
-        fireTableStructureChanged();
-    }
-
-    public void addRow(MCListItemInterface<E> item) {
-        rowValues.add(item);
-        fireTableRowsInserted(rowValues.size() - 1, rowValues.size() - 1);
-        resort();
-    }
-
-    public void addRows(MCListItemInterface<E>[] items) {
-        for (int i = 0; i < items.length; i++) {
-            rowValues.add(items[i]);
-        }
-        fireTableRowsInserted(rowValues.size() - items.length, rowValues.size() - 1);
-        resort();
-    }
-
-    /*
-     * (non-Javadoc)
-     * 
-     * @see javax.swing.table.AbstractTableModel#getValueAt(int, int)
-     */
-    public Object getValueAt(int rowIndex, int columnIndex) {
-        return getRow(rowIndex).getValueOfColumn(columnIndex);
-    }
-
-    /*
-     * (non-Javadoc)
-     * 
-     * @see javax.swing.table.AbstractTableModel#getColumnCount()
-     */
-    public int getColumnCount() {
-        return columnNames.size();
-    }
-
-    /*
-     * (non-Javadoc)
-     * 
-     * @see javax.swing.table.AbstractTableModel#getRowCount()
-     */
-    public int getRowCount() {
-        return rowValues.size();
-    }
-
-    MCListItemInterface<E> getRow(int index) {
-        return rowValues.get(index);
-    }
-
-    public int indexOf(MCListItemInterface<E> item) {
-        return rowValues.indexOf(item);
-    }
-}
-
 class MCListSelectionModel<E> implements ListSelectionModel {
     private final EventListenerList listenerList = new EventListenerList();
     
@@ -639,11 +496,15 @@ class MCListSelectionModel<E> implements ListSelectionModel {
      * @see javax.swing.ListSelectionModel#setSelectionInterval(int, int)
      */
     public void setSelectionInterval(int index0, int index1) {
+        if (index0 == index1 && getSelectionMode() == ListSelectionModel.SINGLE_SELECTION && getSelectedIndex() == index0) {
+            return;
+        }
+        
         clearSelection();
         if (selectionMode == ListSelectionModel.SINGLE_SELECTION) {
-            modifySelectionInterval(index0, index1, true);
-        } else {
             modifySelectionInterval(index1, index1, true);
+        } else {
+            modifySelectionInterval(index0, index1, true);
         }
         fireValueChanged();
     }

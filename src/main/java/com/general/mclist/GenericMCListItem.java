@@ -9,7 +9,7 @@
 
 package com.general.mclist;
 
-public class GenericMCListItem<E> extends MCListItemInterface<E> {
+public class GenericMCListItem<E> extends AbstractMCListItemInterface<E> {
     protected Sortable<?>[] sortables;
 
     protected E object;

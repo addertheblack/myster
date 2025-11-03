@@ -19,7 +19,7 @@ import com.general.util.LinkedList;
 import com.general.util.Timer;
 import com.general.util.Util;
 import com.myster.net.stream.server.FileByHash;
-import com.myster.net.stream.server.FileInfoLister;
+import com.myster.net.stream.server.FileStatsStreamServer;
 import com.myster.net.stream.server.MultiSourceSender;
 import com.myster.net.stream.server.MysterServerLister;
 import com.myster.net.stream.server.RequestSearchThread;
@@ -283,7 +283,7 @@ public class StatsInfoPanel extends JPanel {
                 case ServerStats.NUMBER:
                     numofSSR.increment(isUdp);
                     break;
-                case FileInfoLister.NUMBER:
+                case FileStatsStreamServer.NUMBER:
                     numofFI.increment(isUdp);
                     break;
                 case FileByHash.NUMBER:

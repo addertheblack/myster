@@ -258,6 +258,9 @@ Work on DEV 8:
 	2001/09/11
 	-> Planes run into world trade center.
 	
+	2001/09/12
+  -> nothing.
+	
 	2001/09/13
 	-> nothing.
 	
@@ -1016,7 +1019,7 @@ Work on DEV 8:
 		-> Made it so the search button no longer changes when button gets set to start/stop.
 		-> Switched over the tracker choice box to a TypeChoice object (finally)
 		-> Added all the UDP client and server sections
-		-> Moved ove the top ten conneciton section to UDP / TCP.
+		-> Moved over the top ten connection section to UDP / TCP.
 		-> Moved over the get type list to UDP / TCP.
 		
 	Work on DEV 21
@@ -1244,6 +1247,15 @@ keys for myster types.
     Removed MML from protocols. Now using MessagePack.
     Renamed some network related packages to hopefully be easier to remember and cluster around each other
      when listed by name
+     
+2025-11-01
+	Added basic support for icon loading svg
+	Added support for icons that follow the applied theme using FlatLAF
+	Added support for tree based MCList
+	Support for hierarchical file display in the ClientWindow
+		With tiangle toggle to see folder contents
+	Tweaked speed of file info lister to be 10X faster for the second load of data
+		using caching
 
 	
 

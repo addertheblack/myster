@@ -7,7 +7,7 @@
 
 package com.myster.server.ui;
 
-import com.general.mclist.MCListItemInterface;
+import com.general.mclist.AbstractMCListItemInterface;
 import com.general.mclist.Sortable;
 import com.general.mclist.SortableByte;
 import com.general.mclist.SortableString;
@@ -18,7 +18,7 @@ import com.myster.server.event.ServerDownloadDispatcher;
 import com.myster.server.event.ServerDownloadEvent;
 import com.myster.server.event.ServerDownloadListener;
 
-public class DownloadMCListItem extends MCListItemInterface<ServerDownloadDispatcher> {
+public class DownloadMCListItem extends AbstractMCListItemInterface<ServerDownloadDispatcher> {
     private ServerDownloadDispatcher dispatcher;
 
     private DownloadInfo info;

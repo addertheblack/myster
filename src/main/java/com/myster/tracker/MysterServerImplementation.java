@@ -138,10 +138,10 @@ class MysterServerImplementation {
         identityProvider.addIdentity(identity, address);
         
         server.timeoflastupdate = System.currentTimeMillis();
-        String temp = serverStats.get(ServerStats.SPEED).orElse("1");
+        String temp = serverStats.getString(ServerStats.SPEED).orElse("1");
         server.speed = Double.valueOf(temp).doubleValue();
 
-        server.serverName = serverStats.get(ServerStats.SERVER_NAME).orElse(null);
+        server.serverName = serverStats.getString(ServerStats.SERVER_NAME).orElse(null);
 
         server.uptime = serverStats.getLong(ServerStats.UPTIME).orElse(-1L);
 

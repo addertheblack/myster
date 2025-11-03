@@ -9,6 +9,7 @@ import java.security.SecureRandom;
 import java.security.cert.CertificateException;
 import java.security.cert.X509Certificate;
 import java.util.Optional;
+import java.util.logging.Logger;
 
 import javax.net.ssl.KeyManager;
 import javax.net.ssl.SSLContext;
@@ -28,6 +29,8 @@ import com.myster.net.stream.client.MysterDataOutputStream;
  * The connection starts as plaintext and upgrades to TLS after protocol negotiation.
  */
 public class TLSSocket extends MysterSocket {
+    private static final Logger LOGGER = Logger.getLogger(TLSSocket.class.getName());
+    
     private final SSLSocket sslSocket;
     
     // Custom protocol for explicit TLS negotiation using Myster connection sections
@@ -56,13 +59,13 @@ public class TLSSocket extends MysterSocket {
             // Send STLS connection section request using Myster protocol pattern
             tempOut.writeInt(STLS_CONNECTION_SECTION);
             tempOut.flush();
-            System.out.println("Sent STLS connection section request: " + STLS_CONNECTION_SECTION + " (\"STLS\")");
+            LOGGER.info("Sent STLS connection section request: " + STLS_CONNECTION_SECTION + " (\"STLS\")");
             
             // Read server response byte (Myster protocol: 1 = good, 0 = bad)
             int responseByte = tempIn.read();
             if (responseByte != 1) {
                 // Server doesn't support TLS or rejected - fall back to plaintext
-                System.out.println("Server rejected STLS negotiation, falling back to plaintext. Response: " + responseByte);
+                LOGGER.warning("Server rejected STLS negotiation, falling back to plaintext. Response: " + responseByte);
                 // Return null to indicate fallback needed
                 if (plainSocket != null && !plainSocket.isClosed()) {
                     try { plainSocket.close(); } catch (IOException ignored) {}
@@ -70,7 +73,7 @@ public class TLSSocket extends MysterSocket {
                 return null; // Caller should handle fallback to regular socket
             }
             
-            System.out.println("Server accepted STLS negotiation, upgrading to TLS...");
+            LOGGER.info("Server accepted STLS negotiation, upgrading to TLS...");
             
             // Now upgrade to TLS
             SSLSocket sslSocket = upgradeToTLS(plainSocket, identity, expectedServerIdentity, true);
@@ -95,7 +98,7 @@ public class TLSSocket extends MysterSocket {
      */
     public static TLSSocket upgradeServerSocket(Socket acceptedSocket, Identity identity) throws IOException {
         try {
-            System.out.println("Upgrading accepted socket to TLS...");
+            LOGGER.info("Upgrading accepted socket to TLS...");
             
             // Upgrade to TLS (negotiation already completed)
             SSLSocket sslSocket = upgradeToTLS(acceptedSocket, identity, Optional.empty(), false);

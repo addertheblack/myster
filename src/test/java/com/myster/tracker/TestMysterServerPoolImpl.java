@@ -74,8 +74,8 @@ class TestMysterServerPoolImpl {
         byte[] keyBytes = pubKey.getEncoded();
         
         MessagePack baseStats = MessagePack.newEmpty();
-        baseStats.put(com.myster.net.stream.server.ServerStats.SERVER_NAME, "Mr. Magoo");
-        baseStats.put(com.myster.net.stream.server.ServerStats.MYSTER_VERSION, "10");
+        baseStats.putString(com.myster.net.stream.server.ServerStats.SERVER_NAME, "Mr. Magoo");
+        baseStats.putString(com.myster.net.stream.server.ServerStats.MYSTER_VERSION, "10");
         baseStats.putByteArray(com.myster.net.stream.server.ServerStats.IDENTITY, keyBytes);
         baseStats.putLong(com.myster.net.stream.server.ServerStats.UPTIME, 1000L);
         baseStats.putInt(com.myster.net.stream.server.ServerStats.NUMBER_OF_FILES + type, 42);

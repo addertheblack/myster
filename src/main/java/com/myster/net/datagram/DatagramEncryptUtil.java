@@ -136,7 +136,7 @@ public class DatagramEncryptUtil {
 
     private static byte[] buildSection1Plaintext(byte[] key, byte[] nonce) {
         MessagePack section1 = MessagePack.newEmpty();
-        section1.put(MSDConstants.SECTION1_ALG, MSDConstants.DEFAULT_SYMMETRIC_ALG);
+        section1.putString(MSDConstants.SECTION1_ALG, MSDConstants.DEFAULT_SYMMETRIC_ALG);
         section1.putByteArray(MSDConstants.SECTION1_KEY, key);
         section1.putByteArray(MSDConstants.SECTION1_NONCE, nonce);
         try {
@@ -148,7 +148,7 @@ public class DatagramEncryptUtil {
     
     private static byte[] buildResponseSection1Plaintext(byte[] nonce) {
         MessagePack section1 = MessagePack.newEmpty();
-        section1.put(MSDConstants.SECTION1_ALG, MSDConstants.DEFAULT_SYMMETRIC_ALG);
+        section1.putString(MSDConstants.SECTION1_ALG, MSDConstants.DEFAULT_SYMMETRIC_ALG);
         section1.putByteArray(MSDConstants.SECTION1_NONCE, nonce);
         // Note: No key field for responses since client already has it
         try {
@@ -221,7 +221,7 @@ public class DatagramEncryptUtil {
             section2.putByteArray(SECTION2_SIGNATURE, signature);
 //            section2.putByteArray(SECTION2_PUBLIC_KEY, publicKey.getEncoded());
             section2.putByteArray(SECTION2_CLIENT_ID, cid);
-            section2.put(SECTION2_SIG_ALG, getSignatureAlgorithm(privateKey));
+            section2.putString(SECTION2_SIG_ALG, getSignatureAlgorithm(privateKey));
         }
         
         try {
@@ -250,7 +250,7 @@ public class DatagramEncryptUtil {
             section2.putByteArray(MSDConstants.SECTION2_SIGNATURE, signature);
 //            section2.putByteArray(MSDConstants.SECTION2_PUBLIC_KEY, publicKey.getEncoded());
             section2.putByteArray(MSDConstants.SECTION2_CLIENT_ID, cid);
-            section2.put(MSDConstants.SECTION2_SIG_ALG, getSignatureAlgorithm(privateKey));
+            section2.putString(MSDConstants.SECTION2_SIG_ALG, getSignatureAlgorithm(privateKey));
         }
         
         try {
@@ -382,7 +382,7 @@ public class DatagramEncryptUtil {
             
             // Parse Section 1 to get decryption parameters
             MessagePack section1Data = MessagePack.fromBytes(section1);
-            String algorithm = section1Data.get(MSDConstants.SECTION1_ALG).orElse(MSDConstants.DEFAULT_SYMMETRIC_ALG);
+            String algorithm = section1Data.getString(MSDConstants.SECTION1_ALG).orElse(MSDConstants.DEFAULT_SYMMETRIC_ALG);
             
             if (!MSDConstants.ALG_CHACHA20_POLY1305.equals(algorithm)) {
                 throw new DecryptionException("Unsupported encryption algorithm in packet: " + algorithm);
@@ -523,7 +523,7 @@ public class DatagramEncryptUtil {
             byte[] section1Plaintext = decryptWithPrivateKey(section1Ciphertext, keyPair.get().getPrivate());
             MessagePack section1Data = MessagePack.fromBytes(section1Plaintext);
             
-            String algorithm = section1Data.get(MSDConstants.SECTION1_ALG).orElse(MSDConstants.DEFAULT_SYMMETRIC_ALG);
+            String algorithm = section1Data.getString(MSDConstants.SECTION1_ALG).orElse(MSDConstants.DEFAULT_SYMMETRIC_ALG);
             if (!MSDConstants.ALG_CHACHA20_POLY1305.equals(algorithm)) {
                 throw new DecryptionException("Unsupported encryption algorithm in packet: " + algorithm);
             }
@@ -637,7 +637,7 @@ public class DatagramEncryptUtil {
         toVerify.put(h3);
         toVerify.putLong(timestamp);
         
-        String signatureAlgorithm = section2Data.get(MSDConstants.SECTION2_SIG_ALG).orElse(getSignatureAlgorithm(publicKey));
+        String signatureAlgorithm = section2Data.getString(MSDConstants.SECTION2_SIG_ALG).orElse(getSignatureAlgorithm(publicKey));
         
         Signature verifier;
         try {

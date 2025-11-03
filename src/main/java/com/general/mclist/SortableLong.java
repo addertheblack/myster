@@ -20,24 +20,24 @@ public class SortableLong implements Sortable<Long> {
         return number;
     }
 
-    public boolean isLessThan(Sortable<?> temp) {
+    public boolean isLessThan(Sortable<Long> temp) {
         if (temp == this)
             return false;
         if (!(temp instanceof SortableLong))
             return false;
-        Long n = (Long) temp.getValue();
+        Long n = temp.getValue();
 
         if (number < n.longValue())
             return true;
         return false;
     }
 
-    public boolean isGreaterThan(Sortable<?> temp) {
+    public boolean isGreaterThan(Sortable<Long> temp) {
         if (temp == this)
             return false;
         if (!(temp instanceof SortableLong))
             return false;
-        Long n = (Long) temp.getValue();
+        Long n = temp.getValue();
 
         if (number > n.longValue())
             return true;

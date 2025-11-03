@@ -14,8 +14,8 @@ import com.myster.mml.MessagePack;
 public class MPG3FileItem extends FileItem {
     private MessagePack messagePackRepresentation;
 
-    public MPG3FileItem(File file) {
-        super(file);
+    public MPG3FileItem(File root, File file) {
+        super(root, file);
     }
 
     public synchronized MessagePack getMessagePackRepresentation() {
@@ -55,23 +55,23 @@ public class MPG3FileItem extends FileItem {
         
         String temp = id3Tag.getTitle();
         if (temp != null && !temp.equals("")) {
-            messagePack.put("/ID3Name", temp);
+            messagePack.putString("/ID3Name", temp);
         }
 
         String temp2 = id3Tag.getArtist();
         if (temp2 != null && !temp2.equals("")) {
-            messagePack.put("/Artist", temp2);
+            messagePack.putString("/Artist", temp2);
         }
 
         String temp1 = id3Tag.getAlbum();
         if (temp1 != null && !temp1.equals("")) {
-            messagePack.put("/Album", temp1);
+            messagePack.putString("/Album", temp1);
         }
         
         if (id3Tag instanceof ID3v2 id3v2Tag) {
             temp2 = id3v2Tag.getOriginalArtist();
             if (temp2 != null && !temp2.equals("")) {
-                messagePack.put("/OriginalArtist", temp2);
+                messagePack.putString("/OriginalArtist", temp2);
             }
         }
     }
