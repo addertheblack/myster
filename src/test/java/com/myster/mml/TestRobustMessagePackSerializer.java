@@ -43,31 +43,31 @@ class TestRobustMessagePackSerializer {
     @DisplayName("Test data obliteration behavior")
     void testDataObliteration() {
         // Set up initial nested structure
-        serializer.put("/foo/bar/baz", "nested value");
-        assertEquals("nested value", serializer.get("/foo/bar/baz").orElse(null));
+        serializer.putString("/foo/bar/baz", "nested value");
+        assertEquals("nested value", serializer.getString("/foo/bar/baz").orElse(null));
         
         // Now obliterate it by putting a value at parent path
-        serializer.put("/foo", "parent value");
+        serializer.putString("/foo", "parent value");
         
         // The nested structure should be gone
-        assertTrue(serializer.get("/foo/bar/baz").isEmpty());
-        assertEquals("parent value", serializer.get("/foo").orElse(null));
+        assertTrue(serializer.getString("/foo/bar/baz").isEmpty());
+        assertEquals("parent value", serializer.getString("/foo").orElse(null));
         
         // Reverse test - put nested value after parent value
-        serializer.put("/test", "simple value");
-        assertEquals("simple value", serializer.get("/test").orElse(null));
+        serializer.putString("/test", "simple value");
+        assertEquals("simple value", serializer.getString("/test").orElse(null));
         
         // Put nested structure - should obliterate the simple value
-        serializer.put("/test/nested/deep", "deep value");
-        assertTrue(serializer.get("/test").isEmpty()); // Original value gone
-        assertEquals("deep value", serializer.get("/test/nested/deep").orElse(null));
+        serializer.putString("/test/nested/deep", "deep value");
+        assertTrue(serializer.getString("/test").isEmpty()); // Original value gone
+        assertEquals("deep value", serializer.getString("/test/nested/deep").orElse(null));
     }
 
     @Test
     @DisplayName("Test ClassCastException handling - data type mismatches return empty")
     void testClassCastExceptionHandling() {
         // Put a string, try to get as different types
-        serializer.put("/string", "hello");
+        serializer.putString("/string", "hello");
         assertTrue(serializer.getInt("/string").isEmpty());
         assertTrue(serializer.getLong("/string").isEmpty());
         assertTrue(serializer.getBoolean("/string").isEmpty());
@@ -76,13 +76,13 @@ class TestRobustMessagePackSerializer {
         
         // Put an int, try to get as string
         serializer.putInt("/number", 42);
-        assertTrue(serializer.get("/number").isEmpty()); // String getter on Long value
+        assertTrue(serializer.getString("/number").isEmpty()); // String getter on Long value
         assertEquals(42, serializer.getInt("/number").orElse(0)); // Should work
         
         // Put array, try to get as scalar
         serializer.putIntArray("/array", new int[]{1, 2, 3});
         assertTrue(serializer.getInt("/array").isEmpty());
-        assertTrue(serializer.get("/array").isEmpty());
+        assertTrue(serializer.getString("/array").isEmpty());
         assertArrayEquals(new int[]{1, 2, 3}, serializer.getIntArray("/array").orElse(null));
     }
 
@@ -91,19 +91,19 @@ class TestRobustMessagePackSerializer {
     void testProgrammerErrorExceptions() {
         // These should throw exceptions (programmer errors)
         assertThrows(DoubleSlashException.class, () -> {
-            serializer.get("//bad/path");
+            serializer.getString("//bad/path");
         });
         
         assertThrows(NoStartingSlashException.class, () -> {
-            serializer.get("no/leading/slash");
+            serializer.getString("no/leading/slash");
         });
         
         assertThrows(NullPointerException.class, () -> {
-            serializer.get(null);
+            serializer.getString(null);
         });
         
         assertThrows(MMLPathException.class, () -> {
-            serializer.get("");
+            serializer.getString("");
         });
     }
 
@@ -111,17 +111,17 @@ class TestRobustMessagePackSerializer {
     @DisplayName("Test branch/leaf mismatch handling")
     void testBranchLeafMismatchHandling() {
         // Create nested structure
-        serializer.put("/path/to/value", "test");
+        serializer.putString("/path/to/value", "test");
         
         // Try to get intermediate path as value - should return empty, not throw
-        assertTrue(serializer.get("/path").isEmpty());
-        assertTrue(serializer.get("/path/to").isEmpty());
+        assertTrue(serializer.getString("/path").isEmpty());
+        assertTrue(serializer.getString("/path/to").isEmpty());
         
         // Try to list a leaf - should return empty, not throw
         assertTrue(serializer.list("/path/to/value").isEmpty());
         
         // Original value should remain intact
-        assertEquals("test", serializer.get("/path/to/value").orElse(null));
+        assertEquals("test", serializer.getString("/path/to/value").orElse(null));
     }
 
     @Test
@@ -140,6 +140,7 @@ class TestRobustMessagePackSerializer {
         serializer.putLongArray("/longArray", new long[]{100L, 200L, 300L});
         serializer.putShortArray("/shortArray", new short[]{1, 2, 3});
         serializer.putDoubleArray("/doubleArray", new double[]{1.1, 2.2, 3.3});
+        serializer.putStringArray("/stringArray", new String[]{"hello", "world", null, "test"});
         serializer.putObjectArray("/objArray", new String[]{"a", "b", "c"});
         
         // Verify they can be retrieved
@@ -155,6 +156,7 @@ class TestRobustMessagePackSerializer {
         assertArrayEquals(new long[]{100L, 200L, 300L}, serializer.getLongArray("/longArray").orElse(null));
         assertArrayEquals(new short[]{1, 2, 3}, serializer.getShortArray("/shortArray").orElse(null));
         assertArrayEquals(new double[]{1.1, 2.2, 3.3}, serializer.getDoubleArray("/doubleArray").orElse(null), 0.001);
+        assertArrayEquals(new String[]{"hello", "world", null, "test"}, serializer.getStringArray("/stringArray").orElse(null));
         assertArrayEquals(new String[]{"a", "b", "c"}, serializer.getObjectArray("/objArray").orElse(null));
     }
 
@@ -162,9 +164,9 @@ class TestRobustMessagePackSerializer {
     @DisplayName("Test directory operations")
     void testDirectoryOperations() {
         // Create structure
-        serializer.put("/dir1/file1", "value1");
-        serializer.put("/dir1/file2", "value2");
-        serializer.put("/dir2/file3", "value3");
+        serializer.putString("/dir1/file1", "value1");
+        serializer.putString("/dir1/file2", "value2");
+        serializer.putString("/dir2/file3", "value3");
         
         // Test listing
         List<String> rootList = serializer.list("/");
@@ -183,18 +185,18 @@ class TestRobustMessagePackSerializer {
         
         // Test removal
         assertTrue(serializer.remove("/dir1/file1"));
-        assertTrue(serializer.get("/dir1/file1").isEmpty());
+        assertTrue(serializer.getString("/dir1/file1").isEmpty());
         assertEquals(1, serializer.list("/dir1/").size());
         
         assertTrue(serializer.removeDir("/dir2/"));
-        assertTrue(serializer.get("/dir2/file3").isEmpty());
+        assertTrue(serializer.getString("/dir2/file3").isEmpty());
     }
 
     @Test
     @DisplayName("Test serialization and deserialization")
     void testSerialization() throws IOException {
         // Create test data
-        serializer.put("/test1", "value1");
+        serializer.putString("/test1", "value1");
         serializer.putInt("/test2", 42);
         serializer.putIntArray("/test3", new int[]{1, 2, 3});
         
@@ -207,7 +209,7 @@ class TestRobustMessagePackSerializer {
         RobustMessagePackSerializer newSerializer = new RobustMessagePackSerializer(data);
         
         // Verify data is intact
-        assertEquals("value1", newSerializer.get("/test1").orElse(null));
+        assertEquals("value1", newSerializer.getString("/test1").orElse(null));
         assertEquals(42, newSerializer.getInt("/test2").orElse(0));
         assertArrayEquals(new int[]{1, 2, 3}, newSerializer.getIntArray("/test3").orElse(null));
     }
@@ -216,8 +218,8 @@ class TestRobustMessagePackSerializer {
     @DisplayName("Test null handling")
     void testNullHandling() {
         // Null values should be handled gracefully
-        serializer.put("/null", null);
-        assertTrue(serializer.get("/null").isEmpty());
+        serializer.putString("/null", null);
+        assertTrue(serializer.getString("/null").isEmpty());
         
         serializer.putIntArray("/nullArray", null);
         assertTrue(serializer.getIntArray("/nullArray").isEmpty());
@@ -230,7 +232,7 @@ class TestRobustMessagePackSerializer {
     @DisplayName("Test clearAPath functionality")
     void testClearAPath() {
         // Create a directory structure
-        serializer.put("/existing/path/value", "original");
+        serializer.putString("/existing/path/value", "original");
         assertTrue(serializer.isADirectory("/existing/"));
         assertTrue(serializer.isADirectory("/existing/path/"));
         
@@ -243,7 +245,7 @@ class TestRobustMessagePackSerializer {
         assertEquals(42, serializer.getInt("/existing").orElse(0));
         
         // Original nested value should be gone
-        assertTrue(serializer.get("/existing/path/value").isEmpty());
+        assertTrue(serializer.getString("/existing/path/value").isEmpty());
     }
 
     @Test
@@ -255,15 +257,70 @@ class TestRobustMessagePackSerializer {
         
         // Test very deep nesting
         String deepPath = "/a/b/c/d/e/f/g/h/i/j/k/l/m/n/o/p";
-        serializer.put(deepPath, "deep");
-        assertEquals("deep", serializer.get(deepPath).orElse(null));
+        serializer.putString(deepPath, "deep");
+        assertEquals("deep", serializer.getString(deepPath).orElse(null));
         
         // Test special characters in values (paths are validated separately)
-        serializer.put("/special", "value with spaces and symbols !@#$%^&*()");
-        assertEquals("value with spaces and symbols !@#$%^&*()", serializer.get("/special").orElse(null));
+        serializer.putString("/special", "value with spaces and symbols !@#$%^&*()");
+        assertEquals("value with spaces and symbols !@#$%^&*()", serializer.getString("/special").orElse(null));
         
         // Test empty arrays
         serializer.putIntArray("/emptyArray", new int[0]);
         assertArrayEquals(new int[0], serializer.getIntArray("/emptyArray").orElse(null));
+    }
+
+    @Test
+    @DisplayName("Test string array operations")
+    void testStringArrayOperations() {
+        String[] stringArray = {"robust", "test", "array", null, "mixed"};
+        
+        // Test normal operation
+        serializer.putStringArray("/strings", stringArray);
+        assertArrayEquals(stringArray, serializer.getStringArray("/strings").orElse(null));
+        
+        // Test empty array
+        serializer.putStringArray("/empty", new String[0]);
+        assertArrayEquals(new String[0], serializer.getStringArray("/empty").orElse(null));
+        
+        // Test null handling
+        serializer.putStringArray("/null", (String[]) null);
+        assertTrue(serializer.getStringArray("/null").isEmpty());
+    }
+
+    @Test
+    @DisplayName("Test string array type mismatch handling")
+    void testStringArrayTypeMismatchHandling() {
+        // Put different types and try to get as string array - should return empty, not throw
+        serializer.putIntArray("/ints", new int[]{1, 2, 3});
+        assertTrue(serializer.getStringArray("/ints").isEmpty());
+        
+        serializer.putString("/string", "not an array");
+        assertTrue(serializer.getStringArray("/string").isEmpty());
+        
+        serializer.putBoolean("/bool", true);
+        assertTrue(serializer.getStringArray("/bool").isEmpty());
+    }
+
+    @Test
+    @DisplayName("Test string array with branch/leaf conflicts")
+    void testStringArrayBranchLeafConflicts() {
+        // Create nested structure
+        serializer.putString("/path/to/value", "nested");
+        
+        // Try to get string array from branch - should return empty
+        assertTrue(serializer.getStringArray("/path").isEmpty());
+        assertTrue(serializer.getStringArray("/path/to").isEmpty());
+    }
+
+    @Test
+    @DisplayName("Test string array serialization")
+    void testStringArraySerialization() throws IOException {
+        String[] testArray = {"serialize", "test", null, "robust"};
+        serializer.putStringArray("/test", testArray);
+        
+        byte[] data = serializer.toBytes();
+        RobustMessagePackSerializer newSerializer = new RobustMessagePackSerializer(data);
+        
+        assertArrayEquals(testArray, newSerializer.getStringArray("/test").orElse(null));
     }
 }

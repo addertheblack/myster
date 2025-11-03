@@ -15,7 +15,7 @@ import java.awt.image.ImageObserver;
 import java.awt.image.MemoryImageSource;
 import java.awt.image.PixelGrabber;
 
-import com.general.util.Util;
+import com.general.util.IconLoader;
 
 public class TabUtilities {
     public static Image makeImage(int p_stringWidth, Component c,
@@ -101,25 +101,25 @@ public class TabUtilities {
     }
 
     public static Image loadLeft(Component c) {
-        Image temp = Util.loadImage("left.gif", c);
+        Image temp = IconLoader.loadImage("left.gif", c);
         error(temp, "left.gif");
         return temp;
     }
 
     public static Image loadRight(Component c) {
-        Image temp = Util.loadImage("right.gif", c);
+        Image temp = IconLoader.loadImage("right.gif", c);
         error(temp, "right.gif");
         return temp;
     }
 
     public static Image loadMiddle(String text, Component c) {
-        Image temp = Util.loadImage(text, c);
+        Image temp = IconLoader.loadImage(text, c);
         error(temp, text);
         return temp;
     }
 
     public static Image loadBackground(Component c) {
-        Image temp = Util.loadImage("tab_background.jpg", c);
+        Image temp = IconLoader.loadImage("tab_background.jpg", c);
         error(temp, "tab_background.jpg");
         return temp;
     }

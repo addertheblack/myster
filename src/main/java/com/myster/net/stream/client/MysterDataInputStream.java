@@ -24,6 +24,7 @@ public class MysterDataInputStream extends InputStream {
         return in.read();
     }
 
+    @Override
     public int read(byte[] b, int off, int len) throws IOException {
         return in.read(b, off, len);
     }
@@ -150,8 +151,7 @@ public class MysterDataInputStream extends InputStream {
     }
 
     public MysterType readType() throws IOException {
-        byte[] keyInBytes = readFully(readUnsignedShort());
-        return new MysterType(keyInBytes);
+        return new MysterType(readFully(readUnsignedShort()));
     }
 
     @Override

@@ -114,6 +114,11 @@ public class PromiseFutureListImpl<T> extends PromiseFutureImpl<List<T>> impleme
         public void done() {
             asyncContext.setResult((List<Z>)elements);
         }
+
+        @Override
+        public boolean setException(Exception ex) {
+            return asyncContext.setException(ex);
+        }
     }
     
 

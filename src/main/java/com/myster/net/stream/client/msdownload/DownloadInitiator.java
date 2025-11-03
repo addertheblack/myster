@@ -16,7 +16,7 @@ import com.myster.mml.MessagePack;
 import com.myster.net.MysterAddress;
 import com.myster.net.MysterSocket;
 import com.myster.net.stream.client.MysterSocketFactory;
-import com.myster.net.stream.client.StandardSuite;
+import com.myster.net.stream.client.StandardSuiteStream;
 import com.myster.net.stream.client.msdownload.MultiSourceDownload.FileMover;
 import com.myster.search.HashCrawlerManager;
 import com.myster.search.MysterFileStub;
@@ -253,7 +253,7 @@ public class DownloadInitiator implements Runnable {
         } catch (IOException ex) {
             ex.printStackTrace();
         } finally {
-            StandardSuite.disconnectWithoutException(socket);
+            StandardSuiteStream.disconnectWithoutException(socket);
         }
 
     }
@@ -270,7 +270,7 @@ public class DownloadInitiator implements Runnable {
 
             if (endFlag)
                 return;
-            MessagePack fileStats = StandardSuite.getFileStats(socket, stub);
+            MessagePack fileStats = StandardSuiteStream.getFileStats(socket, stub);
 
             progress.setText("Trying to use multi-source download...");
 

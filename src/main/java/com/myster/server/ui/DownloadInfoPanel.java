@@ -7,7 +7,6 @@
 
 package com.myster.server.ui;
 
-import java.awt.Color;
 import java.awt.Container;
 import java.awt.FlowLayout;
 import java.awt.Graphics;
@@ -17,6 +16,7 @@ import java.awt.Image;
 import java.awt.Insets;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.util.ArrayList;
 import java.util.logging.Logger;
 
 import javax.swing.JButton;
@@ -69,7 +69,6 @@ public class DownloadInfoPanel extends JPanel {
         constraints.weightx = 1;
         constraints.weighty = 1;
         constraints.insets = insets;
-        
 
         list = MCListFactory.buildMCList(6, false, this);
 
@@ -119,8 +118,8 @@ public class DownloadInfoPanel extends JPanel {
                                                                   .getMCListItem(array[i]))))
                                                                           .getAddress()));
                         window.setVisible(true);
-                    } catch (java.net.UnknownHostException ex) {
-
+                    } catch (java.net.UnknownHostException _) {
+                        // skip
                     }
                 }
 
@@ -137,15 +136,21 @@ public class DownloadInfoPanel extends JPanel {
         panel.add(clearAll);
         clearAll.addActionListener(new ActionListener() {
             public void actionPerformed(ActionEvent e) {
+                ArrayList<Integer> indexesToRemove = new ArrayList<>();
                 for (int i = 0; i < list.length(); i++) {
-                    MCListItemInterface item = list.getMCListItem(i);
+                    MCListItemInterface<ServerDownloadDispatcher> item = list.getMCListItem(i);
                     if (((DownloadMCListItem) item).isDone()) {
-                        list.removeItem(item);
-                        i--;
+                        indexesToRemove.add(i);
                     }
                 }
+                
+                var intArray = new int[indexesToRemove.size()];
+                for (int i = 0; i < indexesToRemove.size(); i++) {
+                    intArray[i] = indexesToRemove.get(i);
+                }
+                
+                list.removeItem(intArray);
             }
-
         });
 
         constraints = new GridBagConstraints();
@@ -207,7 +212,7 @@ public class DownloadInfoPanel extends JPanel {
                 DownloadMCListItem downloadMCListItem = (DownloadMCListItem) list
                         .getMCListItem(index);
                 if (downloadMCListItem.isTrivialDownload()) {
-                    list.removeItem(downloadMCListItem);
+                    list.removeItem(index);
                 }
             }
         }

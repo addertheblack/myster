@@ -22,34 +22,34 @@ public class MysterStreamImpl implements MysterStream {
     @Override
     public List<String> getSearch(MysterSocket socket, MysterType searchType, String searchString)
             throws IOException {
-        return StandardSuite.getSearch(socket, searchType, searchString);
+        return StandardSuiteStream.getSearch(socket, searchType, searchString);
     }
 
     @Override
     public List<String> getTopServers(MysterSocket socket, MysterType searchType)
             throws IOException {
-        return StandardSuite.getTopServers(socket, searchType);
+        return StandardSuiteStream.getTopServers(socket, searchType);
     }
 
     @Override
     public MysterType[] getTypes(MysterSocket socket) throws IOException {
-        return StandardSuite.getTypes(socket);
+        return StandardSuiteStream.getTypes(socket);
     }
 
     @Override
     public MessagePack getServerStats(MysterSocket socket) throws IOException {
-        return StandardSuite.getServerStats(socket);
+        return StandardSuiteStream.getServerStats(socket);
     }
     
     @Override
     public String getFileFromHash(MysterSocket socket, MysterType type, FileHash[] hashes)
             throws IOException {
-        return StandardSuite.getFileFromHash(socket, type, hashes);
+        return StandardSuiteStream.getFileFromHash(socket, type, hashes);
     }
 
     @Override
     public MessagePack getFileStats(MysterSocket socket, MysterFileStub stub) throws IOException {
-        return StandardSuite.getFileStats(socket, stub);
+        return StandardSuiteStream.getFileStats(socket, stub);
     }
 
     @Override
@@ -57,6 +57,6 @@ public class MysterStreamImpl implements MysterStream {
                             HashCrawlerManager crawlerManager,
                             MysterAddress ip,
                             MysterFileStub stub) {
-        StandardSuite.downloadFile(c, crawlerManager, ip, stub);
+        StandardSuiteStream.downloadFile(c, crawlerManager, ip, stub);
     }
 }

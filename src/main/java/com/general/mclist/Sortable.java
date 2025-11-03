@@ -10,9 +10,9 @@
 package com.general.mclist;
 
 public interface Sortable<T> {
-    public boolean isLessThan(Sortable<?> m);
+    public boolean isLessThan(Sortable<T> m);
 
-    public boolean isGreaterThan(Sortable<?> m);
+    public boolean isGreaterThan(Sortable<T> m);
 
     public boolean equals(Object m);
 

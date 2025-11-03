@@ -16,7 +16,6 @@ public interface MCList<E> {
     public boolean isSelected(int i);
     public void select(int i);
     public void unselect(int i);
-    public void clearAllSelected();
     public void toggle(int i);
     public boolean isAnythingSelected();
     public int[] getSelectedIndexes();
@@ -26,7 +25,6 @@ public interface MCList<E> {
     public void addMCListEventListener(MCListEventListener e);
     public void clearAll();
     public void removeItem(int i);
-    public void removeItem(MCListItemInterface<E> o);
     public void removeItem(int[] indexes);
     public E getItem(int i);
     public MCListItemInterface<E> getMCListItem(int i);

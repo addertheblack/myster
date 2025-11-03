@@ -10,7 +10,6 @@
 
 package com.myster.client.ui;
 
-import java.awt.Color;
 import java.awt.Dimension;
 import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
@@ -19,25 +18,36 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.FocusEvent;
 import java.awt.event.FocusListener;
+import java.util.Arrays;
+import java.util.HashMap;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.Optional;
 
 import javax.swing.JButton;
 import javax.swing.JTextArea;
 import javax.swing.JTextField;
 
+import com.general.mclist.ColumnSortable;
 import com.general.mclist.GenericMCListItem;
 import com.general.mclist.MCList;
 import com.general.mclist.MCListEvent;
 import com.general.mclist.MCListEventAdapter;
 import com.general.mclist.MCListFactory;
 import com.general.mclist.Sortable;
+import com.general.mclist.SortableByte;
 import com.general.mclist.SortableString;
+import com.general.mclist.TreeMCList;
+import com.general.mclist.TreeMCListTableModel.TreeMCListItem;
+import com.general.mclist.TreeMCListTableModel.TreePath;
+import com.general.mclist.TreeMCListTableModel.TreePathString;
 import com.general.util.AnswerDialog;
+import com.general.util.IconLoader;
 import com.general.util.MessageField;
 import com.general.util.MessagePanel;
 import com.general.util.StandardWindowBehavior;
 import com.general.util.Util;
+import com.myster.client.ui.FileListerThread.FileRecord;
 import com.myster.net.MysterAddress;
 import com.myster.net.client.MysterProtocol;
 import com.myster.net.server.ServerPreferences;
@@ -151,6 +161,7 @@ public class ClientWindow extends MysterFrame implements Sayable {
         statsPanel.setMaximumSize(new Dimension(1,1));
 
         connect = new JButton("Connect");
+        connect.setIcon(IconLoader.loadSvg(ClientWindow.class, "connect-button"));
         connect.setSize(SBXDEFAULT, GYDEFAULT);
         getRootPane().setDefaultButton(connect);
 
@@ -193,10 +204,10 @@ public class ClientWindow extends MysterFrame implements Sayable {
         fileTypeList.sortBy(-1);
         fileTypeList.setColumnName(0, "Type");
         
-        fileList = MCListFactory.buildMCList(1, true, this);
-        fileList.sortBy(-1);
-        fileList.setColumnName(0, "Files");
+        fileList = TreeMCList.create(new String[]{"Name", "Size"}, new TreePathString(new String[] {}));
 
+        fileList.sortBy(0);
+        
         msg = new MessageField("Idle...");
 
         instant = new JButton("Instant Message");
@@ -271,6 +282,7 @@ public class ClientWindow extends MysterFrame implements Sayable {
                 stopStats();
             }
         });
+        fileList.setColumnWidth(0, 150);
 
         addWindowListener(new StandardWindowBehavior());
     }
@@ -304,16 +316,97 @@ public class ClientWindow extends MysterFrame implements Sayable {
         }
     }
 
-    public void addItemsToFileList(String[] files) {
+    public void addItemsToFileList(FileRecord[] files) {
         @SuppressWarnings("unchecked")
-        GenericMCListItem<String>[] items = new GenericMCListItem[files.length];
+        TreeMCListItem<String>[] items = new TreeMCListItem[files.length];
 
-        for (int i = 0; i < items.length; i++)
-            items[i] = new GenericMCListItem<String>(new Sortable[] { new SortableString(files[i]) },
-                    files[i]);
+        var containers = new HashMap<TreePath, TreeMCListItem<String>>();
+        
+        for (int i = 0; i < files.length; i++) {
+            var parentPath = extractParentPath(extractPath(files[i]));
+            
+            var path = new TreePathString(parentPath);
+
+            mkdir(containers, parentPath);
+
+            final var file = files[i];
+            
+            items[i] = new TreeMCListItem<String>(path, extractFileRecordElement(file), Optional.empty());
+        }
 
         fileList.addItem(items);
+        fileList.addItem(containers.values().toArray(new TreeMCListItem[] {}));
     }
+
+    private void mkdir(HashMap<TreePath, TreeMCListItem<String>> containers, String[] p) {
+        // TreePathString(..) need to have the path[0..length-1]
+        // added as containers first
+        for (String[] parentPath = p; parentPath.length > 0; ) {
+            if (containers.containsKey(new TreePathString(parentPath))) {
+                return; // we've already done this one so skip
+            }
+            
+            var temp = extractParentPath(parentPath);
+            
+            containers
+                    .put(new TreePathString(parentPath),
+                         new TreeMCListItem<String>(new TreePathString(temp),
+                                                    extractDirElement(parentPath[parentPath.length
+                                                            - 1]),
+                                                    Optional.of(new TreePathString(parentPath))));
+            parentPath = temp;
+        }
+    }
+
+    private ColumnSortable<String> extractFileRecordElement(final FileRecord file) {
+        return new ColumnSortable<String>() {
+            public Sortable getValueOfColumn(int column) {
+                return new Sortable[] { new SortableString(file.file()),
+                        new SortableByte(file.metaData()
+                                .getLong("/size")
+                                .orElse((long) 0)) }[column];
+            }
+
+            public String getObject() {
+                return file.file();
+            }
+        };
+    }
+    
+    private ColumnSortable<String> extractDirElement(final String name) {
+        return new ColumnSortable<String>() {
+            public Sortable getValueOfColumn(int column) {
+                return new Sortable[] { new SortableString(name),
+                        new SortableByte(-2) }[column];
+            }
+
+            public String getObject() {
+                return name;
+            }
+        };
+    }
+    
+    private static String[] extractPath(FileRecord file) {
+        var path = file.metaData().getStringArray("/path").orElse(new String[] {});
+        for (String element : path) {
+            if (element == null) {
+                return new String[] {};
+            } else if (element.equals("")) {
+                return new String[] {};
+            }
+        }
+        
+        return path;
+    }
+    
+    private static String[] extractParentPath(String[] path) {
+        if (path.length <= 1) {
+            return new String[] {};
+        }
+        
+        return  Arrays.copyOfRange(path, 0, path.length - 1);
+    }
+    
 
     public void refreshIP(final MysterAddress address) {
         MysterServer server = tracker.getQuickServerStats(address);

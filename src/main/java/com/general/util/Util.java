@@ -5,14 +5,11 @@ import java.awt.EventQueue;
 import java.awt.GraphicsConfiguration;
 import java.awt.GraphicsDevice;
 import java.awt.GraphicsEnvironment;
-import java.awt.Image;
 import java.awt.Insets;
-import java.awt.MediaTracker;
 import java.awt.Rectangle;
 import java.awt.Toolkit;
 import java.awt.Window;
 import java.lang.reflect.InvocationTargetException;
-import java.net.URL;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.util.ArrayList;
@@ -31,54 +28,6 @@ import javax.swing.ListCellRenderer;
 
 public class Util { //This code was taken from an Apple Sample Code package,
     private static final Logger LOGGER = Logger.getLogger(Util.class.getName());
-    
-    public static Image loadImage(String filename, Component watcher) {
-        if (filename != null) {
-            URL url = watcher.getClass().getResource(filename);
-            return loadImage(filename, watcher, url);
-        }
-        return null;
-    }
-
-    public static Image loadImage(String filename, Component watcher, URL url) {
-        Image image = null;
-
-        if (url == null) {
-            System.err.println("loadImage() could not find \"" + filename + "\"");
-        } else {
-            image = watcher.getToolkit().getImage(url);
-            if (image == null) {
-                System.err.println("loadImage() getImage() failed for \"" + filename + "\"");
-            } else {
-                MediaTracker tracker = new MediaTracker(watcher);
-
-                try {
-                    tracker.addImage(image, 0);
-                    tracker.waitForID(0);
-                } catch (InterruptedException e) {
-                    System.err.println("loadImage(): " + e);
-                } finally {
-                    boolean isError = tracker.isErrorAny();
-                    if (isError) {
-                        System.err.println("loadImage() failed to load \"" + filename + "\"");
-                        int flags = tracker.statusAll(true);
-
-                        boolean loading = 0 != (flags & MediaTracker.LOADING);
-                        boolean aborted = 0 != (flags & MediaTracker.ABORTED);
-                        boolean errored = 0 != (flags & MediaTracker.ERRORED);
-                        boolean complete = 0 != (flags & MediaTracker.COMPLETE);
-                        System.err.println("loading: " + loading);
-                        System.err.println("aborted: " + aborted);
-                        System.err.println("errored: " + errored);
-                        System.err.println("complete: " + complete);
-                    }
-                }
-            }
-        }
-
-        return image;
-    }
-    
     public static final String SEPARATOR = "---------------------------------";
 
     @SuppressWarnings("unchecked")

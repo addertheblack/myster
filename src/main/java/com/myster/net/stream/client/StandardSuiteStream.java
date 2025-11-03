@@ -4,15 +4,21 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.Executors;
+import java.util.concurrent.FutureTask;
 
+import com.general.thread.AsyncContextList;
+import com.general.thread.PromiseFutureList;
 import com.myster.filemanager.FileTypeList;
 import com.myster.hash.FileHash;
 import com.myster.mml.MessagePack;
+import com.myster.mml.RobustMML;
+import com.myster.net.DisconnectException;
 import com.myster.net.MysterAddress;
 import com.myster.net.MysterSocket;
 import com.myster.net.stream.client.msdownload.DownloadInitiator;
 import com.myster.search.HashCrawlerManager;
 import com.myster.search.MysterFileStub;
+import com.myster.search.SearchResult;
 import com.myster.type.MysterType;
 import com.myster.ui.MysterFrameContext;
 
@@ -20,7 +26,7 @@ import com.myster.ui.MysterFrameContext;
  * Contains many of the more common (simple) stream based connection sections. Most of these
  * connection sections have UDP transaction equivalents.
  */
-public class StandardSuite {
+public class StandardSuiteStream {
     public static List<String> getSearch(MysterSocket socket, MysterType searchType, String searchString)
             throws IOException {
         List<String> searchResults = new ArrayList<>();
@@ -122,14 +128,69 @@ public class StandardSuite {
         socket.out.writeUTF(stub.getName());
 
         // Read the MessagePack data length and bytes
-        int messagePackLength = socket.in.readInt();
-        byte[] messagePackBytes = new byte[messagePackLength];
-        socket.in.readFully(messagePackBytes);
+        return socket.in.readMessagePack();
+    }
+    
+    public static PromiseFutureList<MessagePack> getFileStatsBatch(MysterSocket socket, MysterFileStub[] stubs)
+            throws IOException {
+        return PromiseFutureList.newPromiseFutureList(l -> {
+            Executors.newVirtualThreadPerTaskExecutor().execute(() -> {
+                try {
+                    // This is a speed hack.
+                    int pointer = 0;
+                    int current = 0;
+                    final int MAX_OUTSTANDING = 30;
+                    while (current < stubs.length) { // useful.
+                        checkCancelled(l);
 
-        try {
-            return MessagePack.fromBytes(messagePackBytes);
-        } catch (IOException _) {
-            throw new ProtocolException("Server sent corrupt MessagePack data.");
+                        if (pointer < stubs.length) {
+                            MysterFileStub stub = stubs[pointer];
+                            socket.out.writeInt(77);
+
+                            socket.out.writeType(stub.getType());
+                            socket.out.writeUTF(stub.getName());
+                            pointer++;
+                        }
+
+                        checkCancelled(l);
+
+                        while (socket.in.available() > 1 
+                                || (pointer - current > MAX_OUTSTANDING)
+                                || pointer >= stubs.length) {
+                            if (pointer - current > MAX_OUTSTANDING) {
+                                socket.out.flush();
+                            }
+                            
+
+                            byte errorByte = socket.in.readByte();
+                            if (errorByte != 1) {
+                                throw new DisconnectException("Reply for server gave error while getting file stats in a batch. Error type "
+                                        + errorByte);
+                            }
+
+                            checkCancelled(l);
+
+                            l.addResult(socket.in.readMessagePack());
+
+                            current++;
+
+                            if (current >= stubs.length) {
+                                break;
+                            }
+                        }
+                    }
+                } catch (Exception ex) {
+                    l.setException(ex);
+                }
+
+                l.done();
+            });
+        });
+    }
+
+    private static void checkCancelled(AsyncContextList<MessagePack> l) throws DisconnectException {
+        if (l.isCancelled()) {
+            throw new DisconnectException();
         }
     }
 

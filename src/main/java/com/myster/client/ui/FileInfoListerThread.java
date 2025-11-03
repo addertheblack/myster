@@ -159,7 +159,7 @@ public class FileInfoListerThread extends MysterThread {
                 keyValue.put(name, " ->");
                 listDir(fileStats, keyValue, newPath + "/", prefix + "  ");
             } else {
-                keyValue.put(prefix + (dirList.get(i)), fileStats.getToString(newPath).orElse(null));
+                keyValue.put(prefix + (dirList.get(i)), fileStats.get(newPath).orElse(null));
             }
         }
     }

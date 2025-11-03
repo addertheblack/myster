@@ -11,7 +11,7 @@ package com.general.mclist;
 
 import java.text.Collator;
 
-public class SortableString implements Sortable {
+public class SortableString implements Sortable<String> {
     protected String string;
 
     private static final Collator collator = Collator.getInstance();
@@ -20,29 +20,24 @@ public class SortableString implements Sortable {
         string = s;
     }
 
-    public Object getValue() {
+    public String getValue() {
         return string;
     }
 
-    public boolean isLessThan(Sortable temp) {
+    public boolean isLessThan(Sortable<String> temp) {
         if (temp == this)
             return false;
         if (!(temp instanceof SortableString))
             return false;
-        String s = (String) temp.getValue();
-
-        return collator.compare(string, s) < 0;
-        //return collator(string.toUpperCase(),s.toUpperCase())<0;
+        return collator.compare(string, temp.getValue()) < 0;
     }
 
-    public boolean isGreaterThan(Sortable temp) {
+    public boolean isGreaterThan(Sortable<String> temp) {
         if (temp == this)
             return false;
         if (!(temp instanceof SortableString))
             return false;
-        String s = (String) temp.getValue();
-
-        return collator.compare(string, s) > 0;
+        return collator.compare(string, temp.getValue()) > 0;
         //return collator(string.toUpperCase(),s.toUpperCase())>0;
     }
 

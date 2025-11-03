@@ -1,15 +1,19 @@
 package com.myster.search;
 
 import java.io.IOException;
+import java.util.Arrays;
 import java.util.List;
+import java.util.concurrent.CancellationException;
+import java.util.concurrent.ExecutionException;
 
-
+import com.general.thread.Invoker;
+import com.general.util.UnexpectedException;
 import com.general.util.Util;
-import com.myster.mml.RobustMML;
 import com.myster.net.DisconnectException;
 import com.myster.net.MysterAddress;
 import com.myster.net.MysterSocket;
 import com.myster.net.client.MysterProtocol;
+import com.myster.net.stream.client.StandardSuiteStream;
 import com.myster.tracker.Tracker;
 import com.myster.type.MysterType;
 import com.myster.ui.MysterFrameContext;
@@ -117,68 +121,52 @@ public class StandardMysterSearch {
     }
 
     /**
-     * When passed a socket, type and Vector of search results (String) as well as a listener, this
-     * routine will update the search results in the listener with the meta data found from the
-     * remote server.
+     * When passed a socket, type and Vector of search results (String) as well
+     * as a listener, this routine will update the search results in the
+     * listener with the meta data found from the remote server.
      * 
      * @param socket
      *            socket to ask for File information on.
      * @param mysterSearchResults
      *            vector of strings, search results...
      * @throws IOException
-     *             (also a Disconnect exception) throws this exception on IO errors an if the search
-     *             object is told to die (die die die!).
+     *             (also a Disconnect exception) throws this exception on IO
+     *             errors an if the search object is told to die (die die die!).
      */
     public void dealWithFileStats(MysterSocket socket, MysterSearchResult[] mysterSearchResults)
             throws IOException {
-        //This is a speed hack.
-        int pointer = 0;
-        int current = 0;
-        final int MAX_OUTSTANDING = 25;
-        while (current < mysterSearchResults.length) { //useful.
-            if (endFlag)
-                throw new DisconnectException();
 
-            if (pointer < mysterSearchResults.length) {
-                SearchResult result = mysterSearchResults[pointer];
-                socket.out.writeInt(77);
+        List<MysterFileStub> fileStubs =
+                Util.map(Arrays.asList(mysterSearchResults),
+                         r -> new MysterFileStub(r.getHostAddress(), type, r.getName()));
+        final int[] counter = new int[] { 0 };
+        var promise = StandardSuiteStream
+                .getFileStatsBatch(socket, fileStubs.toArray(new MysterFileStub[] {}))
+                .setInvoker(Invoker.EDT)
+                .addPartialResultListener(messagePack -> {
+                    mysterSearchResults[counter[0]].setFileStats(messagePack);
 
-                socket.out.writeType(type);
-                socket.out.writeUTF(result.getName());
-                pointer++;
-            }
+                    listener.searchStats(mysterSearchResults[counter[0]]);
 
-            if (endFlag)
-                throw new DisconnectException("Flagged to end");
-
-            while (socket.in.available() > 0 || (pointer - current > MAX_OUTSTANDING)
-                    || pointer >= mysterSearchResults.length) {
-                if (socket.in.readByte() != 1)
-                    return;
-
-                if (endFlag)
-                    throw new DisconnectException();
-                
-                if (pointer - current > MAX_OUTSTANDING) {
-                    socket.out.flush();
-                }
-
-                RobustMML mml;
-                try {
-                    mml = new RobustMML(socket.in.readUTF());
-                } catch (Exception ex) {
-                    return;
-                }
-
-                mysterSearchResults[current].setMML(mml);
-
-                listener.searchStats(mysterSearchResults[current]);
-
-                current++;
-
-                if (current >= mysterSearchResults.length) {
-                    break;
-                }
+                    counter[0]++;
+                });
+        
+        try {
+            // wait for async task to complete
+            promise.get();
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+            
+            throw new CancellationException();
+        } catch (ExecutionException e) {
+            var cause = e.getCause();
+            
+            if ( cause instanceof RuntimeException r) {
+                throw r;
+            } else if (cause instanceof IOException r ) {
+                throw r;
+            } else {
+                throw new UnexpectedException(e);
             }
         }
     }

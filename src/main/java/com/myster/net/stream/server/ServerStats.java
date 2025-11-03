@@ -68,17 +68,17 @@ public class ServerStats extends ServerStreamHandler {
 
             String tempstring = prefs.query(com.myster.application.MysterGlobals.SPEEDPATH);
             if (!(tempstring.equals(""))) {
-                serverStats.put(SPEED, tempstring);
+                serverStats.putString(SPEED, tempstring);
             }
 
-            serverStats.put(MYSTER_VERSION, "1.0");
+            serverStats.putString(MYSTER_VERSION, "1.0");
 
             getNumberOfFilesMessagePack(serverStats, fileManager); //Adds the number of files data.
 
             String ident = serverName;
             if (ident != null) {
                 if (!ident.equals("")) {
-                    serverStats.put(SERVER_NAME, ident);
+                    serverStats.putString(SERVER_NAME, ident);
                 }
             }
             

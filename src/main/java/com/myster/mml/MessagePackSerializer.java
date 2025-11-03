@@ -110,11 +110,11 @@ public class MessagePackSerializer implements com.myster.mml.MessagePack {
             throw new MMLPathException("\"" + path + "\" is not a branch path, it's a leaf.");
     }
 
-    public synchronized void put(String path, String value) {
+    public synchronized void putString(String path, String value) {
         putValue(path, value);
     }
 
-    public synchronized Optional<String> get(String path) {
+    public synchronized Optional<String> getString(String path) {
         return getValue(path).map(i -> (String) i);
     }
     
@@ -197,6 +197,18 @@ public class MessagePackSerializer implements com.myster.mml.MessagePack {
         for (int i = 0; i < value.length; i++) {
             objectArray[i] = (long) value[i]; // Store as Long for consistency
                                               // with MessagePack
+        }
+        putValue(path, objectArray);
+    }
+
+    public synchronized void putStringArray(String path, String... value) {
+        if (value == null) {
+            putValue(path, null);
+            return;
+        }
+        Object[] objectArray = new Object[value.length];
+        for (int i = 0; i < value.length; i++) {
+            objectArray[i] = value[i]; // Already String
         }
         putValue(path, objectArray);
     }
@@ -340,6 +352,26 @@ public class MessagePackSerializer implements com.myster.mml.MessagePack {
             }
             
             return doubleArray;
+        });
+    }
+
+    public synchronized Optional<String[]> getStringArray(String path) {
+        return getValue(path).map(value -> {
+            if (!(value instanceof Object[])) {
+                throw new ClassCastException("Value at path '" + path + "' is not an array, it's a " + value.getClass().getSimpleName());
+            }
+            
+            Object[] objectArray = (Object[]) value;
+            String[] stringArray = new String[objectArray.length];
+            
+            for (int i = 0; i < objectArray.length; i++) {
+                if (objectArray[i] != null && !(objectArray[i] instanceof String)) {
+                    throw new ClassCastException("Array element at index " + i + " is not a string, it's a " + objectArray[i].getClass().getSimpleName());
+                }
+                stringArray[i] = (String) objectArray[i];
+            }
+            
+            return stringArray;
         });
     }
 

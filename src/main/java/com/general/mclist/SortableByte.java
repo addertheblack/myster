@@ -9,8 +9,12 @@ public class SortableByte extends SortableLong {
     }
 
     public String toString() {
-        if (number < 0)
+        if (number == -1) {
             return "??";
+        } else if (number == -2) {
+            return "";
+        }
+        
         return Util.getStringFromBytes(((Long) getValue()).longValue());
     }
 

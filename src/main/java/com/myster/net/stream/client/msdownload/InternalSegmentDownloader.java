@@ -136,7 +136,7 @@ class InternalSegmentDownloader implements SegmentDownloader {
 
             // throws Exception if bad
             debug("Work Thread " + name + " -> Checking Protocol");
-            com.myster.net.stream.client.StandardSuite.checkProtocol(socket.in); 
+            com.myster.net.stream.client.StandardSuiteStream.checkProtocol(socket.in); 
 
             debug("Work Thread " + name + " -> Doing Header");
             doHeader(socket);
@@ -161,7 +161,7 @@ class InternalSegmentDownloader implements SegmentDownloader {
                 workingSegment = null;
             }
         } catch (UnknownProtocolException ex) {
-            com.myster.net.stream.client.StandardSuite.disconnectWithoutException(socket);
+            com.myster.net.stream.client.StandardSuiteStream.disconnectWithoutException(socket);
 
             // Well, that's bad.
             debug("Server doesn't understand multi-source download.");
@@ -204,7 +204,7 @@ class InternalSegmentDownloader implements SegmentDownloader {
         socket.out.writeUTF(stub.getName());
 
         if (socket.in.read() != 1) {
-            com.myster.net.stream.client.StandardSuite.disconnect(socket);
+            com.myster.net.stream.client.StandardSuiteStream.disconnect(socket);
 
             throw new IOException("Could not find file");
         }
@@ -219,7 +219,7 @@ class InternalSegmentDownloader implements SegmentDownloader {
         socket.out.writeLong(workingSegment.workSegment.length);
 
         if (workingSegment.workSegment.isEndSignal()) {
-            com.myster.net.stream.client.StandardSuite.disconnect(socket);
+            com.myster.net.stream.client.StandardSuiteStream.disconnect(socket);
             return false;
         }
 

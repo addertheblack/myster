@@ -23,9 +23,9 @@ import java.util.stream.Stream;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
 
+import com.general.mclist.AbstractMCListItemInterface;
 import com.general.mclist.MCList;
 import com.general.mclist.MCListFactory;
-import com.general.mclist.MCListItemInterface;
 import com.general.mclist.Sortable;
 import com.general.mclist.SortableLong;
 import com.general.mclist.SortableString;
@@ -309,7 +309,7 @@ public class TrackerWindow extends MysterFrame {
         }
     }
 
-    static class TrackerMCListItem extends MCListItemInterface<TrackerMCListItem> {
+    static class TrackerMCListItem extends AbstractMCListItemInterface<TrackerMCListItem> {
         private final MysterServer server;
         private final Optional<MysterType> type;
 
@@ -403,7 +403,7 @@ public class TrackerWindow extends MysterFrame {
                 this.status = status;
             }
 
-            public boolean isLessThan(Sortable<?> temp) {
+            public boolean isLessThan(Sortable<Boolean[]> temp) {
                 SortableStatus other = (SortableStatus) (temp);
 
                 if (isUntried) {
@@ -421,7 +421,7 @@ public class TrackerWindow extends MysterFrame {
                 }
             }
 
-            public boolean isGreaterThan(Sortable<?> temp) {
+            public boolean isGreaterThan(Sortable<Boolean[]> temp) {
                 SortableStatus other = (SortableStatus) (temp);
 
                 if (isUntried) {

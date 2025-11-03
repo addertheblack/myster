@@ -4,7 +4,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import com.general.util.Util;
-import com.myster.mml.RobustMML;
+import com.myster.mml.MessagePack;
 import com.myster.net.MysterAddress;
 import com.myster.net.client.MysterProtocol;
 import com.myster.search.ui.ServerStatsFromCache;
@@ -18,7 +18,7 @@ public class MysterSearchResult implements SearchResult {
     private final HashCrawlerManager hashCrawler;
     private final MysterFrameContext context;
     
-    private RobustMML mml;
+    private MessagePack mml;
 
     public MysterSearchResult(MysterProtocol protocol,
                               HashCrawlerManager hashCrawler,
@@ -32,7 +32,7 @@ public class MysterSearchResult implements SearchResult {
         this.cache = cache;
     }
 
-    public void setMML(RobustMML m) {
+    public void setFileStats(MessagePack m) {
         Util.invokeNowOrLater(() -> mml = m);
     }
 
@@ -51,7 +51,7 @@ public class MysterSearchResult implements SearchResult {
     //gets a value for a meta data thingy
     @Override
     public String getMetaData(String key) {
-        return (mml == null ? null : mml.get(key));
+        return (mml == null ? null : mml.get(key).orElse(null));
     }
 
     //gets the list of known meta data types for this item.
@@ -66,7 +66,7 @@ public class MysterSearchResult implements SearchResult {
 
         for (int i = 0; i < items.size(); i++) {
             String s_temp = (items.get(i));
-            if (mml.isAFile("/" + s_temp)) {
+            if (mml.isAValue("/" + s_temp)) {
                 v_temp.add("/" + s_temp);
             }
         }

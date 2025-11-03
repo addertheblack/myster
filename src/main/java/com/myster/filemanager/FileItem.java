@@ -1,6 +1,8 @@
 package com.myster.filemanager;
 
 import java.io.File;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.logging.Logger;
 
 import com.myster.hash.FileHash;
@@ -12,7 +14,10 @@ public class FileItem {
     private final File file;
     private FileHash[] fileHashes;
 
-    public FileItem(File file) {
+    private final File root;
+
+    public FileItem(File root, File file) {
+        this.root = root;
         this.file = file;
     }
 
@@ -81,11 +86,13 @@ public class FileItem {
 
     public static final String HASH_PATH = "/hash/";
 
+    private volatile long fileSize = -1;
     public MessagePack getMessagePackRepresentation() {
         MessagePack messagePack = MessagePack.newEmpty();
 
         if (file != null) {
-            messagePack.putLong("/size", file.length());
+            fileSize = fileSize == -1 ? file.length() : fileSize;
+            messagePack.putLong("/size", fileSize);
 
             if (fileHashes != null) {
                 for (int i = 0; i < fileHashes.length; i++) {
@@ -94,9 +101,47 @@ public class FileItem {
                                            fileHashes[i].getBytes());
                 }
             }
+
+            var pathElements = new ArrayList<String>();
+            extractPathFromFileAndRoot(root, file, pathElements);
+            messagePack.putStringArray("/path", pathElements.toArray(new String[] {}));
         }
 
         return messagePack;
+    }
+    
+    private static void extractPathFromFileAndRoot(File root, File filePath, List<String> path) {
+        if (root == null || filePath == null) {
+            throw new IllegalArgumentException("Root and filePath cannot be null");
+        }
+        
+        // Normalize paths to handle symbolic links, relative paths, etc.
+        File normalizedRoot = root.getAbsoluteFile();
+        File normalizedFilePath = filePath.getAbsoluteFile();
+        
+        if (normalizedRoot.equals(normalizedFilePath)) {
+            return;
+        }
+        
+        // Build path from file back to root (iterative, not recursive)
+        List<String> reversePath = new ArrayList<>();
+        File current = normalizedFilePath;
+        
+        while (current != null && !normalizedRoot.equals(current)) {
+            reversePath.add(current.getName());
+            current = current.getParentFile();
+        }
+        
+        // Check if we actually reached the root
+        if (current == null) {
+            throw new IllegalArgumentException("File '" + filePath + "' is not under root '" + root + "'");
+        }
+        
+        
+        // Add path elements in correct order (reverse of what we collected)
+        for (int i = reversePath.size() - 1; i >= 0; i--) {
+            path.add(reversePath.get(i));
+        }
     }
 
     /*
