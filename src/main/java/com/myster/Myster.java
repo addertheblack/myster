@@ -260,10 +260,11 @@ public class Myster {
                                                      serverDispatcher);
         addServerConnectionSettings(serverFacade, tracker, serverPreferences, identity, datagramManager, fileManager);
         
+        Optional<KeyPair> mainIdentity = Identity.getIdentity().getMainIdentity();
         serverFacade.addEncryptionSupport(new Lookup() {
             @Override
             public Optional<KeyPair> getServerKeyPair(Object serverId) {
-                return Identity.getIdentity().getMainIdentity();
+                return mainIdentity;
             }
             
             @Override
