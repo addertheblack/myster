@@ -83,11 +83,11 @@ public class MSPartialFile implements AutoCloseable {
         
         try {
             maskFile = new RandomAccessFile(fileReference, "rw");
-        } catch (IOException ex) {
+        } catch (IOException _) {
             throw new IOException("File \"" + fileReference + "\" appears to be read only.");
         }
-        PartialFileHeader header = new PartialFileHeader(address, filename, path, type, blockSize, hashes,
-                fileLength);
+        PartialFileHeader header =
+                new PartialFileHeader(address, filename, path, type, blockSize, hashes, fileLength);
 
         maskFile.write(header.toBytes());
 
@@ -436,7 +436,7 @@ public class MSPartialFile implements AutoCloseable {
                 String string_type = mml.get(TYPE);
                 String string_path = mml.get(PATH);
 
-                assertNotNull(filename); //throws IOException on null
+                assertNotNull(filename); // throws IOException on null
                 assertNotNull(string_blockSize);
                 assertNotNull(string_length);
                 assertNotNull(string_type);
@@ -444,7 +444,7 @@ public class MSPartialFile implements AutoCloseable {
                 blockSize = Integer.parseInt(string_blockSize);
                 hashes = getHashesFromHeader(mml, HASHES_PATH);
                 fileLength = Long.parseLong(string_length);
-                
+
                 // throws NumberFormatException
                 byte[] shortBytesType = Util.fromHexString(string_type);
                 type = new MysterType(shortBytesType);
@@ -454,9 +454,14 @@ public class MSPartialFile implements AutoCloseable {
             }
         }
 
-        PartialFileHeader(MysterAddress address, String filename, File path, MysterType type, long blockSize,
-                FileHash[] hashes, long fileLength) {
-            
+        PartialFileHeader(MysterAddress address,
+                          String filename,
+                          File path,
+                          MysterType type,
+                          long blockSize,
+                          FileHash[] hashes,
+                          long fileLength) {
+
             this.address = address.toString();
             this.filename = filename;
             this.type = type;
@@ -543,7 +548,7 @@ public class MSPartialFile implements AutoCloseable {
 
             try {
                 out.writeUTF(toMML().toString());
-            } catch (IOException ex) {
+            } catch (IOException _) {
                 throw new com.general.util.UnexpectedException("This line should not throw an error.");
             }
 
