@@ -51,8 +51,10 @@ import com.myster.util.TypeChoice;
 
 public class SearchWindow extends MysterFrame implements SearchResultListener, Sayable {
     private static final Logger LOGGER = Logger.getLogger(SearchWindow.class.getName());
+    
     private static final int XDEFAULT = 640;
     private static final int YDEFAULT = 400;
+    
     private static final String PREF_LOCATION_KEY = "Search Window";
 
     private static int counter = 0;

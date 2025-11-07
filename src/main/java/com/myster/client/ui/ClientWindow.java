@@ -301,13 +301,13 @@ public class ClientWindow extends MysterFrame implements Sayable {
         super.dispose();
         stopConnect();
     }
-    
+
     public void addItemToTypeList(MysterType t) {
-        fileTypeList
-                .addItem(new GenericMCListItem<MysterType>(new Sortable[] {
-                         new SortableString(typeDescriptionList.get(t)
-                                .map(TypeDescription::getDescription).orElse(t.toString())),
-                         new SortableString(t.toString()) }, t));
+        fileTypeList.addItem(new GenericMCListItem<MysterType>(new Sortable[] {
+                                     new SortableString(typeDescriptionList.get(t)
+                                             .map(TypeDescription::getDescription)
+                                             .orElse(t.toString())),
+                                     new SortableString(t.toString()) }, t));
 
         if (t.equals(type)) {
             type = null;
@@ -376,8 +376,7 @@ public class ClientWindow extends MysterFrame implements Sayable {
     private ColumnSortable<String> extractDirElement(final String name) {
         return new ColumnSortable<String>() {
             public Sortable getValueOfColumn(int column) {
-                return new Sortable[] { new SortableString(name),
-                        new SortableByte(-2) }[column];
+                return new Sortable[] { new SortableString(name), new SortableByte(-2) }[column];
             }
 
             public String getObject() {
@@ -439,6 +438,17 @@ public class ClientWindow extends MysterFrame implements Sayable {
             return "";
 
         return fileList.getItem(selectedIndex);
+    }
+    
+    public boolean isDir() {
+        int rowIndex = fileList.getSelectedIndex();
+        if (rowIndex == -1) {
+            return false;
+        }
+        
+        var row = (TreeMCListItem<String>)fileList.getMCListItem(rowIndex);
+        
+        return row.isContainer();
     }
 
     public void say(String s) {

@@ -243,8 +243,9 @@ public class DownloadInitiator implements Runnable {
         MysterSocket socket = null;
         try {
             socket = MysterSocketFactory.makeStreamConnection(ip);
-        } catch (Exception ex) {
+        } catch (Exception _) {
             com.general.util.AnswerDialog.simpleAlert("Could not connect to server.");
+            
             return;
         }
 
