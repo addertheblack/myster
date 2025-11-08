@@ -27,6 +27,8 @@ import java.util.Optional;
 import java.util.function.BiConsumer;
 
 import javax.swing.JButton;
+import javax.swing.JPanel;
+import javax.swing.JSplitPane;
 import javax.swing.JTextArea;
 import javax.swing.JTextField;
 
@@ -70,7 +72,7 @@ public class ClientWindow extends MysterFrame implements Sayable {
     private static final String WINDOW_KEEPER_KEY = "Myster's Client Windows";
     private static final String CLIENT_WINDOW_TITLE_PREFIX = "Direct Connection ";
     
-    private static final int XDEFAULT = 600;
+    private static final int XDEFAULT = 640;
     private static final int YDEFAULT = 400;
     private static final int SBXDEFAULT = 72; //send button X default
     private static final int GYDEFAULT = 50; //Generic Y default
@@ -84,12 +86,13 @@ public class ClientWindow extends MysterFrame implements Sayable {
     private static TypeDescriptionList typeDescriptionList;
     
     private JButton connect;
+    private JButton toggleStatsButton;
     private JTextField ipTextField;
     private MCList<MysterType> fileTypeList;
     private MCList<String> fileList;
     private JTextArea statsPanel;
+    private JSplitPane splitPane;
     private String currentip;
-    private JButton instant;
     private MessageField msg;
     private TypeListerThread connectToThread;
     private FileListerThread fileListThread;
@@ -151,21 +154,26 @@ public class ClientWindow extends MysterFrame implements Sayable {
     private void init() {
         context.keeper().addFrame(this, WINDOW_KEEPER_KEY, WindowLocationKeeper.MULTIPLE_WINDOWS);
         
-        // Do interface setup:
         setLayout(new GridBagLayout());
         var builder = new com.general.util.GridBagBuilder()
             .withFill(GridBagConstraints.BOTH)
             .withInsets(new Insets(5, 5, 5, 5));
 
         statsPanel = MessagePanel.createNew("");
-        statsPanel.setMinimumSize(new Dimension(1,1));
-        statsPanel.setPreferredSize(new Dimension(1,1));
-        statsPanel.setMaximumSize(new Dimension(1,1));
+        statsPanel.setMinimumSize(new Dimension(150, 1));
+        statsPanel.setPreferredSize(new Dimension(200, 1));
+        statsPanel.setBorder(javax.swing.BorderFactory.createEmptyBorder(5, 5, 5, 5));
 
         connect = new JButton("Connect");
         connect.setIcon(IconLoader.loadSvg(ClientWindow.class, "connect-button"));
         connect.setSize(SBXDEFAULT, GYDEFAULT);
         getRootPane().setDefaultButton(connect);
+
+        // Create toggle button for stats panel
+        toggleStatsButton = new JButton("≡");
+        toggleStatsButton.setToolTipText("Show/Hide Stats Panel");
+        toggleStatsButton.setPreferredSize(new Dimension(30, connect.getPreferredSize().height));
+        toggleStatsButton.setFocusable(false);
 
         ipTextField = new JTextField(ENTER_AN_IP_HERE) {
             @Override
@@ -212,40 +220,36 @@ public class ClientWindow extends MysterFrame implements Sayable {
         
         msg = new MessageField("Idle...");
 
-        instant = new JButton("Instant Message");
-        instant.addActionListener(new ActionListener() {
-            public void actionPerformed(ActionEvent e) {
-                try {
-                    com.myster.net.MysterAddress address =
-                            MysterAddress.createMysterAddress(ipTextField.getText());
-                    com.myster.net.datagram.message.MessageWindow window =
-                            new com.myster.net.datagram.message.MessageWindow(getMysterFrameContext(),
-                                                                 protocol,
-                                                                 address);
-                    window.setVisible(true);
-                } catch (java.net.UnknownHostException _) {
-                    (new AnswerDialog(ClientWindow.this, "The address " + ipTextField.getText()
-                            + " does not apear to be a valid internet address.")).answer();
-                }
-            }
-        });
-
-        add(connect, builder.withGridLoc(0, 0).withSize(1, 1).withWeight(0, 0));
-        add(ipTextField, builder.withGridLoc(1, 0).withSize(1, 1).withWeight(1, 0));
-        add(instant,
-            builder.withGridLoc(2, 0)
-                    .withSize(1, 1)
-                    .withWeight(0, 0)
-                    .withFill(GridBagConstraints.NONE)
-                    .withAnchor(GridBagConstraints.WEST));
-        add(fileTypeList.getPane(), builder.withGridLoc(0, 1).withSize(1, 1).withWeight(0, 1));
-        add(fileList.getPane(), builder.withGridLoc(1, 1).withSize(1, 1).withWeight(1, 1));
-        add(statsPanel, builder.withGridLoc(2, 1).withSize(1, 1).withWeight(1, 1));
-        add(msg, builder.withGridLoc(0, 2).withSize(3, 1).withWeight(1, 0));
+        // Create the left side panel for the split pane (file lists)
+        JPanel leftPanel = new JPanel(new GridBagLayout());
+        var leftBuilder = new com.general.util.GridBagBuilder()
+            .withFill(GridBagConstraints.BOTH)
+            .withInsets(new Insets(0, 0, 0, 0));
+        
+        leftPanel.add(fileTypeList.getPane(), leftBuilder.withGridLoc(0, 0).withSize(1, 1).withWeight(0, 1));
+        leftPanel.add(fileList.getPane(), leftBuilder.withGridLoc(1, 0).withSize(1, 1).withWeight(1, 1));
 
         fileList.getPane().setMinimumSize(new Dimension(1, 1));
         fileList.getPane().setPreferredSize(new Dimension(1, 1));
         fileList.getPane().setMaximumSize(new Dimension(1,1));
+        
+        // Create the split pane with file lists on left, stats on right
+        splitPane = new JSplitPane(JSplitPane.HORIZONTAL_SPLIT, leftPanel, statsPanel);
+        splitPane.setResizeWeight(1.0); // Give all extra space to left side
+        statsPanel.setVisible(false); // hide by default will collapse the right side
+        
+        // Set minimum size for left side to prevent it from collapsing
+        leftPanel.setMinimumSize(new Dimension(400, 1));
+        
+        // Start with stats panel collapsed (divider all the way to the right)
+        splitPane.setDividerLocation(1.0);
+        
+        // Add components to the frame: top row (connect/IP/toggle), middle (split pane), bottom (message)
+        add(connect, builder.withGridLoc(0, 0).withSize(1, 1).withWeight(0, 0));
+        add(ipTextField, builder.withGridLoc(1, 0).withSize(1, 1).withWeight(1, 0));
+        add(toggleStatsButton, builder.withGridLoc(2, 0).withSize(1, 1).withWeight(0, 0));
+        add(splitPane, builder.withGridLoc(0, 1).withSize(3, 1).withWeight(1, 1));
+        add(msg, builder.withGridLoc(0, 2).withSize(3, 1).withWeight(1, 0));
         
         pack();
 
@@ -264,6 +268,19 @@ public class ClientWindow extends MysterFrame implements Sayable {
         };
         connect.addActionListener(connectButtonEvent);
         ipTextField.addActionListener(connectButtonEvent);
+        
+        // Toggle stats panel visibility
+        toggleStatsButton.addActionListener(e -> {
+            boolean isVisible = statsPanel.isVisible();
+            statsPanel.setVisible(!isVisible);
+            if (!isVisible) {
+                // Show the stats panel - set divider to 75% position
+                splitPane.setDividerLocation(0.75);
+            } else {
+                // Hide the stats panel - move divider all the way right
+                splitPane.setDividerLocation(1.0);
+            }
+        });
 
         fileTypeList.addMCListEventListener(new MCListEventAdapter(){
             public void selectItem(MCListEvent e) {
@@ -284,7 +301,7 @@ public class ClientWindow extends MysterFrame implements Sayable {
                 stopStats();
             }
         });
-        fileList.setColumnWidth(0, 150);
+        fileList.setColumnWidth(0, 300);
 
         addWindowListener(new StandardWindowBehavior());
     }

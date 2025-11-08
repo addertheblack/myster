@@ -51,7 +51,7 @@ public class FileListAction extends MCListEventAdapter {
                                        w.getCurrentType(),
                                        w.getCurrentFile());
             protocol.getStream()
-                    .downloadFile(mysterFrameContext, hashManager, stub.getMysterAddress(), stub);
+                    .downloadFile(mysterFrameContext, hashManager, stub);
         } catch (java.io.IOException _) {
             com.general.util.AnswerDialog.simpleAlert(w, "Could not connect to server.");
         }

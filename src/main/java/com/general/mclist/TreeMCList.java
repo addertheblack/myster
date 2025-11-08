@@ -103,7 +103,6 @@ public class TreeMCList {
         for (int i = 0; i < columns.length; i++) {
             list.setColumnName(i, columns[i]);
         }
-        list.setAutoResizeMode(JTable.AUTO_RESIZE_SUBSEQUENT_COLUMNS);
         
         // list.setRowHeight(24);
         list.getTableHeader().getColumnModel().getColumn(0).setCellRenderer(new DefaultTableCellRenderer() {

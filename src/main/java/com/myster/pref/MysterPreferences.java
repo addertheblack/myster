@@ -1,14 +1,3 @@
-/* 
-
- Title:			Myster Open Source
- Author:			Andrew Trumper
- Description:	Generic Myster Code
- 
- This code is under GPL
-
- Copyright Andrew Trumper 2000-2001
- */
-
 package com.myster.pref;
 
 import java.util.Arrays;

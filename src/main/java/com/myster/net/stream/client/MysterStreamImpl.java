@@ -55,8 +55,7 @@ public class MysterStreamImpl implements MysterStream {
     @Override
     public void downloadFile(MysterFrameContext c,
                             HashCrawlerManager crawlerManager,
-                            MysterAddress ip,
                             MysterFileStub stub) {
-        StandardSuiteStream.downloadFile(c, crawlerManager, ip, stub);
+        StandardSuiteStream.downloadFile(c, crawlerManager, stub);
     }
 }
