@@ -11,9 +11,10 @@ package com.myster.client.ui;
 
 import java.io.IOException;
 import java.net.UnknownHostException;
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.List;
 import java.util.concurrent.ExecutionException;
-import java.util.logging.Logger;
 
 import com.general.thread.Invoker;
 import com.general.util.UnexpectedException;
@@ -122,6 +123,8 @@ public class FileListerThread extends MysterThread {
 
             try {
                 final int[] counter = new int[] { 0 };
+                final long[] startTime = new long[] { System.currentTimeMillis() };
+                final List<FileRecord> records = new ArrayList<>();
                 StandardSuiteStream
                         .getFileStatsBatch(socket,
                                            Util.map(Arrays.asList(files),
@@ -130,16 +133,21 @@ public class FileListerThread extends MysterThread {
                                                                                    fileName))
                                                    .toArray(new MysterFileStub[] {}))
                         .setInvoker(Invoker.EDT)
-                        .addResultListener(messagePacks -> {
-                            FileRecord[] records = new FileRecord[files.length];
-
-                            for (int i = 0; i < files.length; i++) {
-                                records[i] = new FileRecord(files[i], messagePacks.get(i));
-                            }
-
-                            listener.addItemsToFileList(records);
+                        .addResultListener(_ -> {
+                            listener.addItemsToFileList(records.toArray(new FileRecord[] {}));
                         })
                         .addPartialResultListener(r -> {
+                            records.add(new FileRecord(files[counter[0]], r));
+                            
+                            // if it has been more than a second .... then..
+                            long currentTime = System.currentTimeMillis();
+                            if ((currentTime - startTime[0]) > 1000) {
+                                listener.addItemsToFileList(records.toArray(new FileRecord[] {}));
+                                records.clear();
+                                startTime[0] = currentTime;
+                            }
+                            
+                            
                             var c = counter[0]++;
                             if ( c %10 != 0) {
                                 return;
@@ -159,12 +167,11 @@ public class FileListerThread extends MysterThread {
                 }
             }
 
+            msg.say("Requesting File List: " + lookup.lookup(type) + " Complete.");
+            msg.say("Idle...");
             
             out.writeInt(2); // 2 is disconnect
             in.read();
-
-            msg.say("Requesting File List: " + lookup.lookup(type) + " Complete.");
-            msg.say("Idle...");
         } catch (IOException ex) {
             msg.say("An unexpected error occurred during the transfer of the file list.");
             ex.printStackTrace();
