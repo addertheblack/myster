@@ -20,9 +20,11 @@ import java.awt.event.FocusEvent;
 import java.awt.event.FocusListener;
 import java.util.Arrays;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Optional;
+import java.util.function.BiConsumer;
 
 import javax.swing.JButton;
 import javax.swing.JTextArea;
@@ -316,55 +318,87 @@ public class ClientWindow extends MysterFrame implements Sayable {
         }
     }
 
+    // this containers map is cleared when the filelist is cleared
+    final HashMap<TreePath, FolderMCListItem<String>> containers = new HashMap<TreePath, FolderMCListItem<String>>();
+    
+    @SuppressWarnings("boxing")
     public void addItemsToFileList(FileRecord[] files) {
         @SuppressWarnings("unchecked")
         TreeMCListItem<String>[] items = new TreeMCListItem[files.length];
 
-        var containers = new HashMap<TreePath, TreeMCListItem<String>>();
-        
+        var localContainers = new HashMap<TreePath, FolderMCListItem<String>>();
         for (int i = 0; i < files.length; i++) {
             var parentPath = extractParentPath(extractPath(files[i]));
             
             var path = new TreePathString(parentPath);
 
-            mkdir(containers, parentPath);
+            mkdir(localContainers, parentPath);
 
             final var file = files[i];
             
-            items[i] = new TreeMCListItem<String>(path, extractFileRecordElement(file), Optional.empty());
+            items[i] = new TreeMCListItem<String>(path,
+                                                  extractFileRecordElement(file),
+                                                  Optional.empty());
+        }
+        
+        // Figure out which folders are ones that we need to add and discard the ones we already have
+        List<FolderMCListItem<String>> newContainersToAdd = Util.filter(localContainers.values(), z -> !containers.containsKey(z.getMyPathOrFail()));
+        
+        // now add the new ones to the containers map
+        for (FolderMCListItem<String> treeMCListItem : newContainersToAdd) {
+            if (containers.containsKey(treeMCListItem.getMyPathOrFail())) {
+                continue;
+            }
+            containers.put(treeMCListItem.getMyPathOrFail(), treeMCListItem);
+        }
+
+        // now we've figured out which folder objects we need and added those to the containers
+        // calculate the folder sizes by adding all the file's sizes to their nested folders
+        for (int i = 0; i < files.length; i++) {
+            addSizeToParentFolders(containers,
+                                   extractParentPath(extractPath(files[i])),
+                                   files[i].metaData().getLong("/size").orElse(0l));
         }
 
         fileList.addItem(items);
-        fileList.addItem(containers.values().toArray(new TreeMCListItem[] {}));
+        fileList.addItem(newContainersToAdd.toArray(new TreeMCListItem[] {}));
     }
 
-    private void mkdir(HashMap<TreePath, TreeMCListItem<String>> containers, String[] p) {
-        // TreePathString(..) need to have the path[0..length-1]
-        // added as containers first
-        for (String[] parentPath = p; parentPath.length > 0; ) {
-            if (containers.containsKey(new TreePathString(parentPath))) {
+    private static void mkdir(HashMap<TreePath, FolderMCListItem<String>> knownContainers, String[] p) {
+        loopBackThroughParents(p, (current, parent) -> {
+            if (knownContainers.containsKey(new TreePathString(current))) {
                 return; // we've already done this one so skip
             }
+
+            knownContainers
+                    .put(new TreePathString(current),
+                         new FolderMCListItem<String>(new TreePathString(parent),
+                                                      extractDirElement(current[current.length - 1]),
+                                                      Optional.of(new TreePathString(current))));
+        });
+    }
+    
+    
+    private static void addSizeToParentFolders(HashMap<TreePath, FolderMCListItem<String>> knownContainers, String[] p, long sizeOfFile) {
+        loopBackThroughParents(p, (current, _) ->  knownContainers.get(new TreePathString(current)).addSize(sizeOfFile) );
+    }
+    
+    private static void loopBackThroughParents(String[] p, BiConsumer<String[], String[]> c) {
+        for (String[] currentPath = p; currentPath.length > 0;) {
+            var parent = extractParentPath(currentPath);
             
-            var temp = extractParentPath(parentPath);
-            
-            containers
-                    .put(new TreePathString(parentPath),
-                         new TreeMCListItem<String>(new TreePathString(temp),
-                                                    extractDirElement(parentPath[parentPath.length
-                                                            - 1]),
-                                                    Optional.of(new TreePathString(parentPath))));
-            parentPath = temp;
+            c.accept(currentPath, parent);
+
+            currentPath = parent;
         }
     }
 
     private ColumnSortable<String> extractFileRecordElement(final FileRecord file) {
         return new ColumnSortable<String>() {
             public Sortable getValueOfColumn(int column) {
-                return new Sortable[] { new SortableString(file.file()),
-                        new SortableByte(file.metaData()
-                                .getLong("/size")
-                                .orElse((long) 0)) }[column];
+                return new Sortable[] { new SortableString(file.file()), new SortableByte(file.metaData()
+                        .getLong("/size")
+                        .orElse((long) 0)) }[column];
             }
 
             public String getObject() {
@@ -373,7 +407,7 @@ public class ClientWindow extends MysterFrame implements Sayable {
         };
     }
     
-    private ColumnSortable<String> extractDirElement(final String name) {
+    private static ColumnSortable<String> extractDirElement(final String name) {
         return new ColumnSortable<String>() {
             public Sortable getValueOfColumn(int column) {
                 return new Sortable[] { new SortableString(name), new SortableByte(-2) }[column];
@@ -452,7 +486,7 @@ public class ClientWindow extends MysterFrame implements Sayable {
     }
 
     public void say(String s) {
-        msg.say(s);
+        Util.invokeNowOrLater( () -> msg.say(s));
     }
 
     public MessageField getMessageField() {
@@ -463,12 +497,6 @@ public class ClientWindow extends MysterFrame implements Sayable {
         var builder = new StringBuilder();
         for (Entry<String, String> entry : k.entrySet()) {
             if (entry.getKey().equals("size")) { // hack to
-                // show
-                // size as
-                // bytes string
-                // like
-                // XXXbytes or
-                // XXXMB
                 try {
                     builder.append(entry.getKey() + " : " + com.general.util.Util
                             .getStringFromBytes(Long.parseLong(entry.getValue())) + "\n");
@@ -496,6 +524,7 @@ public class ClientWindow extends MysterFrame implements Sayable {
         }
         fileList.clearAll();
         stopStats();
+        containers.clear();
     }
 
     private void stopStats() {
@@ -549,4 +578,28 @@ public class ClientWindow extends MysterFrame implements Sayable {
                                          getCurrentFile());
         fileInfoListerThread.start();
     }
+    
+
+    public static class FolderMCListItem<E> extends TreeMCListItem<E> {
+        private long sizeOfContents = 0;
+        
+        /**
+         * @param myPath present if this is a container/folder. Empty if this is a lead node.
+         */
+        public FolderMCListItem(TreePath parent, ColumnSortable<E> delegate, Optional<TreePath> myPath) {
+            super(parent, delegate, myPath);
+        }
+        public Sortable<?> getValueOfColumn(int i) {
+            if (i == 1) {
+                return new SortableByte(sizeOfContents > 0 ? sizeOfContents : -2);
+            }
+            return super.getValueOfColumn(i);
+        }
+
+        public void addSize(long sizeOfFile) {
+            sizeOfContents += sizeOfFile;
+        }
+    }
 }
+
+

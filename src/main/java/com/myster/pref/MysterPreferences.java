@@ -88,9 +88,20 @@ public class MysterPreferences {
     public int getInt(String key, int defaultValue) {
         return preferences.getInt(key, defaultValue);
     }
-    
+
     public void putInt(String key, int value) {
         preferences.putInt(key, value);
+    }
+
+    /**
+     * Gets the preferences node for storing window-specific metadata such as window location,
+     * connected server, search positions, and column sizes.
+     * 
+     * @param windowClassPrefKey the unique key for the window (typically the conceptual class name of the window type)
+     * @return the Preferences node for this window's metadata
+     */
+    public Preferences windowMetaDataNode(String windowClassPrefKey) {
+        return preferences.node("Window Metadata").node(windowClassPrefKey);
     }
 
     /**

@@ -79,7 +79,7 @@ public class FileItem {
             FileItem item = (FileItem) o;
 
             return (file.equals(item.file));
-        } catch (ClassCastException ex) {
+        } catch (ClassCastException _) {
             return false;
         }
     }

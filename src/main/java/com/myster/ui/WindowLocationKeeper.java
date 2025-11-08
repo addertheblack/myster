@@ -33,7 +33,7 @@ import com.myster.pref.MysterPreferences;
  * screen when the routine is called (ie: not too far to the left or right).
  */
 public class WindowLocationKeeper {
-    private static final String PREF_NODE_NAME = "Window Locations and Sizes";
+    private static final String PREF_NODE_WINDOW_BOUNDS = "Window Locations and Sizes";
     
     private static final Logger LOGGER = Logger.getLogger(WindowLocationKeeper.class.getName());
 
@@ -58,37 +58,37 @@ public class WindowLocationKeeper {
      *            windows and singleton windows are for windows with only one
      *            expected instance.
      */
-    public void addFrame(MysterFrame frame, String key, boolean singletonWindow) {
-        if (key.indexOf("/") != -1)
+    public void addFrame(MysterFrame frame, String windowClassPrefKey, boolean singletonWindow) {
+        if (windowClassPrefKey.indexOf("/") != -1)
             throw new RuntimeException("Key cannot contain a \"/\"!");
         
         final String privateID = UUID.randomUUID().toString();
 
         if (frame.isVisible()) {
-            saveLocation(frame, key, privateID);
+            saveLocation(frame, windowClassPrefKey, privateID);
         }
 
         frame.addComponentListener(new ComponentListener() {
             @Override
             public void componentResized(ComponentEvent e) {
                 if (((Component) (e.getSource())).isVisible())
-                    saveLocation(((Component) (e.getSource())), key, privateID);
+                    saveLocation(((Component) (e.getSource())), windowClassPrefKey, privateID);
             }
 
             @Override
             public void componentMoved(ComponentEvent e) {
                 if (((Component) (e.getSource())).isVisible())
-                    saveLocation(((Component) (e.getSource())), key, privateID);
+                    saveLocation(((Component) (e.getSource())), windowClassPrefKey, privateID);
             }
 
             @Override
             public void componentShown(ComponentEvent e) {
-                saveLocation(((Component) (e.getSource())), key, privateID);
+                saveLocation(((Component) (e.getSource())), windowClassPrefKey, privateID);
             }
 
             @Override
             public void componentHidden(ComponentEvent e) {
-                hideComponent(key, privateID, singletonWindow);
+                hideComponent(windowClassPrefKey, privateID, singletonWindow);
             }
 
         });
@@ -96,12 +96,12 @@ public class WindowLocationKeeper {
         frame.addWindowListener(new WindowAdapter() {
             @Override
             public void windowClosing(WindowEvent e) {
-                hideComponent(key, privateID, singletonWindow);
+                hideComponent(windowClassPrefKey, privateID, singletonWindow);
             }
 
             @Override
         	public void windowClosed(WindowEvent e) {
-                hideComponent(key, privateID, singletonWindow);
+                hideComponent(windowClassPrefKey, privateID, singletonWindow);
         	}
         });
     }
@@ -114,9 +114,9 @@ public class WindowLocationKeeper {
         }
     }
 
-    private void saveLocation(Component c, String key, String id) {
-        findWindowNode(key, id).put(LOCATION, rect2String(c.getBounds()));
-        findWindowNode(key, id).putBoolean(VISIBLE, true);
+    private void saveLocation(Component c, String windowClassPrefKey, String id) {
+        findWindowNode(windowClassPrefKey, id).put(LOCATION, rect2String(c.getBounds()));
+        findWindowNode(windowClassPrefKey, id).putBoolean(VISIBLE, true);
     }
     
     private void deleteLocation(String key, String id) {
@@ -127,8 +127,8 @@ public class WindowLocationKeeper {
         }
     }
 
-    private Preferences findWindowNode(String key, String id) {
-        return prefs.getPreferences().node(PREF_NODE_NAME).node(key).node(id);
+    private Preferences findWindowNode(String windowClassPrefKey, String id) {
+        return windowBoundsPrefNode(windowClassPrefKey).node(id);
     }
 
     /////////// STATIC SUB SYSTEM
@@ -156,13 +156,18 @@ public class WindowLocationKeeper {
 
     public static record WindowLocation(Rectangle bounds, boolean visible) {}
 
-    public synchronized WindowLocation[] getLastLocs(String p_key) {
-        Preferences rootNode = prefs.getPreferences().node(PREF_NODE_NAME).node(p_key);
+    /**
+     * @param windowClassPrefKey this would be something like "client windows" or "search windows" or "the pref panel"
+     *  The key is used to associate elements to a window class
+     */
+    public synchronized WindowLocation[] getLastLocs(String windowClassPrefKey) {
+        Preferences rootNode = windowBoundsPrefNode(windowClassPrefKey);
         String[] nodeNames;
+        
         try {
             nodeNames = rootNode.childrenNames();
         } catch (BackingStoreException e) {
-            LOGGER.severe("Could not get list of window locations for key " + p_key + " because of BackingStoreException " + e);
+            LOGGER.severe("Could not get list of window locations for key " + windowClassPrefKey + " because of BackingStoreException " + e);
             return new WindowLocation[0];
         }
 
@@ -181,10 +186,14 @@ public class WindowLocationKeeper {
             } catch (BackingStoreException _) {
                 // ignore, best effort
             }
-            LOGGER.fine("Getting the last window location " + p_key + " " + rectangle.toString());
+            LOGGER.fine("Getting the last window location " + windowClassPrefKey + " " + rectangle.toString());
         }
 
         return locations.toArray(new WindowLocation[0]);
+    }
+
+    private Preferences windowBoundsPrefNode(String windowClassPrefKey) {
+        return prefs.windowMetaDataNode(windowClassPrefKey).node(PREF_NODE_WINDOW_BOUNDS);
     }
 
     private static synchronized Rectangle string2Rect(String s) {
