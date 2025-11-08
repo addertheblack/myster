@@ -41,7 +41,7 @@ public interface MysterStream {
      * <p>
      * THIS ROUTINE IS ASYNCHRONOUS!
      */
-    void downloadFile(MysterFrameContext c, final HashCrawlerManager crawlerManager, final MysterAddress ip, final MysterFileStub stub);
+    void downloadFile(MysterFrameContext c, final HashCrawlerManager crawlerManager, final MysterFileStub stub);
     
     default <T> T doSection(MysterAddress ip, StandardStreamSection<T> section) throws IOException {
         try (MysterSocket socket = MysterSocketFactory.makeStreamConnection(ip)){

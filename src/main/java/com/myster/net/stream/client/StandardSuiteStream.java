@@ -100,9 +100,8 @@ public class StandardSuiteStream {
      */
     public static void downloadFile(MysterFrameContext c,
                                     final HashCrawlerManager crawlerManager,
-                                    final MysterAddress ip,
                                     final MysterFileStub stub) {
-        Executors.newVirtualThreadPerTaskExecutor().execute(new DownloadInitiator(c, crawlerManager, ip, stub));
+        Executors.newVirtualThreadPerTaskExecutor().execute(new DownloadInitiator(c, crawlerManager, stub));
     }
 
     public static MessagePack getFileStats(MysterAddress ip, MysterFileStub stub) throws IOException {

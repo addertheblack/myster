@@ -13,7 +13,6 @@ import com.general.util.Util;
 import com.myster.filemanager.FileTypeListManager;
 import com.myster.hash.FileHash;
 import com.myster.mml.MessagePack;
-import com.myster.net.MysterAddress;
 import com.myster.net.MysterSocket;
 import com.myster.net.stream.client.MysterSocketFactory;
 import com.myster.net.stream.client.StandardSuiteStream;
@@ -24,17 +23,14 @@ import com.myster.ui.MysterFrameContext;
 import com.myster.util.FileProgressWindow;
 
 public class DownloadInitiator implements Runnable {
-    private final MysterAddress ip;
     private final MysterFileStub stub;
     private final HashCrawlerManager crawlerManager;
     private final MysterFrameContext context;
 
     public DownloadInitiator(MysterFrameContext c,
                              HashCrawlerManager crawlerManager,
-                             MysterAddress ip,
                              MysterFileStub stub) {
         this.context = c;
-        this.ip = ip;
         this.stub = stub;
         this.crawlerManager = crawlerManager;
     }
@@ -242,7 +238,7 @@ public class DownloadInitiator implements Runnable {
         
         MysterSocket socket = null;
         try {
-            socket = MysterSocketFactory.makeStreamConnection(ip);
+            socket = MysterSocketFactory.makeStreamConnection(stub.getMysterAddress());
         } catch (Exception _) {
             com.general.util.AnswerDialog.simpleAlert("Could not connect to server.");
             
@@ -274,10 +270,6 @@ public class DownloadInitiator implements Runnable {
             MessagePack fileStats = StandardSuiteStream.getFileStats(socket, stub);
 
             progress.setText("Trying to use multi-source download...");
-
-            final boolean DONT_USE_MULTISOURCE = false;
-            if (DONT_USE_MULTISOURCE)
-                throw new IOException("Toss and catch: Multisource download disabled");
 
             if (endFlag)
                 return;

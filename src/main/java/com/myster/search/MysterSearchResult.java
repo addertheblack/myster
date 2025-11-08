@@ -39,7 +39,7 @@ public class MysterSearchResult implements SearchResult {
     // is called when the user decides to download the item
     @Override
     public void download() {
-        getProtocol().getStream().downloadFile(context, hashCrawler, stub.getMysterAddress(), stub);
+        getProtocol().getStream().downloadFile(context, hashCrawler, stub);
     }
 
     //returns the network the search result is on.
