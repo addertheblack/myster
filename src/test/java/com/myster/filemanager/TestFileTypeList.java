@@ -479,7 +479,7 @@ class TestFileTypeList {
         public boolean isTypeEnabled(MysterType type) {
             return true;
         }
-        
+
         @Override
         public boolean isTypeEnabledInPrefs(MysterType type) {
             return true;
