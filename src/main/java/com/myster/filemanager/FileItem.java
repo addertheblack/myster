@@ -1,6 +1,7 @@
 package com.myster.filemanager;
 
 import java.io.File;
+import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.logging.Logger;
@@ -11,21 +12,34 @@ import com.myster.mml.MessagePack;
 public class FileItem {
     private static final Logger LOGGER = Logger.getLogger(FileItem.class.getName());
     
-    private final File file;
+    private final Path path;
     private FileHash[] fileHashes;
 
-    private final File root;
+    private final Path root;
 
-    public FileItem(File root, File file) {
+    /**
+     * Constructor using Path objects (preferred)
+     */
+    public FileItem(Path root, Path path) {
         this.root = root;
-        this.file = file;
+        this.path = path;
     }
 
     /**
-     * Returns the java.io.File object
+     * Returns the java.io.File object (for backward compatibility)
+     * 
+     * @deprecated use {@link #getPath()}
      */
+    @Deprecated
     public File getFile() {
-        return file;
+        return path.toFile();
+    }
+    
+    /**
+     * Returns the Path object (preferred)
+     */
+    public Path getPath() {
+        return path;
     }
 
     private int getIndex(String hashType) {
@@ -63,22 +77,22 @@ public class FileItem {
     }
 
     public String getName() {
-        return FileTypeList.mergePunctuation(file.getName());
+        return FileTypeList.mergePunctuation(path.getFileName().toString());
     }
 
     public String getFullPath() {
-        return file.getAbsolutePath();
+        return path.toAbsolutePath().toString();
     }
 
     public int hashCode() {
-        return file.hashCode();
+        return path.hashCode();
     }
     
     public boolean equals(Object o) {
         try {
             FileItem item = (FileItem) o;
 
-            return (file.equals(item.file));
+            return (path.equals(item.path));
         } catch (ClassCastException _) {
             return false;
         }
@@ -90,58 +104,56 @@ public class FileItem {
     public MessagePack getMessagePackRepresentation() {
         MessagePack messagePack = MessagePack.newEmpty();
 
-        if (file != null) {
-            fileSize = fileSize == -1 ? file.length() : fileSize;
-            messagePack.putLong("/size", fileSize);
+        if (path != null) {
+            try {
+                fileSize = fileSize == -1 ? java.nio.file.Files.size(path) : fileSize;
+                messagePack.putLong("/size", fileSize);
 
-            if (fileHashes != null) {
-                for (int i = 0; i < fileHashes.length; i++) {
-                    // Use byte arrays for hashes instead of strings for better compactness
-                    messagePack.putByteArray(HASH_PATH + fileHashes[i].getHashName().toLowerCase(), 
-                                           fileHashes[i].getBytes());
+                if (fileHashes != null) {
+                    for (int i = 0; i < fileHashes.length; i++) {
+                        // Use byte arrays for hashes instead of strings for better compactness
+                        messagePack.putByteArray(HASH_PATH + fileHashes[i].getHashName().toLowerCase(), 
+                                               fileHashes[i].getBytes());
+                    }
                 }
-            }
 
-            var pathElements = new ArrayList<String>();
-            extractPathFromFileAndRoot(root, file, pathElements);
-            messagePack.putStringArray("/path", pathElements.toArray(new String[] {}));
+                var pathElements = extractPathFromFileAndRoot(root, path);
+                messagePack.putStringArray("/path", pathElements.toArray(new String[] {}));
+            } catch (java.io.IOException e) {
+                LOGGER.warning("Failed to get file size: " + e.getMessage());
+            }
         }
 
         return messagePack;
     }
     
-    private static void extractPathFromFileAndRoot(File root, File filePath, List<String> path) {
+    static List<String> extractPathFromFileAndRoot(Path root, Path filePath) {
         if (root == null || filePath == null) {
             throw new IllegalArgumentException("Root and filePath cannot be null");
         }
         
+        var pathElements = new ArrayList<String>();
+        
         // Normalize paths to handle symbolic links, relative paths, etc.
-        File normalizedRoot = root.getAbsoluteFile();
-        File normalizedFilePath = filePath.getAbsoluteFile();
+        Path normalizedRoot = root.toAbsolutePath().normalize();
+        Path normalizedFilePath = filePath.toAbsolutePath().normalize();
         
         if (normalizedRoot.equals(normalizedFilePath)) {
-            return;
+            return pathElements;
         }
         
-        // Build path from file back to root (iterative, not recursive)
-        List<String> reversePath = new ArrayList<>();
-        File current = normalizedFilePath;
-        
-        while (current != null && !normalizedRoot.equals(current)) {
-            reversePath.add(current.getName());
-            current = current.getParentFile();
-        }
-        
-        // Check if we actually reached the root
-        if (current == null) {
+        // Check if filePath is under root and get relative path
+        if (!normalizedFilePath.startsWith(normalizedRoot)) {
             throw new IllegalArgumentException("File '" + filePath + "' is not under root '" + root + "'");
         }
         
-        
-        // Add path elements in correct order (reverse of what we collected)
-        for (int i = reversePath.size() - 1; i >= 0; i--) {
-            path.add(reversePath.get(i));
+        // Get relative path and extract components
+        Path relativePath = normalizedRoot.relativize(normalizedFilePath);
+        for (int i = 0; i < relativePath.getNameCount(); i++) {
+            pathElements.add(relativePath.getName(i).toString());
         }
+        
+        return pathElements;
     }
 
     /*

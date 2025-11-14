@@ -180,12 +180,12 @@ public class HashManagerGUI extends MysterFrame {
                 }
 
                 public void fileHashStart(HashManagerEvent e) {
-                    progress.setMax(e.getFile().length());
+                    progress.setMax(e.getFile().toFile().length());
                     progress.setMin(0);
                     progress.setValue(0);
 
                     currentFileLabel.setText("Hashing file: "
-                            + e.getFile().getName());
+                            + e.getFile().toFile().getName());
                 }
 
                 public void fileHashProgress(HashManagerEvent e) {
@@ -196,7 +196,7 @@ public class HashManagerGUI extends MysterFrame {
                     currentFileLabel.setText("Done Hashing.");
                     progress.setValue(-1);
 
-                    totalSize += e.getFile().length();
+                    totalSize += e.getFile().toFile().length();
                     totalFiles++;
 
                     totalFilesValue.setText("" + totalFiles);

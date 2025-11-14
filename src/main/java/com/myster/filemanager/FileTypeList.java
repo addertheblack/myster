@@ -17,22 +17,33 @@
 
 package com.myster.filemanager;
 
-import java.io.File;
+import java.io.IOException;
+import java.nio.file.FileSystem;
+import java.nio.file.FileSystems;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.ArrayList;
+import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
+import java.util.LinkedList;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
+import java.util.Queue;
 import java.util.Set;
+import java.util.concurrent.ExecutionException;
 import java.util.logging.Logger;
+import java.util.stream.Stream;
 
 import com.general.thread.CancellableCallable;
+import com.general.thread.Invoker;
 import com.general.thread.PromiseFuture;
 import com.general.thread.PromiseFutures;
+import com.general.util.ProtectedForUnitTests;
 import com.myster.application.MysterGlobals;
 import com.myster.hash.FileHash;
 import com.myster.hash.FileHashEvent;
 import com.myster.hash.FileHashListener;
-import com.myster.identity.Util;
 import com.myster.mml.MML;
 import com.myster.mml.MMLException;
 import com.myster.pref.MysterPreferences;
@@ -44,11 +55,13 @@ import com.myster.type.TypeDescriptionList;
 public class FileTypeList {
     private static final Logger LOGGER = Logger.getLogger(FileTypeList.class.getName());
     
-    private List<FileItem> filelist; // List of java.io.FileItem objects that are
-
-    // shared.
+    private static final Invoker INVOKER = Invoker.newVThreadInvoker();
+    
+    private Map<String, FileItem> fileMap; // LinkedHashMap for fast filename lookups and maintains insertion order
 
     private final MysterType type; // Myster type represented by this List.
+    
+    private final FileSystem fileSystem; // FileSystem to use (default or custom for testing)
 
     private String rootdir; // The root directory for this list.
 
@@ -81,8 +94,8 @@ public class FileTypeList {
     // indexing...
 
     /**
-     * Creates a new FileTypeList. This shouldn't be called by anybody but the
-     * FileItem Manager.
+     * Creates a new FileTypeList with the default file system.
+     * This shouldn't be called by anybody but the FileItem Manager.
      * 
      * @param type
      *            is the Myster FileItem type to be represented by this object.
@@ -96,9 +109,21 @@ public class FileTypeList {
                         String path,
                         HashProvider hashProvider,
                         TypeDescriptionList tdList) {
+        this(type, path, hashProvider, tdList, FileSystems.getDefault());
+    }
+    
+    /**
+     * Creates a new FileTypeList with a custom file system (useful for testing with Jimfs).
+     */
+    public FileTypeList(MysterType type,
+                        String path,
+                        HashProvider hashProvider,
+                        TypeDescriptionList tdList,
+                        FileSystem fileSystem) {
         this.type = type;
         this.hashProvider = hashProvider;
         this.tdList = tdList;
+        this.fileSystem = fileSystem;
         this.pref_key = PREF_KEY + "." + type.toHexString();
 
         try {
@@ -110,6 +135,32 @@ public class FileTypeList {
         rootdir = getPath();
     }
 
+    /** Package protected for unit tests */
+    @ProtectedForUnitTests
+    void waitForIndexer() {
+        synchronized (this) {
+            if (indexingFuture == null) {
+                return;
+            }
+
+            try {
+                indexingFuture.get();
+            } catch (InterruptedException _) {
+                Thread.currentThread().interrupt();
+            } catch (ExecutionException e) {
+                // ignore - doesn't matter
+                e.printStackTrace();
+            }
+        }
+
+        try {
+            INVOKER.waitForThread();
+            com.general.util.Util.invokeAndWait(() -> {});
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
+    }
+    
     /**
      * returns the isShared flag. If isShared returns true, the list will share files if any are
      * available. If isShared returns false, the list will not show any files shared even if there
@@ -188,15 +239,10 @@ public class FileTypeList {
      * @return an array of all the shared files
      */
     public synchronized String[] getFileListAsStrings() {
-        assertFileList(); // This must be called before working with filelist or
+        assertFileList(); // This must be called before working with fileMap or
         // rootdir internal variables.
 
-        String[] workingarray = new String[filelist.size()];
-        for (int i = 0; i < filelist.size(); i++) {
-            workingarray[i] = mergePunctuation(filelist.get(i).getFile()
-                    .getName());
-        }
-        return workingarray;
+        return fileMap.keySet().toArray(String[]::new);
     }
 
     /**
@@ -205,12 +251,12 @@ public class FileTypeList {
      * @return an array of all the shared file with the hashes
      */
     public synchronized FileItem getFileFromHash(FileHash hash) {
-        assertFileList(); // This must be called before working with filelist or
+        assertFileList(); // This must be called before working with fileMap or
         // rootdir internal variables.
 
-        for (int i = 0; i < filelist.size(); i++) {
-            if (isMatch(filelist.get(i), hash))
-                return filelist.get(i);
+        for (FileItem item : fileMap.values()) {
+            if (isMatch(item, hash))
+                return item;
         }
 
         return null;
@@ -285,9 +331,8 @@ public class FileTypeList {
         }
 
         // MATCHER
-        for (int i = 0; i < filelist.size(); i++) {
-            FileItem file = filelist.get(i);
-            String filename = mergePunctuation(file.getFile().getName());
+        for (FileItem file : fileMap.values()) {
+            String filename = mergePunctuation(file.getPath().getFileName().toString());
 
             // Filter out sequential whitespace
             String simplified = simplify(filename);
@@ -354,21 +399,17 @@ public class FileTypeList {
      * Array a java.io.FileItem object from a file name. NOTE: There is a direct mapping between
      * file names and java.io.FileItem objects.
      * 
-     * @param query
+     * @param fileName
      *            the name of a file to get the File for.
      * @return the java.io.FileItem object corresponding the the query.
      */
-    public synchronized FileItem getFileItemFromString(String query) {
-        // This must be called before working with filelist or
+    public synchronized FileItem getFileItemFromString(String fileName) {
+        // This must be called before working with fileMap or
         // rootdir internal variables.
         assertFileList(); 
         
-
-        for (int i = 0; i < filelist.size(); i++) {
-            if ((mergePunctuation(filelist.get(i).getFile().getName())).equals(query))
-                return filelist.get(i);
-        }
-        return null; // err, file not found.
+        // Use HashMap for O(1) lookup instead of linear search
+        return fileMap != null ? fileMap.get(fileName) : null;
     }
 
     /**
@@ -377,11 +418,11 @@ public class FileTypeList {
      * @return the number of files. Returns 0 if getShared() is false.
      */
     public synchronized int getNumOfFiles() {
-        // This must be called before working with filelist or
+        // This must be called before working with fileMap or
         // rootdir internal variables.
         assertFileList();
 
-        return filelist.size();
+        return fileMap.size();
     }
 
     /**
@@ -411,7 +452,13 @@ public class FileTypeList {
 
     private synchronized void setFileList(List<FileItem> filelist) {
         resetIndexingVariables();
-        this.filelist = filelist;
+        fileMap = new LinkedHashMap<>();
+        if (filelist != null) {
+            for (FileItem item : filelist) {
+                String filename = mergePunctuation(item.getPath().getFileName().toString());
+                fileMap.put(filename, item);
+            }
+        }
         assertFileList();
     }
 
@@ -421,25 +468,25 @@ public class FileTypeList {
     }
 
     /**
-     * This function makes sure the the filelist and rootdir variables are up to date. The general
+     * This function makes sure the the fileMap and rootdir variables are up to date. The general
      * design of this object is that things should not happen until they need to. That is, files
      * should not be indexed if there's no one waiting on the index. This function does all the
-     * checks and calls necessary to make sure filelist and rootdir contain the most up-to-date
-     * values. This function is also responsible for clearing the filelist variable when the list has
-     * been shared or un-shared. As a general rule it should be called before accessing the filelist
+     * checks and calls necessary to make sure fileMap and rootdir contain the most up-to-date
+     * values. This function is also responsible for clearing the fileMap variable when the list has
+     * been shared or un-shared. As a general rule it should be called before accessing the fileMap
      * or rootdir variables.
      * 
      */
     private synchronized void assertFileList() {
-        if (filelist == null) {
-            filelist = new ArrayList<FileItem>();
+        if (fileMap == null) {
+            fileMap = new LinkedHashMap<>();
         }
         if (!isShared()) { // if file list is not shared make sure list has
             initialized = true;
             
             // length = 0 then continue.
-            if (filelist.size() != 0) {
-                filelist = new ArrayList<FileItem>();
+            if (fileMap.size() != 0) {
+                fileMap.clear();
             }
             timeoflastupdate = 0; // never updated (we just buggered up the
             // list, you see...)
@@ -463,27 +510,29 @@ public class FileTypeList {
          */
         if (indexingFuture == null && (isOld() || !rootdir.equals(workingdir))) {
             rootdir = workingdir; // in case the dir for this type has changed.
+            Path rootPath = fileSystem.getPath(rootdir);
+            
             indexingFuture = PromiseFutures
-                    .execute(new FileListIndexCall(type, new File(rootdir), hashProvider, tdList))
+                    .execute(new FileListIndexCall(type, rootPath, hashProvider, tdList))
                     .addFinallyListener(this::resetIndexingVariables)
-                    .addFinallyListener(()-> initialized = true)
+                    .addFinallyListener(() -> initialized = true)
                     .addResultListener(this::setFileList)
                     .addStandardExceptionHandler()
-                    .useEdt();
+                    .setInvoker(INVOKER);
         }
     }
 
     public static class FileListIndexCall implements CancellableCallable<List<FileItem>> {
         private final MysterType type;
-        private final File rootDir;
+        private final Path rootPath;
         private final HashProvider hashProvider;
         private final TypeDescriptionList tdList;
         
         private volatile boolean endFlag = false;
 
-        public FileListIndexCall(MysterType type, File rootFile, HashProvider hashProvider, TypeDescriptionList tdList) {
+        public FileListIndexCall(MysterType type, Path rootPath, HashProvider hashProvider, TypeDescriptionList tdList) {
             this.type = type;
-            this.rootDir = rootFile;
+            this.rootPath = rootPath;
             this.hashProvider = hashProvider;
             this.tdList = tdList;
         }
@@ -494,19 +543,20 @@ public class FileTypeList {
          * @see com.general.thread.CancellableCallable#call()
          */
         public List<FileItem> call() {
-            return indexFiles(type, rootDir);
+            return indexFiles(type, rootPath);
         }
 
         /**
          * an internal procedure used to do the setup of file indexing. This
          * function is only called in one place at this writing.
+         * Uses breadth-first traversal to index files level by level.
          */
-        private List<FileItem> indexFiles(MysterType type, File rootdir) {
+        private List<FileItem> indexFiles(MysterType type, Path rootPath) {
             List<FileItem> temp = new ArrayList<>();
             
-            if (rootdir.exists() && rootdir.isDirectory()) {
-                // Indexes root dir into temp with 5 levels deep.
-                indexDir(type, rootdir, temp, 5); 
+            if (Files.exists(rootPath) && Files.isDirectory(rootPath)) {
+                // Indexes root dir into temp using breadth-first traversal with 5 levels deep.
+                indexPathBreadthFirst(type, rootPath, temp, 5); 
             }
             
             Set<FileItem> items = new LinkedHashSet<>(temp);
@@ -515,40 +565,73 @@ public class FileTypeList {
         }
 
         /**
-         * an internal procedure used to do the actual file indexing. This function is called
-         * recursively for each sub directories up to telomere levels
+         * Indexes files using breadth-first traversal with Path API. Files are
+         * added level by level: first all files in root, then all files one
+         * folder deep, then two folders deep, etc.
          * 
-         * @param file
-         *            is the directory to index
+         * @param type
+         *            the Myster type
+         * @param rootPath
+         *            the root directory to index
          * @param filelist
-         *            is the data structure to save the indexed filename to.
-         * @param telomere
-         *            is a recursion counter. The function will recurse a maximum of telomere times
+         *            the list to add FileItems to
+         * @param maxDepth
+         *            maximum depth to traverse
          */
-        private void indexDir(MysterType type, File file, List<FileItem> filelist, int p_telomere) {
-            int telomere = p_telomere - 1;
-            if (telomere < 0)
-                return;
-            if (!file.isDirectory() || !file.exists()) {
-                LOGGER.warning("Nonsence sent to indexDir. Does this "
-                               + "type have a d/l dir associated with it?");
+        private void indexPathBreadthFirst(MysterType type,
+                                           Path rootPath,
+                                           List<FileItem> filelist,
+                                           int maxDepth) {
+            if (!Files.isDirectory(rootPath) || !Files.exists(rootPath)) {
+                LOGGER.warning("Invalid path sent to indexPathBreadthFirst: " + rootPath);
                 return;
             }
-            
-            String[] listing = file.list();
-            if (listing != null) { // listing is null on permission denied
-                for (int i = 0; i < listing.length; i++) {
-                    if (endFlag)
-                        return;
 
-                    File temp = new File(file.getAbsolutePath() + File.separator + listing[i]);
-                    if (temp.isDirectory()) {
-                        indexDir(type, temp, filelist, telomere);
-                    } else {
-                        if (FileFilter.isCorrectType(type, temp, tdList)) {
-                            filelist.add(createFileItem(temp));
+            Queue<Path> pathsToProcess = new LinkedList<>();
+            pathsToProcess.add(rootPath);
+
+            while (!pathsToProcess.isEmpty() && !endFlag) {
+                Path currentPath = pathsToProcess.poll();
+
+                if (!Files.isDirectory(currentPath)) {
+                    throw new IllegalStateException(currentPath + " is not a directory");
+                }
+
+                if (currentPath == null) {
+                    throw new IllegalStateException("pathsToProcess is empty");
+                }
+
+                // because other processes might be screwing with the
+                // directories behind our back
+                if (!Files.exists(currentPath)) {
+                    continue;
+                }
+
+                try (Stream<Path> paths = Files.list(currentPath)) {
+                    // Process each path in the directory
+                    paths.forEach(path -> {
+                        if (endFlag)
+                            return;
+
+                        try {
+                            if (Files.isDirectory(path) && FileItem.extractPathFromFileAndRoot(rootPath, path).size() < maxDepth) {
+                                pathsToProcess.add(path);
+                            } else {
+                                // Add files immediately (files at this depth
+                                // level)
+                                if (FileFilter.isCorrectType(type, path, tdList)) {
+                                    filelist.add(createFileItem(path));
+                                }
+                            }
+                        } catch (Exception e) {
+                            LOGGER.warning("Error processing path: " + path + " - "
+                                    + e.getMessage());
                         }
-                    }
+                    });
+                } catch (IOException e) {
+                    LOGGER.warning("Error listing directory: " + currentPath + " - "
+                            + e.getMessage());
+                    continue;
                 }
             }
         }
@@ -563,16 +646,18 @@ public class FileTypeList {
         }
 
         /**
-         * Creates a FileItem from a file. Sub classes should over-ride this.
+         * Creates a FileItem from a path. Sub classes should over-ride this.
          * 
-         * @param file
+         * @param path
          *            to be the basis of this FileItem.
-         * @return FileItem created from file.
+         * @return FileItem created from path.
          */
-        private FileItem createFileItem(File file) {
-            FileItem fileItem = tdList.getType(StandardTypes.MPG3).equals(type) ? new MPG3FileItem(rootDir, file) : new FileItem(rootDir, file);
+        private FileItem createFileItem(Path path) {
+            FileItem fileItem = tdList.getType(StandardTypes.MPG3).equals(type) 
+                ? new MPG3FileItem(rootPath, path) 
+                : new FileItem(rootPath, path);
             
-            hashProvider.findHashNonBlocking(file, new FileHashListener() {
+            hashProvider.findHashNonBlocking(path, new FileHashListener() {
                 public void foundHash(FileHashEvent e) {
                     fileItem.setHash(e.getHashes());
                 }
@@ -602,9 +687,10 @@ public class FileTypeList {
      * Determines what path should be used as the root path. Should only be used by getPath();
      */
     private String getDefaultDirectoryPath() {
-        String s = getDefaultDirectory().getAbsolutePath();
-        if (s.charAt(s.length() - 1) != File.separatorChar)
-            s = s + File.separator;
+        String s = getDefaultDirectory().toAbsolutePath().toString();
+        String separator = fileSystem.getSeparator();
+        if (!s.endsWith(separator))
+            s = s + separator;
         return s;
     }
 
@@ -612,18 +698,18 @@ public class FileTypeList {
      * Suggests a default root directory in the filing system. Should only be used by
      * getDefaultDirectoryPath();
      */
-    private synchronized File getDefaultDirectory() {
+    private synchronized Path getDefaultDirectory() {
         Optional<TypeDescription> td = tdList.get(type);
         String prefix = td.isEmpty() ? "Misc" : td.get().getDescription();
-        File empty = new File(MysterGlobals.getAppDataPath(), prefix + " Downloads");
+        Path empty = fileSystem.getPath(MysterGlobals.getAppDataPath().getAbsolutePath(), prefix + " Downloads");
         int counter = 1;
         do {
-            if (empty.exists()) {
-                if (empty.isDirectory())
+            if (Files.exists(empty)) {
+                if (Files.isDirectory(empty))
                     return empty; // here is where the routine should go most of
                 // the time.
                 else {
-                    empty = new File(type + " Downloads" + counter);
+                    empty = fileSystem.getPath(type + " Downloads" + counter);
                     counter++;
                     // if (counter>1000) System.exit(0);//bam!
                 }
@@ -632,7 +718,11 @@ public class FileTypeList {
             }
         } while (true);
 
-        empty.mkdir();
+        try {
+            Files.createDirectories(empty);
+        } catch (IOException e) {
+            LOGGER.warning("Could not create directory: " + empty + " - " + e.getMessage());
+        }
 
         return empty;
 

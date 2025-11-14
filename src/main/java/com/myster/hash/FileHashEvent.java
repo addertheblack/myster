@@ -1,6 +1,6 @@
 package com.myster.hash;
 
-import java.io.File;
+import java.nio.file.Path;
 
 //immutable
 public class FileHashEvent {
@@ -8,18 +8,18 @@ public class FileHashEvent {
 
     private FileHash[] hashes;
 
-    private File file;
+    private Path path;
 
-    public FileHashEvent(FileHash[] hashes, File file) {
+    public FileHashEvent(FileHash[] hashes, Path path) {
         this.hashes = hashes;
-        this.file = file;
+        this.path = path;
     }
 
     public FileHash[] getHashes() {
         return  hashes.clone();
     }
-
-    public File getFile() {
-        return file;
+    
+    public Path getPath() {
+        return path;
     }
 }

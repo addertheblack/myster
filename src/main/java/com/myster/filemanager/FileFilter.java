@@ -1,6 +1,9 @@
 package com.myster.filemanager;
 
 import java.io.File;
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.Enumeration;
 import java.util.Optional;
 import java.util.zip.ZipEntry;
@@ -25,47 +28,53 @@ class FileFilter {
     //NOTE: I have modified it to get the extensions from the
     // TypeDescriptionList isn't of
     //some statically coded stuff
-    public static boolean isCorrectType(MysterType type, File file, TypeDescriptionList tdList) {
-        if (file.length() == 0) {
-            return false; //all 0k files are bad.
-        }
-        if (file.getName().startsWith(".")) {
-            return false; // hidden files should stay hidden
-        }
-
-        Optional<TypeDescription> typeDescriptionOptional = tdList.get(type);
-        if (typeDescriptionOptional.isEmpty())
-            return true; //no information on this type, allow everything.
-        
-        TypeDescription typeDescription = typeDescriptionOptional.get();
-        String[] extensions = typeDescription.getExtensions(); //getExtensions
-                                                               // is slow so we
-                                                               // only want to
-                                                               // exce it once.
-        if (extensions.length == 0)
-            return true;//no information on this type, allow everything.
-
-        if (hasExtension(file.getName(), extensions))//entry.extensions))
-            return true;
-
-        if (typeDescription.isArchived() && isArchive(file.getName())) {
-            try {
-                ZipFile zipFile = new ZipFile(file);
-                try {
-                    for (Enumeration<? extends ZipEntry> entries = zipFile.entries(); entries
-                            .hasMoreElements();) {
-                        ZipEntry zipEntry = entries.nextElement();
-                        if (hasExtension(zipEntry.getName(), extensions))
-                            return true;
-                    }
-                } finally {
-                    zipFile.close();
-                }
-            } catch (java.io.IOException e) {
-                return false;
+    
+    /**
+     * Path-based version (preferred)
+     */
+    public static boolean isCorrectType(MysterType type, Path path, TypeDescriptionList tdList) {
+        try {
+            if (Files.size(path) == 0) {
+                return false; //all 0k files are bad.
             }
+            String fileName = path.getFileName().toString();
+            if (fileName.startsWith(".")) {
+                return false; // hidden files should stay hidden
+            }
+
+            Optional<TypeDescription> typeDescriptionOptional = tdList.get(type);
+            if (typeDescriptionOptional.isEmpty())
+                return true; //no information on this type, allow everything.
+            
+            TypeDescription typeDescription = typeDescriptionOptional.get();
+            String[] extensions = typeDescription.getExtensions();
+            if (extensions.length == 0)
+                return true;//no information on this type, allow everything.
+
+            if (hasExtension(fileName, extensions))
+                return true;
+
+            if (typeDescription.isArchived() && isArchive(fileName)) {
+                try {
+                    ZipFile zipFile = new ZipFile(path.toFile());
+                    try {
+                        for (Enumeration<? extends ZipEntry> entries = zipFile.entries(); entries
+                                .hasMoreElements();) {
+                            ZipEntry zipEntry = entries.nextElement();
+                            if (hasExtension(zipEntry.getName(), extensions))
+                                return true;
+                        }
+                    } finally {
+                        zipFile.close();
+                    }
+                } catch (java.io.IOException e) {
+                    return false;
+                }
+            }
+            return false;
+        } catch (IOException e) {
+            return false;
         }
-        return false;
     }
 
     private static boolean hasExtension(String filename, String[] extensions) {
