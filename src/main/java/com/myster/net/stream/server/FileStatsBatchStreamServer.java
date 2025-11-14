@@ -42,16 +42,14 @@ public class FileStatsBatchStreamServer extends ServerStreamHandler {
             MysterDataOutputStream out = context.socket().out;
 
             MysterType type = in.readType();
-            int count = in.readInt();
-
             // Read all filenames first
-            String[] filenames = new String[count]; 
-            for (int i = 0; i < count; i++) {
-                filenames[i] = in.readUTF(); // annoying mem spike
-            }
+            String[] filenames = context.fileManager().getFileTypeList(type).getFileListAsStrings();
+            out.writeInt(filenames.length);
 
             // Process and send all responses
             for (String filename : filenames) {
+                out.writeUTF(filename);
+                
                 FileItem fileItem = context.fileManager().getFileItem(type, filename);
                 MessagePack messagePack = (fileItem == null) 
                     ? MessagePack.newEmpty() 

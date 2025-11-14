@@ -127,43 +127,90 @@ public class StandardSuiteStream {
         return socket.in.readMessagePack();
     }
     
+    public static record NamedMetaData(String name, MessagePack pak) {}
+    
+    public interface FileCallback {
+        void file(NamedMetaData f);
+        void numberOfFiles(int numberOfFiles);
+    }
+
+    public static void getAllFilesAndMetadata(MysterSocket socket,
+                                              MysterType type,
+                                              FileCallback callback)
+            throws IOException {
+        // Send batch command (177)
+        socket.out.writeInt(177);
+
+        // Send type
+        socket.out.writeType(type);
+        socket.out.flush();
+
+        // Read protocol check
+        checkProtocol(socket.in);
+
+        // Send count
+        int maxSize = socket.in.readInt();
+
+        callback.numberOfFiles(maxSize);
+
+        // Read all responses
+        for (int i = 0; i < maxSize; i++) {
+            if (Thread.currentThread().isInterrupted()) {
+                return;
+            }
+            var name = socket.in.readUTF();
+            callback.file(new NamedMetaData(name, socket.in.readMessagePack()));
+        }
+    }
+    
+
     public static PromiseFutureList<MessagePack> getFileStatsBatch(MysterSocket socket, MysterFileStub[] stubs)
             throws IOException {
         return PromiseFutureList.newPromiseFutureList(l -> {
             Executors.newVirtualThreadPerTaskExecutor().execute(() -> {
                 try {
-                    if (stubs.length == 0) {
-                        l.done();
-                        return;
-                    }
-                    
-                    // All stubs must be of the same type for batch request
-                    MysterType type = stubs[0].getType();
-                    
-                    // Send batch command (177)
-                    socket.out.writeInt(177);
-                    
-                    // Send type
-                    socket.out.writeType(type);
-                    
-                    // Send count
-                    socket.out.writeInt(stubs.length);
-                    
-                    // Send all filenames
-                    for (MysterFileStub stub : stubs) {
+                    // This is a speed hack.
+                    int pointer = 0;
+                    int current = 0;
+                    final int MAX_OUTSTANDING = 30;
+                    while (current < stubs.length) { // useful.
                         checkCancelled(l);
-                        socket.out.writeUTF(stub.getName());
-                    }
-                    
-                    socket.out.flush();
-                    
-                    // Read protocol check
-                    checkProtocol(socket.in);
-                    
-                    // Read all responses
-                    for (int i = 0; i < stubs.length; i++) {
+
+                        if (pointer < stubs.length) {
+                            MysterFileStub stub = stubs[pointer];
+                            socket.out.writeInt(77);
+
+                            socket.out.writeType(stub.getType());
+                            socket.out.writeUTF(stub.getName());
+                            pointer++;
+                        }
+
                         checkCancelled(l);
-                        l.addResult(socket.in.readMessagePack());
+
+                        while (socket.in.available() > 1 
+                                || (pointer - current > MAX_OUTSTANDING)
+                                || pointer >= stubs.length) {
+                            if (pointer - current > MAX_OUTSTANDING) {
+                                socket.out.flush();
+                            }
+                            
+
+                            byte errorByte = socket.in.readByte();
+                            if (errorByte != 1) {
+                                throw new DisconnectException("Reply for server gave error while getting file stats in a batch. Error type "
+                                        + errorByte);
+                            }
+
+                            checkCancelled(l);
+
+                            l.addResult(socket.in.readMessagePack());
+
+                            current++;
+
+                            if (current >= stubs.length) {
+                                break;
+                            }
+                        }
                     }
                 } catch (Exception ex) {
                     l.setException(ex);

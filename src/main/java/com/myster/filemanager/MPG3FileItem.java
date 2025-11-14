@@ -38,7 +38,7 @@ public class MPG3FileItem extends FileItem {
             return;
         }
 
-        if (path.getFileName().endsWith(".mp3")) {
+        if (path.toFile().getName().endsWith(".mp3")) {
             // Use appropriate numeric types instead of strings for better efficiency
             messagePack.putLong("/BitRate", mp3File.getBitrate() * 1000L);
             messagePack.putLong("/Hz", mp3File.getSampleRate());

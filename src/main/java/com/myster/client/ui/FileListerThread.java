@@ -26,6 +26,8 @@ import com.myster.net.stream.client.MysterDataInputStream;
 import com.myster.net.stream.client.MysterDataOutputStream;
 import com.myster.net.stream.client.MysterSocketFactory;
 import com.myster.net.stream.client.StandardSuiteStream;
+import com.myster.net.stream.client.StandardSuiteStream.FileCallback;
+import com.myster.net.stream.client.StandardSuiteStream.NamedMetaData;
 import com.myster.search.MysterFileStub;
 import com.myster.type.MysterType;
 import com.myster.util.MysterThread;
@@ -92,80 +94,45 @@ public class FileListerThread extends MysterThread {
 
             msg.say("Requesting File List...");
 
-            out.writeInt(78);
-
-            if (in.read() != 1) {
-                msg.say("Server says it does not know how to send a file listing.");
-                return;
-            }
-
-            if (type == null) {
-                msg.say("No type is selected.");
-                return;
-            }
-
-            msg.say("Requesting File List: " + lookup.lookup(type));
-
-            out.writeType(type);
-            int numberoffiles = in.readInt();
-
-            msg.say("Receiving List of Size: " + numberoffiles);
-
-            final int listFileProportion = 5;
-            String[] files = new String[numberoffiles];
-            for (int i = 0; i < numberoffiles; i++) {
-                files[i] = in.readUTF();
-                if (i % 100 == 0) {
-                    msg.say("Downloading file names: " + lookup.lookup(type) + " " + ((i * listFileProportion) / numberoffiles) + "%");
+            final int[] counter = new int[] { 0 };
+            final int[] max = new int[] { 0 };
+            final long[] startTime = new long[] { System.currentTimeMillis() };
+            final List<FileRecord> records = new ArrayList<>();
+            StandardSuiteStream.getAllFilesAndMetadata(socket, type, new FileCallback() {
+                @Override
+                public void numberOfFiles(int numberOfFiles) {
+                    Invoker.EDT.invoke(() -> {
+                        max[0] = numberOfFiles;
+                    });
                 }
 
-            }
+                @Override
+                public void file(NamedMetaData f) {
+                    records.add(new FileRecord(f.name(), f.pak()));
 
-            try {
-                final int[] counter = new int[] { 0 };
-                final long[] startTime = new long[] { System.currentTimeMillis() };
-                final List<FileRecord> records = new ArrayList<>();
-                StandardSuiteStream
-                        .getFileStatsBatch(socket,
-                                           Util.map(Arrays.asList(files),
-                                                    fileName -> new MysterFileStub(mysterAddress,
-                                                                                   type,
-                                                                                   fileName))
-                                                   .toArray(new MysterFileStub[] {}))
-                        .setInvoker(Invoker.EDT)
-                        .addResultListener(_ -> {
-                            listener.addItemsToFileList(records.toArray(new FileRecord[] {}));
-                        })
-                        .addPartialResultListener(r -> {
-                            records.add(new FileRecord(files[counter[0]], r));
-                            
-                            // if it has been more than a second .... then..
-                            long currentTime = System.currentTimeMillis();
-                            if ((currentTime - startTime[0]) > 1000) {
-                                listener.addItemsToFileList(records.toArray(new FileRecord[] {}));
-                                records.clear();
-                                startTime[0] = currentTime;
-                            }
-                            
-                            
-                            var c = counter[0]++;
-                            if ( c %10 != 0) {
-                                return;
-                            }
-                            msg.say("Downloading file metadata: " + lookup.lookup(type) + " "
-                                    + ((listFileProportion+( c* (100-listFileProportion)) / numberoffiles)) + "%");})
-                        .get();
-            } catch (InterruptedException ex) {
-                return;
-            } catch (ExecutionException ex) {
-                var cause = ex.getCause();
-                
-                if (cause instanceof IOException ioException) {
-                    throw ioException;
-                } else {
-                    throw new UnexpectedException(ex);
+                    // if it has been more than a second .... then..
+                    long currentTime = System.currentTimeMillis();
+                    if ((currentTime - startTime[0]) > 1000 || max[0] == (counter[0] + 1)) {
+                        var rr = records.toArray(new FileRecord[] {});
+                        Invoker.EDT.invoke(() -> {
+                            listener.addItemsToFileList(rr);
+                        });
+                        records.clear();
+                        startTime[0] = currentTime;
+                    }
+
+                    var c = counter[0]++;
+                    if (c % 10 != 0) {
+                        return;
+                    }
+                    var m = max[0];
+                    Invoker.EDT.invoke(() -> {
+                        msg.say("Downloading file metadata: " + lookup.lookup(type) + " "
+                                + (c * (100)) / m + "%");
+                    });
+
                 }
-            }
+            });
 
             msg.say("Requesting File List: " + lookup.lookup(type) + " Complete.");
             msg.say("Idle...");
