@@ -1,12 +1,12 @@
 package com.myster.hash;
 
-import java.io.File;
+import java.nio.file.Path;
 
 //immutable
 public class HashManagerEvent {
     private final boolean enabled;
 
-    private final File file;
+    private final Path file;
 
     private final long progress;
 
@@ -14,7 +14,7 @@ public class HashManagerEvent {
         this(enabled, null, -1);
     }
 
-    public HashManagerEvent(boolean enabled, File file, long progress) {
+    public HashManagerEvent(boolean enabled, Path file, long progress) {
         this.enabled = enabled;
         this.file = file;
         this.progress = progress;
@@ -27,7 +27,7 @@ public class HashManagerEvent {
     /**
      * Returns file being processed or null if not applicable.
      */
-    public File getFile() {
+    public Path getFile() {
         return file;
     }
 

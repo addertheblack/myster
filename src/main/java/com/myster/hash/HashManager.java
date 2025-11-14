@@ -1,9 +1,10 @@
 package com.myster.hash;
 
 import java.io.File;
-import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.util.logging.Logger;
@@ -98,28 +99,33 @@ public class HashManager implements Runnable {
     /**
      * This routine could take a long time or not. If the file is cached the
      * information is returned to the listener from the current thread.. Else
-     * the information is returned from the internal hashing thread. (Yipes,
-     * thread management in java is <->to memory alloc free in C++ in pointless
-     * complexity)...
+     * the information is returned from the internal hashing thread.
+     * 
+     * Path-based version (preferred).
      */
-    public void findHash(File file, FileHashListener listener) {
-        FileHash[] hashes = oldHashes.getHashesForFile(file);
+    public void findHash(Path path, FileHashListener listener) {
+        FileHash[] hashes = oldHashes.getHashesForFile(path.toFile());
 
         if (hashes == null) {
-            if (file.exists()) {
-                workQueue.add(new WorkingQueueItem(file, listener));
+            if (Files.exists(path)) {
+                workQueue.add(new WorkingQueueItem(path, listener));
             } else {
-                dispatchHashFoundEvent(listener, new FileHash[] {}, file); // file
-                // doens't
-                // EXIST!
+                dispatchHashFoundEvent(listener, new FileHash[] {}, path);
             }
         } else {
-            dispatchHashFoundEvent(listener, hashes, file);
+            dispatchHashFoundEvent(listener, hashes, path);
         }
     }
+    
+    /**
+     * File-based version (for backward compatibility).
+     */
+    public void findHash(File file, FileHashListener listener) {
+        findHash(file.toPath(), listener);
+    }
 
-    private static void dispatchHashFoundEvent(FileHashListener listener, FileHash[] hashes, File file) {
-        listener.foundHash(new FileHashEvent(hashes, file));
+    private static void dispatchHashFoundEvent(FileHashListener listener, FileHash[] hashes, Path path) {
+        listener.foundHash(new FileHashEvent(hashes, path));
     }
 
     public void run() {
@@ -134,10 +140,10 @@ public class HashManager implements Runnable {
                 if (!hashingIsEnabled)
                     continue;
 
-                FileHash[] hashes = oldHashes.getHashesForFile(item.file);
+                FileHash[] hashes = oldHashes.getHashesForFile(item.path.toFile());
 
                 if (hashes !=null) { //Humm we have already hashed this.
-                    dispatchHashFoundEvent(item.listener, hashes, item.file);
+                    dispatchHashFoundEvent(item.listener, hashes, item.path);
                     continue;
                 }
                 
@@ -145,16 +151,16 @@ public class HashManager implements Runnable {
                     digestArray[i] = MessageDigest.getInstance(hashTypes[i].toUpperCase());
                 }
 
-                calcHash(item.file, digestArray);
+                calcHash(item.path, digestArray);
 
                 hashes = new FileHash[digestArray.length];
                 for (int i = 0; i < hashes.length; i++) {
                     hashes[i] = new SimpleFileHash(hashTypes[i], digestArray[i].digest());
                 }
 
-                oldHashes.putHashes(item.file, hashes);
+                oldHashes.putHashes(item.path.toFile(), hashes);
 
-                dispatchHashFoundEvent(item.listener, hashes, item.file);
+                dispatchHashFoundEvent(item.listener, hashes, item.path);
             } catch (NoSuchAlgorithmException ex) {
                 ex.printStackTrace();
                 // Should never happen
@@ -172,19 +178,13 @@ public class HashManager implements Runnable {
         return workQueue.getSize();
     }
 
-    private final void calcHash(File file, MessageDigest[] digests) {
-
-        InputStream in = null;
-
-        try {
-            in = new FileInputStream(file); //read only
-
+    private void calcHash(Path path, MessageDigest[] digests) {
+        try (InputStream in = Files.newInputStream(path)) {
             long currentByte = 0;
-
             byte[] buffer = new byte[64 * 1024]; //64k buffer
 
             hashManagerDispatcher.fire()
-                    .fileHashStart(new HashManagerEvent(hashingIsEnabled, file, 0));
+                    .fileHashStart(new HashManagerEvent(hashingIsEnabled, path, 0));
 
             long timeOfLastUpdate = 0;
             for (int bytesRead = in.read(buffer); bytesRead != -1; bytesRead = in.read(buffer)) {
@@ -192,28 +192,19 @@ public class HashManager implements Runnable {
 
                 addBytesToDigests(buffer, bytesRead, digests);
 
-                if ((System.currentTimeMillis() - timeOfLastUpdate) > 100) { // blarg!
-                                                                             // too
-                                                                             // many
-                                                                             // events!
+                if ((System.currentTimeMillis() - timeOfLastUpdate) > 100) {
                     hashManagerDispatcher.fire()
                             .fileHashProgress(new HashManagerEvent(hashingIsEnabled,
-                                                                   file,
+                                                                   path,
                                                                    currentByte));
                     timeOfLastUpdate = System.currentTimeMillis();
                 }
             }
-        } catch (IOException ex) {
-            LOGGER.warning("Could not read a file.");
-        } finally {
-            try {
-                in.close();
-            } catch (Exception ex) {
-                // ignore
-            } // don't care
-
+            
             hashManagerDispatcher.fire().fileHashEnd(new HashManagerEvent(
-                    hashingIsEnabled, file, file.length()));
+                    hashingIsEnabled, path, Files.size(path)));
+        } catch (IOException ex) {
+            LOGGER.warning("Could not read file: " + path + " - " + ex.getMessage());
         }
     }
 
@@ -226,15 +217,13 @@ public class HashManager implements Runnable {
     }
 
     private static class WorkingQueueItem {
-        public final File file;
+        public final Path path;
 
         public final FileHashListener listener;
 
-        public WorkingQueueItem(File file, FileHashListener listener) {
-            this.file = file;
+        public WorkingQueueItem(Path path, FileHashListener listener) {
+            this.path = path;
             this.listener = listener;
         }
     }
-
-    //private static class
 }

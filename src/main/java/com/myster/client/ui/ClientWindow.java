@@ -227,7 +227,7 @@ public class ClientWindow extends MysterFrame implements Sayable {
             .withInsets(new Insets(0, 0, 0, 0));
         
         leftPanel.add(fileTypeList.getPane(), leftBuilder.withGridLoc(0, 0).withSize(1, 1).withWeight(0, 1));
-        leftPanel.add(fileList.getPane(), leftBuilder.withGridLoc(1, 0).withSize(1, 1).withWeight(1, 1));
+        leftPanel.add(fileList.getPane(), leftBuilder.withGridLoc(1, 0).withSize(1, 1).withWeight(1, 1).withInsets(new Insets(0, 10, 0, 0)));
 
         fileList.getPane().setMinimumSize(new Dimension(1, 1));
         fileList.getPane().setPreferredSize(new Dimension(1, 1));
@@ -245,8 +245,8 @@ public class ClientWindow extends MysterFrame implements Sayable {
         splitPane.setDividerLocation(1.0);
         
         // Add components to the frame: top row (connect/IP/toggle), middle (split pane), bottom (message)
-        add(connect, builder.withGridLoc(0, 0).withSize(1, 1).withWeight(0, 0));
-        add(ipTextField, builder.withGridLoc(1, 0).withSize(1, 1).withWeight(1, 0));
+        add(ipTextField, builder.withGridLoc(0, 0).withSize(1, 1).withWeight(1, 0));
+        add(connect, builder.withGridLoc(1, 0).withSize(1, 1).withWeight(0, 0));
         add(toggleStatsButton, builder.withGridLoc(2, 0).withSize(1, 1).withWeight(0, 0));
         add(splitPane, builder.withGridLoc(0, 1).withSize(3, 1).withWeight(1, 1));
         add(msg, builder.withGridLoc(0, 2).withSize(3, 1).withWeight(1, 0));

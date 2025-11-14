@@ -1,6 +1,7 @@
 package com.myster.filemanager;
 
 import java.io.File;
+import java.nio.file.Path;
 
 import com.mpatric.mp3agic.ID3v1;
 import com.mpatric.mp3agic.ID3v2;
@@ -14,8 +15,8 @@ import com.myster.mml.MessagePack;
 public class MPG3FileItem extends FileItem {
     private MessagePack messagePackRepresentation;
 
-    public MPG3FileItem(File root, File file) {
-        super(root, file);
+    public MPG3FileItem(Path root, Path path) {
+        super(root, path);
     }
 
     public synchronized MessagePack getMessagePackRepresentation() {
@@ -24,21 +25,20 @@ public class MPG3FileItem extends FileItem {
 
         messagePackRepresentation = super.getMessagePackRepresentation();
 
-        patchFunction2(messagePackRepresentation, getFile());
+        patchFunction2(messagePackRepresentation, getPath());
         return messagePackRepresentation;
     }
 
-    // ugh.. for Mp3 stuff
-    public static void patchFunction2(MessagePack messagePack, File file) {
+    public static void patchFunction2(MessagePack messagePack, Path path) {
         Mp3File mp3File = null;
         try {
-            mp3File = new Mp3File(file, 4096, false);
+            mp3File = new Mp3File(path.toFile(), 4096, false);
         } catch (Throwable ex) {
-            System.err.println("Could not read ID3 tag info for: " + file);
+            System.err.println("Could not read ID3 tag info for: " + path);
             return;
         }
 
-        if (file.getName().endsWith(".mp3")) {
+        if (path.getFileName().endsWith(".mp3")) {
             // Use appropriate numeric types instead of strings for better efficiency
             messagePack.putLong("/BitRate", mp3File.getBitrate() * 1000L);
             messagePack.putLong("/Hz", mp3File.getSampleRate());
