@@ -3,13 +3,13 @@ package com.myster.net.datagram.client;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 
-import com.myster.mml.MessagePack;
+import com.myster.mml.MessagePak;
 import com.myster.net.datagram.DatagramConstants;
 import com.myster.net.stream.client.MysterDataOutputStream;
 import com.myster.search.MysterFileStub;
 import com.myster.transaction.Transaction;
 
-public class FileStatsDatagramClient implements StandardDatagramClientImpl<MessagePack> {
+public class FileStatsDatagramClient implements StandardDatagramClientImpl<MessagePak> {
     private final MysterFileStub stub;
     
     public FileStatsDatagramClient(MysterFileStub fileStub) {
@@ -17,11 +17,11 @@ public class FileStatsDatagramClient implements StandardDatagramClientImpl<Messa
     }
     
     @Override
-    public MessagePack getObjectFromTransaction(Transaction transaction)
+    public MessagePak getObjectFromTransaction(Transaction transaction)
             throws IOException {
         // Parse the MessagePack bytes from the transaction using the robust variant
         try {
-            return MessagePack.fromBytes(transaction.getData());
+            return MessagePak.fromBytes(transaction.getData());
         } catch (IOException ex) {
             throw new com.myster.net.datagram.BadPacketException(
                     "Received a badly formed MessagePack from the server : "

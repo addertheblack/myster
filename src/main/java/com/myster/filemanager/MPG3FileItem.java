@@ -7,19 +7,19 @@ import com.mpatric.mp3agic.ID3v1;
 import com.mpatric.mp3agic.ID3v2;
 import com.mpatric.mp3agic.Mp3File;
 
-import com.myster.mml.MessagePack;
+import com.myster.mml.MessagePak;
 
 /**
  * This class implements the different data needed by the MPG3 files.
  */
 public class MPG3FileItem extends FileItem {
-    private MessagePack messagePackRepresentation;
+    private MessagePak messagePackRepresentation;
 
     public MPG3FileItem(Path root, Path path) {
         super(root, path);
     }
 
-    public synchronized MessagePack getMessagePackRepresentation() {
+    public synchronized MessagePak getMessagePackRepresentation() {
         if (messagePackRepresentation != null)
             return messagePackRepresentation;
 
@@ -29,7 +29,7 @@ public class MPG3FileItem extends FileItem {
         return messagePackRepresentation;
     }
 
-    public static void patchFunction2(MessagePack messagePack, Path path) {
+    public static void patchFunction2(MessagePak messagePack, Path path) {
         Mp3File mp3File = null;
         try {
             mp3File = new Mp3File(path.toFile(), 4096, false);

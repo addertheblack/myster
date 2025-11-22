@@ -6,7 +6,7 @@ import java.io.IOException;
 
 import com.myster.filemanager.FileItem;
 import com.myster.filemanager.FileTypeListManager;
-import com.myster.mml.MessagePack;
+import com.myster.mml.MessagePak;
 import com.myster.net.datagram.BadPacketException;
 import com.myster.net.datagram.DatagramConstants;
 import com.myster.net.stream.client.MysterDataInputStream;
@@ -38,10 +38,10 @@ public class FileStatsDatagramServer implements TransactionProtocol {
             String filename = in.readUTF();
 
             FileItem fileItem = fileManager.getFileItem(type, filename);
-            MessagePack messagePack;
+            MessagePak messagePack;
 
             if (fileItem == null) { //file not found
-                messagePack = MessagePack.newEmpty();
+                messagePack = MessagePak.newEmpty();
             } else {
                 messagePack = fileItem.getMessagePackRepresentation();
             }

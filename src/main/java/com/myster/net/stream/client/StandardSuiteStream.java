@@ -9,15 +9,14 @@ import com.general.thread.AsyncContextList;
 import com.general.thread.PromiseFutureList;
 import com.myster.filemanager.FileTypeList;
 import com.myster.hash.FileHash;
-import com.myster.mml.MessagePack;
+import com.myster.mml.MessagePak;
 import com.myster.net.DisconnectException;
 import com.myster.net.MysterAddress;
 import com.myster.net.MysterSocket;
 import com.myster.net.stream.client.msdownload.DownloadInitiator;
-import com.myster.search.HashCrawlerManager;
+import com.myster.net.stream.client.msdownload.MSDownloadParams;
 import com.myster.search.MysterFileStub;
 import com.myster.type.MysterType;
-import com.myster.ui.MysterFrameContext;
 
 /**
  * Contains many of the more common (simple) stream based connection sections. Most of these
@@ -80,7 +79,7 @@ public class StandardSuiteStream {
     }
 
     
-    public static MessagePack getServerStats(MysterSocket socket) throws IOException {
+    public static MessagePak getServerStats(MysterSocket socket) throws IOException {
         socket.setSoTimeout(90000); // ? Probably important in some way or
         // other.
 
@@ -98,13 +97,11 @@ public class StandardSuiteStream {
      * <p>
      * THIS ROUTINE IS ASYNCHRONOUS!
      */
-    public static void downloadFile(MysterFrameContext c,
-                                    final HashCrawlerManager crawlerManager,
-                                    final MysterFileStub stub) {
-        Executors.newVirtualThreadPerTaskExecutor().execute(new DownloadInitiator(c, crawlerManager, stub));
+    public static void downloadFile(MSDownloadParams p) {
+        Executors.newVirtualThreadPerTaskExecutor().execute(new DownloadInitiator(p));
     }
 
-    public static MessagePack getFileStats(MysterAddress ip, MysterFileStub stub) throws IOException {
+    public static MessagePak getFileStats(MysterAddress ip, MysterFileStub stub) throws IOException {
         try (MysterSocket socket = MysterSocketFactory.makeStreamConnection(ip)) {
             return getFileStats(socket, stub);
         }
@@ -114,7 +111,7 @@ public class StandardSuiteStream {
      * Gets the file stats for a particular file on a particular server.
      * Now uses MessagePack instead of MML
      */
-    public static MessagePack getFileStats(MysterSocket socket, MysterFileStub stub)
+    public static MessagePak getFileStats(MysterSocket socket, MysterFileStub stub)
             throws IOException {
         socket.out.writeInt(77);
 
@@ -127,7 +124,7 @@ public class StandardSuiteStream {
         return socket.in.readMessagePack();
     }
     
-    public static record NamedMetaData(String name, MessagePack pak) {}
+    public static record NamedMetaData(String name, MessagePak pak) {}
     
     public interface FileCallback {
         void file(NamedMetaData f);
@@ -164,7 +161,7 @@ public class StandardSuiteStream {
     }
     
 
-    public static PromiseFutureList<MessagePack> getFileStatsBatch(MysterSocket socket, MysterFileStub[] stubs)
+    public static PromiseFutureList<MessagePak> getFileStatsBatch(MysterSocket socket, MysterFileStub[] stubs)
             throws IOException {
         return PromiseFutureList.newPromiseFutureList(l -> {
             Executors.newVirtualThreadPerTaskExecutor().execute(() -> {
@@ -221,7 +218,7 @@ public class StandardSuiteStream {
         });
     }
 
-    private static void checkCancelled(AsyncContextList<MessagePack> l) throws DisconnectException {
+    private static void checkCancelled(AsyncContextList<MessagePak> l) throws DisconnectException {
         if (l.isCancelled()) {
             throw new DisconnectException();
         }

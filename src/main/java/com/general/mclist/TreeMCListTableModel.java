@@ -178,6 +178,15 @@ public class TreeMCListTableModel<E> extends MCListTableModel<E> {
         // Fire update event
         fireTableDataChanged();
     }
+    
+    /**
+     * @param path - must be a container path
+     * @return a copy of the children at Path
+     * @throws NullPointerException if path does not exist or does not represent a container
+     */
+    public List<TreeMCListItem<E>> getChildrenAtPath(TreePath path) {
+        return new ArrayList<TreeMCListItem<E>>(parentToRowsMap.get(path));
+    }
 
     private void buildRenderedListRecursively(TreePath path) {
         List<TreeMCListItem<E>> children = parentToRowsMap.get(path);

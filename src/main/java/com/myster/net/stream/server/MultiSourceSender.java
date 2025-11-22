@@ -8,7 +8,7 @@ import java.io.RandomAccessFile;
 import java.util.logging.Logger;
 
 import com.myster.filemanager.FileTypeListManager;
-import com.myster.mml.RobustMML;
+import com.myster.mml.MessagePak;
 import com.myster.net.MysterAddress;
 import com.myster.net.MysterSocket;
 import com.myster.net.server.BannersManager;
@@ -239,13 +239,13 @@ public class MultiSourceSender extends ServerStreamHandler {
         //Encapsulates the stuff required to send a queue position
         private void sendQueuePosition(MysterDataOutputStream out, int queued, String message)
                 throws IOException {
-            RobustMML mml = new RobustMML();
+            MessagePak pak = MessagePak.newEmpty();
 
-            mml.put(QUEUED_PATH, "" + queued); //no queing
+            pak.putInt(QUEUED_PATH, queued); //no queing
             if (!message.equals(""))
-                mml.put(MESSAGE_PATH, message);
+                pak.putString(MESSAGE_PATH, message);
 
-            out.writeUTF("" + mml); //this would loop until 1
+            out.writeMessagePack(pak); //this would loop until 1
             
             out.flush();
 
@@ -424,7 +424,7 @@ public class MultiSourceSender extends ServerStreamHandler {
             final long offset = socket.in.readLong();
             long fileLength = socket.in.readLong();
             
-            if (offset == fileLength) {
+            if (offset == fileLength && fileLength == 0) {
                 throw new DoneIoException();
             }
 

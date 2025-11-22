@@ -21,25 +21,40 @@ import com.myster.type.TypeDescriptionList;
 
 public class TypeChoice extends JComboBox<String> {
     private static final String LOCAL_NETWORK = "Local Network";
+    
+    private static final String BOOKMARKS= "Bookmarks";
+    
     private final TypeDescription[] types;
 
-    public TypeChoice(TypeDescriptionList typeDescriptionList, boolean addLocalNetwork) {
+    public TypeChoice(TypeDescriptionList typeDescriptionList, boolean addExtras) {
         Util.addSeparatorSupport(this);
         
         types = typeDescriptionList.getEnabledTypes();
         setEditable(false);
         addItemsToChoice(typeDescriptionList);
 
-        if (addLocalNetwork) {
+        if (addExtras) {
             // now add a separator
             addItem(Util.SEPARATOR);
 
             addItem(LOCAL_NETWORK);
+            
+            addItem(Util.SEPARATOR);
+
+            addItem(BOOKMARKS);
         }
     }
     
     public boolean isLan() {
         if (LOCAL_NETWORK.equals(getSelectedItem())) {
+            return true;
+        }
+        
+        return false;
+    }
+    
+    public boolean isBookmark() {
+        if (BOOKMARKS.equals(getSelectedItem())) {
             return true;
         }
         

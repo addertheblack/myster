@@ -8,8 +8,12 @@ import com.myster.net.MysterAddress;
 import com.myster.net.server.ServerUtils;
 
 /**
- * LanMysterServerList is a list of MysterServer objects that are on the local network.
- * It does not save itself in preferences, does not sort its list, and does not have a MysterType.
+ * LanMysterServerList is a list of MysterServer objects that are on the local
+ * network. It does not save itself in preferences (there's no point - this list is dynamically generated), does not
+ * sort its list, and does not have a MysterType.
+ * 
+ * The LanMysterServerList is generated dynamically based on whatever is
+ * happening on the LAN.
  */
 class LanMysterServerList {
 //    private static final Logger LOGGER = Logger.getLogger(LanMysterServerList.class.getName());

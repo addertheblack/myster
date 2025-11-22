@@ -70,9 +70,7 @@ public final class AsyncDatagramSocket {
         @Override
         public void run() {
             try {
-                int counter = 0;
-                
-                counter = loop(counter);
+                int counter = loop();
                 
                 final int p = usedPort;
                 usedPort = -2;
@@ -88,10 +86,11 @@ public final class AsyncDatagramSocket {
             }
         }
 
-        private int loop(int counter) {
+        private int loop() {
+            int counter = 0;
+            
             for (; counter < RETRIES; counter++) {
-                try (DatagramChannel channel = DatagramChannel.open();
-                        Selector s = Selector.open()) {
+                try (DatagramChannel channel = DatagramChannel.open(); Selector s = Selector.open()) {
                     selector = s;
                     
                     // It looks like I might be flooding the output buffer..
@@ -133,6 +132,7 @@ public final class AsyncDatagramSocket {
                     }
                 }
             }
+            
             return counter;
         }
 

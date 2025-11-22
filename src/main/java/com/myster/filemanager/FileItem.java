@@ -7,7 +7,7 @@ import java.util.List;
 import java.util.logging.Logger;
 
 import com.myster.hash.FileHash;
-import com.myster.mml.MessagePack;
+import com.myster.mml.MessagePak;
 
 public class FileItem {
     private static final Logger LOGGER = Logger.getLogger(FileItem.class.getName());
@@ -101,8 +101,8 @@ public class FileItem {
     public static final String HASH_PATH = "/hash/";
 
     private volatile long fileSize = -1;
-    public MessagePack getMessagePackRepresentation() {
-        MessagePack messagePack = MessagePack.newEmpty();
+    public MessagePak getMessagePackRepresentation() {
+        MessagePak messagePack = MessagePak.newEmpty();
 
         if (path != null) {
             try {

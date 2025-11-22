@@ -23,7 +23,7 @@ import com.general.util.Util;
 import com.myster.application.MysterGlobals;
 import com.myster.mml.MML;
 import com.myster.mml.MMLException;
-import com.myster.mml.MessagePack;
+import com.myster.mml.MessagePak;
 import com.myster.mml.RobustMML;
 import com.myster.net.MysterAddress;
 import com.myster.net.stream.server.ServerStats;
@@ -104,7 +104,7 @@ class MysterServerImplementation {
      */
     MysterServerImplementation(Preferences prefs,
                                IdentityProvider addressProvider,
-                               MessagePack serverStats,
+                               MessagePak serverStats,
                                MysterIdentity identity,
                                MysterAddress address) {
         preferences = prefs;
@@ -118,11 +118,11 @@ class MysterServerImplementation {
         return new ExternalName(Util.getMD5Hash(key.toString()));
     }
     
-    void refreshStats(MessagePack serverStats, MysterAddress address) {
+    void refreshStats(MessagePak serverStats, MysterAddress address) {
         refreshStats(this, serverStats, address);
     }
 
-    public static MysterAddress extractCorrectedAddress(MessagePack serverStats,
+    public static MysterAddress extractCorrectedAddress(MessagePak serverStats,
                                                         MysterAddress addressIn) {
         int port = extractPort(serverStats);
 
@@ -130,7 +130,7 @@ class MysterServerImplementation {
                 : new MysterAddress(addressIn.getInetAddress(), port);
     }
     
-    private void refreshStats(MysterServerImplementation server, MessagePack serverStats, MysterAddress addressIn) {
+    private void refreshStats(MysterServerImplementation server, MessagePak serverStats, MysterAddress addressIn) {
         int port = extractPort(serverStats);
         
         var address = extractCorrectedAddress(serverStats, addressIn);
@@ -177,7 +177,7 @@ class MysterServerImplementation {
         server.save();
     }
 
-    private static int extractPort(MessagePack serverStats) {
+    private static int extractPort(MessagePak serverStats) {
         return serverStats.getInt(ServerStats.PORT).orElse(MysterGlobals.DEFAULT_SERVER_PORT);
     }
 

@@ -23,18 +23,18 @@ import com.general.util.ProtectedForUnitTests;
  * 
  * Use this class when you are writing a data structure.
  */
-public class MessagePackSerializer implements com.myster.mml.MessagePack {
+public class MessagePackSerializer implements com.myster.mml.MessagePak {
     private Map<String, Object> root;
     
     /**
-     * Use {@link com.myster.mml.MessagePack#newEmpty()}
+     * Use {@link com.myster.mml.MessagePak#newEmpty()}
      */
     MessagePackSerializer() {
         root = new HashMap<>();
     }
     
     /**
-     * Do not use this method. Use {@link com.myster.mml.MessagePack#fromBytes(byte[])}
+     * Do not use this method. Use {@link com.myster.mml.MessagePak#fromBytes(byte[])}
      */
     MessagePackSerializer(byte[] data) throws IOException {
         try (MessageUnpacker unpacker = MessagePack.newDefaultUnpacker(data)) {

@@ -16,7 +16,7 @@ import java.util.logging.Logger;
  * BranchAsLeafException or ClassCastException. Uses composition to wrap a
  * MessagePackSerializer instance.
  */
-class RobustMessagePackSerializer implements com.myster.mml.MessagePack {
+class RobustMessagePackSerializer implements com.myster.mml.MessagePak {
     private static final Logger LOGGER = Logger.getLogger(RobustMessagePackSerializer.class.getName());
     private final MessagePackSerializer delegate;
     private boolean trace;

@@ -4,14 +4,13 @@ import java.io.IOException;
 import java.util.List;
 
 import com.myster.hash.FileHash;
-import com.myster.mml.MessagePack;
+import com.myster.mml.MessagePak;
 import com.myster.net.MysterAddress;
 import com.myster.net.MysterSocket;
 import com.myster.net.client.MysterStream;
-import com.myster.search.HashCrawlerManager;
+import com.myster.net.stream.client.msdownload.MSDownloadParams;
 import com.myster.search.MysterFileStub;
 import com.myster.type.MysterType;
-import com.myster.ui.MysterFrameContext;
 
 public class MysterStreamImpl implements MysterStream {
     @Override
@@ -37,7 +36,7 @@ public class MysterStreamImpl implements MysterStream {
     }
 
     @Override
-    public MessagePack getServerStats(MysterSocket socket) throws IOException {
+    public MessagePak getServerStats(MysterSocket socket) throws IOException {
         return StandardSuiteStream.getServerStats(socket);
     }
     
@@ -48,14 +47,12 @@ public class MysterStreamImpl implements MysterStream {
     }
 
     @Override
-    public MessagePack getFileStats(MysterSocket socket, MysterFileStub stub) throws IOException {
+    public MessagePak getFileStats(MysterSocket socket, MysterFileStub stub) throws IOException {
         return StandardSuiteStream.getFileStats(socket, stub);
     }
 
     @Override
-    public void downloadFile(MysterFrameContext c,
-                            HashCrawlerManager crawlerManager,
-                            MysterFileStub stub) {
-        StandardSuiteStream.downloadFile(c, crawlerManager, stub);
+    public void downloadFile(MSDownloadParams p) {
+        StandardSuiteStream.downloadFile(p);
     }
 }

@@ -7,8 +7,7 @@ import java.io.InputStream;
 import java.nio.charset.Charset;
 import java.util.Objects;
 
-import com.myster.mml.MessagePack;
-import com.myster.mml.RobustMML;
+import com.myster.mml.MessagePak;
 import com.myster.type.MysterType;
 
 public class MysterDataInputStream extends InputStream {
@@ -109,9 +108,18 @@ public class MysterDataInputStream extends InputStream {
     }
     
     public void readFully(byte[] b, int off, int len) throws IOException {
-        int i = readNBytes(b, off, len);
-        if (i !=len) {
-            throw new IOException("Stream could not read the required number of bytes.");
+        Objects.requireNonNull(b);
+        if (off < 0 || len < 0 || len > b.length - off) {
+            throw new IndexOutOfBoundsException();
+        }
+        
+        int totalRead = 0;
+        while (totalRead < len) {
+            int bytesRead = in.read(b, off + totalRead, len - totalRead);
+            if (bytesRead < 0) {
+                throw new EOFException("Stream closed before reading all bytes");
+            }
+            totalRead += bytesRead;
         }
     }
     
@@ -159,7 +167,7 @@ public class MysterDataInputStream extends InputStream {
         return in.available();
     }
 
-    public MessagePack readMessagePack() throws IOException {
-        return MessagePack.fromBytes(readFully(readInt()));
+    public MessagePak readMessagePack() throws IOException {
+        return MessagePak.fromBytes(readFully(readInt()));
     }
 }

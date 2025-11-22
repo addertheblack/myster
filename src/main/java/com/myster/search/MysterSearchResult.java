@@ -1,12 +1,14 @@
 package com.myster.search;
 
+import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
 
 import com.general.util.Util;
-import com.myster.mml.MessagePack;
+import com.myster.mml.MessagePak;
 import com.myster.net.MysterAddress;
 import com.myster.net.client.MysterProtocol;
+import com.myster.net.stream.client.msdownload.MSDownloadParams;
 import com.myster.search.ui.ServerStatsFromCache;
 import com.myster.tracker.MysterServer;
 import com.myster.ui.MysterFrameContext;
@@ -18,7 +20,7 @@ public class MysterSearchResult implements SearchResult {
     private final HashCrawlerManager hashCrawler;
     private final MysterFrameContext context;
     
-    private MessagePack mml;
+    private MessagePak mml;
 
     public MysterSearchResult(MysterProtocol protocol,
                               HashCrawlerManager hashCrawler,
@@ -32,29 +34,35 @@ public class MysterSearchResult implements SearchResult {
         this.cache = cache;
     }
 
-    public void setFileStats(MessagePack m) {
+    public void setFileStats(MessagePak m) {
         Util.invokeNowOrLater(() -> mml = m);
     }
 
     // is called when the user decides to download the item
     @Override
     public void download() {
-        getProtocol().getStream().downloadFile(context, hashCrawler, stub);
+        getProtocol().getStream()
+                .downloadFile(new MSDownloadParams(context,
+                                                   hashCrawler,
+                                                   stub,
+                                                   Path.of(context.fileManager()
+                                                           .getPathFromType(stub.getType())),
+                                                   Path.of("")));
     }
 
-    //returns the network the search result is on.
+    // returns the network the search result is on.
     @Override
     public String getNetwork() {
         return "Myster Network";
     }
 
-    //gets a value for a meta data thingy
+    // gets a value for a meta data thingy
     @Override
     public String getMetaData(String key) {
         return (mml == null ? null : mml.get(key).orElse(null));
     }
 
-    //gets the list of known meta data types for this item.
+    // gets the list of known meta data types for this item.
     @Override
     public String[] getKeyList() {
         if (mml == null)
@@ -80,7 +88,7 @@ public class MysterSearchResult implements SearchResult {
         return sa_temp;
     }
 
-    //gets the filename of the search result
+    // gets the filename of the search result
     @Override
     public String getName() {
         return stub.getName();

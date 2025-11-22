@@ -249,11 +249,12 @@ public class MultiSourceDownload implements Task, Cancellable {
         long readLength = (fileLength - fileProgress > multiBlockSize ? multiBlockSize : fileLength
                 - fileProgress);
 
-        MultiSourceUtilities.debug("Main Thread -> Adding Work Segment " + fileProgress + " "
+        var tempFileProgress = (readLength == 0 ? 0 : fileProgress);
+        MultiSourceUtilities.debug("Main Thread -> Adding Work Segment " + tempFileProgress + " "
                 + readLength);
 
         // generate an end signal.
-        WorkSegment workSegment = new WorkSegment((readLength == 0 ? 0 : fileProgress), readLength);
+        WorkSegment workSegment = new WorkSegment(tempFileProgress, readLength);
 
         fileProgress += readLength;
 

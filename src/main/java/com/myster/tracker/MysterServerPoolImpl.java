@@ -22,7 +22,7 @@ import com.general.thread.PromiseFuture;
 import com.general.thread.PromiseFutures;
 import com.general.util.Util;
 import com.myster.identity.Cid128;
-import com.myster.mml.MessagePack;
+import com.myster.mml.MessagePak;
 import com.myster.net.MysterAddress;
 import com.myster.net.client.MysterProtocol;
 import com.myster.net.client.ParamBuilder;
@@ -53,11 +53,11 @@ public class MysterServerPoolImpl implements MysterServerPool {
 
     private final NewGenericDispatcher<MysterPoolListener> dispatcher = new NewGenericDispatcher<>(MysterPoolListener.class, TrackerUtils.INVOKER);
 
-    private final Map<MysterAddress, PromiseFuture<MessagePack>> outstandingServerFutures = new HashMap<>();
+    private final Map<MysterAddress, PromiseFuture<MessagePak>> outstandingServerFutures = new HashMap<>();
     
     // This is so we can stop the GC for garbage collecting our weakly references stuff until the IP lists have
     // had a change to get references to things
-    private List<MysterServerImplementation> hardLinks = new ArrayList<>();
+    private final List<MysterServerImplementation> hardLinks = new ArrayList<>();
     private TimerTask task;
 
     public MysterServerPoolImpl(Preferences prefs, MysterProtocol mysterProtocol) {
@@ -181,7 +181,7 @@ public class MysterServerPoolImpl implements MysterServerPool {
         refreshMysterServer(address);
     }
 
-    private static MysterIdentity extractIdentity(MysterAddress address, MessagePack serverStats) {
+    private static MysterIdentity extractIdentity(MysterAddress address, MessagePak serverStats) {
         Optional<byte[]> publicKeyOpt = serverStats.getByteArray(ServerStats.IDENTITY);
         if (publicKeyOpt.isEmpty()) {
             return new MysterAddressIdentity(address);
@@ -242,7 +242,7 @@ public class MysterServerPoolImpl implements MysterServerPool {
      * Package protected for unit tests
      */
     void refreshMysterServer(MysterAddress address) {
-        PromiseFuture<MessagePack> getServerStatsFuture =
+        PromiseFuture<MessagePak> getServerStatsFuture =
                 protocol.getDatagram().getServerStats(new ParamBuilder(address)).clearInvoker()
                         .setInvoker(TrackerUtils.INVOKER).addResultListener(statsMessage -> {
                             serverStatsCallback(address, statsMessage);
@@ -259,7 +259,7 @@ public class MysterServerPoolImpl implements MysterServerPool {
     }
 
     private synchronized void serverStatsCallback(MysterAddress addressIn,
-                                                  MessagePack statsMessage) {
+                                                  MessagePak statsMessage) {
         MysterAddress address = MysterServerImplementation.extractCorrectedAddress(statsMessage, addressIn);
         deleteAddressBasedIdentitiesOnWrongPort(addressIn, address);
         
@@ -344,7 +344,7 @@ public class MysterServerPoolImpl implements MysterServerPool {
     }
 
     private synchronized MysterServerImplementation create(Preferences prefs,
-                                                           MessagePack serverStats,
+                                                           MessagePak serverStats,
                                                            MysterIdentity identity,
                                                            MysterAddress address) {
         var server = new MysterServerImplementation(prefs, identityTracker, serverStats, identity, address);

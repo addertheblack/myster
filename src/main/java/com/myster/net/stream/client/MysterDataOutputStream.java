@@ -4,7 +4,7 @@ package com.myster.net.stream.client;
 import java.io.IOException;
 import java.io.OutputStream;
 
-import com.myster.mml.MessagePack;
+import com.myster.mml.MessagePak;
 import com.myster.type.MysterType;
 
 public class MysterDataOutputStream extends OutputStream  {
@@ -106,7 +106,7 @@ public class MysterDataOutputStream extends OutputStream  {
         out.flush();
     }
 
-    public void writeMessagePack(MessagePack pack) throws IOException {
+    public void writeMessagePack(MessagePak pack) throws IOException {
         byte[] bytes = pack.toBytes();
         writeInt(bytes.length);
         write(bytes);

@@ -40,7 +40,7 @@ import org.bouncycastle.jce.provider.BouncyCastleProvider;
 
 import com.myster.identity.Identity;
 import com.myster.identity.Util;
-import com.myster.mml.MessagePack;
+import com.myster.mml.MessagePak;
 
 /**
  * Contains an encrypt packet and decrypt packet which work on byte[]
@@ -135,7 +135,7 @@ public class DatagramEncryptUtil {
     }
 
     private static byte[] buildSection1Plaintext(byte[] key, byte[] nonce) {
-        MessagePack section1 = MessagePack.newEmpty();
+        MessagePak section1 = MessagePak.newEmpty();
         section1.putString(MSDConstants.SECTION1_ALG, MSDConstants.DEFAULT_SYMMETRIC_ALG);
         section1.putByteArray(MSDConstants.SECTION1_KEY, key);
         section1.putByteArray(MSDConstants.SECTION1_NONCE, nonce);
@@ -147,7 +147,7 @@ public class DatagramEncryptUtil {
     }
     
     private static byte[] buildResponseSection1Plaintext(byte[] nonce) {
-        MessagePack section1 = MessagePack.newEmpty();
+        MessagePak section1 = MessagePak.newEmpty();
         section1.putString(MSDConstants.SECTION1_ALG, MSDConstants.DEFAULT_SYMMETRIC_ALG);
         section1.putByteArray(MSDConstants.SECTION1_NONCE, nonce);
         // Note: No key field for responses since client already has it
@@ -204,7 +204,7 @@ public class DatagramEncryptUtil {
     private static byte[] buildSection2(byte[] section1Ciphertext,
                                         byte[] section3Ciphertext,
                                         Optional<Identity> clientIdentity) {
-        MessagePack section2 = MessagePack.newEmpty();
+        MessagePak section2 = MessagePak.newEmpty();
         long timestamp = System.currentTimeMillis();
         
         section2.putLong(MSDConstants.SECTION2_TIMESTAMP, timestamp);
@@ -234,7 +234,7 @@ public class DatagramEncryptUtil {
     private static byte[] buildResponseSection2(byte[] section1Plaintext,
                                                 byte[] section3Ciphertext,
                                                 Optional<KeyPair> serverKeyPair) {
-        MessagePack section2 = MessagePack.newEmpty();
+        MessagePak section2 = MessagePak.newEmpty();
         long timestamp = System.currentTimeMillis();
 
         section2.putLong(MSDConstants.SECTION2_TIMESTAMP, timestamp);
@@ -381,7 +381,7 @@ public class DatagramEncryptUtil {
             byte[] section3 = extractSection(buffer, 3);
             
             // Parse Section 1 to get decryption parameters
-            MessagePack section1Data = MessagePack.fromBytes(section1);
+            MessagePak section1Data = MessagePak.fromBytes(section1);
             String algorithm = section1Data.getString(MSDConstants.SECTION1_ALG).orElse(MSDConstants.DEFAULT_SYMMETRIC_ALG);
             
             if (!MSDConstants.ALG_CHACHA20_POLY1305.equals(algorithm)) {
@@ -510,7 +510,7 @@ public class DatagramEncryptUtil {
             byte[] section3Ciphertext = extractSection(buffer, 3);
             
             // Parse Section 2 to get signature info
-            MessagePack section2Data = MessagePack.fromBytes(section2);
+            MessagePak section2Data = MessagePak.fromBytes(section2);
             Optional<Integer> serverKeyId = section2Data.getInt(MSDConstants.SECTION2_SERVER_KEY_ID); 
             
             // Get server private key for decryption
@@ -521,7 +521,7 @@ public class DatagramEncryptUtil {
             
             // Decrypt Section 1 to get symmetric key
             byte[] section1Plaintext = decryptWithPrivateKey(section1Ciphertext, keyPair.get().getPrivate());
-            MessagePack section1Data = MessagePack.fromBytes(section1Plaintext);
+            MessagePak section1Data = MessagePak.fromBytes(section1Plaintext);
             
             String algorithm = section1Data.getString(MSDConstants.SECTION1_ALG).orElse(MSDConstants.DEFAULT_SYMMETRIC_ALG);
             if (!MSDConstants.ALG_CHACHA20_POLY1305.equals(algorithm)) {
@@ -596,7 +596,7 @@ public class DatagramEncryptUtil {
     }
     
     private static Optional<PublicKey> verifySignature(byte[] section1Bytes, byte[] section3Ciphertext,
-                                                      MessagePack section2Data, Lookup lookup, String context) 
+                                                      MessagePak section2Data, Lookup lookup, String context) 
             throws DecryptionException, NoSuchAlgorithmException, InvalidKeyException, SignatureException {
         
         byte[] signature = section2Data.getByteArray(MSDConstants.SECTION2_SIGNATURE).orElseThrow(

@@ -21,16 +21,11 @@ import org.mockito.Mockito;
 import org.mockito.stubbing.Answer;
 
 import com.myster.identity.Identity;
-import com.myster.mml.RobustMML;
+import com.myster.mml.MessagePak;
 import com.myster.net.MysterAddress;
 import com.myster.net.MysterSocket;
 import com.myster.net.stream.client.MysterDataInputStream;
 import com.myster.net.stream.client.MysterDataOutputStream;
-import com.myster.net.stream.client.msdownload.Controller;
-import com.myster.net.stream.client.msdownload.DataBlock;
-import com.myster.net.stream.client.msdownload.InternalSegmentDownloader;
-import com.myster.net.stream.client.msdownload.SegmentDownloader;
-import com.myster.net.stream.client.msdownload.WorkSegment;
 import com.myster.net.stream.client.msdownload.InternalSegmentDownloader.SocketFactory;
 import com.myster.search.MysterFileStub;
 import com.myster.type.MysterType;
@@ -61,16 +56,16 @@ public class TestInternalSegmentDownloader {
 
 
             // Your queue position is - 1
-            RobustMML mml = new RobustMML();
-            mml.put(com.myster.net.stream.server.MultiSourceSender.QUEUED_PATH,"1");
-            mml.put(com.myster.net.stream.server.MultiSourceSender.MESSAGE_PATH, "You are queued");
-            out.writeUTF(mml.toString());
+            MessagePak pak = MessagePak.newEmpty();
+            pak.putInt(com.myster.net.stream.server.MultiSourceSender.QUEUED_PATH,1);
+            pak.putString(com.myster.net.stream.server.MultiSourceSender.MESSAGE_PATH, "You are queued");
+            out.writeMessagePack(pak);
 
             // Your queue position is - 0
-            RobustMML mml2 = new RobustMML();
-            mml2.put(com.myster.net.stream.server.MultiSourceSender.QUEUED_PATH,"0");
-            mml2.put(com.myster.net.stream.server.MultiSourceSender.MESSAGE_PATH, "You are queued");
-            out.writeUTF(mml2.toString());
+            MessagePak pak2 = MessagePak.newEmpty();
+            pak2.putInt(com.myster.net.stream.server.MultiSourceSender.QUEUED_PATH,0);
+            pak2.putString(com.myster.net.stream.server.MultiSourceSender.MESSAGE_PATH, "You are queued");
+            out.writeMessagePack(pak2);
 
             // check for sync
             out.writeInt(6669);
@@ -85,7 +80,7 @@ public class TestInternalSegmentDownloader {
             }
             out.write(dataToLoad);
 
-            out.writeUTF(mml2.toString());
+            out.writeMessagePack(pak2);
             
             // check for sync
             out.writeInt(6669);

@@ -13,7 +13,7 @@ package com.myster.net.stream.server;
 import java.io.IOException;
 
 import com.myster.filemanager.FileItem;
-import com.myster.mml.MessagePack;
+import com.myster.mml.MessagePak;
 import com.myster.net.server.ConnectionContext;
 import com.myster.net.stream.client.MysterDataInputStream;
 import com.myster.net.stream.client.MysterDataOutputStream;
@@ -51,8 +51,8 @@ public class FileStatsBatchStreamServer extends ServerStreamHandler {
                 out.writeUTF(filename);
                 
                 FileItem fileItem = context.fileManager().getFileItem(type, filename);
-                MessagePack messagePack = (fileItem == null) 
-                    ? MessagePack.newEmpty() 
+                MessagePak messagePack = (fileItem == null) 
+                    ? MessagePak.newEmpty() 
                     : fileItem.getMessagePackRepresentation();
 
                 out.writeMessagePack(messagePack);

@@ -14,12 +14,12 @@ import com.general.util.Util;
  * for easier migration. Implementations use a more efficient binary format while maintaining
  * a similar tree-like structure for data storage.
  */
-public interface MessagePack {
-    public static MessagePack newEmpty() {
+public interface MessagePak {
+    public static MessagePak newEmpty() {
         return new MessagePackSerializer();
     }
     
-    public static MessagePack fromBytes(byte[] b) throws IOException {
+    public static MessagePak fromBytes(byte[] b) throws IOException {
         return new RobustMessagePackSerializer(b);
     }
     

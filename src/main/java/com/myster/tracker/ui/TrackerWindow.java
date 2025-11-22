@@ -235,7 +235,7 @@ public class TrackerWindow extends MysterFrame {
         return choice.getType();
     }
 
-    List<TrackerMCListItem> itemsinlist;
+    private List<TrackerMCListItem> itemsinlist;
 
     private final AtomicBoolean refreshList;
     private final AtomicBoolean reloadList;
@@ -248,7 +248,7 @@ public class TrackerWindow extends MysterFrame {
         int currentIndex = list.getSelectedIndex();
         list.clearAll();
         itemsinlist = new ArrayList<>();
-        List<MysterServer> servers = choice.isLan() ? tracker.getAllLan() : tracker.getAll(getMysterType().get());
+        List<MysterServer> servers = extractServers();
         TrackerMCListItem[] m = new TrackerMCListItem[servers.size()];
 
         for (int i = 0; i < servers.size(); i++) {
@@ -259,6 +259,16 @@ public class TrackerWindow extends MysterFrame {
         list.select(currentIndex); //not a problem if out of bounds..
         
         cancelTimer();
+    }
+
+    private List<MysterServer> extractServers() {
+        if (choice.isLan()) {
+            return tracker.getAllLan();
+        } else if (choice.isBookmark()) {
+            return tracker.getAllBookmarks();
+        } else {
+            return tracker.getAll(getMysterType().get());
+        }
     }
 
     /**

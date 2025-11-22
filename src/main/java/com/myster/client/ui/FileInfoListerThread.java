@@ -19,7 +19,7 @@ import java.util.concurrent.ExecutionException;
 import java.util.logging.Logger;
 
 import com.general.util.Util;
-import com.myster.mml.MessagePack;
+import com.myster.mml.MessagePak;
 import com.myster.net.MysterAddress;
 import com.myster.net.MysterSocket;
 import com.myster.net.client.MysterProtocol;
@@ -115,7 +115,7 @@ public class FileInfoListerThread extends MysterThread {
             if (endFlag)
                 return;
             
-            MessagePack fileStats = protocol.getStream().getFileStats(socket,
+            MessagePak fileStats = protocol.getStream().getFileStats(socket,
                     stub);
 
             parseResult(fileStats);
@@ -125,7 +125,7 @@ public class FileInfoListerThread extends MysterThread {
         }
     }
 
-    private void parseResult(MessagePack fileStats) {
+    private void parseResult(MessagePak fileStats) {
         msg.say("Parsing file information...");
 
         Map<String, String> keyvalue = new LinkedHashMap<String, String>();
@@ -138,7 +138,7 @@ public class FileInfoListerThread extends MysterThread {
         msg.say("Idle...");
     }
 
-    private void listDir(MessagePack fileStats,
+    private void listDir(MessagePak fileStats,
                          Map<String, String> keyValue,
                          String directory,
                          String prefix) {

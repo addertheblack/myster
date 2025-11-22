@@ -6,7 +6,7 @@ import com.myster.type.MysterType;
 /**
  * Interface for MysterServerList implementations.
  */
-interface MysterServerList {
+interface ServerList {
     /**
      * Returns a String array of length the requested number of entries. Note: It's possible for the
      * list to have fewer entries than requested.. IN that case the rest of the array will be null.
@@ -17,7 +17,7 @@ interface MysterServerList {
     MysterServer[] getTop(int x);
 
     /**
-     * Returns vector of MysterAddress.
+     * Returns all known servers
      */
     List<MysterServer> getAll();
 

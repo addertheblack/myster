@@ -8,7 +8,7 @@ import java.util.Optional;
 import com.general.thread.PromiseFuture;
 import com.myster.hash.FileHash;
 import com.myster.identity.Identity;
-import com.myster.mml.MessagePack;
+import com.myster.mml.MessagePak;
 import com.myster.net.MysterAddress;
 import com.myster.net.client.MysterDatagram;
 import com.myster.net.client.ParamBuilder;
@@ -75,12 +75,12 @@ public class MysterDatagramImpl implements MysterDatagram {
     }
 
     @Override
-    public PromiseFuture<MessagePack> getServerStats(final ParamBuilder params) {
+    public PromiseFuture<MessagePak> getServerStats(final ParamBuilder params) {
         return doSection(params, new ServerStatsDatagramClient());
     }
 
     @Override
-    public PromiseFuture<MessagePack> getFileStats(final MysterFileStub stub) {
+    public PromiseFuture<MessagePak> getFileStats(final MysterFileStub stub) {
         return doSection(new ParamBuilder(stub.getMysterAddress()), new FileStatsDatagramClient(stub));
     }
 

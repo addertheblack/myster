@@ -18,6 +18,8 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.FocusEvent;
 import java.awt.event.FocusListener;
+import java.net.UnknownHostException;
+import java.nio.file.Path;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
@@ -27,6 +29,7 @@ import java.util.Optional;
 import java.util.function.BiConsumer;
 
 import javax.swing.JButton;
+import javax.swing.JMenuItem;
 import javax.swing.JPanel;
 import javax.swing.JSplitPane;
 import javax.swing.JTextArea;
@@ -34,18 +37,20 @@ import javax.swing.JTextField;
 
 import com.general.mclist.ColumnSortable;
 import com.general.mclist.GenericMCListItem;
+import com.general.mclist.JMCList;
 import com.general.mclist.MCList;
 import com.general.mclist.MCListEvent;
 import com.general.mclist.MCListEventAdapter;
 import com.general.mclist.MCListFactory;
+import com.general.mclist.MCListItemInterface;
 import com.general.mclist.Sortable;
 import com.general.mclist.SortableByte;
 import com.general.mclist.SortableString;
 import com.general.mclist.TreeMCList;
+import com.general.mclist.TreeMCListTableModel;
 import com.general.mclist.TreeMCListTableModel.TreeMCListItem;
 import com.general.mclist.TreeMCListTableModel.TreePath;
 import com.general.mclist.TreeMCListTableModel.TreePathString;
-import com.general.util.AnswerDialog;
 import com.general.util.IconLoader;
 import com.general.util.MessageField;
 import com.general.util.MessagePanel;
@@ -55,7 +60,9 @@ import com.myster.client.ui.FileListerThread.FileRecord;
 import com.myster.net.MysterAddress;
 import com.myster.net.client.MysterProtocol;
 import com.myster.net.server.ServerPreferences;
+import com.myster.net.stream.client.msdownload.MSDownloadParams;
 import com.myster.search.HashCrawlerManager;
+import com.myster.search.MysterFileStub;
 import com.myster.tracker.MysterServer;
 import com.myster.tracker.Tracker;
 import com.myster.type.MysterType;
@@ -65,6 +72,7 @@ import com.myster.ui.MysterFrame;
 import com.myster.ui.MysterFrameContext;
 import com.myster.ui.WindowLocationKeeper;
 import com.myster.ui.WindowLocationKeeper.WindowLocation;
+import com.myster.util.ContextMenu;
 import com.myster.util.Sayable;
 
 public class ClientWindow extends MysterFrame implements Sayable {
@@ -89,7 +97,7 @@ public class ClientWindow extends MysterFrame implements Sayable {
     private JButton toggleStatsButton;
     private JTextField ipTextField;
     private MCList<MysterType> fileTypeList;
-    private MCList<String> fileList;
+    private JMCList<String> fileList;
     private JTextArea statsPanel;
     private JSplitPane splitPane;
     private String currentip;
@@ -149,6 +157,32 @@ public class ClientWindow extends MysterFrame implements Sayable {
     public ClientWindow(MysterFrameContext c, String ip, MysterType type) {
         this(c, ip);
         this.type = type;
+    }
+    
+    private void recursivelyStartDownloads(TreeMCListTableModel<String> model, TreeMCListItem<String> item, Path relativePath) {
+        if (item.isContainer()) {
+            TreePath myPathOrFail = item.getMyPathOrFail();
+            for (TreeMCListItem<String> i : model.getChildrenAtPath(myPathOrFail)) {
+                recursivelyStartDownloads(model, i, relativePath.resolve(Path.of(item.getObject())));
+            }
+        } else {
+            try {
+                String pathFromType = context.fileManager()
+                           .getPathFromType(getCurrentType());
+                Path baseDir = Path.of(pathFromType);
+                protocol.getStream()
+                        .downloadFile(new MSDownloadParams(context,
+                                                           hashManager,
+                                                           new MysterFileStub(MysterAddress
+                                                                   .createMysterAddress(currentip),
+                                                                              getCurrentType(),
+                                                                              item.getObject()),
+                                                           baseDir,
+                                                           relativePath));
+            } catch (UnknownHostException e1) {
+                e1.printStackTrace();
+            }
+        }
     }
 
     private void init() {
@@ -216,6 +250,51 @@ public class ClientWindow extends MysterFrame implements Sayable {
         
         fileList = TreeMCList.create(new String[]{"Name", "Size"}, new TreePathString(new String[] {}));
 
+        JMenuItem downloadMenuItem = ContextMenu.createDownloadItem(fileList, _ -> {
+            int index = fileList.getSelectedRow();
+            if (index == -1) {
+                return;
+            }
+
+            MCListItemInterface<String> m = fileList.getMCListItem(index);
+            
+            if (m instanceof TreeMCListItem<String> treeItem) {
+                // recurse along the treeItems so that we start
+                recursivelyStartDownloads((TreeMCListTableModel<String>)fileList.getModel(), treeItem, Path.of(""));
+            } else {
+                try {
+                    protocol.getStream()
+                            .downloadFile(new MSDownloadParams(context,
+                                                               hashManager,
+                                                               new MysterFileStub(MysterAddress
+                                                                       .createMysterAddress(currentip),
+                                                                                  getCurrentType(),
+                                                                                  getCurrentFile()),
+                                                               Path.of(context.fileManager()
+                                                                       .getPathFromType(type)),
+                                                               Path.of("")));
+                } catch (UnknownHostException e1) {
+                    e1.printStackTrace();
+                }
+            }
+        });
+        JMenuItem downloadToMenuItem = ContextMenu.createDownloadToItem(fileList, e -> {
+            int index = fileList.getSelectedRow();
+            if (index == -1) {
+                return;
+            }
+        });
+        JMenuItem bookmarkMenuItem = ContextMenu.createBookmarkServerItem(fileList, e -> {
+            int index = fileList.getSelectedRow();
+            if (index == -1) {
+                return;
+            }
+        });
+        
+        // OPEN FILE ON DISK!
+        
+        ContextMenu.addPopUpMenu(fileList, downloadMenuItem, downloadToMenuItem, null, bookmarkMenuItem);
+        
         fileList.sortBy(0);
         
         msg = new MessageField("Idle...");

@@ -16,7 +16,7 @@ import java.util.function.Supplier;
 
 import com.myster.filemanager.FileTypeListManager;
 import com.myster.identity.Identity;
-import com.myster.mml.MessagePack;
+import com.myster.mml.MessagePak;
 import com.myster.net.server.ConnectionContext;
 import com.myster.pref.MysterPreferences;
 import com.myster.type.MysterType;
@@ -49,7 +49,7 @@ public class ServerStats extends ServerStreamHandler {
     }
 
     public void section(ConnectionContext context) throws IOException {
-        MessagePack messagePackToSend;
+        MessagePak messagePackToSend;
         try {
             messagePackToSend = getServerStatsMessagePack(getServerName.get(), getPort.get(), identity, context.fileManager());
             context.socket().out.writeMessagePack(messagePackToSend);
@@ -59,9 +59,9 @@ public class ServerStats extends ServerStreamHandler {
     }
 
     //Returns a MessagePack that would be sent as bytes via a connection.
-    public static MessagePack getServerStatsMessagePack(String serverName, int port, Identity identity, FileTypeListManager fileManager) throws NotInitializedException {
+    public static MessagePak getServerStatsMessagePack(String serverName, int port, Identity identity, FileTypeListManager fileManager) throws NotInitializedException {
         try {
-            MessagePack serverStats = MessagePack.newEmpty();
+            MessagePak serverStats = MessagePak.newEmpty();
             
 
             MysterPreferences prefs = MysterPreferences.getInstance();
@@ -105,7 +105,7 @@ public class ServerStats extends ServerStreamHandler {
 
     }
 
-    private static MessagePack getNumberOfFilesMessagePack(MessagePack numOfFileStats, FileTypeListManager fileManager) throws NotInitializedException { // in-line
+    private static MessagePak getNumberOfFilesMessagePack(MessagePak numOfFileStats, FileTypeListManager fileManager) throws NotInitializedException { // in-line
         MysterType[] filetypelist = fileManager.getFileTypeListing();
 
         for (int i = 0; i < filetypelist.length; i++) {

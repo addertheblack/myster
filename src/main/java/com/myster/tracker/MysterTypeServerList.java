@@ -39,10 +39,10 @@ import com.myster.type.MysterType;
  * indicate that it is the implementation of the MysterServerList
  * that we typically think of when we refer to a MysterServerList.
  */
-class NormalMysterServerList implements MysterServerList {
+class MysterTypeServerList implements ServerList {
     public static final int LISTSIZE = 100; //Size of any given list..
     
-    private static final Logger LOGGER = Logger.getLogger(MysterServerList.class.getName());
+    private static final Logger LOGGER = Logger.getLogger(ServerList.class.getName());
     
     private final Map<MysterIdentity, MysterServer> mapOfServers = new LinkedHashMap<>();
     private final MysterType type;
@@ -58,7 +58,7 @@ class NormalMysterServerList implements MysterServerList {
      * com.myster objects.
      * @param preferences 
      */
-    NormalMysterServerList(MysterType type, MysterServerPool pool, Preferences preferences, Consumer<MysterType> listChanged) {
+    MysterTypeServerList(MysterType type, MysterServerPool pool, Preferences preferences, Consumer<MysterType> listChanged) {
         this.preferences = preferences;
         this.listChanged = listChanged;
 

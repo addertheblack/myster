@@ -12,14 +12,11 @@ package com.myster.client.ui;
 import java.io.IOException;
 import java.net.UnknownHostException;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
-import java.util.concurrent.ExecutionException;
 
 import com.general.thread.Invoker;
 import com.general.util.UnexpectedException;
-import com.general.util.Util;
-import com.myster.mml.MessagePack;
+import com.myster.mml.MessagePak;
 import com.myster.net.MysterAddress;
 import com.myster.net.MysterSocket;
 import com.myster.net.stream.client.MysterDataInputStream;
@@ -28,7 +25,6 @@ import com.myster.net.stream.client.MysterSocketFactory;
 import com.myster.net.stream.client.StandardSuiteStream;
 import com.myster.net.stream.client.StandardSuiteStream.FileCallback;
 import com.myster.net.stream.client.StandardSuiteStream.NamedMetaData;
-import com.myster.search.MysterFileStub;
 import com.myster.type.MysterType;
 import com.myster.util.MysterThread;
 import com.myster.util.Sayable;
@@ -36,7 +32,7 @@ import com.myster.util.Sayable;
 public class FileListerThread extends MysterThread {
 //    private static final Logger LOGGER = Logger.getLogger(FileListerThread.class.getName());
     
-    public record FileRecord(String file, MessagePack metaData) {}
+    public record FileRecord(String file, MessagePak metaData) {}
     
     public interface ItemListListener {
         public void addItemsToFileList(FileRecord[] files);

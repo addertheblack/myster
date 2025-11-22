@@ -15,7 +15,7 @@ import com.general.thread.PromiseFuture;
 import com.general.util.MapPreferences;
 import com.myster.identity.Identity;
 import com.myster.mml.MMLException;
-import com.myster.mml.MessagePack;
+import com.myster.mml.MessagePak;
 import com.myster.net.MysterAddress;
 import com.myster.net.datagram.client.PingResponse;
 import com.myster.net.stream.server.ServerStats;
@@ -51,7 +51,7 @@ class TestMysterServerImplementation {
         MysterType type = new MysterType(publicKey);
         byte[] key = publicKey.getEncoded(); // this is the Full key now
         MysterIdentity id = new PublicKeyIdentity(publicKey);
-        MessagePack stats = MessagePack.newEmpty();
+        MessagePak stats = MessagePak.newEmpty();
         stats.putString(ServerStats.SERVER_NAME, "Mr. Magoo");
         stats.putString(ServerStats.MYSTER_VERSION, "10");
         stats.putByteArray(ServerStats.IDENTITY, key);

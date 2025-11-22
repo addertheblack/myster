@@ -6,13 +6,13 @@ import static com.myster.net.stream.client.msdownload.MultiSourceDownload.toIoFi
 import java.io.File;
 import java.io.IOException;
 import java.io.RandomAccessFile;
+import java.util.Optional;
 
 import com.general.thread.Cancellable;
 import com.general.util.AnswerDialog;
 import com.general.util.Util;
-import com.myster.filemanager.FileTypeListManager;
 import com.myster.hash.FileHash;
-import com.myster.mml.MessagePack;
+import com.myster.mml.MessagePak;
 import com.myster.net.MysterSocket;
 import com.myster.net.stream.client.MysterSocketFactory;
 import com.myster.net.stream.client.StandardSuiteStream;
@@ -26,13 +26,13 @@ public class DownloadInitiator implements Runnable {
     private final MysterFileStub stub;
     private final HashCrawlerManager crawlerManager;
     private final MysterFrameContext context;
+    private final MSDownloadParams params;
 
-    public DownloadInitiator(MysterFrameContext c,
-                             HashCrawlerManager crawlerManager,
-                             MysterFileStub stub) {
-        this.context = c;
-        this.stub = stub;
-        this.crawlerManager = crawlerManager;
+    public DownloadInitiator(MSDownloadParams p) {
+        this.context = p.context();
+        this.stub = p.stub();
+        this.crawlerManager = p.crawlerManager();
+        this.params = p;
     }
 
     /**
@@ -58,13 +58,13 @@ public class DownloadInitiator implements Runnable {
                 throws IOException;
     }
 
-    private static DownloadInitiatorListener bindToFileProgressWindow(MysterFrameContext context) {
+    private static DownloadInitiatorListener bindToFileProgressWindow(MysterFrameContext context, MSDownloadParams params) {
         return new DownloadInitiatorListener() {
             EdtFileProgressWindow w = null;
             
             private void init() {
                 if (w == null) {
-                    w = new EdtFileProgressWindow(context);
+                    w = new EdtFileProgressWindow(context, params);
                 }
             }
             
@@ -141,16 +141,16 @@ public class DownloadInitiator implements Runnable {
     }
     
     private static class EdtFileProgressWindow implements DownloadInitiatorListener {
-        private final FileTypeListManager fileManager;
         private final FileProgressWindow progress;
+        private final MSDownloadParams params;
         
         private Cancellable cancellable;
         private boolean done;
-
         
-        public EdtFileProgressWindow(MysterFrameContext context) {
+        public EdtFileProgressWindow(MysterFrameContext context, MSDownloadParams params) {
+            this.params = params;
+            
             progress = new com.myster.util.FileProgressWindow(context, "Connecting..");
-            fileManager = context.fileManager();
         }
         
         @Override
@@ -196,7 +196,10 @@ public class DownloadInitiator implements Runnable {
 
         @Override
         public File getFileToDownloadTo(MysterFileStub stub) {
-            return MultiSourceUtilities.getFileToDownloadTo(stub, progress, fileManager);
+            return MultiSourceUtilities.getFileToDownloadTo(stub.name(),
+                                                            progress,
+                                                            Optional.of(params.targetDir()),
+                                                            params.subDirectory());
         }
 
         @Override
@@ -229,7 +232,7 @@ public class DownloadInitiator implements Runnable {
     }
 
     public void run() {
-        final DownloadInitiatorListener progress = bindToFileProgressWindow(context);
+        final DownloadInitiatorListener progress = bindToFileProgressWindow(context, params);
 
         progress.setCancellable(this::cancel);
         
@@ -267,7 +270,7 @@ public class DownloadInitiator implements Runnable {
 
             if (endFlag)
                 return;
-            MessagePack fileStats = StandardSuiteStream.getFileStats(socket, stub);
+            MessagePak fileStats = StandardSuiteStream.getFileStats(socket, stub);
 
             progress.setText("Trying to use multi-source download...");
 
@@ -296,7 +299,7 @@ public class DownloadInitiator implements Runnable {
     private boolean tryMultiSourceDownload(final MysterFileStub stub,
                                            HashCrawlerManager crawlerManager,
                                            final DownloadInitiatorListener downloadInitListener,
-                                           MessagePack fileStats,
+                                           MessagePak fileStats,
                                            final File theFile)
             throws IOException {
         FileHash hash = MultiSourceUtilities.getHashFromStats(fileStats);

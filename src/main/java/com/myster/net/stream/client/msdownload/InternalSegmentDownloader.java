@@ -7,8 +7,7 @@ import java.util.concurrent.Executors;
 
 import com.general.events.NewGenericDispatcher;
 import com.general.thread.Invoker;
-import com.myster.mml.MMLException;
-import com.myster.mml.RobustMML;
+import com.myster.mml.MessagePak;
 import com.myster.net.MysterAddress;
 import com.myster.net.MysterSocket;
 import com.myster.net.stream.client.UnknownProtocolException;
@@ -148,10 +147,6 @@ class InternalSegmentDownloader implements SegmentDownloader {
 
                 WorkSegment workSegment = controller.getNextWorkSegment(idealSegmentSize); // (WorkSegment)workQueue.removeFromHead();
 
-                if (workSegment.isEndSignal()) {
-                    return;
-                }
-
                 workingSegment = new WorkingSegment(workSegment);
 
                 if (!doWorkBlock(socket, workingSegment)) {
@@ -213,7 +208,7 @@ class InternalSegmentDownloader implements SegmentDownloader {
     private boolean doWorkBlock(MysterSocket socket, WorkingSegment workingSegment)
             throws IOException {
         debug("Work Thread " + name + " -> Reading data "
-                + workingSegment.workSegment.startOffset + " " + workingSegment.workSegment.length);
+                + workingSegment.workSegment.startOffset + " length: " + workingSegment.workSegment.length);
 
         socket.out.writeLong(workingSegment.workSegment.startOffset);
         socket.out.writeLong(workingSegment.workSegment.length);
@@ -264,7 +259,7 @@ class InternalSegmentDownloader implements SegmentDownloader {
                     + "s to download " + (workingSegment.workSegment.length / 1024) + "k");
             idealSegmentSize = calculateNextBlockSize(workingSegment.workSegment.length,
                     timeTakenToDownloadSegment);
-            debug("Work Thread " + name + " -> next block will be " + (idealSegmentSize / 1024)
+            debug("Work Thread " + name + " -> next block target size is " + (idealSegmentSize / 1024)
                     + "k");
         }
 
@@ -282,19 +277,13 @@ class InternalSegmentDownloader implements SegmentDownloader {
     private void waitInQueue(MysterSocket socket) throws IOException {
         debug("Work Thread " + name + " -> Reading in QueuePostion");
         for (;;) {
-            RobustMML mml = null;
+            MessagePak pak = socket.in.readMessagePack();
 
             try {
-                mml = new RobustMML(socket.in.readUTF());
-            } catch (MMLException ex) {
-                throw new IOException("MML String was corrupt.");
-            }
+                int queuePosition =
+                        pak.getInt(com.myster.net.stream.server.MultiSourceSender.QUEUED_PATH).orElseThrow();
 
-            try {
-                int queuePosition = Integer.parseInt(mml
-                        .get(com.myster.net.stream.server.MultiSourceSender.QUEUED_PATH));
-
-                String message = mml.get(com.myster.net.stream.server.MultiSourceSender.MESSAGE_PATH);
+                String message = pak.getString(com.myster.net.stream.server.MultiSourceSender.MESSAGE_PATH).orElse("");
 
                 // if (message!=null) progress.setText(message); ///! Stuff for
                 // event here
@@ -316,7 +305,7 @@ class InternalSegmentDownloader implements SegmentDownloader {
                         .queued(new SegmentDownloaderEvent(0, 0, queuePosition, 0, stub, message));
 
             } catch (NumberFormatException ex) {
-                throw new IOException("Server sent garble as queue position -> " + mml);
+                throw new IOException("Server sent garble as queue position -> " + pak);
             }
 
             if (executor.isShutdown())

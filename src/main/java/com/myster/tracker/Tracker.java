@@ -11,6 +11,7 @@
 package com.myster.tracker;
 
 import java.util.List;
+import java.util.Optional;
 import java.util.logging.Logger;
 import java.util.prefs.Preferences;
 import java.util.stream.Stream;
@@ -44,8 +45,9 @@ public class Tracker {
     private static final String[] LAST_RESORT = { "myster.ddnsgeek.com" };
     private static final String PATH = "ServerLists";
 
-    private final MysterServerList[] list;
+    private final ServerList[] list;
     private final LanMysterServerList lan;
+    private final BookmarkMysterServerList bookmarks;
     private final TypeDescription[] enabledTypes;
     private final MysterServerPool pool;
     private final Preferences preferences;
@@ -66,12 +68,13 @@ public class Tracker {
         enabledTypes = typeDescriptionList.getEnabledTypes();
         tdList = typeDescriptionList;
 
-        list = new MysterServerList[enabledTypes.length];
+        list = new ServerList[enabledTypes.length];
         for (int i = 0; i < list.length; i++) {
             assertIndex(i); // loads all lists.
         }
         
         lan = new LanMysterServerList(pool, dispatcher.fire()::lanServerAddedRemoved);
+        bookmarks = new BookmarkMysterServerList(pool, this.preferences, dispatcher);
 
         pool.addPoolListener(new MysterPoolListener() {
             @Override
@@ -108,6 +111,7 @@ public class Tracker {
     
     private void notifyAllListsDeadServer(MysterIdentity identity) {
         Stream.of(list).forEach(l -> l.notifyDeadServer(identity));
+        bookmarks.notifyDeadServer(identity);
     }
 
     /**
@@ -152,7 +156,7 @@ public class Tracker {
      *         containing nulls.
      */
     public synchronized MysterServer[] getTop(MysterType type, int x) {
-        MysterServerList iplist;
+        ServerList iplist;
         iplist = getListFromType(type);
         if (iplist == null)
             return null;
@@ -178,7 +182,7 @@ public class Tracker {
      * @return Vector of MysterAddresses in the order of rank.
      */
     public synchronized List<MysterServer> getAll(MysterType type) {
-        MysterServerList iplist;
+        ServerList iplist;
         iplist = getListFromType(type);
         if (iplist == null)
             return null;
@@ -202,6 +206,43 @@ public class Tracker {
     
     public void addPoolListener(MysterPoolListener l) {
         pool.addPoolListener(l);
+    }
+
+    /**
+     * Returns all bookmarked servers.
+     * 
+     * @return List of bookmarked servers
+     */
+    public synchronized List<MysterServer> getAllBookmarks() {
+        return bookmarks.getAll();
+    }
+
+    /**
+     * Adds or updates a bookmark.
+     * 
+     * @param bookmark The bookmark to add or update
+     */
+    public synchronized void addBookmark(BookmarkMysterServerList.Bookmark bookmark) {
+        bookmarks.addBookmark(bookmark);
+    }
+
+    /**
+     * Removes a server from bookmarks.
+     * 
+     * @param identity The identity of the server to remove from bookmarks
+     */
+    public synchronized void removeBookmark(MysterIdentity identity) {
+        bookmarks.removeBookmark(identity);
+    }
+
+    /**
+     * Gets the bookmark for a bookmarked server.
+     * 
+     * @param identity The identity of the server
+     * @return Optional containing the bookmark if the server is bookmarked
+     */
+    public synchronized Optional<BookmarkMysterServerList.Bookmark> getBookmark(MysterIdentity identity) {
+        return bookmarks.getBookmark(identity);
     }
 
     /**
@@ -230,7 +271,7 @@ public class Tracker {
      * @return the IPList for the type or null if no list exists for that typ.
      */
 
-    private MysterServerList getListFromType(MysterType type) {
+    private ServerList getListFromType(MysterType type) {
         int index;
         index = getIndex(type);
 
@@ -275,8 +316,8 @@ public class Tracker {
      * Returns an IPList for the type in the tdlist variable for that index.
      * This is a stupid routine.
      */
-    private synchronized MysterServerList createNewList(int index) {
-        return new NormalMysterServerList(enabledTypes[index].getType(), pool, preferences, dispatcher.fire()::serverAddedRemoved);
+    private synchronized ServerList createNewList(int index) {
+        return new MysterTypeServerList(enabledTypes[index].getType(), pool, preferences, dispatcher.fire()::serverAddedRemoved);
     }
 
     public void addListChangedListener(ListChangedListener l) {

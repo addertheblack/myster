@@ -14,7 +14,7 @@ import java.io.IOException;
 
 import com.myster.filemanager.FileItem;
 import com.myster.filemanager.FileTypeListManager;
-import com.myster.mml.MessagePack;
+import com.myster.mml.MessagePak;
 import com.myster.net.server.ConnectionContext;
 import com.myster.net.stream.client.MysterDataInputStream;
 import com.myster.net.stream.client.MysterDataOutputStream;
@@ -40,10 +40,10 @@ public class FileStatsStreamServer extends ServerStreamHandler {
 
             FileItem fileItem = context.fileManager().getFileItem(
                     type, filename);
-            MessagePack messagePack;
+            MessagePak messagePack;
 
             if (fileItem == null) { //file not found
-                messagePack = MessagePack.newEmpty();
+                messagePack = MessagePak.newEmpty();
             } else {
                 messagePack = fileItem.getMessagePackRepresentation();
             }

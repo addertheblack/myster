@@ -1256,6 +1256,10 @@ keys for myster types.
 		With tiangle toggle to see folder contents
 	Tweaked speed of file info lister to be 10X faster for the second load of data
 		using caching
+		
+2025-11-22
+  Implemented basic bookmark foundation support
+  Added ability to download full folders
 
 	
 
@@ -1271,9 +1275,8 @@ to do:
     need to be able to share the network config file (might be similar to network file.. or a superset)
 *Add reverse connection protocol.
 *Add business card for server -> basically server stats
-*Pick a place for downloads in progress by default like homedirectory/mysterdata or something..
+*Pick a place for downloads in progress by default like home directory/mysterdata or something..
     Maybe app data on windows?
 Split off concurrency library from Myster and publish to Maven
 Make Myster modules compatible
 fix naming.. We probably want to use myster.org
-

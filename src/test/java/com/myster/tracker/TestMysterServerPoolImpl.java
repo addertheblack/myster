@@ -29,7 +29,7 @@ import com.general.thread.PromiseFuture;
 import com.general.util.MapPreferences;
 import com.general.util.Semaphore;
 import com.myster.identity.Identity;
-import com.myster.mml.MessagePack;
+import com.myster.mml.MessagePak;
 import com.myster.net.MysterAddress;
 import com.myster.net.client.MysterDatagram;
 import com.myster.net.client.MysterProtocol;
@@ -41,7 +41,7 @@ import com.myster.type.MysterType;
 class TestMysterServerPoolImpl {
     private static final Logger LOGGER = Logger.getLogger(TestMysterServerPoolImpl.class.getName());
     
-    private Map<MysterAddress, MessagePack> lookup;
+    private Map<MysterAddress, MessagePak> lookup;
     
     // JUnit 5 will automatically create and clean up this temporary directory
     @TempDir
@@ -73,7 +73,7 @@ class TestMysterServerPoolImpl {
         var pubKey = identity.getMainIdentity().get().getPublic();
         byte[] keyBytes = pubKey.getEncoded();
         
-        MessagePack baseStats = MessagePack.newEmpty();
+        MessagePak baseStats = MessagePak.newEmpty();
         baseStats.putString(com.myster.net.stream.server.ServerStats.SERVER_NAME, "Mr. Magoo");
         baseStats.putString(com.myster.net.stream.server.ServerStats.MYSTER_VERSION, "10");
         baseStats.putByteArray(com.myster.net.stream.server.ServerStats.IDENTITY, keyBytes);
@@ -86,7 +86,7 @@ class TestMysterServerPoolImpl {
         lookup.put(MysterAddress.createMysterAddress("24.20.25.66"), copyOf(baseStats));
         
         // Stats with explicit port 7000
-        MessagePack portStats = copyOf(baseStats);
+        MessagePak portStats = copyOf(baseStats);
         portStats.putInt(com.myster.net.stream.server.ServerStats.PORT, 7000);
         
         lookup.put(MysterAddress.createMysterAddress("192.168.1.2:7000"), copyOf(portStats));
@@ -118,13 +118,13 @@ class TestMysterServerPoolImpl {
 
                 // Fix the getServerStats mock - extract address from ParamBuilder  
                 Mockito.when(myMock.getServerStats(Mockito.any()))
-                        .thenAnswer(new Answer<PromiseFuture<MessagePack>>() {
+                        .thenAnswer(new Answer<PromiseFuture<MessagePak>>() {
                             @Override
-                            public PromiseFuture<MessagePack> answer(InvocationOnMock invocation)
+                            public PromiseFuture<MessagePak> answer(InvocationOnMock invocation)
                                     throws Throwable {
                                 ParamBuilder params = invocation.getArgument(0);
                                 MysterAddress address = params.getAddress().orElseThrow();
-                                MessagePack stats = lookup.get(address);
+                                MessagePak stats = lookup.get(address);
                                 
                                 if (stats == null) {
                                     return PromiseFuture.newPromiseFutureException(new IOException("Fake timeout"));
@@ -264,9 +264,9 @@ class TestMysterServerPoolImpl {
     @ValueSource(booleans = {false, true})
     void testAddressImplSwicharoo(boolean shouldChangePort) throws Exception {
         MysterAddress oneTwoSeven = MysterAddress.createMysterAddress("127.0.0.1");
-        MessagePack mml = lookup.get(oneTwoSeven);
+        MessagePak mml = lookup.get(oneTwoSeven);
         
-        MessagePack copyMml = copyOf(mml);
+        MessagePak copyMml = copyOf(mml);
         byte[] identOld = copyMml.getByteArray(com.myster.net.stream.server.ServerStats.IDENTITY).orElse(null);
         copyMml.remove(com.myster.net.stream.server.ServerStats.IDENTITY);
 
@@ -312,7 +312,7 @@ class TestMysterServerPoolImpl {
         Assertions.assertTrue(pool.existsInPool(addressIdentity));
             
         // Restore identity to stats and update lookup
-        MessagePack restored = copyOf(copyMml);
+        MessagePak restored = copyOf(copyMml);
         if (identOld != null) {
             restored.putByteArray(com.myster.net.stream.server.ServerStats.IDENTITY, identOld);
         }
@@ -591,9 +591,9 @@ class TestMysterServerPoolImpl {
     }
     
     // Helper to deep copy a MessagePack (fromBytes(toBytes()))
-    private static MessagePack copyOf(MessagePack src) {
+    private static MessagePak copyOf(MessagePak src) {
         try {
-            return MessagePack.fromBytes(src.toBytes());
+            return MessagePak.fromBytes(src.toBytes());
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
