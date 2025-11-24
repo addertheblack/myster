@@ -86,7 +86,7 @@ import com.myster.type.TypeDescriptionList;
 import com.myster.type.ui.TypeManagerPreferencesGUI;
 import com.myster.ui.MysterFrameContext;
 import com.myster.ui.PreferencesGui;
-import com.myster.ui.WindowLocationKeeper;
+import com.myster.ui.WindowPrefDataKeeper;
 import com.myster.ui.WindowManager;
 import com.myster.ui.menubar.MysterMenuBar;
 import com.myster.ui.menubar.event.MenuBarEvent;
@@ -306,7 +306,7 @@ public class Myster {
                 MysterMenuBar menuBarFactory = new MysterMenuBar();
                 WindowManager windowManager = new WindowManager();
                 final MysterFrameContext context =
-                        new MysterFrameContext(menuBarFactory, windowManager, tdList, new WindowLocationKeeper(preferences), fileManager);
+                        new MysterFrameContext(menuBarFactory, windowManager, tdList, new WindowPrefDataKeeper(preferences), fileManager);
                 PreferencesGui preferencesGui = new PreferencesGui(context);
 
                 serverFacade

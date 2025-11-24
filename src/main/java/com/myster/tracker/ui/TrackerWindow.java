@@ -41,8 +41,8 @@ import com.myster.tracker.Tracker.ListChangedListener;
 import com.myster.type.MysterType;
 import com.myster.ui.MysterFrame;
 import com.myster.ui.MysterFrameContext;
-import com.myster.ui.WindowLocationKeeper;
-import com.myster.ui.WindowLocationKeeper.WindowLocation;
+import com.myster.ui.WindowPrefDataKeeper;
+import com.myster.ui.WindowPrefDataKeeper.PrefData;
 import com.myster.util.TypeChoice;
 
 public class TrackerWindow extends MysterFrame {
@@ -60,13 +60,13 @@ public class TrackerWindow extends MysterFrame {
     private static MysterFrameContext context;
 
     public static int initWindowLocations(MysterFrameContext c) {
-        WindowLocation[] lastLocs = c.keeper().getLastLocs("Tracker");
-        if (lastLocs.length > 0) {
-            getInstance().setBounds(lastLocs[0].bounds());
-            getInstance().setVisible(lastLocs[0].visible());
+        List<PrefData<Object>> lastLocs = c.keeper().getLastLocs("Tracker", (_) -> null);
+        if (lastLocs.size() > 0) {
+            getInstance().setBounds(lastLocs.get(0).location().bounds());
+            getInstance().setVisible(lastLocs.get(0).location().visible());
         }
 
-        return lastLocs.length;
+        return lastLocs.size();
     }
 
     public static void init(Tracker tracker, MysterFrameContext c) {
@@ -77,7 +77,7 @@ public class TrackerWindow extends MysterFrame {
     private TrackerWindow(MysterFrameContext c) {
         super(c);
         
-        c.keeper().addFrame(this, "Tracker", WindowLocationKeeper.SINGLETON_WINDOW); //never remove
+        c.keeper().addFrame(this, (_) -> {}, "Tracker", WindowPrefDataKeeper.SINGLETON_WINDOW); //never remove
 
         //Do interface setup:
         gblayout = new GridBagLayout();

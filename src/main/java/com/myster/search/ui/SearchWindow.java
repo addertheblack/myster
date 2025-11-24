@@ -15,11 +15,11 @@ import java.awt.Dimension;
 import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
 import java.awt.Insets;
-import java.awt.Rectangle;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
+import java.util.List;
 import java.util.logging.Logger;
 
 import javax.swing.JButton;
@@ -44,8 +44,8 @@ import com.myster.type.MysterType;
 import com.myster.type.TypeDescriptionList;
 import com.myster.ui.MysterFrame;
 import com.myster.ui.MysterFrameContext;
-import com.myster.ui.WindowLocationKeeper;
-import com.myster.ui.WindowLocationKeeper.WindowLocation;
+import com.myster.ui.WindowPrefDataKeeper;
+import com.myster.ui.WindowPrefDataKeeper.PrefData;
 import com.myster.util.Sayable;
 import com.myster.util.TypeChoice;
 
@@ -147,7 +147,7 @@ public class SearchWindow extends MysterFrame implements SearchResultListener, S
         fileList.setColumnName(0, "Search Results appear here");
         fileList.setColumnWidth(0, 400);
 
-        c.keeper().addFrame(this, PREF_LOCATION_KEY, WindowLocationKeeper.MULTIPLE_WINDOWS);
+        c.keeper().addFrame(this, (_) -> {}, PREF_LOCATION_KEY, WindowPrefDataKeeper.MULTIPLE_WINDOWS);
 
         textEntry.setSelectionStart(0);
         textEntry.setSelectionEnd(textEntry.getText().length());
@@ -167,15 +167,15 @@ public class SearchWindow extends MysterFrame implements SearchResultListener, S
     }
     
     public static int initWindowLocations(MysterFrameContext c) {
-        WindowLocation[] lastLocs = c.keeper().getLastLocs(PREF_LOCATION_KEY);
+        List<PrefData<Object>> lastLocs = c.keeper().getLastLocs(PREF_LOCATION_KEY, (_) -> null);
 
-        for (int i = 0; i < lastLocs.length; i++) {
+        for (PrefData<Object> prefData : lastLocs) {
             SearchWindow window = new SearchWindow(c);
-            window.setBounds(lastLocs[i].bounds());
+            window.setBounds(prefData.location().bounds());
             window.setVisible(true);
         }
 
-        return lastLocs.length;
+        return lastLocs.size();
     }
 
     public void addComponent(Component component, int row, int column, int width, int height,

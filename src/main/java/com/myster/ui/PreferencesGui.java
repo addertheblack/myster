@@ -1,10 +1,12 @@
 
 package com.myster.ui;
 
+import java.util.List;
+
 import com.general.util.Util;
 import com.myster.pref.ui.PreferencesDialogBox;
 import com.myster.pref.ui.PreferencesPanel;
-import com.myster.ui.WindowLocationKeeper.WindowLocation;
+import com.myster.ui.WindowPrefDataKeeper.PrefData;
 
 public class PreferencesGui {
     private final PreferencesDialogBox prefsWindow;
@@ -24,15 +26,15 @@ public class PreferencesGui {
 
     public int initGui() {
         int windowCount = 0;
-        WindowLocation[] lastLocs = context.keeper().getLastLocs(WINDOW_KEEPER_KEY);
-        if (lastLocs.length > 0) {
-             prefsWindow.setBounds(lastLocs[0].bounds());
-             setGUI(lastLocs[0].visible());
+        List<PrefData<Object>> lastLocs = context.keeper().getLastLocs(WINDOW_KEEPER_KEY, (_) -> null);
+        if (lastLocs.size() > 0) {
+             prefsWindow.setBounds(lastLocs.get(0).location().bounds());
+             setGUI(lastLocs.get(0).location().visible());
         
              windowCount++;
         }
         
-        context.keeper().addFrame(prefsWindow, WINDOW_KEEPER_KEY, WindowLocationKeeper.SINGLETON_WINDOW);
+        context.keeper().addFrame(prefsWindow, (_) -> {}, WINDOW_KEEPER_KEY, WindowPrefDataKeeper.SINGLETON_WINDOW);
         
         return windowCount;
     }

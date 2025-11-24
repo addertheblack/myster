@@ -22,7 +22,6 @@ import com.general.util.ProgressBar;
 import com.general.util.Util;
 import com.myster.ui.MysterFrame;
 import com.myster.ui.MysterFrameContext;
-import com.myster.ui.WindowLocationKeeper;
 
 public class ProgressWindow extends MysterFrame {
     private static final Logger LOGGER = Logger.getLogger(ProgressWindow.class.getName());

@@ -7,6 +7,7 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
+import java.util.List;
 
 import javax.swing.JLabel;
 import javax.swing.JPanel;
@@ -17,24 +18,25 @@ import com.myster.hash.HashManagerEvent;
 import com.myster.hash.HashManagerListener;
 import com.myster.ui.MysterFrame;
 import com.myster.ui.MysterFrameContext;
-import com.myster.ui.WindowLocationKeeper;
-import com.myster.ui.WindowLocationKeeper.WindowLocation;
+import com.myster.ui.WindowPrefDataKeeper;
+import com.myster.ui.WindowPrefDataKeeper.PrefData;
+import com.myster.ui.WindowPrefDataKeeper.WindowLocation;
 
 public class HashManagerGUI extends MysterFrame {
     public static final String WINDOW_LOC_KEY = "Hash Manager Gui Window Locations";
 
     private static HashManagerGUI singleton;
 
-    private WindowLocationKeeper windowKeeper;
+    private WindowPrefDataKeeper windowKeeper;
 
     private static HashManager hashManager;
 
     public static int initGui(MysterFrameContext context) {
-        WindowLocation[] lastLocs = context.keeper().getLastLocs(WINDOW_LOC_KEY);
+        List<PrefData<Object>> lastLocs = context.keeper().getLastLocs(WINDOW_LOC_KEY, (_) -> null);
         
-        if (lastLocs.length > 0) {
-            singleton.setBounds(lastLocs[0].bounds());
-            singleton.setVisible(lastLocs[0].visible());
+        if (lastLocs.size() > 0) {
+            singleton.setBounds(lastLocs.get(0).location().bounds());
+            singleton.setVisible(lastLocs.get(0).location().visible());
             singleton.pack();
 
             return 1;
@@ -71,7 +73,7 @@ public class HashManagerGUI extends MysterFrame {
         setBackground(new Color(240, 240, 240));
 
         windowKeeper = context.keeper();
-        windowKeeper.addFrame(this, WINDOW_LOC_KEY, WindowLocationKeeper.SINGLETON_WINDOW);
+        windowKeeper.addFrame(this, (_) -> {}, WINDOW_LOC_KEY, WindowPrefDataKeeper.SINGLETON_WINDOW);
 
         final InternalPanel internalPanel = new InternalPanel();
         add(internalPanel);

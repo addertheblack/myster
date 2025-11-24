@@ -54,7 +54,7 @@ public class MysterFrame extends JFrame {
 
         initEvents();
     }
-
+    
     public final MysterFrameContext getMysterFrameContext() {
         return context;
     }
@@ -71,7 +71,7 @@ public class MysterFrame extends JFrame {
                                .getDefaultScreenDevice();
         GraphicsConfiguration gc = primary.getDefaultConfiguration();
 
-        // 2) Figure out the visible area (subtract OS insets)
+        // 2) Figure otut the visible area (subtract OS insets)
         Rectangle bounds = gc.getBounds();
         Insets insets = Toolkit.getDefaultToolkit().getScreenInsets(gc);
         Rectangle visible = new Rectangle(

@@ -27,6 +27,7 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Optional;
 import java.util.function.BiConsumer;
+import java.util.prefs.Preferences;
 
 import javax.swing.JButton;
 import javax.swing.JMenuItem;
@@ -70,8 +71,8 @@ import com.myster.type.TypeDescription;
 import com.myster.type.TypeDescriptionList;
 import com.myster.ui.MysterFrame;
 import com.myster.ui.MysterFrameContext;
-import com.myster.ui.WindowLocationKeeper;
-import com.myster.ui.WindowLocationKeeper.WindowLocation;
+import com.myster.ui.WindowPrefDataKeeper;
+import com.myster.ui.WindowPrefDataKeeper.PrefData;
 import com.myster.util.ContextMenu;
 import com.myster.util.Sayable;
 
@@ -110,6 +111,7 @@ public class ClientWindow extends MysterFrame implements Sayable {
     private MysterType type;
     
     private final MysterFrameContext context;
+    private Runnable savePrefs;
 
     public static void init(MysterProtocol protocol,
                             HashCrawlerManager hashManager,
@@ -123,16 +125,37 @@ public class ClientWindow extends MysterFrame implements Sayable {
         serverPreferences = prefs;
     }
     
-    public static int initWindowLocations(MysterFrameContext c) {
-        WindowLocation[] lastLocs = c.keeper().getLastLocs(WINDOW_KEEPER_KEY);
+    public record Moop(Optional<String> ip, Optional<MysterType> type) {}
+    
+    private static Optional<MysterType> getFromPrefs(Preferences p) {
+        String s = p.get(TYPE_KEY, null);
         
-        for (int i = 0; i < lastLocs.length; i++) {
-            ClientWindow window = new ClientWindow(c);
-            window.setBounds(lastLocs[i].bounds());
+        if (s == null) {
+            return Optional.empty();
+        }
+        try {
+            byte[] mm = Util.fromHexString(s);
+
+            return Optional.of(new MysterType(mm));
+        } catch (Exception ex) {
+            ex.printStackTrace();
+            return Optional.empty();
+        }
+
+    }
+
+    public static int initWindowLocations(MysterFrameContext c) {
+        List<PrefData<Moop>> lastLocs = c.keeper().getLastLocs(WINDOW_KEEPER_KEY, (p) -> {
+            return new Moop(Optional.ofNullable(p.get(IP_KEY, null)), getFromPrefs(p));
+        });
+
+        for (PrefData<Moop> prefData : lastLocs) {
+            ClientWindow window = new ClientWindow(c, prefData.data().ip().orElse(null), prefData.data().type().orElse(null));
+            window.setBounds(prefData.location().bounds());
             window.show();
         }
         
-        return lastLocs.length;
+        return lastLocs.size();
     }
 
     public ClientWindow(MysterFrameContext c) {
@@ -185,8 +208,24 @@ public class ClientWindow extends MysterFrame implements Sayable {
         }
     }
 
+    private static final String IP_KEY = "Ip Key";
+    private static final String TYPE_KEY = "Type Key";
+    
     private void init() {
-        context.keeper().addFrame(this, WINDOW_KEEPER_KEY, WindowLocationKeeper.MULTIPLE_WINDOWS);
+        savePrefs = context.keeper().addFrame(this, (p) -> {
+            if (getCurrentIP()!= null) {
+                p.put(IP_KEY, getCurrentIP());
+            } else {
+                p.remove(IP_KEY);
+            }
+            
+            
+            if (getCurrentType()!= null) {
+                p.put(TYPE_KEY, getCurrentType().toHexString());
+            } else {
+                p.remove(TYPE_KEY);
+            }
+        }, WINDOW_KEEPER_KEY, WindowPrefDataKeeper.MULTIPLE_WINDOWS);
         
         setLayout(new GridBagLayout());
         var builder = new com.general.util.GridBagBuilder()
@@ -364,10 +403,14 @@ public class ClientWindow extends MysterFrame implements Sayable {
         fileTypeList.addMCListEventListener(new MCListEventAdapter(){
             public void selectItem(MCListEvent e) {
                 startFileList();
+                
+                savePrefs.run();
             }
 
             public void unselectItem(MCListEvent e) {
                 stopFileListing();
+                
+                savePrefs.run();
             }
         });
         fileList.addMCListEventListener(new FileListAction(protocol, hashManager, getMysterFrameContext(), this));
@@ -649,6 +692,9 @@ public class ClientWindow extends MysterFrame implements Sayable {
                     }
                 }, this::say, getCurrentIP());
         connectToThread.start();
+        
+        
+        savePrefs.run();
     }
 
     public void startFileList() {

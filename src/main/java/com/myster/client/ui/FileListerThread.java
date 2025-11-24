@@ -121,8 +121,12 @@ public class FileListerThread extends MysterThread {
                     if (c % 10 != 0) {
                         return;
                     }
+
                     var m = max[0];
                     Invoker.EDT.invoke(() -> {
+                        if (m == 0) {
+                            return;
+                        }
                         msg.say("Downloading file metadata: " + lookup.lookup(type) + " "
                                 + (c * (100)) / m + "%");
                     });

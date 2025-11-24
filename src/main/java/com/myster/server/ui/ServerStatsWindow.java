@@ -8,28 +8,22 @@
 package com.myster.server.ui;
 
 import java.awt.CardLayout;
-import java.awt.Color;
 import java.awt.Dimension;
-import java.awt.FlowLayout;
-import java.awt.Rectangle;
 import java.awt.event.ComponentAdapter;
 import java.awt.event.ComponentEvent;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
+import java.util.List;
 import java.util.logging.Logger;
 
-import javax.swing.JPanel;
 import javax.swing.JTabbedPane;
 
-import com.general.tab.TabEvent;
-import com.general.tab.TabListener;
-import com.general.tab.TabPanel;
 import com.myster.net.client.MysterProtocol;
 import com.myster.server.event.ServerContext;
 import com.myster.ui.MysterFrame;
 import com.myster.ui.MysterFrameContext;
-import com.myster.ui.WindowLocationKeeper;
-import com.myster.ui.WindowLocationKeeper.WindowLocation;
+import com.myster.ui.WindowPrefDataKeeper;
+import com.myster.ui.WindowPrefDataKeeper.PrefData;
 import com.myster.util.Sayable;
 
 public class ServerStatsWindow extends MysterFrame implements Sayable {
@@ -44,7 +38,7 @@ public class ServerStatsWindow extends MysterFrame implements Sayable {
     public static final int TABYSIZE = 50;
 
     private static ServerStatsWindow singleton;
-    private static com.myster.ui.WindowLocationKeeper keeper;
+    private static com.myster.ui.WindowPrefDataKeeper keeper;
 
     private static ServerContext context;
 
@@ -66,15 +60,15 @@ public class ServerStatsWindow extends MysterFrame implements Sayable {
     }
 
     public static int initWindowLocations(MysterFrameContext c) {
-        WindowLocation[] lastLocs = c.keeper().getLastLocs("Server Stats");
-        if (lastLocs.length > 0) {
+        List<PrefData<Object>> lastLocs = c.keeper().getLastLocs("Server Stats", (_) -> null);
+        if (lastLocs.size() > 0) {
             Dimension d = singleton.getSize();
-            singleton.setBounds(lastLocs[0].bounds());
+            singleton.setBounds(lastLocs.get(0).location().bounds());
             singleton.setSize(d);
-            singleton.setVisible(lastLocs[0].visible());
+            singleton.setVisible(lastLocs.get(0).location().visible());
         }
         
-        return lastLocs.length;
+        return lastLocs.size();
     }
 
     public void say(String s) {
@@ -85,7 +79,7 @@ public class ServerStatsWindow extends MysterFrame implements Sayable {
         super(c, "Server Statistics");
 
         keeper = c.keeper();
-        keeper.addFrame(this, "Server Stats", WindowLocationKeeper.SINGLETON_WINDOW); //never remove.
+        keeper.addFrame(this, (_) -> {}, "Server Stats", WindowPrefDataKeeper.SINGLETON_WINDOW); //never remove.
 
         setResizable(false);
 
