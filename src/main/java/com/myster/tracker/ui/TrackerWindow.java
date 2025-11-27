@@ -43,9 +43,20 @@ import com.myster.ui.MysterFrame;
 import com.myster.ui.MysterFrameContext;
 import com.myster.ui.WindowPrefDataKeeper;
 import com.myster.ui.WindowPrefDataKeeper.PrefData;
+import com.myster.ui.WindowPrefDataKeeper.WindowLocation;
 import com.myster.util.TypeChoice;
 
 public class TrackerWindow extends MysterFrame {
+    private static final String TYPE = "Type";
+
+    private static final String BOOKMARK = "Bookmark";
+
+    private static final String LAN = "LAN";
+
+    private static final String SELECTED_ITEM = "Selected Item";
+
+    private static final String SELECTED_TYPE = "Selected Type";
+
     private static TrackerWindow me;
 
     private MCList<TrackerMCListItem> list;
@@ -59,11 +70,36 @@ public class TrackerWindow extends MysterFrame {
 
     private static MysterFrameContext context;
 
+    private record TrackerWindowData(String selectedItem, String selectedType) {}
+    
     public static int initWindowLocations(MysterFrameContext c) {
-        List<PrefData<Object>> lastLocs = c.keeper().getLastLocs("Tracker", (_) -> null);
+        List<PrefData<TrackerWindowData>> lastLocs = c.keeper()
+                .getLastLocs("Tracker",
+                             (p) -> new TrackerWindowData(p.get(SELECTED_ITEM, ""),
+                                                          p.get(SELECTED_TYPE, "")));
         if (lastLocs.size() > 0) {
-            getInstance().setBounds(lastLocs.get(0).location().bounds());
-            getInstance().setVisible(lastLocs.get(0).location().visible());
+            var location = lastLocs.get(0).location();
+            getInstance().setBounds(location.bounds());
+            getInstance().setVisible(location.visible());
+            
+            
+            // this is a little brittle.. If we change the JChoice we need to adjust this too.
+            // Probably by encapsulating what selecting the LAN of BOOKMARKS item consists of.
+            // ie: choice.selectBookmarks() or choice.selectLan()
+            var data = lastLocs.get(0).data();
+            TypeChoice choice = getInstance().choice;
+            if (data.selectedType().equals(LAN)) {
+                choice.setSelectedIndex(choice.getItemCount()-3); // there's a separator in between them
+            } else if (data.selectedType().equals(BOOKMARK)) {
+                choice.setSelectedIndex(choice.getItemCount()-1);
+            } else if (data.selectedItem() != "") {
+                for (int i = 0; !choice.getType(i).isEmpty(); i++) {
+                    if (choice.getType(i).map(t -> t.toHexString()).orElse("").equals(data.selectedItem())) {
+                        choice.setSelectedIndex(i);
+                        break;
+                    }
+                }
+            }
         }
 
         return lastLocs.size();
@@ -76,8 +112,14 @@ public class TrackerWindow extends MysterFrame {
 
     private TrackerWindow(MysterFrameContext c) {
         super(c);
-        
-        c.keeper().addFrame(this, (_) -> {}, "Tracker", WindowPrefDataKeeper.SINGLETON_WINDOW); //never remove
+        var windowDataSaver = c.keeper().addFrame(this, (p) -> {
+            var selectedType =  choice.isLan() ? LAN
+                            : choice.isBookmark() ? BOOKMARK 
+                            : TYPE;
+                            
+            p.put(SELECTED_TYPE, selectedType);
+            p.put(SELECTED_ITEM, getMysterType().map(t -> t.toHexString()).orElse(""));
+        }, "Tracker", WindowPrefDataKeeper.SINGLETON_WINDOW); //never remove
 
         //Do interface setup:
         gblayout = new GridBagLayout();
@@ -122,6 +164,7 @@ public class TrackerWindow extends MysterFrame {
         list.addMCListEventListener(new OpenConnectionHandler(c));
 
         choice.addItemListener(new ChoiceListener());
+        choice.addItemListener(_ -> windowDataSaver.run());
 
         setSize(600, 400);
         setTitle("Tracker");

@@ -9,8 +9,6 @@ package com.myster.server.ui;
 
 import java.awt.CardLayout;
 import java.awt.Dimension;
-import java.awt.event.ComponentAdapter;
-import java.awt.event.ComponentEvent;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
 import java.util.List;
@@ -33,9 +31,13 @@ public class ServerStatsWindow extends MysterFrame implements Sayable {
     private final DownloadInfoPanel downloadPanel;
     private final StatsInfoPanel statsinfopanel;
 
+    private Runnable saveWindowData;
+
     public static final int XSIZE = 600;
     public static final int YSIZE = 400;
     public static final int TABYSIZE = 50;
+
+    private static final String SELECTED_TAB = "Selected Tab";
 
     private static ServerStatsWindow singleton;
     private static com.myster.ui.WindowPrefDataKeeper keeper;
@@ -59,13 +61,19 @@ public class ServerStatsWindow extends MysterFrame implements Sayable {
         return singleton;
     }
 
+    private record StatsWindowData(int selectedTabIndex) {}
+    
     public static int initWindowLocations(MysterFrameContext c) {
-        List<PrefData<Object>> lastLocs = c.keeper().getLastLocs("Server Stats", (_) -> null);
+        List<PrefData<StatsWindowData>> lastLocs = c.keeper().getLastLocs("Server Stats", (p) -> {
+            return new StatsWindowData(p.getInt(SELECTED_TAB, 0));
+        });
         if (lastLocs.size() > 0) {
             Dimension d = singleton.getSize();
-            singleton.setBounds(lastLocs.get(0).location().bounds());
-            singleton.setSize(d);
-            singleton.setVisible(lastLocs.get(0).location().visible());
+            PrefData<StatsWindowData> prefData = lastLocs.get(0);
+            singleton.tab.setSelectedIndex(Math.min(singleton.tab.getTabCount()-1, prefData.data().selectedTabIndex()));
+            singleton.setBounds(prefData.location().bounds());
+//            singleton.setSize(d);
+            singleton.setVisible(prefData.location().visible());
         }
         
         return lastLocs.size();
@@ -77,28 +85,32 @@ public class ServerStatsWindow extends MysterFrame implements Sayable {
 
     protected ServerStatsWindow(MysterFrameContext c) {
         super(c, "Server Statistics");
+        tab = new JTabbedPane();
 
         keeper = c.keeper();
-        keeper.addFrame(this, (_) -> {}, "Server Stats", WindowPrefDataKeeper.SINGLETON_WINDOW); //never remove.
+        saveWindowData = keeper.addFrame(this, (p) -> {
+            p.putInt(SELECTED_TAB, tab.getSelectedIndex());
+        }, "Server Stats", WindowPrefDataKeeper.SINGLETON_WINDOW); //never remove.
 
         setResizable(false);
-
-        tab = new JTabbedPane();
 
         downloadPanel = new DownloadInfoPanel(context, c, protocol);
 
         statsinfopanel = new StatsInfoPanel(context, c);
+        
+        tab.addTab("Downloads", downloadPanel);
+        tab.addTab("Server Stats", statsinfopanel);
 
-        addComponentListener(new ComponentAdapter() {
-            public void componentShown(ComponentEvent e) {
-                if (!inited) {
-                    initSelf();
-                }
-                setSize(XSIZE + getInsets().right + getInsets().left, YSIZE
-                        + getInsets().top + getInsets().bottom + getJMenuBar().getSize().height);
-            }
-
-        });
+        initSelf();
+        
+        pack();
+    }
+    
+    @Override
+    public void show() {
+        super.show();
+        setSize(XSIZE + getInsets().right + getInsets().left, YSIZE
+                + getInsets().top + getInsets().bottom + getJMenuBar().getSize().height);
     }
 
     private boolean inited = false;
@@ -116,9 +128,6 @@ public class ServerStatsWindow extends MysterFrame implements Sayable {
          * tab.addTab("Tab 4"); tab.addTab("Monkey bonus tab");
          */
 
-        ///*
-        tab.addTab("Downloads", downloadPanel);
-        tab.addTab("Server Stats", statsinfopanel);
 
         //tab.addTab("Outbound");
         //tab.addTab("Server Stats");
@@ -153,6 +162,13 @@ public class ServerStatsWindow extends MysterFrame implements Sayable {
          * TabHandler(2, graphinfopanel));
          */
         addWindowListener(new CloseBox());
+        
+        tab.addChangeListener(e-> {
+            if (!isVisible()) {
+                return;
+            }
+            saveWindowData.run();
+        });
     }
 
     private class CloseBox extends WindowAdapter {
