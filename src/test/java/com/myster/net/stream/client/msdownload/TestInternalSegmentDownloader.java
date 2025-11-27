@@ -151,7 +151,8 @@ public class TestInternalSegmentDownloader {
         assertEquals(dataSendToServer.readLong(), 2097152);
         assertEquals(dataSendToServer.readLong(), 3);
 
-        assertEquals(-1, dataSendToServer.read());
+        assertEquals(dataSendToServer.readLong(), 0);
+        assertEquals(dataSendToServer.readLong(), 0);
         
         dataSendToServer.close();
     }

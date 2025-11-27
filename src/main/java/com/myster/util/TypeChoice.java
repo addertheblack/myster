@@ -60,6 +60,14 @@ public class TypeChoice extends JComboBox<String> {
         
         return false;
     }
+    
+    public void selectLan() {
+        setSelectedItem(LOCAL_NETWORK);
+    }
+    
+    public void selectBookmarks() {
+        setSelectedItem(BOOKMARKS);
+    }
 
     public Optional<MysterType> getType() {
         return getType(getSelectedIndex());

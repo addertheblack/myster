@@ -83,15 +83,12 @@ public class TrackerWindow extends MysterFrame {
             getInstance().setVisible(location.visible());
             
             
-            // this is a little brittle.. If we change the JChoice we need to adjust this too.
-            // Probably by encapsulating what selecting the LAN of BOOKMARKS item consists of.
-            // ie: choice.selectBookmarks() or choice.selectLan()
             var data = lastLocs.get(0).data();
             TypeChoice choice = getInstance().choice;
             if (data.selectedType().equals(LAN)) {
-                choice.setSelectedIndex(choice.getItemCount()-3); // there's a separator in between them
+                choice.selectLan();
             } else if (data.selectedType().equals(BOOKMARK)) {
-                choice.setSelectedIndex(choice.getItemCount()-1);
+                choice.selectBookmarks();
             } else if (data.selectedItem() != "") {
                 for (int i = 0; !choice.getType(i).isEmpty(); i++) {
                     if (choice.getType(i).map(t -> t.toHexString()).orElse("").equals(data.selectedItem())) {
