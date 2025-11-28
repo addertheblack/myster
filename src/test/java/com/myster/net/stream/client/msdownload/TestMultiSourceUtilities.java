@@ -334,7 +334,8 @@ public class TestMultiSourceUtilities {
     @Test
     public void testGetFileToDownloadTo_RelativePathValidation() {
         // Setup - try to pass an absolute path as relativePath
-        Path absolutePath = Path.of("/absolute/path");
+        // Use tempDir to get a valid absolute path on any platform (Windows, Linux, macOS)
+        Path absolutePath = tempDir.toPath().toAbsolutePath();
         
         // Execute & Verify
         assertThrows(IllegalArgumentException.class, () -> {
