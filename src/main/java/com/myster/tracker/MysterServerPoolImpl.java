@@ -323,7 +323,7 @@ public class MysterServerPoolImpl implements MysterServerPool {
         var s = cache.get(k);
 
         if (s == null) {
-            return null;
+            return Optional.empty();
         }
 
         return Optional.ofNullable(s.get());
