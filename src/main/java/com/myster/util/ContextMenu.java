@@ -60,7 +60,7 @@ public class ContextMenu {
 
 
 
-    public static JPopupMenu addPopUpMenu(JMCList table, JMenuItem... items) {
+    public static JPopupMenu addPopUpMenu(JMCList table, Runnable runBeforeMenusDisplay, JMenuItem... items) {
         // Create the popup menu
         JPopupMenu popup = new JPopupMenu();
 
@@ -100,9 +100,11 @@ public class ContextMenu {
                 if (row >= 0 && row < table.getRowCount()) {
                     table.setRowSelectionInterval(row, row);
                 }
-
+                
                 // Show the popup
                 popup.show(e.getComponent(), e.getX(), e.getY());
+                
+                runBeforeMenusDisplay.run();
             }
         });
         

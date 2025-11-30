@@ -132,7 +132,7 @@ public class TrackerWindow extends MysterFrame {
             .withInsets(new Insets(5, 5, 5, 5));
 
 
-        list = MCListFactory.buildMCList(7, true, this);
+        list = MCListFactory.buildMCList(8, true, this);
 
         //add Objects
         add(new JLabel("Tracked servers on network: "), builder.withGridLoc(0, 0).withSize(1, 1).withWeight(0, 0));
@@ -143,26 +143,64 @@ public class TrackerWindow extends MysterFrame {
         //Add Event handlers
 
         //other stuff
-        list.setColumnName(0, "Server Name");
-        list.setColumnName(1, "# Files");
-        list.setColumnName(2, "Status");
-        list.setColumnName(3, "IP");
-        list.setColumnName(4, "Ping");
-        list.setColumnName(5, "Rank");
-        list.setColumnName(6, "Uptime");
+        list.setColumnName(0, ""); // Bookmark column - no header text
+        list.setColumnName(1, "Server Name");
+        list.setColumnName(2, "# Files");
+        list.setColumnName(3, "Status");
+        list.setColumnName(4, "IP");
+        list.setColumnName(5, "Ping");
+        list.setColumnName(6, "Rank");
+        list.setColumnName(7, "Uptime");
 
-        list.setColumnWidth(0, 150);
-        list.setColumnWidth(1, 70);
+        list.setColumnWidth(0, 30); // Small width for bookmark icon
+        list.setColumnWidth(1, 150);
         list.setColumnWidth(2, 70);
-        list.setColumnWidth(3, 150);
-        list.setColumnWidth(4, 70);
+        list.setColumnWidth(3, 70);
+        list.setColumnWidth(4, 150);
         list.setColumnWidth(5, 70);
         list.setColumnWidth(6, 70);
+        list.setColumnWidth(7, 70);
+
+        // Set up custom renderer for bookmark column
+        list.getTableHeader().getColumnModel().getColumn(0).setCellRenderer(new javax.swing.table.DefaultTableCellRenderer() {
+            private final com.formdev.flatlaf.extras.FlatSVGIcon bookmarkIcon = 
+                com.general.util.IconLoader.loadSvg(com.general.util.IconLoader.class, "bookmark-svgrepo-com");
+            
+            @Override
+            public java.awt.Component getTableCellRendererComponent(javax.swing.JTable table,
+                                                                     Object value,
+                                                                     boolean isSelected,
+                                                                     boolean hasFocus,
+                                                                     int row,
+                                                                     int column) {
+                javax.swing.JLabel label = (javax.swing.JLabel) super.getTableCellRendererComponent(
+                    table, "", isSelected, hasFocus, row, column);
+                
+                // Check if this server is bookmarked
+                if (value instanceof TrackerMCListItem.SortableBookmark) {
+                    TrackerMCListItem.SortableBookmark sortable = (TrackerMCListItem.SortableBookmark) value;
+                    if (sortable.getValue()) {
+                        // Scale icon to fit row height
+                        bookmarkIcon.setColorFilter(new com.formdev.flatlaf.extras.FlatSVGIcon.ColorFilter(
+                            color -> label.getForeground()));
+                        label.setIcon(bookmarkIcon.derive(table.getRowHeight() - 4, table.getRowHeight() - 4));
+                        label.setHorizontalAlignment(javax.swing.SwingConstants.CENTER);
+                    } else {
+                        label.setIcon(null);
+                    }
+                }
+                
+                return label;
+            }
+        });
 
         addWindowListener(new MyWindowHandler());
         list.addMCListEventListener(new OpenConnectionHandler(c));
 
-        JMenuItem bookmarkMenuItem = ContextMenu.createBookmarkServerItem(list, e -> {
+        // Create menu items manually (not using ContextMenu helpers) so we can
+        // control enabled state
+        JMenuItem bookmarkMenuItem = new JMenuItem("Bookmark Server");
+        bookmarkMenuItem.addActionListener(e -> {
             int index = list.getSelectedRow();
             if (index == -1) {
                 return;
@@ -171,8 +209,9 @@ public class TrackerWindow extends MysterFrame {
             MysterServer server = list.getMCListItem(index).getObject();
             tracker.addBookmark(new BookmarkMysterServerList.Bookmark(server.getIdentity()));
         });
-        
-        JMenuItem removeBookmarkMenuItem = ContextMenu.removeBookmarkServerItem(list, e -> {
+
+        JMenuItem removeBookmarkMenuItem = new JMenuItem("Remove Bookmark");
+        removeBookmarkMenuItem.addActionListener(e -> {
             int index = list.getSelectedRow();
             if (index == -1) {
                 return;
@@ -181,8 +220,6 @@ public class TrackerWindow extends MysterFrame {
             tracker.removeBookmark(list.getMCListItem(index).getObject().getIdentity());
         });
         
-        contextMenu = ContextMenu.addPopUpMenu(list, bookmarkMenuItem, removeBookmarkMenuItem);
-
         // Update menu item states based on selection and bookmark status
         Runnable updateMenuStates = () -> {
             int selectedRow = list.getSelectedRow();
@@ -195,21 +232,17 @@ public class TrackerWindow extends MysterFrame {
             MysterServer server = list.getMCListItem(selectedRow).getObject();
             boolean isBookmarked = tracker.getBookmark(server.getIdentity()).isPresent();
             
-            // Enable "Bookmark Server" if not already bookmarked
             bookmarkMenuItem.setEnabled(!isBookmarked);
-            // Enable "Remove Bookmark" if already bookmarked
             removeBookmarkMenuItem.setEnabled(isBookmarked);
         };
         
-        // Update menu states when selection changes
-        list.getSelectionModel().addListSelectionListener(e -> {
-            if (!e.getValueIsAdjusting()) {
-                updateMenuStates.run();
-            }
-        });
+        contextMenu = ContextMenu.addPopUpMenu(list, updateMenuStates, bookmarkMenuItem, removeBookmarkMenuItem);
+
+
 
         choice.addItemListener(new ChoiceListener());
         choice.addItemListener(_ -> windowDataSaver.run());
+        choice.addItemListener(_ -> updateMenuStates.run());
 
         setSize(600, 400);
         setTitle("Tracker");
@@ -249,7 +282,7 @@ public class TrackerWindow extends MysterFrame {
             @Override
             public void lanServerAddedRemoved() {
                 Util.invokeLater(() -> {
-                    if (getMysterType().isEmpty()) {
+                    if (choice.isLan()) {
                         reloadList.set(true);
                         TrackerWindow.this.resetTimer();
                     }
@@ -259,10 +292,18 @@ public class TrackerWindow extends MysterFrame {
             @Override
             public void bookmarkServerAddedRemoved() {
                 Util.invokeLater(() -> {
-                    if (getMysterType().isEmpty()) { // yeah.. not the best.. Gotta fix this :-)
+                    // Always refresh to update bookmark icons, not just when viewing bookmarks
+                    refreshList.set(true);
+                    
+                 // instant update for the icon.. tiny delay for the delete..
+                    // note that this handler applied whatever TYPE is selected!
+                    checkForRefresh(); 
+                    
+                    if (choice.isBookmark()) {
                         reloadList.set(true);
-                        TrackerWindow.this.resetTimer();
                     }
+                    
+                    TrackerWindow.this.resetTimer();
                 });
             }
         });
@@ -283,7 +324,7 @@ public class TrackerWindow extends MysterFrame {
             return;
         }
         
-        timer = new Timer(this::checkForRefresh, 120);
+        timer = new Timer(this::checkForRefresh, 500);
     }
 
     public void show() {
@@ -397,7 +438,7 @@ public class TrackerWindow extends MysterFrame {
         private final MysterServer server;
         private final Optional<MysterType> type;
 
-        private final Sortable<?>[] sortables = new Sortable<?>[7];
+        private final Sortable<?>[] sortables = new Sortable<?>[8];
 
         public TrackerMCListItem(MysterServer s, Optional<MysterType> t) {
             server = s;
@@ -411,19 +452,22 @@ public class TrackerWindow extends MysterFrame {
         }
 
         public void refresh() {
-            sortables[0] = new SortableString(server.getServerName());
-            sortables[1] = type.isPresent() ? new SortableLong(server.getNumberOfFiles(type.get()))
+            // Column 0: Bookmark status
+            sortables[0] = new SortableBookmark(tracker.getBookmark(server.getIdentity()).isPresent());
+            // Column 1-7: Existing data shifted by one
+            sortables[1] = new SortableString(server.getServerName());
+            sortables[2] = type.isPresent() ? new SortableLong(server.getNumberOfFiles(type.get()))
                     : new SortableString("");
-            sortables[2] = new SortableStatus(server.getStatus(), server.isUntried());
-            sortables[3] = new SortableString("" + String.join(", ",
+            sortables[3] = new SortableStatus(server.getStatus(), server.isUntried());
+            sortables[4] = new SortableString("" + String.join(", ",
                                                                Stream.of(server.getAddresses())
                                                                        .map(Object::toString)
                                                                        .toArray(String[]::new)));
-            sortables[4] = new SortablePing(server.getPingTime());
-            sortables[5] =
+            sortables[5] = new SortablePing(server.getPingTime());
+            sortables[6] =
                     type.isPresent() ? new SortableRank(((long) (100 * server.getRank(type.get()))))
                             : new SortableString("");
-            sortables[6] = new SortableUptime((server.getStatus() ? server.getUptime() : -2));
+            sortables[7] = new SortableUptime((server.getStatus() ? server.getUptime() : -2));
         }
 
         public MysterServer getObject() {
@@ -545,6 +589,41 @@ public class TrackerWindow extends MysterFrame {
 
             public String toString() {
                 return com.general.util.Util.getLongAsTime(number);
+            }
+        }
+
+        //Immutable
+        private static class SortableBookmark implements Sortable<Boolean> {
+            private final boolean isBookmarked;
+
+            public SortableBookmark(boolean isBookmarked) {
+                this.isBookmarked = isBookmarked;
+            }
+
+            @Override
+            public boolean isLessThan(Sortable<Boolean> other) {
+                if (other instanceof SortableBookmark) {
+                    return !isBookmarked && ((SortableBookmark) other).isBookmarked;
+                }
+                return false;
+            }
+
+            @Override
+            public boolean isGreaterThan(Sortable<Boolean> other) {
+                if (other instanceof SortableBookmark) {
+                    return isBookmarked && !((SortableBookmark) other).isBookmarked;
+                }
+                return false;
+            }
+
+            @Override
+            public Boolean getValue() {
+                return isBookmarked;
+            }
+
+            @Override
+            public String toString() {
+                return ""; // No text display, icon only
             }
         }
     }

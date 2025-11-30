@@ -193,7 +193,7 @@ public class SearchWindow extends MysterFrame implements SearchResultListener, S
         
         // OPEN FILE ON DISK!
         
-        ContextMenu.addPopUpMenu(fileList, downloadMenuItem, downloadToMenuItem, null, bookmarkMenuItem);
+        ContextMenu.addPopUpMenu(fileList, ()->{}, downloadMenuItem, downloadToMenuItem, null, bookmarkMenuItem);
     }
 
     private static HashCrawlerManager hashManager;
