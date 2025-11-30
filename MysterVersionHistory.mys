@@ -1260,6 +1260,20 @@ keys for myster types.
 2025-11-22
   Implemented basic bookmark foundation support
   Added ability to download full folders
+  
+2025-11-30
+  Add way to add/remove bookmarks
+  Add context menus to SeachWindow
+  Add way to download to...
+  Add way to disable context menu
+  Disabled the ability to use the old AWT based MCList
+  Bye Bye old AWT MCList! I'll miss you!
+  Remember more window state like which server we connected to in ClientWindows.. also type selected
+    Remeber which pref panel selected
+    .. which tab seletected in server stats
+    .... etc...
+
+
 
 	
 

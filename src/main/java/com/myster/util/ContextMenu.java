@@ -35,6 +35,10 @@ public class ContextMenu {
     public static JMenuItem createBookmarkServerItem(JMCList list, ActionListener l) {
         return createMenuItem(list, "Bookmark Server", l);
     }
+    
+    public static JMenuItem removeBookmarkServerItem(JMCList list, ActionListener l) {
+        return createMenuItem(list, "Remove Bookmark", l);
+    }
 
     private static JMenuItem createMenuItem(JMCList list, String menuName, ActionListener l) {
         Action action = new AbstractAction(menuName) {
@@ -56,7 +60,7 @@ public class ContextMenu {
 
 
 
-    public static void addPopUpMenu(JMCList table, JMenuItem... items) {
+    public static JPopupMenu addPopUpMenu(JMCList table, JMenuItem... items) {
         // Create the popup menu
         JPopupMenu popup = new JPopupMenu();
 
@@ -86,6 +90,11 @@ public class ContextMenu {
             }
 
             private void showPopup(MouseEvent e) {
+                // Only show popup if it's enabled
+                if (!popup.isEnabled()) {
+                    return;
+                }
+                
                 // Select the row under the cursor
                 int row = table.rowAtPoint(e.getPoint());
                 if (row >= 0 && row < table.getRowCount()) {
@@ -96,5 +105,7 @@ public class ContextMenu {
                 popup.show(e.getComponent(), e.getX(), e.getY());
             }
         });
+        
+        return popup;
     }
 }

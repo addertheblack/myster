@@ -23,9 +23,9 @@ import java.awt.event.ComponentEvent;
 import java.awt.event.ComponentListener;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
-import java.util.Enumeration;
-import java.util.Hashtable;
+import java.util.HashMap;
 import java.util.Iterator;
+import java.util.Map;
 
 import javax.swing.DefaultListModel;
 import javax.swing.JButton;
@@ -54,6 +54,10 @@ public class PreferencesDialogBox extends MysterFrame {
     private static final int YDEFAULT = 400;
 
     private final MainPanel mypanel;
+
+    private Runnable saver;
+    
+    private String selectedPanel;
 
     /**
      * Builds a new Preferences Dialog
@@ -100,6 +104,18 @@ public class PreferencesDialogBox extends MysterFrame {
         });
     }
 
+    public void setSaver(Runnable s) {
+        saver = s;
+    }
+
+    public void setSelectedKey(String selectedKey) {
+        mypanel.showPanelByKey(selectedKey);
+    }
+    
+    public String getSelectedKey() {
+        return selectedPanel;
+    }
+
     //Adds a panel, duh.
     //Responsible for encapsulation all book-keeping required for adding a
     // panel.
@@ -117,7 +133,7 @@ public class PreferencesDialogBox extends MysterFrame {
     }
     
     private class MainPanel extends JPanel {
-        private JList list;
+        private JList<String> list;
 
         private JButton save;
 
@@ -125,12 +141,13 @@ public class PreferencesDialogBox extends MysterFrame {
 
         private JButton apply;
 
-        private Hashtable hash = new Hashtable();
+        private final Map<String, PreferencesPanel> keyToPrefPanel = new HashMap<String, PreferencesPanel>();
+        
         private JPanel showerPanel;
 
         private JLabel header;
 
-        private DefaultListModel listModel;
+        private DefaultListModel<String> listModel;
 
         public MainPanel() {
             setLayout(new GridBagLayout());
@@ -139,9 +156,9 @@ public class PreferencesDialogBox extends MysterFrame {
             GridBagBuilder layout = new GridBagBuilder();
             layout = layout.withSize(1, 1);
 
-            list = new JList();
+            list = new JList<String>();
           
-            listModel = new DefaultListModel();
+            listModel = new DefaultListModel<>();
             list.setModel(listModel);
             JScrollPane listScrollPane = new JScrollPane(list);
 //            listScrollPane.setSize(150 - 5 - 5, YDEFAULT - 50 - 5);
@@ -150,14 +167,13 @@ public class PreferencesDialogBox extends MysterFrame {
                 public void valueChanged(ListSelectionEvent e) {
                     if (e.getValueIsAdjusting())
                         return;
-                    PreferencesPanel panel = (PreferencesPanel) (hash.get(list
-                            .getSelectedValue()));
-                    if (panel == null) {
-                        removePanel((String) list.getSelectedValue());
+                    showPanelByKeyImpl(list.getSelectedValue());
+                    if (saver!= null) {
+                        saver.run();
                     }
-                    showPanel(panel);
-
                 }
+
+   
             });
             add(listScrollPane,
                 layout.withGridLoc(0, 0)
@@ -243,10 +259,24 @@ public class PreferencesDialogBox extends MysterFrame {
                         .withWeight(1, 0)
                         .withInsets(new Insets(5, 5, 5, 5)));
         }
+        
+        private void showPanelByKeyImpl(String key) {
+            PreferencesPanel panel = (keyToPrefPanel.get(key));
+            if (panel == null) {
+                removePanel(key);
+            }
+            list.setSelectedValue(key, true); // should not inf loop because it's already selected this
+            selectedPanel = panel.getKey();
+            showPanel(panel);
+        }
+        
+        private void showPanelByKey(String key) {
+            list.setSelectedValue(key, true); // should not inf loop because it's already selected this
+        }
 
         // Hide the currently showing panel and shows the new one.
         public void showPanel(PreferencesPanel p) {
-            for (Iterator iter = hash.values().iterator(); iter.hasNext();) {
+            for (Iterator iter = keyToPrefPanel.values().iterator(); iter.hasNext();) {
                 PreferencesPanel preferencesPanel = (PreferencesPanel) iter.next();
                 preferencesPanel.setVisible(false);
             }
@@ -262,22 +292,20 @@ public class PreferencesDialogBox extends MysterFrame {
                     break;
                 }
             }
-            showPanel((PreferencesPanel) (hash.get(panelString)));
+            showPanel((keyToPrefPanel.get(panelString)));
         }
 
         // Tells *panels* to save changes
         public void save() {
-            Enumeration enumeration = hash.elements();
-            while (enumeration.hasMoreElements()) {
-                ((PreferencesPanel) (enumeration.nextElement())).save();
+            for (PreferencesPanel p : keyToPrefPanel.values()) {
+                p.save();
             }
         }
 
         //Tells *panels* to refresh
         public void restore() {
-            Enumeration enumeration = hash.elements();
-            while (enumeration.hasMoreElements()) {
-                ((PreferencesPanel) (enumeration.nextElement())).reset();
+            for (PreferencesPanel p : keyToPrefPanel.values()) {
+                p.reset();
             }
         }
 
@@ -287,9 +315,9 @@ public class PreferencesDialogBox extends MysterFrame {
         public void addPanel(PreferencesPanel p) {
             if (!Util.isEventDispatchThread())
                 throw new IllegalStateException("Component not used o the event thread.");
-            if (hash.get(p.getKey()) == null) {
+            if (keyToPrefPanel.get(p.getKey()) == null) {
                 listModel.addElement(p.getKey());
-                hash.put(p.getKey(), p);
+                keyToPrefPanel.put(p.getKey(), p);
                 p.setLocation(0, 0);
                 p.setSize(p.getPreferredSize());
                 showerPanel.add(p, new GridBagBuilder().withFill(GridBagConstraints.BOTH).withWeight(1, 1));
@@ -301,13 +329,13 @@ public class PreferencesDialogBox extends MysterFrame {
         //Removes a panel, duh.
         //see above.
         public  void removePanel(String type) {
-            if (hash.get(type) != null) {
+            if (keyToPrefPanel.get(type) != null) {
                 listModel.removeElement(type);
 
-                PreferencesPanel pp_temp = (PreferencesPanel) (hash.get(type));
+                PreferencesPanel pp_temp = (keyToPrefPanel.get(type));
                 if (pp_temp != null)
                     showerPanel.remove(pp_temp);
-                hash.remove(type);
+                keyToPrefPanel.remove(type);
                 if (list.getModel().getSize() != 0) {
                     list.getSelectionModel().setSelectionInterval(0, 0);
                 }

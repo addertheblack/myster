@@ -3,7 +3,6 @@ package com.myster.tracker.ui;
 import static com.myster.tracker.MysterServer.DOWN;
 import static com.myster.tracker.MysterServer.UNTRIED;
 
-import java.awt.Component;
 import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
 import java.awt.Insets;
@@ -21,18 +20,22 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.stream.Stream;
 
 import javax.swing.JLabel;
+import javax.swing.JMenuItem;
 import javax.swing.JPanel;
+import javax.swing.JPopupMenu;
 
 import com.general.mclist.AbstractMCListItemInterface;
-import com.general.mclist.MCList;
+import com.general.mclist.JMCList;
 import com.general.mclist.MCListFactory;
 import com.general.mclist.Sortable;
 import com.general.mclist.SortableLong;
 import com.general.mclist.SortableString;
+import com.general.util.GridBagBuilder;
 import com.general.util.Timer;
 import com.general.util.Util;
 import com.myster.net.MysterAddress;
 import com.myster.net.datagram.client.PingResponse;
+import com.myster.tracker.BookmarkMysterServerList;
 import com.myster.tracker.MysterIdentity;
 import com.myster.tracker.MysterPoolListener;
 import com.myster.tracker.MysterServer;
@@ -43,7 +46,7 @@ import com.myster.ui.MysterFrame;
 import com.myster.ui.MysterFrameContext;
 import com.myster.ui.WindowPrefDataKeeper;
 import com.myster.ui.WindowPrefDataKeeper.PrefData;
-import com.myster.ui.WindowPrefDataKeeper.WindowLocation;
+import com.myster.util.ContextMenu;
 import com.myster.util.TypeChoice;
 
 public class TrackerWindow extends MysterFrame {
@@ -59,12 +62,12 @@ public class TrackerWindow extends MysterFrame {
 
     private static TrackerWindow me;
 
-    private MCList<TrackerMCListItem> list;
-    private TypeChoice choice;
-    private GridBagLayout gblayout;
-    private GridBagConstraints gbconstrains;
+    private final JMCList<MysterServer> list;
+    private final TypeChoice choice;
+    private final JPopupMenu contextMenu;
     
     private Timer timer = null;
+
     
     private static Tracker tracker;
 
@@ -109,6 +112,9 @@ public class TrackerWindow extends MysterFrame {
 
     private TrackerWindow(MysterFrameContext c) {
         super(c);
+        //init objects
+        choice = new TypeChoice(c.tdList(), true);
+        
         var windowDataSaver = c.keeper().addFrame(this, (p) -> {
             var selectedType =  choice.isLan() ? LAN
                             : choice.isBookmark() ? BOOKMARK 
@@ -119,24 +125,20 @@ public class TrackerWindow extends MysterFrame {
         }, "Tracker", WindowPrefDataKeeper.SINGLETON_WINDOW); //never remove
 
         //Do interface setup:
-        gblayout = new GridBagLayout();
-        setLayout(gblayout);
-        gbconstrains = new GridBagConstraints();
-        gbconstrains.fill = GridBagConstraints.BOTH;
-        gbconstrains.ipadx = 1;
-        gbconstrains.ipady = 1;
-        gbconstrains.insets = new Insets(5, 5, 5, 5);
+        setLayout(new GridBagLayout());
+        var builder = new GridBagBuilder()
+            .withFill(GridBagConstraints.BOTH)
+            .withIpad(1, 1)
+            .withInsets(new Insets(5, 5, 5, 5));
 
-        //init objects
-        choice = new TypeChoice(c.tdList(), true);
 
         list = MCListFactory.buildMCList(7, true, this);
 
         //add Objects
-        addComponent(new JLabel("Tracked servers on network: "), 0, 0, 1, 1, 0, 0);
-        addComponent(choice, 0, 1, 1, 1, 1, 0);
-        addComponent(new JPanel(), 0, 2, 1, 1, 1, 0);
-        addComponent(list.getPane(), 1, 0, 3, 1, 99, 99);
+        add(new JLabel("Tracked servers on network: "), builder.withGridLoc(0, 0).withSize(1, 1).withWeight(0, 0));
+        add(choice, builder.withGridLoc(1, 0).withSize(1, 1).withWeight(1, 0));
+        add(new JPanel(), builder.withGridLoc(2, 0).withSize(1, 1).withWeight(1, 0));
+        add(list.getPane(), builder.withGridLoc(0, 1).withSize(3, 1).withWeight(99, 99));
 
         //Add Event handlers
 
@@ -159,6 +161,52 @@ public class TrackerWindow extends MysterFrame {
 
         addWindowListener(new MyWindowHandler());
         list.addMCListEventListener(new OpenConnectionHandler(c));
+
+        JMenuItem bookmarkMenuItem = ContextMenu.createBookmarkServerItem(list, e -> {
+            int index = list.getSelectedRow();
+            if (index == -1) {
+                return;
+            }
+
+            MysterServer server = list.getMCListItem(index).getObject();
+            tracker.addBookmark(new BookmarkMysterServerList.Bookmark(server.getIdentity()));
+        });
+        
+        JMenuItem removeBookmarkMenuItem = ContextMenu.removeBookmarkServerItem(list, e -> {
+            int index = list.getSelectedRow();
+            if (index == -1) {
+                return;
+            }
+
+            tracker.removeBookmark(list.getMCListItem(index).getObject().getIdentity());
+        });
+        
+        contextMenu = ContextMenu.addPopUpMenu(list, bookmarkMenuItem, removeBookmarkMenuItem);
+
+        // Update menu item states based on selection and bookmark status
+        Runnable updateMenuStates = () -> {
+            int selectedRow = list.getSelectedRow();
+            if (selectedRow == -1) {
+                bookmarkMenuItem.setEnabled(false);
+                removeBookmarkMenuItem.setEnabled(false);
+                return;
+            }
+            
+            MysterServer server = list.getMCListItem(selectedRow).getObject();
+            boolean isBookmarked = tracker.getBookmark(server.getIdentity()).isPresent();
+            
+            // Enable "Bookmark Server" if not already bookmarked
+            bookmarkMenuItem.setEnabled(!isBookmarked);
+            // Enable "Remove Bookmark" if already bookmarked
+            removeBookmarkMenuItem.setEnabled(isBookmarked);
+        };
+        
+        // Update menu states when selection changes
+        list.getSelectionModel().addListSelectionListener(e -> {
+            if (!e.getValueIsAdjusting()) {
+                updateMenuStates.run();
+            }
+        });
 
         choice.addItemListener(new ChoiceListener());
         choice.addItemListener(_ -> windowDataSaver.run());
@@ -190,9 +238,9 @@ public class TrackerWindow extends MysterFrame {
         tracker.addListChangedListener(new ListChangedListener() {
             @Override
             public void serverAddedRemoved(MysterType type) {
-                reloadList.set(true);
                 Util.invokeLater(() -> {
                     if (type.equals(getMysterType())) {
+                        reloadList.set(true);
                         TrackerWindow.this.resetTimer();
                     }
                 });
@@ -200,9 +248,19 @@ public class TrackerWindow extends MysterFrame {
 
             @Override
             public void lanServerAddedRemoved() {
-                reloadList.set(true);
                 Util.invokeLater(() -> {
-                    if (getMysterType() == null) {
+                    if (getMysterType().isEmpty()) {
+                        reloadList.set(true);
+                        TrackerWindow.this.resetTimer();
+                    }
+                });
+            }
+
+            @Override
+            public void bookmarkServerAddedRemoved() {
+                Util.invokeLater(() -> {
+                    if (getMysterType().isEmpty()) { // yeah.. not the best.. Gotta fix this :-)
+                        reloadList.set(true);
                         TrackerWindow.this.resetTimer();
                     }
                 });
@@ -225,7 +283,7 @@ public class TrackerWindow extends MysterFrame {
             return;
         }
         
-        timer = new Timer(this::checkForRefresh, 1000);
+        timer = new Timer(this::checkForRefresh, 120);
     }
 
     public void show() {
@@ -242,30 +300,6 @@ public class TrackerWindow extends MysterFrame {
         }
 
         return me;
-    }
-
-    /**
-     * Makes grid bag layout less nasty.
-     */
-    public void addComponent(Component c,
-                             int row,
-                             int column,
-                             int width,
-                             int height,
-                             int weightx,
-                             int weighty) {
-        gbconstrains.gridx = column;
-        gbconstrains.gridy = row;
-
-        gbconstrains.gridwidth = width;
-        gbconstrains.gridheight = height;
-
-        gbconstrains.weightx = weightx;
-        gbconstrains.weighty = weighty;
-
-        gblayout.setConstraints(c, gbconstrains);
-
-        add(c);
     }
 
     /**
@@ -359,7 +393,7 @@ public class TrackerWindow extends MysterFrame {
         }
     }
 
-    static class TrackerMCListItem extends AbstractMCListItemInterface<TrackerMCListItem> {
+    static class TrackerMCListItem extends AbstractMCListItemInterface<MysterServer> {
         private final MysterServer server;
         private final Optional<MysterType> type;
 
@@ -392,8 +426,8 @@ public class TrackerWindow extends MysterFrame {
             sortables[6] = new SortableUptime((server.getStatus() ? server.getUptime() : -2));
         }
 
-        public TrackerMCListItem getObject() {
-            return this;
+        public MysterServer getObject() {
+            return server;
         }
         
         public MysterAddress getBestAddress() {

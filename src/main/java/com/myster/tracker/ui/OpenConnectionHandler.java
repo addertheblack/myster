@@ -17,7 +17,7 @@ public class OpenConnectionHandler extends MCListEventAdapter {
     }
 
     public void doubleClick(MCListEvent e) {
-        String serverIp =  ((TrackerMCListItem)e.getParent().getItem(e.getParent().getSelectedIndex())).getBestAddress().toString();
+        String serverIp =  ((TrackerMCListItem)e.getParent().getMCListItem(e.getParent().getSelectedIndex())).getBestAddress().toString();
         MysterType type = ((TrackerWindow) SwingUtilities.getWindowAncestor(e.getParent().getPane())).getMysterType().orElse(null);
         (new ClientWindow(context, serverIp, type)).show();
     }

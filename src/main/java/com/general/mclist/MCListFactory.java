@@ -8,7 +8,7 @@ import java.lang.reflect.InvocationTargetException;
  */
 public class MCListFactory {
 
-    public static <E> MCList<E> buildMCList(int numberofcolumns, boolean singleselect, Component c) {
+    public static <E> JMCList<E> buildMCList(int numberofcolumns, boolean singleselect, Component c) {
         String version = System.getProperty("java.version");
         if (false || version.startsWith("1.1") || version.startsWith("1.0")) {
             throw new IllegalStateException("Nope. Not doing 1.1 or 1.0 Java anymore"); //  new AWTMCList(numberofcolumns, singleselect, c);
@@ -34,7 +34,9 @@ public class MCListFactory {
             } catch (ClassNotFoundException e) {
                 e.printStackTrace();
             }
-            return new AWTMCList(numberofcolumns, singleselect, c);
+            
+            throw new IllegalStateException(); // should never happen
+//            return new AWTMCList(numberofcolumns, singleselect, c);
         }
     }
 }

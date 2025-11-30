@@ -58,6 +58,8 @@ public class Tracker {
         public void serverAddedRemoved(MysterType type);
         
         public void lanServerAddedRemoved();
+        
+        public void bookmarkServerAddedRemoved();
     }
     
     public Tracker(MysterServerPool pool, Preferences preferences, TypeDescriptionList typeDescriptionList) {

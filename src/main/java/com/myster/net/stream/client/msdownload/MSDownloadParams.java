@@ -1,6 +1,7 @@
 package com.myster.net.stream.client.msdownload;
 
 import java.nio.file.Path;
+import java.util.Optional;
 
 import com.myster.search.HashCrawlerManager;
 import com.myster.search.MysterFileStub;
@@ -14,6 +15,6 @@ import com.myster.ui.MysterFrameContext;
 public record MSDownloadParams(MysterFrameContext context,
                                HashCrawlerManager crawlerManager,
                                MysterFileStub stub,
-                               Path targetDir,
+                               Optional<Path> targetDir,
                                Path subDirectory) {
 }

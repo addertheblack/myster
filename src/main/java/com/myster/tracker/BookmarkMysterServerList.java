@@ -233,6 +233,6 @@ public class BookmarkMysterServerList {
     }
     
     private void notifyListChanged() {
-        dispatcher.fire().serverAddedRemoved(null); // null means bookmarks changed, not a specific type
+        dispatcher.fire().bookmarkServerAddedRemoved();
     }
 }

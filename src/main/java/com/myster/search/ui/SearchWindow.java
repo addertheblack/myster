@@ -23,8 +23,10 @@ import java.util.List;
 import java.util.logging.Logger;
 
 import javax.swing.JButton;
+import javax.swing.JMenuItem;
 import javax.swing.JTextField;
 
+import com.general.mclist.JMCList;
 import com.general.mclist.MCList;
 import com.general.mclist.MCListEvent;
 import com.general.mclist.MCListEventAdapter;
@@ -39,6 +41,8 @@ import com.myster.search.HashCrawlerManager;
 import com.myster.search.SearchEngine;
 import com.myster.search.SearchResult;
 import com.myster.search.SearchResultListener;
+import com.myster.tracker.BookmarkMysterServerList;
+import com.myster.tracker.MysterServer;
 import com.myster.tracker.Tracker;
 import com.myster.type.MysterType;
 import com.myster.type.TypeDescriptionList;
@@ -46,6 +50,7 @@ import com.myster.ui.MysterFrame;
 import com.myster.ui.MysterFrameContext;
 import com.myster.ui.WindowPrefDataKeeper;
 import com.myster.ui.WindowPrefDataKeeper.PrefData;
+import com.myster.util.ContextMenu;
 import com.myster.util.Sayable;
 import com.myster.util.TypeChoice;
 
@@ -63,7 +68,7 @@ public class SearchWindow extends MysterFrame implements SearchResultListener, S
     private final GridBagConstraints gbconstrains;
 
     private final JButton searchButton;
-    private final MCList<SearchResult> fileList;
+    private final JMCList<SearchResult> fileList;
     private final JTextField textEntry;
     private final TypeChoice choice;
     private final MessageField msg;
@@ -146,6 +151,8 @@ public class SearchWindow extends MysterFrame implements SearchResultListener, S
 
         fileList.setColumnName(0, "Search Results appear here");
         fileList.setColumnWidth(0, 400);
+        
+        addPopUpMenus();
 
         c.keeper().addFrame(this, (_) -> {}, PREF_LOCATION_KEY, WindowPrefDataKeeper.MULTIPLE_WINDOWS);
 
@@ -154,6 +161,39 @@ public class SearchWindow extends MysterFrame implements SearchResultListener, S
 
         pack();
         setSize(XDEFAULT, YDEFAULT);
+    }
+
+    private void addPopUpMenus() {
+        JMenuItem downloadMenuItem = ContextMenu.createDownloadItem(fileList, _ -> {
+            int index = fileList.getSelectedRow();
+            if (index == -1) {
+                return;
+            }
+
+            fileList.getMCListItem(index).getObject().download();
+        });
+        JMenuItem downloadToMenuItem = ContextMenu.createDownloadToItem(fileList, e -> {
+            int index = fileList.getSelectedRow();
+            if (index == -1) {
+                return;
+            }
+            
+            fileList.getMCListItem(index).getObject().downloadTo();
+        });
+        JMenuItem bookmarkMenuItem = ContextMenu.createBookmarkServerItem(fileList, e -> {
+            int index = fileList.getSelectedRow();
+            if (index == -1) {
+                return;
+            }
+            
+            MysterServer moop = manager.getQuickServerStats(fileList.getMCListItem(index).getObject().getHostAddress());
+            
+            manager.addBookmark(new BookmarkMysterServerList.Bookmark(moop.getIdentity()) );
+        });
+        
+        // OPEN FILE ON DISK!
+        
+        ContextMenu.addPopUpMenu(fileList, downloadMenuItem, downloadToMenuItem, null, bookmarkMenuItem);
     }
 
     private static HashCrawlerManager hashManager;

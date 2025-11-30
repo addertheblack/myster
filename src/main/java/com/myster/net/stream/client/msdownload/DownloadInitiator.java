@@ -6,7 +6,6 @@ import static com.myster.net.stream.client.msdownload.MultiSourceDownload.toIoFi
 import java.io.File;
 import java.io.IOException;
 import java.io.RandomAccessFile;
-import java.util.Optional;
 
 import com.general.thread.Cancellable;
 import com.general.util.AnswerDialog;
@@ -198,7 +197,7 @@ public class DownloadInitiator implements Runnable {
         public File getFileToDownloadTo(MysterFileStub stub) {
             return MultiSourceUtilities.getFileToDownloadTo(stub.name(),
                                                             progress,
-                                                            Optional.of(params.targetDir()),
+                                                            params.targetDir(),
                                                             params.subDirectory());
         }
 

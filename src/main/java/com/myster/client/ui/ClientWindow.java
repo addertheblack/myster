@@ -182,11 +182,11 @@ public class ClientWindow extends MysterFrame implements Sayable {
         this.type = type;
     }
     
-    private void recursivelyStartDownloads(TreeMCListTableModel<String> model, TreeMCListItem<String> item, Path relativePath) {
+    private void recursivelyStartDownloads(TreeMCListTableModel<String> model, TreeMCListItem<String> item, Optional<Path> baseDirectory, Path relativePath) {
         if (item.isContainer()) {
             TreePath myPathOrFail = item.getMyPathOrFail();
             for (TreeMCListItem<String> i : model.getChildrenAtPath(myPathOrFail)) {
-                recursivelyStartDownloads(model, i, relativePath.resolve(Path.of(item.getObject())));
+                recursivelyStartDownloads(model, i, baseDirectory, relativePath.resolve(Path.of(item.getObject())));
             }
         } else {
             try {
@@ -200,7 +200,7 @@ public class ClientWindow extends MysterFrame implements Sayable {
                                                                    .createMysterAddress(currentip),
                                                                               getCurrentType(),
                                                                               item.getObject()),
-                                                           baseDir,
+                                                           baseDirectory,
                                                            relativePath));
             } catch (UnknownHostException e1) {
                 e1.printStackTrace();
@@ -299,22 +299,12 @@ public class ClientWindow extends MysterFrame implements Sayable {
             
             if (m instanceof TreeMCListItem<String> treeItem) {
                 // recurse along the treeItems so that we start
-                recursivelyStartDownloads((TreeMCListTableModel<String>)fileList.getModel(), treeItem, Path.of(""));
+                recursivelyStartDownloads((TreeMCListTableModel<String>) fileList.getModel(),
+                                          treeItem,
+                                          Optional.of(Path
+                                                  .of(context.fileManager().getPathFromType(type))),Path.of(""));
             } else {
-                try {
-                    protocol.getStream()
-                            .downloadFile(new MSDownloadParams(context,
-                                                               hashManager,
-                                                               new MysterFileStub(MysterAddress
-                                                                       .createMysterAddress(currentip),
-                                                                                  getCurrentType(),
-                                                                                  getCurrentFile()),
-                                                               Path.of(context.fileManager()
-                                                                       .getPathFromType(type)),
-                                                               Path.of("")));
-                } catch (UnknownHostException e1) {
-                    e1.printStackTrace();
-                }
+                throw new IllegalStateException("Must be a TreeMCListItem<String> but was " + m.getClass().getName());
             }
         });
         JMenuItem downloadToMenuItem = ContextMenu.createDownloadToItem(fileList, e -> {
@@ -388,7 +378,7 @@ public class ClientWindow extends MysterFrame implements Sayable {
         ipTextField.addActionListener(connectButtonEvent);
         
         // Toggle stats panel visibility
-        toggleStatsButton.addActionListener(e -> {
+        toggleStatsButton.addActionListener(_ -> {
             boolean isVisible = statsPanel.isVisible();
             statsPanel.setVisible(!isVisible);
             if (!isVisible) {

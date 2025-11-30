@@ -22,19 +22,28 @@ public class PreferencesGui {
     
 
     static final String WINDOW_KEEPER_KEY = "MysterPrefsGUI";
+    private static final String SELECTED_KEY = "Selected Key";
 
+    private record PrefGuiData(String selectedKey) {}
 
     public int initGui() {
         int windowCount = 0;
-        List<PrefData<Object>> lastLocs = context.keeper().getLastLocs(WINDOW_KEEPER_KEY, (_) -> null);
+        List<PrefData<PrefGuiData>> lastLocs = context.keeper().getLastLocs(WINDOW_KEEPER_KEY, (p) -> new PrefGuiData(p.get(SELECTED_KEY, "")));
         if (lastLocs.size() > 0) {
-             prefsWindow.setBounds(lastLocs.get(0).location().bounds());
-             setGUI(lastLocs.get(0).location().visible());
+             PrefData<PrefGuiData> prefData = lastLocs.get(0);
+             prefsWindow.setBounds(prefData.location().bounds());
+             setGUI(prefData.location().visible());
         
              windowCount++;
+             prefsWindow.setSelectedKey(prefData.data().selectedKey());
         }
         
-        context.keeper().addFrame(prefsWindow, (_) -> {}, WINDOW_KEEPER_KEY, WindowPrefDataKeeper.SINGLETON_WINDOW);
+        
+        prefsWindow.setSaver(context.keeper().addFrame(prefsWindow, (p) -> {
+            String key = prefsWindow.getSelectedKey();
+            
+            p.put(SELECTED_KEY, key);
+        }, WINDOW_KEEPER_KEY, WindowPrefDataKeeper.SINGLETON_WINDOW));
         
         return windowCount;
     }

@@ -3,6 +3,7 @@ package com.myster.search;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 
 import com.general.util.Util;
 import com.myster.mml.MessagePak;
@@ -45,8 +46,18 @@ public class MysterSearchResult implements SearchResult {
                 .downloadFile(new MSDownloadParams(context,
                                                    hashCrawler,
                                                    stub,
-                                                   Path.of(context.fileManager()
-                                                           .getPathFromType(stub.getType())),
+                                                   Optional.of(Path.of(context.fileManager()
+                                                           .getPathFromType(stub.getType()))),
+                                                   Path.of("")));
+    }
+
+    @Override
+    public void downloadTo() {
+        getProtocol().getStream()
+                .downloadFile(new MSDownloadParams(context,
+                                                   hashCrawler,
+                                                   stub,
+                                                   Optional.empty(),
                                                    Path.of("")));
     }
 

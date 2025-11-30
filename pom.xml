@@ -235,8 +235,7 @@
               <goal>jpackage</goal>
             </goals>
             <configuration>
-              <!-- Directory containing the jar created by the
-							shade plugin -->
+              <!-- Directory containing the jar created by the shade plugin -->
               <input>${project.basedir}/bin</input>
               <!-- Output directory for the packaged application -->
               <destination>${project.build.directory}/jpackage</destination>
@@ -249,8 +248,7 @@
               <!-- Pass additional jpackage arguments -->
               <arguments>
                 <argument>--add-modules</argument>
-                <argument>
-                  java.base,java.desktop,java.naming,java.prefs,java.sql</argument>
+                <argument>java.base,java.desktop,java.naming,java.prefs</argument>
               </arguments>
             </configuration>
           </execution>

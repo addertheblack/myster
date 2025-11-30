@@ -10,6 +10,7 @@
 package com.myster.client.ui;
 
 import java.nio.file.Path;
+import java.util.Optional;
 
 import com.general.mclist.JMCList;
 import com.general.mclist.MCListEvent;
@@ -59,7 +60,7 @@ public class FileListAction extends MCListEventAdapter {
                     .downloadFile(new MSDownloadParams(mysterFrameContext,
                                                        hashManager,
                                                        stub,
-                                                       baseDir,
+                                                       Optional.of(baseDir),
                                                        Path.of("")));
         } catch (java.io.IOException _) {
             com.general.util.AnswerDialog.simpleAlert(w, "Could not connect to server.");
