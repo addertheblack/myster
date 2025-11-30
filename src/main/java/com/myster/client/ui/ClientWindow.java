@@ -125,7 +125,7 @@ public class ClientWindow extends MysterFrame implements Sayable {
         serverPreferences = prefs;
     }
     
-    public record Moop(Optional<String> ip, Optional<MysterType> type) {}
+    public record ClientWindowData(Optional<String> ip, Optional<MysterType> type) {}
     
     private static Optional<MysterType> getFromPrefs(Preferences p) {
         String s = p.get(TYPE_KEY, null);
@@ -145,11 +145,11 @@ public class ClientWindow extends MysterFrame implements Sayable {
     }
 
     public static int initWindowLocations(MysterFrameContext c) {
-        List<PrefData<Moop>> lastLocs = c.keeper().getLastLocs(WINDOW_KEEPER_KEY, (p) -> {
-            return new Moop(Optional.ofNullable(p.get(IP_KEY, null)), getFromPrefs(p));
+        List<PrefData<ClientWindowData>> lastLocs = c.keeper().getLastLocs(WINDOW_KEEPER_KEY, (p) -> {
+            return new ClientWindowData(Optional.ofNullable(p.get(IP_KEY, null)), getFromPrefs(p));
         });
 
-        for (PrefData<Moop> prefData : lastLocs) {
+        for (PrefData<ClientWindowData> prefData : lastLocs) {
             ClientWindow window = new ClientWindow(c, prefData.data().ip().orElse(null), prefData.data().type().orElse(null));
             window.setBounds(prefData.location().bounds());
             window.show();
