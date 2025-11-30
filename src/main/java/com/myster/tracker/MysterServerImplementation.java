@@ -331,6 +331,11 @@ class MysterServerImplementation {
         public int getNumberOfFiles(MysterType type) {
             return MysterServerImplementation.this.getNumberOfFiles(type);
         }
+        
+        @Override
+        public int getTotalNumberOfFiles() {
+            return 0;
+        }
 
         /**
          * Returns the Transfer Speed associated with this MysterIP object.

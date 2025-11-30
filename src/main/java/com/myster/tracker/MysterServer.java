@@ -38,6 +38,8 @@ public interface MysterServer {
      * @return the number of files the server claims to support for this MysterType
      */
     public int getNumberOfFiles(MysterType type);
+    
+    public int getTotalNumberOfFiles();
 
     /**
      * @return a double representing the speed the server tells us. Might be BS.

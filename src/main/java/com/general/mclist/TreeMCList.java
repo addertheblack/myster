@@ -15,10 +15,14 @@ import javax.swing.table.DefaultTableCellRenderer;
 import com.formdev.flatlaf.extras.FlatSVGIcon;
 import com.general.mclist.TreeMCListTableModel.TreeMCListItem;
 import com.general.mclist.TreeMCListTableModel.TreePath;
-import com.general.mclist.TreeMCListTableModel.TreePathString;
 import com.general.util.IconLoader;
 
 public class TreeMCList {
+    private static final FlatSVGIcon downChevron = IconLoader.loadSvg(IconLoader.class, "chevron-down-svgrepo-com");
+    private static final FlatSVGIcon rightChevron = IconLoader.loadSvg(IconLoader.class, "chevron-right-svgrepo-com");
+    
+    private static final FlatSVGIcon folderIcon = IconLoader.loadSvg(IconLoader.class,"folder-svgrepo-com");
+    private static final FlatSVGIcon fileIcon = IconLoader.loadSvg(IconLoader.class,"file-svgrepo-com");
     
     public static <E> JMCList<E> create(String[] columns, TreePath root) {
         // Create the tree model
@@ -135,25 +139,26 @@ public class TreeMCList {
                                                     hasFocus,
                                                     row,
                                                     column);
-                
                 Icon chevIcon = null;
                 if (treeRow.isContainer()) {
-                    FlatSVGIcon icon = treeRow.isOpen()
-                            ? IconLoader.loadSvg(IconLoader.class, "chevron-down-svgrepo-com")
-                            : IconLoader.loadSvg(IconLoader.class, "chevron-right-svgrepo-com");
+                    FlatSVGIcon icon = treeRow.isOpen() ? downChevron : rightChevron;
+
+                    icon.setColorFilter(new com.formdev.flatlaf.extras.FlatSVGIcon.ColorFilter(color -> this
+                            .getForeground()));
                     chevIcon = icon.derive(iconSize, iconSize);
                 } else {
-                    BufferedImage emptyImage = new BufferedImage(iconSize, iconSize, BufferedImage.TYPE_INT_ARGB);
+                    BufferedImage emptyImage =
+                            new BufferedImage(iconSize, iconSize, BufferedImage.TYPE_INT_ARGB);
                     chevIcon = new ImageIcon(emptyImage);
                 }
-                
-                var fileIcon = treeRow.isContainer() ? 
-                        IconLoader.loadSvg(IconLoader.class,"folder-svgrepo-com") :
-                            IconLoader.loadSvg(IconLoader.class,"file-svgrepo-com");
-                fileIcon = fileIcon.derive(iconSize, iconSize);
-                
-                
-                setIcon(mergeIcons(chevIcon, fileIcon, 4));
+
+                var fOrFIcon = treeRow.isContainer() ? folderIcon : fileIcon;
+                fOrFIcon = fOrFIcon.derive(iconSize, iconSize);
+                fOrFIcon.setColorFilter(new com.formdev.flatlaf.extras.FlatSVGIcon.ColorFilter(color -> this
+                        .getForeground()));
+
+
+                setIcon(mergeIcons(chevIcon, fOrFIcon, 4));
                 setBorder(new EmptyBorder(new Insets(0,  10 * indentLevel, 0, 0)));
                 setText("" + v);
 

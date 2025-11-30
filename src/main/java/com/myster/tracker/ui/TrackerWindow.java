@@ -64,10 +64,7 @@ public class TrackerWindow extends MysterFrame {
 
     private final JMCList<MysterServer> list;
     private final TypeChoice choice;
-    private final JPopupMenu contextMenu;
-    
     private Timer timer = null;
-
     
     private static Tracker tracker;
 
@@ -236,7 +233,7 @@ public class TrackerWindow extends MysterFrame {
             removeBookmarkMenuItem.setEnabled(isBookmarked);
         };
         
-        contextMenu = ContextMenu.addPopUpMenu(list, updateMenuStates, bookmarkMenuItem, removeBookmarkMenuItem);
+        ContextMenu.addPopUpMenu(list, updateMenuStates, bookmarkMenuItem, removeBookmarkMenuItem);
 
 
 
@@ -295,15 +292,14 @@ public class TrackerWindow extends MysterFrame {
                     // Always refresh to update bookmark icons, not just when viewing bookmarks
                     refreshList.set(true);
                     
-                 // instant update for the icon.. tiny delay for the delete..
-                    // note that this handler applied whatever TYPE is selected!
-                    checkForRefresh(); 
                     
                     if (choice.isBookmark()) {
-                        reloadList.set(true);
+                        reloadList.set(true); // only apply this for bookmarks type
                     }
                     
-                    TrackerWindow.this.resetTimer();
+                    // instant update for the icon.. tiny delay for the delete..
+                    // note that this handler applied whatever TYPE is selected!
+                    checkForRefresh(); 
                 });
             }
         });
