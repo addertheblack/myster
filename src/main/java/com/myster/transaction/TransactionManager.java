@@ -6,18 +6,19 @@ import java.util.Objects;
 import java.util.logging.Logger;
 
 import com.general.net.ImmutableDatagramPacket;
+import com.general.net.NetUtils;
 import com.general.util.Timer;
 import com.general.util.Util;
+import com.myster.net.MysterAddress;
 import com.myster.net.datagram.BadPacketException;
 import com.myster.net.datagram.DataPacket;
 import com.myster.net.datagram.DatagramConstants;
 import com.myster.net.datagram.DatagramEncryptUtil;
 import com.myster.net.datagram.DatagramProtocolManager;
+import com.myster.net.datagram.DatagramProtocolManager.TransportManager;
 import com.myster.net.datagram.DatagramSender;
 import com.myster.net.datagram.DatagramTransport;
 import com.myster.net.server.datagram.EncryptedDatagramServer;
-import com.myster.net.datagram.DatagramProtocolManager.TransportManager;
-import com.myster.net.MysterAddress;
 import com.myster.server.event.ConnectionManagerEvent;
 import com.myster.server.event.ServerEventDispatcher;
 
@@ -336,8 +337,10 @@ public class TransactionManager {
 
             //if it's not from the right address ignore.. Anti-spoofing
             if (transaction != null) {
-                if (!transaction.getAddress().equals(record.address))
+                MysterAddress address = transaction.getAddress();
+                if (!NetUtils.isLanAddress(address.getInetAddress()) && !address.equals(record.address)) {
                     return;
+                }
             }
 
             if (transaction == null) {

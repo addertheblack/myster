@@ -18,6 +18,7 @@ import java.util.function.Consumer;
 import java.util.logging.Logger;
 import java.util.stream.Collectors;
 
+import com.general.net.NetUtils;
 import com.general.thread.PromiseFuture;
 import com.general.util.Timer;
 import com.general.util.Util;
@@ -153,7 +154,7 @@ class IdentityTracker implements IdentityProvider {
         if (candidates.isEmpty()) {
             // If the server is down we should only check the public address since that is the
             // most likely to be reachable if our laptop is not longer on the LAN (or loopback)
-            candidates = Util.filter(addresses, a -> !TrackerUtils.isLanAddress(a.getInetAddress()));
+            candidates = Util.filter(addresses, a -> !NetUtils.isLanAddress(a.getInetAddress()));
             
             // this is for the edge case where we only have the LAN address for this server
             if (candidates.isEmpty()) {
@@ -408,7 +409,7 @@ class IdentityTracker implements IdentityProvider {
         Map<AddressType, List<MysterAddress>> foo = addresses.stream().collect(Collectors.groupingBy((MysterAddress i) -> {
             if (i.getInetAddress().isLoopbackAddress() ) {
                 return AddressType.OTHER;
-            } else if (TrackerUtils.isLanAddress(i.getInetAddress())) {
+            } else if (NetUtils.isLanAddress(i.getInetAddress())) {
                 return AddressType.LAN;
             } else {
                 return AddressType.PUBLIC;
