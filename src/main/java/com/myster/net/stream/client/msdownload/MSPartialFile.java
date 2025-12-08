@@ -27,11 +27,11 @@ import com.myster.mml.MMLException;
 import com.myster.mml.RobustMML;
 import com.myster.net.MysterAddress;
 import com.myster.net.stream.client.msdownload.MultiSourceDownload.FileMover;
+import com.myster.progress.ui.FileProgressWindow;
 import com.myster.search.HashCrawlerManager;
 import com.myster.search.MysterFileStub;
 import com.myster.type.MysterType;
 import com.myster.ui.MysterFrameContext;
-import com.myster.util.FileProgressWindow;
 
 public class MSPartialFile implements AutoCloseable {
     public static final String FILE_ENDING = ".p";

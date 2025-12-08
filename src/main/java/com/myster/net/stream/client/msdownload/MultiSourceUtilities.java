@@ -206,7 +206,7 @@ public class MultiSourceUtilities {
     /**
      * Default implementation that uses real GUI dialogs.
      */
-    private static class DefaultDialogProvider implements DialogProvider {
+    public static class DefaultDialogProvider implements DialogProvider {
         @Override
         public String showAlert(Frame parentFrame, String message, String[] buttons) {
             return AnswerDialog.simpleAlert(parentFrame, message, buttons);

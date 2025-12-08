@@ -71,6 +71,8 @@ import com.myster.net.server.datagram.TypeDatagramServer;
 import com.myster.net.stream.client.MysterStreamImpl;
 import com.myster.pref.MysterPreferences;
 import com.myster.pref.ui.ThemePane;
+import com.myster.progress.ui.DefaultDownloadManager;
+import com.myster.progress.ui.DownloadManager;
 import com.myster.search.HashCrawlerManager;
 import com.myster.search.MultiSourceHashSearch;
 import com.myster.search.ui.SearchWindow;
@@ -86,8 +88,8 @@ import com.myster.type.TypeDescriptionList;
 import com.myster.type.ui.TypeManagerPreferencesGUI;
 import com.myster.ui.MysterFrameContext;
 import com.myster.ui.PreferencesGui;
-import com.myster.ui.WindowPrefDataKeeper;
 import com.myster.ui.WindowManager;
+import com.myster.ui.WindowPrefDataKeeper;
 import com.myster.ui.menubar.MysterMenuBar;
 import com.myster.ui.menubar.event.MenuBarEvent;
 import com.myster.ui.menubar.event.MenuBarListener;
@@ -305,8 +307,30 @@ public class Myster {
                         + (System.currentTimeMillis() - startTime));
                 MysterMenuBar menuBarFactory = new MysterMenuBar();
                 WindowManager windowManager = new WindowManager();
+                WindowPrefDataKeeper keeper = new WindowPrefDataKeeper(preferences);
+                
+                // Create temporary context to initialize downloadManager
+                // The AI did this and it made me laugh so I kept it in.
+                // Fuck you people who think this is a terrible reason to 
+                // accept code into the codebase!
+                MysterFrameContext tempContext =
+                        new MysterFrameContext(menuBarFactory,
+                                               windowManager,
+                                               tdList,
+                                               keeper,
+                                               fileManager,
+                                               null);
+                DownloadManager downloadManager = new DefaultDownloadManager(tempContext);
+                
+                // Now create the final context with the downloadManager properly set
                 final MysterFrameContext context =
-                        new MysterFrameContext(menuBarFactory, windowManager, tdList, new WindowPrefDataKeeper(preferences), fileManager);
+                        new MysterFrameContext(menuBarFactory,
+                                               windowManager,
+                                               tdList,
+                                               keeper,
+                                               fileManager,
+                                               downloadManager);
+                
                 PreferencesGui preferencesGui = new PreferencesGui(context);
 
                 serverFacade
@@ -370,6 +394,9 @@ public class Myster {
                     count += SearchWindow.initWindowLocations(context);
                     
                     count += preferencesGui.initGui();
+                    
+                    // Initialize ProgressManagerWindow location BEFORE restarting downloads
+                    count += ((DefaultDownloadManager)downloadManager).initWindowLocations();
                     
                     if (count == 0) {
                         SearchWindow window = new SearchWindow(context);

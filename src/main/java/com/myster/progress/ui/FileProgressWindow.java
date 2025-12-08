@@ -1,19 +1,28 @@
-package com.myster.util;
+package com.myster.progress.ui;
 
 import java.awt.Cursor;
 import java.awt.event.ComponentAdapter;
 import java.awt.event.ComponentEvent;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
+import java.io.File;
+import java.io.IOException;
 import java.net.MalformedURLException;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.ArrayList;
 import java.util.List;
 
+import com.general.thread.Cancellable;
 import com.general.util.Timer;
 import com.general.util.Util;
+import com.myster.hash.FileHash;
+import com.myster.net.stream.client.msdownload.DownloadInitiator.DownloadInitiatorListener;
+import com.myster.net.stream.client.msdownload.MSDownloadHandler;
+import com.myster.net.stream.client.msdownload.MSDownloadParams;
+import com.myster.net.stream.client.msdownload.MSPartialFile;
 import com.myster.net.web.WebLinkManager;
+import com.myster.search.MysterFileStub;
 import com.myster.ui.MysterFrameContext;
 
 public class FileProgressWindow extends ProgressWindow {
@@ -30,11 +39,11 @@ public class FileProgressWindow extends ProgressWindow {
     private boolean overFlag = false;
 
     private String url;
-
+    
     public FileProgressWindow(MysterFrameContext c) {
         this(c, "");
     }
-
+    
     public FileProgressWindow(MysterFrameContext c, String title) {
         super(c, title);
 
@@ -63,7 +72,7 @@ public class FileProgressWindow extends ProgressWindow {
 
         super.setProgressBarNumber(numberOfBars);
     }
-
+    
     private static void resizeVectorWithLongs(List<Long> list, int newSize) {
         int oldSize = list.size();
         
@@ -194,5 +203,87 @@ public class FileProgressWindow extends ProgressWindow {
                 lastMouseReleaseTime = System.currentTimeMillis();
             }
         }
+    }
+    
+    public static DownloadInitiatorListener bindToFileProgressGui(MysterFrameContext context, MSDownloadParams params) {
+        return new DownloadInitiatorListener() {
+            EdtFileProgressWindow w = null;
+            
+            private void init() {
+                if (w == null) {
+                    w = new EdtFileProgressWindow(context, params);
+                }
+            }
+            
+            @Override
+            public void setCancellable(Cancellable cancellable) {
+                Util.invokeLater(()-> {
+                    init();
+                    
+                    w.setCancellable(cancellable);
+                });
+            }
+
+            @Override
+            public void setTitle(String title) {
+                Util.invokeLater(()-> {
+                    init();
+                    
+                    w.setTitle(title);
+                });
+            }
+
+            @Override
+            public void setText(String text) {
+                Util.invokeLater(()-> {
+                    init();
+                    
+                    w.setText(text);
+                });
+            }
+            
+            @Override
+            public MSDownloadHandler getMsDownloadListener() {
+                return Util.callAndWaitNoThrows(() -> {
+                    init();
+
+                    return w.getMsDownloadListener();
+                });
+            }
+
+            @Override
+            public File getFileToDownloadTo(MysterFileStub stub) {
+                return Util.callAndWaitNoThrows(()-> {
+                    init();
+                    
+                    return w.getFileToDownloadTo(stub);
+                });
+            }
+
+            @Override
+            public MSPartialFile createMSPartialFile(MysterFileStub stub,
+                                                     File fileToDownloadTo,
+                                                     long estimatedFileLength,
+                                                     FileHash[] hashes)
+                    throws IOException {
+                return Util.callAndWaitNoThrows(() -> {
+                    init();
+
+                    return w.createMSPartialFile(stub,
+                                                 fileToDownloadTo,
+                                                 estimatedFileLength,
+                                                 hashes);
+                });
+            }
+
+            @Override
+            public void moveFileToFinalDestination(File sourceFile) {
+                Util.invokeLater(() -> {
+                    init();
+
+                    w.moveFileToFinalDestination(sourceFile);
+                });
+            }
+        };
     }
 }

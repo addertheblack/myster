@@ -8,7 +8,7 @@
  * Copyright Andrew Trumper 2000-2001
  */
 
-package com.myster.util;
+package com.myster.progress.ui;
 
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
@@ -27,7 +27,7 @@ public class ProgressWindowClose extends WindowAdapter {
             // I think you can't end() here because doing that blocks the EDT
             // Best to not do that.
             t.flagToEnd();
-        } catch (Exception ex) {
+        } catch (Exception _) {
             // nothing
         }
         e.getWindow().setVisible(false);

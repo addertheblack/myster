@@ -235,7 +235,7 @@ public class MysterServerPoolImpl implements MysterServerPool {
     }
 
     public boolean existsInPool(MysterIdentity k) {
-        return (getMysterIP(k) != null);
+        return (getMysterIP(k).isPresent());
     }
 
     /**

@@ -25,6 +25,14 @@ public class TreeMCList {
     private static final FlatSVGIcon fileIcon = IconLoader.loadSvg(IconLoader.class,"file-svgrepo-com");
     
     public static <E> JMCList<E> create(String[] columns, TreePath root) {
+        return create(columns, root, folderIcon, fileIcon);
+    }
+    
+    public static <E> JMCList<E> create(String[] columns, TreePath root, FlatSVGIcon customFolderIcon, FlatSVGIcon customFileIcon) {
+        // Use custom icons if provided, otherwise fall back to defaults
+        final FlatSVGIcon containerIcon = customFolderIcon != null ? customFolderIcon : folderIcon;
+        final FlatSVGIcon itemIcon = customFileIcon != null ? customFileIcon : fileIcon;
+        
         // Create the tree model
         TreeMCListTableModel<E> model = new TreeMCListTableModel<>(root);
         
@@ -152,7 +160,7 @@ public class TreeMCList {
                     chevIcon = new ImageIcon(emptyImage);
                 }
 
-                var fOrFIcon = treeRow.isContainer() ? folderIcon : fileIcon;
+                var fOrFIcon = treeRow.isContainer() ? containerIcon : itemIcon;
                 fOrFIcon = fOrFIcon.derive(iconSize, iconSize);
                 fOrFIcon.setColorFilter(new com.formdev.flatlaf.extras.FlatSVGIcon.ColorFilter(color -> this
                         .getForeground()));

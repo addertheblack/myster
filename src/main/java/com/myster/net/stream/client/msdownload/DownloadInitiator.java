@@ -8,8 +8,6 @@ import java.io.IOException;
 import java.io.RandomAccessFile;
 
 import com.general.thread.Cancellable;
-import com.general.util.AnswerDialog;
-import com.general.util.Util;
 import com.myster.hash.FileHash;
 import com.myster.mml.MessagePak;
 import com.myster.net.MysterSocket;
@@ -19,7 +17,6 @@ import com.myster.net.stream.client.msdownload.MultiSourceDownload.FileMover;
 import com.myster.search.HashCrawlerManager;
 import com.myster.search.MysterFileStub;
 import com.myster.ui.MysterFrameContext;
-import com.myster.util.FileProgressWindow;
 
 public class DownloadInitiator implements Runnable {
     private final MysterFileStub stub;
@@ -37,7 +34,7 @@ public class DownloadInitiator implements Runnable {
     /**
      * This is used while the download is still in the process of starting
      */
-    interface DownloadInitiatorListener extends FileMover {
+    public interface DownloadInitiatorListener extends FileMover {
         // First step
         void setCancellable(Cancellable cancellable);
 
@@ -46,7 +43,7 @@ public class DownloadInitiator implements Runnable {
 
         void setText(String title);
         
-        MSDownloadHandler getMsDownloadHandler();
+        MSDownloadListener getMsDownloadListener();
 
         File getFileToDownloadTo(MysterFileStub stub);
 
@@ -57,181 +54,9 @@ public class DownloadInitiator implements Runnable {
                 throws IOException;
     }
 
-    private static DownloadInitiatorListener bindToFileProgressWindow(MysterFrameContext context, MSDownloadParams params) {
-        return new DownloadInitiatorListener() {
-            EdtFileProgressWindow w = null;
-            
-            private void init() {
-                if (w == null) {
-                    w = new EdtFileProgressWindow(context, params);
-                }
-            }
-            
-            @Override
-            public void setCancellable(Cancellable cancellable) {
-                Util.invokeLater(()-> {
-                    init();
-                    
-                    w.setCancellable(cancellable);
-                });
-            }
-
-            @Override
-            public void setTitle(String title) {
-                Util.invokeLater(()-> {
-                    init();
-                    
-                    w.setTitle(title);
-                });
-            }
-
-            @Override
-            public void setText(String text) {
-                Util.invokeLater(()-> {
-                    init();
-                    
-                    w.setText(text);
-                });
-            }
-            
-            @Override
-            public MSDownloadHandler getMsDownloadHandler() {
-                return Util.callAndWaitNoThrows(() -> {
-                    init();
-
-                    return w.getMsDownloadHandler();
-                });
-            }
-
-            @Override
-            public File getFileToDownloadTo(MysterFileStub stub) {
-                return Util.callAndWaitNoThrows(()-> {
-                    init();
-                    
-                    return w.getFileToDownloadTo(stub);
-                });
-            }
-
-            @Override
-            public MSPartialFile createMSPartialFile(MysterFileStub stub,
-                                                     File fileToDownloadTo,
-                                                     long estimatedFileLength,
-                                                     FileHash[] hashes)
-                    throws IOException {
-                return Util.callAndWaitNoThrows(() -> {
-                    init();
-
-                    return w.createMSPartialFile(stub,
-                                                 fileToDownloadTo,
-                                                 estimatedFileLength,
-                                                 hashes);
-                });
-            }
-
-            @Override
-            public void moveFileToFinalDestination(File sourceFile) {
-                Util.invokeLater(() -> {
-                    init();
-
-                    w.moveFileToFinalDestination(sourceFile);
-                });
-            }
-        };
-    }
-    
-    private static class EdtFileProgressWindow implements DownloadInitiatorListener {
-        private final FileProgressWindow progress;
-        private final MSDownloadParams params;
-        
-        private Cancellable cancellable;
-        private boolean done;
-        
-        public EdtFileProgressWindow(MysterFrameContext context, MSDownloadParams params) {
-            this.params = params;
-            
-            progress = new com.myster.util.FileProgressWindow(context, "Connecting..");
-        }
-        
-        @Override
-        public void setCancellable(Cancellable c) {
-            cancellable = c;
-            
-            progress.addWindowListener(new java.awt.event.WindowAdapter() {
-                public void windowClosing(java.awt.event.WindowEvent e) {
-                    if (!done && !MultiSourceUtilities.confirmCancel(progress)) {
-                        return;
-                    }
-
-                    cancellable.cancel();
-
-                    progress.setVisible(false);
-                }
-            });
-            
-            progress.show();
-        }
-
-        @Override
-        public void setTitle(String title) {
-            progress.setTitle(title);
-        }
-
-        @Override
-        public void setText(String text) {
-            progress.setText(text);
-        }
-
-
-        @Override
-        public MSDownloadHandler getMsDownloadHandler() {
-            return new MSDownloadHandler(progress) {
-                @Override
-                public void doneDownload(MultiSourceEvent event) {
-                    done = true;
-                    super.doneDownload(event);
-                }  
-            };
-        }
-
-        @Override
-        public File getFileToDownloadTo(MysterFileStub stub) {
-            return MultiSourceUtilities.getFileToDownloadTo(stub.name(),
-                                                            progress,
-                                                            params.targetDir(),
-                                                            params.subDirectory());
-        }
-
-        @Override
-        public MSPartialFile createMSPartialFile(MysterFileStub stub,
-                                                 File fileToDownloadTo,
-                                                 long estimatedFileLength,
-                                                 FileHash[] hashes) throws IOException {
-            try {
-                return MSPartialFile.create(stub.getMysterAddress(),
-                                            stub.getName(),
-                                            new File(fileToDownloadTo.getParent()),
-                                            stub.getType(),
-                                            MultiSourceDownload.DEFAULT_CHUNK_SIZE,
-                                            hashes,
-                                            estimatedFileLength);
-            } catch (IOException ex) {
-                AnswerDialog
-                        .simpleAlert(progress,
-                                     "I can't create a partial file because of: \n\n"
-                                             + ex.getMessage()
-                                             + "\n\nIf I can't make this partial file I can't use multi-source download.");
-                throw ex;
-            }
-        }
-
-        @Override
-        public void moveFileToFinalDestination(File sourceFile) {
-            MultiSourceUtilities.moveFileToFinalDestination(sourceFile, s -> AnswerDialog.simpleAlert(progress, s));
-        }
-    }
 
     public void run() {
-        final DownloadInitiatorListener progress = bindToFileProgressWindow(context, params);
+        final DownloadInitiatorListener progress = context.downloadManager().bindToFileProgressGui(params);
 
         progress.setCancellable(this::cancel);
         
@@ -311,7 +136,7 @@ public class DownloadInitiator implements Runnable {
 
         msDownload = new MultiSourceDownload(toIoFile(new RandomAccessFile(theFile, "rw"), theFile),
                                              crawlerManager,
-                                             downloadInitListener.getMsDownloadHandler(),
+                                             downloadInitListener.getMsDownloadListener(),
                                              downloadInitListener,
                                              partialFile);
         msDownload.setInitialServers(new MysterFileStub[] { stub });

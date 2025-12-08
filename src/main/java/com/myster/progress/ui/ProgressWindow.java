@@ -1,4 +1,4 @@
-package com.myster.util;
+package com.myster.progress.ui;
 
 import java.awt.Color;
 import java.awt.Container;
@@ -389,10 +389,10 @@ public class ProgressWindow extends MysterFrame {
         }
     }
 
-    protected static class AdPanel extends JPanel {
-        Image ad;
+    public static class AdPanel extends JPanel {
+        private Image ad;
 
-        String labelText = "";
+        private String labelText = "";
 
         public synchronized void setAd(Image im) {
             ad = im;
@@ -421,6 +421,12 @@ public class ProgressWindow extends MysterFrame {
             }
         }
 
+        @Override
+        public Dimension getMinimumSize() {
+            return getPreferredSize();
+        }
+        
+        @Override
         public synchronized Dimension getPreferredSize() {
             return new Dimension(X_SIZE, AD_HEIGHT);
         }

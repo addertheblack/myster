@@ -7,7 +7,7 @@ import java.util.List;
 import java.util.Map;
 
 import com.myster.net.stream.client.MysterDataInputStream;
-import com.myster.util.FileProgressWindow;
+import com.myster.progress.ui.FileProgressWindow;
 
 public class MSDownloadHandler implements MSDownloadListener {
     private final FileProgressWindow progress;

@@ -62,6 +62,7 @@ import com.myster.net.MysterAddress;
 import com.myster.net.client.MysterProtocol;
 import com.myster.net.server.ServerPreferences;
 import com.myster.net.stream.client.msdownload.MSDownloadParams;
+import com.myster.net.stream.client.msdownload.MultiSourceUtilities.DefaultDialogProvider;
 import com.myster.search.HashCrawlerManager;
 import com.myster.search.MysterFileStub;
 import com.myster.tracker.MysterServer;
@@ -108,7 +109,7 @@ public class ClientWindow extends MysterFrame implements Sayable {
     private FileInfoListerThread fileInfoListerThread;
     
     private boolean hasBeenShown = false;
-    private MysterType type;
+    private MysterType initialTypeDoNoUse;
     
     private final MysterFrameContext context;
     private Runnable savePrefs;
@@ -179,7 +180,7 @@ public class ClientWindow extends MysterFrame implements Sayable {
     
     public ClientWindow(MysterFrameContext c, String ip, MysterType type) {
         this(c, ip);
-        this.type = type;
+        this.initialTypeDoNoUse = type;
     }
     
     private void recursivelyStartDownloads(TreeMCListTableModel<String> model, TreeMCListItem<String> item, Optional<Path> baseDirectory, Path relativePath) {
@@ -296,13 +297,27 @@ public class ClientWindow extends MysterFrame implements Sayable {
             }
 
             MCListItemInterface<String> m = fileList.getMCListItem(index);
-            
+
             if (m instanceof TreeMCListItem<String> treeItem) {
                 // recurse along the treeItems so that we start
+                String pathFromType = context.fileManager().getPathFromType(getCurrentType());
+
+                Optional<Path> baseDir = pathFromType == null ? Optional.empty()
+                        : Optional.of(Path.of(pathFromType));
+                
+                if (baseDir.isEmpty()) {
+                    var p = new DefaultDialogProvider().askForFolder("Select a folder to save the file in");
+                    if (p == null) {
+                        return;
+                    }
+                    
+                    baseDir = Optional.of(p);
+                }
+                
                 recursivelyStartDownloads((TreeMCListTableModel<String>) fileList.getModel(),
                                           treeItem,
-                                          Optional.of(Path
-                                                  .of(context.fileManager().getPathFromType(type))),Path.of(""));
+                                          baseDir,
+                                          Path.of(""));
             } else {
                 throw new IllegalStateException("Must be a TreeMCListItem<String> but was " + m.getClass().getName());
             }
@@ -440,8 +455,8 @@ public class ClientWindow extends MysterFrame implements Sayable {
                                              .orElse(t.toString())),
                                      new SortableString(t.toString()) }, t));
 
-        if (t.equals(type)) {
-            type = null;
+        if (t.equals(initialTypeDoNoUse)) {
+            initialTypeDoNoUse = null;
             
             fileTypeList.select(fileTypeList.length()-1);
         }
