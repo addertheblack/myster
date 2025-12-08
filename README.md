@@ -25,5 +25,4 @@ The ant build might not work correctly due to code rot but it should build a sel
 
 Myster without worrying about stuff like classpaths or library dependencies.
 
-The project setup is simple is silly. The code is in com and the jar dependencies are in lib. 
-Really the source should be in a source folder and the whole thing should use Maven but meh. Hey.. if anyone wants to submit a patch with that.. it would be great. :-)
+The project setup is simple. It's another maven project. The targets are in the pom file. Should be easy enough to poke around in.
