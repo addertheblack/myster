@@ -1,6 +1,8 @@
 package com.myster.progress.ui;
 
+import com.general.thread.Cancellable;
 import com.myster.net.stream.client.msdownload.DownloadInitiator.DownloadInitiatorListener;
+import com.myster.net.stream.client.msdownload.MSDownloadListener;
 import com.myster.net.stream.client.msdownload.MSDownloadParams;
 
 /**
@@ -14,5 +16,7 @@ public interface DownloadManager {
      * @return connect this to listener to events / progress from the download
      */
     DownloadInitiatorListener bindToFileProgressGui(MSDownloadParams params);
+
+    MSDownloadListener getMsDownloadListener(String filename, Cancellable cancellable);
 }
 

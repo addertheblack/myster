@@ -13,6 +13,7 @@ import com.general.mclist.Sortable;
 import com.general.mclist.SortableString;
 import com.general.mclist.TreeMCList;
 import com.general.mclist.TreeMCListTableModel.TreePathString;
+import com.general.thread.Cancellable;
 import com.general.util.GridBagBuilder;
 import com.general.util.IconLoader;
 import com.general.util.Util;
@@ -128,53 +129,53 @@ public class ProgressManagerWindow extends MysterFrame {
         var rootPath = new com.general.mclist.TreeMCListTableModel.TreePathString(new String[] {});
         
         // Download 1: A movie file with 3 connections
-        var download1Item = new DownloadMCListItem("BigMovie.mp4", rootPath, true);
+        var download1Item = new DownloadMCListItem("BigMovie.mp4", rootPath, () -> {}, true);
         download1Item.getObject().setTotal(1024 * 1024 * 1024); // 1GB
         download1Item.getObject().setProgress(512 * 1024 * 1024); // 512MB
         download1Item.getObject().setSpeed(2 * 1024 * 1024); // 2MB/s
         download1Item.getObject().setStatus("Downloading");
         
         var download1Path = new com.general.mclist.TreeMCListTableModel.TreePathString(new String[] {"BigMovie.mp4"});
-        var conn1_1Item = new DownloadMCListItem("192.168.1.100", download1Path, false);
+        var conn1_1Item = new DownloadMCListItem("192.168.1.100", download1Path, null, false);
         conn1_1Item.getObject().setTotal(400 * 1024 * 1024);
         conn1_1Item.getObject().setProgress(250 * 1024 * 1024);
         conn1_1Item.getObject().setSpeed(800 * 1024);
         conn1_1Item.getObject().setStatus("Active");
         
-        var conn1_2Item = new DownloadMCListItem("10.0.0.5", download1Path, false);
+        var conn1_2Item = new DownloadMCListItem("10.0.0.5", download1Path, null, false);
         conn1_2Item.getObject().setTotal(400 * 1024 * 1024);
         conn1_2Item.getObject().setProgress(200 * 1024 * 1024);
         conn1_2Item.getObject().setSpeed(700 * 1024);
         conn1_2Item.getObject().setStatus("Active");
         
-        var conn1_3Item = new DownloadMCListItem("172.16.0.20", download1Path, false);
+        var conn1_3Item = new DownloadMCListItem("172.16.0.20", download1Path, null, false);
         conn1_3Item.getObject().setTotal(224 * 1024 * 1024);
         conn1_3Item.getObject().setProgress(62 * 1024 * 1024);
         conn1_3Item.getObject().setSpeed(500 * 1024);
         conn1_3Item.getObject().setStatus("Active");
         
         // Download 2: A music album with 2 connections
-        var download2Item = new DownloadMCListItem("Album.zip", rootPath, true);
+        var download2Item = new DownloadMCListItem("Album.zip", rootPath, null, true);
         download2Item.getObject().setTotal(150 * 1024 * 1024); // 150MB
         download2Item.getObject().setProgress(100 * 1024 * 1024); // 100MB
         download2Item.getObject().setSpeed(1 * 1024 * 1024); // 1MB/s
         download2Item.getObject().setStatus("Downloading");
         
         var download2Path = new com.general.mclist.TreeMCListTableModel.TreePathString(new String[] {"Album.zip"});
-        var conn2_1Item = new DownloadMCListItem("Connection 1: 192.168.1.50", download2Path, false);
+        var conn2_1Item = new DownloadMCListItem("Connection 1: 192.168.1.50", download2Path, null, false);
         conn2_1Item.getObject().setTotal(75 * 1024 * 1024);
         conn2_1Item.getObject().setProgress(55 * 1024 * 1024);
         conn2_1Item.getObject().setSpeed(600 * 1024);
         conn2_1Item.getObject().setStatus("Active");
         
-        var conn2_2Item = new DownloadMCListItem("Connection 2: 10.0.0.8", download2Path, false);
+        var conn2_2Item = new DownloadMCListItem("Connection 2: 10.0.0.8", download2Path, null, false);
         conn2_2Item.getObject().setTotal(75 * 1024 * 1024);
         conn2_2Item.getObject().setProgress(45 * 1024 * 1024);
         conn2_2Item.getObject().setSpeed(400 * 1024);
         conn2_2Item.getObject().setStatus("Active");
         
         // Download 3: A document (waiting for connection)
-        var download3Item = new DownloadMCListItem("Document.pdf", rootPath, true);
+        var download3Item = new DownloadMCListItem("Document.pdf", rootPath, null, true);
         download3Item.getObject().setTotal(5 * 1024 * 1024); // 5MB
         download3Item.getObject().setProgress(0);
         download3Item.getObject().setSpeed(0);
@@ -225,10 +226,13 @@ public class ProgressManagerWindow extends MysterFrame {
      * TreeMCListItem wrapper for DownloadItem that provides column data.
      */
     public static class DownloadMCListItem extends com.general.mclist.TreeMCListTableModel.TreeMCListItem<DownloadItem> {
-        public DownloadMCListItem(String name, com.general.mclist.TreeMCListTableModel.TreePath parent, boolean isContainer) {
+        private Cancellable cancellable;
+
+        public DownloadMCListItem(String name, com.general.mclist.TreeMCListTableModel.TreePath parent, Cancellable cancellable, boolean isContainer) {
             super(parent, 
                   new DownloadDelegate(name),
                   isContainer ? java.util.Optional.of(new TreePathString(appendToPath(parent, name))) : java.util.Optional.empty());
+            this.cancellable = cancellable;
         }
         
         private static String[] appendToPath(com.general.mclist.TreeMCListTableModel.TreePath parent, String name) {
@@ -246,10 +250,15 @@ public class ProgressManagerWindow extends MysterFrame {
             try {
                 var field = TreePathString.class.getDeclaredField("path");
                 field.setAccessible(true);
+                
                 return (String[]) field.get(path);
             } catch (Exception e) {
                 return new String[] {};
             }
+        }
+
+        public void setCancellable(Cancellable c) {
+            cancellable = c;
         }
     }
     

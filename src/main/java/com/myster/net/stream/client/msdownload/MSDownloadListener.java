@@ -1,5 +1,7 @@
 package com.myster.net.stream.client.msdownload;
 
+import java.awt.Frame;
+
 public interface MSDownloadListener {
     // Start of the overall download
     void startDownload(MultiSourceEvent event);
@@ -28,4 +30,13 @@ public interface MSDownloadListener {
      * Cleanup is done. File have been moved/copied or renamed to the final name. Resources have been closed.
      */
     void doneDownload(MultiSourceEvent event);
+    
+    /**
+     * This is for dialog boxes and things like that. Feel free to return null
+     * if you can't be bothered implementing this - the dialog box will simply
+     * not have a parent.
+     * 
+     * @return a frame or null if you're not a frame.
+     */
+    Frame getFrame();
 }

@@ -1,7 +1,9 @@
 package com.myster.progress.ui;
 
+import com.general.thread.Cancellable;
 import com.general.util.Util;
 import com.myster.net.stream.client.msdownload.DownloadInitiator.DownloadInitiatorListener;
+import com.myster.net.stream.client.msdownload.MSDownloadListener;
 import com.myster.net.stream.client.msdownload.MSDownloadParams;
 import com.myster.ui.MysterFrameContext;
 
@@ -47,11 +49,15 @@ public class DefaultDownloadManager implements DownloadManager {
         // Create a listener for this specific download
         ProgressManagerDownloadListener listener = new ProgressManagerDownloadListener(
             progressManagerWindow,
-            context,
             params
         );
         
         // Wrap it in EDT-safe wrapper to ensure all UI updates happen on EDT
         return new EdtDownloadInitiatorListener(listener);
+    }
+
+    @Override
+    public MSDownloadListener getMsDownloadListener(String filename, Cancellable cancellable) {
+        return new ProgManDownloadHandler(progressManagerWindow, filename, cancellable);
     }
 }

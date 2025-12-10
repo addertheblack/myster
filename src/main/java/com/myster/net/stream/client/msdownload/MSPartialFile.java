@@ -18,6 +18,7 @@ import java.io.RandomAccessFile;
 import java.util.ArrayList;
 import java.util.List;
 
+import com.general.thread.SimpleTaskTracker;
 import com.general.util.AnswerDialog;
 import com.general.util.Util;
 import com.myster.filemanager.FileTypeListManager;
@@ -27,7 +28,6 @@ import com.myster.mml.MMLException;
 import com.myster.mml.RobustMML;
 import com.myster.net.MysterAddress;
 import com.myster.net.stream.client.msdownload.MultiSourceDownload.FileMover;
-import com.myster.progress.ui.FileProgressWindow;
 import com.myster.search.HashCrawlerManager;
 import com.myster.search.MysterFileStub;
 import com.myster.type.MysterType;
@@ -46,7 +46,7 @@ public class MSPartialFile implements AutoCloseable {
         RobustMML mml;
         try {
             mml = new RobustMML(maskFile.readUTF());
-        } catch (MMLException ex) {
+        } catch (MMLException _) {
             maskFile.close();
             throw new IOException("MML Meta data was badly formed. This file is corrupt.");
         }
@@ -136,22 +136,20 @@ public class MSPartialFile implements AutoCloseable {
         }
     }
 
-    private static FileProgressWindow showProgres(MysterFrameContext c, final String filename) {
-        final FileProgressWindow progress = new FileProgressWindow(c);
-        progress.setTitle("Downloading " + filename);
-        progress.show();
-        return progress;
-    }
-
     // Resumable multisource driver.
     public static void startDownload(MSPartialFile partialFile,
                                      FileTypeListManager fileManager,
                                      HashCrawlerManager crawlerManager,
                                      MysterFrameContext c)
             throws IOException {
+        
         final String finalFileName = partialFile.getFilename() + ".i";
         final String pathToType = fileManager.getPathFromType(partialFile.getType());
-        final FileProgressWindow progress = showProgres(c, partialFile.getFilename());
+        
+        final SimpleTaskTracker cancellable = new SimpleTaskTracker();
+        final MSDownloadListener downloadListener 
+                = c.downloadManager().getMsDownloadListener(partialFile.getFilename(), cancellable);
+                
         String incompleteFilename = partialFile.getFilename() + ".i";
         File dir = partialFile.getPath();
         File file = new File(dir, incompleteFilename);
@@ -168,20 +166,21 @@ public class MSPartialFile implements AutoCloseable {
                 && ((!dir.exists()) || (!dir.isDirectory()) || (!file.exists()) || (!file.isFile())); loopCounter++) {
             final String DIALOG_PROMPT = "Where is the file " + partialFile.getFilename() + "?";
 
-            final java.awt.FileDialog dialog =
-                    new java.awt.FileDialog(progress, DIALOG_PROMPT, java.awt.FileDialog.LOAD);
+            final java.awt.FileDialog dialog = new java.awt.FileDialog(downloadListener.getFrame(),
+                                                                       DIALOG_PROMPT,
+                                                                       java.awt.FileDialog.LOAD);
 
             dialog.setVisible(true);
 
             if (dialog.getFile() == null)
-                userCancelled(progress, partialFile); //always
+                userCancelled(downloadListener, partialFile); //always
             // throws
             // exception !
 
             if (!dialog.getFile().equals(finalFileName)) {
                 final String YES_ANSWER = "Yes", NO_ANSWER = "No", CANCEL_ANSWER = "Cancel";
                 String response = AnswerDialog.simpleAlert(
-                        progress,
+                        downloadListener.getFrame(),
                         "The file name \n\n\""
                                 + dialog.getFile()
                                 + "\"\n\n is not the same name as \n\n\""
@@ -194,7 +193,7 @@ public class MSPartialFile implements AutoCloseable {
                 if (response.equals(NO_ANSWER)) {
                     continue;
                 } else if (response.equals(CANCEL_ANSWER)) {
-                    userCancelled(progress, partialFile); //always
+                    userCancelled(downloadListener, partialFile); //always
                     // throws
                     // exception !
                 }
@@ -206,19 +205,20 @@ public class MSPartialFile implements AutoCloseable {
 
         FileMover fileMover = (f) -> {
             EventQueue.invokeLater(() -> {
-                MultiSourceUtilities.moveFileToFinalDestination(f, s -> AnswerDialog.simpleAlert(progress, s));
+                MultiSourceUtilities.moveFileToFinalDestination(f, s -> AnswerDialog.simpleAlert(downloadListener.getFrame(), s));
             });
         };
 
         // TODO move this into MSDownload
         RandomAccessFile randomAccessFile = new RandomAccessFile(file, "rw");
-
+        
         final MultiSourceDownload download =
                 new MultiSourceDownload(toIoFile(randomAccessFile, file),
                                         crawlerManager,
-                                        new MSDownloadHandler(progress),
+                                        downloadListener,
                                         fileMover,
                                         partialFile);
+        cancellable.registerDependentTask(download);
 
         if (partialFile.getServerAddress() != null) {
             download.setInitialServers(new MysterFileStub[] {
@@ -228,17 +228,6 @@ public class MSPartialFile implements AutoCloseable {
                                        partialFile.getFilename()) });
         }
 
-
-        progress.addWindowListener(new java.awt.event.WindowAdapter() {
-            public void windowClosing(java.awt.event.WindowEvent e) {
-                if (!download.isDone()&& !MultiSourceUtilities.confirmCancel(progress))
-                    return;
-
-                download.cancel();
-
-                progress.setVisible(false);
-            }
-        });
         download.start();
     }
 
@@ -248,10 +237,11 @@ public class MSPartialFile implements AutoCloseable {
         }
     }
 
-    private static void userCancelled(FileProgressWindow progress, MSPartialFile file)
+    private static void userCancelled(MSDownloadListener l, MSPartialFile file)
             throws UserCanceledException {
-        progress.setVisible(false);
+        l.doneDownload(new MultiSourceEvent(0, 0, 0, true));
         file.done();
+        
         throw new UserCanceledException();
     }
 
@@ -554,7 +544,7 @@ public class MSPartialFile implements AutoCloseable {
 
             return b_out.toByteArray(); // lots of "to" methods here.
         }
-
+        
         /**
          * @return the number of bytes that the MML header information takes up
          *         in the mask file. Start reading the mask data from this

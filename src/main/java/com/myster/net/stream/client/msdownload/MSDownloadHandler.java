@@ -1,11 +1,13 @@
 package com.myster.net.stream.client.msdownload;
 
 import java.awt.Color;
+import java.awt.Frame;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import com.general.thread.Cancellable;
 import com.myster.net.stream.client.MysterDataInputStream;
 import com.myster.progress.ui.FileProgressWindow;
 
@@ -17,15 +19,32 @@ public class MSDownloadHandler implements MSDownloadListener {
     
     private int maxBarCounter;
     private int segmentCounter = 0;
+    private boolean done;
     
-    public MSDownloadHandler(FileProgressWindow progress) {
+    public MSDownloadHandler(FileProgressWindow progress, Cancellable cancellable) {
         this.progress = progress;
+
+        progress.addWindowListener(new java.awt.event.WindowAdapter() {
+            public void windowClosing(java.awt.event.WindowEvent e) {
+                if (!done&& !MultiSourceUtilities.confirmCancel(progress))
+                    return;
+
+                cancellable.cancel();
+
+                progress.setVisible(false);
+            }
+        });
 
         maxBarCounter = 1; // the first bar is used for overall progress
         freeBars = new ArrayList<Integer>();
         segmentListeners = new HashMap<>();
 
         this.progressBannerManager = new ProgressBannerManager(progress);
+    }
+    
+    @Override
+    public Frame getFrame() {
+        return progress;
     }
 
     public void startDownload(MultiSourceEvent event) {
@@ -35,7 +54,7 @@ public class MSDownloadHandler implements MSDownloadListener {
         progress.setValue(event.getInitialOffset());
     }
 
-    int counter = 0;
+    private int counter = 0;
 
     public void progress(MultiSourceEvent event) {
         progress.setValue(event.getProgress());
@@ -83,6 +102,8 @@ public class MSDownloadHandler implements MSDownloadListener {
         progress.setValue(progress.getMax());
         progress.done();
         progress.setProgressBarNumber(1);
+        
+        done = true;
     }
 
     /**

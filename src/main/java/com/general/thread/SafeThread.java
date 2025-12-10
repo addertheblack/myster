@@ -23,7 +23,7 @@ import java.util.concurrent.CancellationException;
  */
 
 public abstract class SafeThread extends Thread {
-    protected boolean endFlag = false;
+    protected volatile boolean endFlag = false;
 
     public SafeThread() { //being explicit is good.
     }

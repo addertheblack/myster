@@ -6,6 +6,7 @@ import java.awt.GridBagLayout;
 import java.awt.Insets;
 import java.awt.event.ItemEvent;
 import java.awt.event.ItemListener;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -37,8 +38,9 @@ public class BandwidthManager {
      * This function will pause your thread by the amount of time is would take
      * to send the specified number of bytes taking into account all known
      * variables at the time and during the time of its calling.
+     * @throws IOException When thread is interrupted - does not remove interrupted flag
      */
-    public static final int requestBytesIncoming(int maxBytes) {
+    public static final int requestBytesIncoming(int maxBytes) throws IOException {
         if (!data.incommingIsEnabled)
             return maxBytes;
 
@@ -49,8 +51,9 @@ public class BandwidthManager {
      * This function will pause your thread by the amount of time is would take
      * to send the specified number of bytes taking into account all known
      * variables at the time and during the time of its calling.
+     * @throws IOException When thread is interrupted - does not remove interrupted flag
      */
-    public static final int requestBytesOutgoing(int maxBytes) {
+    public static final int requestBytesOutgoing(int maxBytes) throws IOException {
         if (!data.outgoingIsEnabled)
             return maxBytes;
 
@@ -226,7 +229,7 @@ class BlockedThread {
         }
     }
 
-    public synchronized void sleepNow() {
+    public synchronized void sleepNow() throws IOException {
         for (;;) {
             double thisRate;
             int sleepAmount;
@@ -266,8 +269,10 @@ class BlockedThread {
                 } else {
                     wait(sleepAmount);
                 }
-            } catch (InterruptedException ex) {
-                ex.printStackTrace();
+            } catch (InterruptedException _) {
+                Thread.currentThread().interrupt();
+                
+                throw new IOException("Thread was interrupted.");
             } //unexpected error!
 
             double timeSlept = (System.currentTimeMillis() - startTime);
@@ -440,7 +445,7 @@ class BandwidthImpl implements Bandwidth {
 
     //NOTE: I RE-WROTE THE BELOW 03/01/04 It works well but I need to get rid
     // of the VECTOR <-
-    public final int requestBytes(int maxBytes) {
+    public final int requestBytes(int maxBytes) throws IOException {
         BlockedThread b = new BlockedThread(maxBytes, transfers, rate);
 
         synchronized (this) {
@@ -463,7 +468,10 @@ class BandwidthImpl implements Bandwidth {
 }
 
 interface Bandwidth {
-    public int requestBytes(int maxBytes);
+    /**
+     * @throws IOException when thread is interrupted. Does not remove thread interrupted flag.
+     */
+    public int requestBytes(int maxBytes) throws IOException;
 
     public void setRate(double rate);
 }

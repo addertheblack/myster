@@ -6,6 +6,7 @@ import static com.myster.net.stream.client.msdownload.MultiSourceDownload.toIoFi
 import java.io.File;
 import java.io.IOException;
 import java.io.RandomAccessFile;
+import java.util.logging.Logger;
 
 import com.general.thread.Cancellable;
 import com.myster.hash.FileHash;
@@ -19,6 +20,8 @@ import com.myster.search.MysterFileStub;
 import com.myster.ui.MysterFrameContext;
 
 public class DownloadInitiator implements Runnable {
+    private static final Logger LOGGER = Logger.getLogger(DownloadInitiator.class.getName());;
+
     private final MysterFileStub stub;
     private final HashCrawlerManager crawlerManager;
     private final MysterFrameContext context;
@@ -66,7 +69,9 @@ public class DownloadInitiator implements Runnable {
         MysterSocket socket = null;
         try {
             socket = MysterSocketFactory.makeStreamConnection(stub.getMysterAddress());
-        } catch (Exception _) {
+        } catch (Exception ex) {
+            LOGGER.severe("Could not connect to server: " + ex.toString());
+            
             com.general.util.AnswerDialog.simpleAlert("Could not connect to server.");
             
             return;

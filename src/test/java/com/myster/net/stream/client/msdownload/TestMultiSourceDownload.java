@@ -4,6 +4,7 @@ package com.myster.net.stream.client.msdownload;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
+import java.awt.Frame;
 import java.io.File;
 import java.io.IOException;
 import java.net.UnknownHostException;
@@ -21,16 +22,6 @@ import com.myster.hash.FileHash;
 import com.myster.hash.SimpleFileHash;
 import com.myster.identity.Identity;
 import com.myster.net.MysterAddress;
-import com.myster.net.stream.client.msdownload.Controller;
-import com.myster.net.stream.client.msdownload.DataBlock;
-import com.myster.net.stream.client.msdownload.MSDownloadListener;
-import com.myster.net.stream.client.msdownload.MSPartialFile;
-import com.myster.net.stream.client.msdownload.MSSegmentEvent;
-import com.myster.net.stream.client.msdownload.MultiSourceDownload;
-import com.myster.net.stream.client.msdownload.MultiSourceEvent;
-import com.myster.net.stream.client.msdownload.SegmentDownloader;
-import com.myster.net.stream.client.msdownload.SegmentDownloaderListener;
-import com.myster.net.stream.client.msdownload.WorkSegment;
 import com.myster.net.stream.client.msdownload.MultiSourceDownload.FileMover;
 import com.myster.net.stream.client.msdownload.MultiSourceDownload.IoFile;
 import com.myster.search.HashCrawlerManager;
@@ -254,6 +245,11 @@ public class TestMultiSourceDownload {
             @Override
             public void doneDownload(MultiSourceEvent event) {
 
+            }
+
+            @Override
+            public Frame getFrame() {
+                return null;
             }
         });
 

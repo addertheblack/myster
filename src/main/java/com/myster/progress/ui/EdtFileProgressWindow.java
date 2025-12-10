@@ -61,7 +61,7 @@ public class EdtFileProgressWindow implements DownloadInitiatorListener {
 
     @Override
     public MSDownloadHandler getMsDownloadListener() {
-        return new MSDownloadHandler(progress) {
+        return new MSDownloadHandler(progress, cancellable) {
             @Override
             public void doneDownload(MultiSourceEvent event) {
                 done = true;

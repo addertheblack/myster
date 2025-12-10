@@ -13,6 +13,7 @@ import java.io.IOException;
 import java.net.UnknownHostException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.CancellationException;
 
 import com.general.thread.Invoker;
 import com.general.util.UnexpectedException;
@@ -123,6 +124,11 @@ public class FileListerThread extends MysterThread {
                     }
 
                     var m = max[0];
+                    
+                    if (endFlag) {
+                        throw new CancellationException();
+                    }
+                    
                     Invoker.EDT.invoke(() -> {
                         if (m == 0) {
                             return;
