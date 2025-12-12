@@ -191,9 +191,6 @@ public class ClientWindow extends MysterFrame implements Sayable {
             }
         } else {
             try {
-                String pathFromType = context.fileManager()
-                           .getPathFromType(getCurrentType());
-                Path baseDir = Path.of(pathFromType);
                 protocol.getStream()
                         .downloadFile(new MSDownloadParams(context,
                                                            hashManager,

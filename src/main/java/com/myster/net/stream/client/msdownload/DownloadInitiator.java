@@ -20,7 +20,7 @@ import com.myster.search.MysterFileStub;
 import com.myster.ui.MysterFrameContext;
 
 public class DownloadInitiator implements Runnable {
-    private static final Logger LOGGER = Logger.getLogger(DownloadInitiator.class.getName());;
+    private static final Logger LOGGER = Logger.getLogger(DownloadInitiator.class.getName());
 
     private final MysterFileStub stub;
     private final HashCrawlerManager crawlerManager;

@@ -8,6 +8,7 @@ import java.awt.event.ItemEvent;
 import java.awt.event.ItemListener;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 import javax.swing.JCheckBox;
@@ -214,7 +215,12 @@ class BlockedThread {
 
     private Thread thread;
 
-    private static volatile double WAIT_LATENCY = 100;
+    // The duration of the last wait(1) + 1
+    // If the duration is 2 millis that means the latency of wait(1) is 1 millis.
+    // so plus 1 is 2 millis
+    // We use this to make sure we include the overhead of calling wait on this machine
+    // when we start our wait(x)
+    private static volatile int waitLatency = 100;
 
     BlockedThread(int bytesLeft, List<BlockedThread> threads, double rate) {
         this.bytesLeft = bytesLeft;
@@ -243,29 +249,22 @@ class BlockedThread {
                 return;
             }
 
-            //sleepAmount=1;
+            int wl = waitLatency;
 
-            //below is voodoo.
-            double waitLatency = WAIT_LATENCY;
-
-            if (sleepAmount > waitLatency) {
-                sleepAmount -= waitLatency;
+            // if the sleepAmount we need it > than the wait latency then just wait(1)
+            // if it is < than the wait latency then we substract the wait latency and wait
+            // for that amount
+            if (sleepAmount > wl) {
+                sleepAmount -= wl;
             } else {
-                int randomNumber = (int) (Math.random() * waitLatency);
-                if (randomNumber < (waitLatency - sleepAmount)) {
-                    thread = null;
-                    return;
-                } else {
-                    sleepAmount = 1;
-                }
+                sleepAmount = 1;
             }
 
             try {
                 if (sleepAmount == 1) {
                     long sstartTime = System.currentTimeMillis();
                     wait(sleepAmount);
-                    WAIT_LATENCY = System.currentTimeMillis() - sstartTime + 1
-                            - sleepAmount; //the +1 is important
+                    waitLatency = Math.max(1,(int) (System.currentTimeMillis() - sstartTime)); //the +1 is important because 
                 } else {
                     wait(sleepAmount);
                 }
@@ -432,7 +431,8 @@ class BandwithPrefsPanel extends PreferencesPanel {
 }
 
 class BandwidthImpl implements Bandwidth {
-    List<BlockedThread> transfers = new ArrayList<>();
+    // this needs to be synchronized because the thread blocker checks its size with no lock
+    private final List<BlockedThread> transfers = Collections.synchronizedList(new ArrayList<>());
 
     double rate = 10;
 
@@ -446,7 +446,13 @@ class BandwidthImpl implements Bandwidth {
     //NOTE: I RE-WROTE THE BELOW 03/01/04 It works well but I need to get rid
     // of the VECTOR <-
     public final int requestBytes(int maxBytes) throws IOException {
-        BlockedThread b = new BlockedThread(maxBytes, transfers, rate);
+        double r;
+        
+        synchronized (this) {
+            r = rate;
+        }
+        
+        BlockedThread b = new BlockedThread(maxBytes, transfers, r);
 
         synchronized (this) {
             transfers.add(b);
