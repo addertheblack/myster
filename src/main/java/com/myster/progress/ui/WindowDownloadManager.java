@@ -2,7 +2,7 @@ package com.myster.progress.ui;
 
 import com.general.thread.Cancellable;
 import com.myster.net.stream.client.msdownload.DownloadInitiator.DownloadInitiatorListener;
-import com.myster.net.stream.client.msdownload.MSDownloadHandler;
+import com.myster.net.stream.client.msdownload.ObsoleteHandler;
 import com.myster.net.stream.client.msdownload.MSDownloadListener;
 import com.myster.net.stream.client.msdownload.MSDownloadParams;
 import com.myster.ui.MysterFrameContext;
@@ -23,7 +23,7 @@ public class WindowDownloadManager implements DownloadManager {
     public MSDownloadListener getMsDownloadListener(String filename, Cancellable cancellable) {
         final FileProgressWindow progress = showProgres(filename);
         
-        return new MSDownloadHandler(progress, cancellable);
+        return new ObsoleteHandler(progress, cancellable);
     }
     
     private FileProgressWindow showProgres(final String filename) {

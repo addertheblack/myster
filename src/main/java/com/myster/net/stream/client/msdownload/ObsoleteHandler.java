@@ -11,7 +11,7 @@ import com.general.thread.Cancellable;
 import com.myster.net.stream.client.MysterDataInputStream;
 import com.myster.progress.ui.FileProgressWindow;
 
-public class MSDownloadHandler implements MSDownloadListener {
+public class ObsoleteHandler implements MSDownloadListener {
     private final FileProgressWindow progress;
     private final List<Integer> freeBars;
     private final Map<SegmentDownloader, SegmentDownloaderHandler> segmentListeners;
@@ -21,7 +21,7 @@ public class MSDownloadHandler implements MSDownloadListener {
     private int segmentCounter = 0;
     private boolean done;
     
-    public MSDownloadHandler(FileProgressWindow progress, Cancellable cancellable) {
+    public ObsoleteHandler(FileProgressWindow progress, Cancellable cancellable) {
         this.progress = progress;
 
         progress.addWindowListener(new java.awt.event.WindowAdapter() {
@@ -47,7 +47,7 @@ public class MSDownloadHandler implements MSDownloadListener {
         return progress;
     }
 
-    public void startDownload(MultiSourceEvent event) {
+    public void startDownload(StartMultiSourceEvent event) {
         progress.setText("Looking for first source...");
         progress.startBlock(0, 0, event.getLength());
         progress.setPreviouslyDownloaded(event.getInitialOffset(), FileProgressWindow.BAR_1);
@@ -91,6 +91,14 @@ public class MSDownloadHandler implements MSDownloadListener {
                     "Could not find a segment downloader to match a segment download that has ended");
 
         returnBarNumber(handler.getBarNumber());
+    }
+
+    public void pauseDownload(MultiSourceEvent event) {
+        progress.setText("Download Paused");
+    }
+
+    public void resumeDownload(MultiSourceEvent event) {
+        progress.setText("Resuming download...");
     }
 
     public void endDownload(MultiSourceEvent event) {

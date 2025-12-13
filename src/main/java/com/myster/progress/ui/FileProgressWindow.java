@@ -18,7 +18,7 @@ import com.general.util.Timer;
 import com.general.util.Util;
 import com.myster.hash.FileHash;
 import com.myster.net.stream.client.msdownload.DownloadInitiator.DownloadInitiatorListener;
-import com.myster.net.stream.client.msdownload.MSDownloadHandler;
+import com.myster.net.stream.client.msdownload.ObsoleteHandler;
 import com.myster.net.stream.client.msdownload.MSDownloadParams;
 import com.myster.net.stream.client.msdownload.MSPartialFile;
 import com.myster.net.web.WebLinkManager;
@@ -243,7 +243,7 @@ public class FileProgressWindow extends ProgressWindow {
             }
             
             @Override
-            public MSDownloadHandler getMsDownloadListener() {
+            public ObsoleteHandler getMsDownloadListener() {
                 return Util.callAndWaitNoThrows(() -> {
                     init();
 

@@ -5,6 +5,11 @@ import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
 import java.awt.Image;
 import java.awt.Insets;
+import java.awt.event.ActionEvent;
+
+import javax.swing.AbstractAction;
+import javax.swing.JMenuItem;
+import javax.swing.JPopupMenu;
 
 import com.formdev.flatlaf.extras.FlatSVGIcon;
 import com.general.mclist.ColumnSortable;
@@ -17,6 +22,7 @@ import com.general.thread.Cancellable;
 import com.general.util.GridBagBuilder;
 import com.general.util.IconLoader;
 import com.general.util.Util;
+import com.myster.net.stream.client.msdownload.MSDownloadControl;
 import com.myster.pref.MysterPreferences;
 import com.myster.progress.ui.ProgressBannerManager.Banner;
 import com.myster.progress.ui.ProgressWindow.AdPanel;
@@ -76,6 +82,9 @@ public class ProgressManagerWindow extends MysterFrame {
             connectionIcon // file/item icon
         );
         
+        // Add context menu
+        setupContextMenu();
+        
         // Set up layout
         Container c = getContentPane();
         c.setLayout(new GridBagLayout());
@@ -108,6 +117,92 @@ public class ProgressManagerWindow extends MysterFrame {
         setResizable(true);
         setDefaultCloseOperation(HIDE_ON_CLOSE);
         pack();
+    }
+    
+    private void setupContextMenu() {
+        JPopupMenu contextMenu = new JPopupMenu();
+        
+        JMenuItem pauseItem = new JMenuItem(new AbstractAction("Pause") {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                DownloadMCListItem selectedItem = getSelectedDownloadItem();
+                if (selectedItem != null) {
+                    selectedItem.getObject().getControl().pause();
+                }
+            }
+        });
+        
+        JMenuItem resumeItem = new JMenuItem(new AbstractAction("Resume") {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                DownloadMCListItem selectedItem = getSelectedDownloadItem();
+                if (selectedItem != null) {
+                    selectedItem.getObject().getControl().resume();
+                }
+            }
+        });
+        
+        JMenuItem cancelItem = new JMenuItem(new AbstractAction("Cancel") {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                DownloadMCListItem selectedItem = getSelectedDownloadItem();
+                if (selectedItem != null && selectedItem.cancellable != null) {
+                    selectedItem.cancellable.cancel();
+                }
+            }
+        });
+        
+        contextMenu.add(pauseItem);
+        contextMenu.add(resumeItem);
+        contextMenu.addSeparator();
+        contextMenu.add(cancelItem);
+        
+        // Add popup listener to enable/disable items based on selection
+        contextMenu.addPopupMenuListener(new javax.swing.event.PopupMenuListener() {
+            @Override
+            public void popupMenuWillBecomeVisible(javax.swing.event.PopupMenuEvent e) {
+                DownloadMCListItem selectedItem = getSelectedDownloadItem();
+                if (selectedItem != null) {
+                    MSDownloadControl control = selectedItem.getObject().getControl();
+                    boolean isActive = control.isActive();
+                    boolean isPaused = control.isPaused();
+                    
+                    // Pause/Resume only enabled if download is active
+                    pauseItem.setEnabled(isActive && !isPaused);
+                    resumeItem.setEnabled(isActive && isPaused);
+                    
+                    // Cancel enabled if download is active and we have a cancellable
+                    cancelItem.setEnabled(isActive && selectedItem.cancellable != null);
+                } else {
+                    pauseItem.setEnabled(false);
+                    resumeItem.setEnabled(false);
+                    cancelItem.setEnabled(false);
+                }
+            }
+            
+            @Override
+            public void popupMenuWillBecomeInvisible(javax.swing.event.PopupMenuEvent e) {
+                // Do nothing
+            }
+            
+            @Override
+            public void popupMenuCanceled(javax.swing.event.PopupMenuEvent e) {
+                // Do nothing
+            }
+        });
+        
+        downloadList.setComponentPopupMenu(contextMenu);
+    }
+    
+    private DownloadMCListItem getSelectedDownloadItem() {
+        int selectedIndex = downloadList.getSelectedIndex();
+        if (selectedIndex >= 0) {
+            var item = downloadList.getMCListItem(selectedIndex);
+            if (item instanceof DownloadMCListItem downloadItem) {
+                return downloadItem;
+            }
+        }
+        return null;
     }
     
     public AdPanel getAdPanel() {
@@ -316,6 +411,7 @@ public class ProgressManagerWindow extends MysterFrame {
         private long total;
         private int speed; // bytes per second
         private String status;
+        private MSDownloadControl control;
         
         public DownloadItem(String name) {
             this.name = name;
@@ -323,6 +419,35 @@ public class ProgressManagerWindow extends MysterFrame {
             this.total = 0;
             this.speed = 0;
             this.status = "Waiting";
+            this.control = new MSDownloadControl() {
+                private boolean paused = false;
+                private boolean active = true;
+                
+                @Override
+                public void resume() {
+                    paused = false;
+                }
+                
+                @Override
+                public void pause() {
+                    paused = true;
+                }
+                
+                @Override
+                public void cancel() {
+                    active = false;
+                }
+                
+                @Override
+                public boolean isPaused() {
+                    return paused;
+                }
+                
+                @Override
+                public boolean isActive() {
+                    return active;
+                }
+            };
         }
         
         public String getName() {
@@ -363,6 +488,14 @@ public class ProgressManagerWindow extends MysterFrame {
         
         public void setStatus(String status) {
             this.status = status;
+        }
+
+        public void setControl(MSDownloadControl control) {
+           this.control = control;
+        }
+        
+        public MSDownloadControl getControl() {
+            return this.control;
         }
     }
 

@@ -19,14 +19,56 @@ import com.myster.search.HashSearchListener;
 import com.myster.search.MysterFileStub;
 import com.myster.type.MysterType;
 
-/*
- * Things to do
+/**
+ * Manages a multi-source download from the Myster network. This class coordinates multiple
+ * concurrent segment downloaders to download different parts of a file from various sources.
  * 
- * hook up queued message to something.
- *  
+ * <h3>Download Lifecycle</h3>
+ * <ul>
+ * <li>Created in paused state (unstarted downloads are considered paused)</li>
+ * <li>start() begins downloading and fires startDownload event</li>
+ * <li>pause() stops all segment downloaders but preserves state for resumption</li>
+ * <li>start() again (resume) restarts downloaders and fires resumeDownload event</li>
+ * <li>flagToEnd() or cancel() terminates the download</li>
+ * <li>Download completes when all bytes have been written</li>
+ * </ul>
+ * 
+ * <h3>State Flags</h3>
+ * <ul>
+ * <li><b>isPaused</b> - Download is paused and can be resumed (starts true for unstarted downloads)</li>
+ * <li><b>endFlag</b> - Shutdown has been requested; overrides pause state for cancellation</li>
+ * <li><b>isCancelled</b> - User has cancelled the download</li>
+ * <li><b>isDead</b> - Download has stopped and cleanup is complete (regardless of completion status)</li>
+ * <li><b>hasStarted</b> - Download has been started at least once (distinguishes first start from resume)</li>
+ * </ul>
+ * 
+ * <h3>Progress Tracking</h3>
+ * <ul>
+ * <li><b>fileProgress</b> - Next byte offset for work segment allocation</li>
+ * <li><b>bytesWrittenOut</b> - Actual bytes written to disk (tracks real progress)</li>
+ * <li><b>initialOffset</b> - Starting offset from partial file (for resume after app restart)</li>
+ * </ul>
+ * 
+ * <h3>Stub Discovery</h3>
+ * The download maintains a set of discovered file stubs (sources) that are continuously
+ * accumulated via hash crawler searches. When paused, the crawler continues finding sources
+ * in the background. On resume, downloaders are recreated from all discovered stubs.
+ * 
+ * <h3>Thread Safety</h3>
+ * All state-modifying methods are synchronized using monitor locks (synchronized methods).
+ * Event callbacks may execute on the EDT via Util.invokeLater().
+ * 
+ * <h3>Termination Semantics</h3>
+ * <ul>
+ * <li><b>flagToEnd()</b> - Requests async termination (returns immediately)</li>
+ * <li><b>end()</b> - Blocks until isDead is true</li>
+ * <li>endFlag overrides pause: a paused download can still be cancelled</li>
+ * </ul>
  */
 public class MultiSourceDownload implements Task, Cancellable {
     private static final long MIN_TIME_BETWEEN_EVENTS = 100;
+
+    public static final int DEFAULT_CHUNK_SIZE = 2 * 1024;
     
     static IoFile toIoFile(RandomAccessFile accessFile, File file) {
         return new IoFile() {
@@ -49,8 +91,6 @@ public class MultiSourceDownload implements Task, Cancellable {
             public File getFile() {
                 return file;
             }
-            
-            
         };
     }
     
@@ -62,31 +102,36 @@ public class MultiSourceDownload implements Task, Cancellable {
     private final Set<SegmentDownloader> downloaders;
     private final IoFile randomAccessFile; // file downloading to!
     private final int chunkSize;
-    private final long initialOffset; // how much was downloaded in a previous
+    private final long initialOffset; // how much was downloaded in a previous session
+    
+    // Set of all discovered file stubs (sources) for this file.
+    // Continuously accumulated via hash crawler and initial servers.
+    // Used to rapidly restart downloaders when resuming after pause.
+    private final Set<MysterFileStub> discoveredStubs = new HashSet<>();
     
     // it's a stack 'cause it
-    // doens't matter what data structure so long
+    // doesn't matter what data structure so long
     // as add and remove are O(C).
     private final Stack<WorkSegment> unfinishedSegments = new Stack<>();
     private final NewGenericDispatcher<MSDownloadListener> dispatcher =
             new NewGenericDispatcher<>(MSDownloadListener.class, Invoker.EDT_NOW_OR_LATER);
-    private final Controller controller = new ControllerImpl(); // is self
+    private final Controller controller = new ControllerImpl();
     private final HashCrawlerManager crawlerManager;
     private final FileMover fileMover;
 
-    // session
-    private long fileProgress = 0; // for work segments
-    private long bytesWrittenOut = 0; // to know how much of the file has been
-    private MysterFileStub[] initialFileStubs;
+    // State tracking
+    private long fileProgress = 0; // next byte offset for work segment allocation
+    private long bytesWrittenOut = 0; // actual bytes written to disk
 
-    // this is true when the user has asked that the download be cancelled.
-    private boolean isCancelled = false;
-    private boolean endFlag = false; // this is set to true to tell MSSource to stop.
-    private boolean isDead = false; // is set to true if cleanUp() has been called
-
-    public static final int DEFAULT_CHUNK_SIZE = 2 * 1024;
+    // State flags - see class JavaDoc for detailed explanation
+    private boolean isPaused = true; // starts paused (unstarted downloads are considered paused)
+    private boolean hasStarted = false; // true after first start() call
+    private boolean isCancelled = false; // true when user has cancelled the download
+    private boolean endFlag = false; // true to tell download to stop (overrides pause)
+    private boolean isDead = false; // true after cleanup has been called
 
     private long lastProgress;
+    
     interface IoFile {
         void seek(long pos) throws IOException;
         void write(byte[] b) throws IOException;
@@ -121,6 +166,7 @@ public class MultiSourceDownload implements Task, Cancellable {
 
         MultiSourceUtilities.debug("Block Size : " + partialFile.getBlockSize()
                 + " First un-downloaded block " + partialFile.getFirstUndownloadedBlock());
+        
         this.fileProgress = partialFile.getFirstUndownloadedBlock() * partialFile.getBlockSize();
         this.bytesWrittenOut = fileProgress;
         this.initialOffset = fileProgress;
@@ -133,8 +179,8 @@ public class MultiSourceDownload implements Task, Cancellable {
 
     /**
      * Sets the initial list of servers to try when the download is started.
-     * This array is referred to only once, when the multi-source download is
-     * first started.
+     * Stubs are added to the discoveredStubs set and will be used on the first
+     * start() call or any subsequent resume.
      * <p>
      * This should be called on the same thread that is starting the download,
      * before the download is started.
@@ -142,30 +188,77 @@ public class MultiSourceDownload implements Task, Cancellable {
      * @param addresses
      *            to try initially.
      */
-    public void setInitialServers(MysterFileStub[] addresses) {
-        initialFileStubs = new MysterFileStub[addresses.length];
-        System.arraycopy(addresses, 0, initialFileStubs, 0, addresses.length);
+    public synchronized void addInitialServers(MysterFileStub[] addresses) {
+        for (MysterFileStub stub : addresses) {
+            discoveredStubs.add(stub);
+        }
     }
 
     public synchronized void start() {
-        dispatcher.fire().startDownload(createMultiSourceEvent());
+        // Return early if already running
+        if (!isPaused) {
+            return;
+        }
+        
+        isPaused = false;
+        
+        // Determine if this is first start or resume (before updating hasStarted)
+        final boolean isFirstStart = !hasStarted;
+        
+        // Fire appropriate event based on whether this is first start or resume
+        if (isFirstStart) {
+            hasStarted = true;
+            dispatcher.fire().startDownload(createStartMultiSourceEvent());
+        } else {
+            dispatcher.fire().resumeDownload(createMultiSourceEvent());
+        }
+        
         Util.invokeLater(() -> {
-            MysterFileStub[] stubs = initialFileStubs;
-
-            if (stubs != null) {
-                for (int i = 0; i < stubs.length; i++) {
-                    newDownload(stubs[i]);
+            // Register hashes with crawler only on first start
+            if (isFirstStart) {
+                for (FileHash hash : hashes) {
+                    crawlerManager.addHash(type, hash, hashSearchListener);
                 }
             }
 
-            for (FileHash hash : hashes) {
-                crawlerManager.addHash(type, hash, hashSearchListener);
+            // Create downloaders from all discovered stubs
+            synchronized (this) {
+                // Don't create downloaders if we've been paused again or ended
+                if (isPaused || endFlag) {
+                    return;
+                }
+                
+                for (MysterFileStub stub : discoveredStubs) {
+                    newDownload(stub);
+                }
             }
 
-            if ((stubs == null || stubs.length == 0) && hashes.length == 0) {
-                flagToEnd();
+            // If no sources and no hashes, cancel the download
+            synchronized (this) {
+                if (discoveredStubs.isEmpty() && hashes.length == 0) {
+                    flagToEnd();
+                }
             }
         });
+    }
+    
+    public synchronized void pause() {
+        // Return early if already paused
+        if (isPaused) {
+            return;
+        }
+        
+        isPaused = true;
+        
+        // Flag all segment downloaders to end
+        for (SegmentDownloader segmentDownloader : downloaders) {
+            segmentDownloader.flagToEnd();
+        }
+        
+        downloaders.clear();
+        
+        // Fire pause event
+        dispatcher.fire().pauseDownload(createMultiSourceEvent());
     }
 
     /** Package Protected for unit tests */
@@ -181,6 +274,9 @@ public class MultiSourceDownload implements Task, Cancellable {
         if (downloaders.contains(downloader)) {
             return; // already have a downloader doing this file.
         }
+
+        // Track this stub as discovered
+        discoveredStubs.add(stub);
 
         downloaders.add(downloader);
 
@@ -285,7 +381,6 @@ public class MultiSourceDownload implements Task, Cancellable {
 
             partialFile.setBit(dataBlock.offset / chunkSize);
         } catch (IOException ex) {
-            ex.printStackTrace();
             flagToEnd();// humm.. maybe the user should be notified of this problem?
             // TODO add some sort of notification about these kinds of error here.
         }
@@ -305,7 +400,7 @@ public class MultiSourceDownload implements Task, Cancellable {
     // call when download has completed successfully.
     private synchronized void done() {
         dispatcher.fire().doneDownload(createMultiSourceEvent());
-
+        
         partialFile.done();
 
         fileMover.moveFileToFinalDestination(randomAccessFile.getFile());
@@ -362,6 +457,9 @@ public class MultiSourceDownload implements Task, Cancellable {
 
     // This method will only be called once right at the end of the download
     private synchronized void endDownloadCleanUp() {
+        // endFlag overrides pause state - force unpause
+        isPaused = false;
+        
         for (FileHash hash : hashes) {
             crawlerManager.removeHash(type, hash, hashSearchListener);
         }
@@ -375,7 +473,7 @@ public class MultiSourceDownload implements Task, Cancellable {
         isDead = true;
 
         dispatcher.fire().endDownload(createMultiSourceEvent());
-
+        
         if (isCancelled ) {
             partialFile.done();
             randomAccessFile.getFile().delete();
@@ -388,6 +486,35 @@ public class MultiSourceDownload implements Task, Cancellable {
 
     private MultiSourceEvent createMultiSourceEvent() {
         return new MultiSourceEvent(initialOffset, bytesWrittenOut, fileLength, isCancelled);
+    }
+    
+    private StartMultiSourceEvent createStartMultiSourceEvent() {
+        return new StartMultiSourceEvent(new MSDownloadControl() {
+            @Override
+            public void pause() {
+                MultiSourceDownload.this.pause();
+            }
+
+            @Override
+            public void resume() {
+                MultiSourceDownload.this.start();
+            }
+            
+            @Override
+            public void cancel() {
+                MultiSourceDownload.this.cancel();
+            }
+            
+            @Override
+            public boolean isPaused() {
+                return MultiSourceDownload.this.isPaused;
+            }
+            
+            @Override
+            public boolean isActive() {
+                return !MultiSourceDownload.this.isDead() && !MultiSourceDownload.this.isDone();
+            }
+        },initialOffset, bytesWrittenOut, fileLength, isCancelled);
     }
 
     private class MSHashSearchListener implements HashSearchListener {

@@ -221,7 +221,7 @@ public class MSPartialFile implements AutoCloseable {
         cancellable.registerDependentTask(download);
 
         if (partialFile.getServerAddress() != null) {
-            download.setInitialServers(new MysterFileStub[] {
+            download.addInitialServers(new MysterFileStub[] {
                     new MysterFileStub(MysterAddress
                             .createMysterAddress(partialFile.getServerAddress()),
                                        partialFile.getType(),
@@ -239,7 +239,7 @@ public class MSPartialFile implements AutoCloseable {
 
     private static void userCancelled(MSDownloadListener l, MSPartialFile file)
             throws UserCanceledException {
-        l.doneDownload(new MultiSourceEvent(0, 0, 0, true));
+        l.endDownload(new MultiSourceEvent(0, 0, 0, true));
         file.done();
         
         throw new UserCanceledException();

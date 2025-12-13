@@ -105,7 +105,7 @@ public class TestMultiSourceDownload {
         Mockito.verify(mover, Mockito.times(0)).moveFileToFinalDestination(Mockito.any(File.class));
 
         Mockito.verify(listener, Mockito.times(1))
-                .startDownload(Mockito.any(MultiSourceEvent.class));
+                .startDownload(Mockito.any(StartMultiSourceEvent.class));
         Mockito.verify(listener, Mockito.times(0)).progress(Mockito.any(MultiSourceEvent.class));
         Mockito.verify(listener, Mockito.times(0))
                 .startSegmentDownloader(Mockito.any(MSSegmentEvent.class));
@@ -162,7 +162,7 @@ public class TestMultiSourceDownload {
         // We only have one segment, we download everything in one chunk so it's
         // one call to everything
         Mockito.verify(listener, Mockito.times(1))
-                .startDownload(Mockito.any(MultiSourceEvent.class));
+                .startDownload(Mockito.any(StartMultiSourceEvent.class));
         Mockito.verify(listener, Mockito.times(1)).progress(Mockito.any(MultiSourceEvent.class));
         Mockito.verify(listener, Mockito.times(1))
                 .startSegmentDownloader(Mockito.any(MSSegmentEvent.class));
@@ -218,7 +218,7 @@ public class TestMultiSourceDownload {
         // use mockito to stub MSDownloadListener
         listener = Mockito.spy(new MSDownloadListener() {
             @Override
-            public void startDownload(MultiSourceEvent event) {
+            public void startDownload(StartMultiSourceEvent event) {
 
             }
 
@@ -234,6 +234,16 @@ public class TestMultiSourceDownload {
 
             @Override
             public void endSegmentDownloader(MSSegmentEvent event) {
+
+            }
+
+            @Override
+            public void pauseDownload(MultiSourceEvent event) {
+
+            }
+
+            @Override
+            public void resumeDownload(MultiSourceEvent event) {
 
             }
 
@@ -273,6 +283,168 @@ public class TestMultiSourceDownload {
                 return new FakeSegmentDownloader(controller);
             }
         };
+    }
+
+    @Test
+    void testPauseAndResumeStateTransitions()
+            throws UnknownHostException, IOException, InterruptedException {
+        // Test basic pause/resume state management
+        createNewMsDownload(new FileHash[] {});
+
+        MysterFileStub stub1 = new MysterFileStub(MysterAddress.createMysterAddress("127.0.0.1"),
+                                                   new MysterType(identity.getMainIdentity().get().getPublic()),
+                                                   "testfile");
+        download.addInitialServers(new MysterFileStub[] { stub1 });
+
+        // Start download
+        download.start();
+        Util.invokeAndWaitNoThrows(() -> {});
+
+        // Verify startDownload was called
+        Mockito.verify(listener, Mockito.times(1))
+                .startDownload(Mockito.any(StartMultiSourceEvent.class));
+
+        // Pause the download
+        download.pause();
+        Util.invokeAndWaitNoThrows(() -> {});
+
+        // Verify pauseDownload was called
+        Mockito.verify(listener, Mockito.times(1))
+                .pauseDownload(Mockito.any(MultiSourceEvent.class));
+        
+        // Cleanup - cancel to end the download
+        download.cancel();
+        Util.invokeAndWaitNoThrows(() -> {});
+    }
+
+    @Test
+    void testResumeFiresCorrectEvent()
+            throws UnknownHostException, IOException, InterruptedException {
+        // Don't add any initial servers or hashes - just test the state machine
+        createNewMsDownload(new FileHash[] {});
+
+        // Don't call setInitialServers - no sources to download from
+        // This prevents the download from completing instantly
+
+        // Start download
+        download.start();
+        Util.invokeAndWaitNoThrows(() -> {});
+
+        // Pause the download
+        download.pause();
+        Util.invokeAndWaitNoThrows(() -> {});
+
+        // Resume the download  
+        download.start();
+        Util.invokeAndWaitNoThrows(() -> {});
+
+        // Verify correct events for state machine
+        Mockito.verify(listener, Mockito.times(1))
+                .startDownload(Mockito.any(StartMultiSourceEvent.class));
+        Mockito.verify(listener, Mockito.times(1))
+                .pauseDownload(Mockito.any(MultiSourceEvent.class));
+        Mockito.verify(listener, Mockito.times(1))
+                .resumeDownload(Mockito.any(MultiSourceEvent.class));
+
+        // The download should be dead now (no sources + no hashes = immediate flagToEnd)
+        // Wait for cleanup
+        int maxWait = 50;
+        while (!download.isDead() && maxWait-- > 0) {
+            Thread.sleep(10);
+        }
+    }
+
+    @Test
+    void testMultiplePauseResumeCycles()
+            throws UnknownHostException, IOException, InterruptedException {
+        createNewMsDownload(new FileHash[] {});
+
+        MysterFileStub stub1 = new MysterFileStub(MysterAddress.createMysterAddress("127.0.0.1"),
+                                                   new MysterType(identity.getMainIdentity().get().getPublic()),
+                                                   "testfile");
+        download.addInitialServers(new MysterFileStub[] { stub1 });
+
+        // Start
+        download.start();
+
+        // Pause immediately (synchronous call)
+        download.pause();
+
+        // Resume  
+        download.start();
+
+        // Pause again
+        download.pause();
+
+        // Resume again
+        download.start();
+        Util.invokeAndWaitNoThrows(() -> {});
+
+        // Verify events - may complete before all pauses fire, so check minimum
+        Mockito.verify(listener, Mockito.times(1))
+                .startDownload(Mockito.any(StartMultiSourceEvent.class));
+        Mockito.verify(listener, Mockito.atLeastOnce())
+                .resumeDownload(Mockito.any(MultiSourceEvent.class));
+        Mockito.verify(listener, Mockito.atLeastOnce())
+                .pauseDownload(Mockito.any(MultiSourceEvent.class));
+
+        // Cleanup
+        download.cancel();
+        Util.invokeAndWaitNoThrows(() -> {});
+    }
+
+    @Test
+    void testCancelOverridesPause()
+            throws UnknownHostException, IOException, InterruptedException {
+        createNewMsDownload(new FileHash[] {});
+
+        MysterFileStub stub1 = new MysterFileStub(MysterAddress.createMysterAddress("127.0.0.1"),
+                                                   new MysterType(identity.getMainIdentity().get().getPublic()),
+                                                   "testfile");
+        download.addInitialServers(new MysterFileStub[] { stub1 });
+
+        // Start download
+        download.start();
+
+        // Pause the download immediately (synchronous)
+        download.pause();
+
+        // Cancel the paused download - this should work (endFlag overrides pause)
+        download.cancel();
+
+        // The key test: cancel() should work even when paused
+        // (We verify by checking that the download eventually becomes dead, 
+        // which means cleanup completed successfully)
+        int maxWait = 50;
+        while (!download.isDead() && maxWait-- > 0) {
+            Thread.sleep(10);
+        }
+        
+        assertEquals(true, download.isDead());
+    }
+
+    @Test
+    void testUnstartedDownloadIsConsideredPaused()
+            throws UnknownHostException, IOException, InterruptedException {
+        createNewMsDownload(new FileHash[] {
+                new SimpleFileHash("md5", new byte[] { 1, 2, 3, 4, 5, 6, 7, 8, 9, 0 }) });
+
+        MysterFileStub stub1 = new MysterFileStub(MysterAddress.createMysterAddress("127.0.0.1"),
+                                                   new MysterType(identity.getMainIdentity().get().getPublic()),
+                                                   "testfile");
+        download.addInitialServers(new MysterFileStub[] { stub1 });
+
+        // Don't start the download, just cancel it
+        download.cancel();
+
+        // Wait for cleanup
+        while (!download.isDead()) {
+            Thread.sleep(10);
+        }
+
+        // Verify download can be cancelled even when unstarted
+        assertEquals(true, download.isCancelled());
+        assertEquals(true, download.isDead());
     }
 }
 

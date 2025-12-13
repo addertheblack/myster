@@ -144,7 +144,7 @@ public class DownloadInitiator implements Runnable {
                                              downloadInitListener.getMsDownloadListener(),
                                              downloadInitListener,
                                              partialFile);
-        msDownload.setInitialServers(new MysterFileStub[] { stub });
+        msDownload.addInitialServers(new MysterFileStub[] { stub });
 
         synchronized (this) {
             if (!endFlag) {

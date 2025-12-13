@@ -13,10 +13,13 @@ import com.myster.net.stream.client.msdownload.SegmentDownloader;
 import com.myster.net.stream.client.msdownload.SegmentDownloaderEvent;
 import com.myster.net.stream.client.msdownload.SegmentDownloaderListener;
 import com.myster.net.stream.client.msdownload.SegmentMetaDataEvent;
+import com.myster.net.stream.client.msdownload.StartMultiSourceEvent;
 import com.myster.progress.ui.ProgressManagerDownloadListener.AddBanners;
 
 /**
- * Handles overall download events and manages sub-downloads.
+ * Responsible for binding a download and its associated events to the download
+ * ProgressManagerWindow Handles overall download events and manages
+ * sub-downloads.
  */
 public class ProgManDownloadHandler implements MSDownloadListener {
     private final Map<SegmentDownloader, ConnectionHandler> connectionHandlers = new HashMap<>();
@@ -49,12 +52,13 @@ public class ProgManDownloadHandler implements MSDownloadListener {
     
     
     @Override
-    public void startDownload(MultiSourceEvent event) {
+    public void startDownload(StartMultiSourceEvent event) {
         startTime = System.currentTimeMillis();
         
         downloadItem.getObject().setTotal(event.getLength());
         downloadItem.getObject().setProgress(event.getInitialOffset());
         downloadItem.getObject().setStatus("Starting download...");
+        downloadItem.getObject().setControl(event.getControl());
         
         window.getDownloadList().addItem(downloadItem);
     }
@@ -95,6 +99,8 @@ public class ProgManDownloadHandler implements MSDownloadListener {
                                                                           false);
 
         connectionItem.getObject().setStatus("Connecting...");
+        downloadItem.getObject().setStatus("Connecting to a new server...");
+        
         window.getDownloadList().addItem(connectionItem);
         
         // Create handler for this connection
@@ -110,6 +116,24 @@ public class ProgManDownloadHandler implements MSDownloadListener {
         ConnectionHandler handler = connectionHandlers.remove(event.getSegmentDownloader());
         if (handler != null) {
             handler.cleanup();
+        }
+    }
+
+    @Override
+    public void pauseDownload(MultiSourceEvent event) {
+        if (downloadItem != null) {
+            downloadItem.getObject().setStatus("Download paused");
+            downloadItem.getObject().setSpeed(0);
+            window.getDownloadList().repaint();
+        }
+    }
+
+    @Override
+    public void resumeDownload(MultiSourceEvent event) {
+        if (downloadItem != null) {
+            startTime = System.currentTimeMillis(); // Reset start time for speed calculation
+            downloadItem.getObject().setStatus("Resuming download...");
+            window.getDownloadList().repaint();
         }
     }
 

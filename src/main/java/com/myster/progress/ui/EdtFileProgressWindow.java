@@ -7,7 +7,7 @@ import com.general.thread.Cancellable;
 import com.general.util.AnswerDialog;
 import com.myster.hash.FileHash;
 import com.myster.net.stream.client.msdownload.DownloadInitiator.DownloadInitiatorListener;
-import com.myster.net.stream.client.msdownload.MSDownloadHandler;
+import com.myster.net.stream.client.msdownload.ObsoleteHandler;
 import com.myster.net.stream.client.msdownload.MSDownloadParams;
 import com.myster.net.stream.client.msdownload.MSPartialFile;
 import com.myster.net.stream.client.msdownload.MultiSourceDownload;
@@ -60,8 +60,8 @@ public class EdtFileProgressWindow implements DownloadInitiatorListener {
 
 
     @Override
-    public MSDownloadHandler getMsDownloadListener() {
-        return new MSDownloadHandler(progress, cancellable) {
+    public ObsoleteHandler getMsDownloadListener() {
+        return new ObsoleteHandler(progress, cancellable) {
             @Override
             public void doneDownload(MultiSourceEvent event) {
                 done = true;
