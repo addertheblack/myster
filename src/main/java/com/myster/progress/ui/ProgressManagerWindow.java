@@ -8,12 +8,17 @@ import java.awt.Insets;
 import java.awt.event.ActionEvent;
 
 import javax.swing.AbstractAction;
+import javax.swing.Action;
+import javax.swing.Icon;
 import javax.swing.JMenuItem;
 import javax.swing.JPopupMenu;
+import javax.swing.JToolBar;
 
 import com.formdev.flatlaf.extras.FlatSVGIcon;
 import com.general.mclist.ColumnSortable;
 import com.general.mclist.JMCList;
+import com.general.mclist.MCListEvent;
+import com.general.mclist.MCListEventListener;
 import com.general.mclist.Sortable;
 import com.general.mclist.SortableString;
 import com.general.mclist.TreeMCList;
@@ -44,6 +49,13 @@ public class ProgressManagerWindow extends MysterFrame {
     
     private final AdPanel adPanel;
     private final JMCList<DownloadItem> downloadList;
+    private final JToolBar toolbar;
+    
+    // Actions for toolbar and context menu
+    private final Action pauseAction;
+    private final Action resumeAction;
+    private final Action cancelAction;
+    private final Action clearCompletedAction;
     
     // Icons for the tree list
     private static final FlatSVGIcon downloadIcon = IconLoader.loadSvg(ProgressManagerWindow.class, "download-icon");
@@ -52,7 +64,6 @@ public class ProgressManagerWindow extends MysterFrame {
     
     private final ProgressBannerManager adManager = new ProgressBannerManager(this);
     private final WindowPrefDataKeeper keeper;
-    
     
     public ProgressManagerWindow(MysterFrameContext context) {
         super(context, "Download Manager");
@@ -73,6 +84,76 @@ public class ProgressManagerWindow extends MysterFrame {
             adPanel.addImage(adImage);
         }
         
+        // Create actions before toolbar and context menu
+        pauseAction = new AbstractAction("Pause") {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                DownloadMCListItem selectedItem = getSelectedDownloadItem();
+                if (selectedItem != null) {
+                    selectedItem.getObject().getControl().pause();
+                    updateActionStates(); // Update states after pause
+                }
+            }
+        };
+        pauseAction.putValue(Action.SHORT_DESCRIPTION, "Pause download");
+        pauseAction.setEnabled(false); // Initially disabled
+        
+        resumeAction = new AbstractAction("Resume") {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                DownloadMCListItem selectedItem = getSelectedDownloadItem();
+                if (selectedItem != null) {
+                    selectedItem.getObject().getControl().resume();
+                    updateActionStates(); // Update states after resume
+                }
+            }
+        };
+        resumeAction.putValue(Action.SHORT_DESCRIPTION, "Resume download");
+        resumeAction.setEnabled(false); // Initially disabled
+        
+        cancelAction = new AbstractAction("Cancel") {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                DownloadMCListItem selectedItem = getSelectedDownloadItem();
+                if (selectedItem != null && selectedItem.cancellable != null) {
+                    selectedItem.cancellable.cancel();
+                    updateActionStates(); // Update states after cancel
+                }
+            }
+        };
+        cancelAction.putValue(Action.SHORT_DESCRIPTION, "Cancel download");
+        cancelAction.setEnabled(false); // Initially disabled
+        
+        clearCompletedAction = new AbstractAction("Clear Completed") {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                clearCompletedDownloads();
+            }
+        };
+        clearCompletedAction.putValue(Action.SHORT_DESCRIPTION, "Clear all completed/cancelled downloads");
+        clearCompletedAction.setEnabled(true); // Always enabled
+        
+        // Load icons for actions
+        Icon pauseIcon = createPauseIcon();
+        Icon resumeIcon = createResumeIcon();
+        Icon cancelIcon = createCancelIcon();
+        Icon clearIcon = createClearIcon();
+        
+        pauseAction.putValue(Action.SMALL_ICON, pauseIcon);
+        resumeAction.putValue(Action.SMALL_ICON, resumeIcon);
+        cancelAction.putValue(Action.SMALL_ICON, cancelIcon);
+        clearCompletedAction.putValue(Action.SMALL_ICON, clearIcon);
+        
+        // Create toolbar
+        toolbar = new JToolBar();
+        toolbar.setFloatable(false);
+        toolbar.add(pauseAction);
+        toolbar.add(resumeAction);
+        toolbar.addSeparator();
+        toolbar.add(cancelAction);
+        toolbar.addSeparator();
+        toolbar.add(clearCompletedAction);
+        
         // Create the TreeMCList for downloads
         // Columns: Name, Progress, Speed, Status (can be refined later)
         downloadList = TreeMCList.create(
@@ -81,6 +162,24 @@ public class ProgressManagerWindow extends MysterFrame {
             downloadIcon,  // folder/container icon
             connectionIcon // file/item icon
         );
+
+        // Add selection listener to update action states
+        downloadList.addMCListEventListener(new MCListEventListener() {
+
+            @Override
+            public void unselectItem(MCListEvent e) {
+                updateActionStates();
+            }
+
+            @Override
+            public void selectItem(MCListEvent e) {
+                updateActionStates();
+            }
+
+            @Override
+            public void doubleClick(MCListEvent e) {}
+        });
+
         
         // Add context menu
         setupContextMenu();
@@ -101,9 +200,16 @@ public class ProgressManagerWindow extends MysterFrame {
             .withFill(GridBagConstraints.HORIZONTAL)
             .withAnchor(GridBagConstraints.NORTHWEST));
         
-        // Download list: below ad panel, can extend down and right
-        c.add(downloadList.getPane(), builder
+        // Toolbar: below ad panel
+        c.add(toolbar, builder
             .withGridLoc(0, 1)
+            .withSize(1, 1)
+            .withWeight(1, 0)
+            .withFill(GridBagConstraints.HORIZONTAL));
+        
+        // Download list: below toolbar, can extend down and right
+        c.add(downloadList.getPane(), builder
+            .withGridLoc(0, 2)
             .withSize(1, 1)
             .withWeight(1, 1)
             .withFill(GridBagConstraints.BOTH));
@@ -122,76 +228,140 @@ public class ProgressManagerWindow extends MysterFrame {
     private void setupContextMenu() {
         JPopupMenu contextMenu = new JPopupMenu();
         
-        JMenuItem pauseItem = new JMenuItem(new AbstractAction("Pause") {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                DownloadMCListItem selectedItem = getSelectedDownloadItem();
-                if (selectedItem != null) {
-                    selectedItem.getObject().getControl().pause();
-                }
-            }
-        });
-        
-        JMenuItem resumeItem = new JMenuItem(new AbstractAction("Resume") {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                DownloadMCListItem selectedItem = getSelectedDownloadItem();
-                if (selectedItem != null) {
-                    selectedItem.getObject().getControl().resume();
-                }
-            }
-        });
-        
-        JMenuItem cancelItem = new JMenuItem(new AbstractAction("Cancel") {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                DownloadMCListItem selectedItem = getSelectedDownloadItem();
-                if (selectedItem != null && selectedItem.cancellable != null) {
-                    selectedItem.cancellable.cancel();
-                }
-            }
-        });
-        
-        contextMenu.add(pauseItem);
-        contextMenu.add(resumeItem);
+        // Use the same actions as the toolbar
+        contextMenu.add(new JMenuItem(pauseAction));
+        contextMenu.add(new JMenuItem(resumeAction));
         contextMenu.addSeparator();
-        contextMenu.add(cancelItem);
-        
-        // Add popup listener to enable/disable items based on selection
-        contextMenu.addPopupMenuListener(new javax.swing.event.PopupMenuListener() {
-            @Override
-            public void popupMenuWillBecomeVisible(javax.swing.event.PopupMenuEvent e) {
-                DownloadMCListItem selectedItem = getSelectedDownloadItem();
-                if (selectedItem != null) {
-                    MSDownloadControl control = selectedItem.getObject().getControl();
-                    boolean isActive = control.isActive();
-                    boolean isPaused = control.isPaused();
-                    
-                    // Pause/Resume only enabled if download is active
-                    pauseItem.setEnabled(isActive && !isPaused);
-                    resumeItem.setEnabled(isActive && isPaused);
-                    
-                    // Cancel enabled if download is active and we have a cancellable
-                    cancelItem.setEnabled(isActive && selectedItem.cancellable != null);
-                } else {
-                    pauseItem.setEnabled(false);
-                    resumeItem.setEnabled(false);
-                    cancelItem.setEnabled(false);
-                }
-            }
-            
-            @Override
-            public void popupMenuWillBecomeInvisible(javax.swing.event.PopupMenuEvent e) {
-                // Do nothing
-            }
-            
-            @Override
-            public void popupMenuCanceled(javax.swing.event.PopupMenuEvent e) {
-                // Do nothing
-            }
-        });
+        contextMenu.add(new JMenuItem(cancelAction));
+        contextMenu.addSeparator();
+        contextMenu.add(new JMenuItem(clearCompletedAction));
         
         downloadList.setComponentPopupMenu(contextMenu);
+    }
+    
+    /**
+     * Update the enabled state of actions based on current selection.
+     */
+    private void updateActionStates() {
+        DownloadMCListItem selectedItem = getSelectedDownloadItem();
+        if (selectedItem != null && selectedItem.isContainer()) {
+            MSDownloadControl control = selectedItem.getObject().getControl();
+            boolean isActive = control.isActive();
+            boolean isPaused = control.isPaused();
+            
+            // Pause/Resume only enabled if download is active and is a container (not a segment)
+            pauseAction.setEnabled(isActive && !isPaused);
+            resumeAction.setEnabled(isActive && isPaused);
+            
+            // Cancel enabled if download is active and we have a cancellable
+            cancelAction.setEnabled(isActive && selectedItem.cancellable != null);
+        } else {
+            // Disable all actions if no selection or selection is not a container
+            pauseAction.setEnabled(false);
+            resumeAction.setEnabled(false);
+            cancelAction.setEnabled(false);
+        }
+    }
+    
+    /**
+     * Clear all completed/cancelled downloads from the list.
+     * Removes all items where isActive() returns false.
+     */
+    private void clearCompletedDownloads() {
+        java.util.List<Integer> indexesToRemove = new java.util.ArrayList<>();
+        
+        // Collect indices of inactive downloads
+        for (int i = 0; i < downloadList.length(); i++) {
+            var item = downloadList.getMCListItem(i);
+            if (item instanceof DownloadMCListItem downloadItem) {
+                if (!downloadItem.getObject().getControl().isActive()) {
+                    indexesToRemove.add(i);
+                }
+            }
+        }
+        
+        // Remove in reverse order to maintain correct indices
+        for (int i = indexesToRemove.size() - 1; i >= 0; i--) {
+            downloadList.removeItem(indexesToRemove.get(i));
+        }
+        
+        updateActionStates();
+    }
+    
+    /**
+     * Create a pause icon (two vertical bars).
+     */
+    private Icon createPauseIcon() {
+        return new javax.swing.ImageIcon(new java.awt.image.BufferedImage(16, 16, java.awt.image.BufferedImage.TYPE_INT_ARGB) {
+            {
+                java.awt.Graphics2D g2d = createGraphics();
+                g2d.setColor(java.awt.Color.DARK_GRAY);
+                g2d.fillRect(4, 3, 3, 10);
+                g2d.fillRect(9, 3, 3, 10);
+                g2d.dispose();
+            }
+        });
+    }
+    
+    /**
+     * Create a resume/play icon (right-pointing triangle).
+     */
+    private Icon createResumeIcon() {
+        return new javax.swing.ImageIcon(new java.awt.image.BufferedImage(16, 16, java.awt.image.BufferedImage.TYPE_INT_ARGB) {
+            {
+                java.awt.Graphics2D g2d = createGraphics();
+                g2d.setColor(java.awt.Color.DARK_GRAY);
+                int[] xPoints = {5, 5, 12};
+                int[] yPoints = {3, 13, 8};
+                g2d.fillPolygon(xPoints, yPoints, 3);
+                g2d.dispose();
+            }
+        });
+    }
+    
+    /**
+     * Create a cancel icon (circle with diagonal slash).
+     */
+    private Icon createCancelIcon() {
+        return new javax.swing.ImageIcon(new java.awt.image.BufferedImage(16, 16, java.awt.image.BufferedImage.TYPE_INT_ARGB) {
+            {
+                java.awt.Graphics2D g2d = createGraphics();
+                g2d.setRenderingHint(java.awt.RenderingHints.KEY_ANTIALIASING, 
+                                    java.awt.RenderingHints.VALUE_ANTIALIAS_ON);
+                g2d.setColor(java.awt.Color.RED);
+                g2d.setStroke(new java.awt.BasicStroke(2));
+                g2d.drawOval(2, 2, 12, 12);
+                g2d.drawLine(4, 4, 12, 12);
+                g2d.dispose();
+            }
+        });
+    }
+    
+    /**
+     * Create a clear icon (trash can or broom).
+
+	TODO: Make into svg
+     */
+    private Icon createClearIcon() {
+        return new javax.swing.ImageIcon(new java.awt.image.BufferedImage(16, 16, java.awt.image.BufferedImage.TYPE_INT_ARGB) {
+            {
+                java.awt.Graphics2D g2d = createGraphics();
+                g2d.setRenderingHint(java.awt.RenderingHints.KEY_ANTIALIASING, 
+                                    java.awt.RenderingHints.VALUE_ANTIALIAS_ON);
+                g2d.setColor(java.awt.Color.DARK_GRAY);
+                g2d.setStroke(new java.awt.BasicStroke(1.5f));
+                // Draw trash can
+                // Lid
+                g2d.drawLine(3, 4, 13, 4);
+                g2d.drawLine(4, 3, 12, 3);
+                // Body
+                g2d.drawRect(5, 5, 6, 8);
+                // Vertical lines in trash can
+                g2d.drawLine(7, 6, 7, 12);
+                g2d.drawLine(9, 6, 9, 12);
+                g2d.dispose();
+            }
+        });
     }
     
     private DownloadMCListItem getSelectedDownloadItem() {

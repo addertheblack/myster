@@ -123,13 +123,14 @@ public class MSPartialFile implements AutoCloseable {
 
     public static void restartDownloads(FileTypeListManager fileManager,
                                         HashCrawlerManager crawlerManager,
-                                        MysterFrameContext c)
+                                        MysterFrameContext c,
+                                        MSDownloadLocalQueue queue)
             throws IOException {
         MSPartialFile[] files = list();
 
         for (int i = 0; i < files.length; i++) {
             try {
-                startDownload(files[i], fileManager, crawlerManager, c);
+                startDownload(files[i], fileManager, crawlerManager, c, queue);
             } catch (IOException ex) {
                 ex.printStackTrace();
             }
@@ -140,7 +141,8 @@ public class MSPartialFile implements AutoCloseable {
     public static void startDownload(MSPartialFile partialFile,
                                      FileTypeListManager fileManager,
                                      HashCrawlerManager crawlerManager,
-                                     MysterFrameContext c)
+                                     MysterFrameContext c,
+                                     MSDownloadLocalQueue queue)
             throws IOException {
         
         final String finalFileName = partialFile.getFilename() + ".i";
@@ -217,7 +219,8 @@ public class MSPartialFile implements AutoCloseable {
                                         crawlerManager,
                                         downloadListener,
                                         fileMover,
-                                        partialFile);
+                                        partialFile,
+                                        queue);
         cancellable.registerDependentTask(download);
 
         if (partialFile.getServerAddress() != null) {

@@ -34,6 +34,11 @@ public interface MSDownloadListener {
      * Download has been resumed after being paused.
      */
     void resumeDownload(MultiSourceEvent event);
+    
+    /**
+     * Download has been queued locally. The queue position is provided in the event.
+     */
+    void queuedDownload(QueuedMultiSourceEvent event);
 
     /**
      * Download is ending.

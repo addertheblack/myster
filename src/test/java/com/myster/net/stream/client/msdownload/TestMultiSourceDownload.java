@@ -246,6 +246,11 @@ public class TestMultiSourceDownload {
             public void resumeDownload(MultiSourceEvent event) {
 
             }
+            
+            @Override
+            public void queuedDownload(QueuedMultiSourceEvent event) {
+
+            }
 
             @Override
             public void endDownload(MultiSourceEvent event) {
@@ -276,7 +281,7 @@ public class TestMultiSourceDownload {
                                                          fileLength);
 
         // stub the newDownload() using mockito's spy method
-        download = new MultiSourceDownload(file, manager, listener, mover, partialFile) {
+        download = new MultiSourceDownload(file, manager, listener, mover, partialFile, null) {
             @Override
             protected SegmentDownloader newSegmentDownloader(MysterFileStub stub,
                                                              Controller controller) {

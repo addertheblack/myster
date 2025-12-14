@@ -69,6 +69,7 @@ import com.myster.net.server.datagram.ServerStatsDatagramServer;
 import com.myster.net.server.datagram.TopTenDatagramServer;
 import com.myster.net.server.datagram.TypeDatagramServer;
 import com.myster.net.stream.client.MysterStreamImpl;
+import com.myster.net.stream.client.msdownload.MSDownloadLocalQueue;
 import com.myster.pref.MysterPreferences;
 import com.myster.pref.ui.ThemePane;
 import com.myster.progress.ui.DefaultDownloadManager;
@@ -219,8 +220,11 @@ public class Myster {
         
         INSTRUMENTATION.info("-------->> Init client protocol impl " + (System.currentTimeMillis() - startTime));
         PublicKeyLookupImpl serverLookup = new PublicKeyLookupImpl();
+        MSDownloadLocalQueue downloadQueue = 
+                new MSDownloadLocalQueue(Preferences.userRoot().node("Downloads"));
+        
         MysterProtocol protocol =
-                new MysterProtocolImpl(new MysterStreamImpl(),
+                new MysterProtocolImpl(new MysterStreamImpl(downloadQueue),
                                        new MysterDatagramImpl(transactionManager,
                                                               new UDPPingClient(datagramManager),
                                                               serverLookup)); // AddressLookup - placeholder for now
@@ -406,7 +410,7 @@ public class Myster {
 
                 try {
                     com.myster.net.stream.client.msdownload.MSPartialFile
-                            .restartDownloads(fileManager, crawlerManager, context);
+                            .restartDownloads(fileManager, crawlerManager, context, downloadQueue);
                 } catch (IOException ex) {
                     LOGGER.info("Error in restarting downloads.");
                     ex.printStackTrace();

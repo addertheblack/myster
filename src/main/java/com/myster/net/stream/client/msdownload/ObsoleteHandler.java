@@ -100,6 +100,10 @@ public class ObsoleteHandler implements MSDownloadListener {
     public void resumeDownload(MultiSourceEvent event) {
         progress.setText("Resuming download...");
     }
+    
+    public void queuedDownload(QueuedMultiSourceEvent event) {
+        progress.setText("Locally Queued at position " + event.getQueuePosition());
+    }
 
     public void endDownload(MultiSourceEvent event) {
         progress.setText("Download Stopped");

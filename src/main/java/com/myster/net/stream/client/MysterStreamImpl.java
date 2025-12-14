@@ -8,11 +8,18 @@ import com.myster.mml.MessagePak;
 import com.myster.net.MysterAddress;
 import com.myster.net.MysterSocket;
 import com.myster.net.client.MysterStream;
+import com.myster.net.stream.client.msdownload.MSDownloadLocalQueue;
 import com.myster.net.stream.client.msdownload.MSDownloadParams;
 import com.myster.search.MysterFileStub;
 import com.myster.type.MysterType;
 
 public class MysterStreamImpl implements MysterStream {
+    private final MSDownloadLocalQueue downloadQueue;
+
+    public MysterStreamImpl(MSDownloadLocalQueue downloadQueue) {
+        this.downloadQueue = downloadQueue;
+    }
+    
     @Override
     public MysterSocket makeStreamConnection(MysterAddress ip) throws IOException {
         return MysterSocketFactory.makeStreamConnection(ip);
@@ -53,6 +60,6 @@ public class MysterStreamImpl implements MysterStream {
 
     @Override
     public void downloadFile(MSDownloadParams p) {
-        StandardSuiteStream.downloadFile(p);
+        StandardSuiteStream.downloadFile(p, downloadQueue);
     }
 }

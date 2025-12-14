@@ -136,9 +136,21 @@ public class MultiSourceUtilities {
                 return null;
             } else if (answer.equals(WRITE_OVER)) {
                 try {
-                    Files.delete(file);
+                    if (Files.exists(file)) {
+                        Files.delete(file);
+                    }
                 } catch (IOException e) {
                     LOGGER.warning("Could not delete file: " + file + " - " + e.getMessage());
+                    dialogProvider.showAlert(parentFrame, "Could not delete the file.", new String[] { OK_BUTTON });
+                    return null;
+                }
+                
+                try {
+                    if (Files.exists(finalFile)) {
+                        Files.delete(finalFile);
+                    }
+                } catch (IOException e) {
+                    LOGGER.warning("Could not delete file: " + finalFile + " - " + e.getMessage());
                     dialogProvider.showAlert(parentFrame, "Could not delete the file.", new String[] { OK_BUTTON });
                     return null;
                 }

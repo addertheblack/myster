@@ -14,6 +14,7 @@ import com.myster.net.DisconnectException;
 import com.myster.net.MysterAddress;
 import com.myster.net.MysterSocket;
 import com.myster.net.stream.client.msdownload.DownloadInitiator;
+import com.myster.net.stream.client.msdownload.MSDownloadLocalQueue;
 import com.myster.net.stream.client.msdownload.MSDownloadParams;
 import com.myster.search.MysterFileStub;
 import com.myster.type.MysterType;
@@ -96,9 +97,10 @@ public class StandardSuiteStream {
      * Regular old style download whichever is appropriate.
      * <p>
      * THIS ROUTINE IS ASYNCHRONOUS!
+     * @param downloadQueue 
      */
-    public static void downloadFile(MSDownloadParams p) {
-        Executors.newVirtualThreadPerTaskExecutor().execute(new DownloadInitiator(p));
+    public static void downloadFile(MSDownloadParams p, MSDownloadLocalQueue downloadQueue) {
+        Executors.newVirtualThreadPerTaskExecutor().execute(new DownloadInitiator(p, downloadQueue));
     }
 
     public static MessagePak getFileStats(MysterAddress ip, MysterFileStub stub) throws IOException {

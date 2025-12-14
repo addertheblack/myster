@@ -103,6 +103,7 @@ public class MultiSourceDownload implements Task, Cancellable {
     private final IoFile randomAccessFile; // file downloading to!
     private final int chunkSize;
     private final long initialOffset; // how much was downloaded in a previous session
+    private final MSDownloadLocalQueue queue; // never null
     
     // Set of all discovered file stubs (sources) for this file.
     // Continuously accumulated via hash crawler and initial servers.
@@ -153,11 +154,13 @@ public class MultiSourceDownload implements Task, Cancellable {
                                HashCrawlerManager crawlerManager,
                                MSDownloadListener listener,
                                FileMover fileMover,
-                               MSPartialFile partialFile)
+                               MSPartialFile partialFile,
+                               MSDownloadLocalQueue queue)
             throws IOException {
         this.randomAccessFile = randomAccessFile;
         this.crawlerManager = crawlerManager;
         this.fileMover = fileMover;
+        this.queue = queue;
         this.type = partialFile.getType();
         this.hashes = partialFile.getFileHashes();
         this.fileLength = partialFile.getFileLength();
@@ -199,19 +202,18 @@ public class MultiSourceDownload implements Task, Cancellable {
         if (!isPaused) {
             return;
         }
-        
-        isPaused = false;
-        
-        // Determine if this is first start or resume (before updating hasStarted)
+
+        // Determine if this is first start or resume (before updating
+        // hasStarted)
         final boolean isFirstStart = !hasStarted;
-        
+
         // Fire appropriate event based on whether this is first start or resume
         if (isFirstStart) {
             hasStarted = true;
             dispatcher.fire().startDownload(createStartMultiSourceEvent());
-        } else {
-            dispatcher.fire().resumeDownload(createMultiSourceEvent());
         }
+
+        queue.addToQueue(this);
         
         Util.invokeLater(() -> {
             // Register hashes with crawler only on first start
@@ -220,13 +222,25 @@ public class MultiSourceDownload implements Task, Cancellable {
                     crawlerManager.addHash(type, hash, hashSearchListener);
                 }
             }
-
+        });
+    }
+    
+    /**
+     * Starts the download directly without going through the queue.
+     * This is package-private and should only be called by MSDownloadLocalQueue.
+     */
+    synchronized void startDirectly() {
+        isPaused = false;
+        
+        Util.invokeLater(() -> {
             // Create downloaders from all discovered stubs
             synchronized (this) {
                 // Don't create downloaders if we've been paused again or ended
                 if (isPaused || endFlag) {
                     return;
                 }
+                
+                dispatcher.fire().resumeDownload(createMultiSourceEvent());
                 
                 for (MysterFileStub stub : discoveredStubs) {
                     newDownload(stub);
@@ -243,6 +257,14 @@ public class MultiSourceDownload implements Task, Cancellable {
     }
     
     public synchronized void pause() {
+             queue.removeFromQueue(this);
+     }
+    
+    /**
+     * Pauses the download directly without going through the queue.
+     * This is package-private and should only be called by MSDownloadLocalQueue.
+     */
+    synchronized void pauseDirectly() {
         // Return early if already paused
         if (isPaused) {
             return;
@@ -260,6 +282,16 @@ public class MultiSourceDownload implements Task, Cancellable {
         // Fire pause event
         dispatcher.fire().pauseDownload(createMultiSourceEvent());
     }
+    
+    /**
+     * Notifies the download that it has been queued at the given position.
+     * This is package-private and should only be called by MSDownloadLocalQueue.
+     * 
+     * @param queuePosition the position in the queue (1-based)
+     */
+    synchronized void notifyQueued(int queuePosition) {
+        dispatcher.fire().queuedDownload(createQueuedMultiSourceEvent(queuePosition));
+    }
 
     /** Package Protected for unit tests */
     synchronized void newDownload(MysterFileStub stub) {
@@ -268,15 +300,19 @@ public class MultiSourceDownload implements Task, Cancellable {
 
         if (stub.getMysterAddress() == null)
             return; // cheap hack
+        
+        // Track this stub as discovered
+        discoveredStubs.add(stub);
+        
+        if (isPaused) {
+            return;
+        }
 
         final SegmentDownloader downloader = newSegmentDownloader(stub, controller);
 
         if (downloaders.contains(downloader)) {
             return; // already have a downloader doing this file.
         }
-
-        // Track this stub as discovered
-        discoveredStubs.add(stub);
 
         downloaders.add(downloader);
 
@@ -515,6 +551,10 @@ public class MultiSourceDownload implements Task, Cancellable {
                 return !MultiSourceDownload.this.isDead() && !MultiSourceDownload.this.isDone();
             }
         },initialOffset, bytesWrittenOut, fileLength, isCancelled);
+    }
+    
+    private QueuedMultiSourceEvent createQueuedMultiSourceEvent(int queuePosition) {
+        return new QueuedMultiSourceEvent(queuePosition, initialOffset, bytesWrittenOut, fileLength, isCancelled);
     }
 
     private class MSHashSearchListener implements HashSearchListener {

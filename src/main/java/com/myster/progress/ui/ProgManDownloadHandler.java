@@ -9,6 +9,7 @@ import com.general.util.Util;
 import com.myster.net.stream.client.msdownload.MSDownloadListener;
 import com.myster.net.stream.client.msdownload.MSSegmentEvent;
 import com.myster.net.stream.client.msdownload.MultiSourceEvent;
+import com.myster.net.stream.client.msdownload.QueuedMultiSourceEvent;
 import com.myster.net.stream.client.msdownload.SegmentDownloader;
 import com.myster.net.stream.client.msdownload.SegmentDownloaderEvent;
 import com.myster.net.stream.client.msdownload.SegmentDownloaderListener;
@@ -133,6 +134,15 @@ public class ProgManDownloadHandler implements MSDownloadListener {
         if (downloadItem != null) {
             startTime = System.currentTimeMillis(); // Reset start time for speed calculation
             downloadItem.getObject().setStatus("Resuming download...");
+            window.getDownloadList().repaint();
+        }
+    }
+    
+    @Override
+    public void queuedDownload(QueuedMultiSourceEvent event) {
+        if (downloadItem != null) {
+            downloadItem.getObject().setStatus("Queued at position " + event.getQueuePosition());
+            downloadItem.getObject().setSpeed(0);
             window.getDownloadList().repaint();
         }
     }

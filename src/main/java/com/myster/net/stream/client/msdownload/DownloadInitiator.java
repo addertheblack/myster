@@ -26,8 +26,11 @@ public class DownloadInitiator implements Runnable {
     private final HashCrawlerManager crawlerManager;
     private final MysterFrameContext context;
     private final MSDownloadParams params;
+    private final MSDownloadLocalQueue downloadQueue;
 
-    public DownloadInitiator(MSDownloadParams p) {
+
+    public DownloadInitiator(MSDownloadParams p, MSDownloadLocalQueue downloadQueue) {
+        this.downloadQueue = downloadQueue;
         this.context = p.context();
         this.stub = p.stub();
         this.crawlerManager = p.crawlerManager();
@@ -143,7 +146,8 @@ public class DownloadInitiator implements Runnable {
                                              crawlerManager,
                                              downloadInitListener.getMsDownloadListener(),
                                              downloadInitListener,
-                                             partialFile);
+                                             partialFile,
+                                             downloadQueue);
         msDownload.addInitialServers(new MysterFileStub[] { stub });
 
         synchronized (this) {
