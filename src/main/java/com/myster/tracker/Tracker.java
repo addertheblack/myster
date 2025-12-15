@@ -41,7 +41,7 @@ import com.myster.type.TypeDescriptionList;
  * @see com.myster.tracker.IPListManagerSingleton
  */
 public class Tracker {
-    private static final Logger LOGGER = Logger.getLogger(Tracker.class.getName());
+    private static final Logger log = Logger.getLogger(Tracker.class.getName());
     private static final String[] LAST_RESORT = { "myster.ddnsgeek.com" };
     private static final String PATH = "ServerLists";
 
@@ -294,7 +294,7 @@ public class Tracker {
     private synchronized void assertIndex(int index) {
         if (list[index] == null) {
             list[index] = createNewList(index);
-            LOGGER.info("Loaded List " + tdList.get(list[index].getType()).get().toString());
+            log.info("Loaded List " + tdList.get(list[index].getType()).get().toString());
         }
     }
 

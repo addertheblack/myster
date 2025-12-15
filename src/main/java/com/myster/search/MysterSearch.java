@@ -59,7 +59,7 @@ import com.myster.util.Sayable;
  * asynchronous tasks.
  */
 public class MysterSearch {
-    private static final Logger LOGGER = Logger.getLogger(MysterSearch.class.getName());
+    private static final Logger log = Logger.getLogger(MysterSearch.class.getName());
     
     /** Contains the object to pass status messages to. */
     private final Sayable msg;
@@ -449,7 +449,7 @@ public class MysterSearch {
             synchronized (this) {
                 isDone = true;
                 notifyAll();
-                LOGGER.info("DONE search!");
+                log.info("DONE search!");
 
                 if (endFlag)
                     return; // don't call searchOver() if end flag is set (it

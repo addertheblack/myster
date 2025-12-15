@@ -42,7 +42,7 @@ import com.myster.type.MysterType;
 class MysterTypeServerList implements ServerList {
     public static final int LISTSIZE = 100; //Size of any given list..
     
-    private static final Logger LOGGER = Logger.getLogger(ServerList.class.getName());
+    private static final Logger log = Logger.getLogger(ServerList.class.getName());
     
     private final Map<MysterIdentity, MysterServer> mapOfServers = new LinkedHashMap<>();
     private final MysterType type;
@@ -73,10 +73,10 @@ class MysterTypeServerList implements ServerList {
                     .flatMap(identity -> pool.getCachedMysterServer(identity))
                     .ifPresentOrElse(
                         server -> mapOfServers.put(server.getIdentity(), server),
-                        () -> LOGGER.warning("This server does not exist in the pool: " + externalName + ". Repairing.")
+                        () -> log.warning("This server does not exist in the pool: " + externalName + ". Repairing.")
                     );
             } catch (Exception ex) {
-                LOGGER.warning("Failed to add an IP to an IP list: " + type + " " + ex);
+                log.warning("Failed to add an IP to an IP list: " + type + " " + ex);
             }
         }
 

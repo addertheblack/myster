@@ -53,7 +53,7 @@ import com.myster.type.TypeDescription;
 import com.myster.type.TypeDescriptionList;
 
 public class FileTypeList {
-    private static final Logger LOGGER = Logger.getLogger(FileTypeList.class.getName());
+    private static final Logger log = Logger.getLogger(FileTypeList.class.getName());
     
     private static final Invoker INVOKER = Invoker.newVThreadInvoker();
     
@@ -583,7 +583,7 @@ public class FileTypeList {
                                            List<FileItem> filelist,
                                            int maxDepth) {
             if (!Files.isDirectory(rootPath) || !Files.exists(rootPath)) {
-                LOGGER.warning("Invalid path sent to indexPathBreadthFirst: " + rootPath);
+                log.warning("Invalid path sent to indexPathBreadthFirst: " + rootPath);
                 return;
             }
 
@@ -624,12 +624,12 @@ public class FileTypeList {
                                 }
                             }
                         } catch (Exception e) {
-                            LOGGER.warning("Error processing path: " + path + " - "
+                            log.warning("Error processing path: " + path + " - "
                                     + e.getMessage());
                         }
                     });
                 } catch (IOException e) {
-                    LOGGER.warning("Error listing directory: " + currentPath + " - "
+                    log.warning("Error listing directory: " + currentPath + " - "
                             + e.getMessage());
                     continue;
                 }
@@ -721,7 +721,7 @@ public class FileTypeList {
         try {
             Files.createDirectories(empty);
         } catch (IOException e) {
-            LOGGER.warning("Could not create directory: " + empty + " - " + e.getMessage());
+            log.warning("Could not create directory: " + empty + " - " + e.getMessage());
         }
 
         return empty;

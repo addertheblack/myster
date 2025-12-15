@@ -17,7 +17,7 @@ import java.util.logging.Logger;
  * MessagePackSerializer instance.
  */
 class RobustMessagePackSerializer implements com.myster.mml.MessagePak {
-    private static final Logger LOGGER = Logger.getLogger(RobustMessagePackSerializer.class.getName());
+    private static final Logger log = Logger.getLogger(RobustMessagePackSerializer.class.getName());
     private final MessagePackSerializer delegate;
     private boolean trace;
 
@@ -50,7 +50,7 @@ class RobustMessagePackSerializer implements com.myster.mml.MessagePak {
             return delegate.getBoolean(path);
         } catch (ClassCastException | BranchAsALeafException | LeafAsABranchException ex) {
             if (trace) {
-                LOGGER.fine("Failed to get boolean at " + path + ": " + ex.getMessage());
+                log.fine("Failed to get boolean at " + path + ": " + ex.getMessage());
                 ex.printStackTrace();
             }
             return Optional.empty();
@@ -63,7 +63,7 @@ class RobustMessagePackSerializer implements com.myster.mml.MessagePak {
             return delegate.getInt(path);
         } catch (ClassCastException | BranchAsALeafException | LeafAsABranchException ex) {
             if (trace) {
-                LOGGER.fine("Failed to get int at " + path + ": " + ex.getMessage());
+                log.fine("Failed to get int at " + path + ": " + ex.getMessage());
                 ex.printStackTrace();
             }
             return Optional.empty();
@@ -76,7 +76,7 @@ class RobustMessagePackSerializer implements com.myster.mml.MessagePak {
             return delegate.getLong(path);
         } catch (ClassCastException | BranchAsALeafException | LeafAsABranchException ex) {
             if (trace) {
-                LOGGER.fine("Failed to get long at " + path + ": " + ex.getMessage());
+                log.fine("Failed to get long at " + path + ": " + ex.getMessage());
                 ex.printStackTrace();
             }
             return Optional.empty();
@@ -89,7 +89,7 @@ class RobustMessagePackSerializer implements com.myster.mml.MessagePak {
             return delegate.getShort(path);
         } catch (ClassCastException | BranchAsALeafException | LeafAsABranchException ex) {
             if (trace) {
-                LOGGER.fine("Failed to get short at " + path + ": " + ex.getMessage());
+                log.fine("Failed to get short at " + path + ": " + ex.getMessage());
                 ex.printStackTrace();
             }
             return Optional.empty();
@@ -102,7 +102,7 @@ class RobustMessagePackSerializer implements com.myster.mml.MessagePak {
             return delegate.getFloat(path);
         } catch (ClassCastException | BranchAsALeafException | LeafAsABranchException ex) {
             if (trace) {
-                LOGGER.fine("Failed to get float at " + path + ": " + ex.getMessage());
+                log.fine("Failed to get float at " + path + ": " + ex.getMessage());
                 ex.printStackTrace();
             }
             return Optional.empty();
@@ -115,7 +115,7 @@ class RobustMessagePackSerializer implements com.myster.mml.MessagePak {
             return delegate.getDouble(path);
         } catch (ClassCastException | BranchAsALeafException | LeafAsABranchException ex) {
             if (trace) {
-                LOGGER.fine("Failed to get double at " + path + ": " + ex.getMessage());
+                log.fine("Failed to get double at " + path + ": " + ex.getMessage());
                 ex.printStackTrace();
             }
             return Optional.empty();
@@ -128,7 +128,7 @@ class RobustMessagePackSerializer implements com.myster.mml.MessagePak {
             return delegate.getDate(path);
         } catch (ClassCastException | BranchAsALeafException | LeafAsABranchException ex) {
             if (trace) {
-                LOGGER.fine("Failed to get date at " + path + ": " + ex.getMessage());
+                log.fine("Failed to get date at " + path + ": " + ex.getMessage());
                 ex.printStackTrace();
             }
             return Optional.empty();
@@ -141,7 +141,7 @@ class RobustMessagePackSerializer implements com.myster.mml.MessagePak {
             return delegate.getByteArray(path);
         } catch (ClassCastException | BranchAsALeafException | LeafAsABranchException ex) {
             if (trace) {
-                LOGGER.fine("Failed to get byte array at " + path + ": " + ex.getMessage());
+                log.fine("Failed to get byte array at " + path + ": " + ex.getMessage());
                 ex.printStackTrace();
             }
             return Optional.empty();
@@ -154,7 +154,7 @@ class RobustMessagePackSerializer implements com.myster.mml.MessagePak {
             return delegate.getIntArray(path);
         } catch (ClassCastException | BranchAsALeafException | LeafAsABranchException ex) {
             if (trace) {
-                LOGGER.fine("Failed to get int array at " + path + ": " + ex.getMessage());
+                log.fine("Failed to get int array at " + path + ": " + ex.getMessage());
                 ex.printStackTrace();
             }
             return Optional.empty();
@@ -167,7 +167,7 @@ class RobustMessagePackSerializer implements com.myster.mml.MessagePak {
             return delegate.getLongArray(path);
         } catch (ClassCastException | BranchAsALeafException | LeafAsABranchException ex) {
             if (trace) {
-                LOGGER.fine("Failed to get long array at " + path + ": " + ex.getMessage());
+                log.fine("Failed to get long array at " + path + ": " + ex.getMessage());
                 ex.printStackTrace();
             }
             return Optional.empty();
@@ -180,7 +180,7 @@ class RobustMessagePackSerializer implements com.myster.mml.MessagePak {
             return delegate.getShortArray(path);
         } catch (ClassCastException | BranchAsALeafException | LeafAsABranchException ex) {
             if (trace) {
-                LOGGER.fine("Failed to get short array at " + path + ": " + ex.getMessage());
+                log.fine("Failed to get short array at " + path + ": " + ex.getMessage());
                 ex.printStackTrace();
             }
             return Optional.empty();
@@ -193,7 +193,7 @@ class RobustMessagePackSerializer implements com.myster.mml.MessagePak {
             return delegate.getDoubleArray(path);
         } catch (ClassCastException | BranchAsALeafException | LeafAsABranchException ex) {
             if (trace) {
-                LOGGER.fine("Failed to get double array at " + path + ": " + ex.getMessage());
+                log.fine("Failed to get double array at " + path + ": " + ex.getMessage());
                 ex.printStackTrace();
             }
             return Optional.empty();
@@ -206,7 +206,7 @@ class RobustMessagePackSerializer implements com.myster.mml.MessagePak {
             return delegate.getStringArray(path);
         } catch (ClassCastException | BranchAsALeafException | LeafAsABranchException ex) {
             if (trace) {
-                LOGGER.fine("Failed to get string array at " + path + ": " + ex.getMessage());
+                log.fine("Failed to get string array at " + path + ": " + ex.getMessage());
                 ex.printStackTrace();
             }
             return Optional.empty();
@@ -219,7 +219,7 @@ class RobustMessagePackSerializer implements com.myster.mml.MessagePak {
             return delegate.getObjectArray(path);
         } catch (ClassCastException | BranchAsALeafException | LeafAsABranchException ex) {
             if (trace) {
-                LOGGER.fine("Failed to get object array at " + path + ": " + ex.getMessage());
+                log.fine("Failed to get object array at " + path + ": " + ex.getMessage());
                 ex.printStackTrace();
             }
             return Optional.empty();
@@ -232,7 +232,7 @@ class RobustMessagePackSerializer implements com.myster.mml.MessagePak {
             return delegate.getValue(path);
         } catch (ClassCastException | BranchAsALeafException | LeafAsABranchException ex) {
             if (trace) {
-                LOGGER.fine("Failed to get object array at " + path + ": " + ex.getMessage());
+                log.fine("Failed to get object array at " + path + ": " + ex.getMessage());
                 ex.printStackTrace();
             }
             return Optional.empty();
@@ -245,7 +245,7 @@ class RobustMessagePackSerializer implements com.myster.mml.MessagePak {
             return delegate.getString(path);
         } catch (ClassCastException | BranchAsALeafException | LeafAsABranchException ex) {
             if (trace) {
-                LOGGER.fine("Failed to get value at " + path + ": " + ex.getMessage());
+                log.fine("Failed to get value at " + path + ": " + ex.getMessage());
                 ex.printStackTrace();
             }
             return Optional.empty();
@@ -379,7 +379,7 @@ class RobustMessagePackSerializer implements com.myster.mml.MessagePak {
             return delegate.list(path);
         } catch (ClassCastException | BranchAsALeafException | LeafAsABranchException ex) {
             if (trace) {
-                LOGGER.fine("Failed to list path " + path + ": " + ex.getMessage());
+                log.fine("Failed to list path " + path + ": " + ex.getMessage());
                 ex.printStackTrace();
             }
             return new ArrayList<>();
@@ -402,7 +402,7 @@ class RobustMessagePackSerializer implements com.myster.mml.MessagePak {
             return delegate.remove(path);
         } catch (BranchAsALeafException | LeafAsABranchException ex) {
             if (trace) {
-                LOGGER.fine("Failed to remove value at " + path + ": " + ex.getMessage());
+                log.fine("Failed to remove value at " + path + ": " + ex.getMessage());
                 ex.printStackTrace();
             }
             return false;
@@ -415,7 +415,7 @@ class RobustMessagePackSerializer implements com.myster.mml.MessagePak {
             return delegate.removeDir(path);
         } catch (BranchAsALeafException | LeafAsABranchException ex) {
             if (trace) {
-                LOGGER.fine("Failed to remove directory at " + path + ": " + ex.getMessage());
+                log.fine("Failed to remove directory at " + path + ": " + ex.getMessage());
                 ex.printStackTrace();
             }
             return false;
@@ -428,7 +428,7 @@ class RobustMessagePackSerializer implements com.myster.mml.MessagePak {
             return delegate.toBytes();
         } catch (BranchAsALeafException | LeafAsABranchException ex) {
             if (trace) {
-                LOGGER.fine("Failed to serialize to bytes: " + ex.getMessage());
+                log.fine("Failed to serialize to bytes: " + ex.getMessage());
                 ex.printStackTrace();
             }
             throw new IOException("Failed to serialize data", ex);

@@ -13,7 +13,7 @@ import com.myster.hash.FileHash;
 import com.myster.mml.MessagePak;
 
 public class MultiSourceUtilities {
-    private static final Logger LOGGER = Logger.getLogger(MultiSourceUtilities.class.getName());
+    private static final Logger log = Logger.getLogger(MultiSourceUtilities.class.getName());
 
     private static final String EXTENSION = ".i";
 
@@ -97,7 +97,7 @@ public class MultiSourceUtilities {
             try {
                 Files.createDirectories(targetDirectory);
             } catch (IOException e) {
-                LOGGER.warning("Could not create directories: " + targetDirectory + " - " + e.getMessage());
+                log.warning("Could not create directories: " + targetDirectory + " - " + e.getMessage());
                 String answer = dialogProvider.showAlert(parentFrame,
                         "Cannot create subdirectories in " + baseDir + ". The directory may be read-only.",
                         new String[] { OK_BUTTON, CANCEL_BUTTON });
@@ -140,7 +140,7 @@ public class MultiSourceUtilities {
                         Files.delete(file);
                     }
                 } catch (IOException e) {
-                    LOGGER.warning("Could not delete file: " + file + " - " + e.getMessage());
+                    log.warning("Could not delete file: " + file + " - " + e.getMessage());
                     dialogProvider.showAlert(parentFrame, "Could not delete the file.", new String[] { OK_BUTTON });
                     return null;
                 }
@@ -150,7 +150,7 @@ public class MultiSourceUtilities {
                         Files.delete(finalFile);
                     }
                 } catch (IOException e) {
-                    LOGGER.warning("Could not delete file: " + finalFile + " - " + e.getMessage());
+                    log.warning("Could not delete file: " + finalFile + " - " + e.getMessage());
                     dialogProvider.showAlert(parentFrame, "Could not delete the file.", new String[] { OK_BUTTON });
                     return null;
                 }
@@ -347,7 +347,7 @@ public class MultiSourceUtilities {
     }
 
     public static void debug(String msg) {
-        LOGGER.fine(msg);
+        log.fine(msg);
     }
 
     private static final String STOP_DOWNLOAD = "Kill";

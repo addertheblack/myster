@@ -27,7 +27,7 @@ import javax.swing.ListCellRenderer;
 
 
 public class Util { //This code was taken from an Apple Sample Code package,
-    private static final Logger LOGGER = Logger.getLogger(Util.class.getName());
+    private static final Logger log = Logger.getLogger(Util.class.getName());
     public static final String SEPARATOR = "---------------------------------";
 
     @SuppressWarnings("unchecked")
@@ -81,7 +81,7 @@ public class Util { //This code was taken from an Apple Sample Code package,
                     }
                 }
             } catch (Exception ex) {
-                Util.LOGGER.info("Could not detect GTK theme: " + ex.getMessage());
+                Util.log.info("Could not detect GTK theme: " + ex.getMessage());
             }
         } else if (osName.contains("mac")) {
             // For macOS we can check system appearance
@@ -95,7 +95,7 @@ public class Util { //This code was taken from an Apple Sample Code package,
                     return "Dark".equalsIgnoreCase(style);
                 }
             } catch (Exception ex) {
-                Util.LOGGER.info("Could not detect macOS dark mode: " + ex.getMessage());
+                Util.log.info("Could not detect macOS dark mode: " + ex.getMessage());
             }
         } else if (osName.contains("windows")) {
             try {

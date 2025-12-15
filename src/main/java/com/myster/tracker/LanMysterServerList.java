@@ -16,7 +16,7 @@ import com.myster.net.server.ServerUtils;
  * happening on the LAN.
  */
 class LanMysterServerList {
-//    private static final Logger LOGGER = Logger.getLogger(LanMysterServerList.class.getName());
+//    private static final Logger log = Logger.getLogger(LanMysterServerList.class.getName());
 
     private final List<MysterServer> lanServers = new ArrayList<>();
     private final Runnable listChangedListener;

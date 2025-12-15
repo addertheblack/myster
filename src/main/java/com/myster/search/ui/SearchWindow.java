@@ -55,7 +55,7 @@ import com.myster.util.Sayable;
 import com.myster.util.TypeChoice;
 
 public class SearchWindow extends MysterFrame implements SearchResultListener, Sayable {
-    private static final Logger LOGGER = Logger.getLogger(SearchWindow.class.getName());
+    private static final Logger log = Logger.getLogger(SearchWindow.class.getName());
     
     private static final int XDEFAULT = 640;
     private static final int YDEFAULT = 400;
@@ -312,7 +312,7 @@ public class SearchWindow extends MysterFrame implements SearchResultListener, S
     }
 
     public void say(String s) {
-        LOGGER.fine(s);
+        log.fine(s);
         msg.say("" + s);
     }
 }

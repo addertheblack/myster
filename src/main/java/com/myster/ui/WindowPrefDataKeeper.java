@@ -37,7 +37,7 @@ import com.myster.pref.MysterPreferences;
  * screen when the routine is called (ie: not too far to the left or right).
  */
 public class WindowPrefDataKeeper {
-    private static final Logger LOGGER = Logger.getLogger(WindowPrefDataKeeper.class.getName());
+    private static final Logger log = Logger.getLogger(WindowPrefDataKeeper.class.getName());
 
     private static final String LOCATION = "location";
     private static final String VISIBLE = "visible";
@@ -175,7 +175,7 @@ public class WindowPrefDataKeeper {
         try {
             nodeNames = rootNode.childrenNames();
         } catch (BackingStoreException e) {
-            LOGGER.severe("Could not get list of window locations for key " + windowClassPrefKey + " because of BackingStoreException " + e);
+            log.severe("Could not get list of window locations for key " + windowClassPrefKey + " because of BackingStoreException " + e);
             
             return Collections.emptyList();
         }
@@ -195,7 +195,7 @@ public class WindowPrefDataKeeper {
             } catch (BackingStoreException _) {
                 // ignore, best effort
             }
-            LOGGER.fine("Getting the last window location " + windowClassPrefKey + " " + rectangle.toString());
+            log.fine("Getting the last window location " + windowClassPrefKey + " " + rectangle.toString());
         }
 
         return Collections.unmodifiableList(locations);

@@ -17,7 +17,7 @@ import com.general.util.Util;
 import com.myster.pref.MysterPreferences;
 
 public class ThemeUtil {
-    private static final Logger LOGGER = Logger.getLogger(ThemeUtil.class.getName());
+    private static final Logger log = Logger.getLogger(ThemeUtil.class.getName());
     
     // Themes in UI display order, including separators
     private static final List<ThemeInfo> THEMES_WITH_SEPARATORS = createThemesList();
@@ -332,21 +332,21 @@ public class ThemeUtil {
     
     public static String findDefaultThemeFullyQualifiedName() {
         for (var info : UIManager.getInstalledLookAndFeels()) {
-            LOGGER.info("Installed Look and Feel: " + info.getName() + " - " + info.getClassName());
+            log.info("Installed Look and Feel: " + info.getName() + " - " + info.getClassName());
         }
         
         String systemLookAndFeelClassName = UIManager.getSystemLookAndFeelClassName();
-        LOGGER.info("System Look and feel: " + systemLookAndFeelClassName);
+        log.info("System Look and feel: " + systemLookAndFeelClassName);
         
         // If dark mode is detected, use FlatLaf Dark regardless of platform
         if (Util.isSystemDarkTheme()) {
-            LOGGER.info("System is using dark theme, using FlatDarkLaf");
+            log.info("System is using dark theme, using FlatDarkLaf");
             systemLookAndFeelClassName =
                     SystemInfo.isMacOS ? "com.formdev.flatlaf.themes.FlatMacDarkLaf"
                             : "com.formdev.flatlaf.FlatDarkLaf";
         } else if (systemLookAndFeelClassName.equals("javax.swing.plaf.metal.MetalLookAndFeel")) {
             // Metal look and feel is ugly, use FlatLaf Light instead
-            LOGGER.info("MetalLookAndFeel detected, using FlatLightLaf instead");
+            log.info("MetalLookAndFeel detected, using FlatLightLaf instead");
             systemLookAndFeelClassName = "com.formdev.flatlaf.FlatLightLaf";
         } else if (SystemInfo.isMacOS) {
             systemLookAndFeelClassName = "com.formdev.flatlaf.themes.FlatMacLightLaf";

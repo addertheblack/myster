@@ -30,7 +30,7 @@ import com.myster.util.MysterThread;
 import com.myster.util.Sayable;
 
 public class FileInfoListerThread extends MysterThread {
-    private static final Logger LOGGER = Logger.getLogger(FileInfoListerThread.class.getName());
+    private static final Logger log = Logger.getLogger(FileInfoListerThread.class.getName());
     
     public interface FileStatsListener {
         void showFileStats(final Map<String, String> keyValue);   
@@ -98,14 +98,14 @@ public class FileInfoListerThread extends MysterThread {
         
         MysterFileStub stub = new MysterFileStub(address, type, file);
         try {
-            LOGGER.info("Doing get files stats UDP");
+            log.info("Doing get files stats UDP");
             parseResult(protocol.getDatagram().getFileStats(stub).get());
             
             return;
         } catch (InterruptedException _) {
             return;
         } catch (ExecutionException ex) {
-            LOGGER.warning("Unexpected exception from calling protocol.getDatagram().getFileStats(stub): "
+            log.warning("Unexpected exception from calling protocol.getDatagram().getFileStats(stub): "
                     + ex.getCause());
         }
 

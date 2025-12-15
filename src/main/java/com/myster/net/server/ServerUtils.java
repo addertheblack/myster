@@ -15,7 +15,7 @@ import com.myster.net.client.ParamBuilder;
 import com.myster.tracker.Tracker;
 
 public class ServerUtils {
-    private static final Logger LOGGER = Logger.getLogger(ServerUtils.class.getName());
+    private static final Logger log = Logger.getLogger(ServerUtils.class.getName());
     
     public static List<InetAddress> findPublicLandAddress() throws SocketException {
         List<InetAddress> allMyIps = new ArrayList<>();
@@ -32,18 +32,18 @@ public class ServerUtils {
         }
         
         List<InetAddress> networkAddresses = new ArrayList<>();
-        LOGGER.fine("Looking for LAN address of this machine");
+        log.fine("Looking for LAN address of this machine");
         for (InetAddress ip: allMyIps) {
             if (isLanAddress(ip)) {
-                LOGGER.fine("    Machine LAN address found ->" + ip.getHostAddress());
+                log.fine("    Machine LAN address found ->" + ip.getHostAddress());
                 networkAddresses.add(ip);
             } else {
-                LOGGER.fine("    Machine Not LAN address   ->" + ip.getHostAddress());
+                log.fine("    Machine Not LAN address   ->" + ip.getHostAddress());
             }
         }
         
         if (networkAddresses.size() == 0 ) {
-            LOGGER.fine("Could not find LAN address");
+            log.fine("Could not find LAN address");
         }
         
         return networkAddresses;
@@ -67,7 +67,7 @@ public class ServerUtils {
     public static void massPing(MysterProtocol protocol, Tracker tracker) throws  SocketException {
         List<InetAddress> allMyIps = ServerUtils.findPublicLandAddress();
         
-        LOGGER.info("Pinging all 255 addresses on the 24 bit subnet");
+        log.info("Pinging all 255 addresses on the 24 bit subnet");
         List<byte[]> addressesToPing = new ArrayList<>();
         for (InetAddress inetAddress : allMyIps) {
             byte[] addrBytes = inetAddress.getAddress();
@@ -80,7 +80,7 @@ public class ServerUtils {
                 }
                 
                 addressesToPing.add(addrBytes.clone());
-                LOGGER.finest("Going to ping " + inetAddress + " -> "+i);
+                log.finest("Going to ping " + inetAddress + " -> "+i);
             }
         }
         
@@ -88,9 +88,9 @@ public class ServerUtils {
                 .ping(new ParamBuilder(new MysterAddress(newAddressNoThrows(address), 6669)))
                 .addResultListener(result -> {
                     if (result.isTimeout()) {
-                        LOGGER.finest("LAN ping Timeout: " + result.address());
+                        log.finest("LAN ping Timeout: " + result.address());
                     } else {
-                        LOGGER.info  ("Found a Myster server on the LAN: " + result.address());
+                        log.info  ("Found a Myster server on the LAN: " + result.address());
                         tracker.addIp(result.address());
                     }
                 }));

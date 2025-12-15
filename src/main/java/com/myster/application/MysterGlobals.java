@@ -13,7 +13,7 @@ public class MysterGlobals {
     public static final String ADDRESSPATH = "Globals/address/";
     public static final String DEFAULT_ENCODING = "ASCII";
 
-    private static final Logger LOGGER = Logger.getLogger(MysterGlobals.class.getName());
+    private static final Logger log = Logger.getLogger(MysterGlobals.class.getName());
     private static final long programLaunchTime = System.currentTimeMillis(); //class load time really..
     
     public static final boolean ON_LINUX = (System.getProperty("os.name") != null ? System
@@ -36,7 +36,7 @@ public class MysterGlobals {
      * quitting!).
      */
     public static void quit() {
-        LOGGER.info("Byeeeee.");
+        log.info("Byeeeee.");
         if (appSigleton!=null)
             appSigleton.close();
         System.exit(0);

@@ -120,7 +120,7 @@ public class DatagramProtocolManager {
      * This class is the implementation of the transport manager. Could be any class.
      */
     private static class GenericTransportManager implements TransportManager, AsyncDatagramListener {
-        private static final Logger LOGGER = Logger.getLogger(GenericTransportManager.class.getName());
+        private static final Logger log = Logger.getLogger(GenericTransportManager.class.getName());
         
         private final Map<Short, DatagramTransport> transportProtocols = new HashMap<>();
         private final int port;
@@ -159,12 +159,12 @@ public class DatagramProtocolManager {
                     t.packetReceived(this::sendPacket, p);
                 } else {
                     if (MysterGlobals.DEFAULT_SERVER_PORT == p.getPort()) {
-                        LOGGER.info("Transport Code not found -> " + getCodeFromPacket(p) + " "
+                        log.info("Transport Code not found -> " + getCodeFromPacket(p) + " "
                                     + p.getAddress().toString() + ":" + p.getPort());
                     }
                 }
             } catch (IOException ex) {
-                LOGGER.info("Packet too short Exception.");
+                log.info("Packet too short Exception.");
                 ex.printStackTrace();
             }
         }

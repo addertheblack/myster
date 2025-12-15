@@ -36,7 +36,7 @@ import com.myster.net.stream.server.ServerStats;
  * collector based system.
  */
 public class MysterServerPoolImpl implements MysterServerPool {
-    private static final Logger LOGGER = Logger.getLogger(MysterServerPoolImpl.class.getName());
+    private static final Logger log = Logger.getLogger(MysterServerPoolImpl.class.getName());
     private static final java.util.Timer timer = new java.util.Timer();
 
     // MysterIPPool stores all its ips
@@ -64,7 +64,7 @@ public class MysterServerPoolImpl implements MysterServerPool {
         this.preferences = prefs.node(PREF_NODE_NAME);
         this.protocol = mysterProtocol;
         
-        LOGGER.info("Loading IPPool.....");
+        log.info("Loading IPPool.....");
 
         cache = new HashMap<>();
 
@@ -92,7 +92,7 @@ public class MysterServerPoolImpl implements MysterServerPool {
             // ignore
         }
 
-        LOGGER.info("Loaded IPPool");
+        log.info("Loaded IPPool");
     }
 
     public void clearHardLinks() {
@@ -199,7 +199,7 @@ public class MysterServerPoolImpl implements MysterServerPool {
                 .addResultListener(this::suggestAddress)
                 .addExceptionListener((e) -> {
                     if (e instanceof UnknownHostException) {
-                        LOGGER.info("Could not add this address to the pool, unknown host: " + address);
+                        log.info("Could not add this address to the pool, unknown host: " + address);
                         return;
                     }
                     
@@ -247,7 +247,7 @@ public class MysterServerPoolImpl implements MysterServerPool {
                         .setInvoker(TrackerUtils.INVOKER).addResultListener(statsMessage -> {
                             serverStatsCallback(address, statsMessage);
                         })
-                        .addExceptionListener(_ -> LOGGER.info("Address not a server: " + address))
+                        .addExceptionListener(_ -> log.info("Address not a server: " + address))
                         .addExceptionListener(_ -> deadCache.addDeadAddress(address))
                         .addFinallyListener(() -> {
                             synchronized (MysterServerPoolImpl.this) {
@@ -372,7 +372,7 @@ public class MysterServerPoolImpl implements MysterServerPool {
         try {
             preferences.node(computeNodeNameFromIdentity(identity).toString()).removeNode();
         } catch (BackingStoreException _) {
-            LOGGER.info("Could not delete MysterIP pref node for " + identity.toString());
+            log.info("Could not delete MysterIP pref node for " + identity.toString());
         }
     }
 

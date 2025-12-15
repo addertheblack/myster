@@ -22,7 +22,7 @@ import com.myster.net.stream.server.ServerStats;
 import com.myster.type.MysterType;
 
 class TestMysterServerImplementation {
-//   private static final Logger LOGGER = Logger.getLogger(TestMysterServerPoolImpl.class.getName());
+//   private static final Logger log = Logger.getLogger(TestMysterServerPoolImpl.class.getName());
     
     // JUnit 5 will automatically create and clean up this temporary directory
     @TempDir

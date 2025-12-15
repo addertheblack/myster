@@ -21,7 +21,7 @@ import com.myster.net.stream.client.MysterDataOutputStream;
 public class RequestDirThread extends ServerStreamHandler {
     public static final int NUMBER = 78;
 
-    private static final Logger LOGGER = Logger.getLogger(RequestDirThread.class.getName());
+    private static final Logger log = Logger.getLogger(RequestDirThread.class.getName());
 
     public int getSectionNumber() {
         return NUMBER;
@@ -32,19 +32,19 @@ public class RequestDirThread extends ServerStreamHandler {
         MysterDataOutputStream out = context.socket().getOutputStream();
 
         var type = in.readType();
-        LOGGER.info("Reading: " + type);
+        log.info("Reading: " + type);
         String[] array = context.fileManager().getDirList(type);
 
         if (array == null) {
-            LOGGER.info("Null Pointer");
+            log.info("Null Pointer");
             out.writeInt(0);
         } else {
-            LOGGER.info("Sending: " + array.length + " Strings");
+            log.info("Sending: " + array.length + " Strings");
             out.writeInt(array.length);
 
             for (int j = 0; j < array.length; j++) {
                 out.writeUTF(array[j]);
-                LOGGER.fine("Outputting: " + array[j]);
+                log.fine("Outputting: " + array[j]);
             }
         }
     }

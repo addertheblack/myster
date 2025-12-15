@@ -24,7 +24,7 @@ import java.util.zip.ZipFile;
 import com.myster.net.stream.client.MysterDataInputStream;
 
 public class JarClassLoader extends ClassLoader {
-    private static final Logger LOGGER = Logger.getLogger(JarClassLoader.class.getName());
+    private static final Logger log = Logger.getLogger(JarClassLoader.class.getName());
     
     private final Hashtable<String, Class> cache = new Hashtable<>();
     private final ZipFile zip;
@@ -42,7 +42,7 @@ public class JarClassLoader extends ClassLoader {
 
         while (t.hasMoreElements()) {
             ZipEntry entry = ((ZipEntry) (t.nextElement()));
-            LOGGER.info(entry.getName());
+            log.info(entry.getName());
         }
     }
 
@@ -64,7 +64,7 @@ public class JarClassLoader extends ClassLoader {
             InputStream in = zip.getInputStream(entry);
             long size = entry.getSize();
             if (size == -1) {
-                LOGGER.info("This file is broken");
+                log.info("This file is broken");
                 throw new ClassNotFoundException("Fuck");
             }
             
@@ -84,16 +84,16 @@ public class JarClassLoader extends ClassLoader {
             try {
                 return findSystemClass(name);
             } catch (NoClassDefFoundError ex) {
-                LOGGER.info("Here.");
+                log.info("Here.");
                 return null;
             } catch (Error ex) {
-                LOGGER.info("" + ex);
+                log.info("" + ex);
                 throw ex;
             }
         } catch (ClassNotFoundException ex) {
             Class c = cache.get(name);
             if (c == null) {
-                LOGGER.info("Loading class : " + name);
+                log.info("Loading class : " + name);
                 byte data[] = loadClassData(name);
                 c = defineClass(name, data, 0, data.length);
                 cache.put(name, c);

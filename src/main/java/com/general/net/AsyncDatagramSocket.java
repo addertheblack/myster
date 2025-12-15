@@ -15,7 +15,7 @@ import java.util.logging.Logger;
 import com.general.thread.Invoker;
 
 public final class AsyncDatagramSocket {
-    private static final Logger LOGGER = Logger.getLogger(AsyncDatagramSocket.class.getName());
+    private static final Logger log = Logger.getLogger(AsyncDatagramSocket.class.getName());
     
     private static final int BIG_BUFFER = 65536;
     
@@ -76,11 +76,11 @@ public final class AsyncDatagramSocket {
                 usedPort = -2;
 
                 if (counter >= RETRIES) {
-                    LOGGER.severe("Closing AsyncDatagramSocket on " + p
+                    log.severe("Closing AsyncDatagramSocket on " + p
                             + " giving up due to too many errors...");
                 }
 
-                LOGGER.fine("Closing AsyncDatagramSocket on " + p + "...");
+                log.fine("Closing AsyncDatagramSocket on " + p + "...");
             } finally {
                 invoker.shutdown();
             }
@@ -102,7 +102,7 @@ public final class AsyncDatagramSocket {
                     channel.configureBlocking(false);
                     channel.register(selector, SelectionKey.OP_READ);
                     usedPort = ((InetSocketAddress) channel.getLocalAddress()).getPort();
-                    LOGGER.fine("Opened DatagramChannel on UDP port " + usedPort
+                    log.fine("Opened DatagramChannel on UDP port " + usedPort
                             + (port != usedPort ? " (a random port) " : ""));
 
                     mainLoop(channel);
@@ -120,7 +120,7 @@ public final class AsyncDatagramSocket {
                      */
                     long sleepTimeMs = 10 * (long) Math.pow(2, counter);
                     
-                    LOGGER.fine("Waiting "+ sleepTimeMs+ "ms before retry.. Failed to open DatagramChannel on port " + port + ": "
+                    log.fine("Waiting "+ sleepTimeMs+ "ms before retry.. Failed to open DatagramChannel on port " + port + ": "
                             + ex.getMessage());
                     usedPort = -2;
 
@@ -196,7 +196,7 @@ public final class AsyncDatagramSocket {
         }
 
         public void flagToEnd() {
-            LOGGER.fine("Requesting AsyncDatagramSocket on " + port + " to close...");
+            log.fine("Requesting AsyncDatagramSocket on " + port + " to close...");
             endFlag = true;
 
             if (selector != null) {

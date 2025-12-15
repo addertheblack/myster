@@ -11,7 +11,7 @@ import com.myster.transaction.TransactionProtocol;
 import com.myster.transaction.TransactionSender;
 
 public class EncryptedDatagramServer implements TransactionProtocol {
-    private static final Logger LOGGER = Logger.getLogger(EncryptedDatagramServer.class.getName());
+    private static final Logger log = Logger.getLogger(EncryptedDatagramServer.class.getName());
 
     public interface TransactionManager {
         void resendTransaction(TransactionSender sender, Transaction transaction)
@@ -38,7 +38,7 @@ public class EncryptedDatagramServer implements TransactionProtocol {
                                     Object transactionObject)
             throws BadPacketException {
         try {
-            LOGGER.fine("Server got an encrypted packet");
+            log.fine("Server got an encrypted packet");
             
             // Decrypt the MSD packet using the protocol utilities
             DatagramEncryptUtil.R decryptResult = DatagramEncryptUtil.decryptRequestPacket(
@@ -49,7 +49,7 @@ public class EncryptedDatagramServer implements TransactionProtocol {
             // Extract original transaction code from first 4 bytes of decrypted payload
             byte[] decryptedPayload = decryptResult.payload;
             if (decryptedPayload.length < 4) {
-                LOGGER.warning("Decrypted payload too short from " + transaction.getAddress());
+                log.warning("Decrypted payload too short from " + transaction.getAddress());
                 sendDecryptionError(sender, transaction);
                 return;
             }
@@ -75,7 +75,7 @@ public class EncryptedDatagramServer implements TransactionProtocol {
                     Transaction encryptedTransaction =
                             t.withDifferentPayload(encryptedData, DatagramConstants.STLS_CODE);
                     
-                    LOGGER.fine("Server sent an encrypted reply packet");
+                    log.fine("Server sent an encrypted reply packet");
                     sender.sendTransaction(encryptedTransaction);
                 }
             };
@@ -83,11 +83,11 @@ public class EncryptedDatagramServer implements TransactionProtocol {
             // Forward to transaction manager as if it received the original unencrypted packet
             manager.resendTransaction(encrypterSender, decryptedTransaction);
             
-            LOGGER.fine("Successfully decrypted and forwarded transaction code " + originalTransactionCode 
+            log.fine("Successfully decrypted and forwarded transaction code " + originalTransactionCode 
                        + " from " + transaction.getAddress());
             
         } catch (DatagramEncryptUtil.DecryptionException e) {
-            LOGGER.warning("Failed to decrypt packet from " + transaction.getAddress() + ": " + e.getMessage());
+            log.warning("Failed to decrypt packet from " + transaction.getAddress() + ": " + e.getMessage());
             sendDecryptionError(sender, transaction);
             throw new BadPacketException("Packet decryption failed: " + e.getMessage());
         }
@@ -104,7 +104,7 @@ public class EncryptedDatagramServer implements TransactionProtocol {
             
             sender.sendTransaction(errorResponse);
         } catch (RuntimeException e) {
-            LOGGER.severe("Failed to send decryption error response: " + e.getMessage());
+            log.severe("Failed to send decryption error response: " + e.getMessage());
             // Don't re-throw - we've already logged the issue
         }
     }

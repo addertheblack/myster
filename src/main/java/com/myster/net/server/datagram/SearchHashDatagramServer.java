@@ -68,7 +68,7 @@ public class SearchHashDatagramServer implements TransactionProtocol {
             } else {
                 out.writeUTF(file.getName());
             }
-
+            
             sender.sendTransaction(new Transaction(transaction,
                                                    byteOutputStream.toByteArray(),
                                                    DatagramConstants.NO_ERROR));

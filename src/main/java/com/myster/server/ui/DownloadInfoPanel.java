@@ -39,7 +39,7 @@ import com.myster.server.event.ServerDownloadDispatcher;
 import com.myster.ui.MysterFrameContext;
 
 public class DownloadInfoPanel extends JPanel {
-    private static final Logger LOGGER = Logger.getLogger(DownloadInfoPanel.class.getName());
+    private static final Logger log = Logger.getLogger(DownloadInfoPanel.class.getName());
     
     private final ServerContext serverContext;
     private final ConnectionHandler chandler;
@@ -206,7 +206,7 @@ public class DownloadInfoPanel extends JPanel {
                 ServerDownloadDispatcher d = (ServerDownloadDispatcher) e.getSectionObject();
                 int index = getIndexOfDispatcher(d);
                 if (index == -1) {
-                    LOGGER.warning("Couldn't find this dispatcher.. weird..");
+                    log.warning("Couldn't find this dispatcher.. weird..");
                     return;
                 }
                 DownloadMCListItem downloadMCListItem = (DownloadMCListItem) list

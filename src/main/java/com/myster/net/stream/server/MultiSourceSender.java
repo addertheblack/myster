@@ -39,7 +39,7 @@ import com.myster.type.MysterType;
 //repeat from 1
 
 public class MultiSourceSender extends ServerStreamHandler {
-    private static final Logger LOGGER = Logger.getLogger(MultiSourceSender.class.getName());
+    private static final Logger log = Logger.getLogger(MultiSourceSender.class.getName());
     
     public static final String QUEUED_PATH = "/queued";
     public static final String MESSAGE_PATH = "/message";
@@ -152,7 +152,7 @@ public class MultiSourceSender extends ServerStreamHandler {
                     // code!!!!!! AGHHH!!
                     this.offset = this.fileLength;
                     amountDownloaded = 0;
-                    LOGGER.info("GOT END SIGNAL: " + this.offset + " : " + this.fileLength);
+                    log.info("GOT END SIGNAL: " + this.offset + " : " + this.fileLength);
                     return;
                 }
 
@@ -218,7 +218,7 @@ public class MultiSourceSender extends ServerStreamHandler {
                 if (currentBlock.isEndSignal()) {
                     this.offset = this.fileLength;
                     amountDownloaded = 0;
-                    LOGGER.info("GOT END SIGNAL: " + this.offset + " : " + this.fileLength);
+                    log.info("GOT END SIGNAL: " + this.offset + " : " + this.fileLength);
                     break;
                 }
 
@@ -422,16 +422,15 @@ public class MultiSourceSender extends ServerStreamHandler {
         // diconnects.
         private UploadBlock getNextBlockToSend(MysterSocket socket, File file) throws IOException {
             final long offset = socket.in.readLong();
-            long fileLength = socket.in.readLong();
+            long segmentSize = socket.in.readLong();
             
-            if (offset == fileLength && fileLength == 0) {
+            if (offset == segmentSize && segmentSize == 0) {
                 throw new DoneIoException();
             }
 
-            if ((fileLength < 0) | (offset < 0) | ((fileLength == 0) & (offset != 0))
-                    | (fileLength + offset > file.length())) {
-                throw new IOException("Client sent garbage fileLengths and offsets of "
-                        + fileLength + " and " + offset);
+            if (segmentSize < 0 || (offset < 0) || (segmentSize == 0) || (segmentSize + offset > file.length())) {
+                throw new IOException("Client sent garbage fileLengths and offsets of segmentSize: "
+                        + segmentSize + " and offset: " + offset + " and file length: " + file.length());
             }
 
             if (myCounter > file.length()) {
@@ -440,7 +439,7 @@ public class MultiSourceSender extends ServerStreamHandler {
 
             this.offset = offset;
 
-            return new UploadBlock(offset, fileLength);
+            return new UploadBlock(offset, segmentSize);
 
         }
 

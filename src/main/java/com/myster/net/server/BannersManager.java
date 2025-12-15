@@ -156,7 +156,7 @@ public class BannersManager {
     }
 
     public static class BannersPreferences extends PreferencesPanel {
-        public static final Logger LOGGER = Logger.getLogger(BannersPreferences.class.getName());
+        public static final Logger log = Logger.getLogger(BannersPreferences.class.getName());
         
         public static final int LIST_YSIZE = 150;
         public static final int BUTTON_YSIZE = 25;
@@ -209,7 +209,7 @@ public class BannersManager {
                         
                         java.awt.Desktop.getDesktop().open(dir);
                     } catch (Exception ex) {
-                        LOGGER.fine("Could not open the file explorer on this path: " + getImagesDirectory());
+                        log.fine("Could not open the file explorer on this path: " + getImagesDirectory());
                         ex.printStackTrace();
                     }
                 }

@@ -100,7 +100,7 @@ import com.myster.util.ThemeUtil;
 import com.simtechdata.waifupnp.UPnP;
 
 public class Myster {
-    private static final Logger LOGGER = Logger.getLogger(Myster.class.getName());
+    private static final Logger log = Logger.getLogger(Myster.class.getName());
     private static final Logger INSTRUMENTATION = Logger.getLogger("INSTRUMENTATION");
 
     public static void main(String[] args) throws IOException {
@@ -108,9 +108,9 @@ public class Myster {
         
         String loggingConfig = System.getProperty("java.util.logging.config.file");
         if (loggingConfig != null) {
-            LOGGER.info("Logging config file: " + loggingConfig);
+            log.info("Logging config file: " + loggingConfig);
         } else {
-            LOGGER.info("Logging config file not set");
+            log.info("Logging config file not set");
         }
         
         TypeDescriptionList tdList;
@@ -132,16 +132,16 @@ public class Myster {
         // ignored by everyone except mac
         System.setProperty("apple.laf.useScreenMenuBar", "true");
 
-        LOGGER.info("java.vm.specification.version:"
+        log.info("java.vm.specification.version:"
                 + System.getProperty("java.vm.specification.version"));
-        LOGGER.info("java.vm.specification.vendor :"
+        log.info("java.vm.specification.vendor :"
                 + System.getProperty("java.vm.specification.vendor"));
-        LOGGER.info("java.vm.specification.name   :"
+        log.info("java.vm.specification.name   :"
                 + System.getProperty("java.vm.specification.name"));
-        LOGGER.info("java.vm.version              :" + System.getProperty("java.vm.version"));
-        LOGGER.info("java.vm.vendor               :" + System.getProperty("java.vm.vendor"));
-        LOGGER.info("java.vm.name                 :" + System.getProperty("java.vm.name"));
-        LOGGER.info("Desktop.isDesktopSupported() :" + Desktop.isDesktopSupported());
+        log.info("java.vm.version              :" + System.getProperty("java.vm.version"));
+        log.info("java.vm.vendor               :" + System.getProperty("java.vm.vendor"));
+        log.info("java.vm.name                 :" + System.getProperty("java.vm.name"));
+        log.info("Desktop.isDesktopSupported() :" + Desktop.isDesktopSupported());
 
         MysterPreferences preferences = MysterPreferences.getInstance();
         
@@ -412,7 +412,7 @@ public class Myster {
                     com.myster.net.stream.client.msdownload.MSPartialFile
                             .restartDownloads(fileManager, crawlerManager, context, downloadQueue);
                 } catch (IOException ex) {
-                    LOGGER.info("Error in restarting downloads.");
+                    log.info("Error in restarting downloads.");
                     ex.printStackTrace();
                 }
 
@@ -451,13 +451,13 @@ public class Myster {
         // ugh
         printoutAllNetworkInterfaces();
         printoutAllIpAddresses();
-        LOGGER.info("UPnP available: " + UPnP.isUPnPAvailable());
-        LOGGER.info("External UPnP gateway: " + UPnP.getDefaultGatewayIP());
-        LOGGER.info("External IP: " + UPnP.getExternalIP());
-        LOGGER.info("Local IP: " + UPnP.getLocalIP());
-        LOGGER.info("isMappedTCP(): " + UPnP.isMappedTCP(MysterGlobals.DEFAULT_SERVER_PORT));
-        LOGGER.info("External TCP/IP port enabled: " + UPnP.openPortTCP(MysterGlobals.DEFAULT_SERVER_PORT));
-        LOGGER.info("External UDP/IP port enabled: " + UPnP.openPortUDP(MysterGlobals.DEFAULT_SERVER_PORT));
+        log.info("UPnP available: " + UPnP.isUPnPAvailable());
+        log.info("External UPnP gateway: " + UPnP.getDefaultGatewayIP());
+        log.info("External IP: " + UPnP.getExternalIP());
+        log.info("Local IP: " + UPnP.getLocalIP());
+        log.info("isMappedTCP(): " + UPnP.isMappedTCP(MysterGlobals.DEFAULT_SERVER_PORT));
+        log.info("External TCP/IP port enabled: " + UPnP.openPortTCP(MysterGlobals.DEFAULT_SERVER_PORT));
+        log.info("External UDP/IP port enabled: " + UPnP.openPortUDP(MysterGlobals.DEFAULT_SERVER_PORT));
         
         ServerUtils.massPing(protocol, tracker);
     } // Utils, globals etc.. //These variables are System wide variables //
@@ -506,7 +506,7 @@ public class Myster {
                 LogManager.getLogManager().readConfiguration(in);
             }
         } else {
-            LOGGER.info("logging.properties file not found");
+            log.info("logging.properties file not found");
             return;
         }
     }
@@ -514,19 +514,19 @@ public class Myster {
 
     private static void printoutAllNetworkInterfaces() {
         try {
-            LOGGER.info("Full list of Network Interfaces:");
+            log.info("Full list of Network Interfaces:");
             for (Enumeration<NetworkInterface> en = NetworkInterface.getNetworkInterfaces(); en
                     .hasMoreElements();) {
                 NetworkInterface intf = en.nextElement();
-                LOGGER.info("    " + intf.getName() + " " + intf.getDisplayName());
+                log.info("    " + intf.getName() + " " + intf.getDisplayName());
                 for (Enumeration<InetAddress> enumIpAddr = intf.getInetAddresses(); enumIpAddr
                         .hasMoreElements();) {
                     InetAddress nextAddress = enumIpAddr.nextElement();
-                    LOGGER.info("        " + nextAddress.toString());
+                    log.info("        " + nextAddress.toString());
                 }
             }
         } catch (SocketException _) {
-            LOGGER.info(" (error retrieving network interface list)");
+            log.info(" (error retrieving network interface list)");
         }
     }
 
@@ -534,20 +534,20 @@ public class Myster {
         List<InetAddress> networkAddresses = new ArrayList<>();
         try {
             InetAddress localhost = InetAddress.getLocalHost();
-            LOGGER.info("IP Addr for local host: " + localhost.getHostAddress());
+            log.info("IP Addr for local host: " + localhost.getHostAddress());
 
             // Just in case this host has multiple IP addresses....
             InetAddress[] allMyIps = InetAddress.getAllByName(localhost.getCanonicalHostName());
             if (allMyIps != null && allMyIps.length > 1) {
-                LOGGER.info(" Full list of IP addresses:");
+                log.info(" Full list of IP addresses:");
                 for (int i = 0; i < allMyIps.length; i++) {
-                    LOGGER.info("    " + allMyIps[i].getHostAddress());
+                    log.info("    " + allMyIps[i].getHostAddress());
                     if (networkAddresses.isEmpty())
                         networkAddresses.add(allMyIps[i]);
                 }
             }
         } catch (UnknownHostException e) {
-            LOGGER.info(" (error retrieving server host name)");
+            log.info(" (error retrieving server host name)");
         }
     }
 }

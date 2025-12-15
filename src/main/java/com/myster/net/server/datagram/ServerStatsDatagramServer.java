@@ -20,7 +20,7 @@ import com.myster.transaction.TransactionSender;
  * Server side datagram implementation of Myster server stats connection section.
  */
 public class ServerStatsDatagramServer implements TransactionProtocol {
-    private static final Logger LOGGER = Logger.getLogger(ServerStatsDatagramServer.class.getName());
+    private static final Logger log = Logger.getLogger(ServerStatsDatagramServer.class.getName());
     
     private final Supplier<String> getServerName;
     private final Supplier<Integer> getPort;

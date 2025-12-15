@@ -24,7 +24,7 @@ import com.myster.ui.MysterFrame;
 import com.myster.ui.MysterFrameContext;
 
 public class ProgressWindow extends MysterFrame {
-    private static final Logger LOGGER = Logger.getLogger(ProgressWindow.class.getName());
+    private static final Logger log = Logger.getLogger(ProgressWindow.class.getName());
     
     public static final int X_SIZE = 468;
     public static final int Y_SIZE = 50;
@@ -104,7 +104,7 @@ public class ProgressWindow extends MysterFrame {
 //            }
 //
 //            if (counter > 1) {
-//                LOGGER.fine("I have tried " + counter
+//                log.fine("I have tried " + counter
 //                        + " times to change the size of the progress window!");
 //            }
 //        }
@@ -180,7 +180,7 @@ public class ProgressWindow extends MysterFrame {
         try {
             tracker.waitForID(0);
         } catch (Exception ex) {
-            LOGGER.severe("Crap");
+            log.severe("Crap");
         }
 
         adPanel.addImage(ad);

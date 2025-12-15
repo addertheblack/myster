@@ -39,7 +39,7 @@ import org.bouncycastle.operator.jcajce.JcaContentSignerBuilder;
 import com.myster.application.MysterGlobals;
 
 public class Identity {
-    private static final Logger LOGGER = Logger.getLogger(Identity.class.getName());
+    private static final Logger log = Logger.getLogger(Identity.class.getName());
     private static final String KEYSTORE_PASSWORD = "If I am typing this somethig is terribly wrong.";
 
     /* Package protected for unit tests */
@@ -167,8 +167,8 @@ public class Identity {
             String encodedPrivateKey = Base64.getEncoder().encodeToString(privateKey.getEncoded());
             String encodedPublicKey = Base64.getEncoder().encodeToString(publicKey.getEncoded());
 
-            LOGGER.finest("Private Key: " + encodedPrivateKey);
-            LOGGER.fine("Public Key: " + encodedPublicKey);
+            log.finest("Private Key: " + encodedPrivateKey);
+            log.fine("Public Key: " + encodedPublicKey);
 
             Certificate certificate = generateSelfSignedCertificate(keyPair);
 
@@ -232,13 +232,13 @@ public class Identity {
 
     private void load() {
         if (loadFrom(keystoreName())) {
-            LOGGER.fine("Keystore loaded from usual place");
+            log.fine("Keystore loaded from usual place");
             return;
         } else if (loadFrom(keystoreNameNew())) {
-            LOGGER.info("Keystore loaded from new file");
+            log.info("Keystore loaded from new file");
             return;
         } else if (loadFrom(keystoreNameOld())) {
-            LOGGER.warning("Keystore loaded from backup");
+            log.warning("Keystore loaded from backup");
             return;
         }
 
@@ -248,7 +248,7 @@ public class Identity {
         } catch (KeyStoreException | NoSuchAlgorithmException | CertificateException | IOException exception) {
             exception.printStackTrace();
         }
-        LOGGER.info("Keystore could not be loaded so creating a new one");
+        log.info("Keystore could not be loaded so creating a new one");
     }
 
     private String keystoreName() {
@@ -303,7 +303,7 @@ public class Identity {
         try {
             boolean success =   keyStorePath.mkdirs();
             if (!success && !keyStorePath.exists()) {
-                LOGGER.severe("Could not make key store path - directories could not be created: "+keyStorePath);
+                log.severe("Could not make key store path - directories could not be created: "+keyStorePath);
             }
             final File file = new File(keyStorePath, keystoreNameNew());
             
@@ -319,7 +319,7 @@ public class Identity {
             
             final File existing = new File(keyStorePath, keystoreName());
             if (existing.exists() && !existing.renameTo(new File(keyStorePath, keystoreNameOld())) ) {
-                LOGGER.severe("Could not delete old keystore because I couldn't rename it out of the way.");
+                log.severe("Could not delete old keystore because I couldn't rename it out of the way.");
                 return;
             }
             
@@ -328,7 +328,7 @@ public class Identity {
             }
 
             if (!file.renameTo(new File(keyStorePath, keystoreName()))) {
-                LOGGER.severe("Could not rename new keystore.");
+                log.severe("Could not rename new keystore.");
                 return;
             }
         } catch (KeyStoreException exception) {

@@ -30,7 +30,7 @@ import com.myster.type.MysterType;
  * ebooks...
  */
 public class MultiSourceHashSearch implements HashCrawlerManager {
-    private static final Logger LOGGER = Logger.getLogger(MultiSourceHashSearch.class.getName());
+    private static final Logger log = Logger.getLogger(MultiSourceHashSearch.class.getName());
 
     private static final int TIME_BETWEEN_CRAWLS = 10 * 60 * 1000;
 
@@ -83,7 +83,7 @@ public class MultiSourceHashSearch implements HashCrawlerManager {
      * Starts the crawler for the type
      */
     public synchronized void addHash(MysterType type, FileHash hash, HashSearchListener listener) {
-        LOGGER.fine("Adding hash to crawler " + hash);
+        log.fine("Adding hash to crawler " + hash);
 
         List<SearchEntry> entriesVector = getEntriesForType(type);
 
@@ -96,7 +96,7 @@ public class MultiSourceHashSearch implements HashCrawlerManager {
         entriesVector.add(new SearchEntry(hash, listener));
 
 
-        LOGGER.fine("Size of entriesVector " + entriesVector.size());
+        log.fine("Size of entriesVector " + entriesVector.size());
         if ((entriesVector.size() >= 1)) {
             restartCrawler(type);
         }
@@ -110,7 +110,7 @@ public class MultiSourceHashSearch implements HashCrawlerManager {
     public synchronized void removeHash(MysterType type,
                                         FileHash hash,
                                         HashSearchListener listener) {
-        LOGGER.fine("Removing hash from crawler " + hash);
+        log.fine("Removing hash from crawler " + hash);
 
         List<SearchEntry> entriesVector = getEntriesForType(type);
 
@@ -123,7 +123,7 @@ public class MultiSourceHashSearch implements HashCrawlerManager {
 
     // asserts that the crawler is stopping
     private synchronized void stopCrawler(MysterType type) {
-        LOGGER.fine("stopCrawler(" + type + ")");
+        log.fine("stopCrawler(" + type + ")");
         BatchedType batchedType = getBatchForType(type);
 
         if (batchedType.asyncTracker == null)
@@ -135,14 +135,14 @@ public class MultiSourceHashSearch implements HashCrawlerManager {
     }
 
     private synchronized void restartCrawler(MysterType type) {
-        LOGGER.fine("restartCrawler(" + type + ")");
+        log.fine("restartCrawler(" + type + ")");
 
         stopCrawler(type);
         if (getEntriesForType(type).size() > 0) { // are we still relevant?
             MultiSourceUtilities.debug("Retarting crawler!");
             startCrawler(type);
         } else {
-            LOGGER.fine("Not calling restartCrawler(" + type
+            log.fine("Not calling restartCrawler(" + type
                     + ") because there are no more hashes");
         }
     }
@@ -150,7 +150,7 @@ public class MultiSourceHashSearch implements HashCrawlerManager {
     // asserts that the crawler is running (ie: only "starts" the crawler if one
     // is not already running)
     private synchronized void startCrawler(final MysterType type) {
-        LOGGER.fine("startCrawler(" + type + ")");
+        log.fine("startCrawler(" + type + ")");
         if (tracker == null) {
             throw new NullPointerException("tracker not inited");
         }
@@ -194,15 +194,15 @@ public class MultiSourceHashSearch implements HashCrawlerManager {
 
                                     MysterFileStub stub =
                                             new MysterFileStub(address, localType, fileName);
-                                    LOGGER.fine("Found new matching file \"" + stub + "\"");
+                                    log.fine("Found new matching file \"" + stub + "\"");
                                     searchEntry.listener.searchResult(stub);
                                 })
-                                .addExceptionListener(ex -> LOGGER
+                                .addExceptionListener(ex -> log
                                         .fine("Exception while doing UDP hash search crawler getFileFromHash("
                                                 + address + ", " + localType + ") " + ex)))
                         .collect(Collectors.toList());
 
-                LOGGER.fine("Searching for " + f.size() + " hashes");
+                log.fine("Searching for " + f.size() + " hashes");
                 return PromiseFutures.all(f);
             };
 
@@ -211,7 +211,7 @@ public class MultiSourceHashSearch implements HashCrawlerManager {
                     AsyncTaskTracker t = AsyncTaskTracker.create(new SimpleTaskTracker(), INVOKER);
                     t.setDoneListener(() -> context.setResult(null));
                     AsyncNetworkCrawler
-                            .startWork(LOGGER, protocol, searchIp, type, ipQueue, tracker::addIp, t);
+                            .startWork(log, protocol, searchIp, type, ipQueue, tracker::addIp, t);
                 });
             }).addResultListener((_) -> waitForSomeTimeThenRestart(asyncTaskTracker, type));
         });
@@ -219,7 +219,7 @@ public class MultiSourceHashSearch implements HashCrawlerManager {
 
     private void waitForSomeTimeThenRestart(AsyncTaskTracker tracker, MysterType type) {
         tracker.doAsync(() -> {
-            LOGGER.fine("Crawler sleeping for " + timeInMs + "ms for type " + type);
+            log.fine("Crawler sleeping for " + timeInMs + "ms for type " + type);
             return sleep(timeInMs).addResultListener((_) -> restartCrawler(type));
         });
     }

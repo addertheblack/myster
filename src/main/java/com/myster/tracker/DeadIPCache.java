@@ -12,7 +12,7 @@ import com.myster.net.MysterAddress;
  *  
  */
 class DeadIPCache {
-    private static final Logger LOGGER = Logger.getLogger(DeadIPCache.class.getName());
+    private static final Logger log = Logger.getLogger(DeadIPCache.class.getName());
     
     private final LinkedList<DeadItem> queue = new LinkedList<>();
 
@@ -40,7 +40,7 @@ class DeadIPCache {
     public synchronized void addDeadAddress(MysterAddress address) {
         removeDead();
         if (queue.getSize() > 150) {
-            LOGGER.info("Dead IP Cache has " + queue.getSize() + " items in it!");
+            log.info("Dead IP Cache has " + queue.getSize() + " items in it!");
         }
         
         DeadItem i = new DeadItem(address, System.currentTimeMillis());

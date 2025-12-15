@@ -30,7 +30,7 @@ import com.myster.transaction.TransactionManager;
 import com.myster.transaction.TransactionProtocol;
 
 public class ServerFacade {
-    private static final Logger LOGGER = Logger.getLogger(ServerFacade.class.getName());
+    private static final Logger log = Logger.getLogger(ServerFacade.class.getName());
 
     private boolean inited = true;
 
@@ -78,11 +78,11 @@ public class ServerFacade {
         
         
         if (preferences.getServerPort() != MysterGlobals.DEFAULT_SERVER_PORT) {
-            LOGGER.fine("Initializing LAN operator");
+            log.fine("Initializing LAN operator");
             try {
                 initLanResourceDiscovery(operatorList);
             } catch (SocketException exception) {
-                LOGGER.log(Level.WARNING, "Could not initialize LAN socket", exception);
+                log.log(Level.WARNING, "Could not initialize LAN socket", exception);
             }
         }
         

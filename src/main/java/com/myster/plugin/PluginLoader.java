@@ -12,7 +12,7 @@ import com.general.util.AnswerDialog;
  */
 
 public class PluginLoader implements Runnable {
-    private static final Logger LOGGER = Logger.getLogger(PluginLoader.class.getName());
+    private static final Logger log = Logger.getLogger(PluginLoader.class.getName());
     
     private final File pluginDirectory;
 
@@ -41,29 +41,29 @@ public class PluginLoader implements Runnable {
                         true)).newInstance())).pluginInit();
 
             } catch (IOException ex) {
-                LOGGER.info("Plugin " + f_temp.getName() + " could not be loaded due to a "
+                log.info("Plugin " + f_temp.getName() + " could not be loaded due to a "
                         + ex.toString() + " error.");
             } catch (ClassNotFoundException ex) {
-                LOGGER.info("Plugin " + f_temp.getName()
+                log.info("Plugin " + f_temp.getName()
                         + " does not have a \"com.myster.plugins.Main\" class.");
             } catch (InstantiationException ex) {
-                LOGGER.info("Plugin " + f_temp.getName()
+                log.info("Plugin " + f_temp.getName()
                         + " refused to create a new instance of \"com.myster.plugins.Main\" class.");
             } catch (IllegalAccessException ex) {
                 ex.printStackTrace();
             } catch (Exception ex) {
-                LOGGER.info("Unexpected Exception. While loading a plugin.w");
+                log.info("Unexpected Exception. While loading a plugin.w");
                 ex.printStackTrace();
             } catch (NoClassDefFoundError ex) {
-                LOGGER.info("NoClassDefFoundError: The pluggin " + f_temp.getName()
+                log.info("NoClassDefFoundError: The pluggin " + f_temp.getName()
                         + " is not compatiable with Myster.");
-                LOGGER.info("NoClassDefFoundError: The pluggin uses a class that is "
+                log.info("NoClassDefFoundError: The pluggin uses a class that is "
                         + "not in this version of Myster.");
                 ex.printStackTrace();
                 AnswerDialog.simpleAlert("The pluggin " + f_temp.getName()
                         + " is not compatiable with this version of Myster." + "\n");
             } catch (Error ex) {
-                LOGGER.info("Unexpected error. The pluggin is not compatiable with Myster.");
+                log.info("Unexpected error. The pluggin is not compatiable with Myster.");
                 ex.printStackTrace();
             }
         }

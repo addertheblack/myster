@@ -25,7 +25,7 @@ import com.myster.ui.WindowPrefDataKeeper.PrefData;
 import com.myster.util.Sayable;
 
 public class ServerStatsWindow extends MysterFrame implements Sayable {
-    private static final Logger LOGGER = Logger.getLogger(ServerStatsWindow.class.getName());
+    private static final Logger log = Logger.getLogger(ServerStatsWindow.class.getName());
     
     private final JTabbedPane tab;
     private final DownloadInfoPanel downloadPanel;
@@ -80,7 +80,7 @@ public class ServerStatsWindow extends MysterFrame implements Sayable {
     }
 
     public void say(String s) {
-        LOGGER.info(s);
+        log.info(s);
     }
 
     protected ServerStatsWindow(MysterFrameContext c) {

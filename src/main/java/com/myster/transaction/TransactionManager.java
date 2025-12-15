@@ -29,7 +29,7 @@ import com.myster.server.event.ServerEventDispatcher;
  * TODO put in transaction protocol docs here.
  */
 public class TransactionManager {
-    private static final Logger LOGGER = Logger.getLogger(TransactionManager.class.getName());
+    private static final Logger log = Logger.getLogger(TransactionManager.class.getName());
     
     private final ServerEventDispatcher dispatcher;
     private final DatagramProtocolManager datagramManager;
@@ -232,7 +232,7 @@ public class TransactionManager {
                     .get(transaction.getTransactionCode());
 
             if (protocol == null) {
-                LOGGER.info("No Transaction protocol registered under type: "
+                log.info("No Transaction protocol registered under type: "
                         + transaction.getTransactionCode());
 
                 sender.sendTransaction(new Transaction(transaction, new byte[0],

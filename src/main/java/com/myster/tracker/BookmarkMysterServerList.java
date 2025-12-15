@@ -23,7 +23,7 @@ import com.myster.tracker.Tracker.ListChangedListener;
  * and potentially a folder for organization.
  */
 public class BookmarkMysterServerList {
-    private static final Logger LOGGER = Logger.getLogger(BookmarkMysterServerList.class.getName());
+    private static final Logger log = Logger.getLogger(BookmarkMysterServerList.class.getName());
     private static final String BOOKMARK_PREF_KEY = "Bookmarks"; // the place where bookmarked servers are stored
     private static final String ALT_NAME_KEY = "altName";
     private static final String FOLDER_KEY = "folder";
@@ -91,10 +91,10 @@ public class BookmarkMysterServerList {
                             Bookmark bookmark = loadBookmarkMetadata(externalName, server.getIdentity());
                             bookmarks.put(server.getIdentity(), bookmark);
                         },
-                        () -> LOGGER.warning("Bookmarked server does not exist in pool: " + externalName + ". Repairing.")
+                        () -> log.warning("Bookmarked server does not exist in pool: " + externalName + ". Repairing.")
                     );
             } catch (Exception ex) {
-                LOGGER.warning("Failed to load bookmark: " + ex);
+                log.warning("Failed to load bookmark: " + ex);
             }
         }
     }
@@ -145,7 +145,7 @@ public class BookmarkMysterServerList {
         try {
             preferences.flush();
         } catch (BackingStoreException exception) {
-            LOGGER.warning("Failed to save bookmarks: " + exception);
+            log.warning("Failed to save bookmarks: " + exception);
         }
     }
 
@@ -169,7 +169,7 @@ public class BookmarkMysterServerList {
      */
     public synchronized void addBookmark(Bookmark bookmark) {
         if (!pool.existsInPool(bookmark.identity())) {
-            LOGGER.warning("Cannot bookmark server that doesn't exist in pool: " + bookmark.identity());
+            log.warning("Cannot bookmark server that doesn't exist in pool: " + bookmark.identity());
             return;
         }
         
@@ -192,7 +192,7 @@ public class BookmarkMysterServerList {
                     Preferences bookmarkNode = preferences.node(server.getExternalName().toString());
                     bookmarkNode.removeNode();
                 } catch (BackingStoreException e) {
-                    LOGGER.warning("Failed to remove bookmark node: " + e);
+                    log.warning("Failed to remove bookmark node: " + e);
                 }
             });
             

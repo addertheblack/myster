@@ -29,7 +29,7 @@ import com.general.util.Timer;
  * manage the different connection sections.
  */
 public class Operator implements Runnable {
-    private static final Logger LOGGER = Logger.getLogger(Operator.class.getName());
+    private static final Logger log = Logger.getLogger(Operator.class.getName());
     
     private final Consumer<Socket> socketConsumer; //Communication CHANNEL.
     private final int port;
@@ -89,12 +89,12 @@ public class Operator implements Runnable {
                 if (serverSocket != null)
                     try {
                         serverSocket.close();
-                    } catch (IOException ex) {
+                    } catch (IOException _) {
                     }
 
-                serverSocket = new ServerSocket(getPort(), 5, bindAddress.orElse(null)); //bigger buffer
+                serverSocket = new ServerSocket(getPort(), 512, bindAddress.orElse(null)); //bigger buffer
                 break;
-            } catch (IOException ex) {
+            } catch (IOException _) {
                 try {
                     Thread.sleep(10 * 1000);
                 } catch (InterruptedException exp) {
@@ -110,7 +110,7 @@ public class Operator implements Runnable {
 
         timer = new Timer(new Runnable() {
             public void run() {
-                LOGGER.info("RESETING THE CONNECTION");
+                log.info("RESETING THE CONNECTION");
                 refreshServerSocket();
             }
         }, 10 * 60 * 1000); //ms -> seconds -> minutes 10 minutes.

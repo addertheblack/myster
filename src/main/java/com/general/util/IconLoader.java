@@ -10,7 +10,7 @@ import javax.swing.ImageIcon;
 import javax.swing.UIManager;
 
 public final class IconLoader {
-    private static final Logger LOGGER = Logger.getLogger(IconLoader.class.getName());
+    private static final Logger log = Logger.getLogger(IconLoader.class.getName());
 
     private IconLoader() {}
 
@@ -46,13 +46,13 @@ public final class IconLoader {
     }
 
     public static Image loadImage(String filename, URL url) {
-        LOGGER.severe("loadImage() is loading  \"" + filename + "\"");
+        log.severe("loadImage() is loading  \"" + filename + "\"");
 
         if (filename == null)
             return null;
 
         if (url == null) {
-            LOGGER.severe("loadImage() could not find \"" + filename + "\"");
+            log.severe("loadImage() could not find \"" + filename + "\"");
 
             return null;
         }
@@ -62,12 +62,12 @@ public final class IconLoader {
             // Image)
             java.awt.image.BufferedImage img = javax.imageio.ImageIO.read(url);
             if (img == null) {
-                LOGGER.severe("loadImage(): unsupported or unreadable image format for \""
+                log.severe("loadImage(): unsupported or unreadable image format for \""
                         + filename + "\"");
             }
             return img; // drop-in: still an Image
         } catch (java.io.IOException e) {
-            LOGGER.severe("loadImage(): " + e + " for \"" + filename + "\"");
+            log.severe("loadImage(): " + e + " for \"" + filename + "\"");
             return null;
         }
     }

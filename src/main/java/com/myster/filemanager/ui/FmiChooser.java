@@ -50,7 +50,7 @@ import com.myster.util.TypeChoice;
  */
 
 public class FmiChooser extends PreferencesPanel {
-    private static final Logger LOGGER = Logger.getLogger(PreferencesPanel.class.getName());
+    private static final Logger log = Logger.getLogger(PreferencesPanel.class.getName());
 	private static final int XPAD = 10;
 	private static final int MAX_PATH_LABEL_SIZE = STD_XSIZE - 100 - 3 * XPAD - 5;
 	
@@ -149,7 +149,7 @@ public class FmiChooser extends PreferencesPanel {
                 hash.put(choice.getType().get(),
                          new SettingsStruct(choice.getType().get(), path, checkbox.isSelected()));
             } else {
-                LOGGER.info("User cancelled the action.");
+                log.info("User cancelled the action.");
             }
         });
         panel.add(button, innerGbc.withGridLoc(2, 0).withInsets(new Insets(5, 0, 0, 5)));

@@ -10,7 +10,7 @@ import com.myster.hash.FileHash;
 import com.myster.mml.MessagePak;
 
 public class FileItem {
-    private static final Logger LOGGER = Logger.getLogger(FileItem.class.getName());
+    private static final Logger log = Logger.getLogger(FileItem.class.getName());
     
     private final Path path;
     private FileHash[] fileHashes;
@@ -51,7 +51,7 @@ public class FileItem {
                 return i;
         }
 
-        LOGGER.fine("Could not find hash type: " + hashType);
+        log.fine("Could not find hash type: " + hashType);
         
         return -1;
     }
@@ -120,7 +120,7 @@ public class FileItem {
                 var pathElements = extractPathFromFileAndRoot(root, path);
                 messagePack.putStringArray("/path", pathElements.toArray(new String[] {}));
             } catch (java.io.IOException e) {
-                LOGGER.warning("Failed to get file size: " + e.getMessage());
+                log.warning("Failed to get file size: " + e.getMessage());
             }
         }
 

@@ -13,7 +13,7 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.DisplayName;
 
 class TestRobustMessagePackSerializer {
-    private static final Logger LOGGER = Logger.getLogger(TestRobustMessagePackSerializer.class.getName());
+    private static final Logger log = Logger.getLogger(TestRobustMessagePackSerializer.class.getName());
     private RobustMessagePackSerializer serializer;
 
     @BeforeEach

@@ -44,7 +44,7 @@ import com.myster.server.event.ServerEventDispatcher;
  */
 
 public class ConnectionRunnable implements Runnable {
-    private static final Logger LOGGER = Logger.getLogger(ConnectionRunnable.class.getName());
+    private static final Logger log = Logger.getLogger(ConnectionRunnable.class.getName());
     
     private final ServerEventDispatcher eventSender;
     private final TransferQueue transferQueue;
@@ -130,7 +130,7 @@ public class ConnectionRunnable implements Runnable {
                     
                     // Log the protocol code with multiple representations for debugging
                     String asciiRepresentation = intToAsciiString(protocolCode);
-                    LOGGER.fine("Protocol code received: " + protocolCode + 
+                    log.fine("Protocol code received: " + protocolCode + 
                                      " (0x" + Integer.toHexString(protocolCode).toUpperCase() + 
                                      ") ASCII: \"" + asciiRepresentation + "\"");
                 } catch (Exception _) {
@@ -143,7 +143,7 @@ public class ConnectionRunnable implements Runnable {
 
                 switch (protocolCode) {
                 case TLSSocket.STLS_CONNECTION_SECTION:
-                    LOGGER.fine("Client requested STLS (Start TLS) connection section");
+                    log.fine("Client requested STLS (Start TLS) connection section");
                     try {
                         // Send acceptance response (1 = success in Myster protocol)
                         context.socket().out.write(1);
@@ -155,11 +155,11 @@ public class ConnectionRunnable implements Runnable {
                         context = new ConnectionContext(tlsSocket, context.serverAddress(), context.sectionObject(), transferQueue, fileManager);
                         inputStream = context.socket().in;
                         
-                        LOGGER.fine("STLS upgrade successful - connection is now encrypted");
+                        log.fine("STLS upgrade successful - connection is now encrypted");
                         break;
                         
                     } catch (Exception e) {
-                        LOGGER.warning("Failed to upgrade to TLS: " + e.getMessage());
+                        log.warning("Failed to upgrade to TLS: " + e.getMessage());
                         
                         // Send rejection (0 = failure in Myster protocol)
                         context.socket().out.write(0);
@@ -178,7 +178,7 @@ public class ConnectionRunnable implements Runnable {
                     ConnectionSection section = connectionSections.get(protocolCode);
                     if (section == null) {
                         String asciiRepresentation = intToAsciiString(protocolCode);
-                        LOGGER.warning("System detects unknown protocol number: " + protocolCode + 
+                        log.warning("System detects unknown protocol number: " + protocolCode + 
                                      " (0x" + Integer.toHexString(protocolCode).toUpperCase() + 
                                      ") ASCII: \"" + asciiRepresentation + "\"");
                         context.socket().out.write(0); // Send rejection for unknown protocol

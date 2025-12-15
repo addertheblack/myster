@@ -19,7 +19,7 @@ import com.myster.net.MysterAddress;
 import com.myster.tracker.Tracker;
 
 public class AddMysterServerMenuAction implements ActionListener {
-    private static final Logger LOGGER = Logger.getLogger(AddMysterServerMenuAction.class.getName());
+    private static final Logger log = Logger.getLogger(AddMysterServerMenuAction.class.getName());
     
     private final Tracker tracker;
     
@@ -36,7 +36,7 @@ public class AddMysterServerMenuAction implements ActionListener {
         try {
             tracker.addIp(MysterAddress.createMysterAddress(answer));
         } catch (UnknownHostException ex) {
-            LOGGER.info("The \"Name\" : " + answer + " is not a valid domain name at all!");
+            log.info("The \"Name\" : " + answer + " is not a valid domain name at all!");
         }
     }
 }

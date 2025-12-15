@@ -20,7 +20,7 @@ public class PongTransport implements DatagramTransport {
     private static final int TIMEOUT = 60000;
     private static final int FIRST_TIMEOUT = 1000;
     
-    private static final Logger LOGGER = Logger.getLogger(AsyncDatagramSocket.class.getName());
+    private static final Logger log = Logger.getLogger(AsyncDatagramSocket.class.getName());
 
     private final Map<MysterAddress, PongItemStruct> requests = new HashMap<>();
     private final DatagramSender sender;
@@ -46,7 +46,7 @@ public class PongTransport implements DatagramTransport {
                 if (struct != null) {
                     justBeforeDispatch(param_address, struct);
                 } else {
-                    LOGGER.fine("Got PONG response but can't find a request that matches it: " + param_address + ":" + immutablePacket.getPort());
+                    log.fine("Got PONG response but can't find a request that matches it: " + param_address + ":" + immutablePacket.getPort());
                     return;
                 }
             }

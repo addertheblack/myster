@@ -39,7 +39,7 @@ import com.myster.net.datagram.client.PingResponse;
 import com.myster.type.MysterType;
 
 class TestMysterServerPoolImpl {
-    private static final Logger LOGGER = Logger.getLogger(TestMysterServerPoolImpl.class.getName());
+    private static final Logger log = Logger.getLogger(TestMysterServerPoolImpl.class.getName());
     
     private Map<MysterAddress, MessagePak> lookup;
     
@@ -192,12 +192,12 @@ class TestMysterServerPoolImpl {
             Thread.sleep(1); // give some time for the cleanup thread to run..
             if (!pool.existsInPool(identity2)) {
 
-                LOGGER.info("Myster server is not there.. good.");
+                log.info("Myster server is not there.. good.");
 
                 break;
             }
 
-            LOGGER.info("Myster server still there.. trying GC: " + (i + 1));
+            log.info("Myster server still there.. trying GC: " + (i + 1));
         }
 
         Assertions.assertFalse(pool.existsInPool(MysterAddress.createMysterAddress("127.0.0.1")));
@@ -579,7 +579,7 @@ class TestMysterServerPoolImpl {
 
             @Override
             public void serverPing(PingResponse pingResponse) {
-                LOGGER.info("Ping response from " + pingResponse.address() + " in " + pingResponse.pingTimeMs() +"ms");
+                log.info("Ping response from " + pingResponse.address() + " in " + pingResponse.pingTimeMs() +"ms");
             }
 
             @Override

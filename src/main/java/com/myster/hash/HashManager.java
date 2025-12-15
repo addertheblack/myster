@@ -19,7 +19,7 @@ import com.general.util.BlockingQueue;
  */
 
 public class HashManager implements Runnable {
-    private static final Logger LOGGER = Logger.getLogger(HashManager.class.getName());
+    private static final Logger log = Logger.getLogger(HashManager.class.getName());
     
     public static final String MD5 = "md5";
     public static final String SHA1 = "sha1";
@@ -204,7 +204,7 @@ public class HashManager implements Runnable {
             hashManagerDispatcher.fire().fileHashEnd(new HashManagerEvent(
                     hashingIsEnabled, path, Files.size(path)));
         } catch (IOException ex) {
-            LOGGER.warning("Could not read file: " + path + " - " + ex.getMessage());
+            log.warning("Could not read file: " + path + " - " + ex.getMessage());
         }
     }
 

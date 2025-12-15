@@ -31,7 +31,7 @@ import com.myster.util.MysterThread;
 import com.myster.util.Sayable;
 
 public class FileListerThread extends MysterThread {
-//    private static final Logger LOGGER = Logger.getLogger(FileListerThread.class.getName());
+//    private static final Logger log = Logger.getLogger(FileListerThread.class.getName());
     
     public record FileRecord(String file, MessagePak metaData) {}
     

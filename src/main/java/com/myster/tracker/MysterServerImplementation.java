@@ -35,7 +35,7 @@ import com.myster.type.MysterType;
  */
 
 class MysterServerImplementation {
-    private static final Logger LOGGER = Logger.getLogger("com.myster.tracker.MysterServer");
+    private static final Logger log = Logger.getLogger("com.myster.tracker.MysterServer");
     
     private final MysterIdentity identity;
     
@@ -167,7 +167,7 @@ class MysterServerImplementation {
         
         for (MysterAddress mysterAddress : addresses) {
             if (mysterAddress.getPort() != port) {
-                LOGGER.info("Deleting this address: " + mysterAddress);
+                log.info("Deleting this address: " + mysterAddress);
                 server.identityProvider.removeIdentity(server.identity, mysterAddress);
             }
         }
@@ -187,13 +187,13 @@ class MysterServerImplementation {
         if (publicKeyAsString != null) {
             var identityPublicKey = com.myster.identity.Util.publicKeyFromString(publicKeyAsString);
             if (identityPublicKey.isEmpty()) {
-                LOGGER.warning("identityPublicKey in the prefs seem to be corrupt: " + publicKeyAsString);
+                log.warning("identityPublicKey in the prefs seem to be corrupt: " + publicKeyAsString);
                 
                 return Optional.empty(); // sigh corruption
             }
 
             if (!Util.getMD5Hash(publicKeyAsString).equals(md5HashOfIdentity)) {
-                LOGGER.warning("The md5 of the identity in the prefs and the identity in the server don't match. pref key:"
+                log.warning("The md5 of the identity in the prefs and the identity in the server don't match. pref key:"
                         + md5HashOfIdentity + " vs in server structure: " + identityPublicKey);
 
                 return Optional.empty();
@@ -463,7 +463,7 @@ class MysterServerImplementation {
 
             return workingmml;
         } catch (Exception ex) {
-            LOGGER.info("Exception while trying to go from MysterServer to MML " + ex);
+            log.info("Exception while trying to go from MysterServer to MML " + ex);
             ex.printStackTrace();
         }
         return null; //NEVER HAPPENS!
@@ -490,7 +490,7 @@ class MysterServerImplementation {
             } catch (NullPointerException ex) {
                 return 0;
             } catch (Exception ex) {
-                LOGGER.warning("Unexcepted Error occured");
+                log.warning("Unexcepted Error occured");
                 ex.printStackTrace();
                 return 0;
             }
