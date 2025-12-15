@@ -66,22 +66,20 @@ public class ProgManDownloadHandler implements MSDownloadListener {
 
     @Override
     public void progress(MultiSourceEvent event) {
-        if (downloadItem != null) {
-            downloadItem.getObject().setProgress(event.getProgress());
-            
-            // Calculate overall speed
-            long elapsed = System.currentTimeMillis() - startTime;
-            if (elapsed > 1000) {
-                long bytesDownloaded = event.getProgress() - event.getInitialOffset();
-                int speed = (int) (bytesDownloaded * 1000 / elapsed);
-                downloadItem.getObject().setSpeed(speed);
-            }
-            
-            downloadItem.getObject().setStatus("Downloading: " + 
-                Util.getStringFromBytes(event.getProgress()));
-            
-            window.getDownloadList().repaint();
+        downloadItem.getObject().setProgress(event.getProgress());
+
+        // Calculate overall speed
+        long elapsed = System.currentTimeMillis() - startTime;
+        if (elapsed > 1000) {
+            long bytesDownloaded = event.getProgress() - event.getInitialOffset();
+            int speed = (int) (bytesDownloaded * 1000 / elapsed);
+            downloadItem.getObject().setSpeed(speed);
         }
+
+        downloadItem.getObject()
+                .setStatus("Downloading: " + Util.getStringFromBytes(event.getProgress()));
+
+        window.getDownloadList().repaint();
     }
 
     @Override
@@ -117,52 +115,53 @@ public class ProgManDownloadHandler implements MSDownloadListener {
         ConnectionHandler handler = connectionHandlers.remove(event.getSegmentDownloader());
         if (handler != null) {
             handler.cleanup();
+            
+            // Remove the connection item from the download list
+            var connectionItem = handler.getConnectionItem();
+            int itemCount = window.getDownloadList().length();
+            for (int i = 0; i < itemCount; i++) {
+                if (window.getDownloadList().getMCListItem(i) == connectionItem) {
+                    window.getDownloadList().removeItem(i);
+                    break;
+                }
+            }
         }
     }
 
     @Override
     public void pauseDownload(MultiSourceEvent event) {
-        if (downloadItem != null) {
-            downloadItem.getObject().setStatus("Download paused");
-            downloadItem.getObject().setSpeed(0);
-            window.getDownloadList().repaint();
-        }
+        downloadItem.getObject().setStatus("Download paused");
+        downloadItem.getObject().setSpeed(0);
+        window.getDownloadList().repaint();
     }
 
     @Override
     public void resumeDownload(MultiSourceEvent event) {
-        if (downloadItem != null) {
-            startTime = System.currentTimeMillis(); // Reset start time for speed calculation
-            downloadItem.getObject().setStatus("Resuming download...");
-            window.getDownloadList().repaint();
-        }
+        startTime = System.currentTimeMillis(); // Reset start time for speed
+                                                // calculation
+        downloadItem.getObject().setStatus("Resuming download...");
+        window.getDownloadList().repaint();
     }
-    
+
     @Override
     public void queuedDownload(QueuedMultiSourceEvent event) {
-        if (downloadItem != null) {
-            downloadItem.getObject().setStatus("Queued at position " + event.getQueuePosition());
-            downloadItem.getObject().setSpeed(0);
-            window.getDownloadList().repaint();
-        }
+        downloadItem.getObject().setStatus("Queued at position " + event.getQueuePosition());
+        downloadItem.getObject().setSpeed(0);
+        window.getDownloadList().repaint();
     }
 
     @Override
     public void endDownload(MultiSourceEvent event) {
-        if (downloadItem != null) {
-            downloadItem.getObject().setStatus("Download stopped");
-            window.getDownloadList().repaint();
-        }
+        downloadItem.getObject().setStatus("Download stopped");
+        window.getDownloadList().repaint();
     }
 
     @Override
     public void doneDownload(MultiSourceEvent event) {
-        if (downloadItem != null) {
-            downloadItem.getObject().setProgress(downloadItem.getObject().getTotal());
-            downloadItem.getObject().setSpeed(0);
-            downloadItem.getObject().setStatus("Download complete!");
-            window.getDownloadList().repaint();
-        }
+        downloadItem.getObject().setProgress(downloadItem.getObject().getTotal());
+        downloadItem.getObject().setSpeed(0);
+        downloadItem.getObject().setStatus("Download complete!");
+        window.getDownloadList().repaint();
     }
     
     @Override
@@ -298,6 +297,10 @@ public class ProgManDownloadHandler implements MSDownloadListener {
 
         public void cleanup() {
             // Clean up any resources if needed
+        }
+        
+        public ProgressManagerWindow.DownloadMCListItem getConnectionItem() {
+            return connectionItem;
         }
     }
 

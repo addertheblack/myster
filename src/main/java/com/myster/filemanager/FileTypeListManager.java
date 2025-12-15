@@ -23,6 +23,7 @@
 package com.myster.filemanager;
 
 import java.io.File;
+import java.nio.file.Files;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -141,7 +142,17 @@ public class FileTypeListManager {
         FileTypeList list = getFileTypeList(type);
         if (list == null)
             return null;
-        return list.getFileFromHash(hashes);
+
+        FileItem item = list.getFileFromHash(hashes);
+        if (item==null) {
+            return null;
+        }
+        
+        if (!Files.exists(item.getPath())) {
+            return null;
+        }
+
+        return item;
     }
 
     /**

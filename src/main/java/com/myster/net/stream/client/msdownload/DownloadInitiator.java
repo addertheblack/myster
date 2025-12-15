@@ -6,6 +6,7 @@ import static com.myster.net.stream.client.msdownload.MultiSourceDownload.toIoFi
 import java.io.File;
 import java.io.IOException;
 import java.io.RandomAccessFile;
+import java.util.concurrent.Semaphore;
 import java.util.logging.Logger;
 
 import com.general.thread.Cancellable;
@@ -20,7 +21,8 @@ import com.myster.search.MysterFileStub;
 import com.myster.ui.MysterFrameContext;
 
 public class DownloadInitiator implements Runnable {
-    private static final Logger LOGGER = Logger.getLogger(DownloadInitiator.class.getName());
+    private static final Logger log = Logger.getLogger(DownloadInitiator.class.getName());
+    private static final Semaphore connectionSem = new Semaphore(5);
 
     private final MysterFileStub stub;
     private final HashCrawlerManager crawlerManager;
@@ -71,9 +73,22 @@ public class DownloadInitiator implements Runnable {
         
         MysterSocket socket = null;
         try {
-            socket = MysterSocketFactory.makeStreamConnection(stub.getMysterAddress());
+            connectionSem.acquire();
+            try {
+                socket = MysterSocketFactory.makeStreamConnection(stub.getMysterAddress());
+            } finally {
+                connectionSem.release();
+            }
+        } catch (InterruptedException ex) {
+            Thread.currentThread().interrupt();
+            log.severe("Thread interrupted while waiting for connection permit: " + ex.toString());
+            
+            com.general.util.AnswerDialog.simpleAlert("Download interrupted.");
+            
+            return;
         } catch (Exception ex) {
-            LOGGER.severe("Could not connect to server: " + ex.toString());
+            ex.printStackTrace();
+            log.severe("Could not connect to server: " + ex.toString());
             
             com.general.util.AnswerDialog.simpleAlert("Could not connect to server.");
             

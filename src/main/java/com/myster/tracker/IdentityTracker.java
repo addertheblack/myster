@@ -32,7 +32,7 @@ import com.myster.net.server.ServerUtils;
  * (MysterIdentity).
  */
 class IdentityTracker implements IdentityProvider {
-    private static final Logger LOGGER = Logger.getLogger(IdentityTracker.class.getName());
+    private static final Logger log = Logger.getLogger(IdentityTracker.class.getName());
 
     private static final long REFRESH_MS = 10 * 60 * 1000;
 
@@ -199,7 +199,7 @@ class IdentityTracker implements IdentityProvider {
         if (addressState == null) {
             // this can happen due to a race condition where the address is removed
             // but it's incredibly unlikely
-            LOGGER.warning("Tried to reping an address that doesn't exist: " + address);
+            log.warning("Tried to reping an address that doesn't exist: " + address);
             return;
         }
 
@@ -241,7 +241,7 @@ class IdentityTracker implements IdentityProvider {
             state.timeOfLastSuggestPing = timeMillis;
             state.timeOfLastPing = 0;
 
-            LOGGER.fine("getPublicKeyTrying suggested ping for " + a);
+            log.fine("getPublicKeyTrying suggested ping for " + a);
             refreshElementIfNeeded(a, state);
         }
     }
@@ -276,14 +276,14 @@ class IdentityTracker implements IdentityProvider {
         List<MysterAddress> addresses = identityToAddresses.get(key);
 
         if (addresses.contains(address)) {
-            LOGGER.warning("address was already in the data MysterAddressTracker but it shouldn't be at this point "
+            log.warning("address was already in the data MysterAddressTracker but it shouldn't be at this point "
                     + address);
         } else {
             addresses.add(address);
         }
 
         if (addressStates.containsKey(address)) {
-            LOGGER.warning("address was already in the data MysterAddressTracker but it shouldn't be at this point "
+            log.warning("address was already in the data MysterAddressTracker but it shouldn't be at this point "
                     + address);
             return;
         }

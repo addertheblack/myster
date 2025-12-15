@@ -58,7 +58,7 @@ public class MSDownloadLocalQueue {
     }
     
     private int getMaxSimultaneousDownloads() {
-        return prefs.getInt(PREF_KEY, 1);
+        return prefs.getInt(PREF_KEY, 4);
     }
     
     private static void startDownload(MultiSourceDownload download) {

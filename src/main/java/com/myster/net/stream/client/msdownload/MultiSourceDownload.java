@@ -240,6 +240,10 @@ public class MultiSourceDownload implements Task, Cancellable {
                     return;
                 }
                 
+                if (isDead) {
+                    return;
+                }
+                
                 dispatcher.fire().resumeDownload(createMultiSourceEvent());
                 
                 for (MysterFileStub stub : discoveredStubs) {
@@ -270,6 +274,10 @@ public class MultiSourceDownload implements Task, Cancellable {
             return;
         }
         
+        if (isDead) {
+            return;
+        }
+        
         isPaused = true;
         
         // Flag all segment downloaders to end
@@ -296,6 +304,9 @@ public class MultiSourceDownload implements Task, Cancellable {
     /** Package Protected for unit tests */
     synchronized void newDownload(MysterFileStub stub) {
         if (endFlag)
+            return;
+        
+        if (isDead) 
             return;
 
         if (stub.getMysterAddress() == null)
@@ -389,7 +400,7 @@ public class MultiSourceDownload implements Task, Cancellable {
         WorkSegment workSegment = new WorkSegment(tempFileProgress, readLength);
 
         fileProgress += readLength;
-
+        
         return workSegment;
     }
 
@@ -493,6 +504,12 @@ public class MultiSourceDownload implements Task, Cancellable {
 
     // This method will only be called once right at the end of the download
     private synchronized void endDownloadCleanUp() {
+        if (isDead) {
+            System.out.println("WTF? We are already dead!");
+            
+            return;
+        }
+        
         // endFlag overrides pause state - force unpause
         isPaused = false;
         
@@ -507,6 +524,8 @@ public class MultiSourceDownload implements Task, Cancellable {
         } // assert file is closed
 
         isDead = true;
+        
+        queue.removeFromQueue(this);
 
         dispatcher.fire().endDownload(createMultiSourceEvent());
         
