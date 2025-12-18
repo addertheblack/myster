@@ -9,7 +9,6 @@ import java.awt.event.ActionEvent;
 
 import javax.swing.AbstractAction;
 import javax.swing.Action;
-import javax.swing.Icon;
 import javax.swing.JMenuItem;
 import javax.swing.JPopupMenu;
 import javax.swing.JToolBar;
@@ -69,7 +68,7 @@ public class ProgressManagerWindow extends MysterFrame {
         super(context, "Download Manager");
         
         // Register window location saving
-        context.keeper().addFrame(this, (p) -> {
+        context.keeper().addFrame(this, (_) -> {
             // No custom data to save, just window location
         }, WINDOW_KEEPER_KEY, com.myster.ui.WindowPrefDataKeeper.SINGLETON_WINDOW);
         
@@ -133,11 +132,17 @@ public class ProgressManagerWindow extends MysterFrame {
         clearCompletedAction.putValue(Action.SHORT_DESCRIPTION, "Clear all completed/cancelled downloads");
         clearCompletedAction.setEnabled(true); // Always enabled
         
-        // Load icons for actions
-        Icon pauseIcon = createPauseIcon();
-        Icon resumeIcon = createResumeIcon();
-        Icon cancelIcon = createCancelIcon();
-        Icon clearIcon = createClearIcon();
+        // Load SVG icons for actions with 16x16 size for toolbar
+        FlatSVGIcon pauseIcon = IconLoader.loadSvg(ProgressManagerWindow.class, "pause-icon", 16);
+        FlatSVGIcon resumeIcon = IconLoader.loadSvg(ProgressManagerWindow.class, "resume-icon", 16);
+        FlatSVGIcon cancelIcon = IconLoader.loadSvg(ProgressManagerWindow.class, "cancel-icon", 16);
+        FlatSVGIcon clearIcon = IconLoader.loadSvg(ProgressManagerWindow.class, "clear-icon", 16);
+        
+        var adaptiveColor = IconLoader.adaptiveColor();
+        pauseIcon.setColorFilter(adaptiveColor);
+        resumeIcon.setColorFilter(adaptiveColor);
+        cancelIcon.setColorFilter(adaptiveColor);
+        clearIcon.setColorFilter(adaptiveColor);
         
         pauseAction.putValue(Action.SMALL_ICON, pauseIcon);
         resumeAction.putValue(Action.SMALL_ICON, resumeIcon);
@@ -224,7 +229,7 @@ public class ProgressManagerWindow extends MysterFrame {
         setDefaultCloseOperation(HIDE_ON_CLOSE);
         pack();
     }
-    
+
     private void setupContextMenu() {
         JPopupMenu contextMenu = new JPopupMenu();
         
@@ -286,82 +291,6 @@ public class ProgressManagerWindow extends MysterFrame {
         }
         
         updateActionStates();
-    }
-    
-    /**
-     * Create a pause icon (two vertical bars).
-     */
-    private Icon createPauseIcon() {
-        return new javax.swing.ImageIcon(new java.awt.image.BufferedImage(16, 16, java.awt.image.BufferedImage.TYPE_INT_ARGB) {
-            {
-                java.awt.Graphics2D g2d = createGraphics();
-                g2d.setColor(java.awt.Color.DARK_GRAY);
-                g2d.fillRect(4, 3, 3, 10);
-                g2d.fillRect(9, 3, 3, 10);
-                g2d.dispose();
-            }
-        });
-    }
-    
-    /**
-     * Create a resume/play icon (right-pointing triangle).
-     */
-    private Icon createResumeIcon() {
-        return new javax.swing.ImageIcon(new java.awt.image.BufferedImage(16, 16, java.awt.image.BufferedImage.TYPE_INT_ARGB) {
-            {
-                java.awt.Graphics2D g2d = createGraphics();
-                g2d.setColor(java.awt.Color.DARK_GRAY);
-                int[] xPoints = {5, 5, 12};
-                int[] yPoints = {3, 13, 8};
-                g2d.fillPolygon(xPoints, yPoints, 3);
-                g2d.dispose();
-            }
-        });
-    }
-    
-    /**
-     * Create a cancel icon (circle with diagonal slash).
-     */
-    private Icon createCancelIcon() {
-        return new javax.swing.ImageIcon(new java.awt.image.BufferedImage(16, 16, java.awt.image.BufferedImage.TYPE_INT_ARGB) {
-            {
-                java.awt.Graphics2D g2d = createGraphics();
-                g2d.setRenderingHint(java.awt.RenderingHints.KEY_ANTIALIASING, 
-                                    java.awt.RenderingHints.VALUE_ANTIALIAS_ON);
-                g2d.setColor(java.awt.Color.RED);
-                g2d.setStroke(new java.awt.BasicStroke(2));
-                g2d.drawOval(2, 2, 12, 12);
-                g2d.drawLine(4, 4, 12, 12);
-                g2d.dispose();
-            }
-        });
-    }
-    
-    /**
-     * Create a clear icon (trash can or broom).
-
-	TODO: Make into svg
-     */
-    private Icon createClearIcon() {
-        return new javax.swing.ImageIcon(new java.awt.image.BufferedImage(16, 16, java.awt.image.BufferedImage.TYPE_INT_ARGB) {
-            {
-                java.awt.Graphics2D g2d = createGraphics();
-                g2d.setRenderingHint(java.awt.RenderingHints.KEY_ANTIALIASING, 
-                                    java.awt.RenderingHints.VALUE_ANTIALIAS_ON);
-                g2d.setColor(java.awt.Color.DARK_GRAY);
-                g2d.setStroke(new java.awt.BasicStroke(1.5f));
-                // Draw trash can
-                // Lid
-                g2d.drawLine(3, 4, 13, 4);
-                g2d.drawLine(4, 3, 12, 3);
-                // Body
-                g2d.drawRect(5, 5, 6, 8);
-                // Vertical lines in trash can
-                g2d.drawLine(7, 6, 7, 12);
-                g2d.drawLine(9, 6, 9, 12);
-                g2d.dispose();
-            }
-        });
     }
     
     private DownloadMCListItem getSelectedDownloadItem() {

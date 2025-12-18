@@ -1,5 +1,6 @@
 package com.general.util;
 
+import java.awt.Color;
 import java.awt.Component;
 import java.awt.Image;
 import java.net.URL;
@@ -7,7 +8,10 @@ import java.util.logging.Logger;
 
 import javax.swing.Icon;
 import javax.swing.ImageIcon;
+import javax.swing.JMenuItem;
 import javax.swing.UIManager;
+
+import com.formdev.flatlaf.extras.FlatSVGIcon.ColorFilter;
 
 public final class IconLoader {
     private static final Logger log = Logger.getLogger(IconLoader.class.getName());
@@ -18,6 +22,12 @@ public final class IconLoader {
     public static com.formdev.flatlaf.extras.FlatSVGIcon loadSvg(Class<?> clazz, String name) {
         com.formdev.flatlaf.extras.FlatSVGIcon flatSVGIcon = new com.formdev.flatlaf.extras.FlatSVGIcon(clazz.getResource(name + ".svg"));
         return flatSVGIcon;
+    }
+    
+    // Load SVG with specific size (width and height in pixels)
+    public static com.formdev.flatlaf.extras.FlatSVGIcon loadSvg(Class<?> clazz, String name, int size) {
+        com.formdev.flatlaf.extras.FlatSVGIcon flatSVGIcon = new com.formdev.flatlaf.extras.FlatSVGIcon(clazz.getResource(name + ".svg"));
+        return flatSVGIcon.derive(size, size);
     }
 
     // Future drop-in (if you leave FlatLaf): multi-res PNGs
@@ -70,5 +80,31 @@ public final class IconLoader {
             log.severe("loadImage(): " + e + " for \"" + filename + "\"");
             return null;
         }
+    }
+    
+    /**
+     * A ColorFilter that adapts the color of menu items based on their
+     * selection state. Basically, if you have an icon and it's going to appear
+     * in a menu somewhere, better add this color filter or the color won't
+     * render correctly for all themes.
+     * 
+     * Note, any new components with custom rendered based on component can be
+     * put in here.
+     */
+    public static ColorFilter adaptiveColor() {
+        return new ColorFilter((component,color)->{
+            
+            if (component instanceof JMenuItem) {
+                JMenuItem menuItem = (JMenuItem) component;
+                // Check if menu item is armed (highlighted/selected)
+                if (menuItem.isArmed() || menuItem.isSelected()) {
+                    // Use selection foreground color when highlighted
+                    Color selectionFg = UIManager.getColor("MenuItem.selectionForeground");
+                    return selectionFg != null ? selectionFg : component.getForeground();
+                }
+            }
+            
+            return color;
+        });
     }
 }
