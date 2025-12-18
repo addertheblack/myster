@@ -85,6 +85,22 @@ class DefaultMCListTableModel<E> extends MCListTableModel<E> {
         }
         fireTableRowsDeleted(0, rowValues.size());
     }
+    
+
+    @Override
+    public boolean removeItems(MCListItemInterface<E>[] m) {
+        if (m == null || m.length == 0) {
+            return false;
+        }
+        
+        boolean modified = rowValues.removeAll(Arrays.asList(m));
+        
+        if (modified) {
+            fireTableDataChanged();
+        }
+        
+        return modified;
+    }
 
     @Override
     public void setColumnIdentifiers(String[] names) {

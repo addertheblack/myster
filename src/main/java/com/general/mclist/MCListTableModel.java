@@ -168,4 +168,6 @@ abstract class MCListTableModel<E> extends AbstractTableModel {
      * - index must be a valid model row index (0 <= index < rowCount)
      */
     abstract MCListItemInterface<E> getRow(int index);
+
+    public abstract boolean removeItems(MCListItemInterface<E>[] m);
 }

@@ -184,6 +184,10 @@ public class JMCList<E> extends JTable implements MCList<E> {
     public void addItem(MCListItemInterface<E>[] m) {
         getMCTableModel().addRows(m);
     }
+    
+    public boolean removeItems(MCListItemInterface<E>[] m) {
+        return getMCTableModel().removeItems(m);
+    }
 
     /*
      * (non-Javadoc)

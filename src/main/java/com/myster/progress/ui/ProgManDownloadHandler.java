@@ -118,13 +118,7 @@ public class ProgManDownloadHandler implements MSDownloadListener {
             
             // Remove the connection item from the download list
             var connectionItem = handler.getConnectionItem();
-            int itemCount = window.getDownloadList().length();
-            for (int i = 0; i < itemCount; i++) {
-                if (window.getDownloadList().getMCListItem(i) == connectionItem) {
-                    window.getDownloadList().removeItem(i);
-                    break;
-                }
-            }
+            window.getDownloadList().removeItems(new com.general.mclist.MCListItemInterface[] { connectionItem });
         }
     }
 

@@ -37,6 +37,33 @@ public class TreeMCListTableModel<E> extends MCListTableModel<E> {
     public int getRowCount() {
         return renderedList.size();
     }
+    
+    /**
+     * Package protected for unit tests
+     * 
+     * @return the count of every element ignoring whether it's on screen at the moment
+     */
+    int getAllElementsCount() {
+        return countElementsRecursively(root);
+    }
+    
+    private int countElementsRecursively(TreePath path) {
+        List<TreeMCListItem<E>> children = parentToRowsMap.get(path);
+        if (children == null) {
+            return 0;
+        }
+        
+        int count = children.size();
+        
+        // Recursively count children of containers
+        for (TreeMCListItem<E> item : children) {
+            if (item.isContainer()) {
+                count += countElementsRecursively(item.getMyPathOrFail());
+            }
+        }
+        
+        return count;
+    }
 
     @Override
     public int getColumnCount() {
@@ -79,39 +106,9 @@ public class TreeMCListTableModel<E> extends MCListTableModel<E> {
 
     @Override
     public void removeRows(int[] indexes) {
-        if (indexes.length == 0) {
-            return;
+        if (removeTreeItems(Arrays.stream(indexes).mapToObj(i -> renderedList.get(i)).toList())) {
+            resortAndRebuild();
         }
-    
-        // There's no point in going through the indexes in reverse sort order since we DO NOT
-        // modify renderedList as we progress and so we don't fuck up the indexes as we progress
-    
-        // Process each index
-        // Do not check if index is valid - it will cause out of bound exeception on the renderedList and I'm ok with that.
-        for (int index : indexes) {
-            // Step 1: Figure out which item we're talking about from the
-            // renderedList
-            TreeMCListItem<E> item = renderedList.get(index);
-    
-            // Step 2: Find the list in the pathToRowsMap
-            TreePath parentPath = item.getParent();
-            List<TreeMCListItem<E>> siblings = parentToRowsMap.get(parentPath);
-    
-            // Step 3: Use identity to delete that row from the map
-            siblings.remove(item);
-
-            // Clean up empty lists
-            if (siblings.isEmpty()) {
-                parentToRowsMap.remove(parentPath);
-            }
-
-            // Delete all children recursively if this is a container
-            if (item.isContainer()) {
-                deleteTreePath(item.getMyPathOrFail());
-            }
-        }
-
-        resortAndRebuild();
     }
     
     /**
@@ -143,6 +140,64 @@ public class TreeMCListTableModel<E> extends MCListTableModel<E> {
     }
 
     @Override
+    public boolean removeItems(MCListItemInterface<E>[] m) {
+        if (m == null || m.length == 0) {
+            return false;
+        }
+        
+        // Filter to only TreeMCListItem instances
+        List<TreeMCListItem<E>> itemsToRemove = new ArrayList<>();
+        for (MCListItemInterface<E> item : m) {
+            if (item instanceof TreeMCListItem<E> treeItem) {
+                itemsToRemove.add(treeItem);
+            }
+        }
+        
+        if (itemsToRemove.isEmpty()) {
+            return false;
+        }
+        
+        boolean modified = removeTreeItems(itemsToRemove);
+        if (modified) {
+            resortAndRebuild();
+        }
+        
+        return modified;
+    }
+    
+    /**
+     * Common method to remove tree items from the parentToRowsMap.
+     * Does not trigger rebuild - caller is responsible for calling resortAndRebuild().
+     */
+    private boolean removeTreeItems(List<TreeMCListItem<E>> itemsToRemove) {
+        var modified = false;
+        
+        for (TreeMCListItem<E> item : itemsToRemove) {
+
+            // Step 2: Find the list in the pathToRowsMap
+            TreePath parentPath = item.getParent();
+            List<TreeMCListItem<E>> siblings = parentToRowsMap.get(parentPath);
+
+            // Step 3: Use identity to delete that row from the map
+            // If siblings is null, that's a bug - let it NPE
+            if (siblings.remove(item)) {
+                modified = true;
+            }
+
+            // Clean up empty lists
+            if (siblings.isEmpty()) {
+                parentToRowsMap.remove(parentPath);
+            }
+
+            // Delete all children recursively if this is a container
+            if (item.isContainer()) {
+                deleteTreePath(item.getMyPathOrFail());
+            }
+        }
+        
+        return modified;
+    }
+    
     public void addRow(MCListItemInterface<E> item) {
         addRows(new MCListItemInterface[] {item });
     }
