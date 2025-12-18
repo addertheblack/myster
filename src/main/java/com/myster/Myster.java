@@ -324,7 +324,7 @@ public class Myster {
                                                keeper,
                                                fileManager,
                                                null);
-                DownloadManager downloadManager = new DefaultDownloadManager(tempContext);
+                DefaultDownloadManager downloadManager = new DefaultDownloadManager(tempContext);
                 
                 // Now create the final context with the downloadManager properly set
                 final MysterFrameContext context =
@@ -346,7 +346,7 @@ public class Myster {
                                                                                                                         .show()));
                 INSTRUMENTATION.info("-------->>   EDT init MysterMenuBar "
                         + (System.currentTimeMillis() - startTime));
-                menuBarFactory.initMenuBar(tracker, preferencesGui, protocol, context);
+                menuBarFactory.initMenuBar(tracker, preferencesGui, protocol, context, downloadManager.getProgressManagerWindow());
 
                 String osName = System.getProperty("os.name").toLowerCase();
                 if (osName.startsWith("mac os") && Desktop.isDesktopSupported()) {
@@ -400,7 +400,7 @@ public class Myster {
                     count += preferencesGui.initGui();
                     
                     // Initialize ProgressManagerWindow location BEFORE restarting downloads
-                    count += ((DefaultDownloadManager)downloadManager).initWindowLocations();
+                    count += downloadManager.initWindowLocations();
                     
                     if (count == 0) {
                         SearchWindow window = new SearchWindow(context);

@@ -26,6 +26,10 @@ public class DefaultDownloadManager implements DownloadManager {
         }
     }
     
+    public ProgressManagerWindow getProgressManagerWindow() {
+        return progressManagerWindow;
+    }
+    
     /**
      * Initialize and restore window locations from preferences. Call this
      * before restartDownloads() to ensure the window is ready.

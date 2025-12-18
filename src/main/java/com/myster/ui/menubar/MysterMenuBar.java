@@ -35,6 +35,7 @@ import com.general.events.NewGenericDispatcher;
 import com.general.thread.Invoker;
 import com.myster.application.MysterGlobals;
 import com.myster.net.client.MysterProtocol;
+import com.myster.progress.ui.ProgressManagerWindow;
 import com.myster.tracker.Tracker;
 import com.myster.type.TypeDescriptionList;
 import com.myster.ui.MysterFrameContext;
@@ -82,7 +83,7 @@ public class MysterMenuBar {
     }
 
     // note that this is construction time dependencies
-    public void initMenuBar(Tracker manager, PreferencesGui prefGui, MysterProtocol protocol, MysterFrameContext context ) {
+    public void initMenuBar(Tracker manager, PreferencesGui prefGui, MysterProtocol protocol, MysterFrameContext context, ProgressManagerWindow progressManagerWindow ) {
         file = new ArrayList<>();
         edit = new ArrayList<>();
         special = new ArrayList<>();
@@ -133,6 +134,7 @@ public class MysterMenuBar {
 
         // Myster menu items
         special.add(new MysterMenuItemFactory("Add IP", new AddMysterServerMenuAction(manager)));
+        special.add(new MysterMenuItemFactory("-", NULL));
         special.add(new MysterMenuItemFactory("Show Server Stats",
                                                      new StatsWindowAction(),
                                                      java.awt.event.KeyEvent.VK_S,
@@ -140,6 +142,9 @@ public class MysterMenuBar {
         special.add(new MysterMenuItemFactory("Show Tracker",
                                                      new TrackerWindowAction(),
                                                      java.awt.event.KeyEvent.VK_T));
+        special.add(new MysterMenuItemFactory("Show Downloads",
+                                              _ -> progressManagerWindow.setVisible(true),
+                                              java.awt.event.KeyEvent.VK_D));
         special.add(com.myster.hash.ui.HashManagerGUI.getMenuItem());
 
         // Myster plugins Menu
