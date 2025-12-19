@@ -59,7 +59,9 @@ public class ContextMenu {
     }
 
 
-
+    /**
+     * using this fixes the popup behaviour so that right click also selects the row
+     */
     public static JPopupMenu addPopUpMenu(JMCList table, Runnable runBeforeMenusDisplay, JMenuItem... items) {
         // Create the popup menu
         JPopupMenu popup = new JPopupMenu();
