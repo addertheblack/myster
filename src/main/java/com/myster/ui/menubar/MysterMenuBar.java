@@ -37,10 +37,8 @@ import com.myster.application.MysterGlobals;
 import com.myster.net.client.MysterProtocol;
 import com.myster.progress.ui.ProgressManagerWindow;
 import com.myster.tracker.Tracker;
-import com.myster.type.TypeDescriptionList;
 import com.myster.ui.MysterFrameContext;
 import com.myster.ui.PreferencesGui;
-import com.myster.ui.WindowManager;
 import com.myster.ui.menubar.event.AddMysterServerMenuAction;
 import com.myster.ui.menubar.event.CloseWindowAction;
 import com.myster.ui.menubar.event.MenuBarEvent;
@@ -144,7 +142,7 @@ public class MysterMenuBar {
                                                      java.awt.event.KeyEvent.VK_T));
         special.add(new MysterMenuItemFactory("Show Downloads",
                                               _ -> progressManagerWindow.setVisible(true),
-                                              java.awt.event.KeyEvent.VK_D));
+                                              java.awt.event.KeyEvent.VK_J));
         special.add(com.myster.hash.ui.HashManagerGUI.getMenuItem());
 
         // Myster plugins Menu

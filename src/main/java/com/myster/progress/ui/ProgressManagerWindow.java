@@ -10,7 +10,6 @@ import java.awt.event.ActionEvent;
 import javax.swing.AbstractAction;
 import javax.swing.Action;
 import javax.swing.JMenuItem;
-import javax.swing.JPopupMenu;
 import javax.swing.JToolBar;
 
 import com.formdev.flatlaf.extras.FlatSVGIcon;
@@ -34,6 +33,7 @@ import com.myster.ui.MysterFrame;
 import com.myster.ui.MysterFrameContext;
 import com.myster.ui.WindowPrefDataKeeper;
 import com.myster.ui.menubar.MysterMenuBar;
+import com.myster.util.ContextMenu;
 
 /**
  * A window that manages all downloads in progress using a tree-based MCList.
@@ -231,19 +231,16 @@ public class ProgressManagerWindow extends MysterFrame {
     }
 
     private void setupContextMenu() {
-        JPopupMenu contextMenu = new JPopupMenu();
-        
-        // Use the same actions as the toolbar
-        contextMenu.add(new JMenuItem(pauseAction));
-        contextMenu.add(new JMenuItem(resumeAction));
-        contextMenu.addSeparator();
-        contextMenu.add(new JMenuItem(cancelAction));
-        contextMenu.addSeparator();
-        contextMenu.add(new JMenuItem(clearCompletedAction));
-        
-        downloadList.setComponentPopupMenu(contextMenu);
+        ContextMenu.addPopUpMenu(downloadList,
+                                 () -> {},
+                                 new JMenuItem(pauseAction),
+                                 new JMenuItem(resumeAction),
+                                 null,
+                                 new JMenuItem(cancelAction),
+                                 null,
+                                 new JMenuItem(clearCompletedAction));
     }
-    
+
     /**
      * Update the enabled state of actions based on current selection.
      */

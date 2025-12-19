@@ -333,7 +333,6 @@ public class ClientWindow extends MysterFrame implements Sayable {
         });
         
         // OPEN FILE ON DISK!
-        
         ContextMenu.addPopUpMenu(fileList, ()->{}, downloadMenuItem, downloadToMenuItem, null, bookmarkMenuItem);
         
         fileList.sortBy(0);
