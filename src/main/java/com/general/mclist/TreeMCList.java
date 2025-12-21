@@ -174,6 +174,10 @@ public class TreeMCList {
             }
         });
         
+        // Enable type-to-select functionality on the first column by default
+        // todo, move to better spot
+        TypeToSelectKeyListener.enableSearch(list,  0);
+        
         return list;
     }
     

@@ -48,14 +48,15 @@ public class JMCList<E> extends JTable implements MCList<E> {
         
         ListSelectionListener internalSelectionListener = new ListSelectionListener() {
             public void valueChanged(ListSelectionEvent e) {
-                if (listeners == null)
+                if (listeners == null) {
                     return;
+                }
                 
                 for (Iterator<MCListEventListener> iterator = listeners.iterator(); iterator.hasNext();) {
                     MCListEventListener handler = iterator.next();
-                    if (e.getFirstIndex() >= length())
+                    if (e.getFirstIndex() >= length()) {
                         return;
-                    if (getMCListItem(e.getFirstIndex()).isSelected()) {
+                    } if (getMCListItem(e.getFirstIndex()).isSelected()) {
                         handler.selectItem(new MCListEvent(JMCList.this));
                     } else {
                         handler.unselectItem(new MCListEvent(JMCList.this));
@@ -63,10 +64,13 @@ public class JMCList<E> extends JTable implements MCList<E> {
                 }
             }
         };
-        
-        setSelectionModel(new MCListSelectionModel<E>(getMCTableModel(), internalSelectionListener));
-        getSelectionModel().setSelectionMode(singleSelect ? ListSelectionModel.SINGLE_SELECTION : ListSelectionModel.MULTIPLE_INTERVAL_SELECTION);
-        
+
+        setSelectionModel(new MCListSelectionModel<E>(getMCTableModel(),
+                                                      internalSelectionListener));
+
+        getSelectionModel().setSelectionMode(singleSelect ? ListSelectionModel.SINGLE_SELECTION
+                : ListSelectionModel.MULTIPLE_INTERVAL_SELECTION);
+
         setColumnSelectionAllowed(false);
         getTableHeader().setReorderingAllowed(false);
 
