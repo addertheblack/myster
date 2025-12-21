@@ -169,10 +169,12 @@ public class ConnectionRunnable implements Runnable {
                 case 1:
                     // Basic acknowledgment protocol
                     context.socket().out.write(1);
+                    context.socket().out.flush();
                     break;
                 case 2:
                     // Acknowledgment and disconnect protocol
                     context.socket().out.write(1);
+                    context.socket().out.flush();
                     return;
                 default:
                     ConnectionSection section = connectionSections.get(protocolCode);

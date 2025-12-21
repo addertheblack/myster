@@ -203,7 +203,7 @@ public class MultiSourceHashSearch implements HashCrawlerManager {
                         .collect(Collectors.toList());
 
                 log.fine("Searching for " + f.size() + " hashes");
-                return PromiseFutures.all(f);
+                return PromiseFutures.all(f); // wrong
             };
 
             asyncTaskTracker.doAsync(() -> {

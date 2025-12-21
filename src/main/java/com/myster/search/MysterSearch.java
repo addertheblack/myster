@@ -31,6 +31,7 @@ import com.myster.net.MysterSocket;
 import com.myster.net.client.MysterProtocol;
 import com.myster.net.client.ParamBuilder;
 import com.myster.net.stream.client.MysterSocketFactory;
+import com.myster.net.stream.client.StandardSuiteStream;
 import com.myster.tracker.MysterServer;
 import com.myster.tracker.Tracker;
 import com.myster.type.MysterType;
@@ -573,6 +574,7 @@ public class MysterSearch {
             try {
                 socket = MysterSocketFactory.makeStreamConnection(address);
                 doSection();
+                StandardSuiteStream.disconnect(socket);
             } catch (IOException ex) {
                 //ignore
             } finally {
