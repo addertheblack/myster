@@ -99,7 +99,7 @@ public class ContextMenu {
                 
                 // Select the row under the cursor
                 int row = table.rowAtPoint(e.getPoint());
-                if (row >= 0 && row < table.getRowCount()) {
+                if (row >= 0 && row < table.getRowCount() && !table.isSelected(row)) {
                     table.setRowSelectionInterval(row, row);
                 }
                 

@@ -25,6 +25,7 @@ import java.util.logging.Logger;
 import javax.swing.JButton;
 import javax.swing.JMenuItem;
 import javax.swing.JTextField;
+import javax.swing.ListSelectionModel;
 
 import com.general.mclist.JMCList;
 import com.general.mclist.MCList;
@@ -115,6 +116,7 @@ public class SearchWindow extends MysterFrame implements SearchResultListener, S
 
         fileList = MCListFactory.buildMCList(1, true, this);
         fileList.getPane().setSize(XDEFAULT, YDEFAULT);
+        fileList.setSelectionMode(ListSelectionModel.MULTIPLE_INTERVAL_SELECTION);
 
         msg = new MessageField("Idle...");
 
@@ -165,33 +167,31 @@ public class SearchWindow extends MysterFrame implements SearchResultListener, S
 
     private void addPopUpMenus() {
         JMenuItem downloadMenuItem = ContextMenu.createDownloadItem(fileList, _ -> {
-            int index = fileList.getSelectedRow();
-            if (index == -1) {
-                return;
-            }
+            int[] indexes = fileList.getSelectedRows();
 
-            fileList.getMCListItem(index).getObject().download();
+            for (int i : indexes) {
+                fileList.getMCListItem(i).getObject().download();
+            }
         });
         JMenuItem downloadToMenuItem = ContextMenu.createDownloadToItem(fileList, e -> {
-            int index = fileList.getSelectedRow();
-            if (index == -1) {
-                return;
-            }
+            int[] indexes = fileList.getSelectedRows();
             
-            fileList.getMCListItem(index).getObject().downloadTo();
+            for (int i : indexes) {
+                fileList.getMCListItem(i).getObject().downloadTo();
+            }
         });
         JMenuItem bookmarkMenuItem = ContextMenu.createBookmarkServerItem(fileList, e -> {
-            int index = fileList.getSelectedRow();
-            if (index == -1) {
-                return;
+            int[] indexes = fileList.getSelectedRows();
+
+            for (int i : indexes) {
+
+                MysterServer server = manager.getQuickServerStats(fileList.getMCListItem(i)
+                        .getObject()
+                        .getHostAddress());
+
+                manager.addBookmark(new BookmarkMysterServerList.Bookmark(server.getIdentity()));
             }
-            
-            MysterServer moop = manager.getQuickServerStats(fileList.getMCListItem(index).getObject().getHostAddress());
-            
-            manager.addBookmark(new BookmarkMysterServerList.Bookmark(moop.getIdentity()) );
         });
-        
-        // OPEN FILE ON DISK!
         
         ContextMenu.addPopUpMenu(fileList, ()->{}, downloadMenuItem, downloadToMenuItem, null, bookmarkMenuItem);
     }
