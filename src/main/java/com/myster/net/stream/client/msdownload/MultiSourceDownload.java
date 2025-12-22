@@ -408,6 +408,16 @@ public class MultiSourceDownload implements Task, Cancellable {
         for (int i = 0; i < workSegments.length; i++) {
             unfinishedSegments.push(workSegments[i]);
         }
+        
+        if (!isDone()) {
+            for (SegmentDownloader downloader : downloaders) {
+                if (downloader.isActive() && !downloader.isDead()) {
+                    return;
+                }
+            }
+            
+            System.out.println("Stuff left over but no one to do it" + downloaders.size());
+        }
     }
 
     private synchronized void receiveDataBlock(DataBlock dataBlock) {
@@ -519,7 +529,7 @@ public class MultiSourceDownload implements Task, Cancellable {
 
         try {
             randomAccessFile.close();
-        } catch (Exception ex) {
+        } catch (Exception _) {
             // nothing
         } // assert file is closed
 
@@ -605,7 +615,8 @@ public class MultiSourceDownload implements Task, Cancellable {
          * 
          * @see com.myster.client.stream.Controller#receiveExtraSegments(com.myster.client.stream.WorkSegment[])
          */
-        public void receiveExtraSegments(WorkSegment[] workSegments) {
+        @Override
+        public void receiveExtraSegments(WorkSegment... workSegments) {
             MultiSourceDownload.this.receiveExtraSegments(workSegments);
         }
 

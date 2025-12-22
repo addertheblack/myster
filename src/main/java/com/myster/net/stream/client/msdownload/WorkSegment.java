@@ -2,19 +2,9 @@
 package com.myster.net.stream.client.msdownload;
 
 // immutable!
-final class WorkSegment {
-    public final boolean recycled;
-
-    public final long startOffset, length;
-
+record WorkSegment(long startOffset, long length, boolean recycled) {
     public WorkSegment(long startOffset, long length) {
         this(startOffset, length, false);
-    }
-
-    private WorkSegment(long startOffset, long length, boolean isRecycled) {
-        this.startOffset = startOffset;
-        this.length = length;
-        this.recycled = isRecycled;
     }
 
     public boolean isEndSignal() {

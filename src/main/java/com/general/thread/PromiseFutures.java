@@ -53,4 +53,26 @@ public final class PromiseFutures {
              context.setResult(result);
          });
      }
+
+     public static <T> PromiseFuture<List<CallResult<T>>> allCallResults(List<PromiseFuture<T>> futures) {
+         return PromiseFuture.newPromiseFuture(context -> {
+             List<CallResult<T>> result = Collections.synchronizedList(new ArrayList<>((Collections
+                     .nCopies(futures.size(), null))));
+
+             for (int i = 0; i < futures.size(); i++) {
+                 PromiseFuture<T> f = futures.get(i);
+
+                 final int index = i;
+                 f.addSynchronousCallback(r -> {
+                     if (r.isCancelled()) {
+                         context.setException(new CancellationException());
+                     } else {
+                         result.set(index, r);
+                     }
+                 });
+             }
+
+             context.setResult(result);
+         });
+     }
  }

@@ -179,6 +179,7 @@ class InternalSegmentDownloader implements SegmentDownloader {
 
     private synchronized void finishUp() {
         deadFlag = true;
+        isActive = false;
 
         if ((workingSegment == null) || (workingSegment.isDone())) {
             controller.receiveExtraSegments(new WorkSegment[] {});
@@ -208,28 +209,27 @@ class InternalSegmentDownloader implements SegmentDownloader {
     private boolean doWorkBlock(MysterSocket socket, WorkingSegment workingSegment)
             throws IOException {
         debug("Work Thread " + name + " -> Reading data "
-                + workingSegment.workSegment.startOffset + " length: " + workingSegment.workSegment.length);
+                + workingSegment.workSegment.startOffset() + " length: " + workingSegment.workSegment.length());
 
-        socket.out.writeLong(workingSegment.workSegment.startOffset);
-        socket.out.writeLong(workingSegment.workSegment.length);
+        socket.out.writeLong(workingSegment.workSegment.startOffset());
+        socket.out.writeLong(workingSegment.workSegment.length());
 
         if (workingSegment.workSegment.isEndSignal()) {
-            com.myster.net.stream.client.StandardSuiteStream.disconnect(socket);
             return false;
         }
 
         waitInQueue(socket);
 
         dispatcher.fire()
-                .startSegment(new SegmentDownloaderEvent(workingSegment.workSegment.startOffset,
+                .startSegment(new SegmentDownloaderEvent(workingSegment.workSegment.startOffset(),
                                                          0,
                                                          0,
-                                                         workingSegment.workSegment.length,
+                                                         workingSegment.workSegment.length(),
                                                          stub,
                                                          ""));
 
         long timeTakenToDownloadSegment = 0;
-        while (workingSegment.getProgress() < workingSegment.workSegment.length) {
+        while (workingSegment.getProgress() < workingSegment.workSegment.length()) {
             debug("Work Thread " + name + " -> Reading in Type");
 
             if (socket.in.readInt() != 6669)
@@ -254,21 +254,21 @@ class InternalSegmentDownloader implements SegmentDownloader {
                 break;
             }
         }
-        if (!workingSegment.workSegment.recycled) {
+        if (!workingSegment.workSegment.recycled()) {
             debug("Work Thread " + name + " -> Took " + (timeTakenToDownloadSegment / 1000)
-                    + "s to download " + (workingSegment.workSegment.length / 1024) + "k");
-            idealSegmentSize = calculateNextBlockSize(workingSegment.workSegment.length,
+                    + "s to download " + (workingSegment.workSegment.length() / 1024) + "k");
+            idealSegmentSize = calculateNextBlockSize(workingSegment.workSegment.length(),
                     timeTakenToDownloadSegment);
             debug("Work Thread " + name + " -> next block target size is " + (idealSegmentSize / 1024)
                     + "k");
         }
 
         dispatcher.fire()
-                .endSegment(new SegmentDownloaderEvent(workingSegment.workSegment.startOffset,
-                                                       workingSegment.workSegment.startOffset
-                                                               + workingSegment.workSegment.length,
+                .endSegment(new SegmentDownloaderEvent(workingSegment.workSegment.startOffset(),
+                                                       workingSegment.workSegment.startOffset()
+                                                               + workingSegment.workSegment.length(),
                                                        0,
-                                                       workingSegment.workSegment.length,
+                                                       workingSegment.workSegment.length(),
                                                        stub,
                                                        ""));
         return true;
@@ -358,10 +358,10 @@ class InternalSegmentDownloader implements SegmentDownloader {
 
             if (System.currentTimeMillis() - lastProgressTime > 100) {
                 dispatcher.fire()
-                        .downloadedBlock(new SegmentDownloaderEvent(workingSegment.workSegment.startOffset,
+                        .downloadedBlock(new SegmentDownloaderEvent(workingSegment.workSegment.startOffset(),
                                                                     workingSegment.getProgress(),
                                                                     0,
-                                                                    workingSegment.workSegment.length,
+                                                                    workingSegment.workSegment.length(),
                                                                     stub,
                                                                     ""));
                 lastProgressTime = System.currentTimeMillis();
@@ -401,16 +401,16 @@ class InternalSegmentDownloader implements SegmentDownloader {
          * this method.
          */
         public WorkSegment getRemainingWorkSegment() {
-            return new WorkSegment(workSegment.startOffset + progress, workSegment.length
+            return new WorkSegment(workSegment.startOffset() + progress, workSegment.length()
                     - progress);
         }
 
         public boolean isDone() {
-            return (progress == workSegment.length);
+            return (progress == workSegment.length());
         }
 
         public long getCurrentOffset() {
-            return (workSegment.startOffset + progress);
+            return (workSegment.startOffset() + progress);
         }
     }
 }

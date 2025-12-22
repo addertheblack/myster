@@ -55,20 +55,20 @@ public class TestMultiSourceDownload {
 
         Controller controller = download.new ControllerImpl();
         WorkSegment nextWorkSegment = controller.getNextWorkSegment(1);
-        assertEquals(0, nextWorkSegment.startOffset);
-        assertEquals(200, nextWorkSegment.length);
+        assertEquals(0, nextWorkSegment.startOffset());
+        assertEquals(200, nextWorkSegment.length());
 
         controller.receiveExtraSegments(new WorkSegment(0, 1), new WorkSegment(3, 5));
 
         WorkSegment nextWorkSegment2 = controller.getNextWorkSegment(200);
-        assertEquals(nextWorkSegment2.startOffset, 3);
-        assertEquals(5, nextWorkSegment2.length);
-        assertTrue(nextWorkSegment2.recycled);
+        assertEquals(nextWorkSegment2.startOffset(), 3);
+        assertEquals(5, nextWorkSegment2.length());
+        assertTrue(nextWorkSegment2.recycled());
 
         WorkSegment nextWorkSegment3 = controller.getNextWorkSegment(200);
-        assertEquals(nextWorkSegment3.startOffset, 0);
-        assertEquals(1, nextWorkSegment3.length);
-        assertTrue(nextWorkSegment3.recycled);
+        assertEquals(nextWorkSegment3.startOffset(), 0);
+        assertEquals(1, nextWorkSegment3.length());
+        assertTrue(nextWorkSegment3.recycled());
 
         WorkSegment nextWorkSegment4 = controller.getNextWorkSegment(1);
         assertTrue(nextWorkSegment4.isEndSignal());
@@ -496,7 +496,7 @@ class FakeSegmentDownloader implements SegmentDownloader {
         Util.invokeLater(() -> {
             WorkSegment nextWorkSegment = controller.getNextWorkSegment(999);
 
-            controller.receiveDataBlock(new DataBlock(0, new byte[(int)nextWorkSegment.length]));
+            controller.receiveDataBlock(new DataBlock(0, new byte[(int)nextWorkSegment.length()]));
 
             controller.removeDownload(FakeSegmentDownloader.this);
 
