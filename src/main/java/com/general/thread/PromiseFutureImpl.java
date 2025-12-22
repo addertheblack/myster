@@ -203,7 +203,7 @@ public class PromiseFutureImpl<T> implements PromiseFuture<T> {
     }
 
     @Override
-    public synchronized PromiseFuture<T> addCallResultListener(Consumer<CallResult<T>> c) {
+    public synchronized PromiseFuture<T> addFinallyCallResultListener(Consumer<CallResult<T>> c) {
         listeners.add(c);
         
         checkForDispatch();
@@ -261,7 +261,7 @@ public class PromiseFutureImpl<T> implements PromiseFuture<T> {
 
     @Override
     public PromiseFuture<T> addCallListener(CallListener<T> callListener) {
-        return addCallResultListener((c)-> {
+        return addFinallyCallResultListener((c)-> {
             try {
                 callListener.handleResult(c.get());
             } catch (CancellationException exception) {

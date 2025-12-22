@@ -140,17 +140,15 @@ public class MultiSourceHashSearch implements HashCrawlerManager {
         stopCrawler(type);
         if (getEntriesForType(type).size() > 0) { // are we still relevant?
             MultiSourceUtilities.debug("Retarting crawler!");
-            startCrawler(type);
+            delayStart(type);
         } else {
             log.fine("Not calling restartCrawler(" + type
                     + ") because there are no more hashes");
         }
     }
-
-    // asserts that the crawler is running (ie: only "starts" the crawler if one
-    // is not already running)
-    private synchronized void startCrawler(final MysterType type) {
-        log.fine("startCrawler(" + type + ")");
+    
+    private synchronized void delayStart(MysterType type) {
+        log.fine("delayStart(" + type + ")");
         if (tracker == null) {
             throw new NullPointerException("tracker not inited");
         }
@@ -159,6 +157,38 @@ public class MultiSourceHashSearch implements HashCrawlerManager {
 
         if (batchedType.asyncTracker != null) {
             throw new IllegalStateException("batchedType.tracker must be null here");
+        }
+
+        // normally the tracker would be connected to the upstream future so it could be
+        // cancelled but there's not upstream. The tracker is god!
+        batchedType.asyncTracker = AsyncTaskTracker.create(new SimpleTaskTracker(), INVOKER);
+
+        INVOKER.invoke(() -> {
+            synchronized (this) {
+                if (batchedType.asyncTracker == null) {
+                    return;
+                }
+                
+                batchedType.asyncTracker.doAsync(() -> sleep(5000)
+                                                 .addStandardExceptionHandler()
+                                                 .addResultListener(_ -> startCrawler(type)));
+            }
+        });
+    }
+
+    // asserts that the crawler is running (ie: only "starts" the crawler if one
+    // is not already running)
+    // must be called on invoker thread!
+    private synchronized void startCrawler(final MysterType type) {
+        log.fine("startCrawler(" + type + ")");
+        if (tracker == null) {
+            throw new NullPointerException("tracker not inited");
+        }
+
+        BatchedType batchedType = getBatchForType(type);
+
+        if (batchedType.asyncTracker == null) {
+            return;
         }
 
         final IPQueue ipQueue = new IPQueue();
@@ -174,47 +204,41 @@ public class MultiSourceHashSearch implements HashCrawlerManager {
         for (MysterServer s : top) {
             s.getBestAddress().ifPresent(ipQueue::addIP);
         }
-
-        // normally the tracker would be connected to the upstream future so it could be
-        // cancelled but there's not upstream. The tracker is god!
-        AsyncTaskTracker asyncTaskTracker = AsyncTaskTracker.create(new SimpleTaskTracker(), INVOKER);
-
-        batchedType.asyncTracker = asyncTaskTracker;
+        
+        var asyncTaskTracker = batchedType.asyncTracker;
 
         List<SearchEntry> entries = new ArrayList<>(batchedType.entries);
-        INVOKER.invoke(() -> {
-            SearchIp searchIp = (MysterAddress address, MysterType localType) -> {
-                List<PromiseFuture<String>> f = entries.stream()
-                        .map(searchEntry -> protocol.getDatagram()
-                                .getFileFromHash(new ParamBuilder(address), localType, searchEntry.hash)
-                                .addResultListener(fileName -> {
-                                    if (fileName.isEmpty()) {
-                                        return;
-                                    }
+        SearchIp searchIp = (MysterAddress address, MysterType localType) -> {
+            List<PromiseFuture<String>> f = entries.stream()
+                    .map(searchEntry -> protocol.getDatagram()
+                            .getFileFromHash(new ParamBuilder(address), localType, searchEntry.hash)
+                            .addResultListener(fileName -> {
+                                if (fileName.isEmpty()) {
+                                    return;
+                                }
 
-                                    MysterFileStub stub =
-                                            new MysterFileStub(address, localType, fileName);
-                                    log.fine("Found new matching file \"" + stub + "\"");
-                                    searchEntry.listener.searchResult(stub);
-                                })
-                                .addExceptionListener(ex -> log
-                                        .fine("Exception while doing UDP hash search crawler getFileFromHash("
-                                                + address + ", " + localType + ") " + ex)))
-                        .collect(Collectors.toList());
+                                MysterFileStub stub =
+                                        new MysterFileStub(address, localType, fileName);
+                                log.fine("Found new matching file \"" + stub + "\"");
+                                searchEntry.listener.searchResult(stub);
+                            })
+                            .addExceptionListener(ex -> log
+                                    .fine("Exception while doing UDP hash search crawler getFileFromHash("
+                                            + address + ", " + localType + ") " + ex)))
+                    .collect(Collectors.toList());
 
-                log.fine("Searching for " + f.size() + " hashes");
-                return PromiseFutures.allCallResults(f);
-            };
+            log.fine("Searching for " + f.size() + " hashes");
+            return PromiseFutures.allCallResults(f);
+        };
 
-            asyncTaskTracker.doAsync(() -> {
-                return PromiseFuture.newPromiseFuture(context -> {
-                    AsyncTaskTracker t = AsyncTaskTracker.create(new SimpleTaskTracker(), INVOKER);
-                    t.setDoneListener(() -> context.setResult(null));
-                    AsyncNetworkCrawler
-                            .startWork(log, protocol, searchIp, type, ipQueue, tracker::addIp, t);
-                });
-            }).addResultListener((_) -> waitForSomeTimeThenRestart(asyncTaskTracker, type));
-        });
+        asyncTaskTracker.doAsync(() -> {
+            return PromiseFuture.newPromiseFuture(context -> {
+                AsyncTaskTracker t = AsyncTaskTracker.create(new SimpleTaskTracker(), INVOKER);
+                t.setDoneListener(() -> context.setResult(null));
+                AsyncNetworkCrawler
+                        .startWork(log, protocol, searchIp, type, ipQueue, tracker::addIp, t);
+            });
+        }).addResultListener((_) -> waitForSomeTimeThenRestart(asyncTaskTracker, type));
     }
 
     private void waitForSomeTimeThenRestart(AsyncTaskTracker tracker, MysterType type) {

@@ -137,8 +137,8 @@ public class PromiseFutureListImpl<T> extends PromiseFutureImpl<List<T>> impleme
     
 
     @Override
-    public synchronized PromiseFutureList<T> addCallResultListener(Consumer<CallResult<List<T>>> consumer) {
-        super.addCallResultListener(consumer);
+    public synchronized PromiseFutureList<T> addFinallyCallResultListener(Consumer<CallResult<List<T>>> consumer) {
+        super.addFinallyCallResultListener(consumer);
         
         return this;
     }

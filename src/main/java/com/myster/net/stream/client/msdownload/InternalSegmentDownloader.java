@@ -48,19 +48,19 @@ class InternalSegmentDownloader implements SegmentDownloader {
     private int idealSegmentSize = DEFAULT_MULTI_SOURCE_BLOCK_SIZE;
 
     // Utility working variables
-    private boolean deadFlag = false;
+    private volatile boolean deadFlag = false;
 
     /**
      * is active says if the SegmentDownloader is actively downloading a file or
      * if the download is queued
      */
-    private boolean isActive = false;
+    private volatile boolean isActive = false;
 
     private final String name;
 
     private final ExecutorService executor;
 
-    private SocketFactory socketFactory;
+    private final SocketFactory socketFactory;
 
     interface SocketFactory {
         MysterSocket makeStreamConnection(MysterAddress ip)
@@ -149,7 +149,7 @@ class InternalSegmentDownloader implements SegmentDownloader {
 
                 workingSegment = new WorkingSegment(workSegment);
 
-                if (!doWorkBlock(socket, workingSegment)) {
+                if (!doWorkBlock(socket)) {
                     return; // this is for kill signals.. there are also exceptions
                 }
 
@@ -202,11 +202,11 @@ class InternalSegmentDownloader implements SegmentDownloader {
         if (socket.in.read() != 1) {
             com.myster.net.stream.client.StandardSuiteStream.disconnect(socket);
 
-            throw new IOException("Could not find file");
+            throw new IOException("Remote Server could not find file");
         }
     }
 
-    private boolean doWorkBlock(MysterSocket socket, WorkingSegment workingSegment)
+    private boolean doWorkBlock(MysterSocket socket)
             throws IOException {
         debug("Work Thread " + name + " -> Reading data "
                 + workingSegment.workSegment.startOffset() + " length: " + workingSegment.workSegment.length());
@@ -297,7 +297,9 @@ class InternalSegmentDownloader implements SegmentDownloader {
 
                 isActive = false; // blagh! Looks like we're queued!
 
-                if (!controller.isOkToQueue()) {
+                if (!controller.isOkToQueue(workingSegment
+                                            .getRemainingWorkSegment())) {
+                    workingSegment = null; // because we do not own this segment anymore!
                     throw new DoNotQueueException();
                 }
 

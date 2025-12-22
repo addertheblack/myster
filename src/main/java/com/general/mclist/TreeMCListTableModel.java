@@ -178,6 +178,10 @@ public class TreeMCListTableModel<E> extends MCListTableModel<E> {
             TreePath parentPath = item.getParent();
             List<TreeMCListItem<E>> siblings = parentToRowsMap.get(parentPath);
 
+            if (siblings == null) {
+                return false;
+            }
+            
             // Step 3: Use identity to delete that row from the map
             // If siblings is null, that's a bug - let it NPE
             if (siblings.remove(item)) {

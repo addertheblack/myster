@@ -147,10 +147,12 @@ public class FileTypeListManager {
         if (item==null) {
             return null;
         }
-        
-        if (!Files.exists(item.getPath())) {
-            return null;
-        }
+     
+        // can't do this because it is too slow
+        // Do not enable pls
+//        if (!Files.exists(item.getPath())) {
+//            return null;
+//        }
 
         return item;
     }

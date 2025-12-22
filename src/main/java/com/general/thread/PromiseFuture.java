@@ -36,7 +36,7 @@ public interface PromiseFuture<T> extends Cancellable, Future<T> {
     Invoker getInvoker();
     
     /**
-     * Similar to {@link #addCallResultListener(Consumer)} but completely
+     * Similar to {@link #addFinallyCallResultListener(Consumer)} but completely
      * synchronous. Does not use the invoker at all. Will always return the
      * result immediately on whatever thread caused the result to be set. Useful
      * for when you need a callback but don't give a crap about the invoker
@@ -49,7 +49,10 @@ public interface PromiseFuture<T> extends Cancellable, Future<T> {
         return setInvoker(Invoker.EDT);
     }
     
-    PromiseFuture<T> addCallResultListener(Consumer<CallResult<T>> c);
+    /**
+     * Is always called once a task finished. Similar to addFinally but with a callResult
+     */
+    PromiseFuture<T> addFinallyCallResultListener(Consumer<CallResult<T>> c);
 
     PromiseFuture<T> addCallListener(CallListener<T> callListener);
 

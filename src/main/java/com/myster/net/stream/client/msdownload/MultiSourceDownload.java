@@ -343,11 +343,15 @@ public class MultiSourceDownload implements Task, Cancellable {
      * If a segment download has received word that it is now queued it double
      * checks back with this routine to see if it should bother continuing the
      * download.
+     * @param workingSegment 
      */
-    private synchronized boolean isOkToQueue() {
-        for (SegmentDownloader SegmentDownloader : downloaders) {
-            if (SegmentDownloader.isActive())
+    private synchronized boolean isOkToQueue(WorkSegment workSegment) {
+        for (SegmentDownloader download : downloaders) {
+            if (download.isActive()) {
+                receiveExtraSegments(new WorkSegment[] { workSegment });
+                
                 return false;
+            }
         }
 
         return true;
@@ -409,15 +413,23 @@ public class MultiSourceDownload implements Task, Cancellable {
             unfinishedSegments.push(workSegments[i]);
         }
         
-        if (!isDone()) {
-            for (SegmentDownloader downloader : downloaders) {
-                if (downloader.isActive() && !downloader.isDead()) {
-                    return;
-                }
-            }
-            
-            System.out.println("Stuff left over but no one to do it" + downloaders.size());
-        }
+        // I'm leaving this here because this "Stuff left over but no one to do it"
+        // should NEVER happen and when it does download disconnect for no reason
+        // before they've d/led everything
+//        if (!isDone() && workSegments.length !=0) {
+//            for (SegmentDownloader downloader : downloaders) {
+//                if (downloader.isActive() && !downloader.isDead()) {
+//                    return;
+//                }
+//            }
+//            
+//            for (SegmentDownloader downloader : downloaders) {
+//                if (!downloader.isActive() || downloader.isDead()) {
+//                    System.out.println("Stuff left over but no one to do it " +workSegments.length+ " downloads size: "+ downloaders.size() + " " + downloader.isActive() + " - " + downloader.isDead());
+//                }
+//            }
+//            System.out.println("---");
+//        }
     }
 
     private synchronized void receiveDataBlock(DataBlock dataBlock) {
@@ -643,8 +655,8 @@ public class MultiSourceDownload implements Task, Cancellable {
          * 
          * @see com.myster.client.stream.Controller#isOkToQueue()
          */
-        public boolean isOkToQueue() {
-            return MultiSourceDownload.this.isOkToQueue();
+        public boolean isOkToQueue(WorkSegment workingSegment) {
+            return MultiSourceDownload.this.isOkToQueue(workingSegment);
         }
     }
 }

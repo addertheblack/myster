@@ -110,7 +110,7 @@ public class TestInternalSegmentDownloader {
                         });
         Mockito.doNothing().when(controller).receiveExtraSegments(any(WorkSegment[].class));
         Mockito.doNothing().when(controller).receiveDataBlock(any(DataBlock.class));
-        when(controller.isOkToQueue()).thenReturn(true);
+        when(controller.isOkToQueue(any(WorkSegment.class))).thenReturn(true);
         when(controller.removeDownload(any(SegmentDownloader.class))).thenReturn(true);
         // stuff missing
 

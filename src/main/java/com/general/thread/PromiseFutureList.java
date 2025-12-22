@@ -17,7 +17,7 @@ public interface PromiseFutureList<T> extends PromiseFuture<List<T>> {
     PromiseFutureList<T> clearInvoker();
     PromiseFutureList<T> setInvoker(Invoker invoker);
     PromiseFutureList<T> useEdt();
-    PromiseFutureList<T> addCallResultListener(Consumer<CallResult<List<T>>> c);
+    PromiseFutureList<T> addFinallyCallResultListener(Consumer<CallResult<List<T>>> c);
     PromiseFutureList<T> addCallListener(CallListener<List<T>> callListener);
     PromiseFutureList<T> addResultListener(Consumer<List<T>> resultListener);
     PromiseFutureList<T> addExceptionListener(Consumer<Throwable> exceptionListener);

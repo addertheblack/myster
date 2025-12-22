@@ -13,5 +13,9 @@ interface Controller {
 
     boolean removeDownload(SegmentDownloader downloader);
 
-    boolean isOkToQueue(); // returns false if it's not ok to queue.
+    /**
+     * If it returns false it assumes ownership of the segment.
+     * If it returns true YOU retain ownership of the segment.
+     */
+    boolean isOkToQueue(WorkSegment workSegment); // returns false if it's not ok to queue.
 }
