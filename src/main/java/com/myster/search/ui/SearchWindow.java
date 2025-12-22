@@ -173,14 +173,14 @@ public class SearchWindow extends MysterFrame implements SearchResultListener, S
                 fileList.getMCListItem(i).getObject().download();
             }
         });
-        JMenuItem downloadToMenuItem = ContextMenu.createDownloadToItem(fileList, e -> {
+        JMenuItem downloadToMenuItem = ContextMenu.createDownloadToItem(fileList, _ -> {
             int[] indexes = fileList.getSelectedRows();
             
             for (int i : indexes) {
                 fileList.getMCListItem(i).getObject().downloadTo();
             }
         });
-        JMenuItem bookmarkMenuItem = ContextMenu.createBookmarkServerItem(fileList, e -> {
+        JMenuItem bookmarkMenuItem = ContextMenu.createBookmarkServerItem(fileList, _ -> {
             int[] indexes = fileList.getSelectedRows();
 
             for (int i : indexes) {
