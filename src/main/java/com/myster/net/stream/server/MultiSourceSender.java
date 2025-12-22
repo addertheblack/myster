@@ -136,7 +136,7 @@ public class MultiSourceSender extends ServerStreamHandler {
 
                 // this happens when we THOUGHT we had the file but... we don't
                 // remote clients ask for it and.. nope
-                if (file == null || !file.isFile() || file.exists()) {
+                if (file == null || !file.isFile() || !file.exists()) {
                     out.write(0);
                     return;
                 } else {
