@@ -4,6 +4,8 @@ import java.awt.Component;
 import java.awt.Graphics2D;
 import java.awt.Insets;
 import java.awt.RenderingHints;
+import java.awt.event.KeyAdapter;
+import java.awt.event.KeyEvent;
 import java.awt.image.BufferedImage;
 
 import javax.swing.Icon;
@@ -177,6 +179,40 @@ public class TreeMCList {
         // Enable type-to-select functionality on the first column by default
         // todo, move to better spot
         TypeToSelectKeyListener.enableSearch(list,  0);
+        
+        // Add keyboard support for opening/closing tree items with arrow keys
+        list.addKeyListener(new KeyAdapter() {
+            @Override
+            public void keyPressed(KeyEvent e) {
+                int selectedRow = list.getSelectedRow();
+                if (selectedRow < 0) {
+                    return;
+                }
+                
+                TreeMCListTableModel<E> treeModel = (TreeMCListTableModel<E>) list.getModel();
+                TreeMCListItem<E> treeRow = (TreeMCListItem<E>) treeModel.getRow(selectedRow);
+                
+                if (!treeRow.isContainer()) {
+                    return; // Only handle containers
+                }
+                
+                if (e.getKeyCode() == KeyEvent.VK_RIGHT) {
+                    // Right arrow: open the item if it's closed
+                    if (!treeRow.isOpen()) {
+                        treeRow.setOpen(true);
+                        treeModel.resortAndRebuild();
+                    }
+                    e.consume(); // Always consume to prevent JTable's default horizontal navigation
+                } else if (e.getKeyCode() == KeyEvent.VK_LEFT) {
+                    // Left arrow: close the item if it's open
+                    if (treeRow.isOpen()) {
+                        treeRow.setOpen(false);
+                        treeModel.resortAndRebuild();
+                    }
+                    e.consume(); // Always consume to prevent JTable's default horizontal navigation
+                }
+            }
+        });
         
         return list;
     }

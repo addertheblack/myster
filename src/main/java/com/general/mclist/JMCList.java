@@ -282,23 +282,24 @@ public class JMCList<E> extends JTable implements MCList<E> {
     
     
     // Yeah it's great that JTable has a bug because it keeps track of indexes in its selection
-    // but I don't.. so don't clear the dang selection when you rebuild.. You can clear the anchor
-    // because that's maybe wrong.. but not the selection please.
-    boolean ignoreClearSelection = false;
-    @Override
-    public void tableChanged(TableModelEvent e) {
-        ignoreClearSelection = true;
-        super.tableChanged(e);
-        ignoreClearSelection = false;
-    }
+    // but I don't.. so don't clear the dang selection when you rebuild.. We need to let JTable
+    // update anchor and lead selection (for keyboard focus) but NOT clear our actual selection.
+    // Solution: temporarily swap in a no-op selection model during table changes.
+    private ListSelectionModel realSelectionModel = null;
     
     @Override
-    public void clearSelection() {
-        if (ignoreClearSelection) {
-            return;
-        }
+    public void tableChanged(TableModelEvent e) {
+        // Save the real selection model and temporarily install a no-op model
+        realSelectionModel = getSelectionModel();
         
-        super.clearSelection();
+        // set the selection model but don't use setSelectionModel() because that fire events and we're trying to be sneaky
+        selectionModel = new NoOpSelectionModel();
+        
+        super.tableChanged(e);
+        
+        // Restore the real selection model
+        // no events. be sneaky.
+        selectionModel = realSelectionModel;
     }
 
     /*
@@ -813,4 +814,74 @@ class MCHeaderCellRenderer<E> extends JPanel implements TableCellRenderer {
         g.fillRect(0, 0, getWidth(), getHeight());
     }
 
+}
+
+/**
+ * A no-op selection model that does nothing. Used temporarily during table rebuilds
+ * to prevent JTable from interfering with our custom selection model.
+ */
+class NoOpSelectionModel implements ListSelectionModel {
+    private int selectionMode = MULTIPLE_INTERVAL_SELECTION;
+    
+    @Override
+    public void setSelectionInterval(int index0, int index1) {}
+    
+    @Override
+    public void addSelectionInterval(int index0, int index1) {}
+    
+    @Override
+    public void removeSelectionInterval(int index0, int index1) {}
+    
+    @Override
+    public int getMinSelectionIndex() { return -1; }
+    
+    @Override
+    public int getMaxSelectionIndex() { return -1; }
+    
+    @Override
+    public boolean isSelectedIndex(int index) { return false; }
+    
+    @Override
+    public int getAnchorSelectionIndex() { return -1; }
+    
+    @Override
+    public void setAnchorSelectionIndex(int index) {}
+    
+    @Override
+    public int getLeadSelectionIndex() { return -1; }
+    
+    @Override
+    public void setLeadSelectionIndex(int index) {}
+    
+    @Override
+    public void clearSelection() {}
+    
+    @Override
+    public boolean isSelectionEmpty() { return true; }
+    
+    @Override
+    public void insertIndexInterval(int index, int length, boolean before) {}
+    
+    @Override
+    public void removeIndexInterval(int index0, int index1) {}
+    
+    @Override
+    public void setValueIsAdjusting(boolean valueIsAdjusting) {}
+    
+    @Override
+    public boolean getValueIsAdjusting() { return false; }
+    
+    @Override
+    public void setSelectionMode(int selectionMode) {
+        this.selectionMode = selectionMode;
+    }
+    
+    @Override
+    public int getSelectionMode() { return selectionMode; }
+    
+    @Override
+    public void addListSelectionListener(ListSelectionListener listener) {}
+    
+    @Override
+    public void removeListSelectionListener(ListSelectionListener listener) {}
 }
