@@ -169,7 +169,7 @@ public class SearchWindow extends MysterFrame implements SearchResultListener, S
 
     private void addPopUpMenus() {
         
-        JMenuItem openContainingFolder = ContextMenu.createMenuItem(fileList, "Open Containing Folder", _ -> {
+        JMenuItem openContainingFolder = ContextMenu.createMenuItem(fileList, "Reveal on Server", _ -> {
             var moop = fileList.getSelectedIndex();
 
             MCListItemInterface<SearchResult> item = (MCListItemInterface<SearchResult>) fileList.getMCListItem(moop);
