@@ -7,6 +7,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.function.Predicate;
 
 public class TreeMCListTableModel<E> extends MCListTableModel<E> {
     private final List<String> columnNames = new ArrayList<>();
@@ -14,13 +15,25 @@ public class TreeMCListTableModel<E> extends MCListTableModel<E> {
     
     private final Map<TreePath, List<TreeMCListItem<E>>> parentToRowsMap = new HashMap<>();
     private final TreePath root;
-    
+ 
     private int sortByIndex = -1;
 
     private boolean lessThan = true;
 
     public TreeMCListTableModel(TreePath root) {
         this.root = root;
+    }
+    
+    public Optional<TreeMCListItem<E>> findElement(Predicate<TreeMCListItem<E>> p) {
+        for (List<TreeMCListItem<E>> list : parentToRowsMap.values()) {
+            for (TreeMCListItem<E> treeMCListItem : list) {
+                if (p.test(treeMCListItem)) {
+                    return Optional.of(treeMCListItem);
+                }
+            }
+        }
+        
+        return Optional.empty();
     }
     
     @Override
@@ -309,6 +322,77 @@ public class TreeMCListTableModel<E> extends MCListTableModel<E> {
     @Override
     MCListItemInterface<E> getRow(int index) {
         return renderedList.get(index);
+    }
+    
+    /**
+     * Opens all parent folders for the item at the given index, ensuring the item is visible.
+     * Rebuilds the model after opening the folders.
+     * 
+     * @param index the index of the item in the rendered list
+     */
+    public void ensureParentFoldersOpen(int index) {
+        if (index < 0 || index >= renderedList.size()) {
+            return;
+        }
+        ensureParentFoldersOpen(renderedList.get(index));
+    }
+    
+    /**
+     * Opens all parent folders for the given item, ensuring the item is visible.
+     * If the item itself is a container, it will also be opened.
+     * Rebuilds the model after opening the folders.
+     * 
+     * @param item the tree item whose parents should be opened
+     */
+    public void ensureParentFoldersOpen(TreeMCListItem<E> item) {
+        if (item == null) {
+            return;
+        }
+        
+        // If the item itself is a container, open it
+        if (item.isContainer() && !item.isOpen()) {
+            item.setOpen(true);
+        }
+        
+        // Walk up the tree from the item's parent to the root, opening each container
+        TreePath currentPath = item.getParent();
+        
+        while (currentPath != null && !currentPath.equals(root)) {
+            // Find the container item for this path
+            TreeMCListItem<E> containerItem = findContainerForPath(currentPath);
+            
+            if (containerItem != null && containerItem.isContainer() && !containerItem.isOpen()) {
+                containerItem.setOpen(true);
+            }
+            
+            // Move up to the parent
+            if (containerItem != null) {
+                currentPath = containerItem.getParent();
+            } else {
+                break; // No container found, stop
+            }
+        }
+        
+        // Rebuild the model to show the newly opened folders
+        resortAndRebuild();
+    }
+    
+    /**
+     * Finds the TreeMCListItem that represents a container with the given path.
+     * 
+     * @param path the path to search for
+     * @return the container item, or null if not found
+     */
+    private TreeMCListItem<E> findContainerForPath(TreePath path) {
+        // Search all items in the parentToRowsMap
+        for (List<TreeMCListItem<E>> items : parentToRowsMap.values()) {
+            for (TreeMCListItem<E> item : items) {
+                if (item.isContainer() && item.getMyPathOrFail().equals(path)) {
+                    return item;
+                }
+            }
+        }
+        return null;
     }
     
     /// ====== hierarchy

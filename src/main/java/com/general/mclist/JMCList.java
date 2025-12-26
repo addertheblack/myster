@@ -114,6 +114,39 @@ public class JMCList<E> extends JTable implements MCList<E> {
         return (MCListTableModel<E>) getModel();
     }
 
+
+    /**
+     * Finds the current row index of an item and selects it.
+     */
+    public void selectAndScrollToItem(MCListItemInterface<?> item) {
+        // Find the current row index of this item
+        int rowIndex = findRowIndexOfItem(item);
+        if (rowIndex < 0) {
+            return;
+        }
+
+        selectAndScrollToItem(rowIndex);
+    }
+
+    private void selectAndScrollToItem(int rowIndex) {
+        clearSelection();
+        select(rowIndex);
+        scrollRectToVisible(getCellRect(rowIndex, 0, true));
+    }
+
+    /**
+     * Finds the current row index of an item in the table. Returns -1 if not
+     * found.
+     */
+    public int findRowIndexOfItem(MCListItemInterface<?> item) {
+        for (int i = 0; i < length(); i++) {
+            if (getMCListItem(i) == item) {
+                return i;
+            }
+        }
+        return -1;
+    }
+    
     /*
      * (non-Javadoc)
      * 

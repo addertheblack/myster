@@ -321,6 +321,189 @@ class TestTreeMCListTableModel {
         assertEquals(2, level2.getIndentLevel(), "Second level should have indent 2");
     }
     
+    @Test
+    void testEnsureParentFoldersOpenWithIndex() {
+        // Create nested folder structure: /FolderA/SubFolder/file.txt
+        TreePath subFolderPath = new TreePathString(new String[] { "FolderA", "SubFolder" });
+        
+        TreeMCListItem<String> folder = createFolderItem(rootPath, "FolderA", folderAPath);
+        TreeMCListItem<String> subFolder = createFolderItem(folderAPath, "SubFolder", subFolderPath);
+        TreeMCListItem<String> fileInSubFolder = createFileItem(subFolderPath, "file.txt");
+        
+        model.addRows(new TreeMCListItem[] { folder, subFolder, fileInSubFolder });
+        
+        // Initially, folders are closed, so only FolderA is visible
+        assertEquals(1, model.getRowCount(), "Only root folder should be visible when closed");
+        assertFalse(folder.isOpen(), "FolderA should be closed initially");
+        assertFalse(subFolder.isOpen(), "SubFolder should be closed initially");
+        
+        // Open FolderA manually to make SubFolder visible
+        folder.setOpen(true);
+        model.resortAndRebuild();
+        assertEquals(2, model.getRowCount(), "FolderA and SubFolder should be visible");
+        
+        // Call ensureParentFoldersOpen on SubFolder (at index 1)
+        // This should open SubFolder itself (since it's a container) and all its parents
+        model.ensureParentFoldersOpen(1); // SubFolder index
+        
+        // Now SubFolder should be open and the file should be visible
+        assertTrue(subFolder.isOpen(), "SubFolder should be opened");
+        assertEquals(3, model.getRowCount(), "All items should be visible now");
+        
+        // Call ensureParentFoldersOpen on the file (index 2)
+        model.ensureParentFoldersOpen(2);
+        
+        // Both parent folders should be open
+        assertTrue(folder.isOpen(), "FolderA should be open");
+        assertTrue(subFolder.isOpen(), "SubFolder should be open");
+        assertEquals(3, model.getRowCount(), "All items should be visible");
+    }
+    
+    @Test
+    void testEnsureParentFoldersOpenWithItem() {
+        // Create nested folder structure: /FolderA/SubFolder/file.txt
+        TreePath subFolderPath = new TreePathString(new String[] { "FolderA", "SubFolder" });
+        
+        TreeMCListItem<String> folder = createFolderItem(rootPath, "FolderA", folderAPath);
+        TreeMCListItem<String> subFolder = createFolderItem(folderAPath, "SubFolder", subFolderPath);
+        TreeMCListItem<String> fileInSubFolder = createFileItem(subFolderPath, "file.txt");
+        
+        model.addRows(new TreeMCListItem[] { folder, subFolder, fileInSubFolder });
+        
+        // Initially, folders are closed
+        assertEquals(1, model.getRowCount(), "Only root folder should be visible when closed");
+        assertFalse(folder.isOpen(), "FolderA should be closed initially");
+        assertFalse(subFolder.isOpen(), "SubFolder should be closed initially");
+        
+        // Ensure parent folders are open for the file
+        model.ensureParentFoldersOpen(fileInSubFolder);
+        
+        // Both parent folders should now be open
+        assertTrue(folder.isOpen(), "FolderA should be opened");
+        assertTrue(subFolder.isOpen(), "SubFolder should be opened");
+        assertEquals(3, model.getRowCount(), "All items should be visible after opening parents");
+        
+        // Verify the file is now visible in the rendered list
+        assertTrue(model.indexOf(fileInSubFolder) >= 0, "File should be in the rendered list");
+    }
+    
+    @Test
+    void testEnsureParentFoldersOpenWithAlreadyOpenFolders() {
+        // Create nested folder structure
+        TreePath subFolderPath = new TreePathString(new String[] { "FolderA", "SubFolder" });
+        
+        TreeMCListItem<String> folder = createFolderItem(rootPath, "FolderA", folderAPath);
+        TreeMCListItem<String> subFolder = createFolderItem(folderAPath, "SubFolder", subFolderPath);
+        TreeMCListItem<String> fileInSubFolder = createFileItem(subFolderPath, "file.txt");
+        
+        model.addRows(new TreeMCListItem[] { folder, subFolder, fileInSubFolder });
+        
+        // Manually open folders first
+        folder.setOpen(true);
+        subFolder.setOpen(true);
+        model.resortAndRebuild();
+        
+        assertTrue(folder.isOpen(), "FolderA should be open");
+        assertTrue(subFolder.isOpen(), "SubFolder should be open");
+        assertEquals(3, model.getRowCount(), "All items should be visible");
+        
+        // Call ensureParentFoldersOpen - should not break anything
+        model.ensureParentFoldersOpen(fileInSubFolder);
+        
+        // Folders should still be open
+        assertTrue(folder.isOpen(), "FolderA should still be open");
+        assertTrue(subFolder.isOpen(), "SubFolder should still be open");
+        assertEquals(3, model.getRowCount(), "All items should still be visible");
+    }
+    
+    @Test
+    void testEnsureParentFoldersOpenWithSingleLevel() {
+        // Simple case: /FolderA/file.txt
+        TreeMCListItem<String> folder = createFolderItem(rootPath, "FolderA", folderAPath);
+        TreeMCListItem<String> fileInFolder = createFileItem(folderAPath, "file.txt");
+        
+        model.addRows(new TreeMCListItem[] { folder, fileInFolder });
+        
+        // Initially, folder is closed
+        assertEquals(1, model.getRowCount(), "Only folder should be visible when closed");
+        assertFalse(folder.isOpen(), "FolderA should be closed initially");
+        
+        // Ensure parent folders are open for the file
+        model.ensureParentFoldersOpen(fileInFolder);
+        
+        // Folder should now be open
+        assertTrue(folder.isOpen(), "FolderA should be opened");
+        assertEquals(2, model.getRowCount(), "Both folder and file should be visible");
+    }
+    
+    @Test
+    void testEnsureParentFoldersOpenWithInvalidIndex() {
+        TreeMCListItem<String> file = createFileItem(rootPath, "file.txt");
+        model.addRow(file);
+        
+        // Test with negative index
+        model.ensureParentFoldersOpen(-1);
+        assertEquals(1, model.getRowCount(), "Should handle negative index gracefully");
+        
+        // Test with index too large
+        model.ensureParentFoldersOpen(999);
+        assertEquals(1, model.getRowCount(), "Should handle large index gracefully");
+    }
+    
+    @Test
+    void testEnsureParentFoldersOpenWithNullItem() {
+        TreeMCListItem<String> file = createFileItem(rootPath, "file.txt");
+        model.addRow(file);
+        
+        // Should handle null gracefully
+        model.ensureParentFoldersOpen((TreeMCListItem<String>) null);
+        assertEquals(1, model.getRowCount(), "Should handle null item gracefully");
+    }
+    
+    @Test
+    void testEnsureParentFoldersOpenForDeepNesting() {
+        // Create deeply nested structure: /A/B/C/D/file.txt
+        TreePath pathA = new TreePathString(new String[] { "A" });
+        TreePath pathB = new TreePathString(new String[] { "A", "B" });
+        TreePath pathC = new TreePathString(new String[] { "A", "B", "C" });
+        TreePath pathD = new TreePathString(new String[] { "A", "B", "C", "D" });
+        
+        TreeMCListItem<String> folderA = createFolderItem(rootPath, "A", pathA);
+        TreeMCListItem<String> folderB = createFolderItem(pathA, "B", pathB);
+        TreeMCListItem<String> folderC = createFolderItem(pathB, "C", pathC);
+        TreeMCListItem<String> folderD = createFolderItem(pathC, "D", pathD);
+        TreeMCListItem<String> file = createFileItem(pathD, "file.txt");
+        
+        model.addRows(new TreeMCListItem[] { folderA, folderB, folderC, folderD, file });
+        
+        // All folders are closed initially
+        assertEquals(1, model.getRowCount(), "Only root folder should be visible");
+        
+        // Ensure parent folders are open for the deeply nested file
+        model.ensureParentFoldersOpen(file);
+        
+        // All folders should now be open
+        assertTrue(folderA.isOpen(), "Folder A should be open");
+        assertTrue(folderB.isOpen(), "Folder B should be open");
+        assertTrue(folderC.isOpen(), "Folder C should be open");
+        assertTrue(folderD.isOpen(), "Folder D should be open");
+        assertEquals(5, model.getRowCount(), "All items should be visible");
+    }
+    
+    @Test
+    void testEnsureParentFoldersOpenForItemAtRoot() {
+        // File directly at root - no parent folders to open
+        TreeMCListItem<String> file = createFileItem(rootPath, "file.txt");
+        model.addRow(file);
+        
+        assertEquals(1, model.getRowCount(), "File should be visible");
+        
+        // Should handle gracefully - no parents to open
+        model.ensureParentFoldersOpen(file);
+        
+        assertEquals(1, model.getRowCount(), "File should still be visible");
+    }
+    
     // Helper methods
     
     private TreeMCListItem<String> createFileItem(TreePath parent, String name) {

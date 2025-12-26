@@ -1,5 +1,7 @@
 package com.myster.tracker.ui;
 
+import java.util.Optional;
+
 import javax.swing.SwingUtilities;
 
 import com.general.mclist.MCListEvent;
@@ -19,7 +21,8 @@ public class OpenConnectionHandler extends MCListEventAdapter {
     public void doubleClick(MCListEvent e) {
         String serverIp =  ((TrackerMCListItem)e.getParent().getMCListItem(e.getParent().getSelectedIndex())).getBestAddress().toString();
         MysterType type = ((TrackerWindow) SwingUtilities.getWindowAncestor(e.getParent().getPane())).getMysterType().orElse(null);
-        (new ClientWindow(context, serverIp, type)).show();
+        var data = new ClientWindow.ClientWindowData(Optional.of(serverIp), Optional.of(type), Optional.empty());
+        (new ClientWindow(context, data)).show();
     }
 
 }

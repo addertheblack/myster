@@ -109,10 +109,11 @@ public class ClientWindow extends MysterFrame implements Sayable {
     private FileInfoListerThread fileInfoListerThread;
     
     private boolean hasBeenShown = false;
-    private MysterType initialTypeDoNoUse;
     
     private final MysterFrameContext context;
     private Runnable savePrefs;
+    
+    private Optional<ClientWindowData> initiaData = Optional.empty();
 
     public static void init(MysterProtocol protocol,
                             HashCrawlerManager hashManager,
@@ -126,7 +127,7 @@ public class ClientWindow extends MysterFrame implements Sayable {
         serverPreferences = prefs;
     }
     
-    public record ClientWindowData(Optional<String> ip, Optional<MysterType> type) {}
+    public record ClientWindowData(Optional<String> ip, Optional<MysterType> type, Optional<String> fileName) {}
     
     private static Optional<MysterType> getFromPrefs(Preferences p) {
         String s = p.get(TYPE_KEY, null);
@@ -147,11 +148,11 @@ public class ClientWindow extends MysterFrame implements Sayable {
 
     public static int initWindowLocations(MysterFrameContext c) {
         List<PrefData<ClientWindowData>> lastLocs = c.keeper().getLastLocs(WINDOW_KEEPER_KEY, (p) -> {
-            return new ClientWindowData(Optional.ofNullable(p.get(IP_KEY, null)), getFromPrefs(p));
+            return new ClientWindowData(Optional.ofNullable(p.get(IP_KEY, null)), getFromPrefs(p), Optional.empty());
         });
 
         for (PrefData<ClientWindowData> prefData : lastLocs) {
-            ClientWindow window = new ClientWindow(c, prefData.data().ip().orElse(null), prefData.data().type().orElse(null));
+            ClientWindow window = new ClientWindow(c, prefData.data());
             window.setBounds(prefData.location().bounds());
             window.show();
         }
@@ -168,19 +169,21 @@ public class ClientWindow extends MysterFrame implements Sayable {
 
     }
 
-    public ClientWindow(MysterFrameContext c, String ip) {
+    public ClientWindow(MysterFrameContext c, ClientWindowData initiaData) {
         super(c, "Direct Connection " + (++counter));
         
         context = c;
         
         init();
-        ipTextField.setText(ip);
+        this.initiaData = Optional.of(initiaData);
+        initiaData.ip.ifPresent(ip -> {
+            ipTextField.setText(ip);
+            
+            if (initiaData.type().isEmpty()) {
+                this.initiaData = Optional.empty();
+            }
+        });
         ipTextField.setForeground(javax.swing.UIManager.getColor("TextField.foreground"));
-    }
-    
-    public ClientWindow(MysterFrameContext c, String ip, MysterType type) {
-        this(c, ip);
-        this.initialTypeDoNoUse = type;
     }
     
     private void recursivelyStartDownloads(TreeMCListTableModel<String> model, TreeMCListItem<String> item, Optional<Path> baseDirectory, Path relativePath) {
@@ -451,11 +454,15 @@ public class ClientWindow extends MysterFrame implements Sayable {
                                              .orElse(t.toString())),
                                      new SortableString(t.toString()) }, t));
 
-        if (t.equals(initialTypeDoNoUse)) {
-            initialTypeDoNoUse = null;
-            
-            fileTypeList.select(fileTypeList.length()-1);
-        }
+        initiaData.ifPresent(data -> {
+            if (t.equals(data.type().orElse(null))) {
+                fileTypeList.select(fileTypeList.length()-1);
+                
+                if (data.fileName().isEmpty()) {
+                    initiaData = Optional.empty();
+                }
+            }
+        });
     }
 
     // this containers map is cleared when the filelist is cleared
@@ -700,7 +707,15 @@ public class ClientWindow extends MysterFrame implements Sayable {
 
     public void startFileList() {
         stopFileListing();
-        fileListThread = new FileListerThread(this::addItemsToFileList,
+        fileListThread = new FileListerThread(new FileListerThread.ItemListListener() {
+                                                    public void addItemsToFileList(FileRecord[] files) {
+                                                        ClientWindow.this.addItemsToFileList(files);
+                                                    }
+    
+                                                    public void finish() {
+                                                        selectElement();
+                                                    }
+                                              },
                                               this::say,
                                               getCurrentIP(),
                                               getCurrentType(),
@@ -708,6 +723,35 @@ public class ClientWindow extends MysterFrame implements Sayable {
                                                       .map(TypeDescription::getDescription)
                                                       .orElse(t.toString()));
         fileListThread.start();
+    }
+
+    private void selectElement() {
+        if (initiaData.isEmpty()) {
+            return;
+        }
+
+        ClientWindowData data = initiaData.get();
+        
+        if (data.fileName().isEmpty()) {
+            return;
+        }
+
+        TreeMCListTableModel<String> model = (TreeMCListTableModel<String>) fileList.getModel();
+
+        var foundElement = model.findElement(item -> !item.isContainer()
+                && item.getObject().equals(data.fileName().get()));
+
+        foundElement.ifPresent(item -> {
+            model.ensureParentFoldersOpen(item);
+            item.setSelected(true);
+            
+            fileList.selectAndScrollToItem(item);
+            
+            fileList.repaint();
+        });
+        
+        initiaData = Optional.empty();
+        
     }
 
     public void startStats() {

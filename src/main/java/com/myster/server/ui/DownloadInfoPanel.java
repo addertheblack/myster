@@ -17,6 +17,7 @@ import java.awt.Insets;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.util.ArrayList;
+import java.util.Optional;
 import java.util.logging.Logger;
 
 import javax.swing.JButton;
@@ -228,19 +229,16 @@ public class DownloadInfoPanel extends JPanel {
         public void disconnectSelected() {
             int[] array = list.getSelectedIndexes();
             for (int i = 0; i < array.length; i++) {
-                ((DownloadMCListItem) (list.getMCListItem(array[i]))).disconnectClient(); //isn't
-                // this a
-                // great
-                // line or
-                // what?
+                ((DownloadMCListItem) (list.getMCListItem(array[i]))).disconnectClient();
             }
         }
 
         public void newConnectWindow() {
             int[] array = list.getSelectedIndexes();
             for (int i = 0; i < array.length; i++) {
-                (new ClientWindow(frameContext, ""
-                        + (((DownloadMCListItem) (list.getMCListItem(array[i])))).getAddress()))
+                String address = (((DownloadMCListItem) (list.getMCListItem(array[i])))).getAddress();
+                var data = new ClientWindow.ClientWindowData(Optional.of(address), Optional.empty(), Optional.empty());
+                (new ClientWindow(frameContext, data))
                         .show();
             }
         }

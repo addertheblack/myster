@@ -40,7 +40,7 @@ public class ContextMenu {
         return createMenuItem(list, "Remove Bookmark", l);
     }
 
-    private static JMenuItem createMenuItem(JMCList list, String menuName, ActionListener l) {
+    public static JMenuItem createMenuItem(JMCList list, String menuName, ActionListener l) {
         Action action = new AbstractAction(menuName) {
             @Override
             public void actionPerformed(ActionEvent e) {

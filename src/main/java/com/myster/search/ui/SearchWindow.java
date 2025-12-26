@@ -20,6 +20,7 @@ import java.awt.event.ActionListener;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
 import java.util.List;
+import java.util.Optional;
 import java.util.logging.Logger;
 
 import javax.swing.JButton;
@@ -37,6 +38,7 @@ import com.general.util.IconLoader;
 import com.general.util.MessageField;
 import com.general.util.StandardWindowBehavior;
 import com.general.util.Util;
+import com.myster.client.ui.ClientWindow;
 import com.myster.net.client.MysterProtocol;
 import com.myster.search.HashCrawlerManager;
 import com.myster.search.SearchEngine;
@@ -166,6 +168,22 @@ public class SearchWindow extends MysterFrame implements SearchResultListener, S
     }
 
     private void addPopUpMenus() {
+        
+        JMenuItem openContainingFolder = ContextMenu.createMenuItem(fileList, "Open Containing Folder", _ -> {
+            var moop = fileList.getSelectedIndex();
+
+            MCListItemInterface<SearchResult> item = (MCListItemInterface<SearchResult>) fileList.getMCListItem(moop);
+            var downloadItem = item.getObject();
+
+            ClientWindow w =
+                    new ClientWindow(getMysterFrameContext(),
+                                     new ClientWindow.ClientWindowData(Optional
+                                             .of(downloadItem.getHostAddress().toString()),
+                                                                       Optional.of(getMysterType()),
+                                                                       Optional.of(item.getObject().getName())));
+            w.show();
+        });
+
         JMenuItem downloadMenuItem = ContextMenu.createDownloadItem(fileList, _ -> {
             int[] indexes = fileList.getSelectedRows();
 
@@ -193,7 +211,7 @@ public class SearchWindow extends MysterFrame implements SearchResultListener, S
             }
         });
         
-        ContextMenu.addPopUpMenu(fileList, ()->{}, downloadMenuItem, downloadToMenuItem, null, bookmarkMenuItem);
+        ContextMenu.addPopUpMenu(fileList, ()->{}, openContainingFolder, null, downloadMenuItem, downloadToMenuItem, null, bookmarkMenuItem);
     }
 
     private static HashCrawlerManager hashManager;

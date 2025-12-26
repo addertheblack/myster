@@ -37,6 +37,7 @@ public class FileListerThread extends MysterThread {
     
     public interface ItemListListener {
         public void addItemsToFileList(FileRecord[] files);
+        public void finish();
     }
 
     // must be called on EDT!
@@ -109,10 +110,14 @@ public class FileListerThread extends MysterThread {
 
                     // if it has been more than a second .... then..
                     long currentTime = System.currentTimeMillis();
-                    if ((currentTime - startTime[0]) > 1000 || max[0] == (counter[0] + 1)) {
+                    boolean ended = max[0] == (counter[0] + 1);
+                    if ((currentTime - startTime[0]) > 1000 || ended) {
                         var rr = records.toArray(new FileRecord[] {});
                         Invoker.EDT.invoke(() -> {
                             listener.addItemsToFileList(rr);
+                            if (ended) {
+                                listener.finish();
+                            }
                         });
                         records.clear();
                         startTime[0] = currentTime;
