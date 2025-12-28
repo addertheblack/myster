@@ -27,6 +27,7 @@ import java.util.ArrayList;
 import java.util.Enumeration;
 import java.util.List;
 import java.util.Optional;
+import java.util.concurrent.Executors;
 import java.util.logging.LogManager;
 import java.util.logging.Logger;
 import java.util.prefs.Preferences;
@@ -48,6 +49,7 @@ import com.myster.hash.ui.HashManagerGUI;
 import com.myster.identity.Cid128;
 import com.myster.identity.Identity;
 import com.myster.message.ui.MessagePreferencesPanel;
+import com.myster.net.MysterAddress;
 import com.myster.net.client.MysterProtocol;
 import com.myster.net.client.MysterProtocolImpl;
 import com.myster.net.datagram.DatagramEncryptUtil.Lookup;
@@ -73,7 +75,6 @@ import com.myster.net.stream.client.msdownload.MSDownloadLocalQueue;
 import com.myster.pref.MysterPreferences;
 import com.myster.pref.ui.ThemePane;
 import com.myster.progress.ui.DefaultDownloadManager;
-import com.myster.progress.ui.DownloadManager;
 import com.myster.search.HashCrawlerManager;
 import com.myster.search.MultiSourceHashSearch;
 import com.myster.search.ui.SearchWindow;
@@ -233,6 +234,17 @@ public class Myster {
                 + (System.currentTimeMillis() - startTime));
         MysterServerPoolImpl pool = new MysterServerPoolImpl(Preferences.userRoot(), protocol);
         Tracker tracker = new Tracker(pool, Preferences.userRoot().node("Tracker.IpListManager"), tdList);
+        
+        var lastResort = Tracker.getOnRamps();
+        for (String ip : lastResort) {
+            Executors.newVirtualThreadPerTaskExecutor().execute(() -> {
+                try {
+                    tracker.addIp(MysterAddress.createMysterAddress(ip));
+                } catch (UnknownHostException e) {
+                    // ugh
+                }
+            });
+        }
         
         // An annoying circular ref. The tracker uses the protocol to refresh information in its db and the 
         // protocol stack uses the tracker and friends to lookup a server's public key for encryption.
