@@ -64,6 +64,29 @@ public class ProgressManagerWindow extends MysterFrame {
     private final ProgressBannerManager adManager = new ProgressBannerManager(this);
     private final WindowPrefDataKeeper keeper;
     
+    public int initWindowLocations() {
+        if (!Util.isEventDispatchThread()) {
+            throw new IllegalStateException("initWindowLocations() must be called on the EDT");
+        }
+        
+        
+        var lastLocs = keeper.getLastLocs("Progress Manager Window", (p) -> {
+            return null; // No custom data needed for this window, just location
+        });
+        
+        if (!lastLocs.isEmpty()) {
+            var prefData = lastLocs.get(0); // Only one progress manager window
+            setBounds(prefData.location().bounds());
+            if (prefData.location().visible()) {
+                setVisible(true);
+                return 1;
+            }
+        }
+        
+        return 0;
+        
+    }
+    
     public ProgressManagerWindow(MysterFrameContext context) {
         super(context, "Download Manager");
         
@@ -593,26 +616,5 @@ public class ProgressManagerWindow extends MysterFrame {
         public MSDownloadControl getControl() {
             return this.control;
         }
-    }
-
-    public int initWindowLocations() {
-        if (!Util.isEventDispatchThread()) {
-            throw new IllegalStateException("initWindowLocations() must be called on the EDT");
-        }
-        
-        
-        var lastLocs = keeper.getLastLocs("Progress Manager Window", (p) -> {
-            return null; // No custom data needed for this window, just location
-        });
-        
-        if (!lastLocs.isEmpty()) {
-            var prefData = lastLocs.get(0); // Only one progress manager window
-            setBounds(prefData.location().bounds());
-            setVisible(true);
-            return 1;
-        }
-        
-        return 0;
-        
     }
 }

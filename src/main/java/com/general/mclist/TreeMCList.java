@@ -1,6 +1,7 @@
 package com.general.mclist;
 
 import java.awt.Component;
+import java.awt.Graphics;
 import java.awt.Graphics2D;
 import java.awt.Insets;
 import java.awt.RenderingHints;
@@ -225,11 +226,22 @@ public class TreeMCList {
         int width = icon1.getIconWidth() + icon2.getIconWidth() + spacing;
         int height = Math.max(icon1.getIconHeight(), icon2.getIconHeight());
         
-        BufferedImage combined = new BufferedImage(width, height, BufferedImage.TYPE_INT_ARGB);
+        // Create a 2x resolution buffer for crisp HiDPI rendering
+        int scale = 2;
+        int scaledWidth = width * scale;
+        int scaledHeight = height * scale;
+        
+        BufferedImage combined = new BufferedImage(scaledWidth, scaledHeight, BufferedImage.TYPE_INT_ARGB);
         Graphics2D g2d = combined.createGraphics();
         
-        // Enable antialiasing for better quality
+        // Scale the graphics context to 2x
+        g2d.scale(scale, scale);
+        
+        // Enable high-quality rendering hints
         g2d.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+        g2d.setRenderingHint(RenderingHints.KEY_RENDERING, RenderingHints.VALUE_RENDER_QUALITY);
+        g2d.setRenderingHint(RenderingHints.KEY_INTERPOLATION, RenderingHints.VALUE_INTERPOLATION_BICUBIC);
+        g2d.setRenderingHint(RenderingHints.KEY_ALPHA_INTERPOLATION, RenderingHints.VALUE_ALPHA_INTERPOLATION_QUALITY);
         
         // Draw first icon
         icon1.paintIcon(null, g2d, 0, (height - icon1.getIconHeight()) / 2);
@@ -239,6 +251,26 @@ public class TreeMCList {
         
         g2d.dispose();
         
-        return new ImageIcon(combined);
+        // Create an ImageIcon that will scale the 2x image appropriately
+        return new ImageIcon(combined) {
+            @Override
+            public int getIconWidth() {
+                return width;
+            }
+            
+            @Override
+            public int getIconHeight() {
+                return height;
+            }
+            
+            @Override
+            public synchronized void paintIcon(Component c, Graphics g, int x, int y) {
+                Graphics2D g2 = (Graphics2D) g.create();
+                g2.setRenderingHint(RenderingHints.KEY_INTERPOLATION, RenderingHints.VALUE_INTERPOLATION_BICUBIC);
+                g2.setRenderingHint(RenderingHints.KEY_RENDERING, RenderingHints.VALUE_RENDER_QUALITY);
+                g2.drawImage(getImage(), x, y, width, height, null);
+                g2.dispose();
+            }
+        };
     }
 }
