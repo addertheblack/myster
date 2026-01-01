@@ -290,7 +290,7 @@
       <properties>
         <jpackage.type>EXE</jpackage.type>
         <jpackage.icon>program_icon.ico</jpackage.icon>
-        <jpackage.speeduplaunchpath>%USERPROFILE%\myster\</jpackage.speeduplaunchpath>
+        <jpackage.speeduplaunchpath>%USERPROFILE%\Myster\</jpackage.speeduplaunchpath>
       </properties>
 
       <build>
@@ -330,7 +330,7 @@
       <properties>
         <jpackage.type>DMG</jpackage.type>
         <jpackage.icon>${project.basedir}/program_icon.icns</jpackage.icon>
-        <jpackage.speeduplaunchpath>$HOME/myster/</jpackage.speeduplaunchpath>
+        <jpackage.speeduplaunchpath>$HOME/Library/Application Support/Myster</jpackage.speeduplaunchpath>
       </properties>
     </profile>
 
@@ -345,6 +345,7 @@
       <properties>
         <jpackage.type>DEB</jpackage.type>
         <jpackage.icon>program_icon.png</jpackage.icon>
+        <jpackage.speeduplaunchpath>$HOME/.myster/</jpackage.speeduplaunchpath>
       </properties>
     </profile>
   </profiles>
