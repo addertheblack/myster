@@ -237,10 +237,10 @@
             </goals>
             <configuration>
               <javaOptions>
-                <!-- <option>-Xshare:on</option> -->
+                <!-- <option>-Xshare:on</option>  
                 <option>-XX:+AutoCreateSharedArchive</option>
                 <option>-XX:SharedArchiveFile=${jpackage.speeduplaunchpath}speeduplaunch.jsa</option>
-               <!-- <option>-Xlog:cds</option>  Optional: for debugging -->
+                  <option>-Xlog:cds</option>  Optional: for debugging -->
               </javaOptions>
               <!-- Directory containing the jar created by the
               shade plugin -->
@@ -290,7 +290,7 @@
       <properties>
         <jpackage.type>EXE</jpackage.type>
         <jpackage.icon>program_icon.ico</jpackage.icon>
-        <jpackage.speeduplaunchpath>%USERPROFILE%\Myster\</jpackage.speeduplaunchpath>
+        <jpackage.speeduplaunchpath>${java.io.tmpdir}</jpackage.speeduplaunchpath>
       </properties>
 
       <build>

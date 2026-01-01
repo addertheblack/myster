@@ -544,6 +544,12 @@ public class MultiSourceDownload implements Task, Cancellable {
         } catch (Exception _) {
             // nothing
         } // assert file is closed
+        
+        try {
+            partialFile.close();
+        } catch (IOException ex) {
+            // whatever
+        }
 
         isDead = true;
         
