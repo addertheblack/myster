@@ -69,7 +69,7 @@
       <version>5.20.0</version>
       <scope>test</scope>
     </dependency>
-    
+
     <!-- In-memory file system for testing -->
     <dependency>
       <groupId>com.google.jimfs</groupId>
@@ -97,11 +97,12 @@
     <maven.compiler.source>25</maven.compiler.source>
     <maven.compiler.target>25</maven.compiler.target>
     <outputName>MysterBuild</outputName> <!-- Custom property for output
-		filename -->
+    filename -->
     <mainclass>com.myster.Myster</mainclass>
     <!-- Default values for jpackage -->
     <jpackage.type>exe</jpackage.type>
     <jpackage.icon>program_icon.ico</jpackage.icon>
+    <jpackage.speeduplaunchpath>$HOME/myster/</jpackage.speeduplaunchpath>
   </properties>
 
   <build>
@@ -235,7 +236,14 @@
               <goal>jpackage</goal>
             </goals>
             <configuration>
-              <!-- Directory containing the jar created by the shade plugin -->
+              <javaOptions>
+                <!-- <option>-Xshare:on</option> -->
+                <option>-XX:+AutoCreateSharedArchive</option>
+                <option>-XX:SharedArchiveFile=${jpackage.speeduplaunchpath}speeduplaunch.jsa</option>
+               <!-- <option>-Xlog:cds</option>  Optional: for debugging -->
+              </javaOptions>
+              <!-- Directory containing the jar created by the
+              shade plugin -->
               <input>${project.basedir}/bin</input>
               <!-- Output directory for the packaged application -->
               <destination>${project.build.directory}/jpackage</destination>
@@ -245,10 +253,17 @@
               <type>${jpackage.type}</type>
               <appVersion>${project.version}</appVersion>
               <icon>${jpackage.icon}</icon>
+              <jLinkOptions>
+                <option>--generate-cds-archive</option>
+                <option>--strip-debug</option>
+                <option>--no-man-pages</option>
+                <option>--no-header-files</option>
+              </jLinkOptions>
               <!-- Pass additional jpackage arguments -->
               <arguments>
                 <argument>--add-modules</argument>
-                <argument>java.base,java.desktop,java.naming,java.prefs</argument>
+                <argument>
+                  java.base,java.desktop,java.naming,java.prefs</argument>
               </arguments>
             </configuration>
           </execution>
@@ -258,7 +273,7 @@
   </build>
 
   <profiles>
-  <!--
+    <!--
     add this stuff later. it makes launch almost but not quite 2X faster..
   -Xshare:on 
 -XX:+AutoCreateSharedArchive 
@@ -275,6 +290,7 @@
       <properties>
         <jpackage.type>EXE</jpackage.type>
         <jpackage.icon>program_icon.ico</jpackage.icon>
+        <jpackage.speeduplaunchpath>%USERPROFILE%\myster\</jpackage.speeduplaunchpath>
       </properties>
 
       <build>
@@ -297,7 +313,7 @@
                 </configuration>
               </execution>
             </executions>
-          </plugin>
+          </plugin>	
         </plugins>
       </build>
 
@@ -313,7 +329,8 @@
       </activation>
       <properties>
         <jpackage.type>DMG</jpackage.type>
-        <jpackage.icon>program_icon.icns</jpackage.icon>
+        <jpackage.icon>${project.basedir}/program_icon.icns</jpackage.icon>
+        <jpackage.speeduplaunchpath>$HOME/myster/</jpackage.speeduplaunchpath>
       </properties>
     </profile>
 
