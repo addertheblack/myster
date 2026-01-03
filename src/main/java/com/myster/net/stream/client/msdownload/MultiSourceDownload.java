@@ -125,11 +125,11 @@ public class MultiSourceDownload implements Task, Cancellable {
     private long bytesWrittenOut = 0; // actual bytes written to disk
 
     // State flags - see class JavaDoc for detailed explanation
-    private boolean isPaused = true; // starts paused (unstarted downloads are considered paused)
-    private boolean hasStarted = false; // true after first start() call
-    private boolean isCancelled = false; // true when user has cancelled the download
-    private boolean endFlag = false; // true to tell download to stop (overrides pause)
-    private boolean isDead = false; // true after cleanup has been called
+    private boolean pausedFlag = true; // starts paused (unstarted downloads are considered paused)
+    private boolean hasStartedFlag = false; // true after first start() call
+    private boolean cancelledFlag = false; // true when user has cancelled the download
+    private boolean endNowFlag = false; // true to tell download to stop (overrides pause)
+    private boolean endedFlag = false; // true after cleanup has been called
 
     private long lastProgress;
     
@@ -199,17 +199,17 @@ public class MultiSourceDownload implements Task, Cancellable {
 
     public synchronized void start() {
         // Return early if already running
-        if (!isPaused) {
+        if (!pausedFlag) {
             return;
         }
 
         // Determine if this is first start or resume (before updating
         // hasStarted)
-        final boolean isFirstStart = !hasStarted;
+        final boolean isFirstStart = !hasStartedFlag;
 
         // Fire appropriate event based on whether this is first start or resume
         if (isFirstStart) {
-            hasStarted = true;
+            hasStartedFlag = true;
             dispatcher.fire().startDownload(createStartMultiSourceEvent());
         }
 
@@ -230,17 +230,17 @@ public class MultiSourceDownload implements Task, Cancellable {
      * This is package-private and should only be called by MSDownloadLocalQueue.
      */
     synchronized void startDirectly() {
-        isPaused = false;
+        pausedFlag = false;
         
         Util.invokeLater(() -> {
             // Create downloaders from all discovered stubs
             synchronized (this) {
                 // Don't create downloaders if we've been paused again or ended
-                if (isPaused || endFlag) {
+                if (pausedFlag || endNowFlag) {
                     return;
                 }
                 
-                if (isDead) {
+                if (endedFlag) {
                     return;
                 }
                 
@@ -270,15 +270,15 @@ public class MultiSourceDownload implements Task, Cancellable {
      */
     synchronized void pauseDirectly() {
         // Return early if already paused
-        if (isPaused) {
+        if (pausedFlag) {
             return;
         }
         
-        if (isDead) {
+        if (endedFlag) {
             return;
         }
         
-        isPaused = true;
+        pausedFlag = true;
         
         // Flag all segment downloaders to end
         for (SegmentDownloader segmentDownloader : downloaders) {
@@ -303,10 +303,10 @@ public class MultiSourceDownload implements Task, Cancellable {
 
     /** Package Protected for unit tests */
     synchronized void newDownload(MysterFileStub stub) {
-        if (endFlag)
+        if (endNowFlag)
             return;
         
-        if (isDead) 
+        if (endedFlag) 
             return;
 
         if (stub.getMysterAddress() == null)
@@ -315,7 +315,7 @@ public class MultiSourceDownload implements Task, Cancellable {
         // Track this stub as discovered
         discoveredStubs.add(stub);
         
-        if (isPaused) {
+        if (pausedFlag) {
             return;
         }
 
@@ -377,7 +377,7 @@ public class MultiSourceDownload implements Task, Cancellable {
      * cleanup routine
      */
     private synchronized boolean endCheckAndCleanup() {
-        if ((endFlag || isDone()) && (downloaders.size() == 0)) {
+        if ((endNowFlag || isDone()) && (downloaders.size() == 0)) {
             endDownloadCleanUp();
 
             return true;
@@ -456,7 +456,7 @@ public class MultiSourceDownload implements Task, Cancellable {
     }
 
     public synchronized boolean isDead() {
-        return isDead;
+        return endedFlag;
     }
 
     /**
@@ -486,14 +486,14 @@ public class MultiSourceDownload implements Task, Cancellable {
     }
 
     public synchronized void flagToEnd() {
-        if (isDead)
+        if (endedFlag)
             return;
-        isCancelled = true;
+        cancelledFlag = true;
 
-        if (endFlag)
+        if (endNowFlag)
             return; // shouldn't be called twice..
 
-        endFlag = true;
+        endNowFlag = true;
 
 
         for (SegmentDownloader SegmentDownloader : downloaders) {
@@ -508,13 +508,13 @@ public class MultiSourceDownload implements Task, Cancellable {
     }
 
     public boolean isCancelled() {
-        return isCancelled;
+        return cancelledFlag;
     }
 
     public void end() {
         flagToEnd();
 
-        while (!isDead) { // wow, is crap
+        while (!endedFlag) { // wow, is crap
             try {
                 Thread.sleep(1);
             } catch (InterruptedException ex) {
@@ -526,14 +526,14 @@ public class MultiSourceDownload implements Task, Cancellable {
 
     // This method will only be called once right at the end of the download
     private synchronized void endDownloadCleanUp() {
-        if (isDead) {
+        if (endedFlag) {
             System.out.println("WTF? We are already dead!");
             
             return;
         }
         
         // endFlag overrides pause state - force unpause
-        isPaused = false;
+        pausedFlag = false;
         
         for (FileHash hash : hashes) {
             crawlerManager.removeHash(type, hash, hashSearchListener);
@@ -551,13 +551,13 @@ public class MultiSourceDownload implements Task, Cancellable {
             // whatever
         }
 
-        isDead = true;
+        endedFlag = true;
         
         queue.removeFromQueue(this);
 
         dispatcher.fire().endDownload(createMultiSourceEvent());
         
-        if (isCancelled ) {
+        if (cancelledFlag ) {
             partialFile.done();
             randomAccessFile.getFile().delete();
         }
@@ -568,7 +568,7 @@ public class MultiSourceDownload implements Task, Cancellable {
     }
 
     private MultiSourceEvent createMultiSourceEvent() {
-        return new MultiSourceEvent(initialOffset, bytesWrittenOut, fileLength, isCancelled);
+        return new MultiSourceEvent(initialOffset, bytesWrittenOut, fileLength, cancelledFlag);
     }
     
     private StartMultiSourceEvent createStartMultiSourceEvent() {
@@ -590,18 +590,18 @@ public class MultiSourceDownload implements Task, Cancellable {
             
             @Override
             public boolean isPaused() {
-                return MultiSourceDownload.this.isPaused;
+                return MultiSourceDownload.this.pausedFlag;
             }
             
             @Override
             public boolean isActive() {
                 return !MultiSourceDownload.this.isDead() && !MultiSourceDownload.this.isDone();
             }
-        },initialOffset, bytesWrittenOut, fileLength, isCancelled);
+        },initialOffset, bytesWrittenOut, fileLength, cancelledFlag);
     }
     
     private QueuedMultiSourceEvent createQueuedMultiSourceEvent(int queuePosition) {
-        return new QueuedMultiSourceEvent(queuePosition, initialOffset, bytesWrittenOut, fileLength, isCancelled);
+        return new QueuedMultiSourceEvent(queuePosition, initialOffset, bytesWrittenOut, fileLength, cancelledFlag);
     }
 
     private class MSHashSearchListener implements HashSearchListener {
