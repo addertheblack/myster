@@ -267,7 +267,7 @@ public class ProgressManagerWindow extends MysterFrame {
     /**
      * Update the enabled state of actions based on current selection.
      */
-    private void updateActionStates() {
+    private void updateActionStates() { 
         DownloadMCListItem selectedItem = getSelectedDownloadItem();
         if (selectedItem != null && selectedItem.isContainer()) {
             MSDownloadControl control = selectedItem.getObject().getControl();
