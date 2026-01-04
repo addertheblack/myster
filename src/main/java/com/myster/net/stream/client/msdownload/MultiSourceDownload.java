@@ -130,6 +130,7 @@ public class MultiSourceDownload implements Task, Cancellable {
     private boolean cancelledFlag = false; // true when user has cancelled the download
     private boolean endNowFlag = false; // true to tell download to stop (overrides pause)
     private boolean endedFlag = false; // true after cleanup has been called
+    private boolean locallyQueuedFlag = false; // true when download is in the local queue
 
     private long lastProgress;
     
@@ -199,7 +200,7 @@ public class MultiSourceDownload implements Task, Cancellable {
 
     public synchronized void start() {
         // Return early if already running
-        if (!pausedFlag) {
+        if (!pausedFlag && !locallyQueuedFlag) {
             return;
         }
 
@@ -213,7 +214,12 @@ public class MultiSourceDownload implements Task, Cancellable {
             dispatcher.fire().startDownload(createStartMultiSourceEvent());
         }
 
-        queue.addToQueue(this);
+        // If already locally queued, force-start to bump this download to active
+        if (locallyQueuedFlag) {
+            queue.forceStartDownload(this);
+        } else {
+            queue.addToQueue(this);
+        }
         
         Util.invokeLater(() -> {
             // Register hashes with crawler only on first start
@@ -231,6 +237,7 @@ public class MultiSourceDownload implements Task, Cancellable {
      */
     synchronized void startDirectly() {
         pausedFlag = false;
+        locallyQueuedFlag = false;
         
         Util.invokeLater(() -> {
             // Create downloaders from all discovered stubs
@@ -243,9 +250,9 @@ public class MultiSourceDownload implements Task, Cancellable {
                 if (endedFlag) {
                     return;
                 }
-                
+
                 dispatcher.fire().resumeDownload(createMultiSourceEvent());
-                
+
                 for (MysterFileStub stub : discoveredStubs) {
                     newDownload(stub);
                 }
@@ -298,7 +305,18 @@ public class MultiSourceDownload implements Task, Cancellable {
      * @param queuePosition the position in the queue (1-based)
      */
     synchronized void notifyQueued(int queuePosition) {
+        locallyQueuedFlag = true;
         dispatcher.fire().queuedDownload(createQueuedMultiSourceEvent(queuePosition));
+    }
+    
+    /**
+     * Notifies the download that it has been removed from the queue (truly paused).
+     * This is package-private and should only be called by MSDownloadLocalQueue.
+     * Fires a queued event with position -1 to indicate "unqueued".
+     */
+    synchronized void notifyUnqueued() {
+        locallyQueuedFlag = false;
+        dispatcher.fire().queuedDownload(createQueuedMultiSourceEvent(-1));
     }
 
     /** Package Protected for unit tests */
@@ -596,6 +614,11 @@ public class MultiSourceDownload implements Task, Cancellable {
             @Override
             public boolean isActive() {
                 return !MultiSourceDownload.this.isDead() && !MultiSourceDownload.this.isDone();
+            }
+            
+            @Override
+            public boolean isLocallyQueued() {
+                return MultiSourceDownload.this.locallyQueuedFlag;
             }
         },initialOffset, bytesWrittenOut, fileLength, cancelledFlag);
     }

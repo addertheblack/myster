@@ -273,10 +273,14 @@ public class ProgressManagerWindow extends MysterFrame {
             MSDownloadControl control = selectedItem.getObject().getControl();
             boolean isActive = control.isActive();
             boolean isPaused = control.isPaused();
+            boolean isLocallyQueued = control.isLocallyQueued();
             
-            // Pause/Resume only enabled if download is active and is a container (not a segment)
-            pauseAction.setEnabled(isActive && !isPaused);
-            resumeAction.setEnabled(isActive && isPaused);
+            // Pause enabled if download is active and actually downloading (not paused, not queued)
+            pauseAction.setEnabled(isActive && (!isPaused || isLocallyQueued));
+            
+            // Resume enabled if download is active and either paused OR queued
+            // (resuming a queued download force-starts it)
+            resumeAction.setEnabled(isActive && (isPaused || isLocallyQueued));
             
             // Cancel enabled if download is active and we have a cancellable
             cancelAction.setEnabled(isActive && selectedItem.cancellable != null);
@@ -521,6 +525,8 @@ public class ProgressManagerWindow extends MysterFrame {
     }
     
     /**
+                dispatcher.fire().resumeDownload(createMultiSourceEvent());
+
      * Represents a download item (either a main download or a sub-download).
      * This will be expanded later to track actual download state.
      */
@@ -541,10 +547,12 @@ public class ProgressManagerWindow extends MysterFrame {
             this.control = new MSDownloadControl() {
                 private boolean paused = false;
                 private boolean active = true;
+                private boolean locallyQueued = false;
                 
                 @Override
                 public void resume() {
                     paused = false;
+                    locallyQueued = false;
                 }
                 
                 @Override
@@ -565,6 +573,11 @@ public class ProgressManagerWindow extends MysterFrame {
                 @Override
                 public boolean isActive() {
                     return active;
+                }
+                
+                @Override
+                public boolean isLocallyQueued() {
+                    return locallyQueued;
                 }
             };
         }

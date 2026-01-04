@@ -139,7 +139,11 @@ public class ProgManDownloadHandler implements MSDownloadListener {
 
     @Override
     public void queuedDownload(QueuedMultiSourceEvent event) {
-        downloadItem.getObject().setStatus("Queued at position " + event.getQueuePosition());
+        if (event.getQueuePosition() == -1) {
+            downloadItem.getObject().setStatus("Paused");
+        } else {
+            downloadItem.getObject().setStatus("Queued at position " + event.getQueuePosition());
+        }
         downloadItem.getObject().setSpeed(0);
         window.getDownloadList().repaint();
     }
@@ -195,7 +199,7 @@ public class ProgManDownloadHandler implements MSDownloadListener {
 
         @Override
         public void queued(SegmentDownloaderEvent e) {
-            connectionItem.getObject().setStatus("Queue position: " + e.getQueuePosition());
+            connectionItem.getObject().setStatus("**Server** put us in a queue at position: " + e.getQueuePosition());
             window.getDownloadList().repaint();
         }
 

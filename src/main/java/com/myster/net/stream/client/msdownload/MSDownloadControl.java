@@ -6,4 +6,5 @@ public interface MSDownloadControl {
     void cancel();
     boolean isPaused();
     boolean isActive(); // true if download is not dead or done
+    boolean isLocallyQueued(); // true if download is in the local download queue
 }
