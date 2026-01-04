@@ -38,7 +38,7 @@ jobs:
       uses: actions/upload-artifact@v4
       with:
         name: linux-installer
-        path: Myster*.rpm
+        path: target/jpackage/Myster*.deb
 
   build-windows:
 
@@ -64,7 +64,7 @@ jobs:
       uses: actions/upload-artifact@v4
       with:
         name: windows-installer
-        path: Myster*.exe
+        path: target/jpackage/Myster*.exe
   build-mac-os-x86:
 
     runs-on: macos-15-intel
@@ -89,7 +89,7 @@ jobs:
       uses: actions/upload-artifact@v4
       with:
         name: macOS-x86-installer
-        path: Myster*.dmg
+        path: target/jpackage/Myster*.dmg
 
   build-mac-os-arm:
 
@@ -115,4 +115,4 @@ jobs:
       uses: actions/upload-artifact@v4
       with:
         name: macOS-arm-installer
-        path: Myster*.dmg
+        path: target/jpackage/Myster*.dmg
