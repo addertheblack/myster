@@ -259,12 +259,13 @@
                 <option>--no-man-pages</option>
                 <option>--no-header-files</option>
               </jLinkOptions>
+              <addModules>
+                <module>java.base</module>
+                <module>java.desktop</module>
+                <module>java.naming</module>
+                <module>java.prefs</module>
+              </addModules>
               <!-- Pass additional jpackage arguments -->
-              <arguments>
-                <argument>--add-modules</argument>
-                <argument>
-                  java.base,java.desktop,java.naming,java.prefs</argument>
-              </arguments>
             </configuration>
           </execution>
         </executions>
