@@ -55,6 +55,8 @@ public class ProgressManagerWindow extends MysterFrame {
     private final Action resumeAction;
     private final Action cancelAction;
     private final Action clearCompletedAction;
+    private final Action expandAllAction;
+    private final Action collapseAllAction;
     
     // Icons for the tree list
     private static final FlatSVGIcon downloadIcon = IconLoader.loadSvg(ProgressManagerWindow.class, "download-icon");
@@ -155,22 +157,46 @@ public class ProgressManagerWindow extends MysterFrame {
         clearCompletedAction.putValue(Action.SHORT_DESCRIPTION, "Clear all completed/cancelled downloads");
         clearCompletedAction.setEnabled(true); // Always enabled
         
+        expandAllAction = new AbstractAction("Expand All") {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                expandAllContainers();
+            }
+        };
+        expandAllAction.putValue(Action.SHORT_DESCRIPTION, "Expand all downloads to show segments");
+        expandAllAction.setEnabled(true);
+        
+        collapseAllAction = new AbstractAction("Collapse All") {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                collapseAllContainers();
+            }
+        };
+        collapseAllAction.putValue(Action.SHORT_DESCRIPTION, "Collapse all downloads to hide segments");
+        collapseAllAction.setEnabled(true);
+        
         // Load SVG icons for actions with 16x16 size for toolbar
         FlatSVGIcon pauseIcon = IconLoader.loadSvg(ProgressManagerWindow.class, "pause-icon", 16);
         FlatSVGIcon resumeIcon = IconLoader.loadSvg(ProgressManagerWindow.class, "resume-icon", 16);
         FlatSVGIcon cancelIcon = IconLoader.loadSvg(ProgressManagerWindow.class, "cancel-icon", 16);
         FlatSVGIcon clearIcon = IconLoader.loadSvg(ProgressManagerWindow.class, "clear-icon", 16);
+        FlatSVGIcon expandIcon = IconLoader.loadSvg(ProgressManagerWindow.class, "expand-icon", 16);
+        FlatSVGIcon collapseIcon = IconLoader.loadSvg(ProgressManagerWindow.class, "collapse-icon", 16);
         
         var adaptiveColor = IconLoader.adaptiveColor();
         pauseIcon.setColorFilter(adaptiveColor);
         resumeIcon.setColorFilter(adaptiveColor);
         cancelIcon.setColorFilter(adaptiveColor);
         clearIcon.setColorFilter(adaptiveColor);
+        expandIcon.setColorFilter(adaptiveColor);
+        collapseIcon.setColorFilter(adaptiveColor);
         
         pauseAction.putValue(Action.SMALL_ICON, pauseIcon);
         resumeAction.putValue(Action.SMALL_ICON, resumeIcon);
         cancelAction.putValue(Action.SMALL_ICON, cancelIcon);
         clearCompletedAction.putValue(Action.SMALL_ICON, clearIcon);
+        expandAllAction.putValue(Action.SMALL_ICON, expandIcon);
+        collapseAllAction.putValue(Action.SMALL_ICON, collapseIcon);
         
         // Create toolbar
         toolbar = new JToolBar();
@@ -181,6 +207,9 @@ public class ProgressManagerWindow extends MysterFrame {
         toolbar.add(cancelAction);
         toolbar.addSeparator();
         toolbar.add(clearCompletedAction);
+        toolbar.addSeparator();
+        toolbar.add(expandAllAction);
+        toolbar.add(collapseAllAction);
         
         // Create the TreeMCList for downloads
         // Columns: Name, Progress, Speed, Status (can be refined later)
@@ -261,7 +290,10 @@ public class ProgressManagerWindow extends MysterFrame {
                                  null,
                                  new JMenuItem(cancelAction),
                                  null,
-                                 new JMenuItem(clearCompletedAction));
+                                 new JMenuItem(clearCompletedAction),
+                                 null,
+                                 new JMenuItem(expandAllAction),
+                                 new JMenuItem(collapseAllAction));
     }
 
     /**
@@ -315,6 +347,46 @@ public class ProgressManagerWindow extends MysterFrame {
         }
         
         updateActionStates();
+    }
+    
+    /**
+     * Expand all container items (downloads) to show their children (segments).
+     */
+    private void expandAllContainers() {
+        var model = (com.general.mclist.TreeMCListTableModel<DownloadItem>) downloadList.getModel();
+        
+        // Iterate through all items and expand containers
+        for (int i = 0; i < downloadList.length(); i++) {
+            var item = downloadList.getMCListItem(i);
+            if (item instanceof com.general.mclist.TreeMCListTableModel.TreeMCListItem<?> treeItem) {
+                if (treeItem.isContainer() && !treeItem.isOpen()) {
+                    treeItem.setOpen(true);
+                }
+            }
+        }
+        
+        // Rebuild the model to show the changes
+        model.resortAndRebuild();
+    }
+    
+    /**
+     * Collapse all container items (downloads) to hide their children (segments).
+     */
+    private void collapseAllContainers() {
+        var model = (com.general.mclist.TreeMCListTableModel<DownloadItem>) downloadList.getModel();
+        
+        // Iterate through all items and collapse containers
+        for (int i = 0; i < downloadList.length(); i++) {
+            var item = downloadList.getMCListItem(i);
+            if (item instanceof com.general.mclist.TreeMCListTableModel.TreeMCListItem<?> treeItem) {
+                if (treeItem.isContainer() && treeItem.isOpen()) {
+                    treeItem.setOpen(false);
+                }
+            }
+        }
+        
+        // Rebuild the model to show the changes
+        model.resortAndRebuild();
     }
     
     private DownloadMCListItem getSelectedDownloadItem() {
