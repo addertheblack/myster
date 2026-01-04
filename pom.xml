@@ -103,6 +103,8 @@
     <jpackage.type>exe</jpackage.type>
     <jpackage.icon>program_icon.ico</jpackage.icon>
     <jpackage.speeduplaunchpath>$HOME/myster/</jpackage.speeduplaunchpath>
+    <!-- Version for jpackage - must be X.Y.Z format without -SNAPSHOT -->
+    <jpackage.version>10.0.0</jpackage.version>
   </properties>
 
   <build>
@@ -251,7 +253,7 @@
               <mainJar>${outputName}.jar</mainJar>
               <mainClass>${mainclass}</mainClass>
               <type>${jpackage.type}</type>
-              <appVersion>${project.version}</appVersion>
+              <appVersion>${jpackage.version}</appVersion>
               <icon>${jpackage.icon}</icon>
               <jLinkOptions>
                 <option>--generate-cds-archive</option>
