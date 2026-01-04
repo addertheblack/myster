@@ -1,6 +1,7 @@
 package com.myster.progress.ui;
 
 import java.awt.Frame;
+import java.io.File;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -165,6 +166,16 @@ public class ProgManDownloadHandler implements MSDownloadListener {
     @Override
     public Frame getFrame() {
         return window;
+    }
+    
+    /**
+     * Sets the file being downloaded on the download item.
+     * This should be called with the .i file during download and the final file after completion.
+     * 
+     * @param file the file to set
+     */
+    public void setFile(File file) {
+        downloadItem.getObject().setFile(file);
     }
 
 

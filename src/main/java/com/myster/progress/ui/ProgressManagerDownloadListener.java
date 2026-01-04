@@ -19,12 +19,15 @@ import com.myster.search.MysterFileStub;
  * Manages a single download within the ProgressManagerWindow.
  * This class implements DownloadInitiatorListener and creates nested listeners
  * for the overall download and individual segment downloaders (connections).
+ * 
+ * Everything in here is expected to be called on the Swing EDT thread.
  */
 public class ProgressManagerDownloadListener implements DownloadInitiatorListener {
     private final ProgressManagerWindow window;
     private final MSDownloadParams params;
     
     private ProgressManagerWindow.DownloadMCListItem downloadItem;
+    private ProgManDownloadHandler downloadHandler;
     
     public interface AddBanners {
         void addNewBannerToQueue(Banner b);
@@ -68,15 +71,26 @@ public class ProgressManagerDownloadListener implements DownloadInitiatorListene
 
     @Override
     public MSDownloadListener getMsDownloadListener() {
-        return new ProgManDownloadHandler(window, downloadItem, params.stub().getName());
+        if (downloadHandler == null) {
+            downloadHandler =
+                    new ProgManDownloadHandler(window, downloadItem, params.stub().getName());
+        }
+        return downloadHandler;
     }
 
     @Override
     public File getFileToDownloadTo(MysterFileStub stub) {
-        return MultiSourceUtilities.getFileToDownloadTo(stub.name(),
-                                                        window,
-                                                        params.targetDir(),
-                                                        params.subDirectory());
+        File file = MultiSourceUtilities.getFileToDownloadTo(stub.name(),
+                                                             window,
+                                                             params.targetDir(),
+                                                             params.subDirectory());
+
+        // Set the .i file on the download item so the user can reveal it
+        // while downloading
+        if (file != null && downloadHandler != null) {
+            downloadHandler.setFile(file);
+        }
+        return file;
     }
 
     @Override
@@ -103,8 +117,18 @@ public class ProgressManagerDownloadListener implements DownloadInitiatorListene
 
     @Override
     public void moveFileToFinalDestination(File sourceFile) {
+        // Move the file to final destination (removes .i extension)
         MultiSourceUtilities.moveFileToFinalDestination(sourceFile, 
                                                         s -> AnswerDialog.simpleAlert(window, s));
+        
+        // Update the download item with the final file (without .i extension)
+        if (downloadHandler != null && sourceFile != null) {
+            String sourcePath = sourceFile.getAbsolutePath();
+            if (sourcePath.endsWith(".i")) {
+                File finalFile = new File(sourcePath.substring(0, sourcePath.length() - 2));
+                downloadHandler.setFile(finalFile);
+            }
+        }
     }
     
 }

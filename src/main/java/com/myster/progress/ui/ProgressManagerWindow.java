@@ -6,6 +6,7 @@ import java.awt.GridBagLayout;
 import java.awt.Image;
 import java.awt.Insets;
 import java.awt.event.ActionEvent;
+import java.io.File;
 
 import javax.swing.AbstractAction;
 import javax.swing.Action;
@@ -25,6 +26,7 @@ import com.general.thread.Cancellable;
 import com.general.util.GridBagBuilder;
 import com.general.util.IconLoader;
 import com.general.util.Util;
+import com.myster.application.MysterGlobals;
 import com.myster.net.stream.client.msdownload.MSDownloadControl;
 import com.myster.pref.MysterPreferences;
 import com.myster.progress.ui.ProgressBannerManager.Banner;
@@ -51,6 +53,7 @@ public class ProgressManagerWindow extends MysterFrame {
     private final JToolBar toolbar;
     
     // Actions for toolbar and context menu
+    private final Action showInFinderAction;
     private final Action pauseAction;
     private final Action resumeAction;
     private final Action cancelAction;
@@ -109,6 +112,22 @@ public class ProgressManagerWindow extends MysterFrame {
         }
         
         // Create actions before toolbar and context menu
+        String showInFileManagerLabel = getShowInFileManagerLabel();
+        showInFinderAction = new AbstractAction(showInFileManagerLabel) {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                DownloadMCListItem selectedItem = getSelectedDownloadItem();
+                if (selectedItem != null) {
+                    File file = selectedItem.getObject().getFile();
+                    if (file != null) {
+                        Util.revealFileInFileManager(file);
+                    }
+                }
+            }
+        };
+        showInFinderAction.putValue(Action.SHORT_DESCRIPTION, showInFileManagerLabel);
+        showInFinderAction.setEnabled(false); // Initially disabled
+        
         pauseAction = new AbstractAction("Pause") {
             @Override
             public void actionPerformed(ActionEvent e) {
@@ -176,6 +195,7 @@ public class ProgressManagerWindow extends MysterFrame {
         collapseAllAction.setEnabled(true);
         
         // Load SVG icons for actions with 16x16 size for toolbar
+        FlatSVGIcon showInFinderIcon = IconLoader.loadSvg(ProgressManagerWindow.class, "folder-open-icon", 16);
         FlatSVGIcon pauseIcon = IconLoader.loadSvg(ProgressManagerWindow.class, "pause-icon", 16);
         FlatSVGIcon resumeIcon = IconLoader.loadSvg(ProgressManagerWindow.class, "resume-icon", 16);
         FlatSVGIcon cancelIcon = IconLoader.loadSvg(ProgressManagerWindow.class, "cancel-icon", 16);
@@ -184,6 +204,7 @@ public class ProgressManagerWindow extends MysterFrame {
         FlatSVGIcon collapseIcon = IconLoader.loadSvg(ProgressManagerWindow.class, "collapse-icon", 16);
         
         var adaptiveColor = IconLoader.adaptiveColor();
+        showInFinderIcon.setColorFilter(adaptiveColor);
         pauseIcon.setColorFilter(adaptiveColor);
         resumeIcon.setColorFilter(adaptiveColor);
         cancelIcon.setColorFilter(adaptiveColor);
@@ -191,6 +212,7 @@ public class ProgressManagerWindow extends MysterFrame {
         expandIcon.setColorFilter(adaptiveColor);
         collapseIcon.setColorFilter(adaptiveColor);
         
+        showInFinderAction.putValue(Action.SMALL_ICON, showInFinderIcon);
         pauseAction.putValue(Action.SMALL_ICON, pauseIcon);
         resumeAction.putValue(Action.SMALL_ICON, resumeIcon);
         cancelAction.putValue(Action.SMALL_ICON, cancelIcon);
@@ -201,6 +223,8 @@ public class ProgressManagerWindow extends MysterFrame {
         // Create toolbar
         toolbar = new JToolBar();
         toolbar.setFloatable(false);
+        toolbar.add(showInFinderAction);
+        toolbar.addSeparator();
         toolbar.add(pauseAction);
         toolbar.add(resumeAction);
         toolbar.addSeparator();
@@ -285,6 +309,8 @@ public class ProgressManagerWindow extends MysterFrame {
     private void setupContextMenu() {
         ContextMenu.addPopUpMenu(downloadList,
                                  () -> {},
+                                 new JMenuItem(showInFinderAction),
+                                 null,
                                  new JMenuItem(pauseAction),
                                  new JMenuItem(resumeAction),
                                  null,
@@ -294,6 +320,19 @@ public class ProgressManagerWindow extends MysterFrame {
                                  null,
                                  new JMenuItem(expandAllAction),
                                  new JMenuItem(collapseAllAction));
+    }
+
+    /**
+     * Returns the platform-appropriate label for the "show in file manager" action.
+     */
+    private static String getShowInFileManagerLabel() {
+        if (MysterGlobals.ON_MAC) {
+            return "Show in Finder";
+        } else if (MysterGlobals.ON_WINDOWS) {
+            return "Show in Explorer";
+        } else {
+            return "Show in File Manager";
+        }
     }
 
     /**
@@ -307,6 +346,10 @@ public class ProgressManagerWindow extends MysterFrame {
             boolean isPaused = control.isPaused();
             boolean isLocallyQueued = control.isLocallyQueued();
             
+            // Show in Finder enabled if we have a file to show
+            File file = selectedItem.getObject().getFile();
+            showInFinderAction.setEnabled(file != null && file.exists());
+            
             // Pause enabled if download is active and actually downloading (not paused, not queued)
             pauseAction.setEnabled(isActive && (!isPaused || isLocallyQueued));
             
@@ -318,6 +361,7 @@ public class ProgressManagerWindow extends MysterFrame {
             cancelAction.setEnabled(isActive && selectedItem.cancellable != null);
         } else {
             // Disable all actions if no selection or selection is not a container
+            showInFinderAction.setEnabled(false);
             pauseAction.setEnabled(false);
             resumeAction.setEnabled(false);
             cancelAction.setEnabled(false);
@@ -609,6 +653,7 @@ public class ProgressManagerWindow extends MysterFrame {
         private int speed; // bytes per second
         private String status;
         private MSDownloadControl control;
+        private File file; // The file being downloaded (either .i partial file or final file)
         
         public DownloadItem(String name) {
             this.name = name;
@@ -700,6 +745,14 @@ public class ProgressManagerWindow extends MysterFrame {
         
         public MSDownloadControl getControl() {
             return this.control;
+        }
+        
+        public File getFile() {
+            return file;
+        }
+        
+        public void setFile(File file) {
+            this.file = file;
         }
     }
 }

@@ -1,6 +1,7 @@
 package com.general.util;
 
 import java.awt.Component;
+import java.awt.Desktop;
 import java.awt.EventQueue;
 import java.awt.GraphicsConfiguration;
 import java.awt.GraphicsDevice;
@@ -9,6 +10,8 @@ import java.awt.Insets;
 import java.awt.Rectangle;
 import java.awt.Toolkit;
 import java.awt.Window;
+import java.io.File;
+import java.io.IOException;
 import java.lang.reflect.InvocationTargetException;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
@@ -24,6 +27,8 @@ import javax.swing.DefaultComboBoxModel;
 import javax.swing.JComboBox;
 import javax.swing.JList;
 import javax.swing.ListCellRenderer;
+
+import com.myster.application.MysterGlobals;
 
 
 public class Util { //This code was taken from an Apple Sample Code package,
@@ -128,6 +133,140 @@ public class Util { //This code was taken from an Apple Sample Code package,
         }
 
         return false; // Default to light theme if we can't detect
+    }
+
+    /**
+     * Reveals the specified file in the system file manager (Finder, Explorer, etc.).
+     * On macOS, uses 'open -R' to highlight the file.
+     * On Windows, uses 'explorer /select,' to highlight the file.
+     * On Linux, attempts to use the desktop environment's file manager with selection support,
+     * falling back to opening the parent directory if selection is not supported.
+     * 
+     * @param file the file to reveal in the file manager
+     * @return true if the operation was successful, false otherwise
+     */
+    public static boolean revealFileInFileManager(File file) {
+        if (file == null || !file.exists()) {
+            log.warning("Cannot reveal file: file is null or does not exist");
+            return false;
+        }
+
+        try {
+            if (MysterGlobals.ON_MAC) {
+                // macOS: use 'open -R' to reveal the file in Finder
+                Runtime.getRuntime().exec(new String[] { "open", "-R", file.getAbsolutePath() });
+                return true;
+            } else if (MysterGlobals.ON_WINDOWS) {
+                // Windows: use 'explorer /select,' to highlight the file
+                Runtime.getRuntime().exec(new String[] { "explorer", "/select,", file.getAbsolutePath() });
+                return true;
+            } else if (MysterGlobals.ON_LINUX) {
+                // Linux: Try various file managers with selection support
+                
+                // Try dbus-based file managers (most modern Linux desktops)
+                if (tryLinuxDbusReveal(file)) {
+                    return true;
+                }
+                
+                // Try specific file managers
+                String[] fileManagers = {
+                    "nautilus",    // GNOME
+                    "dolphin",     // KDE
+                    "thunar",      // XFCE
+                    "nemo",        // Cinnamon
+                    "caja"         // MATE
+                };
+                
+                for (String fm : fileManagers) {
+                    if (tryLinuxFileManager(fm, file)) {
+                        return true;
+                    }
+                }
+                
+                // Fallback: open parent directory using Desktop API
+                File parent = file.getParentFile();
+                if (parent != null && Desktop.isDesktopSupported()) {
+                    Desktop.getDesktop().open(parent);
+                    return true;
+                }
+            }
+        } catch (IOException e) {
+            log.warning("Failed to reveal file in file manager: " + e.getMessage());
+        }
+
+        // Final fallback: try to open parent directory with Desktop API
+        try {
+            File parent = file.getParentFile();
+            if (parent != null && Desktop.isDesktopSupported()) {
+                Desktop.getDesktop().open(parent);
+                return true;
+            }
+        } catch (IOException e) {
+            log.warning("Failed to open parent directory: " + e.getMessage());
+        }
+
+        return false;
+    }
+
+    /**
+     * Attempts to reveal a file using D-Bus on Linux systems that support org.freedesktop.FileManager1
+     */
+    private static boolean tryLinuxDbusReveal(File file) {
+        try {
+            // Use dbus-send to call the ShowItems method on the file manager
+            String uri = file.toURI().toString();
+            Process process = Runtime.getRuntime().exec(new String[] {
+                "dbus-send",
+                "--session",
+                "--print-reply",
+                "--dest=org.freedesktop.FileManager1",
+                "/org/freedesktop/FileManager1",
+                "org.freedesktop.FileManager1.ShowItems",
+                "array:string:" + uri,
+                "string:"
+            });
+            
+            int exitCode = process.waitFor();
+            return exitCode == 0;
+        } catch (Exception e) {
+            // D-Bus not available or command failed
+            return false;
+        }
+    }
+
+    /**
+     * Attempts to open a file with a specific Linux file manager
+     */
+    private static boolean tryLinuxFileManager(String fileManager, File file) {
+        try {
+            // Check if the file manager is available
+            Process checkProcess = Runtime.getRuntime().exec(new String[] { "which", fileManager });
+            if (checkProcess.waitFor() != 0) {
+                return false; // File manager not installed
+            }
+
+            // Try to execute the file manager with the file or its parent directory
+            String[] command;
+            if ("nautilus".equals(fileManager) || "nemo".equals(fileManager)) {
+                // Nautilus and Nemo support --select
+                command = new String[] { fileManager, "--select", file.getAbsolutePath() };
+            } else if ("dolphin".equals(fileManager)) {
+                // Dolphin supports --select
+                command = new String[] { fileManager, "--select", file.getAbsolutePath() };
+            } else {
+                // Other file managers: just open the parent directory
+                File parent = file.getParentFile();
+                if (parent == null) {
+                    return false;
+                }
+                command = new String[] { fileManager, parent.getAbsolutePath() };
+            }
+
+            Runtime.getRuntime().exec(command);
+            return true;
+        } catch (Exception e) {
+            return false;
+        }
     }
 
     public static String getStringFromBytes(long bytes) {
