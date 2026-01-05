@@ -7,7 +7,6 @@ import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
 
-import javax.swing.Timer;
 import javax.swing.event.TableModelEvent;
 import javax.swing.event.TableModelListener;
 
@@ -17,7 +16,7 @@ import javax.swing.event.TableModelListener;
  * Users can type characters to quickly navigate to matching entries:
  * - Typing accumulates characters in a search buffer
  * - Selection jumps to first matching item (case-insensitive prefix match)
- * - After 2 seconds of inactivity, the search buffer resets
+ * - After 1 second of inactivity, the search buffer resets
  * - Tab key advances to the next matching item alphabetically
  * 
  * This class maintains its own alphabetically sorted index of the search column
@@ -49,6 +48,8 @@ public class TypeToSelectKeyListener {
                 if (e.getKeyCode() == KeyEvent.VK_TAB) {
                     e.consume(); // Prevent default tab behavior
                     listener.selectNextMatch();
+                    // Set timestamp to distant past so next letter starts a new search
+                    listener.lastKeystrokeTime = 0;
                 }
             }
             
@@ -61,11 +62,17 @@ public class TypeToSelectKeyListener {
                     return;
                 }
                 
+                // Check if enough time has passed to reset the search buffer
+                long currentTime = System.currentTimeMillis();
+                if (currentTime - listener.lastKeystrokeTime > RESET_DELAY_MS) {
+                    listener.searchBuffer.setLength(0);
+                }
+                
                 // Add character to search buffer
                 listener.searchBuffer.append(c);
                 
-                // Restart the reset timer
-                listener.resetTimer.restart();
+                // Update timestamp of last keystroke
+                listener.lastKeystrokeTime = currentTime;
                 
                 // Search from the beginning of the alphabetically sorted list
                 listener.selectFirstMatch();
@@ -75,14 +82,14 @@ public class TypeToSelectKeyListener {
     
     private final JMCList<?> list;
     private final StringBuilder searchBuffer;
-    private final Timer resetTimer;
+    private long lastKeystrokeTime = 0; // Timestamp of last keystroke that contributed to search buffer
     
     // Sorted index for efficient searching
     private List<MCListItemInterface<?>> sortedIndex;
     private boolean indexValid = false;
     private int searchColumnIndex = 0; // Column to search (default: first column)
     
-    private static final int RESET_DELAY_MS = 1000;
+    private static final long RESET_DELAY_MS = 1000;
     
     public TypeToSelectKeyListener(JMCList<?> list) {
         this(list, 0);
@@ -93,13 +100,6 @@ public class TypeToSelectKeyListener {
         this.searchColumnIndex = searchColumnIndex;
         this.searchBuffer = new StringBuilder();
         this.sortedIndex = new ArrayList<>();
-        
-        
-        // Timer to reset search buffer after inactivity
-        this.resetTimer = new Timer(RESET_DELAY_MS, _ -> {
-            searchBuffer.setLength(0);
-        });
-        resetTimer.setRepeats(false);
     }
     
     /**
@@ -185,7 +185,6 @@ public class TypeToSelectKeyListener {
         // Search from startPos to end
         MCListItemInterface<?> item = sortedIndex.get(startPos);
         selectAndScrollToItem(item);
-        resetTimer.restart();
     }
     
     /**
@@ -259,6 +258,5 @@ public class TypeToSelectKeyListener {
 //     */
 //    void clearSearchBuffer() {
 //        searchBuffer.setLength(0);
-//        resetTimer.stop();
 //    }
 }

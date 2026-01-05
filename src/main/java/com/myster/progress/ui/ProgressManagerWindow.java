@@ -622,7 +622,7 @@ public class ProgressManagerWindow extends MysterFrame {
             };
         }
         
-        private String formatProgress(DownloadItem item) {
+        private static String formatProgress(DownloadItem item) {
             if (item.getTotal() == 0) {
                 return "0%";
             }
