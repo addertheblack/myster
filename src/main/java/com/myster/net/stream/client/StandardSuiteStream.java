@@ -323,4 +323,12 @@ public class StandardSuiteStream {
         }
     }
 
+    public static boolean ping(MysterSocket socket) {
+        try {
+            socket.out.writeInt(1);
+            return socket.in.read() == 1;
+        } catch (Exception _) {
+            return false;
+        }
+    }
 }

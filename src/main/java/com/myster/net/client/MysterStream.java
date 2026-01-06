@@ -33,6 +33,8 @@ public interface MysterStream {
     String getFileFromHash(MysterSocket socket, MysterType type, FileHash[] hashes) throws IOException;
     MessagePak getFileStats(MysterSocket socket, MysterFileStub stub)
             throws IOException;
+    
+    boolean ping(MysterSocket socket);
 
     /**
      * downloadFile downloads a file by starting up a MultiSourceDownload or

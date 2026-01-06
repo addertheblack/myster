@@ -2,6 +2,7 @@ package com.myster.tracker;
 
 import static com.myster.tracker.MysterServerImplementation.computeNodeNameFromIdentity;
 
+import java.io.IOException;
 import java.lang.ref.WeakReference;
 import java.net.UnknownHostException;
 import java.security.PublicKey;
@@ -243,8 +244,20 @@ public class MysterServerPoolImpl implements MysterServerPool {
      */
     void refreshMysterServer(MysterAddress address) {
         PromiseFuture<MessagePak> getServerStatsFuture =
-                protocol.getDatagram().getServerStats(new ParamBuilder(address)).clearInvoker()
-                        .setInvoker(TrackerUtils.INVOKER).addResultListener(statsMessage -> {
+                        PromiseFutures.execute(() -> {
+                            try (var s = protocol.getStream().makeStreamConnection(address)) {
+                                return protocol.getStream().ping(s);
+                            } catch (Exception _) {
+                                return false;
+                            }
+                        }).mapAsync(result -> {
+                            if (result) {
+                                return protocol.getDatagram().getServerStats(new ParamBuilder(address));
+                            } else {
+                                return PromiseFuture.newPromiseFutureException(new IOException("TCP PING Failed"));
+                            }
+                        }).setInvoker(TrackerUtils.INVOKER)
+                        .addResultListener(statsMessage -> {
                             serverStatsCallback(address, statsMessage);
                         })
                         .addExceptionListener(_ -> log.info("Address not a server: " + address))
@@ -253,7 +266,7 @@ public class MysterServerPoolImpl implements MysterServerPool {
                             synchronized (MysterServerPoolImpl.this) {
                                 outstandingServerFutures.remove(address);
                             }
-                        }); // thread bug
+                        });
 
         outstandingServerFutures.put(address, getServerStatsFuture);
     }

@@ -3,6 +3,7 @@ package com.general.thread;
 
 import java.util.concurrent.Future;
 import java.util.function.Consumer;
+import java.util.function.Function;
 
 public interface PromiseFuture<T> extends Cancellable, Future<T> {
     public static <R> PromiseFuture<R> newPromiseFuture(Consumer<AsyncContext<R>> context) {
@@ -43,7 +44,7 @@ public interface PromiseFuture<T> extends Cancellable, Future<T> {
      * thread. Also very dangerous because you have no idea what thread upstream
      * you're using or what locks are held.
      */
-    void addSynchronousCallback(Consumer<CallResult<T>> c);
+    PromiseFuture<T> addSynchronousCallback(Consumer<CallResult<T>> c);
 
     default PromiseFuture<T> useEdt() {
         return setInvoker(Invoker.EDT);
@@ -65,5 +66,26 @@ public interface PromiseFuture<T> extends Cancellable, Future<T> {
     PromiseFuture<T> addCancelLisener(Runnable cancelLisener);
 
     PromiseFuture<T> addStandardExceptionHandler();
+    
+    /**
+     * Maps the result of this PromiseFuture to another PromiseFuture
+     * asynchronously. Does NOT map the invoker
+     * 
+     * @param <R>
+     */
+    default <R> PromiseFuture<R> mapAsync(Function<T, PromiseFuture<R>> mapAsync) {
+        return PromiseFuture.newPromiseFuture(context -> {
+            addSynchronousCallback(c -> {
+                if (c.isException()) {
+                    context.setException(c.getException());
+                } else if (c.isCancelled()) {
+                    context.cancel();
+                } else {
+                    context.registerDependentTask(mapAsync.apply(c.getResult())
+                            .addSynchronousCallback(context::setCallResult));
+                }
+            });
+        });
+    }
 }
 

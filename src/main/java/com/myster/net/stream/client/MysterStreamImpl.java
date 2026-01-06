@@ -62,4 +62,9 @@ public class MysterStreamImpl implements MysterStream {
     public void downloadFile(MSDownloadParams p) {
         StandardSuiteStream.downloadFile(p, downloadQueue);
     }
+
+    @Override
+    public boolean ping(MysterSocket socket) {
+        return StandardSuiteStream.ping(socket);
+    }
 }
