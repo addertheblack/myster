@@ -243,12 +243,14 @@ public class PromiseFutureImpl<T> implements PromiseFuture<T> {
     }
 
     @Override
-    public void addSynchronousCallback(Consumer<CallResult<T>> c) {
+    public PromiseFuture<T> addSynchronousCallback(Consumer<CallResult<T>> c) {
         synchronized(this) {
             synchronousCallbacks.add(c);
         }
         
         checkForSyncDispatch();
+        
+        return this;
     }
     
     @Override
