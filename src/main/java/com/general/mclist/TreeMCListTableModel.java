@@ -400,6 +400,15 @@ public class TreeMCListTableModel<E> extends MCListTableModel<E> {
     public interface TreePath {
         int getIndentLevel();
         
+        /**
+         * Returns true if this path is an ancestor of, or the same as, the given path.
+         * For example, ["a", "b"] is an ancestor of ["a", "b", "c"] and ["a", "b"].
+         * 
+         * @param other the path to check
+         * @return true if this path is an ancestor of or equal to the other path
+         */
+        boolean isAncestorOfOrSame(TreePath other);
+        
         // you also NEED to implement these correctly!
         int hashCode();
         boolean equals(Object obj);
@@ -417,6 +426,30 @@ public class TreeMCListTableModel<E> extends MCListTableModel<E> {
         
         public int getIndentLevel() {
             return path.length;
+        }
+        
+        @Override
+        public boolean isAncestorOfOrSame(TreePath other) {
+            // If not the same class, return false
+            if (other == null || getClass() != other.getClass()) {
+                return false;
+            }
+            
+            TreePathString otherPath = (TreePathString) other;
+            
+            // Can't be an ancestor if this path is longer than the other
+            if (path.length > otherPath.path.length) {
+                return false;
+            }
+            
+            // Check if all elements of this path match the prefix of the other path
+            for (int i = 0; i < path.length; i++) {
+                if (!path[i].equals(otherPath.path[i])) {
+                    return false;
+                }
+            }
+            
+            return true;
         }
 
         @Override

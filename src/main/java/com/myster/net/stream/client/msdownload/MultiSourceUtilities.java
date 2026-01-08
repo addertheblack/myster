@@ -161,8 +161,8 @@ public class MultiSourceUtilities {
     }
     
     private static Path askUserForANewFolder(String name) {
-        javax.swing.JFileChooser chooser = new javax.swing.JFileChooser();
-        chooser.setDialogTitle("Select a folder to save the file in");
+        javax.swing.JFileChooser chooser = new javax.swing.JFileChooser(name);
+        chooser.setDialogTitle(name);// "Select a folder to save the file in");
         chooser.setFileSelectionMode(javax.swing.JFileChooser.DIRECTORIES_ONLY);
         chooser.setAcceptAllFileFilterUsed(false);
         

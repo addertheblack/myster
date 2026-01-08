@@ -35,6 +35,7 @@ import javax.swing.JPanel;
 import javax.swing.JSplitPane;
 import javax.swing.JTextArea;
 import javax.swing.JTextField;
+import javax.swing.ListSelectionModel;
 
 import com.general.mclist.ColumnSortable;
 import com.general.mclist.GenericMCListItem;
@@ -208,6 +209,53 @@ public class ClientWindow extends MysterFrame implements Sayable {
             }
         }
     }
+    
+    /**
+     * Filters a list of selected items to remove any item whose ancestor is also in the list.
+     * This prevents duplicate downloads when both a folder and its contents are selected.
+     * 
+     * Optimized O(n log n) algorithm: sorts by depth first, then checks each item against
+     * already-claimed ancestor paths. This is much faster than the naive O(n²) approach.
+     * 
+     * @param selectedItems the list of selected items
+     * @return a list containing only top-level items (no descendants of other selected items)
+     */
+    private List<TreeMCListItem<String>> filterToTopLevelItems(List<TreeMCListItem<String>> selectedItems) {
+        if (selectedItems.size() <= 1) {
+            return new java.util.ArrayList<>(selectedItems);
+        }
+
+        // Sort by path depth (shallowest first)
+        // This ensures parent folders are always processed before their descendants
+        List<TreeMCListItem<String>> sorted = new java.util.ArrayList<>(selectedItems);
+        sorted.sort((a, b) -> {
+            TreePath pathA = a.isContainer() ? a.getMyPathOrFail() : a.getParent();
+            TreePath pathB = b.isContainer() ? b.getMyPathOrFail() : b.getParent();
+            return Integer.compare(pathA.getIndentLevel(), pathB.getIndentLevel());
+        });
+
+        // Track paths we've already claimed (will download)
+        java.util.Set<TreePath> claimedPaths = new java.util.HashSet<>();
+        List<TreeMCListItem<String>> result = new java.util.ArrayList<>();
+
+        for (TreeMCListItem<String> item : sorted) {
+            TreePath itemPath = item.isContainer() ? item.getMyPathOrFail() : item.getParent();
+            
+            // Check if any already-claimed path is an ancestor of this item
+            boolean hasClaimedAncestor = claimedPaths.stream()
+                .anyMatch(claimed -> claimed.isAncestorOfOrSame(itemPath));
+            
+            if (!hasClaimedAncestor) {
+                result.add(item);
+                // Only add container paths to claimed set (files can't be ancestors)
+                if (item.isContainer()) {
+                    claimedPaths.add(item.getMyPathOrFail());
+                }
+            }
+        }
+
+        return result;
+    }
 
     private static final String IP_KEY = "Ip Key";
     private static final String TYPE_KEY = "Type Key";
@@ -289,43 +337,54 @@ public class ClientWindow extends MysterFrame implements Sayable {
         fileTypeList.setColumnName(0, "Type");
         
         fileList = TreeMCList.create(new String[]{"Name", "Size"}, new TreePathString(new String[] {}));
+        fileList.setSelectionMode(ListSelectionModel.MULTIPLE_INTERVAL_SELECTION);
 
         JMenuItem downloadMenuItem = ContextMenu.createDownloadItem(fileList, _ -> {
-            int index = fileList.getSelectedRow();
-            if (index == -1) {
+            List<TreeMCListItem<String>> itemsToDownload = extractItemsFromSelection();
+            
+            if (itemsToDownload.isEmpty()) {
                 return;
             }
-
-            MCListItemInterface<String> m = fileList.getMCListItem(index);
-
-            if (m instanceof TreeMCListItem<String> treeItem) {
-                // recurse along the treeItems so that we start
-                String pathFromType = context.fileManager().getPathFromType(getCurrentType());
-
-                Optional<Path> baseDir = pathFromType == null ? Optional.empty()
-                        : Optional.of(Path.of(pathFromType));
-                
-                if (baseDir.isEmpty()) {
-                    var p = new DefaultDialogProvider().askForFolder("Select a folder to save the file in");
-                    if (p == null) {
-                        return;
-                    }
-                    
-                    baseDir = Optional.of(p);
+            
+            // Get the base directory (ask only once for all downloads)
+            String pathFromType = context.fileManager().getPathFromType(getCurrentType());
+            Optional<Path> baseDir = pathFromType == null ? Optional.empty()
+                    : Optional.of(Path.of(pathFromType));
+            
+            if (baseDir.isEmpty()) {
+                var p = new DefaultDialogProvider().askForFolder("Select a folder to save the file in");
+                if (p == null) {
+                    return;
                 }
                 
-                recursivelyStartDownloads((TreeMCListTableModel<String>) fileList.getModel(),
-                                          treeItem,
-                                          baseDir,
-                                          Path.of(""));
-            } else {
-                throw new IllegalStateException("Must be a TreeMCListItem<String> but was " + m.getClass().getName());
+                baseDir = Optional.of(p);
+            }
+            
+            // Download each top-level item
+            TreeMCListTableModel<String> model = (TreeMCListTableModel<String>) fileList.getModel();
+            for (TreeMCListItem<String> treeItem : itemsToDownload) {
+                recursivelyStartDownloads(model, treeItem, baseDir, Path.of(""));
             }
         });
-        JMenuItem downloadToMenuItem = ContextMenu.createDownloadToItem(fileList, e -> {
-            int index = fileList.getSelectedRow();
-            if (index == -1) {
+        JMenuItem downloadToMenuItem = ContextMenu.createDownloadToItem(fileList, _ -> {
+            List<TreeMCListItem<String>> itemsToDownload = extractItemsFromSelection();
+            
+            if (itemsToDownload.isEmpty()) {
                 return;
+            }
+            
+            // Ask user for base directory via dialog (always ask, don't use preferences)
+            var p = new DefaultDialogProvider().askForFolder("Select a folder to save the file in");
+            if (p == null) {
+                return; // User cancelled
+            }
+            
+            Optional<Path> baseDir = Optional.of(p);
+            
+            // Download each top-level item
+            TreeMCListTableModel<String> model = (TreeMCListTableModel<String>) fileList.getModel();
+            for (TreeMCListItem<String> treeItem : itemsToDownload) {
+                recursivelyStartDownloads(model, treeItem, baseDir, Path.of(""));
             }
         });
         JMenuItem bookmarkMenuItem = ContextMenu.createBookmarkServerItem(fileList, e -> {
@@ -430,6 +489,27 @@ public class ClientWindow extends MysterFrame implements Sayable {
         fileList.setColumnWidth(0, 300);
 
         addWindowListener(new StandardWindowBehavior());
+    }
+
+    private List<TreeMCListItem<String>> extractItemsFromSelection() {
+        int[] selectedIndices = fileList.getSelectedIndexes();
+        if (selectedIndices.length == 0) {
+            return List.of();
+        }
+
+        // Collect all selected items
+        List<TreeMCListItem<String>> selectedItems = new java.util.ArrayList<>();
+        for (int index : selectedIndices) {
+            MCListItemInterface<String> m = fileList.getMCListItem(index);
+            if (m instanceof TreeMCListItem<String> treeItem) {
+                selectedItems.add(treeItem);
+            } else {
+                throw new IllegalStateException("Must be a TreeMCListItem<String> but was " + m.getClass().getName());
+            }
+        }
+        
+        // Filter out items whose ancestors are also selected (keep only top-level items)
+        return filterToTopLevelItems(selectedItems);
     }
     
     public void show() {
