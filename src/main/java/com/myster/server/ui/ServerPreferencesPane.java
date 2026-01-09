@@ -1,4 +1,3 @@
-
 package com.myster.server.ui;
 
 import java.awt.Dimension;
@@ -28,6 +27,7 @@ public class ServerPreferencesPane extends PreferencesPanel {
     private final JLabel serverThreadsLabel;
     private final JLabel spacerLabel;
     private final ServerPreferences preferences;
+    private Runnable onServerNameChanged; // Callback when server name changes
 
     private final FreeLoaderPref leech;
     
@@ -98,6 +98,15 @@ public class ServerPreferencesPane extends PreferencesPanel {
 
         reset();
     }
+    
+    /**
+     * Sets a callback to be invoked when the server name is changed and saved.
+     * 
+     * @param callback the callback to invoke
+     */
+    public void setOnServerNameChanged(Runnable callback) {
+        this.onServerNameChanged = callback;
+    }
 
     public Dimension getPreferredSize() {
         return new Dimension(STD_XSIZE, 140);
@@ -108,10 +117,18 @@ public class ServerPreferencesPane extends PreferencesPanel {
     }
 
     public void save() {
-        preferences.setIdentityName(serverIdentityField.getText());
+        String oldName = preferences.getIdentityName();
+        String newName = serverIdentityField.getText();
+        
+        preferences.setIdentityName(newName);
         preferences.setDownloadSlots(Integer.parseInt((String) openSlotChoice.getSelectedItem()));
         preferences.setPort((int) serverThreadsChoice.getModel().getValue());
         preferences.setKickFreeloaders(leech.isSet());
+        
+        // Notify if server name changed
+        if (!oldName.equals(newName) && onServerNameChanged != null) {
+            onServerNameChanged.run();
+        }
     }
 
     public void reset() {

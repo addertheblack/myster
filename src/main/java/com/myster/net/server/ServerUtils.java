@@ -17,7 +17,13 @@ import com.myster.tracker.Tracker;
 public class ServerUtils {
     private static final Logger log = Logger.getLogger(ServerUtils.class.getName());
     
-    public static List<InetAddress> findPublicLandAddress() throws SocketException {
+    /** 
+     * Finds all LAN (private) IP addresses of the local machine.
+     * 
+     * @return A list of InetAddress objects representing the LAN addresses.
+     * @throws SocketException If an I/O error occurs.
+     */
+    public static List<InetAddress> findMyLanAddress() throws SocketException {
         List<InetAddress> allMyIps = new ArrayList<>();
         for (NetworkInterface networkInterface: Collections.list(NetworkInterface.getNetworkInterfaces())) {
             
@@ -65,7 +71,7 @@ public class ServerUtils {
     }
     
     public static void massPing(MysterProtocol protocol, Tracker tracker) throws  SocketException {
-        List<InetAddress> allMyIps = ServerUtils.findPublicLandAddress();
+        List<InetAddress> allMyIps = ServerUtils.findMyLanAddress();
         
         log.info("Pinging all 255 addresses on the 24 bit subnet");
         List<byte[]> addressesToPing = new ArrayList<>();

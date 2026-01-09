@@ -134,6 +134,12 @@ public class Tracker {
         }, () -> pool.suggestAddress(ip));
     }
     
+    
+    /**
+     * Call this method if we've received a notification that a server is "up" from
+     * either getting a ping (original purpose) or a notification from a resource 
+     * discovery service that the server is on the network and is "up" 
+     */
     public void receivedPing(MysterAddress ip) {
        pool.receivedPing(ip);
     }

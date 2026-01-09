@@ -1,5 +1,6 @@
 package com.myster.net.server;
 
+import java.io.IOException;
 import java.net.InetAddress;
 import java.net.Socket;
 import java.net.SocketException;
@@ -28,6 +29,7 @@ import com.myster.server.event.ServerEventDispatcher;
 import com.myster.tracker.Tracker;
 import com.myster.transaction.TransactionManager;
 import com.myster.transaction.TransactionProtocol;
+import com.myster.net.mdns.MysterMdnsAnnouncer;
 
 public class ServerFacade {
     private static final Logger log = Logger.getLogger(ServerFacade.class.getName());
@@ -46,6 +48,7 @@ public class ServerFacade {
     private final Executor connectionExecutor;
     private final Identity identity;
     private final FileTypeListManager fileManager;
+    private MysterMdnsAnnouncer mdnsAnnouncer; // mDNS service announcer (optional)
 
     public ServerFacade(Tracker tracker,
                         ServerPreferences preferences,
@@ -98,7 +101,7 @@ public class ServerFacade {
                                                                               transferQueue,
                                                                               fileManager,
                                                                               new HashMap<>()));
-        List<InetAddress> publicLandAddresses = ServerUtils.findPublicLandAddress();
+        List<InetAddress> publicLandAddresses = ServerUtils.findMyLanAddress();
         for (InetAddress publicLandAddress : publicLandAddresses) {
             operatorList.add(new Operator(serviceDiscoveryPort,
                                           MysterGlobals.DEFAULT_SERVER_PORT,
@@ -111,6 +114,19 @@ public class ServerFacade {
                                                               preferences::getServerPort,
                                                               identity,
                                                               fileManager));
+        
+        // Start mDNS service announcement (hybrid approach - doesn't replace existing discovery)
+        try {
+            mdnsAnnouncer = new MysterMdnsAnnouncer(
+                preferences.getIdentityName(),
+                preferences.getServerPort(),
+                identity
+            );
+            log.info("mDNS service announcement started");
+        } catch (IOException e) {
+            log.warning("Failed to start mDNS announcement (continuing without it): " + e.getMessage());
+            // Continue anyway - mDNS is optional, existing UDP discovery still works
+        }
     }
 
 
@@ -153,5 +169,27 @@ public class ServerFacade {
     
     public void addConnectionSection(ConnectionSection section) {
         connectionSections.put(section.getSectionNumber(), section);
+    }
+    
+    /**
+     * Shuts down the mDNS service announcer if it was started.
+     * Should be called when the server is shutting down.
+     */
+    public void shutdownMdns() {
+        if (mdnsAnnouncer != null) {
+            mdnsAnnouncer.close();
+            log.info("mDNS announcer shut down");
+        }
+    }
+    
+    /**
+     * Updates the mDNS service name when the server identity changes.
+     * 
+     * @param newServerName the new server name
+     */
+    public void updateMdnsServerName(String newServerName) {
+        if (mdnsAnnouncer != null) {
+            mdnsAnnouncer.updateServerName(newServerName);
+        }
     }
 }

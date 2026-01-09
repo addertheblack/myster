@@ -90,6 +90,13 @@
       <artifactId>msgpack-core</artifactId>
       <version>0.9.10</version>
     </dependency>
+    
+    <!-- JmDNS for mDNS/DNS-SD service discovery (Bonjour/Zeroconf) -->
+    <dependency>
+      <groupId>org.jmdns</groupId>
+      <artifactId>jmdns</artifactId>
+      <version>3.5.9</version>
+    </dependency>
   </dependencies>
 
   <properties>

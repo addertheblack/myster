@@ -59,6 +59,7 @@ import com.myster.net.datagram.client.PublicKeyLookupImpl;
 import com.myster.net.datagram.client.UDPPingClient;
 import com.myster.net.datagram.message.ImTransactionServer;
 import com.myster.net.datagram.message.MessageWindow;
+import com.myster.net.mdns.MysterMdnsDiscovery;
 import com.myster.net.server.BannersManager.BannersPreferences;
 import com.myster.net.server.ServerFacade;
 import com.myster.net.server.ServerPreferences;
@@ -255,6 +256,22 @@ public class Myster {
         // This will cause the tracker sub system to starting pinging and getting server stats for servers in it's in mem db
         // it's a good idea to make sure the damn  server lookup code, used by the protocol stack is initated first.
         pool.startRefreshTimer();
+
+        // Start mDNS service discovery (hybrid approach - discovers servers
+        // alongside existing UDP broadcast)
+        INSTRUMENTATION
+                .info("-------->> Init mDNS discovery " + (System.currentTimeMillis() - startTime));
+        try {
+            new MysterMdnsDiscovery(address -> {
+                // Wire discovered servers to tracker's receivedPing method
+                tracker.receivedPing(address);
+            }, address -> {});
+            log.info("mDNS service discovery started");
+        } catch (IOException e) {
+            log.warning("Failed to start mDNS discovery (continuing without it): " + e.getMessage());
+            // Continue anyway - mDNS is optional, existing UDP discovery still works
+        }
+        
         INSTRUMENTATION
                 .info("-------->> after IPListManager " + (System.currentTimeMillis() - startTime));
 
@@ -388,7 +405,15 @@ public class Myster {
                         + (System.currentTimeMillis() - startTime));
                 preferencesGui.addPanel(BandwidthManager.getPrefsPanel());
                 preferencesGui.addPanel(new BannersPreferences());
-                preferencesGui.addPanel(new ServerPreferencesPane(serverPreferences));
+                
+                // Set up server preferences panel with mDNS update callback
+                var serverPrefsPane = new ServerPreferencesPane(serverPreferences);
+                serverPrefsPane.setOnServerNameChanged(() -> {
+                    // Update mDNS service name when server name changes
+                    serverFacade.updateMdnsServerName(serverPreferences.getIdentityName());
+                });
+                preferencesGui.addPanel(serverPrefsPane);
+                
                 preferencesGui.addPanel(new FmiChooser(fileManager, tdList));
                 preferencesGui.addPanel(new MessagePreferencesPanel(preferences));
                 preferencesGui.addPanel(new TypeManagerPreferencesGUI(tdList));
@@ -439,7 +464,9 @@ public class Myster {
                 
                 if (Desktop.getDesktop().isSupported(Action.APP_QUIT_HANDLER)) {
                     Desktop.getDesktop().setQuitHandler((_, response) -> {
-                        // Add any cleanup code here before quitting
+                        // Cleanup mDNS resources before quitting
+                        serverFacade.shutdownMdns();
+                        
                         MysterGlobals.quit();
                         response.performQuit();
                     });
