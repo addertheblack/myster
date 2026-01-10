@@ -55,6 +55,8 @@ public class ConnectionRunnable implements Runnable {
     /** Counter for generating unique thread names */
     private static final AtomicInteger threadCounter = new AtomicInteger(0);
 
+    private final Identity identity;
+
     /**
      * Creates a new connection handler for the specified socket.
      * 
@@ -65,10 +67,12 @@ public class ConnectionRunnable implements Runnable {
      * @param connectionSections map of protocol codes to their handlers
      */
     protected ConnectionRunnable(Socket socket,
+                                 Identity identity,
                                  ServerEventDispatcher eventSender,
                                  TransferQueue transferQueue,
                                  FileTypeListManager fileTypeListManager,    
                                  Map<Integer, ConnectionSection> connectionSections) {
+        this.identity = identity;
         Thread.currentThread().setName("Server Thread " + (threadCounter.incrementAndGet()));
 
         this.socket = socket;
@@ -149,7 +153,7 @@ public class ConnectionRunnable implements Runnable {
                         context.socket().out.write(1);
                         context.socket().out.flush();
                         
-                        TLSSocket tlsSocket = TLSSocket.upgradeServerSocket(socket, Identity.getIdentity());
+                        TLSSocket tlsSocket = TLSSocket.upgradeServerSocket(socket, identity);
                         
                         // Update context to use encrypted connection
                         context = new ConnectionContext(tlsSocket, context.serverAddress(), context.sectionObject(), transferQueue, fileManager);

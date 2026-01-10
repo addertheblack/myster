@@ -207,9 +207,10 @@ public class Myster {
         }
         
         INSTRUMENTATION.info("-------->> Init Identity " + (System.currentTimeMillis() - startTime));
+        Identity identity = Identity.newIdentity();
+        Executors.newVirtualThreadPerTaskExecutor().execute(() -> identity.getMainIdentity());
 
-        Identity identity = Identity.getIdentity();
-        
+
         INSTRUMENTATION.info("-------->> Init I18n " + (System.currentTimeMillis() - startTime));
         I18n.init();
 
@@ -235,7 +236,6 @@ public class Myster {
                 + (System.currentTimeMillis() - startTime));
         MysterServerPoolImpl pool = new MysterServerPoolImpl(Preferences.userRoot(), protocol);
         Tracker tracker = new Tracker(pool, Preferences.userRoot().node("Tracker.IpListManager"), tdList);
-        
         var lastResort = Tracker.getOnRamps();
         for (String ip : lastResort) {
             Executors.newVirtualThreadPerTaskExecutor().execute(() -> {
@@ -256,6 +256,10 @@ public class Myster {
         // This will cause the tracker sub system to starting pinging and getting server stats for servers in it's in mem db
         // it's a good idea to make sure the damn  server lookup code, used by the protocol stack is initated first.
         pool.startRefreshTimer();
+        
+        
+        INSTRUMENTATION
+                .info("-------->> after IPListManager " + (System.currentTimeMillis() - startTime));
 
         // Start mDNS service discovery (hybrid approach - discovers servers
         // alongside existing UDP broadcast)
@@ -273,19 +277,32 @@ public class Myster {
         }
         
         INSTRUMENTATION
-                .info("-------->> after IPListManager " + (System.currentTimeMillis() - startTime));
+        .info("-------->> Done mDNS discovery " + (System.currentTimeMillis() - startTime));
 
+        INSTRUMENTATION.info("-------->> Creating server preferences " + (System.currentTimeMillis() - startTime));
         Preferences serverPreferenceNodes = Preferences.userRoot().node("Myster Server Preferences");
         ServerPreferences serverPreferences = new ServerPreferences(serverPreferenceNodes);
+        INSTRUMENTATION.info("-------->> Server preferences created " + (System.currentTimeMillis() - startTime));
 
+        INSTRUMENTATION.info("-------->> Creating HashCrawlerManager " + (System.currentTimeMillis() - startTime));
         final HashCrawlerManager crawlerManager =
                 new MultiSourceHashSearch(tracker, protocol);
-        ClientWindow.init(protocol, crawlerManager, tracker, serverPreferences, tdList);
-
-
-        final HashManager hashManager = new HashManager();
-        FileTypeListManager fileManager = new FileTypeListManager((f, l) -> hashManager.findHash(f, l), tdList);
+        INSTRUMENTATION.info("-------->> HashCrawlerManager created " + (System.currentTimeMillis() - startTime));
         
+        INSTRUMENTATION.info("-------->> Init ClientWindow " + (System.currentTimeMillis() - startTime));
+        ClientWindow.init(protocol, crawlerManager, tracker, serverPreferences, tdList);
+        INSTRUMENTATION.info("-------->> ClientWindow inited " + (System.currentTimeMillis() - startTime));
+
+
+        INSTRUMENTATION.info("-------->> Creating HashManager " + (System.currentTimeMillis() - startTime));
+        final HashManager hashManager = new HashManager();
+        INSTRUMENTATION.info("-------->> HashManager created " + (System.currentTimeMillis() - startTime));
+        
+        INSTRUMENTATION.info("-------->> Creating FileTypeListManager " + (System.currentTimeMillis() - startTime));
+        FileTypeListManager fileManager = new FileTypeListManager((f, l) -> hashManager.findHash(f, l), tdList);
+        INSTRUMENTATION.info("-------->> FileTypeListManager created " + (System.currentTimeMillis() - startTime));
+        
+        INSTRUMENTATION.info("-------->> Creating ServerFacade " + (System.currentTimeMillis() - startTime));
         ServerFacade serverFacade = new ServerFacade(tracker,
                                                      serverPreferences,
                                                      datagramManager,
@@ -293,23 +310,35 @@ public class Myster {
                                                      identity,
                                                      fileManager,
                                                      serverDispatcher);
-        addServerConnectionSettings(serverFacade, tracker, serverPreferences, identity, datagramManager, fileManager);
+        INSTRUMENTATION.info("-------->> ServerFacade created " + (System.currentTimeMillis() - startTime));
         
-        Optional<KeyPair> mainIdentity = Identity.getIdentity().getMainIdentity();
+        INSTRUMENTATION.info("-------->> Adding server connection settings " + (System.currentTimeMillis() - startTime));
+        addServerConnectionSettings(serverFacade, tracker, serverPreferences, identity, datagramManager, fileManager);
+        INSTRUMENTATION.info("-------->> Server connection settings added " + (System.currentTimeMillis() - startTime));
+        
+        
+        // Register mDNS cleanup to run on shutdown
+        MysterGlobals.addShutdownListener(() -> serverFacade.shutdownMdns());
+        
+        INSTRUMENTATION.info("-------->> Adding encryption support " + (System.currentTimeMillis() - startTime));
+        Optional<KeyPair> mainIdentity = identity.getMainIdentity();
         serverFacade.addEncryptionSupport(new Lookup() {
             @Override
             public Optional<KeyPair> getServerKeyPair(Object serverId) {
                 return mainIdentity;
             }
-            
+
             @Override
             public Optional<PublicKey> findPublicKey(byte[] keyHash) {
                 return pool.lookupIdentityFromCid(new Cid128(keyHash));
             }
         });
+        INSTRUMENTATION.info("-------->> Encryption support added " + (System.currentTimeMillis() - startTime));
         
         // asynchronously start the server
+        INSTRUMENTATION.info("-------->> Starting server " + (System.currentTimeMillis() - startTime));
         serverFacade.startServer();
+        INSTRUMENTATION.info("-------->> Server started " + (System.currentTimeMillis() - startTime));
 
         INSTRUMENTATION.info("-------->> Init AWT GUI " + (System.currentTimeMillis() - startTime));
 
@@ -464,9 +493,6 @@ public class Myster {
                 
                 if (Desktop.getDesktop().isSupported(Action.APP_QUIT_HANDLER)) {
                     Desktop.getDesktop().setQuitHandler((_, response) -> {
-                        // Cleanup mDNS resources before quitting
-                        serverFacade.shutdownMdns();
-                        
                         MysterGlobals.quit();
                         response.performQuit();
                     });

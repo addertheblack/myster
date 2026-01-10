@@ -20,6 +20,12 @@ import com.myster.net.MysterSocket;
 import com.myster.net.TLSSocket;
 
 public class MysterSocketFactory {
+    private static volatile Identity identity;
+    
+    public void init(Identity identity) {
+	MysterSocketFactory.identity = identity;
+    }
+    
     /** Not used right now. We don't do unencrypted sockets */
     private static Socket makeTCPSocket(MysterAddress ip) throws IOException {
         Socket socket;
@@ -33,7 +39,7 @@ public class MysterSocketFactory {
 
     public static MysterSocket makeStreamConnection(MysterAddress ip)
             throws IOException {
-        return makeTLSConnection(ip, Identity.getIdentity());
+        return makeTLSConnection(ip, identity);
     }
 
     public static void makeTransactionConnection(MysterAddress ip)

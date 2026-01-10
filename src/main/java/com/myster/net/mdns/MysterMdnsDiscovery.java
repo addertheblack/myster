@@ -49,7 +49,6 @@ public class MysterMdnsDiscovery implements AutoCloseable {
             
             InetAddress address = addresses[0]; // Use first address
             int port = info.getPort();
-            String name = info.getName();
             
             // Create MysterAddress
             String addressString = address.getHostAddress() + ":" + port;
@@ -92,7 +91,7 @@ public class MysterMdnsDiscovery implements AutoCloseable {
                 public void serviceResolved(ServiceEvent event) {
                     extractAddress(event).ifPresent(address -> {
                         onServerFound.accept(address);
-                        log.info("mDNS server detected: " + event.getName());
+                        log.info("mDNS server detected: " + event.getName() + " " + address);
                     });
                 }
                 
@@ -100,7 +99,7 @@ public class MysterMdnsDiscovery implements AutoCloseable {
                 public void serviceRemoved(ServiceEvent event) {
                     extractAddress(event).ifPresent(address -> {
                         serverGoByeBye.accept(address);
-                        log.info("mDNS server removed: " + event.getName());
+                        log.info("mDNS server removed: " + event.getName() + " " + address);
                     });
                 }
             };

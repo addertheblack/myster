@@ -21,6 +21,7 @@ import com.myster.filemanager.FileTypeListManager;
 import com.myster.identity.Identity;
 import com.myster.net.datagram.DatagramEncryptUtil;
 import com.myster.net.datagram.DatagramProtocolManager;
+import com.myster.net.mdns.MysterMdnsAnnouncer;
 import com.myster.net.server.datagram.PingTransport;
 import com.myster.net.server.datagram.ServerStatsDatagramServer;
 import com.myster.net.stream.server.transferqueue.ServerQueue;
@@ -29,7 +30,6 @@ import com.myster.server.event.ServerEventDispatcher;
 import com.myster.tracker.Tracker;
 import com.myster.transaction.TransactionManager;
 import com.myster.transaction.TransactionProtocol;
-import com.myster.net.mdns.MysterMdnsAnnouncer;
 
 public class ServerFacade {
     private static final Logger log = Logger.getLogger(ServerFacade.class.getName());
@@ -71,11 +71,11 @@ public class ServerFacade {
         
         Consumer<Socket> socketConsumer =
                 (socket) -> connectionExecutor.execute(new ConnectionRunnable(socket,
+                                                                              identity,
                                                                               serverDispatcher,
                                                                               transferQueue,
                                                                               fileManager,
                                                                               connectionSections));
-
         final var operatorList = new ArrayList<Operator>();
         operatorList.add( new Operator(socketConsumer, preferences.getServerPort(), Optional.empty()));
         
@@ -97,6 +97,7 @@ public class ServerFacade {
             throws  SocketException {
         Consumer<Socket> serviceDiscoveryPort =
                 (socket) -> connectionExecutor.execute(new ConnectionRunnable(socket,
+                                                                              identity,
                                                                               serverDispatcher,
                                                                               transferQueue,
                                                                               fileManager,
@@ -114,18 +115,19 @@ public class ServerFacade {
                                                               preferences::getServerPort,
                                                               identity,
                                                               fileManager));
-        
-        // Start mDNS service announcement (hybrid approach - doesn't replace existing discovery)
+
+        // Start mDNS service announcement (hybrid approach - doesn't replace
+        // existing discovery)
         try {
-            mdnsAnnouncer = new MysterMdnsAnnouncer(
-                preferences.getIdentityName(),
-                preferences.getServerPort(),
-                identity
-            );
+            mdnsAnnouncer = new MysterMdnsAnnouncer(preferences.getIdentityName(),
+                                                    preferences.getServerPort(),
+                                                    identity);
             log.info("mDNS service announcement started");
         } catch (IOException e) {
-            log.warning("Failed to start mDNS announcement (continuing without it): " + e.getMessage());
-            // Continue anyway - mDNS is optional, existing UDP discovery still works
+            log.warning("Failed to start mDNS announcement (continuing without it): "
+                    + e.getMessage());
+            // Continue anyway - mDNS is optional, existing UDP discovery
+            // still works
         }
     }
 

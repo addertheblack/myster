@@ -53,6 +53,9 @@ public class Identity {
 
     private KeyStore keyStore;
     
+    // cached because it's really slow with the debugger
+    private KeyPair cachedMainIdentity;
+    
     public static void main(String[] args) throws IOException {
         List<String> types = List.of("MPG3", "MACS", "WINT", "PICT", "MooV", "TEXT", "ROMS");
         
@@ -79,7 +82,7 @@ public class Identity {
         }
     }
     
-    public static Identity getIdentity() {
+    public static Identity newIdentity() {
         return new Identity("main_store.keystore", new File(MysterGlobals.getAppDataPath(), "identity"));
     }
 
@@ -96,19 +99,35 @@ public class Identity {
         return keyStore;
     }
 
-    public Optional<KeyPair> getMainIdentity() {
+    public synchronized Optional<KeyPair> getMainIdentity() {
+        // Return cached value if available
+        if (cachedMainIdentity != null) {
+            return Optional.of(cachedMainIdentity);
+        }
+        
+        // need to instrument this:
+        long startTime = System.currentTimeMillis();
         KeyStore k = getKeyStore();
         
+        System.out.println("getKeyStore(): " + (System.currentTimeMillis() - startTime) + "ms");
         ensureIdentity(k);
 
+        System.out.println("Identity load time: " + (System.currentTimeMillis() - startTime) + "ms");
         try {
             PrivateKey privateKey =
                     (PrivateKey) k.getKey(MAIN_IDENTITY_ALIAS, MAIN_IDENTITY_PW.toCharArray());
+            System.out.println(" k.getKey(MAIN_IDENTITY_ALIAS, MAIN_IDENTITY_PW.toCharArray()): " + (System.currentTimeMillis() - startTime) + "ms");
             Certificate[] certificateChain = k.getCertificateChain(MAIN_IDENTITY_ALIAS);
+            System.out.println("k.getCertificateChain(MAIN_IDENTITY_ALIAS): " + (System.currentTimeMillis() - startTime) + "ms");
             Certificate certificate = certificateChain[0];
+            System.out.println("certificateChain[0]: " + (System.currentTimeMillis() - startTime) + "ms");
             PublicKey publicKey = certificate.getPublicKey();
-
-            return Optional.of(new KeyPair(publicKey, privateKey));
+            
+            System.out.println("certificate.getPublicKey(): " + (System.currentTimeMillis() - startTime) + "ms");
+            
+            // Cache the result
+            cachedMainIdentity = new KeyPair(publicKey, privateKey);
+            return Optional.of(cachedMainIdentity);
         } catch (UnrecoverableKeyException | KeyStoreException
                 | NoSuchAlgorithmException exception) {
             exception.printStackTrace();

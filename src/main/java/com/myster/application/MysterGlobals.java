@@ -1,6 +1,8 @@
 package com.myster.application;
 
 import java.io.File;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.logging.Logger;
 
 import com.general.application.ApplicationContext;
@@ -27,6 +29,28 @@ public class MysterGlobals {
 
     public static ApplicationContext appSigleton;
     
+    private static final List<Runnable> shutdownListeners = new ArrayList<>();
+    
+    /**
+     * Registers a shutdown listener to be called when quit() is invoked.
+     * Listeners are called in the order they were registered.
+     * 
+     * @param listener the listener to register
+     */
+    public static synchronized void addShutdownListener(Runnable listener) {
+        shutdownListeners.add(listener);
+    }
+    
+    /**
+     * Removes a shutdown listener.
+     * 
+     * @param listener the listener to remove
+     * @return true if the listener was removed, false if it wasn't registered
+     */
+    public static synchronized boolean removeShutdownListener(Runnable listener) {
+        return shutdownListeners.remove(listener);
+    }
+    
     /**
      * Instead of calling System.exit() directly to quit, call this routine. It makes sure cleanup
      * is done.
@@ -37,6 +61,18 @@ public class MysterGlobals {
      */
     public static void quit() {
         log.info("Byeeeee.");
+        
+        // Call all registered shutdown listeners
+        synchronized (MysterGlobals.class) {
+            for (Runnable listener : shutdownListeners) {
+                try {
+                    listener.run();
+                } catch (Exception e) {
+                    log.warning("Error in shutdown listener: " + e.getMessage());
+                }
+            }
+        }
+        
         if (appSigleton!=null)
             appSigleton.close();
         System.exit(0);
