@@ -230,20 +230,31 @@ class IdentityTracker implements IdentityProvider {
      * @param identity
      *            to scan for down addresses to check.
      */
-    public synchronized void suggestPing(MysterAddress a) {
+    public synchronized void receivedUpNotification(MysterAddress a) {
         AddressState state = addressStates.get(a);
         if (state == null || state.up) {
             return;
         }
-        
-        long timeMillis = System.currentTimeMillis();
-        if (REFRESH_MS < timeMillis - state.timeOfLastSuggestPing) {
-            state.timeOfLastSuggestPing = timeMillis;
-            state.timeOfLastPing = 0;
 
-            log.fine("getPublicKeyTrying suggested ping for " + a);
-            refreshElementIfNeeded(a, state);
+        state.timeOfLastPing = 0;
+
+        log.fine("getPublicKeyTrying suggested ping for " + a);
+        refreshElementIfNeeded(a, state);
+    }
+    
+    public synchronized void receivedDownNotification(MysterAddress a) {
+        AddressState state = addressStates.get(a);
+        if (state == null || !state.up) {
+            return;
         }
+
+        state.timeOfLastPing = 0;
+        state.up = false;
+        INVOKER.invoke(() -> pingListener.accept(new PingResponse(a, DOWN)));
+        
+
+        log.fine("getPublicKeyTrying suggested ping for " + a);
+        refreshElementIfNeeded(a, state);
     }
 
     /**
@@ -461,7 +472,6 @@ class IdentityTracker implements IdentityProvider {
     
      
     private static class AddressState {
-        public long timeOfLastSuggestPing = 0;
         public long timeOfLastPing = 0;
         public int lastPingDurationMs = UNTRIED;
         public boolean up = false;

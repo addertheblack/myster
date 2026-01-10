@@ -27,8 +27,6 @@ import com.myster.net.MysterAddress;
  * they can be collected by the MysterIPPool's funky garbage collector.
  */
 public interface MysterServerPool {
-    void suggestAddress(MysterAddress address);
-    
     /**
      * ONLY UNIT TESTS!
      */
@@ -79,5 +77,7 @@ public interface MysterServerPool {
      * @param ip to check
      * @return false if we didn't retry the server.
      */
-    void receivedPing(MysterAddress ip);
+    void receivedUpNotification(MysterAddress address);
+
+    void receivedDownNotification(MysterAddress address);
 }

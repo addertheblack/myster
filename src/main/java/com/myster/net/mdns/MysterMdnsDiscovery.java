@@ -5,7 +5,9 @@ import java.net.InetAddress;
 import java.net.SocketException;
 import java.net.UnknownHostException;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Consumer;
 import java.util.logging.Logger;
 
@@ -30,15 +32,10 @@ public class MysterMdnsDiscovery implements AutoCloseable {
     private final List<JmDNS> jmdnsInstances;
     private final ServiceListener serviceListener;
     
-    private static Optional<MysterAddress> extractAddress(ServiceEvent event) {
-        // Full service info received
-        ServiceInfo info = event.getInfo();
-        
-        if (info == null) {
-            log.warning("Service info is null for: " + event.getName());
-            return Optional.empty();
-        }
-        
+    // Cache service name -> MysterAddress mappings for when services are removed
+    private final Map<String, MysterAddress> serviceAddressCache = new ConcurrentHashMap<>();
+    
+    private static Optional<MysterAddress> extractAddress(ServiceInfo info) {
         try {
             // Get the server's address and port
             InetAddress[] addresses = info.getInetAddresses();
@@ -89,7 +86,18 @@ public class MysterMdnsDiscovery implements AutoCloseable {
                 
                 @Override
                 public void serviceResolved(ServiceEvent event) {
-                    extractAddress(event).ifPresent(address -> {
+                    // Full service info received
+                    ServiceInfo info = event.getInfo();
+                    
+                    if (info == null) {
+                        log.warning("Service info is null for: " + event.getName());
+                        return;
+                    }
+                    
+                    extractAddress(info).ifPresent(address -> {
+                        // Cache the service name -> address mapping
+                        serviceAddressCache.put(event.getName(), address);
+                        
                         onServerFound.accept(address);
                         log.info("mDNS server detected: " + event.getName() + " " + address);
                     });
@@ -97,10 +105,15 @@ public class MysterMdnsDiscovery implements AutoCloseable {
                 
                 @Override
                 public void serviceRemoved(ServiceEvent event) {
-                    extractAddress(event).ifPresent(address -> {
-                        serverGoByeBye.accept(address);
-                        log.info("mDNS server removed: " + event.getName() + " " + address);
-                    });
+                    // Look up the cached address by service name
+                    MysterAddress cachedAddress = serviceAddressCache.remove(event.getName());
+                    
+                    if (cachedAddress != null) {
+                        serverGoByeBye.accept(cachedAddress);
+                        log.info("mDNS server removed: " + event.getName() + " " + cachedAddress);
+                    } else {
+                        log.warning("Service removed but no cached address found: " + event.getName());
+                    }
                 }
             };
             
@@ -144,6 +157,7 @@ public class MysterMdnsDiscovery implements AutoCloseable {
                 log.warning("Error closing mDNS instance: " + e.getMessage());
             }
         }
+        serviceAddressCache.clear();
         log.info("mDNS discovery stopped on all LAN interfaces");
     }
 }

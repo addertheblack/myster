@@ -3,9 +3,15 @@ package com.myster.application;
 import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 import java.util.logging.Logger;
 
 import com.general.application.ApplicationContext;
+import com.general.thread.PromiseFuture;
+import com.general.thread.PromiseFutures;
+import com.general.util.Util;
 
 /**
  */
@@ -61,18 +67,28 @@ public class MysterGlobals {
      */
     public static void quit() {
         log.info("Byeeeee.");
-        
+
+
         // Call all registered shutdown listeners
+        List<PromiseFuture<Runnable>> futures;
         synchronized (MysterGlobals.class) {
-            for (Runnable listener : shutdownListeners) {
-                try {
-                    listener.run();
-                } catch (Exception e) {
-                    log.warning("Error in shutdown listener: " + e.getMessage());
-                }
-            }
+            futures = Util.map(shutdownListeners, l -> PromiseFutures.execute(() -> {
+                l.run();
+                
+                return null;
+            }));
         }
         
+        var f = PromiseFutures.allCallResults(futures);
+
+        try {
+            f.get(1, TimeUnit.SECONDS);
+        } catch (InterruptedException | TimeoutException _) {
+            // nothing...
+        } catch (ExecutionException e) {
+            e.printStackTrace();
+        }
+
         if (appSigleton!=null)
             appSigleton.close();
         System.exit(0);

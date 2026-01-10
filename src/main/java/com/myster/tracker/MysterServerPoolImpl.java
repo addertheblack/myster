@@ -157,7 +157,7 @@ public class MysterServerPoolImpl implements MysterServerPool {
     }
 
     @Override
-    public synchronized void suggestAddress(MysterAddress address) {
+    public synchronized void receivedUpNotification(MysterAddress address) {
         Optional<MysterIdentity> identity = identityTracker.getIdentity(address);
 
         if (identity.isPresent()) {
@@ -166,7 +166,7 @@ public class MysterServerPoolImpl implements MysterServerPool {
                 // If the identity and server are known but someone is
                 // suggesting the IP then maybe we should double check to see if the IP
                 // is up. If it's down it might be worth a re-ping
-                identityTracker.suggestPing(address);
+                identityTracker.receivedUpNotification(address);
                 return;
             }
         }
@@ -180,6 +180,39 @@ public class MysterServerPoolImpl implements MysterServerPool {
         }
 
         refreshMysterServer(address);
+    }
+    
+    @Override
+    public synchronized void receivedDownNotification(MysterAddress address) {
+        // this doens't always work because the ping can come from a port that
+        // isn't the same one
+        // that the server is registered with. In fact this is the normal case
+        // for servers on a different port.
+        // This will cause the cache lookup
+        // to fail. So we ignore this case for servers not on the LAN.
+        // For LAN addresses we look for servers on alternate addresses and
+        // check
+        // which are down and then ping that
+        // This could result in extra pings but whatever. It's on the LAN
+        // anyway.
+        // For servers on a LAN we use the default port to allow servers to be
+        // discoverable.. So this code path is a nice to have.
+        if (!ServerUtils.isLanAddress(address.getInetAddress())) {
+            return;
+        }
+        
+        Optional<MysterIdentity> identity = identityTracker.getIdentity(address);
+
+        if (identity.isPresent()) {
+            Optional<MysterServer> cachedServer = getCachedMysterServer(identity.get());
+            if (cachedServer.isPresent()) {
+                // If the identity and server are known but someone is
+                // suggesting the IP then maybe we should double check to see if the IP
+                // is up. If it's down it might be worth a re-ping
+                identityTracker.receivedDownNotification(address);
+                return;
+            }
+        }
     }
 
     private static MysterIdentity extractIdentity(MysterAddress address, MessagePak serverStats) {
@@ -197,7 +230,7 @@ public class MysterServerPoolImpl implements MysterServerPool {
     public synchronized void suggestAddress(String address) {
         PromiseFutures.execute(() -> MysterAddress.createMysterAddress(address))
                 .setInvoker(TrackerUtils.INVOKER) // invoker is the CALLBACK thread not the exec thread
-                .addResultListener(this::suggestAddress)
+                .addResultListener(this::receivedUpNotification)
                 .addExceptionListener((e) -> {
                     if (e instanceof UnknownHostException) {
                         log.info("Could not add this address to the pool, unknown host: " + address);
@@ -417,27 +450,5 @@ public class MysterServerPoolImpl implements MysterServerPool {
                 }
             }
         }        
-    }
-
-    @Override
-    public void receivedPing(MysterAddress ip) {
-        // this doens't always work because the ping can come from a port that
-        // isn't the same one
-        // that the server is registered with. In fact this is the normal case
-        // for servers on a different port.
-        // This will cause the cache lookup
-        // to fail. So we ignore this case for servers not on the LAN.
-        // For LAN addresses we look for servers on alternate addresses and
-        // check
-        // which are down and then ping that
-        // This could result in extra pings but whatever. It's on the LAN
-        // anyway.
-        // For servers on a LAN we use the default port to allow servers to be
-        // discoverable.. So this code path is a nice to have.
-        if (!ServerUtils.isLanAddress(ip.getInetAddress())) {
-            return;
-        }
-        
-        suggestAddress(ip);
     }
 }

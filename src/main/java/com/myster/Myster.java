@@ -38,6 +38,7 @@ import javax.swing.SwingUtilities;
 import com.general.application.ApplicationContext;
 import com.general.application.ApplicationSingletonListener;
 import com.general.util.AnswerDialog;
+import com.general.util.Timer;
 import com.general.util.Util;
 import com.myster.application.MysterGlobals;
 import com.myster.bandwidth.BandwidthManager;
@@ -269,7 +270,9 @@ public class Myster {
             new MysterMdnsDiscovery(address -> {
                 // Wire discovered servers to tracker's receivedPing method
                 tracker.receivedPing(address);
-            }, address -> {});
+            }, address -> {
+                new Timer(() -> tracker.addressIsGoingDown(address), 1111);
+            });
             log.info("mDNS service discovery started");
         } catch (IOException e) {
             log.warning("Failed to start mDNS discovery (continuing without it): " + e.getMessage());
@@ -318,7 +321,9 @@ public class Myster {
         
         
         // Register mDNS cleanup to run on shutdown
-        MysterGlobals.addShutdownListener(() -> serverFacade.shutdownMdns());
+        MysterGlobals.addShutdownListener(() -> {
+            serverFacade.shutdownMdns();
+        });
         
         INSTRUMENTATION.info("-------->> Adding encryption support " + (System.currentTimeMillis() - startTime));
         Optional<KeyPair> mainIdentity = identity.getMainIdentity();

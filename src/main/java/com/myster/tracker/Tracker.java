@@ -129,9 +129,9 @@ public class Tracker {
     public void addIp(MysterAddress ip) {
         pool.getCachedMysterIp(ip).ifPresentOrElse(s -> {
             if (!s.isUntried() && s.getUpAddresses().length == 0) {
-                pool.suggestAddress(ip);
+                pool.receivedUpNotification(ip);
             }
-        }, () -> pool.suggestAddress(ip));
+        }, () -> pool.receivedUpNotification(ip));
     }
     
     
@@ -141,7 +141,11 @@ public class Tracker {
      * discovery service that the server is on the network and is "up" 
      */
     public void receivedPing(MysterAddress ip) {
-       pool.receivedPing(ip);
+       pool.receivedUpNotification(ip);
+    }
+    
+    public void addressIsGoingDown(MysterAddress ip) {
+        pool.receivedDownNotification(ip);
     }
     
     /**

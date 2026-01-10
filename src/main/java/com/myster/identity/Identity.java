@@ -105,25 +105,15 @@ public class Identity {
             return Optional.of(cachedMainIdentity);
         }
         
-        // need to instrument this:
-        long startTime = System.currentTimeMillis();
         KeyStore k = getKeyStore();
-        
-        System.out.println("getKeyStore(): " + (System.currentTimeMillis() - startTime) + "ms");
         ensureIdentity(k);
 
-        System.out.println("Identity load time: " + (System.currentTimeMillis() - startTime) + "ms");
         try {
             PrivateKey privateKey =
                     (PrivateKey) k.getKey(MAIN_IDENTITY_ALIAS, MAIN_IDENTITY_PW.toCharArray());
-            System.out.println(" k.getKey(MAIN_IDENTITY_ALIAS, MAIN_IDENTITY_PW.toCharArray()): " + (System.currentTimeMillis() - startTime) + "ms");
             Certificate[] certificateChain = k.getCertificateChain(MAIN_IDENTITY_ALIAS);
-            System.out.println("k.getCertificateChain(MAIN_IDENTITY_ALIAS): " + (System.currentTimeMillis() - startTime) + "ms");
             Certificate certificate = certificateChain[0];
-            System.out.println("certificateChain[0]: " + (System.currentTimeMillis() - startTime) + "ms");
             PublicKey publicKey = certificate.getPublicKey();
-            
-            System.out.println("certificate.getPublicKey(): " + (System.currentTimeMillis() - startTime) + "ms");
             
             // Cache the result
             cachedMainIdentity = new KeyPair(publicKey, privateKey);

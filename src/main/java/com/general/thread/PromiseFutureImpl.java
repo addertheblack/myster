@@ -230,7 +230,9 @@ public class PromiseFutureImpl<T> implements PromiseFuture<T> {
 			throw new IllegalStateException("get() Called on invoker thread");
 		}
 
-		latch.await(timeout, unit);
+		if (!latch.await(timeout, unit)) {
+		    throw new TimeoutException();
+		}
 
 		synchronized (this) {
 			return result.get();
