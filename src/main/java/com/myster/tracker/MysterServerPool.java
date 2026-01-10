@@ -77,7 +77,7 @@ public interface MysterServerPool {
      * @param ip to check
      * @return false if we didn't retry the server.
      */
-    void receivedUpNotification(MysterAddress address);
+    void suggestAddress(MysterAddress address);
 
     void receivedDownNotification(MysterAddress address);
 }

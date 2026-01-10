@@ -235,7 +235,7 @@ class IdentityTracker implements IdentityProvider {
         if (state == null || state.up) {
             return;
         }
-
+        
         state.timeOfLastPing = 0;
 
         log.fine("getPublicKeyTrying suggested ping for " + a);

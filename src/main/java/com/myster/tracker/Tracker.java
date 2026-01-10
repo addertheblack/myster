@@ -129,9 +129,9 @@ public class Tracker {
     public void addIp(MysterAddress ip) {
         pool.getCachedMysterIp(ip).ifPresentOrElse(s -> {
             if (!s.isUntried() && s.getUpAddresses().length == 0) {
-                pool.receivedUpNotification(ip);
+                pool.suggestAddress(ip);
             }
-        }, () -> pool.receivedUpNotification(ip));
+        }, () -> pool.suggestAddress(ip));
     }
     
     
@@ -141,7 +141,24 @@ public class Tracker {
      * discovery service that the server is on the network and is "up" 
      */
     public void receivedPing(MysterAddress ip) {
-       pool.receivedUpNotification(ip);
+        // this doens't always work because the ping can come from a port that
+        // isn't the same one
+        // that the server is registered with. In fact this is the normal case
+        // for servers on a different port.
+        // This will cause the cache lookup
+        // to fail. So we ignore this case for servers not on the LAN.
+        // For LAN addresses we look for servers on alternate addresses and
+        // check
+        // which are down and then ping that
+        // This could result in extra pings but whatever. It's on the LAN
+        // anyway.
+        // For servers on a LAN we use the default port to allow servers to be
+        // discoverable.. So this code path is a nice to have.
+        if (!ServerUtils.isLanAddress(ip.getInetAddress())) {
+            return;
+        }
+        
+       pool.suggestAddress(ip);
     }
     
     public void addressIsGoingDown(MysterAddress ip) {

@@ -31,6 +31,7 @@ import com.general.util.Semaphore;
 import com.myster.identity.Identity;
 import com.myster.mml.MessagePak;
 import com.myster.net.MysterAddress;
+import com.myster.net.MysterSocket;
 import com.myster.net.client.MysterDatagram;
 import com.myster.net.client.MysterProtocol;
 import com.myster.net.client.MysterStream;
@@ -97,7 +98,26 @@ class TestMysterServerPoolImpl {
         protocol = new MysterProtocol() {
             @Override
             public MysterStream getStream() {
-                throw new IllegalStateException("Not implemented");
+                MysterStream streamMock = Mockito.mock(MysterStream.class);
+                
+                try {
+                    // Mock makeStreamConnection to return a valid MysterSocket
+                    Mockito.when(streamMock.makeStreamConnection(Mockito.any()))
+                            .thenAnswer(_ -> {
+                                MysterSocket socketMock = Mockito.mock(MysterSocket.class);
+                                // Make close() do nothing
+                                Mockito.doNothing().when(socketMock).close();
+                                return socketMock;
+                            });
+                    
+                    // Mock ping to return true
+                    Mockito.when(streamMock.ping(Mockito.any())).thenReturn(true);
+                    
+                } catch (IOException e) {
+                    throw new RuntimeException(e);
+                }
+                
+                return streamMock;
             }
 
             @Override

@@ -108,7 +108,6 @@ public class SearchWindow extends MysterFrame implements SearchResultListener, S
         };
         searchButton.setIcon(IconLoader.loadSvg(getClass(), "search"));
 
-        searchButton.setSize(50, 25);
         getRootPane().setDefaultButton(searchButton);
 
         textEntry = new JTextField("", 1);
