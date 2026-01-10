@@ -107,10 +107,19 @@ public class MysterMdnsDiscovery implements AutoCloseable {
             // Create JmDNS instance for each LAN interface and start listening
             jmdnsInstances = new java.util.ArrayList<>();
             for (InetAddress lanAddress : lanAddresses) {
-                JmDNS jmdns = JmDNS.create(lanAddress);
-                jmdns.addServiceListener(SERVICE_TYPE, serviceListener);
-                jmdnsInstances.add(jmdns);
-                log.info("mDNS discovery started on " + lanAddress.getHostAddress() + ", listening for " + SERVICE_TYPE);
+                try {
+                    JmDNS jmdns = JmDNS.create(lanAddress);
+                    jmdns.addServiceListener(SERVICE_TYPE, serviceListener);
+                    jmdnsInstances.add(jmdns);
+                    log.info("mDNS discovery started on " + lanAddress.getHostAddress() + ", listening for " + SERVICE_TYPE);
+                } catch (IOException e) {
+                    // Skip interfaces that don't support multicast or have binding issues
+                    log.warning("Failed to start mDNS on " + lanAddress.getHostAddress() + ": " + e.getMessage());
+                }
+            }
+            
+            if (jmdnsInstances.isEmpty()) {
+                throw new IOException("Failed to start mDNS on any network interface");
             }
             
         } catch (SocketException e) {

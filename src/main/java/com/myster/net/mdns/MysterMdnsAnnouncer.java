@@ -73,18 +73,24 @@ public class MysterMdnsAnnouncer implements AutoCloseable {
             // Create JmDNS instance for each LAN interface and register the service
             jmdnsInstances = new java.util.ArrayList<>();
             for (InetAddress lanAddress : lanAddresses) {
-                JmDNS jmdns = JmDNS.create(lanAddress);
-                jmdns.registerService(serviceInfo);
-                jmdnsInstances.add(jmdns);
-                log.info("mDNS service announced on " + lanAddress.getHostAddress() + ": " + serverName + " on port " + port);
+                try {
+                    JmDNS jmdns = JmDNS.create(lanAddress);
+                    jmdns.registerService(serviceInfo);
+                    jmdnsInstances.add(jmdns);
+                    log.info("mDNS service announced on " + lanAddress.getHostAddress() + ": " + serverName + " on port " + port);
+                } catch (IOException e) {
+                    // Skip interfaces that don't support multicast or have binding issues
+                    log.warning("Failed to announce mDNS on " + lanAddress.getHostAddress() + ": " + e.getMessage());
+                }
+            }
+            
+            if (jmdnsInstances.isEmpty()) {
+                throw new IOException("Failed to announce mDNS on any network interface");
             }
             
         } catch (SocketException e) {
             log.warning("Failed to find LAN addresses for mDNS announcement: " + e.getMessage());
             throw new IOException("Failed to find LAN addresses", e);
-        } catch (IOException e) {
-            log.warning("Failed to start mDNS announcement: " + e.getMessage());
-            throw e;
         }
     }
     
