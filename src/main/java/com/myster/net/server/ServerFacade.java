@@ -89,6 +89,8 @@ public class ServerFacade {
             }
         }
         
+        initMDns();
+        
         this.operators = operatorList.toArray(Operator[]::new);
     }
 
@@ -116,6 +118,10 @@ public class ServerFacade {
                                                               identity,
                                                               fileManager));
 
+    }
+
+
+    private void initMDns() {
         // Start mDNS service announcement (hybrid approach - doesn't replace
         // existing discovery)
         try {
