@@ -26,7 +26,7 @@ public class PublicKeyLookupImpl implements PublicKeyLookup {
 
     @Override
     public Optional<PublicKey> getCached(MysterAddress address) {
-        return pool.getCachedMysterIp(address)
+        return pool.getCachedMysterServer(address)
                 .map(s -> s.getIdentity())
                 .flatMap(i -> extractPublicKey(i));
     }

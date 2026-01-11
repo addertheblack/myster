@@ -163,9 +163,9 @@ public class Myster {
 
             // this gets awt to start initializing on the EDT while we initialize Myster's
             // backend
-            var f = new JFrame();
-            f.pack(); // this starts up the AWT graphics stuff
-            f.dispose(); // we just want to warm up the awt stuff.. We don't need to do anything yet.
+            var disposableFrameToLoadAwt = new JFrame();
+            disposableFrameToLoadAwt.pack(); // this starts up the AWT graphics stuff
+            disposableFrameToLoadAwt.dispose(); // we just want to warm up the awt stuff.. We don't need to do anything yet.
             INSTRUMENTATION.info("-------->> !! EDT Basic AWT libs initialized: " + (System.currentTimeMillis() - startTime));
         });
 
@@ -183,7 +183,7 @@ public class Myster {
         ApplicationContext applicationContext =
                 new ApplicationContext(10457, applicationSingletonListener, args);
 
-        MysterGlobals.appSigleton = applicationContext;
+        MysterGlobals.appSingleton = applicationContext;
 
         try {
             if (!applicationContext.start())
@@ -438,7 +438,7 @@ public class Myster {
 
                 SearchWindow.init(protocol, crawlerManager, tracker);
 
-                INSTRUMENTATION.info("-------->>   EDT add panels tor preferences "
+                INSTRUMENTATION.info("-------->>   EDT add panels to preferences "
                         + (System.currentTimeMillis() - startTime));
                 preferencesGui.addPanel(BandwidthManager.getPrefsPanel());
                 preferencesGui.addPanel(new BannersPreferences());
@@ -508,7 +508,7 @@ public class Myster {
                 
                 MysterTray.init();
                 
-                INSTRUMENTATION.info("-------->>   EDT AWT GUID init complete " + (System.currentTimeMillis() - startTime));
+                INSTRUMENTATION.info("-------->>   EDT AWT GUI init complete " + (System.currentTimeMillis() - startTime));
             });
         } catch (InterruptedException ex) {
             ex.printStackTrace(); // never reached.
@@ -554,7 +554,6 @@ public class Myster {
         serverFacade.addConnectionSection(new com.myster.net.stream.server.FileStatsBatchStreamServer());
         serverFacade.addConnectionSection(new com.myster.net.stream.server.FileByHash());
         serverFacade.addConnectionSection(new com.myster.net.stream.server.MultiSourceSender(preferences));
-        serverFacade.addConnectionSection(new com.myster.net.stream.server.FileTypeLister());
 
         datagramManager.mutateTransportManager(preferences.getServerPort(),
                                                t -> t.addTransport(new PingTransport(tracker)));

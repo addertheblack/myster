@@ -100,7 +100,7 @@ public class Tracker {
         
         // since we''ve missed events while the tracker was being constructed
         // we need to recheck the pool for lan servers
-        pool.filter(server -> {
+        pool.forEach(server -> {
             MysterAddress[] upAddresses = server.getUpAddresses();
             for (MysterAddress address : upAddresses) {
                 if (ServerUtils.isLanAddress(address.getInetAddress())) {
@@ -127,7 +127,7 @@ public class Tracker {
      *            The MysterAddress of the server you want to add.
      */
     public void addIp(MysterAddress ip) {
-        pool.getCachedMysterIp(ip).ifPresentOrElse(s -> {
+        pool.getCachedMysterServer(ip).ifPresentOrElse(s -> {
             if (!s.isUntried() && s.getUpAddresses().length == 0) {
                 pool.suggestAddress(ip);
             }
@@ -201,7 +201,7 @@ public class Tracker {
      *         any record of a server at that address
      */
     public synchronized MysterServer getQuickServerStats(MysterAddress address) {
-        return pool.getCachedMysterIp(address).orElse(null);
+        return pool.getCachedMysterServer(address).orElse(null);
     }
 
     /**

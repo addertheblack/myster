@@ -73,7 +73,7 @@ class LanMysterServerList {
             return;
         }
 
-        Optional<MysterServer> mysterServerOptional = pool.getCachedMysterIp(address);
+        Optional<MysterServer> mysterServerOptional = pool.getCachedMysterServer(address);
         
         if (mysterServerOptional.isEmpty()) {
             return;

@@ -152,7 +152,6 @@ public class MysterServerPoolImpl implements MysterServerPool {
     
     @Override
     public void removePoolListener(MysterPoolListener serverListener) {
-//        listeners.remove(serverListener);
         throw new IllegalStateException();
     }
 
@@ -246,7 +245,7 @@ public class MysterServerPoolImpl implements MysterServerPool {
     }
     
     @Override
-    public synchronized Optional<MysterServer> getCachedMysterIp(MysterAddress address) {
+    public synchronized Optional<MysterServer> getCachedMysterServer(MysterAddress address) {
         var identity = identityTracker.getIdentity(address);
         if (identity.isEmpty()) {
             return Optional.empty();
@@ -428,7 +427,7 @@ public class MysterServerPoolImpl implements MysterServerPool {
     }
 
     @Override
-    public void filter(Consumer<MysterServer> consumer) {
+    public void forEach(Consumer<MysterServer> consumer) {
         synchronized (this) {
             for (WeakReference<MysterServerImplementation> weakRef : cache.values()) {
                 MysterServerImplementation server = weakRef.get();

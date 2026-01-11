@@ -274,8 +274,8 @@ class TestMysterServerPoolImpl {
         Assertions.assertFalse(pool.existsInPool(new MysterAddressIdentity(MysterAddress.createMysterAddress("127.0.0.1"))));
         Assertions.assertTrue(pool.existsInPool(MysterAddress.createMysterAddress("127.0.0.1")));
         
-        var localHost = pool.getCachedMysterIp(MysterAddress.createMysterAddress("127.0.0.1")).get();
-        var lanHost = pool.getCachedMysterIp(MysterAddress.createMysterAddress("192.168.1.2")).get();
+        var localHost = pool.getCachedMysterServer(MysterAddress.createMysterAddress("127.0.0.1")).get();
+        var lanHost = pool.getCachedMysterServer(MysterAddress.createMysterAddress("192.168.1.2")).get();
         
         Assertions.assertEquals(localHost.getIdentity(), lanHost.getIdentity());
     }
@@ -353,7 +353,7 @@ class TestMysterServerPoolImpl {
         Assertions.assertEquals(0, refreshedServers.get(0).getAddresses().length);
         Assertions.assertEquals(1, refreshedServers.get(1).getAddresses().length);
         if (shouldChangePort) {
-            Assertions.assertTrue(pool.getCachedMysterIp(oneTwoSeven).isEmpty());
+            Assertions.assertTrue(pool.getCachedMysterServer(oneTwoSeven).isEmpty());
         }
     }
     
@@ -390,7 +390,7 @@ class TestMysterServerPoolImpl {
         Assertions.assertTrue(pool.existsInPool(identityPublic));
         Assertions.assertTrue(pool.existsInPool(MysterAddress.createMysterAddress("192.168.1.2")));
         
-        var localHost = pool.getCachedMysterIp(MysterAddress.createMysterAddress("192.168.1.2")).get();
+        var localHost = pool.getCachedMysterServer(MysterAddress.createMysterAddress("192.168.1.2")).get();
         var serverFromCache = pool.getCachedMysterServer(identityPublic).get();
         
         Assertions.assertEquals(localHost.getIdentity(), serverFromCache.getIdentity());
@@ -426,8 +426,8 @@ class TestMysterServerPoolImpl {
         Assertions.assertFalse(pool.existsInPool(new MysterAddressIdentity(MysterAddress.createMysterAddress("127.0.0.1"))));
         Assertions.assertTrue(pool.existsInPool(MysterAddress.createMysterAddress("127.0.0.1")));
         
-        var localHost = pool.getCachedMysterIp(MysterAddress.createMysterAddress("127.0.0.1")).get();
-        var lanHost = pool.getCachedMysterIp(MysterAddress.createMysterAddress("192.168.1.2")).get();
+        var localHost = pool.getCachedMysterServer(MysterAddress.createMysterAddress("127.0.0.1")).get();
+        var lanHost = pool.getCachedMysterServer(MysterAddress.createMysterAddress("192.168.1.2")).get();
         Assertions.assertEquals(localHost.getIdentity(), lanHost.getIdentity());
         
         var serverFromCache = pool.getCachedMysterServer(identityPublic).get();
@@ -586,7 +586,7 @@ class TestMysterServerPoolImpl {
 
         sem.getLock();
 
-        Assertions.assertNotNull(pool.getCachedMysterIp(MysterAddress.createMysterAddress("24.20.25.66:7000"))
+        Assertions.assertNotNull(pool.getCachedMysterServer(MysterAddress.createMysterAddress("24.20.25.66:7000"))
                 .toString());
     }
 

@@ -33,7 +33,7 @@ public class MysterGlobals {
     public static final boolean ON_WINDOWS = (System.getProperty("os.name") != null ? System
             .getProperty("os.name").toLowerCase().contains("win") : false);
 
-    public static ApplicationContext appSigleton;
+    public static ApplicationContext appSingleton;
     
     private static final List<Runnable> shutdownListeners = new ArrayList<>();
     
@@ -89,8 +89,8 @@ public class MysterGlobals {
             e.printStackTrace();
         }
 
-        if (appSigleton!=null)
-            appSigleton.close();
+        if (appSingleton !=null)
+            appSingleton.close();
         System.exit(0);
     }
 
