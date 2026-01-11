@@ -535,7 +535,7 @@ public class MultiSourceDownload implements Task, Cancellable {
         while (!endedFlag) { // wow, is crap
             try {
                 Thread.sleep(1);
-            } catch (InterruptedException ex) {
+            } catch (InterruptedException _) {
                 return;
             }
         }
@@ -545,8 +545,6 @@ public class MultiSourceDownload implements Task, Cancellable {
     // This method will only be called once right at the end of the download
     private synchronized void endDownloadCleanUp() {
         if (endedFlag) {
-            System.out.println("WTF? We are already dead!");
-            
             return;
         }
         
