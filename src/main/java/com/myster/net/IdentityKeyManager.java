@@ -22,6 +22,10 @@ public class IdentityKeyManager implements X509KeyManager {
     private X509Certificate[] certificateChain;
     
     public IdentityKeyManager(Identity identity) {
+        if (identity==null) {
+            throw new NullPointerException();
+        }
+        
         this.identity = identity;
         loadIdentityData();
     }

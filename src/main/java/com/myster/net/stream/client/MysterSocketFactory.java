@@ -21,9 +21,9 @@ import com.myster.net.TLSSocket;
 
 public class MysterSocketFactory {
     private static volatile Identity identity;
-    
-    public void init(Identity identity) {
-	MysterSocketFactory.identity = identity;
+
+    public static void init(Identity identity) {
+        MysterSocketFactory.identity = identity;
     }
     
     /** Not used right now. We don't do unencrypted sockets */

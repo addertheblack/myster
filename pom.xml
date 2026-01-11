@@ -267,7 +267,6 @@
                 <option>--strip-debug</option>
                 <option>--no-man-pages</option>
                 <option>--no-header-files</option>
-                <option>--compress=2</option>
               </jLinkOptions>
               <addModules>
                 <module>java.base</module>
@@ -321,37 +320,6 @@
                   <winMenu>true</winMenu>
                   <winShortcut>true</winShortcut>
                   <winMenuGroup>Myster</winMenuGroup>
-                  
-                  <javaOptions>
-                <!-- <option>-Xshare:on</option>  
-                <option>-XX:+AutoCreateSharedArchive</option>
-                <option>-XX:SharedArchiveFile=${jpackage.speeduplaunchpath}speeduplaunch.jsa</option>
-                  <option>-Xlog:cds</option>  Optional: for debugging -->
-                </javaOptions>
-                <!-- Directory containing the jar created by the
-                shade plugin -->
-                <input>${project.basedir}/bin</input>
-                <!-- Output directory for the packaged application -->
-                <destination>${project.build.directory}/jpackage</destination>
-                <name>Myster</name>
-                <mainJar>${outputName}.jar</mainJar>
-                <mainClass>${mainclass}</mainClass>
-                <type>${jpackage.type}</type>
-                <appVersion>${jpackage.version}</appVersion>
-                <icon>${jpackage.icon}</icon>
-                <jLinkOptions>
-                  <option>--generate-cds-archive</option>
-                  <option>--strip-debug</option>
-                  <option>--no-man-pages</option>
-                  <option>--no-header-files</option>
-                  <option>--compress=2</option>
-                </jLinkOptions>
-                <addModules>
-                  <module>java.base</module>
-                  <module>java.desktop</module>
-                  <module>java.naming</module>
-                  <module>java.prefs</module>
-                </addModules>
                 </configuration>
               </execution>
             </executions>

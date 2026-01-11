@@ -99,9 +99,7 @@ public class FileListerThread extends MysterThread {
             StandardSuiteStream.getAllFilesAndMetadata(socket, type, new FileCallback() {
                 @Override
                 public void numberOfFiles(int numberOfFiles) {
-                    Invoker.EDT.invoke(() -> {
-                        max[0] = numberOfFiles;
-                    });
+                    max[0] = numberOfFiles;
                 }
 
                 @Override
@@ -114,6 +112,10 @@ public class FileListerThread extends MysterThread {
                     if ((currentTime - startTime[0]) > 1000 || ended) {
                         var rr = records.toArray(new FileRecord[] {});
                         Invoker.EDT.invoke(() -> {
+                            if (endFlag) {
+                                return;
+                            }
+                            
                             listener.addItemsToFileList(rr);
                             if (ended) {
                                 listener.finish();
@@ -138,6 +140,11 @@ public class FileListerThread extends MysterThread {
                         if (m == 0) {
                             return;
                         }
+                        
+                        if (endFlag) {
+                            return;
+                        }
+                        
                         msg.say("Downloading file metadata: " + lookup.lookup(type) + " "
                                 + (c * (100)) / m + "%");
                     });

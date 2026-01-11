@@ -72,6 +72,7 @@ import com.myster.net.server.datagram.SearchHashDatagramServer;
 import com.myster.net.server.datagram.ServerStatsDatagramServer;
 import com.myster.net.server.datagram.TopTenDatagramServer;
 import com.myster.net.server.datagram.TypeDatagramServer;
+import com.myster.net.stream.client.MysterSocketFactory;
 import com.myster.net.stream.client.MysterStreamImpl;
 import com.myster.net.stream.client.msdownload.MSDownloadLocalQueue;
 import com.myster.pref.MysterPreferences;
@@ -215,6 +216,8 @@ public class Myster {
         INSTRUMENTATION.info("-------->> Init I18n " + (System.currentTimeMillis() - startTime));
         I18n.init();
 
+        MysterSocketFactory.init(identity);
+        
         INSTRUMENTATION.info("-------->> Init datagram server " + (System.currentTimeMillis() - startTime));
         ServerEventDispatcher serverDispatcher = new ServerEventDispatcher();
         DatagramProtocolManager datagramManager = new DatagramProtocolManager();

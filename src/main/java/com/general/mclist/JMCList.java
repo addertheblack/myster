@@ -686,9 +686,9 @@ class MCListSelectionModel<E> implements ListSelectionModel {
     public void clearSelection() {
         for (int i = 0; i < tableModel.getRowCount(); i++) {
             if (tableModel.getRow(i).isSelected()) {
+                tableModel.getRow(i).setSelected(false);
                 internalSelectionListener.valueChanged(new ListSelectionEvent(this, i, i, valueIsAdjusting));
             }
-            tableModel.getRow(i).setSelected(false);
         }
         fireValueChanged();
     }
