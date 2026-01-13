@@ -1,28 +1,58 @@
-# myster
-Myster Open Source - completely distributed p2p network
+# Myster
 
-Myster is a completely distributed p2p client in the same style as Kaazaaaaaaaa or Gnutella (old school). An important difference between
-Myster and the rest is that Myster gains its scalability via virutal overlay networks that segment the giant p2p network by
-interrest. Withing each sub-network the network self optimizes to make searches fast and to make sure the traffic doesn't spill over
-to everyone else. So, like, people who are interrested in videos don't get searches for pictures or music.
+Myster is a fully distributed, old-school P2P application (originally started around 1999).
+It scales via **virtual overlay networks** that segment the broader network by interest, so searches stay within relevant sub-networks instead of flooding everyone.
 
-Myster Open Source was started in about 1999 during the age of Java AWT. During this time it actually got fairly popular and was 
-downloaded over a million times. Then I realized there was a huge amount of piracy on the network (shocking! sigh) and so I didn't try 
-to monitize it. Then I ran out of time because of ... umm.. life happened.. so I abandoned it.
+## Prerequisites
 
-I've put Myster on git-hub so that the code is accessible for those curious or those who would like to pilfer it's treasures.
+- Java (use the version specified in `pom.xml`)
+- Maven
 
-In theory Myster allows you to build you own p2p network. Essentially you'd create a p2p network specifically for your interrests 
-and you'd have some sort of access control on top of that so you can decide who joins. There are a few things that need to be 
-changed to get it to work but if anyone is interrested in making it a possibility I'm fine with explaining how to do it and 
-contributing what meager time I can to the effort.
+## Build & test
 
-There's an eclipse project setup already.
+```bash
+mvn clean test
+```
 
-The ant build might not work correctly due to code rot but it should build a self contained, runnable jar. So you can just 
+To build artifacts:
 
-"java -jar XXX.jar"
+```bash
+mvn package
+```
 
-Myster without worrying about stuff like classpaths or library dependencies.
+The authoritative build configuration and targets are in `pom.xml`.
 
-The project setup is simple. It's another maven project. The targets are in the pom file. Should be easy enough to poke around in.
+## Run
+
+Typical ways to run Myster:
+
+- **From an IDE**: import the project as Maven and run the appropriate main class/run configuration.
+- **From the command line**: after `mvn package`, run the produced jar from the relevant `target/` directory (if an executable jar is produced).
+
+## Documentation
+
+- Design docs (living docs describing the current implementation): `docs/design/`
+- Coding conventions (including Javadoc guidance): `docs/conventions/`
+
+## Agent-driven development workflow
+
+Myster uses a two-agent workflow for planning and implementing features:
+
+1. **Planning Agent** (`.github/agents/myster-plan-agent.md`)
+   - Produces implementation plans in `docs/plans/<feature-slug>.md`
+   - Spec: `docs/agents/planning-agent.md`
+
+2. **Implementation Agent** (`.github/agents/myster-impl-agent.md`)
+   - Executes plans, updates code/Javadoc/design docs
+   - Writes summaries to `docs/impl_summary/<feature-slug>.md`
+   - Spec: `docs/agents/implementation-agent.md`
+
+Related:
+
+- Plans: `docs/plans/README.md`
+- Implementation summaries: `docs/impl_summary/README.md`
+
+## Background
+
+This repository is here to keep the project accessible for anyone curious or interested in working on it.
+In theory, Myster can also be used as a foundation for building your own P2P network by defining interest-based overlay networks and layering access control on top.
