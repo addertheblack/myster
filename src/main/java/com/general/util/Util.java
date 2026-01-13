@@ -401,6 +401,12 @@ public class Util { //This code was taken from an Apple Sample Code package,
         return EventQueue.isDispatchThread();
     }
 
+    public static void ensureEventDispatchThread() {
+        if (!EventQueue.isDispatchThread()) {
+            throw new IllegalStateException("This method must be called on the Event Dispatch Thread");
+        }
+    }
+
     public static void invokeAndWait(final Runnable runnable) throws InterruptedException {
         try {
             EventQueue.invokeAndWait(runnable);

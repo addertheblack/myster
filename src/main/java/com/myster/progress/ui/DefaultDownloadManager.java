@@ -7,23 +7,14 @@ import com.myster.net.stream.client.msdownload.MSDownloadListener;
 import com.myster.net.stream.client.msdownload.MSDownloadParams;
 import com.myster.ui.MysterFrameContext;
 
+import static com.general.util.Util.ensureEventDispatchThread;
+
 public class DefaultDownloadManager implements DownloadManager {
     private ProgressManagerWindow progressManagerWindow;
-    private final MysterFrameContext context;
+    private MysterFrameContext context;
     
-    public DefaultDownloadManager(MysterFrameContext context) {
-        this.context = context;
-        
-        // Create the ProgressManagerWindow immediately in the constructor
-        // This ensures it exists before downloads are restarted
-        try {
-            Util.invokeAndWaitForAnyThread(() -> {
-                progressManagerWindow = new ProgressManagerWindow(context);
-            });
-        } catch (InterruptedException _) {
-            Thread.currentThread().interrupt();
-            throw new RuntimeException("Failed to create ProgressManagerWindow");
-        }
+    public DefaultDownloadManager() {
+        ensureEventDispatchThread();
     }
     
     public ProgressManagerWindow getProgressManagerWindow() {
@@ -39,10 +30,11 @@ public class DefaultDownloadManager implements DownloadManager {
      * @return the number of windows restored (0 or 1)
      */
     public int initWindowLocations() {
-        if (!Util.isEventDispatchThread()) {
-            throw new IllegalStateException("initWindowLocations() must be called on the EDT");
-        }
+        ensureEventDispatchThread();
 
+        if (progressManagerWindow == null) {
+            throw new IllegalStateException("MysterFrameContext not set before initWindowLocations()");
+        }
 
         return progressManagerWindow.initWindowLocations();
     }
@@ -63,5 +55,10 @@ public class DefaultDownloadManager implements DownloadManager {
     @Override
     public MSDownloadListener getMsDownloadListener(String filename, Cancellable cancellable) {
         return new ProgManDownloadHandler(progressManagerWindow, filename, cancellable);
+    }
+
+    public void setContext(MysterFrameContext context) {
+        ensureEventDispatchThread();
+        progressManagerWindow = new ProgressManagerWindow(context);
     }
 }

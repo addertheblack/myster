@@ -238,8 +238,7 @@ public class DownloadInfoPanel extends JPanel {
             for (int i = 0; i < array.length; i++) {
                 String address = (((DownloadMCListItem) (list.getMCListItem(array[i])))).getAddress();
                 var data = new ClientWindow.ClientWindowData(Optional.of(address), Optional.empty(), Optional.empty());
-                (new ClientWindow(frameContext, data))
-                        .show();
+                frameContext.clientWindowProvider().getOrCreateWindow(data).show();
             }
         }
 

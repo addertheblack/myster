@@ -90,7 +90,7 @@ public class MysterMenuBar {
         file.add(new MysterMenuItemFactory("New Search",
                                                   new NewSearchWindowAction(context),
                                                   java.awt.event.KeyEvent.VK_N));
-        file.add(new MysterMenuItemFactory("New Peer-to-Peer Connection",
+        file.add(new MysterMenuItemFactory("New Peer-to-Peer Connection...",
                                                   new NewClientWindowAction(context),
                                                   java.awt.event.KeyEvent.VK_N,
                                                   true));

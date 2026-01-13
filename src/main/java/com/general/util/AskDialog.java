@@ -27,6 +27,9 @@ import javax.swing.text.DefaultCaret;
 
 import com.myster.application.MysterGlobals;
 
+/**
+ * A simple dialog that asks a question and provides a text box for the answer.
+ */
 public class AskDialog extends JDialog {
     private static final String CANCEL_ACTION = "Cancel";
     private static final String OK_ACTION = "Ok";

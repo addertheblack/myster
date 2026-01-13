@@ -72,7 +72,10 @@ public interface MysterServer {
      * @return the uptime that the server tells us. Might be BS.
      */
     public long getUptime();
-    
+
+    /**
+     * @return The unique identity string for this server.
+     */
     public MysterIdentity getIdentity();
 
     /**

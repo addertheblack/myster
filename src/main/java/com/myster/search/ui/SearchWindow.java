@@ -174,9 +174,8 @@ public class SearchWindow extends MysterFrame implements SearchResultListener, S
             MCListItemInterface<SearchResult> item = (MCListItemInterface<SearchResult>) fileList.getMCListItem(moop);
             var downloadItem = item.getObject();
 
-            ClientWindow w =
-                    new ClientWindow(getMysterFrameContext(),
-                                     new ClientWindow.ClientWindowData(Optional
+            ClientWindow w = getMysterFrameContext().clientWindowProvider()
+                    .getOrCreateWindow(new ClientWindow.ClientWindowData(Optional
                                              .of(downloadItem.getHostAddress().toString()),
                                                                        Optional.of(getMysterType()),
                                                                        Optional.of(item.getObject().getName())));

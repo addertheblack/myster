@@ -92,7 +92,6 @@ public class WindowPrefDataKeeper {
             public void componentHidden(ComponentEvent e) {
                 hideComponent(windowClassPrefKey, privateID, singletonWindow);
             }
-
         });
         
         frame.addWindowListener(new WindowAdapter() {

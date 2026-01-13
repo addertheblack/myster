@@ -547,8 +547,8 @@ public class ProgressManagerWindow extends MysterFrame {
                 }
             };
             
-            var context = new MysterFrameContext(new MysterMenuBar(), mockWindowManager, null, mockKeeper, null, null);
-            
+            var context = new MysterFrameContext(new MysterMenuBar(), mockWindowManager, null, mockKeeper, null, null, null);
+
             ProgressManagerWindow window = new ProgressManagerWindow(context);
             window.populateWithFakeData();
             window.setDefaultCloseOperation(javax.swing.JFrame.EXIT_ON_CLOSE);

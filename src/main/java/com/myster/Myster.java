@@ -23,9 +23,7 @@ import java.net.SocketException;
 import java.net.UnknownHostException;
 import java.security.KeyPair;
 import java.security.PublicKey;
-import java.util.ArrayList;
 import java.util.Enumeration;
-import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.Executors;
 import java.util.logging.LogManager;
@@ -42,7 +40,6 @@ import com.general.util.Timer;
 import com.general.util.Util;
 import com.myster.application.MysterGlobals;
 import com.myster.bandwidth.BandwidthManager;
-import com.myster.client.ui.ClientWindow;
 import com.myster.filemanager.FileTypeListManager;
 import com.myster.filemanager.ui.FmiChooser;
 import com.myster.hash.HashManager;
@@ -294,10 +291,6 @@ public class Myster {
         final HashCrawlerManager crawlerManager =
                 new MultiSourceHashSearch(tracker, protocol);
         INSTRUMENTATION.info("-------->> HashCrawlerManager created " + (System.currentTimeMillis() - startTime));
-        
-        INSTRUMENTATION.info("-------->> Init ClientWindow " + (System.currentTimeMillis() - startTime));
-        ClientWindow.init(protocol, crawlerManager, tracker, serverPreferences, tdList);
-        INSTRUMENTATION.info("-------->> ClientWindow inited " + (System.currentTimeMillis() - startTime));
 
 
         INSTRUMENTATION.info("-------->> Creating HashManager " + (System.currentTimeMillis() - startTime));
@@ -379,18 +372,21 @@ public class Myster {
                 WindowManager windowManager = new WindowManager();
                 WindowPrefDataKeeper keeper = new WindowPrefDataKeeper(preferences);
                 
-                // Create temporary context to initialize downloadManager
-                // The AI did this and it made me laugh so I kept it in.
-                // Fuck you people who think this is a terrible reason to 
-                // accept code into the codebase!
-                MysterFrameContext tempContext =
-                        new MysterFrameContext(menuBarFactory,
-                                               windowManager,
-                                               tdList,
-                                               keeper,
-                                               fileManager,
-                                               null);
-                DefaultDownloadManager downloadManager = new DefaultDownloadManager(tempContext);
+                // Create ClientWindowProvider with identity resolver
+                INSTRUMENTATION.info("-------->>   EDT init ClientWindowProvider "
+                        + (System.currentTimeMillis() - startTime));
+                com.myster.client.ui.IdentityResolver identityResolver =
+                        address -> pool.getCachedMysterServer(address)
+                                      .flatMap(server -> Optional.of(server.getIdentity()));
+                com.myster.client.ui.ClientWindowProvider clientWindowProvider =
+                        new com.myster.client.ui.ClientWindowProvider(identityResolver,
+                                                                      protocol,
+                                                                      crawlerManager,
+                                                                      tracker,
+                                                                      serverPreferences,
+                                                                      tdList);
+
+                DefaultDownloadManager downloadManager = new DefaultDownloadManager();
                 
                 // Now create the final context with the downloadManager properly set
                 final MysterFrameContext context =
@@ -399,8 +395,13 @@ public class Myster {
                                                tdList,
                                                keeper,
                                                fileManager,
-                                               downloadManager);
-                
+                                               downloadManager,
+                                               clientWindowProvider);
+
+                // Set the context on the provider to complete the circular dependency
+                clientWindowProvider.setContext(context);
+                downloadManager.setContext(context);
+
                 PreferencesGui preferencesGui = new PreferencesGui(context);
 
                 serverFacade
@@ -603,7 +604,6 @@ public class Myster {
     }
 
     private static void printoutAllIpAddresses() {
-        List<InetAddress> networkAddresses = new ArrayList<>();
         try {
             InetAddress localhost = InetAddress.getLocalHost();
             log.info("IP Addr for local host: " + localhost.getHostAddress());
@@ -614,8 +614,6 @@ public class Myster {
                 log.info(" Full list of IP addresses:");
                 for (int i = 0; i < allMyIps.length; i++) {
                     log.info("    " + allMyIps[i].getHostAddress());
-                    if (networkAddresses.isEmpty())
-                        networkAddresses.add(allMyIps[i]);
                 }
             }
         } catch (UnknownHostException e) {

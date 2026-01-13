@@ -90,12 +90,14 @@ public class ClientWindow extends MysterFrame implements Sayable {
     
 
     private static int counter = 0;
-    private static Tracker tracker;
-    private static MysterProtocol protocol;
-    private static HashCrawlerManager hashManager;
-    private static ServerPreferences serverPreferences;
-    private static TypeDescriptionList typeDescriptionList;
-    
+
+    // Instance fields for dependencies (no longer static)
+    private final MysterProtocol protocol;
+    private final HashCrawlerManager hashManager;
+    private final Tracker tracker;
+    private final ServerPreferences serverPreferences;
+    private final TypeDescriptionList typeDescriptionList;
+
     private JButton connect;
     private JButton toggleStatsButton;
     private JTextField ipTextField;
@@ -116,18 +118,6 @@ public class ClientWindow extends MysterFrame implements Sayable {
     
     private Optional<ClientWindowData> initiaData = Optional.empty();
 
-    public static void init(MysterProtocol protocol,
-                            HashCrawlerManager hashManager,
-                            Tracker tracker,
-                            ServerPreferences prefs,
-                            TypeDescriptionList typeDescriptionList) {
-        ClientWindow.protocol = protocol;
-        ClientWindow.tracker = tracker;
-        ClientWindow.hashManager = hashManager;
-        ClientWindow.typeDescriptionList = typeDescriptionList;
-        serverPreferences = prefs;
-    }
-    
     public record ClientWindowData(Optional<String> ip, Optional<MysterType> type, Optional<String> fileName) {}
     
     private static Optional<MysterType> getFromPrefs(Preferences p) {
@@ -153,7 +143,7 @@ public class ClientWindow extends MysterFrame implements Sayable {
         });
 
         for (PrefData<ClientWindowData> prefData : lastLocs) {
-            ClientWindow window = new ClientWindow(c, prefData.data());
+            ClientWindow window = c.clientWindowProvider().getOrCreateWindow(prefData.data());
             window.setBounds(prefData.location().bounds());
             window.show();
         }
@@ -161,26 +151,48 @@ public class ClientWindow extends MysterFrame implements Sayable {
         return lastLocs.size();
     }
 
-    public ClientWindow(MysterFrameContext c) {
+    // Constructor for creating a new window with no initial data
+    public ClientWindow(MysterFrameContext c,
+                        MysterProtocol protocol,
+                        HashCrawlerManager hashManager,
+                        Tracker tracker,
+                        ServerPreferences serverPreferences,
+                        TypeDescriptionList typeDescriptionList) {
         super(c, "Direct Connection " + (++counter));
         
-        context = c;
+        this.context = c;
+        this.protocol = protocol;
+        this.hashManager = hashManager;
+        this.tracker = tracker;
+        this.serverPreferences = serverPreferences;
+        this.typeDescriptionList = typeDescriptionList;
 
         init();
-
     }
 
-    public ClientWindow(MysterFrameContext c, ClientWindowData initiaData) {
+    // Constructor for creating a window with initial data
+    public ClientWindow(MysterFrameContext c,
+                        ClientWindowData initialData,
+                        MysterProtocol protocol,
+                        HashCrawlerManager hashManager,
+                        Tracker tracker,
+                        ServerPreferences serverPreferences,
+                        TypeDescriptionList typeDescriptionList) {
         super(c, "Direct Connection " + (++counter));
         
-        context = c;
-        
+        this.context = c;
+        this.protocol = protocol;
+        this.hashManager = hashManager;
+        this.tracker = tracker;
+        this.serverPreferences = serverPreferences;
+        this.typeDescriptionList = typeDescriptionList;
+
         init();
-        this.initiaData = Optional.of(initiaData);
-        initiaData.ip.ifPresent(ip -> {
+        this.initiaData = Optional.of(initialData);
+        initialData.ip.ifPresent(ip -> {
             ipTextField.setText(ip);
             
-            if (initiaData.type().isEmpty()) {
+            if (initialData.type().isEmpty()) {
                 this.initiaData = Optional.empty();
             }
         });
@@ -770,7 +782,7 @@ public class ClientWindow extends MysterFrame implements Sayable {
         }
         
         connectToThread =
-                new TypeListerThread(ClientWindow.protocol, new TypeListerThread.TypeListener() {
+                new TypeListerThread(protocol, new TypeListerThread.TypeListener() {
                     public void addItemToTypeList(MysterType s) {
                         ClientWindow.this.addItemToTypeList(s);
                     }
@@ -837,7 +849,7 @@ public class ClientWindow extends MysterFrame implements Sayable {
     public void startStats() {
         stopStats();
         fileInfoListerThread =
-                new FileInfoListerThread(ClientWindow.protocol,
+                new FileInfoListerThread(protocol,
                                          this::showFileStats,
                                          this::say,
                                          getCurrentIP(),
