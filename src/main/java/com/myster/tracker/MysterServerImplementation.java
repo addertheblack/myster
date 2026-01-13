@@ -85,15 +85,15 @@ class MysterServerImplementation {
         this.preferences = node;
         this.identityProvider = identityProvider;
         this.identity = identity;
-        createNewMysterServerImpl(Double.valueOf(node.get(SPEED, "")).doubleValue(),
-                                  Integer.valueOf(node.get(TIMEUP, "")).intValue(),
-                                  Integer.valueOf(node.get(TIMEDOWN, "")).intValue(),
-                                  Integer.valueOf(node.get(NUMBEROFHITS, "")).intValue(),
-                                  Long.valueOf(node.get(TIMESINCEUPDATE, "")).longValue(),
+        createNewMysterServerImpl(Double.valueOf(node.get(SPEED, "")),
+                                  Integer.valueOf(node.get(TIMEUP, "")),
+                                  Integer.valueOf(node.get(TIMEDOWN, "")),
+                                  Integer.valueOf(node.get(NUMBEROFHITS, "")),
+                                  Long.valueOf(node.get(TIMESINCEUPDATE, "")),
                                   node.get(NUMBEROFFILES, ""),
                                   node.get(SERVER_NAME, ""),
                                   (node.get(UPTIME, "") == null ? -1
-                                          : Long.valueOf(node.get(UPTIME, "")).longValue()));
+                                        : Long.valueOf(node.get(UPTIME, ""))));
     }
     
     /**
@@ -279,6 +279,14 @@ class MysterServerImplementation {
 
     @Override
     public boolean equals(Object m) {
+        if (m == null) {
+            return false;
+        }
+
+        if (!m.getClass().equals(MysterServerImplementation.class)) {
+            return false;
+        }
+
         MysterServerImplementation mysterIp;
         try {
             mysterIp = (MysterServerImplementation) m;
@@ -416,12 +424,12 @@ class MysterServerImplementation {
         preferences.put(NUMBEROFHITS, "" + numberofhits);
         preferences.put(UPTIME, "" + uptime);
         
-        if (serverName != null && !serverName.equals("")) {
+        if (serverName != null && !serverName.isEmpty()) {
             preferences.put(SERVER_NAME, "" + serverName);
         }
 
         String s_temp = numberOfFiles.toString();
-        if (!s_temp.equals("")) {
+        if (!s_temp.isEmpty()) {
             preferences.put(NUMBEROFFILES, numberOfFiles.toString());
         }
         
@@ -454,11 +462,11 @@ class MysterServerImplementation {
                 workingmml.put("/"+IDENTITY_PUBLIC_KEY, ADDRESSES);
             }
             
-            if (serverName != null && !serverName.equals(""))
+            if (serverName != null && !serverName.isEmpty())
                 workingmml.put("/"+SERVER_NAME, "" + serverName);
 
             String s_temp = numberOfFiles.toString();
-            if (!s_temp.equals(""))
+            if (!s_temp.isEmpty())
                 workingmml.put("/"+NUMBEROFFILES, numberOfFiles.toString());
 
             return workingmml;

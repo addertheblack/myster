@@ -111,8 +111,6 @@ public class ClientWindow extends MysterFrame implements Sayable {
     private FileListerThread fileListThread;
     private FileInfoListerThread fileInfoListerThread;
     
-    private boolean hasBeenShown = false;
-    
     private final MysterFrameContext context;
     private Runnable savePrefs;
     
@@ -151,7 +149,7 @@ public class ClientWindow extends MysterFrame implements Sayable {
         return lastLocs.size();
     }
 
-    // Constructor for creating a new window with no initial data
+    // Constructor for creating a new window
     public ClientWindow(MysterFrameContext c,
                         MysterProtocol protocol,
                         HashCrawlerManager hashManager,
@@ -170,33 +168,78 @@ public class ClientWindow extends MysterFrame implements Sayable {
         init();
     }
 
-    // Constructor for creating a window with initial data
-    public ClientWindow(MysterFrameContext c,
-                        ClientWindowData initialData,
-                        MysterProtocol protocol,
-                        HashCrawlerManager hashManager,
-                        Tracker tracker,
-                        ServerPreferences serverPreferences,
-                        TypeDescriptionList typeDescriptionList) {
-        super(c, "Direct Connection " + (++counter));
-        
-        this.context = c;
-        this.protocol = protocol;
-        this.hashManager = hashManager;
-        this.tracker = tracker;
-        this.serverPreferences = serverPreferences;
-        this.typeDescriptionList = typeDescriptionList;
+    /**
+     * Sets initial data for navigating to a specific IP, type, and/or file.
+     * This works for both new windows and recycled windows.
+     *
+     * The process is sequential:
+     * 1. Connect (if needed) - triggers type listing
+     * 2. Select type (if needed) - triggers file listing
+     * 3. Select file (if needed)
+     *
+     * Each step is only triggered if not already completed.
+     *
+     * @param data the navigation data (IP, optional type, optional filename)
+     */
+    public void setInitialData(ClientWindowData data) {
+        // Step 1: Set the initial data
+        this.initiaData = Optional.of(data);
 
-        init();
-        this.initiaData = Optional.of(initialData);
-        initialData.ip.ifPresent(ip -> {
+        // Set IP in text field if provided
+        data.ip().ifPresent(ip -> {
             ipTextField.setText(ip);
-            
-            if (initialData.type().isEmpty()) {
-                this.initiaData = Optional.empty();
-            }
+            ipTextField.setForeground(javax.swing.UIManager.getColor("TextField.foreground"));
         });
-        ipTextField.setForeground(javax.swing.UIManager.getColor("TextField.foreground"));
+
+        // Step 2: Check if we need to connect
+        String targetIp = data.ip().orElse(null);
+        String currentIp = getCurrentIP();
+        boolean sameServer = targetIp != null && targetIp.equals(currentIp);
+        boolean typesLoaded = fileTypeList.length() > 0;
+
+        if (!sameServer || !typesLoaded) {
+            // Need to connect - this will trigger type listing
+            // When types arrive, addItemToTypeList() will handle selecting the type
+            connect.doClick();
+            return;
+        }
+
+        // Step 3: Already connected with types loaded, check if we need to select a type
+        if (data.type().isPresent()) {
+            MysterType targetType = data.type().get();
+            int selectedTypeIndex = fileTypeList.getSelectedIndex();
+
+            // Check if the correct type is already selected
+            if (selectedTypeIndex >= 0) {
+                MysterType currentType = fileTypeList.getMCListItem(selectedTypeIndex).getObject();
+                if (currentType.equals(targetType)) {
+                    // Correct type already selected
+                    // Step 4: Select file if needed
+                    if (data.fileName().isPresent()) {
+                        selectElement();
+                    } else {
+                        initiaData = Optional.empty();
+                    }
+                    return;
+                }
+            }
+
+            // Need to select the type - find it in the list
+            for (int i = 0; i < fileTypeList.length(); i++) {
+                if (fileTypeList.getMCListItem(i).getObject().equals(targetType)) {
+                    // Selecting the type will trigger file listing
+                    // When files arrive, selectElement() will be called to select the file
+                    fileTypeList.select(i);
+                    return;
+                }
+            }
+
+            // Type not found in list - might arrive later, keep initiaData
+            return;
+        }
+
+        // No type specified, just clear initial data
+        initiaData = Optional.empty();
     }
     
     private void recursivelyStartDownloads(TreeMCListTableModel<String> model, TreeMCListItem<String> item, Optional<Path> baseDirectory, Path relativePath) {
@@ -526,12 +569,6 @@ public class ClientWindow extends MysterFrame implements Sayable {
     
     public void show() {
         super.show();
-        if (!ipTextField.getText().equals("") && !hasBeenShown) {
-            Util.invokeLater(() -> {
-                connect.doClick();
-            });
-            hasBeenShown = true;
-        }
     }
         
     public void dispose() {

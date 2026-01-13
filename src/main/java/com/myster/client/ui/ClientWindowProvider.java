@@ -93,6 +93,7 @@ public class ClientWindowProvider {
             ClientWindow existingWindow = activeWindows.get(identity.get());
             if (existingWindow != null) {
                 log.info("Bringing existing ClientWindow to front for identity: " + identity.get());
+                existingWindow.setInitialData(data);
                 existingWindow.toFront();
                 existingWindow.requestFocus();
                 return existingWindow;
@@ -100,8 +101,11 @@ public class ClientWindowProvider {
         }
 
         // Create a new window
-        ClientWindow window = new ClientWindow(context, data, protocol, hashManager, tracker,
+        ClientWindow window = new ClientWindow(context, protocol, hashManager, tracker,
                                                 serverPreferences, typeDescriptionList);
+
+        // Set initial data - works for both new and recycled windows
+        window.setInitialData(data);
 
         // If we have an identity, track this window
         identity.ifPresent(id -> {
@@ -139,16 +143,6 @@ public class ClientWindowProvider {
         });
 
         return window;
-    }
-
-    /**
-     * Creates a new ClientWindow with no initial data.
-     * This window will not be tracked by identity until it connects to a server.
-     *
-     * @return a new ClientWindow
-     */
-    public ClientWindow createNewWindow() {
-        return new ClientWindow(context, protocol, hashManager, tracker, serverPreferences, typeDescriptionList);
     }
 }
 
