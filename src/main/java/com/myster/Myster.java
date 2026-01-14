@@ -348,30 +348,14 @@ public class Myster {
                 INSTRUMENTATION.info("-------->>   EDT Init AWT GUI "
                         + (System.currentTimeMillis() - startTime));
                 
-                // might move this if I can be bothered
-//                try {
-//                    if (com.myster.type.TypeDescriptionList.getDefault()
-//                            .getEnabledTypes().length <= 0) {
-//                        AnswerDialog
-//                                .simpleAlert("There are not enabled types. This screws up Myster. Please make sure"
-//                                        + " the typedescriptionlist.mml is in the right place and correctly"
-//                                        + " formated.");
-//                        MysterGlobals.quit();
-//                        return; // not reached
-//                    }
-//                } catch (Exception ex) {
-//                    AnswerDialog.simpleAlert("Could not load the Type Description List: \n\n" + ex);
-//                    MysterGlobals.quit();
-//                    return; // not reached
-//                }
-
-                
                 INSTRUMENTATION.info("-------->>   EDT init WindowManager "
                         + (System.currentTimeMillis() - startTime));
                 MysterMenuBar menuBarFactory = new MysterMenuBar();
                 WindowManager windowManager = new WindowManager();
                 WindowPrefDataKeeper keeper = new WindowPrefDataKeeper(preferences);
-                
+
+
+
                 // Create ClientWindowProvider with identity resolver
                 INSTRUMENTATION.info("-------->>   EDT init ClientWindowProvider "
                         + (System.currentTimeMillis() - startTime));

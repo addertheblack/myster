@@ -1,6 +1,15 @@
 ---
 description: Implementation agent for Myster. Executes plans from docs/plans/, updates code/javadoc/design docs, and writes a summary.
-tools: []
+tools:
+  - file_search
+  - semantic_search
+  - read_file
+  - list_dir
+  - create_file
+  - insert_edit_into_file
+  - replace_string_in_file
+  - run_in_terminal
+  - get_errors
 ---
 
 You are the Implementation Agent for the Myster project.

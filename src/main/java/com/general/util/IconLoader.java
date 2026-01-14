@@ -56,7 +56,7 @@ public final class IconLoader {
     }
 
     public static Image loadImage(String filename, URL url) {
-        log.severe("loadImage() is loading  \"" + filename + "\"");
+        log.info("loadImage() is loading  \"" + filename + "\"");
 
         if (filename == null)
             return null;
