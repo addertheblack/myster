@@ -59,6 +59,7 @@ public class WindowPrefDataKeeper {
      *            Multiple windows are for things like the search or client
      *            windows and singleton windows are for windows with only one
      *            expected instance.
+     * @return a Runnable that when run saves the current location of the frame - window, savePrefData everything
      */
     public Runnable addFrame(MysterFrame frame, Consumer<Preferences> savePrefData, String windowClassPrefKey, boolean singletonWindow) {
         if (windowClassPrefKey.indexOf("/") != -1)
@@ -166,6 +167,8 @@ public class WindowPrefDataKeeper {
     /**
      * @param windowClassPrefKey this would be something like "client windows" or "search windows" or "the pref panel"
      *  The key is used to associate elements to a window class
+     * @param build a function that builds the data object from the preferences node. Any data can be stored here in a type D object.
+     * @return an unmodifiable list of window locations and associated data objects
      */
     public synchronized <D> List<PrefData<D>> getLastLocs(String windowClassPrefKey, Function<Preferences, D> build) {
         Preferences rootNode = windowBoundsPrefNode(windowClassPrefKey);

@@ -87,13 +87,15 @@ public class MysterMenuBar {
         special = new ArrayList<>();
 
         // File menu items
-        file.add(new MysterMenuItemFactory("New Search",
+        file.add(new MysterMenuItemFactory("New Search Tab",
                                                   new NewSearchWindowAction(context),
                                                   java.awt.event.KeyEvent.VK_N));
-        file.add(new MysterMenuItemFactory("New Peer-to-Peer Connection...",
-                                                  new NewClientWindowAction(context),
+        file.add(new MysterMenuItemFactory("New Search Window",
+                                                  new NewSearchWindowAction(context, true),
                                                   java.awt.event.KeyEvent.VK_N,
                                                   true));
+        file.add(new MysterMenuItemFactory("New Peer-to-Peer Connection...",
+                                                  new NewClientWindowAction(context)));
         file.add(new MysterMenuItemFactory("New Instant Message",
                                                   (java.awt.event.ActionEvent e) -> {
                                                       com.myster.net.datagram.message.MessageWindow window =

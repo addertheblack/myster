@@ -80,7 +80,25 @@ public class TypeChoice extends JComboBox<String> {
         
         return Optional.of(types[i].getType());
     }
-    
+
+    /**
+     * Sets the selected type in the combo box.
+     *
+     * @param type the type to select
+     */
+    public void setType(MysterType type) {
+        if (type == null) {
+            return;
+        }
+
+        for (int i = 0; i < types.length; i++) {
+            if (types[i].getType().equals(type)) {
+                setSelectedIndex(i);
+                return;
+            }
+        }
+    }
+
     public String getSelectedDescription() {
         return types[getSelectedIndex()].getDescription();
     }
