@@ -122,14 +122,6 @@ public class ServerFacade {
 
 
     private void initMDns() {
-        if (preferences.getServerPort() != MysterGlobals.DEFAULT_SERVER_PORT) {
-            // No need to start mDNS if we're not on the default port
-            // We always have a server running on the default port for LAN discovery
-            // and MysterMdnsAnnouncer only supports running on one port
-            // so we run it only on the default port
-            return;
-        }
-        
         // Start mDNS service announcement (hybrid approach - doesn't replace
         // existing discovery)
         try {

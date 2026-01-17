@@ -24,8 +24,13 @@ public class MysterMdnsAnnouncer implements AutoCloseable {
     private static final Logger log = Logger.getLogger(MysterMdnsAnnouncer.class.getName());
     private static final String SERVICE_TYPE = "_myster._tcp.local.";
     
-    private final List<JmDNS> jmdnsInstances;
-    private final ServiceInfo serviceInfo;
+    /** Holds a JmDNS instance paired with its own ServiceInfo */
+    private record MdnsEntry(JmDNS jmdns, ServiceInfo serviceInfo) {}
+    
+    private final List<MdnsEntry> mdnsEntries;
+    private final String serverName;
+    private final int port;
+    private final Map<String, String> props;
     
     /**
      * Starts announcing this Myster server on the network.
@@ -36,6 +41,10 @@ public class MysterMdnsAnnouncer implements AutoCloseable {
      * @throws IOException if mDNS initialization fails
      */
     public MysterMdnsAnnouncer(String serverName, int port, Identity identity) throws IOException {
+        this.serverName = serverName;
+        this.port = port;
+        this.props = new HashMap<>();
+        
         try {
             // Find LAN addresses only (excludes public IPs, VPNs, etc.)
             List<InetAddress> lanAddresses = ServerUtils.findMyLanAddress();
@@ -45,7 +54,6 @@ public class MysterMdnsAnnouncer implements AutoCloseable {
             }
             
             // Build metadata (TXT records) about this server
-            Map<String, String> props = new HashMap<>();
             props.put("version", "10.0.0");
             
             // Include identity if available
@@ -59,24 +67,25 @@ public class MysterMdnsAnnouncer implements AutoCloseable {
                 }
             });
             
-            // Create and register the service
-            // Name will be made unique automatically if there's a conflict (e.g., "Server" -> "Server (2)")
-            serviceInfo = ServiceInfo.create(
-                SERVICE_TYPE,            // Service type
-                serverName,              // Instance name (will be made unique if needed)
-                port,                    // Port
-                0,                       // Weight (for load balancing, 0 = no preference)
-                0,                       // Priority (0 = no preference)
-                props                    // TXT record metadata
-            );
-            
-            // Create JmDNS instance for each LAN interface and register the service
-            jmdnsInstances = new java.util.ArrayList<>();
+            // Create JmDNS instance for each LAN interface, each with its own ServiceInfo
+			// jmdns insists on one ServiceInfo per jmdns instance
+            mdnsEntries = new java.util.ArrayList<>();
             for (InetAddress lanAddress : lanAddresses) {
                 try {
                     JmDNS jmdns = JmDNS.create(lanAddress);
+                    
+                    // Create a unique ServiceInfo for this JmDNS instance
+                    ServiceInfo serviceInfo = ServiceInfo.create(
+                        SERVICE_TYPE,            // Service type
+                        serverName,              // Instance name (will be made unique if needed)
+                        port,                    // Port
+                        0,                       // Weight (for load balancing, 0 = no preference)
+                        0,                       // Priority (0 = no preference)
+                        props                    // TXT record metadata
+                    );
+                    
                     jmdns.registerService(serviceInfo);
-                    jmdnsInstances.add(jmdns);
+                    mdnsEntries.add(new MdnsEntry(jmdns, serviceInfo));
                     log.info("mDNS service announced on " + lanAddress.getHostAddress() + ": " + serverName + " on port " + port);
                 } catch (IOException e) {
                     // Skip interfaces that don't support multicast or have binding issues
@@ -84,7 +93,7 @@ public class MysterMdnsAnnouncer implements AutoCloseable {
                 }
             }
             
-            if (jmdnsInstances.isEmpty()) {
+            if (mdnsEntries.isEmpty()) {
                 throw new IOException("Failed to announce mDNS on any network interface");
             }
             
@@ -99,10 +108,10 @@ public class MysterMdnsAnnouncer implements AutoCloseable {
      */
     @Override
     public void close() {
-        for (JmDNS jmdns : jmdnsInstances) {
+        for (MdnsEntry entry : mdnsEntries) {
             try {
-                jmdns.unregisterService(serviceInfo);
-                jmdns.close();
+                entry.jmdns().unregisterService(entry.serviceInfo());
+                entry.jmdns().close();
             } catch (Exception e) {
                 log.warning("Error closing mDNS instance: " + e.getMessage());
             }
@@ -118,38 +127,29 @@ public class MysterMdnsAnnouncer implements AutoCloseable {
      */
     public void updateServerName(String newServerName) {
         try {
-            // Unregister the old service from all instances
-            for (JmDNS jmdns : jmdnsInstances) {
-                jmdns.unregisterService(serviceInfo);
+            // Unregister old services and re-register with new name
+            List<MdnsEntry> newEntries = new java.util.ArrayList<>();
+            
+            for (MdnsEntry entry : mdnsEntries) {
+                entry.jmdns().unregisterService(entry.serviceInfo());
+                
+                // Create new service info with updated name
+                ServiceInfo newServiceInfo = ServiceInfo.create(
+                    SERVICE_TYPE,
+                    newServerName,
+                    port,
+                    0,
+                    0,
+                    props
+                );
+                
+                entry.jmdns().registerService(newServiceInfo);
+                newEntries.add(new MdnsEntry(entry.jmdns(), newServiceInfo));
             }
             
-            // Create new service info with the same details but new name
-            Map<String, String> props = new HashMap<>();
-            
-            // Copy existing properties from old service
-            var propKeys = serviceInfo.getPropertyNames();
-            while (propKeys.hasMoreElements()) {
-                String key = propKeys.nextElement();
-                String value = serviceInfo.getPropertyString(key);
-                if (value != null) {
-                    props.put(key, value);
-                }
-            }
-            
-            // Create and register new service with updated name
-            ServiceInfo newServiceInfo = ServiceInfo.create(
-                SERVICE_TYPE,
-                newServerName,
-                serviceInfo.getPort(),
-                0,
-                0,
-                props
-            );
-            
-            // Re-register on all LAN interfaces
-            for (JmDNS jmdns : jmdnsInstances) {
-                jmdns.registerService(newServiceInfo);
-            }
+            // Replace the entries list
+            mdnsEntries.clear();
+            mdnsEntries.addAll(newEntries);
             
             log.info("mDNS service name updated to: " + newServerName + " on all LAN interfaces");
             
