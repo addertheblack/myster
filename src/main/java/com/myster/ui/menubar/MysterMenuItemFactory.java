@@ -71,13 +71,13 @@ public class MysterMenuItemFactory {
     public void makeMenuItem(JFrame frame, JMenu menu) {
         if ("-".equals(action.getValue(Action.NAME))) {
             menu.addSeparator();
+
             return;
         }
 
         JMenuItem menuItem = new JMenuItem(action);
 
         menu.add(menuItem);
-        return;
     }
 
     public void setEnabled(boolean b) {

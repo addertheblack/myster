@@ -167,6 +167,23 @@ public class TransactionManager {
             return transactionTransport.addTransactionProtocol(protocol);
         });
     }
+
+    /**
+     * Removes a TransactionProtocol (server side).
+     *
+     * @see TransactionProtocol
+     * @param transactionCode
+     *            of the protocol to remove.
+     * @return the removed TransactionProtocol or null if none was registered under that code.
+     */
+    public TransactionProtocol removeTransactionProtocol(int port, int transactionCode) {
+        return datagramManager.mutateTransportManager(port, (TransportManager transportManager) -> {
+            TransactionTransportImplementation transactionTransport =
+                    extractTransactionTransport(transportManager);
+
+            return transactionTransport.removeTransactionProtocol(transactionCode);
+        });
+    }
     
     public void addEncryptionSupport(int port, DatagramEncryptUtil.Lookup keyLookup) {
         Objects.requireNonNull(keyLookup, "Key lookup cannot be null");
@@ -321,6 +338,13 @@ public class TransactionManager {
          */
         public TransactionProtocol addTransactionProtocol(TransactionProtocol protocol) {
             return serverProtocols.put(protocol.getTransactionCode(), protocol);
+        }
+
+        /**
+         * Removes a transaction protocol.
+         */
+        public TransactionProtocol removeTransactionProtocol(int transactionCode) {
+            return serverProtocols.remove(transactionCode);
         }
 
         /*

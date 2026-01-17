@@ -434,6 +434,16 @@ public class Myster {
                     // Update mDNS service name when server name changes
                     serverFacade.updateMdnsServerName(serverPreferences.getIdentityName());
                 });
+                serverPrefsPane.setOnServerPortChanged((oldPort, newPort) -> {
+                    // Change server port
+                    serverFacade.changePort(oldPort, newPort);
+
+                    // Close old UPnP mappings and open new ones
+                    UPnP.closePortTCP(oldPort);
+                    UPnP.closePortUDP(oldPort);
+                    UPnP.openPortTCP(newPort);
+                    UPnP.openPortUDP(newPort);
+                });
                 preferencesGui.addPanel(serverPrefsPane);
                 
                 preferencesGui.addPanel(new FmiChooser(fileManager, tdList));
@@ -513,10 +523,10 @@ public class Myster {
         log.info("External UPnP gateway: " + UPnP.getDefaultGatewayIP());
         log.info("External IP: " + UPnP.getExternalIP());
         log.info("Local IP: " + UPnP.getLocalIP());
-        log.info("isMappedTCP(): " + UPnP.isMappedTCP(MysterGlobals.DEFAULT_SERVER_PORT));
-        log.info("External TCP/IP port enabled: " + UPnP.openPortTCP(MysterGlobals.DEFAULT_SERVER_PORT));
-        log.info("External UDP/IP port enabled: " + UPnP.openPortUDP(MysterGlobals.DEFAULT_SERVER_PORT));
-        
+        log.info("isMappedTCP(): " + UPnP.isMappedTCP(serverPreferences.getServerPort()));
+        log.info("External TCP/IP port enabled: " + UPnP.openPortTCP(serverPreferences.getServerPort()));
+        log.info("External UDP/IP port enabled: " + UPnP.openPortUDP(serverPreferences.getServerPort()));
+
         ServerUtils.massPing(protocol, tracker);
     } // Utils, globals etc.. //These variables are System wide variables //
 

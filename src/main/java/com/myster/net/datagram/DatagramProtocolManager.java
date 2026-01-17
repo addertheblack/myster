@@ -94,6 +94,8 @@ public class DatagramProtocolManager {
          */
         DatagramTransport removeTransportIfEmpty(DatagramTransport t);
 
+        DatagramTransport removeTransport(short transportCode);
+
         /**
          * @return True if there's not active transports
          */
@@ -147,6 +149,11 @@ public class DatagramProtocolManager {
                 return transportProtocols.remove(t.getTransportCode());
             }
             return null;
+        }
+
+        @Override
+        public DatagramTransport removeTransport(short transportCode) {
+            return transportProtocols.remove(transportCode);
         }
 
         @Override

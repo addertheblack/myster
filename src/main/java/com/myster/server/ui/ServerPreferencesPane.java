@@ -5,6 +5,7 @@ import java.awt.FlowLayout;
 import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
 import java.awt.Insets;
+import java.util.function.BiConsumer;
 
 import javax.swing.JCheckBox;
 import javax.swing.JComboBox;
@@ -28,6 +29,7 @@ public class ServerPreferencesPane extends PreferencesPanel {
     private final JLabel spacerLabel;
     private final ServerPreferences preferences;
     private Runnable onServerNameChanged; // Callback when server name changes
+    private BiConsumer<Integer, Integer> onServerPortChanged; // Callback when server port changes (oldPort, newPort)
 
     private final FreeLoaderPref leech;
     
@@ -108,6 +110,16 @@ public class ServerPreferencesPane extends PreferencesPanel {
         this.onServerNameChanged = callback;
     }
 
+    /**
+     * Sets a callback to be invoked when the server port is changed and saved.
+     * The callback receives both the old port and the new port.
+     *
+     * @param callback the callback to invoke with (oldPort, newPort)
+     */
+    public void setOnServerPortChanged(BiConsumer<Integer, Integer> callback) {
+        this.onServerPortChanged = callback;
+    }
+
     public Dimension getPreferredSize() {
         return new Dimension(STD_XSIZE, 140);
     }
@@ -119,15 +131,22 @@ public class ServerPreferencesPane extends PreferencesPanel {
     public void save() {
         String oldName = preferences.getIdentityName();
         String newName = serverIdentityField.getText();
-        
+        int oldPort = preferences.getServerPort();
+        int newPort = (int) serverThreadsChoice.getModel().getValue();
+
         preferences.setIdentityName(newName);
         preferences.setDownloadSlots(Integer.parseInt((String) openSlotChoice.getSelectedItem()));
-        preferences.setPort((int) serverThreadsChoice.getModel().getValue());
+        preferences.setPort(newPort);
         preferences.setKickFreeloaders(leech.isSet());
         
         // Notify if server name changed
         if (!oldName.equals(newName) && onServerNameChanged != null) {
             onServerNameChanged.run();
+        }
+
+        // Notify if server port changed
+        if (oldPort != newPort && onServerPortChanged != null) {
+            onServerPortChanged.accept(oldPort, newPort);
         }
     }
 

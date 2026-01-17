@@ -15,7 +15,6 @@ import java.io.IOException;
 import java.net.InetAddress;
 import java.net.ServerSocket;
 import java.net.Socket;
-import java.util.List;
 import java.util.Optional;
 import java.util.function.Consumer;
 import java.util.logging.Logger;
@@ -36,6 +35,7 @@ public class Operator implements Runnable {
 
     private ServerSocket serverSocket;
     private volatile Timer timer;
+    private volatile boolean endFlag = false;
 
     private final Optional<InetAddress> bindAddress;
 
@@ -47,16 +47,39 @@ public class Operator implements Runnable {
         this.port = port;
     }
 
+    /**
+     * Signals this operator to stop accepting new connections.
+     * The server socket is closed which causes the accept() call to throw an
+     * IOException, breaking out of the accept loop. Existing connections that
+     * were already accepted continue to be processed - they are not affected.
+     * <p>
+     * This method is idempotent - calling it multiple times has no additional effect.
+     */
+    public void flagToEnd() {
+        endFlag = true;
+        try {
+            if (serverSocket != null) {
+                serverSocket.close();
+            }
+        } catch (IOException e) {
+            log.fine("Exception closing server socket during flagToEnd: " + e.getMessage());
+        }
+        if (timer != null) {
+            timer.cancelTimer();
+        }
+    }
+
     public void run() {
         Thread.currentThread().setPriority(Thread.MAX_PRIORITY); //to minimize the time it takes to make a
         // connection.
+        Thread.currentThread().setName("Operator Thread port: " + port);
 
         refreshServerSocket(); //creates the sever socket.
 
         resetSocketTimer();
 
         Socket socket = null;
-        do {
+        while (!endFlag) {
             try {
                 socket = serverSocket.accept();
                 socket.setSoTimeout(120000);
@@ -64,6 +87,11 @@ public class Operator implements Runnable {
 
                 resetSocketTimer();
             } catch (IOException ex) {
+                if (endFlag) {
+                    // Normal shutdown - we were flagged to end
+                    log.info("Operator on port " + port + " shutting down");
+                    break;
+                }
                 try {
                     socket.close();
                 } catch (Exception exp) {
@@ -80,7 +108,8 @@ public class Operator implements Runnable {
                     }
                 }
             }
-        } while (true);
+        }
+        log.info("Operator on port " + port + " has stopped");
     }
     //Creates or recreates a new server socket.
     private synchronized void refreshServerSocket() {

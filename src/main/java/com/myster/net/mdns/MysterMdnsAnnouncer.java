@@ -59,6 +59,7 @@ public class MysterMdnsAnnouncer implements AutoCloseable {
             // Include identity if available
             identity.getMainIdentity().ifPresent(pair -> {
                 String publicKeyStr = com.myster.identity.Util.keyToString(pair.getPublic());
+                props.put("port", port + ""); // to prevent caching issues when port changes
                 // TXT records have a 255 byte limit per value, so we might need to truncate or split
                 if (publicKeyStr.length() <= 255) {
                     props.put("identity", publicKeyStr);
