@@ -58,10 +58,10 @@ public class ProgressWindow extends MysterFrame {
 
         Image adImage = com.general.util.IconLoader.loadImage("defaultProgressImage.gif", adPanel);
 
-        if (adImage != null)
+        if (adImage != null) {
             adPanel.addImage(adImage);
-        
-        
+        }
+
         setDefaultCloseOperation(DO_NOTHING_ON_CLOSE);
     }
 

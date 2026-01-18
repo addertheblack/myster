@@ -1,26 +1,7 @@
 package com.myster.progress.ui;
 
-import java.awt.Container;
-import java.awt.GridBagConstraints;
-import java.awt.GridBagLayout;
-import java.awt.Image;
-import java.awt.Insets;
-import java.awt.event.ActionEvent;
-import java.io.File;
-
-import javax.swing.AbstractAction;
-import javax.swing.Action;
-import javax.swing.JMenuItem;
-import javax.swing.JToolBar;
-
 import com.formdev.flatlaf.extras.FlatSVGIcon;
-import com.general.mclist.ColumnSortable;
-import com.general.mclist.JMCList;
-import com.general.mclist.MCListEvent;
-import com.general.mclist.MCListEventListener;
-import com.general.mclist.Sortable;
-import com.general.mclist.SortableString;
-import com.general.mclist.TreeMCList;
+import com.general.mclist.*;
 import com.general.mclist.TreeMCListTableModel.TreePathString;
 import com.general.thread.Cancellable;
 import com.general.util.GridBagBuilder;
@@ -36,6 +17,11 @@ import com.myster.ui.MysterFrameContext;
 import com.myster.ui.WindowPrefDataKeeper;
 import com.myster.ui.menubar.MysterMenuBar;
 import com.myster.util.ContextMenu;
+
+import javax.swing.*;
+import java.awt.*;
+import java.awt.event.ActionEvent;
+import java.io.File;
 
 /**
  * A window that manages all downloads in progress using a tree-based MCList.
@@ -272,26 +258,31 @@ public class ProgressManagerWindow extends MysterFrame {
         var builder = new GridBagBuilder()
             .withFill(GridBagConstraints.BOTH)
             .withInsets(new Insets(0, 0, 0, 0));
-        
+
         // Ad panel: top-left anchored, can extend to the right
         c.add(adPanel, builder
             .withGridLoc(0, 0)
             .withSize(1, 1)
-            .withWeight(1, 0)
+            .withWeight(0, 0)
             .withFill(GridBagConstraints.HORIZONTAL)
             .withAnchor(GridBagConstraints.NORTHWEST));
+        c.add(new JPanel(), builder
+            .withGridLoc(1, 0)
+            .withSize(1, 1)
+            .withWeight(1, 0)
+            .withFill(GridBagConstraints.HORIZONTAL));
         
         // Toolbar: below ad panel
         c.add(toolbar, builder
             .withGridLoc(0, 1)
-            .withSize(1, 1)
+            .withSize(2, 1)
             .withWeight(1, 0)
             .withFill(GridBagConstraints.HORIZONTAL));
         
         // Download list: below toolbar, can extend down and right
         c.add(downloadList.getPane(), builder
             .withGridLoc(0, 2)
-            .withSize(1, 1)
+            .withSize(2, 1)
             .withWeight(1, 1)
             .withFill(GridBagConstraints.BOTH));
         
