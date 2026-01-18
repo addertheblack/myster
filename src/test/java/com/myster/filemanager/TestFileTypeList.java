@@ -63,7 +63,7 @@ class TestFileTypeList {
             fileSystem.close();
         }
     }
-    
+
     private void createTestFileStructure() throws IOException {
         // Root level files (depth 0)
         Files.createFile(testRoot.resolve("root_file1.txt"));
@@ -270,17 +270,17 @@ class TestFileTypeList {
         assertFalse(fileTypeList.isIndexing(), "Should not be indexing after completion");
         assertTrue(fileTypeList.isInitialized(), "Should be initialized after indexing");
     }
-    
+
     @Test
     @DisplayName("Test maximum depth indexing - level 4 included, level 5 excluded")
     void testMaximumDepthIndexing() throws InterruptedException {
         fileTypeList.setPath(testRoot.toString());
         fileTypeList.setShared(true);
-        
-        waitForIndexing();
-        
+
         String[] files = fileTypeList.getFileListAsStrings();
-        
+
+        waitForIndexing();
+
         boolean hasLevel4 = false;
         boolean hasLevel5 = false;
         
