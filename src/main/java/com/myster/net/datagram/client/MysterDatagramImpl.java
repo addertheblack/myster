@@ -4,8 +4,10 @@ import java.io.IOException;
 import java.security.PublicKey;
 import java.util.List;
 import java.util.Optional;
+import java.util.function.Supplier;
 
 import com.general.thread.PromiseFuture;
+import com.myster.filemanager.FileTypeListManager;
 import com.myster.hash.FileHash;
 import com.myster.identity.Identity;
 import com.myster.mml.MessagePak;
@@ -37,10 +39,25 @@ public class MysterDatagramImpl implements MysterDatagram {
      */
     private final PublicKeyLookup lookup;
     
-    public MysterDatagramImpl(TransactionManager transactionManager, UDPPingClient pingClient, PublicKeyLookup lookup) {
+    private final Supplier<String> serverName;
+    private final Supplier<Integer> serverPort;
+    private final Identity identity;
+    private final FileTypeListManager fileManager;
+
+    public MysterDatagramImpl(TransactionManager transactionManager,
+                              UDPPingClient pingClient,
+                              PublicKeyLookup lookup,
+                              Supplier<String> serverName,
+                              Supplier<Integer> serverPort,
+                              Identity identity,
+                              FileTypeListManager fileManager) {
         this.transactionManager = transactionManager;
         this.pingClient = pingClient;
         this.lookup = lookup;
+        this.serverName = serverName;
+        this.serverPort = serverPort;
+        this.identity = identity;
+        this.fileManager = fileManager;
     }
     
     @Override
@@ -77,6 +94,16 @@ public class MysterDatagramImpl implements MysterDatagram {
     @Override
     public PromiseFuture<MessagePak> getServerStats(final ParamBuilder params) {
         return doSection(params, new ServerStatsDatagramClient());
+    }
+
+    @Override
+    public PromiseFuture<MessagePak> getBidirectionalServerStats(final ParamBuilder params) {
+        return doSection(params, new BidirectionalServerStatsDatagramClient(
+            serverName.get(),
+            serverPort.get(),
+            identity,
+            fileManager
+        ));
     }
 
     @Override

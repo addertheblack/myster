@@ -151,6 +151,7 @@ public class FileTypeList {
                 // ignore - doesn't matter
                 e.printStackTrace();
             }
+
         }
 
         try {
@@ -481,7 +482,7 @@ public class FileTypeList {
         if (fileMap == null) {
             fileMap = new LinkedHashMap<>();
         }
-        if (!isShared()) { // if file list is not shared make sure list has
+        if (!isShared()) { // if file list is not shared make sure list has nothing
             initialized = true;
             
             // length = 0 then continue.
@@ -506,7 +507,7 @@ public class FileTypeList {
         /*
          * If the directory need indexing or the user has changed the directory to index from, this
          * part of the code will start a new indexing task off.. assuming there's not one already
-         * running..
+         * running.
          */
         if (indexingFuture == null && (isOld() || !rootdir.equals(workingdir))) {
             rootdir = workingdir; // in case the dir for this type has changed.
@@ -514,9 +515,9 @@ public class FileTypeList {
             
             indexingFuture = PromiseFutures
                     .execute(new FileListIndexCall(type, rootPath, hashProvider, tdList))
+                    .addResultListener(this::setFileList)
                     .addFinallyListener(this::resetIndexingVariables)
                     .addFinallyListener(() -> initialized = true)
-                    .addResultListener(this::setFileList)
                     .addStandardExceptionHandler()
                     .setInvoker(INVOKER);
         }

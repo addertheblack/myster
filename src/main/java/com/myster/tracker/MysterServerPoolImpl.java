@@ -271,7 +271,8 @@ public class MysterServerPoolImpl implements MysterServerPool {
                             }
                         }).mapAsync(result -> {
                             if (result) {
-                                return protocol.getDatagram().getServerStats(new ParamBuilder(address));
+                                // Use bidirectional exchange - sends our stats and receives theirs
+                                return protocol.getDatagram().getBidirectionalServerStats(new ParamBuilder(address));
                             } else {
                                 return PromiseFuture.newPromiseFutureException(new IOException("TCP PING Failed"));
                             }

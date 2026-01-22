@@ -277,9 +277,10 @@ class TestFileTypeList {
         fileTypeList.setPath(testRoot.toString());
         fileTypeList.setShared(true);
 
+        waitForIndexing();
+
         String[] files = fileTypeList.getFileListAsStrings();
 
-        waitForIndexing();
 
         boolean hasLevel4 = false;
         boolean hasLevel5 = false;

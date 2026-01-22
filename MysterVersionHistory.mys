@@ -1264,7 +1264,7 @@ keys for myster types.
 2025-11-30
   Add way to add/remove bookmarks
   Add context menus to SeachWindow
-  Add way to download to...
+  Add way to download to... for search
   Add way to disable context menu
   Disabled the ability to use the old AWT based MCList
   Bye Bye old AWT MCList! I'll miss you!
@@ -1272,6 +1272,20 @@ keys for myster types.
     Remeber which pref panel selected
     .. which tab seletected in server stats
     .... etc...
+
+2026-01-21
+  Add way to download to specific folder for p2p window
+  Add way to download folders
+  Add multi selection support to SearchFrame and p2p window
+  Add tabbed search window support
+  Make Myster reuse p2p windows if connecting to the same server
+  Add one ProgressDialog for all downloads
+  Add ability to pause/resume downloads
+  Add local download queuing system
+  Add ability to limit number of concurrent downloads
+  Make more icons theme aware via dynamic draw coloring
+  Add new github copilot agent to myster to allow for planning and impl documents for project feature under /docs/
+  Added more stuff to the concurrency library I wrote. Woot.
 
 
 
@@ -1283,8 +1297,6 @@ to do:
 *Make MSDownload auto-reconnect based on the servers that were being downloaded from at the time.
     Continues downloads instantly
 *Need to implement private networks
-    need to get rid of myster type or otherwise make it as string
-    need to add private certificate code
     need to find a format for sharing a network file - like public key, primary servers etc.. maybe other public keys too
     need to be able to share the network config file (might be similar to network file.. or a superset)
 *Add reverse connection protocol.
@@ -1294,3 +1306,5 @@ to do:
 Split off concurrency library from Myster and publish to Maven
 Make Myster modules compatible
 fix naming.. We probably want to use myster.org
+*Fix website links so that everything uses https (ie: make them relative links)
+implement DoS attack. Packet amplification stuff. I do not want to be a target vector for dos attacks of others.

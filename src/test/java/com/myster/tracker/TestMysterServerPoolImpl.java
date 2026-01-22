@@ -154,6 +154,24 @@ class TestMysterServerPoolImpl {
                             }
                         });
 
+                // Mock getBidirectionalServerStats - same logic as getServerStats
+                Mockito.when(myMock.getBidirectionalServerStats(Mockito.any()))
+                        .thenAnswer(new Answer<PromiseFuture<MessagePak>>() {
+                            @Override
+                            public PromiseFuture<MessagePak> answer(InvocationOnMock invocation)
+                                    throws Throwable {
+                                ParamBuilder params = invocation.getArgument(0);
+                                MysterAddress address = params.getAddress().orElseThrow();
+                                MessagePak stats = lookup.get(address);
+
+                                if (stats == null) {
+                                    return PromiseFuture.newPromiseFutureException(new IOException("Fake timeout"));
+                                }
+
+                                return PromiseFuture.newPromiseFuture(stats);
+                            }
+                        });
+
                 return myMock;
             }
         };

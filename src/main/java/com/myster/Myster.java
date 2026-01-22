@@ -66,6 +66,7 @@ import com.myster.net.server.datagram.FileStatsDatagramServer;
 import com.myster.net.server.datagram.PingTransport;
 import com.myster.net.server.datagram.SearchDatagramServer;
 import com.myster.net.server.datagram.SearchHashDatagramServer;
+import com.myster.net.server.datagram.BidirectionalServerStatsDatagramServer;
 import com.myster.net.server.datagram.ServerStatsDatagramServer;
 import com.myster.net.server.datagram.TopTenDatagramServer;
 import com.myster.net.server.datagram.TypeDatagramServer;
@@ -81,6 +82,7 @@ import com.myster.search.ui.SearchWindow;
 import com.myster.server.event.ServerEventDispatcher;
 import com.myster.server.ui.ServerPreferencesPane;
 import com.myster.server.ui.ServerStatsWindow;
+import com.myster.tracker.MysterServerPool;
 import com.myster.tracker.MysterServerPoolImpl;
 import com.myster.tracker.Tracker;
 import com.myster.tracker.ui.TrackerWindow;
@@ -221,7 +223,19 @@ public class Myster {
         TransactionManager transactionManager =
                 new TransactionManager(serverDispatcher, datagramManager);
 
-        
+        INSTRUMENTATION.info("-------->> Creating server preferences " + (System.currentTimeMillis() - startTime));
+        Preferences serverPreferenceNodes = Preferences.userRoot().node("Myster Server Preferences");
+        ServerPreferences serverPreferences = new ServerPreferences(serverPreferenceNodes);
+        INSTRUMENTATION.info("-------->> Server preferences created " + (System.currentTimeMillis() - startTime));
+
+        INSTRUMENTATION.info("-------->> Creating HashManager " + (System.currentTimeMillis() - startTime));
+        final HashManager hashManager = new HashManager();
+        INSTRUMENTATION.info("-------->> HashManager created " + (System.currentTimeMillis() - startTime));
+
+        INSTRUMENTATION.info("-------->> Creating FileTypeListManager " + (System.currentTimeMillis() - startTime));
+        FileTypeListManager fileManager = new FileTypeListManager((f, l) -> hashManager.findHash(f, l), tdList);
+        INSTRUMENTATION.info("-------->> FileTypeListManager created " + (System.currentTimeMillis() - startTime));
+
         INSTRUMENTATION.info("-------->> Init client protocol impl " + (System.currentTimeMillis() - startTime));
         PublicKeyLookupImpl serverLookup = new PublicKeyLookupImpl();
         MSDownloadLocalQueue downloadQueue = 
@@ -231,7 +245,11 @@ public class Myster {
                 new MysterProtocolImpl(new MysterStreamImpl(downloadQueue),
                                        new MysterDatagramImpl(transactionManager,
                                                               new UDPPingClient(datagramManager),
-                                                              serverLookup)); // AddressLookup - placeholder for now
+                                                              serverLookup,
+                                                              serverPreferences::getIdentityName,
+                                                              serverPreferences::getServerPort,
+                                                              identity,
+                                                              fileManager)); // AddressLookup - placeholder for now
 
         INSTRUMENTATION.info("-------->> Init IPListManager "
                 + (System.currentTimeMillis() - startTime));
@@ -282,25 +300,11 @@ public class Myster {
         INSTRUMENTATION
         .info("-------->> Done mDNS discovery " + (System.currentTimeMillis() - startTime));
 
-        INSTRUMENTATION.info("-------->> Creating server preferences " + (System.currentTimeMillis() - startTime));
-        Preferences serverPreferenceNodes = Preferences.userRoot().node("Myster Server Preferences");
-        ServerPreferences serverPreferences = new ServerPreferences(serverPreferenceNodes);
-        INSTRUMENTATION.info("-------->> Server preferences created " + (System.currentTimeMillis() - startTime));
-
         INSTRUMENTATION.info("-------->> Creating HashCrawlerManager " + (System.currentTimeMillis() - startTime));
         final HashCrawlerManager crawlerManager =
                 new MultiSourceHashSearch(tracker, protocol);
         INSTRUMENTATION.info("-------->> HashCrawlerManager created " + (System.currentTimeMillis() - startTime));
 
-
-        INSTRUMENTATION.info("-------->> Creating HashManager " + (System.currentTimeMillis() - startTime));
-        final HashManager hashManager = new HashManager();
-        INSTRUMENTATION.info("-------->> HashManager created " + (System.currentTimeMillis() - startTime));
-        
-        INSTRUMENTATION.info("-------->> Creating FileTypeListManager " + (System.currentTimeMillis() - startTime));
-        FileTypeListManager fileManager = new FileTypeListManager((f, l) -> hashManager.findHash(f, l), tdList);
-        INSTRUMENTATION.info("-------->> FileTypeListManager created " + (System.currentTimeMillis() - startTime));
-        
         INSTRUMENTATION.info("-------->> Creating ServerFacade " + (System.currentTimeMillis() - startTime));
         ServerFacade serverFacade = new ServerFacade(tracker,
                                                      serverPreferences,
@@ -312,7 +316,7 @@ public class Myster {
         INSTRUMENTATION.info("-------->> ServerFacade created " + (System.currentTimeMillis() - startTime));
         
         INSTRUMENTATION.info("-------->> Adding server connection settings " + (System.currentTimeMillis() - startTime));
-        addServerConnectionSettings(serverFacade, tracker, serverPreferences, identity, datagramManager, fileManager);
+        addServerConnectionSettings(serverFacade, tracker, serverPreferences, identity, datagramManager, fileManager, pool);
         INSTRUMENTATION.info("-------->> Server connection settings added " + (System.currentTimeMillis() - startTime));
         
         
@@ -535,8 +539,9 @@ public class Myster {
                                                     ServerPreferences preferences,
                                                     Identity identity,
                                                     DatagramProtocolManager datagramManager, 
-                                                    FileTypeListManager fileManager) {
-        
+                                                    FileTypeListManager fileManager,
+                                                    MysterServerPool pool) {
+
         serverFacade.addConnectionSection(new com.myster.net.stream.server.MysterServerLister(tracker));
         serverFacade.addConnectionSection(new com.myster.net.stream.server.RequestDirThread());
         serverFacade.addConnectionSection(new com.myster.net.stream.server.FileTypeLister());
@@ -561,6 +566,11 @@ public class Myster {
                                                                        preferences::getServerPort,
                                                                        identity,
                                                                        fileManager),
+                                         new BidirectionalServerStatsDatagramServer(preferences::getIdentityName,
+                                                                                    preferences::getServerPort,
+                                                                                    identity,
+                                                                                    fileManager,
+                                                                                    pool),
                                          new FileStatsDatagramServer(fileManager),
                                          new SearchHashDatagramServer(fileManager));
     }

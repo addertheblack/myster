@@ -60,6 +60,14 @@ public class DatagramConstants {
     public static final int SERVER_STATS_TRANSACTION_CODE = 101;
     
     /**
+     * Transaction code for bidirectional server statistics exchange.
+     * Unlike SERVER_STATS_TRANSACTION_CODE, this transaction sends the client's
+     * stats in the request and receives the server's stats in the response,
+     * allowing both parties to learn about each other in a single round-trip.
+     */
+    public static final int BIDIRECTIONAL_SERVER_STATS_TRANSACTION_CODE = 102;
+
+    /**
      * Transaction code for hash-based search requests
      */
     public static final int SEARCH_HASH_TRANSACTION_CODE = 150;

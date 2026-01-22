@@ -30,6 +30,16 @@ public interface MysterDatagram {
 
     public PromiseFuture<MessagePak> getServerStats(final ParamBuilder params);
 
+    /**
+     * Performs a bidirectional server stats exchange with the remote server.
+     * Sends our server stats in the request and receives the remote server's
+     * stats in the response. Both parties learn about each other in one transaction.
+     *
+     * @param params connection parameters including the remote server address
+     * @return PromiseFuture containing the remote server's stats
+     */
+    public PromiseFuture<MessagePak> getBidirectionalServerStats(final ParamBuilder params);
+
     public PromiseFuture<MessagePak> getFileStats(final MysterFileStub stub);
 
     public PromiseFuture<String> getFileFromHash(final ParamBuilder params,
