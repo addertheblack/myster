@@ -10,6 +10,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.logging.Logger;
+import java.util.prefs.Preferences;
 
 import com.general.events.NewGenericDispatcher;
 import com.general.thread.Invoker;
@@ -33,37 +34,69 @@ public class DefaultTypeDescriptionList implements TypeDescriptionList {
     //values stored in the prefs only the values that were true as of
     //the beginning of the last execution.
     //See code for how to get back the dynamic behavior... (comments actually)
-    private final TypeDescriptionElement[] types;
+    private List<TypeDescriptionElement> types;
 
-    private final TypeDescriptionElement[] workingTypes;
+    private List<TypeDescriptionElement> workingTypes;
 
     private final NewGenericDispatcher<TypeListener> dispatcher;
 
-    public DefaultTypeDescriptionList() {
-        TypeDescriptionElement[] oldTypes;
+    private final CustomTypeManager customTypeManager;
 
-        TypeDescription[] list = loadDefaultTypeAndDescriptionList();
+    // Map to store CustomTypeDefinitions for editing purposes
+    private final Map<MysterType, CustomTypeDefinition> customTypeDefinitions = new HashMap<>();
 
-        types = new TypeDescriptionElement[list.length];
-        oldTypes = new TypeDescriptionElement[list.length];
+    public DefaultTypeDescriptionList(Preferences pref) {
+        // Initialize custom type manager
+        customTypeManager = new CustomTypeManager(pref);
+
+        List<TypeDescriptionElement> typesList = new ArrayList<>();
+        List<TypeDescriptionElement> oldTypesList = new ArrayList<>();
+
+        // Load default types from resource file
+        TypeDescription[] defaultList = loadDefaultTypeAndDescriptionList();
 
         Map<String, String> hash = getEnabledFromPrefs();
 
-        for (int i = 0; i < list.length; i++) {
-            String string_bool = (hash.get(list[i].getType()
+        for (int i = 0; i < defaultList.length; i++) {
+            String string_bool = (hash.get(defaultList[i].getType()
                     .toString()));
 
             if (string_bool == null) {
-                string_bool = (list[i].isEnabledByDefault() ? "TRUE" : "FALSE");
+                string_bool = (defaultList[i].isEnabledByDefault() ? "TRUE" : "FALSE");
             }
 
-            types[i] = new TypeDescriptionElement(list[i], (string_bool
-                    .equals("TRUE") ? true : false));
-            oldTypes[i] = new TypeDescriptionElement(list[i], (string_bool
-                    .equals("TRUE") ? true : false));
+            typesList.add(new TypeDescriptionElement(defaultList[i], string_bool.equals("TRUE")));
+            oldTypesList.add(new TypeDescriptionElement(defaultList[i], string_bool.equals("TRUE")));
         }
 
-        workingTypes = oldTypes; //set working types to "types" variable to
+        // Load custom types from preferences
+        List<CustomTypeDefinition> customTypes = customTypeManager.loadCustomTypes();
+        for (CustomTypeDefinition customDef : customTypes) {
+            MysterType customType = customDef.toMysterType();
+
+            // Store in map for editing
+            customTypeDefinitions.put(customType, customDef);
+
+            TypeDescription customDesc = new TypeDescription(
+                customType,
+                customDef.getDescription(), // Description is the longer text, goes to internalName
+                customDef.getName(), // Name is the short identifier, goes to description (shown in UI)
+                customDef.getExtensions(),
+                customDef.isSearchInArchives(),
+                false, // Custom types are not enabled by default
+                TypeSource.CUSTOM
+            );
+
+            // Check if this custom type is enabled in prefs
+            String enabledStr = hash.get(customType.toString());
+            boolean enabled = enabledStr != null && enabledStr.equals("TRUE");
+
+            typesList.add(new TypeDescriptionElement(customDesc, enabled));
+            oldTypesList.add(new TypeDescriptionElement(customDesc, enabled));
+        }
+
+        types = typesList;
+        workingTypes = oldTypesList; //set working types to "types" variable to
                                  // enable on the fly changes
 
         dispatcher = new NewGenericDispatcher<TypeListener>(TypeListener.class, Invoker.EDT_NOW_OR_LATER);
@@ -99,11 +132,11 @@ public class DefaultTypeDescriptionList implements TypeDescriptionList {
 
         PreferencesMML mml = new PreferencesMML();
 
-        for (int i = 0; i < types.length; i++) {
+        for (int i = 0; i < types.size(); i++) {
             String temp = "/" + i;
 
-            mml.put(temp + TYPE_KEY, types[i].getType().toString());
-            mml.put(temp + TYPE_ENABLED, (types[i].enabled ? "TRUE"
+            mml.put(temp + TYPE_KEY, types.get(i).getType().toString());
+            mml.put(temp + TYPE_ENABLED, (types.get(i).enabled ? "TRUE"
                     : "FALSE"));
         }
 
@@ -124,10 +157,10 @@ public class DefaultTypeDescriptionList implements TypeDescriptionList {
     @Override
     //TypeDescription Methods
     public TypeDescription[] getAllTypes() {
-        TypeDescription[] typeArray_temp = new TypeDescription[workingTypes.length];
+        TypeDescription[] typeArray_temp = new TypeDescription[workingTypes.size()];
 
-        for (int i = 0; i < types.length; i++) {
-            typeArray_temp[i] = workingTypes[i].getTypeDescription();
+        for (int i = 0; i < workingTypes.size(); i++) {
+            typeArray_temp[i] = workingTypes.get(i).getTypeDescription();
         }
 
         return typeArray_temp;
@@ -135,9 +168,9 @@ public class DefaultTypeDescriptionList implements TypeDescriptionList {
 
     @Override
     public Optional<TypeDescription> get(MysterType type) {
-        for (int i = 0; i < types.length; i++) {
-            if (types[i].getTypeDescription().getType().equals(type)) {
-                return Optional.of(types[i].getTypeDescription());
+        for (int i = 0; i < types.size(); i++) {
+            if (types.get(i).getTypeDescription().getType().equals(type)) {
+                return Optional.of(types.get(i).getTypeDescription());
             }
         }
 
@@ -147,16 +180,16 @@ public class DefaultTypeDescriptionList implements TypeDescriptionList {
     @Override
     public TypeDescription[] getEnabledTypes() {
         int counter = 0;
-        for (int i = 0; i < workingTypes.length; i++) {
-            if (workingTypes[i].enabled)
+        for (int i = 0; i < workingTypes.size(); i++) {
+            if (workingTypes.get(i).enabled)
                 counter++;
         }
 
         TypeDescription[] typeArray_temp = new TypeDescription[counter];
         counter = 0;
-        for (int i = 0; i < types.length; i++) {
-            if (workingTypes[i].enabled)
-                typeArray_temp[counter++] = types[i].getTypeDescription();
+        for (int i = 0; i < types.size(); i++) {
+            if (workingTypes.get(i).enabled)
+                typeArray_temp[counter++] = types.get(i).getTypeDescription();
         }
 
         return typeArray_temp;
@@ -166,14 +199,14 @@ public class DefaultTypeDescriptionList implements TypeDescriptionList {
     public boolean isTypeEnabled(MysterType type) {
         int index = getIndexFromType(type);
 
-        return (index != -1 ? workingTypes[index].enabled : false);
+        return (index != -1 ? workingTypes.get(index).enabled : false);
     }
 
     @Override
     public boolean isTypeEnabledInPrefs(MysterType type) {
         int index = getIndexFromType(type);
 
-        return (index != -1 ? types[index].enabled : false);
+        return (index != -1 ? types.get(index).enabled : false);
     }
 
     @Override
@@ -196,10 +229,10 @@ public class DefaultTypeDescriptionList implements TypeDescriptionList {
         //errs
         if (index == -1)
             return; //no such type
-        if (types[index].enabled == enable)
+        if (types.get(index).enabled == enable)
             return;
 
-        types[index].setEnabled(enable);
+        types.get(index).setEnabled(enable);
 
         saveEverythingToDisk();
 
@@ -211,8 +244,8 @@ public class DefaultTypeDescriptionList implements TypeDescriptionList {
     }
 
     private synchronized int getIndexFromType(MysterType type) {
-        for (int i = 0; i < types.length; i++) {
-            if (types[i].getType().equals(type))
+        for (int i = 0; i < types.size(); i++) {
+            if (types.get(i).getType().equals(type))
                 return i;
         }
 
@@ -333,6 +366,130 @@ public class DefaultTypeDescriptionList implements TypeDescriptionList {
         }
 
         return out.toByteArray();
+    }
+
+    @Override
+    public synchronized void addCustomType(CustomTypeDefinition def) {
+        MysterType type = def.toMysterType();
+
+        // Check if type already exists
+        if (getIndexFromType(type) != -1) {
+            throw new IllegalArgumentException("Type already exists: " + def.getName());
+        }
+
+        // Store in map for editing
+        customTypeDefinitions.put(type, def);
+
+        // Create TypeDescription for the custom type
+        TypeDescription customDesc = new TypeDescription(
+            type,
+            def.getDescription(), // Description is the longer text, goes to internalName
+            def.getName(), // Name is the short identifier, goes to description (shown in UI)
+            def.getExtensions(),
+            def.isSearchInArchives(),
+            false, // Custom types are not enabled by default
+            TypeSource.CUSTOM
+        );
+
+        // Add to types list (disabled by default)
+        TypeDescriptionElement element = new TypeDescriptionElement(customDesc, false);
+        types.add(element);
+        workingTypes.add(new TypeDescriptionElement(customDesc, false));
+
+        // Save to custom type manager
+        customTypeManager.saveCustomType(def);
+
+        // Save enabled/disabled state
+        saveEverythingToDisk();
+
+        log.info("Added custom type: " + def.getName());
+    }
+
+    @Override
+    public synchronized void removeCustomType(MysterType type) {
+        int index = getIndexFromType(type);
+
+        if (index == -1) {
+            throw new IllegalArgumentException("Type does not exist: " + type);
+        }
+
+        TypeDescription desc = types.get(index).getTypeDescription();
+        if (desc.getSource() != TypeSource.CUSTOM) {
+            throw new IllegalArgumentException("Cannot remove default type: " + desc.getDescription());
+        }
+
+        // Remove from lists
+        types.remove(index);
+        workingTypes.remove(index);
+
+        // Remove from map
+        customTypeDefinitions.remove(type);
+
+        // Delete from custom type manager
+        customTypeManager.deleteCustomType(type);
+
+        // Save enabled/disabled state
+        saveEverythingToDisk();
+
+        log.info("Removed custom type: " + desc.getDescription());
+
+        // Fire disabled event if it was enabled
+        if (index < types.size() || !types.isEmpty()) {
+            dispatcher.fire().typeDisabled(new TypeDescriptionEvent(this, type));
+        }
+    }
+
+    @Override
+    public synchronized void updateCustomType(MysterType type, CustomTypeDefinition def) {
+        int index = getIndexFromType(type);
+
+        if (index == -1) {
+            throw new IllegalArgumentException("Type does not exist: " + type);
+        }
+
+        TypeDescription existingDesc = types.get(index).getTypeDescription();
+        if (existingDesc.getSource() != TypeSource.CUSTOM) {
+            throw new IllegalArgumentException("Cannot update default type: " + existingDesc.getDescription());
+        }
+
+        // Verify the type matches
+        if (!type.equals(def.toMysterType())) {
+            throw new IllegalArgumentException("Type mismatch: cannot change public key during update");
+        }
+
+        // Update in map
+        customTypeDefinitions.put(type, def);
+
+        // Create updated TypeDescription
+        TypeDescription updatedDesc = new TypeDescription(
+            type,
+            def.getDescription(), // Description is the longer text, goes to internalName
+            def.getName(), // Name is the short identifier, goes to description (shown in UI)
+            def.getExtensions(),
+            def.isSearchInArchives(),
+            false, // Custom types are not enabled by default
+            TypeSource.CUSTOM
+        );
+
+        // Preserve enabled state
+        boolean wasEnabled = types.get(index).enabled;
+
+        // Update in lists
+        types.get(index).typeDescription = updatedDesc;
+        workingTypes.get(index).typeDescription = updatedDesc;
+
+        // Update in custom type manager
+        customTypeManager.updateCustomType(type, def);
+
+        // Save enabled/disabled state
+        saveEverythingToDisk();
+
+        log.info("Updated custom type: " + def.getName());
+    }
+
+    @Override
+    public Optional<CustomTypeDefinition> getCustomTypeDefinition(MysterType type) {
+        return Optional.ofNullable(customTypeDefinitions.get(type));
     }
 
     private static class TypeDescriptionElement {

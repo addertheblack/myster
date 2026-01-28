@@ -9,8 +9,11 @@
 
 package com.myster.search.ui;
 
-import java.awt.Color;
-import java.awt.Component;
+import javax.swing.JButton;
+import javax.swing.JMenuItem;
+import javax.swing.JPanel;
+import javax.swing.JTextField;
+import javax.swing.ListSelectionModel;
 import java.awt.Dimension;
 import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
@@ -21,18 +24,13 @@ import java.util.Optional;
 import java.util.function.Consumer;
 import java.util.logging.Logger;
 
-import javax.swing.JButton;
-import javax.swing.JMenuItem;
-import javax.swing.JPanel;
-import javax.swing.JTextField;
-import javax.swing.ListSelectionModel;
-
 import com.general.mclist.JMCList;
 import com.general.mclist.MCList;
 import com.general.mclist.MCListEvent;
 import com.general.mclist.MCListEventAdapter;
 import com.general.mclist.MCListFactory;
 import com.general.mclist.MCListItemInterface;
+import com.general.util.GridBagBuilder;
 import com.general.util.IconLoader;
 import com.general.util.MessageField;
 import com.general.util.Util;
@@ -65,9 +63,6 @@ public class SearchTab extends JPanel implements SearchResultListener, Sayable {
 
     private static final int XDEFAULT = 640;
     private static final int YDEFAULT = 400;
-
-    private final GridBagLayout gblayout;
-    private final GridBagConstraints gbconstrains;
 
     private final JButton searchButton;
     private final JMCList<SearchResult> fileList;
@@ -109,16 +104,12 @@ public class SearchTab extends JPanel implements SearchResultListener, Sayable {
         this.onStateChange = onStateChange;
         this.tdList = context.tdList();
 
-        setBackground(new Color(240, 240, 240));
-
         // Do interface setup:
-        gblayout = new GridBagLayout();
-        setLayout(gblayout);
-        gbconstrains = new GridBagConstraints();
-        gbconstrains.fill = GridBagConstraints.BOTH;
-        gbconstrains.insets = new Insets(5, 5, 5, 5);
-        gbconstrains.ipadx = 1;
-        gbconstrains.ipady = 1;
+        setLayout(new GridBagLayout());
+        var gbc = new GridBagBuilder()
+            .withFill(GridBagConstraints.BOTH)
+            .withInsets(new Insets(5, 5, 5, 5))
+            .withIpad(1, 1);
 
         searchButton = new JButton("Search") {
             public Dimension getPreferredSize() {
@@ -143,11 +134,11 @@ public class SearchTab extends JPanel implements SearchResultListener, Sayable {
 
         msg = new MessageField("Idle...");
 
-        addComponent(textEntry, 0, 0, 1, 1, 1, 0, GridBagConstraints.HORIZONTAL);
-        addComponent(choice, 0, 1, 1, 1, 0, 0, GridBagConstraints.HORIZONTAL);
-        addComponent(searchButton, 0, 2, 1, 1, 0, 0, GridBagConstraints.HORIZONTAL);
-        addComponent(fileList.getPane(), 1, 0, 4, 1, 1, 1, GridBagConstraints.BOTH);
-        addComponent(msg, 2, 0, 4, 1, 1, 0, GridBagConstraints.HORIZONTAL);
+        add(textEntry, gbc.withGridLoc(0, 0).withSize(1, 1).withWeight(1, 0).withFill(GridBagConstraints.HORIZONTAL));
+        add(choice, gbc.withGridLoc(1, 0).withSize(1, 1).withWeight(0, 0).withFill(GridBagConstraints.HORIZONTAL));
+        add(searchButton, gbc.withGridLoc(2, 0).withSize(1, 1).withWeight(0, 0).withFill(GridBagConstraints.HORIZONTAL));
+        add(fileList.getPane(), gbc.withGridLoc(0, 1).withSize(4, 1).withWeight(1, 1).withFill(GridBagConstraints.BOTH));
+        add(msg, gbc.withGridLoc(0, 2).withSize(4, 1).withWeight(1, 0).withFill(GridBagConstraints.HORIZONTAL));
 
         searchButton.addActionListener(new SearchButtonHandler());
 
@@ -213,23 +204,6 @@ public class SearchTab extends JPanel implements SearchResultListener, Sayable {
         ContextMenu.addPopUpMenu(fileList, ()->{}, openContainingFolder, null, downloadMenuItem, downloadToMenuItem, null, bookmarkMenuItem);
     }
 
-    private void addComponent(Component component, int row, int column, int width, int height,
-            int weightx, int weighty, int fill) {
-        gbconstrains.gridx = column;
-        gbconstrains.gridy = row;
-
-        gbconstrains.gridwidth = width;
-        gbconstrains.gridheight = height;
-
-        gbconstrains.weightx = weightx;
-        gbconstrains.weighty = weighty;
-
-        gbconstrains.fill = fill;
-
-        gblayout.setConstraints(component, gbconstrains);
-
-        add(component);
-    }
 
     @Override
     public void searchStart() {

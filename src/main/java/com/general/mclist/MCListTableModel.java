@@ -17,7 +17,9 @@ import javax.swing.table.AbstractTableModel;
  * Type parameters:
  * - E: the underlying object type carried by each MCListItemInterface row
  */
-abstract class MCListTableModel<E> extends AbstractTableModel {
+public abstract class MCListTableModel<E> extends AbstractTableModel {
+    private final java.util.Set<Integer> editableColumns = new java.util.HashSet<>();
+
     /**
      * Sets the display name for a column header at the given model column index.
      *
@@ -170,4 +172,19 @@ abstract class MCListTableModel<E> extends AbstractTableModel {
     abstract MCListItemInterface<E> getRow(int index);
 
     public abstract boolean removeItems(MCListItemInterface<E>[] m);
+
+    @Override
+    public boolean isCellEditable(int rowIndex, int columnIndex) {
+        return editableColumns.contains(columnIndex);
+    }
+
+    public void setColumnEditable(int columnIndex, boolean editable) {
+        if (editable) {
+            if (!editableColumns.contains(columnIndex)) {
+                editableColumns.add(columnIndex);
+            }
+        } else {
+            editableColumns.remove(Integer.valueOf(columnIndex));
+        }
+    }
 }

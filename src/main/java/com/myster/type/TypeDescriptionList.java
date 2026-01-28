@@ -56,5 +56,46 @@ public interface TypeDescriptionList {
      * Myster is launched.
      */
     void setEnabledType(MysterType type, boolean enable);
+
+    /**
+     * Adds a custom type definition to this list.
+     * The type will be persisted to preferences and available immediately.
+     *
+     * @param def the custom type definition to add
+     * @throws IllegalArgumentException if a type with the same public key already exists
+     */
+    void addCustomType(CustomTypeDefinition def);
+
+    /**
+     * Removes a custom type from this list.
+     * Only custom types can be removed; attempting to remove a default type will throw an exception.
+     *
+     * @param type the MysterType to remove
+     * @throws IllegalArgumentException if the type doesn't exist or is a default type
+     */
+    void removeCustomType(MysterType type);
+
+    /**
+     * Updates an existing custom type definition.
+     * Only custom types can be updated; attempting to update a default type will throw an exception.
+     *
+     * @param type the MysterType to update
+     * @param def the new custom type definition (must have the same public key)
+     * @throws IllegalArgumentException if the type doesn't exist, is a default type, or the public key doesn't match
+     */
+    void updateCustomType(MysterType type, CustomTypeDefinition def);
+
+    /**
+     * Gets the CustomTypeDefinition for a custom type.
+     * Returns empty Optional for default types or types that don't exist.
+     *
+     * @param type the MysterType to look up
+     * @return Optional containing the CustomTypeDefinition if this is a custom type, empty otherwise
+     */
+    Optional<CustomTypeDefinition> getCustomTypeDefinition(MysterType type);
 }
+
+
+
+
 

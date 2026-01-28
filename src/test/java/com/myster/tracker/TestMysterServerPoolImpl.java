@@ -229,9 +229,7 @@ class TestMysterServerPoolImpl {
             System.gc();System.gc();System.gc();
             Thread.sleep(1); // give some time for the cleanup thread to run..
             if (!pool.existsInPool(identity2)) {
-
                 log.info("Myster server is not there.. good.");
-
                 break;
             }
 

@@ -1300,7 +1300,6 @@ to do:
     need to find a format for sharing a network file - like public key, primary servers etc.. maybe other public keys too
     need to be able to share the network config file (might be similar to network file.. or a superset)
 *Add reverse connection protocol.
-*Add business card for server -> basically server stats
 *Pick a place for downloads in progress by default like home directory/mysterdata or something..
     Maybe app data on windows?
 Split off concurrency library from Myster and publish to Maven

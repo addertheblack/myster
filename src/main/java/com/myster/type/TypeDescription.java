@@ -30,12 +30,20 @@ public class TypeDescription {
     private final boolean isArchived;
     private final boolean isEnabledByDefault;
     private final String internalName;
+    private final TypeSource source;
+
+    public TypeDescription(MysterType type, String internalName, String description, String[] extensions,
+            boolean isArchived, boolean isEnabledByDefault ) {
+        this(type, internalName, description, extensions, isArchived, isEnabledByDefault, TypeSource.DEFAULT);
+    }
 
     /**
-     * Creates a TypeDescription object.
-     * 
+     * Creates a TypeDescription object with an explicit source.
+     *
      * @param type
      *            The MysterType this description is for.
+     * @param internalName
+     *            Internal name for this type (used for StandardTypes lookup)
      * @param description
      *            A short description of this type
      * @param extensions
@@ -47,15 +55,18 @@ public class TypeDescription {
      * @param isEnabledByDefault
      *            a flag to indicate that this file type should be enabled by
      *            default
+     * @param source
+     *            whether this is a DEFAULT (built-in) or CUSTOM (user-created) type
      */
     public TypeDescription(MysterType type, String internalName, String description, String[] extensions,
-            boolean isArchived, boolean isEnabledByDefault ) {
+            boolean isArchived, boolean isEnabledByDefault, TypeSource source) {
         this.type = type;
         this.internalName = internalName;
         this.description = description;
         this.extensions = extensions;
         this.isArchived = isArchived;
         this.isEnabledByDefault = isEnabledByDefault;
+        this.source = source;
     }
 
     public String getTypeAsString() {
@@ -103,6 +114,35 @@ public class TypeDescription {
      */
     public boolean isEnabledByDefault() {
         return isEnabledByDefault;
+    }
+
+    /**
+     * Gets the source of this type definition.
+     *
+     * @return TypeSource.DEFAULT for built-in types, TypeSource.CUSTOM for user-created types
+     */
+    public TypeSource getSource() {
+        return source;
+    }
+
+    /**
+     * Indicates whether this type can be deleted by the user.
+     * Only custom types can be deleted; default types cannot.
+     *
+     * @return true if this type can be deleted, false otherwise
+     */
+    public boolean isDeletable() {
+        return source == TypeSource.CUSTOM;
+    }
+
+    /**
+     * Indicates whether this type can be edited by the user.
+     * Only custom types can be edited; default types cannot.
+     *
+     * @return true if this type can be edited, false otherwise
+     */
+    public boolean isEditable() {
+        return source == TypeSource.CUSTOM;
     }
 
     public String toString() {

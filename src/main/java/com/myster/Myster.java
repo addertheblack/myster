@@ -9,6 +9,8 @@
 
 package com.myster;
 
+import javax.swing.JFrame;
+import javax.swing.SwingUtilities;
 import java.awt.Desktop;
 import java.awt.Desktop.Action;
 import java.awt.EventQueue;
@@ -29,9 +31,6 @@ import java.util.concurrent.Executors;
 import java.util.logging.LogManager;
 import java.util.logging.Logger;
 import java.util.prefs.Preferences;
-
-import javax.swing.JFrame;
-import javax.swing.SwingUtilities;
 
 import com.general.application.ApplicationContext;
 import com.general.application.ApplicationSingletonListener;
@@ -62,11 +61,11 @@ import com.myster.net.server.BannersManager.BannersPreferences;
 import com.myster.net.server.ServerFacade;
 import com.myster.net.server.ServerPreferences;
 import com.myster.net.server.ServerUtils;
+import com.myster.net.server.datagram.BidirectionalServerStatsDatagramServer;
 import com.myster.net.server.datagram.FileStatsDatagramServer;
 import com.myster.net.server.datagram.PingTransport;
 import com.myster.net.server.datagram.SearchDatagramServer;
 import com.myster.net.server.datagram.SearchHashDatagramServer;
-import com.myster.net.server.datagram.BidirectionalServerStatsDatagramServer;
 import com.myster.net.server.datagram.ServerStatsDatagramServer;
 import com.myster.net.server.datagram.TopTenDatagramServer;
 import com.myster.net.server.datagram.TypeDatagramServer;
@@ -89,7 +88,6 @@ import com.myster.tracker.ui.TrackerWindow;
 import com.myster.transaction.TransactionManager;
 import com.myster.type.DefaultTypeDescriptionList;
 import com.myster.type.TypeDescriptionList;
-import com.myster.type.ui.TypeManagerPreferencesGUI;
 import com.myster.ui.MysterFrameContext;
 import com.myster.ui.PreferencesGui;
 import com.myster.ui.WindowManager;
@@ -118,7 +116,7 @@ public class Myster {
         
         TypeDescriptionList tdList;
         try {
-            tdList = new DefaultTypeDescriptionList();
+            tdList = new DefaultTypeDescriptionList(java.util.prefs.Preferences.userRoot().node("MysterTypes"));
         } catch (Exception ex) {
             ex.printStackTrace();
             return;
@@ -452,7 +450,7 @@ public class Myster {
                 
                 preferencesGui.addPanel(new FmiChooser(fileManager, tdList));
                 preferencesGui.addPanel(new MessagePreferencesPanel(preferences));
-                preferencesGui.addPanel(new TypeManagerPreferencesGUI(tdList));
+                preferencesGui.addPanel(new com.myster.type.ui.TypeManagerPreferences(tdList));
                 preferencesGui.addPanel(new ThemePane(preferences));
 
                 INSTRUMENTATION.info("-------->>   EDT init other GUI sub systems " + (System.currentTimeMillis() - startTime));
