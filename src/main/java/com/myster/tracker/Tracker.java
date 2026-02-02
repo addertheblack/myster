@@ -10,11 +10,12 @@
 
 package com.myster.tracker;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import java.util.logging.Logger;
+import java.util.prefs.BackingStoreException;
 import java.util.prefs.Preferences;
-import java.util.stream.Stream;
 
 import com.general.events.NewGenericDispatcher;
 import com.myster.net.MysterAddress;
@@ -22,7 +23,9 @@ import com.myster.net.datagram.client.PingResponse;
 import com.myster.net.server.ServerUtils;
 import com.myster.type.MysterType;
 import com.myster.type.TypeDescription;
+import com.myster.type.TypeDescriptionEvent;
 import com.myster.type.TypeDescriptionList;
+import com.myster.type.TypeListener;
 
 /**
  * This class is the interface to Myster's tracker. Every single interaction
@@ -37,7 +40,10 @@ import com.myster.type.TypeDescriptionList;
  * <p>
  * To access this object from Myster code use the singleton :
  * com.myster.tracker.IPListManagerSingleton
- * 
+ * <p>
+ * The Tracker now supports dynamic type addition/removal by listening for
+ * TypeEnabled and TypeDisabled events from the TypeDescriptionList.
+ *
  * @see com.myster.tracker.IPListManagerSingleton
  */
 public class Tracker {
@@ -45,10 +51,10 @@ public class Tracker {
     private static final String[] LAST_RESORT = { "myster.ddnsgeek.com" };
     private static final String PATH = "ServerLists";
 
-    private final ServerList[] list;
+    private final List<ServerList> list;
     private final LanMysterServerList lan;
     private final BookmarkMysterServerList bookmarks;
-    private final TypeDescription[] enabledTypes;
+    private final List<TypeDescription> enabledTypes;
     private final MysterServerPool pool;
     private final Preferences preferences;
     private final NewGenericDispatcher<ListChangedListener> dispatcher;
@@ -67,11 +73,15 @@ public class Tracker {
         this.preferences = preferences.node(PATH);
         this.dispatcher = new NewGenericDispatcher<>(ListChangedListener.class, TrackerUtils.INVOKER);
 
-        enabledTypes = typeDescriptionList.getEnabledTypes();
+        TypeDescription[] enabledTypesArray = typeDescriptionList.getEnabledTypes();
+        this.enabledTypes = new ArrayList<>(List.of(enabledTypesArray));
         tdList = typeDescriptionList;
 
-        list = new ServerList[enabledTypes.length];
-        for (int i = 0; i < list.length; i++) {
+        // Register as a listener for type enable/disable events
+        tdList.addTypeListener(new TypeListnerImpl());
+
+        this.list = new ArrayList<>();
+        for (int i = 0; i < this.enabledTypes.size(); i++) {
             assertIndex(i); // loads all lists.
         }
         
@@ -112,7 +122,7 @@ public class Tracker {
     }
     
     private void notifyAllListsDeadServer(MysterIdentity identity) {
-        Stream.of(list).forEach(l -> l.notifyDeadServer(identity));
+        list.forEach(l -> l.notifyDeadServer(identity));
         bookmarks.notifyDeadServer(identity);
     }
 
@@ -283,11 +293,11 @@ public class Tracker {
      *            unworthy of being on the list
      */
     private void addServerToAllLists(MysterServer server) {
-        for (int i = 0; i < enabledTypes.length; i++) {
+        for (int i = 0; i < enabledTypes.size(); i++) {
             assertIndex(i);
-            list[i].addIP(server);
+            list.get(i).addIP(server);
         }
-        
+
         lan.addIP(server);
     }
 
@@ -309,32 +319,40 @@ public class Tracker {
 
         assertIndex(index); // to make sure the list if loaded.
 
-        if (list[index].getType().equals(type))
-            return list[index];
+        if (list.get(index).getType().equals(type))
+            return list.get(index);
 
         return null;
     }
 
     /**
-     * For dynamic loading Note.. this dynamic loading is thread safe!
+     * For lazy loading of server lists. Thread safe.
+     * During construction, this creates lists on-demand.
+     * After construction, with dynamic type enable/disable, lists should already exist.
      */
     private synchronized void assertIndex(int index) {
-        if (list[index] == null) {
-            list[index] = createNewList(index);
-            log.info("Loaded List " + tdList.get(list[index].getType()).get().toString());
+        // Expand list if needed
+        while (list.size() <= index) {
+            list.add(null);
+        }
+
+        // Create list if null (lazy loading during construction)
+        if (list.get(index) == null) {
+            list.set(index, createNewList(index));
+            log.info("Loaded list for type: " + enabledTypes.get(index).getDescription());
         }
     }
 
     /**
      * Returns the index in the list of IPLists for the type passed.
-     * 
+     *
      * @param type
      * @return the index in the list array for this type or -1 if there is not
      *         list for this type.
      */
     private synchronized int getIndex(MysterType type) {
-        for (int i = 0; i < enabledTypes.length; i++) {
-            if (enabledTypes[i].getType().equals(type))
+        for (int i = 0; i < enabledTypes.size(); i++) {
+            if (enabledTypes.get(i).getType().equals(type))
                 return i;
         }
 
@@ -346,11 +364,105 @@ public class Tracker {
      * This is a stupid routine.
      */
     private synchronized ServerList createNewList(int index) {
-        return new MysterTypeServerList(enabledTypes[index].getType(), pool, preferences, dispatcher.fire()::serverAddedRemoved);
+        return new MysterTypeServerList(enabledTypes.get(index).getType(), pool, preferences, dispatcher.fire()::serverAddedRemoved);
     }
 
     public void addListChangedListener(ListChangedListener l) {
         dispatcher.addListener(l);
+    }
+
+    /**
+     * Called when a type is enabled in the TypeDescriptionList.
+     * Creates a new MysterTypeServerList and populates it with existing servers
+     * that know about this type.
+     */
+    private void typeEnabled(TypeDescriptionEvent e) {
+        MysterType newType = e.getType();
+
+        // Only add if still enabled (could have been toggled rapidly)
+        Optional<TypeDescription> descOpt = tdList.get(newType);
+        if (descOpt.isEmpty() || !tdList.isTypeEnabled(newType)) {
+            return;
+        }
+
+        TypeDescription desc = descOpt.get();
+
+        // Add to enabledTypes list
+        synchronized(this) {
+            // Check if already present (shouldn't be, but defensive)
+            if (getIndex(newType) != -1) {
+                log.warning("Type already enabled in tracker: " + newType);
+                return;
+            }
+
+            enabledTypes.add(desc);
+
+            // Create new MysterTypeServerList
+            ServerList newList = new MysterTypeServerList(
+                newType, pool, preferences,
+                dispatcher.fire()::serverAddedRemoved
+            );
+
+            // Populate with existing servers that know about this type
+            pool.forEach(server -> {
+                if (server.knowsAboutType(newType)) {
+                    newList.addIP(server);
+                }
+            });
+
+            list.add(newList);
+
+            log.info("Enabled type in tracker: " + desc.getDescription() + " (" + newType + ")");
+        }
+
+        // Notify listeners
+        dispatcher.fire().serverAddedRemoved(newType);
+    }
+
+    /**
+     * Called when a type is disabled in the TypeDescriptionList.
+     * Removes the MysterTypeServerList and cleans up preferences.
+     */
+    private void typeDisabled(TypeDescriptionEvent e) {
+        MysterType type = e.getType();
+
+        synchronized(this) {
+            int index = getIndex(type);
+            if (index == -1) {
+                return; // Not in our list (already removed or never added)
+            }
+
+            // Remove from lists
+            list.remove(index);
+            enabledTypes.remove(index);
+
+            // Clean up preferences
+            try {
+                String nodeName = type.toHexString();
+                if (preferences.nodeExists(nodeName)) {
+                    preferences.node(nodeName).removeNode();
+                    preferences.flush();
+                }
+                log.info("Disabled type in tracker and cleaned up preferences: " + type);
+            } catch (BackingStoreException ex) {
+                log.warning("Failed to remove preferences for type: " + type + " - " + ex.getMessage());
+            }
+        }
+
+        // Notify listeners
+        dispatcher.fire().serverAddedRemoved(type);
+    }
+
+    private class TypeListnerImpl implements TypeListener {
+        @Override
+        public void typeEnabled(TypeDescriptionEvent e) {
+            Tracker.this.typeEnabled(e);
+        }
+
+        @Override
+        public void typeDisabled(TypeDescriptionEvent e) {
+            Tracker.this.typeDisabled(e);
+        }
     }
 }
 

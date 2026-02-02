@@ -72,6 +72,9 @@ public class TypeManagerPreferences extends PreferencesPanel {
     private TypeEditorPanel editorPanel;
     private MysterType editingType = null; // Non-null if we're editing an existing type
 
+    // Track types pending deletion (applied on save)
+    private final List<MysterType> pendingDeletions = new ArrayList<>();
+
     /**
      * Creates a new type manager preferences panel.
      *
@@ -379,14 +382,14 @@ public class TypeManagerPreferences extends PreferencesPanel {
         }
 
         try {
-            // Delete immediately
-            tdList.removeCustomType(desc.getType());
+            // Mark for deletion (applied on save)
+            pendingDeletions.add(desc.getType());
 
-            // Reload the list to reflect the deletion
-            reset();
+            // Reload the list to hide the deleted type (but don't clear pending deletions)
+            loadList();
         } catch (Exception ex) {
             JOptionPane.showMessageDialog(this,
-                "Failed to delete type: " + ex.getMessage(),
+                "Failed to mark type for deletion: " + ex.getMessage(),
                 "Error",
                 JOptionPane.ERROR_MESSAGE);
         }
@@ -394,6 +397,16 @@ public class TypeManagerPreferences extends PreferencesPanel {
 
     @Override
     public void save() {
+        // Apply pending deletions first
+        for (MysterType type : pendingDeletions) {
+            try {
+                tdList.removeCustomType(type);
+            } catch (Exception ex) {
+                // whatever
+            }
+        }
+        pendingDeletions.clear();
+
         // Save enabled/disabled states
         for (int i = 0; i < mcList.length(); i++) {
             TypeMCListItem item = (TypeMCListItem) mcList.getMCListItem(i);
@@ -406,12 +419,28 @@ public class TypeManagerPreferences extends PreferencesPanel {
 
     @Override
     public void reset() {
+        // Clear pending deletions (cancel operation)
+        pendingDeletions.clear();
+
+        // Reload the list
+        loadList();
+    }
+
+    /**
+     * Loads the type list from TypeDescriptionList, filtering out pending deletions.
+     */
+    private void loadList() {
         mcList.clearAll();
 
         TypeDescription[] types = tdList.getAllTypes();
         List<TypeMCListItem> items = new ArrayList<>();
 
         for (TypeDescription desc : types) {
+            // Skip types marked for deletion
+            if (pendingDeletions.contains(desc.getType())) {
+                continue;
+            }
+
             boolean enabled = tdList.isTypeEnabledInPrefs(desc.getType());
             items.add(new TypeMCListItem(desc, enabled));
         }

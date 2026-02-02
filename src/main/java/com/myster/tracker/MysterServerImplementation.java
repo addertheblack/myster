@@ -341,6 +341,11 @@ class MysterServerImplementation {
         }
         
         @Override
+        public boolean knowsAboutType(MysterType type) {
+            return MysterServerImplementation.this.knowsAboutType(type);
+        }
+
+        @Override
         public int getTotalNumberOfFiles() {
             return 0;
         }
@@ -481,6 +486,10 @@ class MysterServerImplementation {
         return numberOfFiles.getNumberOfFiles(type);
     }
 
+    private boolean knowsAboutType(MysterType type) {
+        return numberOfFiles.knowsAboutType(type);
+    }
+
     private static class NumOfFiles extends RobustMML {
         public NumOfFiles(String s) throws MMLException {
             super(s);
@@ -501,6 +510,19 @@ class MysterServerImplementation {
                 log.warning("Unexcepted Error occured");
                 ex.printStackTrace();
                 return 0;
+            }
+        }
+
+        /**
+         * Checks if the server has reported this type.
+         * Returns true if the type key exists in the MML structure, even if the value is 0.
+         * Returns false if the type key doesn't exist (server doesn't know about this type).
+         */
+        public boolean knowsAboutType(MysterType type) {
+            try {
+                return get("/" + type) != null;
+            } catch (Exception ex) {
+                return false;
             }
         }
     }

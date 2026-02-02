@@ -22,21 +22,7 @@ import com.myster.transaction.TransactionManager;
 public class DefaultTypeDescriptionList implements TypeDescriptionList {
     private static final Logger log = Logger.getLogger(TransactionManager.class.getName());
     
-    //Ok, so here's the situation
-    //I designed this so that I could change types while the program is running
-    //and have all modules auto update without Myster restarting.. but it's too
-    //freaking long to program
-    //so rather than do all that coding I've modified it to return the value
-    // that was
-    //last saved (so that values from typeDescriptionList are CONSTANT PER
-    // PROGRAM EXECUTION
-    //. The system will still fire events but the list won't send the
-    //values stored in the prefs only the values that were true as of
-    //the beginning of the last execution.
-    //See code for how to get back the dynamic behavior... (comments actually)
     private List<TypeDescriptionElement> types;
-
-    private List<TypeDescriptionElement> workingTypes;
 
     private final NewGenericDispatcher<TypeListener> dispatcher;
 
@@ -96,8 +82,6 @@ public class DefaultTypeDescriptionList implements TypeDescriptionList {
         }
 
         types = typesList;
-        workingTypes = oldTypesList; //set working types to "types" variable to
-                                 // enable on the fly changes
 
         dispatcher = new NewGenericDispatcher<TypeListener>(TypeListener.class, Invoker.EDT_NOW_OR_LATER);
     }
@@ -144,7 +128,7 @@ public class DefaultTypeDescriptionList implements TypeDescriptionList {
     }
     
     @Override
-    public MysterType getType(StandardTypes standardType) {
+    public synchronized MysterType getType(StandardTypes standardType) {
         for (TypeDescriptionElement t : types) {
             if (t.getTypeDescription().getInternalName().equals(standardType.toString())) {
                 return t.getType();
@@ -156,18 +140,18 @@ public class DefaultTypeDescriptionList implements TypeDescriptionList {
 
     @Override
     //TypeDescription Methods
-    public TypeDescription[] getAllTypes() {
-        TypeDescription[] typeArray_temp = new TypeDescription[workingTypes.size()];
+    public synchronized TypeDescription[] getAllTypes() {
+        TypeDescription[] typeArray_temp = new TypeDescription[types.size()];
 
-        for (int i = 0; i < workingTypes.size(); i++) {
-            typeArray_temp[i] = workingTypes.get(i).getTypeDescription();
+        for (int i = 0; i < types.size(); i++) {
+            typeArray_temp[i] = types.get(i).getTypeDescription();
         }
 
         return typeArray_temp;
     }
 
     @Override
-    public Optional<TypeDescription> get(MysterType type) {
+    public synchronized Optional<TypeDescription> get(MysterType type) {
         for (int i = 0; i < types.size(); i++) {
             if (types.get(i).getTypeDescription().getType().equals(type)) {
                 return Optional.of(types.get(i).getTypeDescription());
@@ -178,32 +162,22 @@ public class DefaultTypeDescriptionList implements TypeDescriptionList {
     }
 
     @Override
-    public TypeDescription[] getEnabledTypes() {
-        int counter = 0;
-        for (int i = 0; i < workingTypes.size(); i++) {
-            if (workingTypes.get(i).enabled)
-                counter++;
-        }
-
-        TypeDescription[] typeArray_temp = new TypeDescription[counter];
-        counter = 0;
-        for (int i = 0; i < types.size(); i++) {
-            if (workingTypes.get(i).enabled)
-                typeArray_temp[counter++] = types.get(i).getTypeDescription();
-        }
-
-        return typeArray_temp;
+    public synchronized TypeDescription[] getEnabledTypes() {
+        return types.stream()
+                .filter(t -> t.enabled)
+                .map(TypeDescriptionElement::getTypeDescription)
+                .toArray(TypeDescription[]::new);
     }
 
     @Override
-    public boolean isTypeEnabled(MysterType type) {
+    public synchronized boolean isTypeEnabled(MysterType type) {
         int index = getIndexFromType(type);
 
-        return (index != -1 ? workingTypes.get(index).enabled : false);
+        return (index != -1 ? types.get(index).enabled : false);
     }
 
     @Override
-    public boolean isTypeEnabledInPrefs(MysterType type) {
+    public synchronized boolean isTypeEnabledInPrefs(MysterType type) {
         int index = getIndexFromType(type);
 
         return (index != -1 ? types.get(index).enabled : false);
@@ -223,7 +197,7 @@ public class DefaultTypeDescriptionList implements TypeDescriptionList {
      * Must be done on the event thread!
      */
     @Override
-    public void setEnabledType(MysterType type, boolean enable) {
+    public synchronized void setEnabledType(MysterType type, boolean enable) {
         int index = getIndexFromType(type);
 
         //errs
@@ -394,7 +368,6 @@ public class DefaultTypeDescriptionList implements TypeDescriptionList {
         // Add to types list (disabled by default)
         TypeDescriptionElement element = new TypeDescriptionElement(customDesc, false);
         types.add(element);
-        workingTypes.add(new TypeDescriptionElement(customDesc, false));
 
         // Save to custom type manager
         customTypeManager.saveCustomType(def);
@@ -420,7 +393,6 @@ public class DefaultTypeDescriptionList implements TypeDescriptionList {
 
         // Remove from lists
         types.remove(index);
-        workingTypes.remove(index);
 
         // Remove from map
         customTypeDefinitions.remove(type);
@@ -476,7 +448,6 @@ public class DefaultTypeDescriptionList implements TypeDescriptionList {
 
         // Update in lists
         types.get(index).typeDescription = updatedDesc;
-        workingTypes.get(index).typeDescription = updatedDesc;
 
         // Update in custom type manager
         customTypeManager.updateCustomType(type, def);
@@ -485,10 +456,16 @@ public class DefaultTypeDescriptionList implements TypeDescriptionList {
         saveEverythingToDisk();
 
         log.info("Updated custom type: " + def.getName());
+
+        // Fire typeEnabled event if the type is enabled to trigger UI refresh (e.g., TypeChoice dropdown)
+        // This ensures that any name/description changes are reflected in the UI
+        if (wasEnabled) {
+            dispatcher.fire().typeEnabled(new TypeDescriptionEvent(this, type));
+        }
     }
 
     @Override
-    public Optional<CustomTypeDefinition> getCustomTypeDefinition(MysterType type) {
+    public synchronized Optional<CustomTypeDefinition> getCustomTypeDefinition(MysterType type) {
         return Optional.ofNullable(customTypeDefinitions.get(type));
     }
 

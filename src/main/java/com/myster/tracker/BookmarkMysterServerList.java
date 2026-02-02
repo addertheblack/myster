@@ -228,6 +228,11 @@ public class BookmarkMysterServerList {
         if (bookmarks.containsKey(identity)) {
             // Don't remove the bookmark, but it won't be returned by getAll()
             // until the server comes back online
+            // this is because the concept of a bookmarked server is independent
+            // of whether the server is currently reachable or known by the pool
+            // Although it does suck to think that you can't see a bookmarked server
+            // if there's no addresses for it in the pool. There's simply no good way
+            // around that without changing the pool's behavior.
             notifyListChanged();
         }
     }

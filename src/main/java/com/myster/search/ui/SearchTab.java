@@ -379,6 +379,7 @@ public class SearchTab extends JPanel implements SearchResultListener, Sayable {
      */
     public void dispose() {
         stopSearch();
+        choice.dispose();
     }
 
     /**

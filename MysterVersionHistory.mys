@@ -1287,6 +1287,10 @@ keys for myster types.
   Add new github copilot agent to myster to allow for planning and impl documents for project feature under /docs/
   Added more stuff to the concurrency library I wrote. Woot.
 
+2026-01-28
+  Add custom/private types. So Myster Types are now user configurable.
+    It's been a long road... Getting from there to here.
+
 
 
 	

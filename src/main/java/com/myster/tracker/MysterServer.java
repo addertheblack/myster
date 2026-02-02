@@ -39,6 +39,17 @@ public interface MysterServer {
      */
     public int getNumberOfFiles(MysterType type);
     
+    /**
+     * Checks if the server has reported knowing about this type.
+     * This is different from having 0 files for a type - a server that knows about
+     * a type but has no files will return true here and 0 from getNumberOfFiles().
+     * A server that has never reported this type will return false here.
+     *
+     * @param type the type to check
+     * @return true if the server has reported this type (even with 0 files), false otherwise
+     */
+    public boolean knowsAboutType(MysterType type);
+
     public int getTotalNumberOfFiles();
 
     /**

@@ -23,39 +23,43 @@
 package com.myster.filemanager;
 
 import java.io.File;
-import java.nio.file.Files;
-import java.util.ArrayList;
-import java.util.List;
+import java.util.HashMap;
+import java.util.Map;
 
 import com.myster.hash.FileHash;
 import com.myster.type.MysterType;
 import com.myster.type.TypeDescription;
+import com.myster.type.TypeDescriptionEvent;
 import com.myster.type.TypeDescriptionList;
+import com.myster.type.TypeListener;
 
 public class FileTypeListManager {
-    private final FileTypeList filelist[]; //An array of all file lists. 1 Per type.
+    private final Map<MysterType, FileTypeList> fileListMap; // Map of type -> FileTypeList
+    private final HashProvider hashProvider;
+    private final TypeDescriptionList tdList;
 
     public static final String PATH = "/File Lists/"; //Path the File Lists
 
-
-
-    /*
-     * Private Constructor. Does nothing except call initFileTypeListManager()
-     * routine.
+    /**
+     * Constructor that initializes the FileTypeListManager and registers
+     * as a listener for type enable/disable events.
      */
     public FileTypeListManager(HashProvider hashProvider, TypeDescriptionList tdList) {
-        /*
-         * Loads the list of types using the loadTypeAndDescriptionList routine and
-         * creates a new FileTypeList for each of the types. So we have a
-         * type->FileList behavior.. This routine is only called by
-         * FileTypeListManager().
-         */
+        this.hashProvider = hashProvider;
+        this.tdList = tdList;
+        this.fileListMap = new HashMap<>();
+
+        // Initialize file lists for all currently enabled types
         TypeDescription[] list = tdList.getEnabledTypes();
-        filelist = new FileTypeList[list.length];
-        for (int i = 0; i < list.length; i++) {
-            filelist[i] = new FileTypeList(list[i].getType(), PATH, hashProvider, tdList);
-            filelist[i].getNumOfFiles(); //This forces the list to load.
+        for (TypeDescription typeDesc : list) {
+            MysterType type = typeDesc.getType();
+            FileTypeList fileList = new FileTypeList(type, PATH, hashProvider, tdList);
+            fileList.getNumOfFiles(); // This forces the list to load
+            fileListMap.put(type, fileList);
         }
+
+        // Register as listener for future type changes
+        tdList.addTypeListener(new TypeListenerImpl());
     }
 
 
@@ -69,11 +73,7 @@ public class FileTypeListManager {
      * that type if it exists; null otherwise.
      */
     public FileTypeList getFileTypeList(MysterType type) {
-        for (int i = 0; i < filelist.length; i++) {
-            if (filelist[i].getType().equals(type))
-                return filelist[i];
-        }
-        return null;
+        return fileListMap.get(type);
     }
 
     /**
@@ -218,20 +218,10 @@ public class FileTypeListManager {
      * @return a String[] of shared Myster file types.
      */
     public MysterType[] getFileTypeListing() {
-        //This routine uses the old vector copied to an array trick, since the
-        // number of shared Items is not known until later
-        //so the list is put into a vector initially then copied to an array.
-        List<MysterType> workinglist = new ArrayList<>(); //since the size of
-        // the final vector
-        // will always be <=
-        // filelist.length.
-
-        for (int i = 0; i < filelist.length; i++) {
-            if (filelist[i].isShared())
-                workinglist.add(filelist[i].getType());
-        }
-
-        return workinglist.toArray(MysterType[]::new);
+        return fileListMap.values().stream()
+                .filter(FileTypeList::isShared)
+                .map(FileTypeList::getType)
+                .toArray(MysterType[]::new);
     }
 
     /**
@@ -327,4 +317,46 @@ public class FileTypeListManager {
 
         return list.isInitialized();
     }
+
+    /**
+     * Called when a type is enabled in the TypeDescriptionList.
+     * Creates a new FileTypeList for the newly enabled type.
+     */
+    private void typeEnabled(TypeDescriptionEvent e) {
+        MysterType type = e.getType();
+
+        // Check if we already have this type (shouldn't happen, but defensive)
+        if (fileListMap.containsKey(type)) {
+            return;
+        }
+
+        // Create and initialize new FileTypeList
+        FileTypeList fileList = new FileTypeList(type, PATH, hashProvider, tdList);
+        fileList.getNumOfFiles(); // This forces the list to load
+        fileListMap.put(type, fileList);
+    }
+
+    /**
+     * Called when a type is disabled in the TypeDescriptionList.
+     * Removes the FileTypeList for the disabled type.
+     */
+    private void typeDisabled(TypeDescriptionEvent e) {
+        MysterType type = e.getType();
+
+        // Remove the file list from our map
+        fileListMap.remove(type);
+    }
+
+    private class TypeListenerImpl implements TypeListener {
+        @Override
+        public void typeEnabled(TypeDescriptionEvent e) {
+            FileTypeListManager.this.typeEnabled(e);
+        }
+
+        @Override
+        public void typeDisabled(TypeDescriptionEvent e) {
+            FileTypeListManager.this.typeDisabled(e);
+        }
+    }
 }
+

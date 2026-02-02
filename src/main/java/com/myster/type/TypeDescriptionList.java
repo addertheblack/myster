@@ -6,7 +6,8 @@ import java.util.Optional;
  * The TypeDescriptionList contains some basic type information for most file
  * based types on the Myster network. The TypeDescriptionList is loaded from a
  * file called "TypeDescriptionList.mml"
- *  
+ *
+ *  Can be called from any thread.
  */
 public interface TypeDescriptionList {
     MysterType getType(StandardTypes t);
