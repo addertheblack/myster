@@ -8,6 +8,6 @@ package com.myster.type;
  */
 
 public interface TypeListener {
-    public void typeDisabled(TypeDescriptionEvent e);
-    public void typeEnabled(TypeDescriptionEvent e);
+    void typeDisabled(TypeDescriptionEvent e);
+    void typeEnabled(TypeDescriptionEvent e);
 }

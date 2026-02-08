@@ -21,8 +21,10 @@ A plan file **must exist** at `docs/plans/<feature-slug>.md`. If missing, stop a
 - Package/class Javadoc for module contracts
 - Existing code for patterns
 - `docs/design/*.md` for system design (living docs—update if your changes make them stale)
+  - `docs/codebase-structure.md` for codebase strucure
 - `docs/conventions/Code Comments.md` for Javadoc rules
-- `docs/conventions/myster-coding-conventions.md` for Myster coding conventions and architecture
+- `docs/conventions/myster-coding-conventions.md` for Myster coding conventions
+- `docs/conventions/myster-important-patterns.md` for important patterns and architectural styles
 
 ## Workflow
 1. Read and validate the plan file

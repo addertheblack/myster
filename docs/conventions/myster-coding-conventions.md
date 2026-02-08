@@ -2,6 +2,21 @@
 
 This document captures Myster-specific coding conventions, preferred libraries, and architectural patterns. It serves as a reference for AI agents and developers working on the codebase.
 
+## Table of Contents
+
+- [UI Components](#ui-components)
+- [Layout](#layout)
+- [Data Persistence](#data-persistence)
+- [Testing](#testing)
+- [Preference Panels](#preference-panels)
+
+**For architectural patterns** (Event System, Promise/Future, Listener Pattern, Dependency Injection, Threading), see:
+- **[Important Patterns](myster-important-patterns.md)** - Key architectural and design patterns
+
+---
+
+## UI Components
+
 ### JMCList Preferences
 
 **Pattern**: Prefer JMCList over raw JTable for displaying lists of items with multiple columns.
@@ -57,8 +72,6 @@ private class CheckBoxEditor extends DefaultCellEditor {
     }
 }
 ```
-
-## UI & Icons
 
 ### Modal Dialogs
 
@@ -159,20 +172,20 @@ GridBagBuilder gbc = new GridBagBuilder().withInsets(new Insets(5, 5, 5, 5));
 add(component, gbc.withGridLoc(0, 0).withWeight(1.0, 0.0).withFill(GridBagConstraints.HORIZONTAL));
 ```
 
-## Lists
-
-### JMCList instead of JTable
-
-**Pattern**: Use `JMCList` (via `MCListFactory.buildMCList()` or `TreeMCList.create()`) instead of raw `JTable` for list-based UIs.
-
-**Reason**: JMCList provides Myster-specific behaviors and styling.
-
-**Examples**:
-- `ClientWindow` - uses MCList for file listings
-- `SearchWindow` - uses MCList for search results
-- `ProgressManagerWindow` - uses TreeMCList for hierarchical downloads
-
 ## Data Persistence
+
+### Preferences Storage
+
+**Pattern**: Use Java `Preferences` API for all persistent configuration and state.
+
+**Example**:
+```java
+Preferences prefs = Preferences.userRoot().node("MysterTypes");
+prefs.put("key", "value");
+prefs.getInt("key", defaultValue);
+```
+
+**Location**: Preference nodes follow a hierarchical naming pattern based on feature area.
 
 ### Preferences for Custom Types
 
@@ -203,70 +216,7 @@ public static void main(String[] args) {
 }
 ```
 
-## Architecture Patterns
-
-### Listener Pattern
-
-**Pattern**: Use private inner classes for listener implementations instead of having the main class implement listener interfaces.
-
-**Rationale**: Keeps listener interfaces separate from the class's primary public interface. Makes the class's purpose clearer and avoids polluting the public API with listener methods.
-
-**Bad Example**:
-```java
-public class MyComponent extends JPanel implements SomeListener {
-    public MyComponent() {
-        someObject.addListener(this);  // 'this' implements SomeListener
-    }
-    
-    @Override
-    public void eventOccurred(Event e) {
-        // This is now part of MyComponent's public interface
-    }
-}
-```
-
-**Good Example**:
-```java
-public class MyComponent extends JPanel {
-    public MyComponent() {
-        someObject.addListener(new SomeListenerImpl());
-    }
-    
-    private void eventOccurred(Event e) {
-        // Private method - not part of public interface
-        // Can be large without extra indentation
-    }
-    
-    // Inner classes belong at the end of the file
-    private class SomeListenerImpl implements SomeListener {
-        @Override
-        public void eventOccurred(Event e) {
-            MyComponent.this.eventOccurred(e);
-        }
-    }
-}
-```
-
-**Notes**:
-- Private inner classes should be placed at the end of the file
-- You don't need to have the inner class call private methods in the parent - you can implement directly in the inner class
-- The private method approach shown above is preferred when the implementation is large (avoids extra indentation)
-- For simple one-liners, lambda expressions are fine: `someObject.addListener(e -> doSomething())`
-
-**Examples in codebase**:
-- `Tracker.TypeListenerImpl`
-- `TypeChoice.TypeListenerImpl`
-- `FileTypeListManager.TypeListenerImpl`
-
-### Type System
-
-**MysterTypes**: As of the latest implementation, MysterTypes are represented by public keys (not 4-byte types as in older versions).
-
-**Type Sources**: Types come from two sources:
-- `TypeSource.DEFAULT` - Built-in types (not editable/deletable)
-- `TypeSource.CUSTOM` - User-defined types (editable/deletable)
-
-### Preference Panels
+## Preference Panels
 
 **Save Semantics**:
 - **Add operations**: Saved immediately (cannot be "canceled" - deletion is the undo)

@@ -20,7 +20,8 @@ import com.general.util.Util;
 /**
  * This class represents a MysterType.
  * <p>
- * Is immutable!
+ * Is immutable! Based on a public key, but only stores a short hash of the key for compactness.
+ * The short hash is computed using MD5 of the public key's encoded bytes.
  */
 public final class MysterType {
     private final byte[] shortBytes;
