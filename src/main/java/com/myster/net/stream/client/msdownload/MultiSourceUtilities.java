@@ -290,13 +290,13 @@ public class MultiSourceUtilities {
 
     /**
      * Returns a file object containing the path that a multi-source object will
-     * be downloaded to.
+     * be downloaded to. Uses the private data path for incomplete downloads.
      * <p>
      * This routine is not stable as it is dependent on the way multi-source
      * downloads are downloaded.
      */
     public static File getIncomingDirectory() throws IOException {
-        File file = new File(com.myster.application.MysterGlobals.getAppDataPath(), "Incoming");
+        File file = new File(com.myster.application.MysterGlobals.getPrivateDataPath(), "Incoming");
 
         if ((file.exists()) && (file.isDirectory()))
             return file;

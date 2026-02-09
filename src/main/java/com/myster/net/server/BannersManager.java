@@ -1,5 +1,10 @@
 package com.myster.net.server;
 
+import javax.swing.DefaultListModel;
+import javax.swing.JButton;
+import javax.swing.JList;
+import javax.swing.JTextArea;
+import javax.swing.text.DefaultCaret;
 import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
 import java.awt.Insets;
@@ -12,13 +17,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.logging.Logger;
-
-import javax.swing.DefaultListModel;
-import javax.swing.JButton;
-import javax.swing.JLabel;
-import javax.swing.JList;
-import javax.swing.JTextArea;
-import javax.swing.text.DefaultCaret;
 
 import com.general.util.AskDialog;
 import com.general.util.GridBagBuilder;
@@ -60,8 +58,11 @@ public class BannersManager {
         return imageNames[currentIndex++]; // it's post increment
     }
 
+    /**
+     * Returns the images directory in the public data path for user-accessible banner images.
+     */
     public static synchronized File getImagesDirectory() {
-        return new File(MysterGlobals.getAppDataPath(), IMAGE_DIRECTORY);
+        return new File(MysterGlobals.getPublicDataPath(), IMAGE_DIRECTORY);
     }
 
     public static synchronized File getFileFromImageName(String imageName) {

@@ -697,12 +697,12 @@ public class FileTypeList {
 
     /*
      * Suggests a default root directory in the filing system. Should only be used by
-     * getDefaultDirectoryPath();
+     * getDefaultDirectoryPath(). Uses the public data path for user-accessible downloads.
      */
     private synchronized Path getDefaultDirectory() {
         Optional<TypeDescription> td = tdList.get(type);
         String prefix = td.isEmpty() ? "Misc" : td.get().getDescription();
-        Path empty = fileSystem.getPath(MysterGlobals.getAppDataPath().getAbsolutePath(), prefix + " Downloads");
+        Path empty = fileSystem.getPath(MysterGlobals.getPublicDataPath().getAbsolutePath(), prefix + " Downloads");
         int counter = 1;
         do {
             if (Files.exists(empty)) {
@@ -785,3 +785,4 @@ public class FileTypeList {
         return initialized;
     }
 }
+

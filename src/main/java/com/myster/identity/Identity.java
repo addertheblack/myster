@@ -1,7 +1,5 @@
 package com.myster.identity;
 
-import static com.myster.identity.Util.keyToString;
-
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
@@ -28,6 +26,7 @@ import java.util.Optional;
 import java.util.UUID;
 import java.util.logging.Logger;
 
+import com.myster.application.MysterGlobals;
 import org.bouncycastle.asn1.x500.X500Name;
 import org.bouncycastle.cert.X509v3CertificateBuilder;
 import org.bouncycastle.cert.jcajce.JcaX509CertificateConverter;
@@ -36,7 +35,7 @@ import org.bouncycastle.operator.ContentSigner;
 import org.bouncycastle.operator.OperatorCreationException;
 import org.bouncycastle.operator.jcajce.JcaContentSignerBuilder;
 
-import com.myster.application.MysterGlobals;
+import static com.myster.identity.Util.keyToString;
 
 public class Identity {
     private static final Logger log = Logger.getLogger(Identity.class.getName());
@@ -61,7 +60,7 @@ public class Identity {
         
         
         for (String type : types) {
-            File keyStorePath = new File(MysterGlobals.getAppDataPath(), "someNewIdentity");
+            File keyStorePath = new File(MysterGlobals.getPrivateDataPath(), "someNewIdentity");
             String keyStoreFilename = "tmp_store.keystore";
             Identity identity = new Identity(keyStoreFilename, 
                                              keyStorePath);
@@ -82,8 +81,11 @@ public class Identity {
         }
     }
     
+    /**
+     * Creates a new Identity using the private data path for secure storage of the keystore.
+     */
     public static Identity newIdentity() {
-        return new Identity("main_store.keystore", new File(MysterGlobals.getAppDataPath(), "identity"));
+        return new Identity("main_store.keystore", new File(MysterGlobals.getPrivateDataPath(), "identity"));
     }
 
     public Identity(String keyStoreFilename, File keyStorePath) {

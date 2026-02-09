@@ -104,20 +104,63 @@ public class MysterGlobals {
 
     public static final String APP_NAME = "myster";
 
-    public static File getAppDataPath() {
-        String osName = System.getProperty("os.name").toLowerCase();
-        String appDataDir;
-        if (osName.contains("win")) {
-            // Windows
-            appDataDir = System.getenv("LOCALAPPDATA") + "\\Myster";
-        } else if (osName.contains("mac")) {
-            // macOS
-            appDataDir = System.getProperty("user.home") + "/Library/Application Support/Myster";
+    /**
+     * Returns the public data path for user-managed content (downloads, images).
+     * <p>
+     * Platform-specific paths:
+     * <ul>
+     * <li>Linux: ~/myster</li>
+     * <li>macOS: ~/myster</li>
+     * <li>Windows: %USERPROFILE%\myster</li>
+     * </ul>
+     * <p>
+     * The directory is automatically created if it doesn't exist.
+     *
+     * @return the public data directory
+     */
+    public static File getPublicDataPath() {
+        String publicDataDir;
+        if (ON_WINDOWS) {
+            // Windows: User profile directory
+            publicDataDir = System.getProperty("user.home") + "\\myster";
         } else {
-            // Linux and others
-            appDataDir = System.getProperty("user.home") + "/." + APP_NAME;
+            // Linux and macOS: Home directory
+            publicDataDir = System.getProperty("user.home") + "/myster";
         }
-        File result = new File(appDataDir);
+        File result = new File(publicDataDir);
+        if (!result.exists()) {
+            result.mkdir();
+        }
+        return result;
+    }
+
+    /**
+     * Returns the private data path for application-managed content (identity, incoming).
+     * <p>
+     * Platform-specific paths:
+     * <ul>
+     * <li>Linux: ~/.myster</li>
+     * <li>macOS: ~/Library/Application Support/Myster</li>
+     * <li>Windows: %LOCALAPPDATA%\Myster</li>
+     * </ul>
+     * <p>
+     * The directory is automatically created if it doesn't exist.
+     *
+     * @return the private data directory
+     */
+    public static File getPrivateDataPath() {
+        String privateDataDir;
+        if (ON_WINDOWS) {
+            // Windows: Local app data
+            privateDataDir = System.getenv("LOCALAPPDATA") + "\\Myster";
+        } else if (ON_MAC) {
+            // macOS: Application Support directory
+            privateDataDir = System.getProperty("user.home") + "/Library/Application Support/Myster";
+        } else {
+            // Linux: Hidden directory in home
+            privateDataDir = System.getProperty("user.home") + "/." + APP_NAME;
+        }
+        File result = new File(privateDataDir);
         if (!result.exists()) {
             result.mkdir();
         }
