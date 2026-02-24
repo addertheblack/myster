@@ -69,6 +69,21 @@ Application-specific logic for the Myster P2P network:
   - `Cid128` - 128-bit compact identity digest (hash of public key)
   - Public key-based server identification
 
+#### Access Lists (Private Types)
+- **`com.myster.access`** - Access control with blockchain-based access lists. Every type has an access list; public vs private is a policy distinction.
+  - `AccessList` - Append-only blockchain of signed blocks
+  - `AccessBlock` - Individual block with operations and Ed25519 signature
+  - `AccessListState` - Derived state (writers, members, policy, onramps, type metadata)
+  - `AccessListManager` - File management and caching
+  - `AccessListStorage` - Binary serialization format
+  - `AccessListIdentity` - Ed25519 keypair management
+  - `AccessListGetServer` - TCP server handler (section 125)
+  - `AccessListGetClient` - TCP client for fetching chains
+  - `OpType` - Extensible, string-based operation type identifiers (supports non-canonical future types)
+  - `Policy` - Access control settings (discoverable, list_files_public)
+  - `Role` - MEMBER or ADMIN
+  - Block operations: `SetPolicyOp`, `AddWriterOp`, `RemoveWriterOp`, `AddMemberOp`, `RemoveMemberOp`, `AddOnrampOp`, `RemoveOnrampOp`, `SetTypePublicKeyOp`, `SetNameOp`, `SetDescriptionOp`, `SetExtensionsOp`, `SetSearchInArchivesOp`, `UnknownOp`
+
 #### Type System
 - **`com.myster.type`** - Myster file type system. Uses types based on a public key for extensibility and uniqueness.
   - `MysterType` - Immutable type identifier - based on a public key
@@ -206,7 +221,7 @@ Myster uses both **TCP (stream)** and **UDP (datagram)** protocols:
 
 ### 3. **Type System**
 
-- **`MysterType`** - 4-byte immutable type identifier
+- **`MysterType`** - Immutable type identifier based on a public key (stores MD5 shortBytes of the key, 16 bytes)
 - **`TypeDescription`** - Name, extensions, description, source
 - **`TypeDescriptionList`** - Registry with enable/disable state
   - Fires events (`TypeListener`) when types are added/removed/enabled/disabled

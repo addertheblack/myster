@@ -9,6 +9,10 @@ This document captures Myster-specific coding conventions, preferred libraries, 
 - [Data Persistence](#data-persistence)
 - [Testing](#testing)
 - [Preference Panels](#preference-panels)
+- [Naming Conventions](#naming-conventions)
+- [Null Checks / Argument Validation](#null-checks--argument-validation)
+- [Extensible Enums](#extensible-enums)
+- [Serialization Extensibility](#serialization-extensibility)
 
 **For architectural patterns** (Event System, Promise/Future, Listener Pattern, Dependency Injection, Threading), see:
 - **[Important Patterns](myster-important-patterns.md)** - Key architectural and design patterns
@@ -222,6 +226,75 @@ public static void main(String[] args) {
 - **Add operations**: Saved immediately (cannot be "canceled" - deletion is the undo)
 - **Edit/Delete operations**: Applied when the panel is saved (can be canceled)
 - **Rationale**: Prevents loss of user data entry effort (add dialogs have their own OK/Cancel)
+
+---
+
+## Naming Conventions
+
+### Utils Classes
+
+**Pattern**: Classes that contain only static methods (no instances) should have `Utils` appended to the class name.
+
+**Examples**: `AccessListStorageUtils`, `FooUtils`, `MultiSourceUtilities`
+
+**Note**: The codebase has some historical inconsistency between `Util`, `Utils`, and `Utilities` suffixes, but the convention going forward is `Utils`. The intent is the same in all cases: the class is a collection of static methods, not something you instantiate.
+
+---
+
+## Extensible Enums
+
+**Pattern**: For enum-like values that appear in serialized formats (wire protocol, file formats), use a `final class` with `static final` constants instead of a Java `enum`. This supports forward compatibility: unknown values from future versions can be preserved without crashing.
+
+**Key characteristics**:
+- String-based identifiers (not numeric) — self-describing and unlikely to conflict
+- `fromString(String)` factory method returns the known constant or creates a non-canonical instance
+- `isCanonical()` distinguishes known from unknown values
+- Known values are interned via a `Map<String, T>` for identity comparison
+
+**When to use**: Any enumeration that is serialized to disk or sent over the wire and may grow over time (e.g., `OpType`, `Role`).
+
+**Example** (from `com.myster.access.OpType`):
+```java
+public final class OpType {
+    public static final OpType SET_POLICY = new OpType("SET_POLICY", true);
+    public static final OpType ADD_MEMBER = new OpType("ADD_MEMBER", true);
+    // ...more canonical constants...
+
+    private static final Map<String, OpType> KNOWN_TYPES = new ConcurrentHashMap<>();
+    static { KNOWN_TYPES.put(SET_POLICY.identifier, SET_POLICY); /* ... */ }
+
+    private final String identifier;
+    private final boolean canonical;
+
+    public static OpType fromString(String identifier) {
+        OpType known = KNOWN_TYPES.get(identifier);
+        return known != null ? known : new OpType(identifier, false);
+    }
+
+    public boolean isCanonical() { return canonical; }
+}
+```
+
+## Serialization Extensibility
+
+**Pattern**: For data structures that may gain new fields in future versions, use `MessagePak` (tree-structured binary format) instead of fixed-field binary layouts. Old nodes silently ignore unknown fields; new nodes can read old data with defaults.
+
+**Example** (from `com.myster.access.Policy`):
+```java
+public byte[] toMessagePakBytes() throws IOException {
+    MessagePak pak = MessagePak.newEmpty();
+    pak.putBoolean("/discoverable", discoverable);
+    pak.putBoolean("/listFilesPublic", listFilesPublic);
+    return pak.toBytes();
+}
+
+public static Policy fromMessagePakBytes(byte[] bytes) throws IOException {
+    MessagePak pak = MessagePak.fromBytes(bytes);
+    boolean discoverable = pak.getBoolean("/discoverable").orElse(false);
+    // unknown fields silently ignored
+    return new Policy(discoverable, ...);
+}
+```
 
 ---
 

@@ -553,6 +553,10 @@ public class Myster {
         serverFacade.addConnectionSection(new com.myster.net.stream.server.FileByHash());
         serverFacade.addConnectionSection(new com.myster.net.stream.server.MultiSourceSender(preferences));
 
+        // Private types access list server
+        com.myster.access.AccessListManager accessListManager = new com.myster.access.AccessListManager();
+        serverFacade.addConnectionSection(new com.myster.access.AccessListGetServer(accessListManager));
+
         datagramManager.mutateTransportManager(preferences.getServerPort(),
                                                t -> t.addTransport(new PingTransport(tracker)));
 

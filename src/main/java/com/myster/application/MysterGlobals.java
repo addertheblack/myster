@@ -166,4 +166,21 @@ public class MysterGlobals {
         }
         return result;
     }
+
+    /**
+     * Returns the directory for storing access list files for private types.
+     * <p>
+     * Access lists are stored in: {@code PrivateDataPath/AccessLists/}
+     * <p>
+     * The directory is automatically created if it doesn't exist.
+     *
+     * @return the access lists directory
+     */
+    public static File getAccessListPath() {
+        File accessListDir = new File(getPrivateDataPath(), "AccessLists");
+        if (!accessListDir.exists()) {
+            accessListDir.mkdirs();
+        }
+        return accessListDir;
+    }
 }
