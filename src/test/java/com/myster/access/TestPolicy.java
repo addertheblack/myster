@@ -10,7 +10,6 @@ import static org.junit.jupiter.api.Assertions.*;
  * Tests for {@link Policy} MessagePak serialization and forward/backward compatibility.
  */
 class TestPolicy {
-
     @Test
     void roundTripRestrictive() throws IOException {
         Policy original = Policy.defaultRestrictive();

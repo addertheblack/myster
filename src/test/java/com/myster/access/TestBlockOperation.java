@@ -19,7 +19,6 @@ import static org.junit.jupiter.api.Assertions.*;
  * including forward compatibility via {@link UnknownOp}.
  */
 class TestBlockOperation {
-
     private static KeyPair ed25519KeyPair;
     private static KeyPair rsaKeyPair;
 

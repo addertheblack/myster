@@ -15,7 +15,6 @@ import static org.junit.jupiter.api.Assertions.*;
  * Tests for {@link AccessListState} state derivation from operations.
  */
 class TestAccessListState {
-
     private static KeyPair ed25519KeyPair;
     private static KeyPair rsaKeyPair;
 
