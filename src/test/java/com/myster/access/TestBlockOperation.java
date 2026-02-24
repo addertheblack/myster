@@ -41,7 +41,7 @@ class TestBlockOperation {
 
     @Test
     void setPolicyRoundTrip() throws IOException {
-        Policy policy = new Policy(true, false, true);
+        Policy policy = new Policy(true );
         SetPolicyOp original = new SetPolicyOp(policy);
         SetPolicyOp restored = (SetPolicyOp) roundTrip(original);
         assertEquals(policy, restored.getPolicy());

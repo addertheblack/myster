@@ -17,9 +17,7 @@ class TestPolicy {
         byte[] bytes = original.toMessagePakBytes();
         Policy restored = Policy.fromMessagePakBytes(bytes);
         assertEquals(original, restored);
-        assertFalse(restored.isDiscoverable());
         assertFalse(restored.isListFilesPublic());
-        assertFalse(restored.isNodeCanJoinPublic());
     }
 
     @Test
@@ -28,43 +26,42 @@ class TestPolicy {
         byte[] bytes = original.toMessagePakBytes();
         Policy restored = Policy.fromMessagePakBytes(bytes);
         assertEquals(original, restored);
-        assertTrue(restored.isDiscoverable());
         assertTrue(restored.isListFilesPublic());
-    }
-
-    @Test
-    void roundTripCustom() throws IOException {
-        Policy original = new Policy(true, false, true);
-        byte[] bytes = original.toMessagePakBytes();
-        Policy restored = Policy.fromMessagePakBytes(bytes);
-        assertEquals(original, restored);
     }
 
     @Test
     void unknownFieldsAreIgnored() throws IOException {
+        // A blob written by a future version with an unknown extra field
         var pak = com.myster.mml.MessagePak.newEmpty();
-        pak.putBoolean("/discoverable", true);
-        pak.putBoolean("/listFilesPublic", false);
-        pak.putBoolean("/nodeCanJoinPublic", false);
+        pak.putBoolean("/listFilesPublic", true);
         pak.putString("/futureField", "future value");
         byte[] bytes = pak.toBytes();
 
         Policy restored = Policy.fromMessagePakBytes(bytes);
-        assertTrue(restored.isDiscoverable());
+        assertTrue(restored.isListFilesPublic());
+    }
+
+    @Test
+    void missingFieldDefaultsToFalse() throws IOException {
+        // Empty blob — listFilesPublic should default to false (restrictive)
+        var pak = com.myster.mml.MessagePak.newEmpty();
+        byte[] bytes = pak.toBytes();
+
+        Policy restored = Policy.fromMessagePakBytes(bytes);
         assertFalse(restored.isListFilesPublic());
     }
 
     @Test
-    void missingFieldsDefaultToFalse() throws IOException {
+    void legacyFieldsAreIgnored() throws IOException {
+        // A blob written by an older node with the now-removed discoverable and nodeCanJoinPublic keys
         var pak = com.myster.mml.MessagePak.newEmpty();
-        pak.putBoolean("/discoverable", true);
         pak.putBoolean("/listFilesPublic", true);
+        pak.putBoolean("/discoverable", true);
+        pak.putBoolean("/nodeCanJoinPublic", true);
         byte[] bytes = pak.toBytes();
 
         Policy restored = Policy.fromMessagePakBytes(bytes);
-        assertTrue(restored.isDiscoverable());
         assertTrue(restored.isListFilesPublic());
-        assertFalse(restored.isNodeCanJoinPublic());
+        // legacy keys silently discarded — no crash, correct value
     }
 }
-

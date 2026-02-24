@@ -28,7 +28,6 @@ class TestAccessListState {
     @Test
     void emptyStateHasDefaults() {
         AccessListState state = new AccessListState();
-        assertFalse(state.getPolicy().isDiscoverable());
         assertFalse(state.getPolicy().isListFilesPublic());
         assertEquals(0, state.getWriters().size());
         assertEquals(0, state.getMembers().size());
@@ -108,10 +107,10 @@ class TestAccessListState {
         state.applyOperation(new AddWriterOp(writer), writer);
 
         state.applyOperation(new SetPolicyOp(Policy.defaultPermissive()), writer);
-        assertTrue(state.getPolicy().isDiscoverable());
+        assertTrue(state.getPolicy().isListFilesPublic());
 
         state.applyOperation(new SetPolicyOp(Policy.defaultRestrictive()), writer);
-        assertFalse(state.getPolicy().isDiscoverable());
+        assertFalse(state.getPolicy().isListFilesPublic());
     }
 
     @Test
@@ -130,4 +129,3 @@ class TestAccessListState {
         assertNull(state.toMysterType());
     }
 }
-

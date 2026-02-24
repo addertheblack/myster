@@ -1,18 +1,17 @@
 package com.myster.access;
 
-import static org.junit.jupiter.api.Assertions.*;
-
 import java.io.IOException;
 import java.security.KeyPair;
 import java.security.KeyPairGenerator;
 import java.util.Collections;
 import java.util.List;
 
+import com.myster.identity.Cid128;
+import com.myster.type.MysterType;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 
-import com.myster.identity.Cid128;
-import com.myster.type.MysterType;
+import static org.junit.jupiter.api.Assertions.*;
 
 /**
  * Tests for {@link AccessList} — chain creation, append, validation, and serialization round-trip.
@@ -76,7 +75,7 @@ class TestAccessList {
         assertEquals("A test type for unit tests", state.getDescription());
         assertArrayEquals(new String[]{"mp3", "flac"}, state.getExtensions());
         assertFalse(state.isSearchInArchives());
-        assertFalse(state.getPolicy().isDiscoverable());
+        assertFalse(state.getPolicy().isListFilesPublic());
         assertEquals(1, state.getOnramps().size());
         assertEquals("onramp1.example.com:6669", state.getOnramps().get(0));
     }
@@ -177,7 +176,6 @@ class TestAccessList {
                 "Public Type",
                 null, null, false);
 
-        assertTrue(list.getState().getPolicy().isDiscoverable());
         assertTrue(list.getState().getPolicy().isListFilesPublic());
     }
 
@@ -192,7 +190,6 @@ class TestAccessList {
                 "Private Type",
                 null, null, false);
 
-        assertFalse(list.getState().getPolicy().isDiscoverable());
         assertFalse(list.getState().getPolicy().isListFilesPublic());
     }
 
@@ -246,7 +243,7 @@ class TestAccessList {
         assertEquals("Updated Description", restored.getState().getDescription());
         assertArrayEquals(new String[]{"gz"}, restored.getState().getExtensions());
         assertFalse(restored.getState().isSearchInArchives());
-        assertTrue(restored.getState().getPolicy().isDiscoverable());
+        assertTrue(restored.getState().getPolicy().isListFilesPublic());
         assertEquals(1, restored.getState().getOnramps().size());
         assertEquals("onramp2.example.com", restored.getState().getOnramps().get(0));
         assertFalse(restored.getState().isMember(cid));
