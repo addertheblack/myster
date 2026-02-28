@@ -18,6 +18,29 @@ After this milestone:
   A prefs node with no corresponding access list is treated as corrupt and silently removed.
 - The GUI offers a "Create Type" editor (public or private) that creates a genesis block, and
   an "Edit Type" flow that appends signed blocks to the chain.
+- **Types the user does not own** (no `.key` file on disk) open in the editor as read-only.
+  This covers both built-in types and future imported types — no special casing needed.
+
+---
+
+## Implementation Status (as of 2026-02-24)
+
+| Component | Status | Notes |
+|---|---|---|
+| `Policy.java` | ✅ Done | Single `listFilesPublic` field; legacy keys silently ignored |
+| `AccessListManager.java` | ✅ Done | Load/save/remove/cache; from M1 |
+| All `*Op` classes, `AccessList`, `AccessListState`, `AccessListStorageUtils` | ✅ Done | From M1 |
+| `AccessListKeyUtils.java` | ✅ Done | Save/load/hasKeyPair/deleteKeyPair; Ed25519 + EdDSA fallback |
+| `MysterType.fromHexString()` | ✅ Done | Added to support prefs node name parsing |
+| `CustomTypeManager.java` | ✅ Done | Enabled-index only; `saveEnabled` / `loadEnabledTypes` |
+| `DefaultTypeDescriptionList.java` | ✅ Done | Loads custom types from access lists; stale nodes deleted |
+| `TypeEditorPanel.java` | ✅ Done | Create: genesis block + admin key; Edit: diff + append; read-only guard |
+| `TypeManagerPreferences.java` | ✅ Done | Passes `AccessListManager` through to `TypeEditorPanel` |
+| `Myster.java` | ✅ Done | Single shared `AccessListManager`; passed to all consumers |
+| `TestCustomTypeManager` | ✅ Done | 8 tests |
+| `TestAccessListKeyUtils` | ✅ Done | 3 tests (file-format + sign/verify + missing-file) |
+
+**All 274 tests pass.**
 
 ---
 
@@ -39,14 +62,28 @@ After this milestone:
 
 ## Non-Goals (Milestone 2)
 
-- Share / Import type dialogs (deferred to Milestone 3).
-- TCP access list fetching from remote servers.
-- Access-control enforcement in file serving or search (Milestone 3).
+- **Type metadata resolution** (transient, display-only fetch of an unknown type's name from a
+  remote node) — deferred to Milestone 3.
+- **Type import** (user deliberately adds a remote type to their local list) — deferred to
+  Milestone 3.
+- TCP access list fetching from remote servers (used by both of the above) — deferred to
+  Milestone 3.
+- Access-control enforcement in file serving or search (later milestone).
 - Discovery (UDP type lister) filtering.
 - Multi-admin / multi-writer flows — only the genesis admin writes blocks in this milestone.
 - Any changes to built-in / default types (they remain without access lists for now).
 - **Migration from old prefs data** — there is no live user data to migrate; stale prefs nodes
   are simply deleted.
+
+### Note on Type Import (Milestone 3 preview)
+
+When Milestone 3 adds Import, an imported type will have:
+- An access list file on disk (fetched from the network and saved via `AccessListManager`)
+- **No** `.key` file (the user is not the admin)
+
+The `TypeEditorPanel` edit-mode logic already handles this correctly: `AccessListKeyUtils.hasKeyPair(mysterType)` returns `false` → all fields are read-only, Save is disabled. **No special "imported type" flag or code path is needed.** The key-file gate is the universal mechanism for both built-in and imported types.
+
+Built-in types (videos, music, etc.) loaded from `typedescriptionlist.mml` never go through `CustomTypeManager` or `AccessListManager` at all, so they are also implicitly read-only.
 
 ---
 

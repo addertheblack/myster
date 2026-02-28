@@ -1311,3 +1311,4 @@ Make Myster modules compatible
 fix naming.. We probably want to use myster.org
 *Fix website links so that everything uses https (ie: make them relative links)
 implement DoS attack. Packet amplification stuff. I do not want to be a target vector for dos attacks of others.
+* Fix DefaultTypeDescriptionList to interact with the preferences in a sane way not using MML..

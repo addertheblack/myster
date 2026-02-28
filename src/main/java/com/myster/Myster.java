@@ -114,9 +114,13 @@ public class Myster {
             log.info("Logging config file not set");
         }
         
+        com.myster.access.AccessListManager accessListManager =
+                new com.myster.access.AccessListManager();
         TypeDescriptionList tdList;
         try {
-            tdList = new DefaultTypeDescriptionList(java.util.prefs.Preferences.userRoot().node("MysterTypes"));
+            tdList = new DefaultTypeDescriptionList(
+                    java.util.prefs.Preferences.userRoot().node("MysterTypes"),
+                    accessListManager);
         } catch (Exception ex) {
             ex.printStackTrace();
             return;
@@ -314,7 +318,7 @@ public class Myster {
         INSTRUMENTATION.info("-------->> ServerFacade created " + (System.currentTimeMillis() - startTime));
         
         INSTRUMENTATION.info("-------->> Adding server connection settings " + (System.currentTimeMillis() - startTime));
-        addServerConnectionSettings(serverFacade, tracker, serverPreferences, identity, datagramManager, fileManager, pool);
+        addServerConnectionSettings(serverFacade, tracker, serverPreferences, identity, datagramManager, fileManager, pool, accessListManager);
         INSTRUMENTATION.info("-------->> Server connection settings added " + (System.currentTimeMillis() - startTime));
         
         
@@ -450,7 +454,7 @@ public class Myster {
                 
                 preferencesGui.addPanel(new FmiChooser(fileManager, tdList));
                 preferencesGui.addPanel(new MessagePreferencesPanel(preferences));
-                preferencesGui.addPanel(new com.myster.type.ui.TypeManagerPreferences(tdList));
+                preferencesGui.addPanel(new com.myster.type.ui.TypeManagerPreferences(tdList, accessListManager));
                 preferencesGui.addPanel(new ThemePane(preferences));
 
                 INSTRUMENTATION.info("-------->>   EDT init other GUI sub systems " + (System.currentTimeMillis() - startTime));
@@ -538,7 +542,8 @@ public class Myster {
                                                     Identity identity,
                                                     DatagramProtocolManager datagramManager, 
                                                     FileTypeListManager fileManager,
-                                                    MysterServerPool pool) {
+                                                    MysterServerPool pool,
+                                                    com.myster.access.AccessListManager accessListManager) {
 
         serverFacade.addConnectionSection(new com.myster.net.stream.server.MysterServerLister(tracker));
         serverFacade.addConnectionSection(new com.myster.net.stream.server.RequestDirThread());
@@ -554,7 +559,6 @@ public class Myster {
         serverFacade.addConnectionSection(new com.myster.net.stream.server.MultiSourceSender(preferences));
 
         // Private types access list server
-        com.myster.access.AccessListManager accessListManager = new com.myster.access.AccessListManager();
         serverFacade.addConnectionSection(new com.myster.access.AccessListGetServer(accessListManager));
 
         datagramManager.mutateTransportManager(preferences.getServerPort(),

@@ -10,6 +10,7 @@
 
 package com.myster.type;
 
+import java.io.IOException;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.security.PublicKey;
@@ -41,7 +42,28 @@ public final class MysterType {
     public String toHexString() {
         return Util.asHex(shortBytes);
     }
-    
+
+    /**
+     * Parses a {@link MysterType} from its hex string representation (as produced by
+     * {@link #toHexString()}). Used when reconstructing types from stored prefs node names.
+     *
+     * @param hex the hex string to parse
+     * @return the corresponding MysterType
+     * @throws IllegalArgumentException if the string is not valid hex or has the wrong length
+     */
+    public static MysterType fromHexString(String hex) throws IOException {
+        try {
+            byte[] bytes = Util.fromHexString(hex);
+            if (bytes.length != 16) {
+                throw new IOException(
+                    "MysterType hex string must be 32 characters (16 bytes), got: " + hex);
+            }
+            return new MysterType(bytes);
+        } catch (NumberFormatException e) {
+            throw new IOException("Invalid hex string for MysterType: " + hex, e);
+        }
+    }
+
     public String toString() {
         return toHexString();
     }

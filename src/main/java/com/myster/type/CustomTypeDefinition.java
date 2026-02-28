@@ -105,26 +105,16 @@ public class CustomTypeDefinition {
     }
 
     /**
-     * Saves this custom type definition to a Preferences node.
-     *
-     * @param prefs the Preferences node to save to
-     */
-    public void toPreferences(Preferences prefs) {
-        prefs.put(KEY_NAME, name);
-        prefs.put(KEY_DESCRIPTION, description);
-        prefs.put(KEY_PUBLIC_KEY, Base64.getEncoder().encodeToString(publicKey.getEncoded()));
-        prefs.put(KEY_EXTENSIONS, String.join(",", extensions));
-        prefs.putBoolean(KEY_SEARCH_IN_ARCHIVES, searchInArchives);
-        prefs.putBoolean(KEY_IS_PUBLIC, isPublic);
-    }
-
-    /**
      * Loads a custom type definition from a Preferences node.
      *
      * @param prefs the Preferences node to load from
      * @return the loaded CustomTypeDefinition
      * @throws IllegalStateException if the data is corrupted or invalid
+     * @deprecated No longer called — all type metadata is now stored in the type's
+     *             {@link com.myster.access.AccessList} file. Retained for reference; safe to
+     *             remove once no migration path is needed.
      */
+    @Deprecated
     public static CustomTypeDefinition fromPreferences(Preferences prefs) {
         try {
             String name = prefs.get(KEY_NAME, null);

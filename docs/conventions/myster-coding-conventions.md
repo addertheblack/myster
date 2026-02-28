@@ -21,6 +21,22 @@ This document captures Myster-specific coding conventions, preferred libraries, 
 
 ## UI Components
 
+### Dialogs — use AnswerDialog, not JOptionPane
+
+**Rule**: Never use `JOptionPane` in Myster UI code. It ignores the application theme and looks wrong. Use `com.general.util.AnswerDialog` instead.
+
+```java
+// Simple alert
+AnswerDialog.simpleAlert("Something went wrong.");
+
+// Confirmation with custom buttons — returns the button label that was clicked
+String answer = AnswerDialog.simpleAlert(
+        AnswerDialog.getCenteredFrame(),
+        "No extensions specified. Continue?",
+        new String[] { "Continue", "Cancel" });
+if (!"Continue".equals(answer)) return;
+```
+
 ### JMCList Preferences
 
 **Pattern**: Prefer JMCList over raw JTable for displaying lists of items with multiple columns.
@@ -227,9 +243,21 @@ public static void main(String[] args) {
 - **Edit/Delete operations**: Applied when the panel is saved (can be canceled)
 - **Rationale**: Prevents loss of user data entry effort (add dialogs have their own OK/Cancel)
 
----
 
 ## Naming Conventions
+
+### No Section-Divider Banner Comments
+
+Do not use banner-style section dividers in Java source files:
+
+```java
+// Don't do this:
+// ---------------------------------------------------------------------------
+// Private helpers
+// ---------------------------------------------------------------------------
+```
+
+Methods and fields speak for themselves. If a class needs section headers to be readable, it's a sign the class is too large and should be split.
 
 ### Utils Classes
 
@@ -283,18 +311,54 @@ public final class OpType {
 ```java
 public byte[] toMessagePakBytes() throws IOException {
     MessagePak pak = MessagePak.newEmpty();
-    pak.putBoolean("/discoverable", discoverable);
     pak.putBoolean("/listFilesPublic", listFilesPublic);
     return pak.toBytes();
 }
 
 public static Policy fromMessagePakBytes(byte[] bytes) throws IOException {
     MessagePak pak = MessagePak.fromBytes(bytes);
-    boolean discoverable = pak.getBoolean("/discoverable").orElse(false);
-    // unknown fields silently ignored
-    return new Policy(discoverable, ...);
+    boolean listFilesPublic = pak.getBoolean("/listFilesPublic").orElse(false);
+    // unknown fields silently ignored — forward-compatible by design
+    return new Policy(listFilesPublic);
 }
 ```
+
+---
+
+## Access Lists as Canonical Metadata
+
+**Pattern**: For types that have access control, the `AccessList` file on disk is the single
+authoritative source of truth for all metadata (name, description, extensions, policy, public key).
+Java `Preferences` stores **only** the enabled/disabled flag per type — nothing else.
+
+**Rule**: Never duplicate access list metadata into `Preferences`. If you need type metadata at
+runtime, load it from `AccessListManager`.
+
+**Ownership / edit gate**: Whether the current machine can edit a type is determined solely by
+the presence of an admin key file at `{PrivateDataPath}/AccessListKeys/{mysterType_hex}.key`.
+There is no separate "isOwner" flag anywhere else. `AccessListKeyUtils.hasKeyPair(type)` is the
+check to use.
+
+**Singleton**: There is exactly one `AccessListManager` instance in the application, created in
+`Myster.java` before `DefaultTypeDescriptionList`. Never `new AccessListManager()` anywhere else.
+
+---
+
+## Prefs-Based Enabled/Disabled Index
+
+When a subsystem has a collection of items that can be enabled/disabled, the `Preferences`
+store should contain only the item identifier (as the node name) and the `enabled` boolean.
+All other metadata lives elsewhere (e.g. access list file, MML resource). This keeps the prefs
+store minimal and avoids stale data problems.
+
+```
+CustomTypes/
+  {mysterType_hex}/    ← node name is the unique identifier
+    enabled = true     ← the ONLY key written here
+```
+
+Old prefs nodes that contain extra keys from a previous implementation are silently ignored
+on read. Missing access list → delete the stale prefs node; log a WARNING; skip.
 
 ---
 

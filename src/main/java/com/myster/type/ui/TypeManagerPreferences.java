@@ -34,6 +34,7 @@ import com.general.mclist.SortableString;
 import com.general.util.GridBagBuilder;
 import com.general.util.IconLoader;
 import com.general.util.MessagePanel;
+import com.myster.access.AccessListManager;
 import com.myster.pref.ui.PreferencesPanel;
 import com.myster.type.CustomTypeDefinition;
 import com.myster.type.MysterType;
@@ -58,6 +59,7 @@ import com.myster.type.TypeSource;
  */
 public class TypeManagerPreferences extends PreferencesPanel {
     private final TypeDescriptionList tdList;
+    private final AccessListManager accessListManager;
     private MCList<MysterType> mcList;
     private Action addAction;
     private Action editAction;
@@ -78,10 +80,12 @@ public class TypeManagerPreferences extends PreferencesPanel {
     /**
      * Creates a new type manager preferences panel.
      *
-     * @param tdList the type description list to manage
+     * @param tdList            the type description list to manage
+     * @param accessListManager used when opening the type editor to create/edit access lists
      */
-    public TypeManagerPreferences(TypeDescriptionList tdList) {
+    public TypeManagerPreferences(TypeDescriptionList tdList, AccessListManager accessListManager) {
         this.tdList = tdList;
+        this.accessListManager = accessListManager;
         setLayout(new GridBagLayout());
 
         cardLayout = new CardLayout();
@@ -300,7 +304,7 @@ public class TypeManagerPreferences extends PreferencesPanel {
         }
 
         // Create editor panel with callbacks
-        editorPanel = new TypeEditorPanel(tdList, existingType,
+        editorPanel = new TypeEditorPanel(tdList, accessListManager, existingType,
             this::onEditorSave,
             this::onEditorCancel
         );
@@ -313,32 +317,11 @@ public class TypeManagerPreferences extends PreferencesPanel {
     }
 
     private void onEditorSave() {
-        CustomTypeDefinition newType = editorPanel.getResult();
-        if (newType != null) {
-            try {
-                if (editingType != null) {
-                    // Editing existing type
-                    tdList.updateCustomType(editingType, newType);
-                } else {
-                    // Adding new type
-                    tdList.addCustomType(newType);
-                }
-
-                // Switch back to list view
-                cardLayout.show(containerPanel, LIST_VIEW);
-
-                // Reload the list
-                reset();
-
-                // Clear editing state
-                editingType = null;
-            } catch (IllegalArgumentException ex) {
-                JOptionPane.showMessageDialog(this,
-                    "Failed to save type: " + ex.getMessage(),
-                    "Error",
-                    JOptionPane.ERROR_MESSAGE);
-            }
-        }
+        // TypeEditorPanel has already persisted the access list and updated tdList;
+        // just return to the list view and refresh.
+        cardLayout.show(containerPanel, LIST_VIEW);
+        editingType = null;
+        reset();
     }
 
     private void onEditorCancel() {
@@ -502,8 +485,10 @@ public class TypeManagerPreferences extends PreferencesPanel {
             testFrame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 
             // Create the panel with a real type list
-            TypeDescriptionList typeList = new com.myster.type.DefaultTypeDescriptionList(java.util.prefs.Preferences.userRoot().node("MysterTypes"));
-            TypeManagerPreferences panel = new TypeManagerPreferences(typeList);
+            com.myster.access.AccessListManager alm = new com.myster.access.AccessListManager();
+            TypeDescriptionList typeList = new com.myster.type.DefaultTypeDescriptionList(
+                java.util.prefs.Preferences.userRoot().node("MysterTypes"), alm);
+            TypeManagerPreferences panel = new TypeManagerPreferences(typeList, alm);
 
             // Add to frame and set it on the panel
             testFrame.add(panel);

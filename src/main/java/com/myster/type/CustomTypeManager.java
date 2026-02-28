@@ -1,157 +1,117 @@
 package com.myster.type;
 
-import java.util.ArrayList;
-import java.util.List;
+import java.io.IOException;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.logging.Logger;
 import java.util.prefs.BackingStoreException;
 import java.util.prefs.Preferences;
 
 /**
- * Manages persistence of custom type definitions using Java Preferences API.
+ * Persists the enabled/disabled state of custom types using the Java Preferences API.
  *
- * <p>Custom types are stored under the "CustomTypes" preferences node, with each
- * type stored in a child node named by its {@link MysterType#toHexString()} value.
- * This provides a compact, unique identifier for each custom type.
+ * <p>This class is intentionally minimal: it stores only whether each custom type exists and
+ * whether it is enabled. All richer metadata (name, description, extensions, public key, etc.)
+ * lives in the type's {@link com.myster.access.AccessList} file on disk and is managed by
+ * {@link com.myster.access.AccessListManager}.
  *
- * <p>Example structure:
+ * <p>Prefs node structure:
  * <pre>
  * CustomTypes/
- *   a3f5c2d1.../  (hex string from MysterType.toShortBytes())
- *     name = "My Custom Network"
- *     description = "Files for my project"
- *     publicKey = &lt;base64&gt;
- *     extensions = "doc,pdf,txt"
- *     searchInArchives = true
- *     isPublic = true
+ *   {mysterType_hex}/   ← node name is the hex representation of the MysterType
+ *     enabled = true    ← the only key written
  * </pre>
+ *
+ * <p>Old nodes that contain extra keys (name, description, publicKey, etc.) from a previous
+ * implementation are silently ignored on read. If the corresponding access list file is
+ * missing, the caller is responsible for deleting the stale prefs node via
+ * {@link #deleteCustomType(MysterType)}.
  */
 public class CustomTypeManager {
     private static final Logger log = Logger.getLogger(CustomTypeManager.class.getName());
     private static final String CUSTOM_TYPES_NODE = "CustomTypes";
+    private static final String KEY_ENABLED = "enabled";
 
     private final Preferences prefs;
 
     /**
      * Creates a new CustomTypeManager.
      *
-     * @param prefs the root Preferences node to use for storage
+     * @param prefs the root Preferences node under which the {@code CustomTypes} child is stored
      */
     public CustomTypeManager(Preferences prefs) {
         this.prefs = prefs;
     }
 
     /**
-     * Loads all custom type definitions from preferences.
+     * Saves the enabled/disabled state for a custom type. Creates the prefs node if absent.
+     * Any other keys that may already exist in the node are left untouched.
      *
-     * @return list of all custom type definitions (may be empty, never null)
+     * @param type the type to persist
+     * @param enabled whether the type should be enabled
      */
-    public List<CustomTypeDefinition> loadCustomTypes() {
-        List<CustomTypeDefinition> customTypes = new ArrayList<>();
+    public void saveEnabled(MysterType type, boolean enabled) {
+        try {
+            Preferences typeNode = prefs.node(CUSTOM_TYPES_NODE).node(type.toHexString());
+            typeNode.putBoolean(KEY_ENABLED, enabled);
+            typeNode.flush();
+            log.fine("Saved enabled=" + enabled + " for type: " + type.toHexString());
+        } catch (BackingStoreException e) {
+            log.severe("Failed to save enabled state for type " + type.toHexString() + ": " + e.getMessage());
+            // no throw. Best effort only.
+        }
+    }
 
+    /**
+     * Loads the enabled/disabled state for all known custom types.
+     *
+     * <p>Node names that cannot be parsed as valid {@link MysterType} hex strings are silently
+     * skipped and logged at WARNING level. Unknown prefs keys within a node are ignored.
+     *
+     * @return a map from {@link MysterType} to its enabled flag; never null, may be empty
+     */
+    public Map<MysterType, Boolean> loadEnabledTypes() {
+        Map<MysterType, Boolean> result = new HashMap<>();
         try {
             Preferences customTypesRoot = prefs.node(CUSTOM_TYPES_NODE);
-            String[] typeNodeNames = customTypesRoot.childrenNames();
+            String[] nodeNames = customTypesRoot.childrenNames();
 
-            for (String nodeName : typeNodeNames) {
+            for (String nodeName : nodeNames) {
                 try {
+                    MysterType type = MysterType.fromHexString(nodeName);
                     Preferences typeNode = customTypesRoot.node(nodeName);
-                    CustomTypeDefinition def = CustomTypeDefinition.fromPreferences(typeNode);
-                    customTypes.add(def);
-                } catch (Exception e) {
-                    log.warning("Failed to load custom type from node " + nodeName + ": " + e.getMessage());
-                    // Continue loading other types even if one fails
+                    boolean enabled = typeNode.getBoolean(KEY_ENABLED, false);
+                    result.put(type, enabled);
+                } catch (IOException e) {
+                    log.warning("Skipping unrecognised CustomTypes prefs node: " + nodeName);
                 }
             }
 
-            log.info("Loaded " + customTypes.size() + " custom type(s)");
+            log.info("Loaded " + result.size() + " custom type enabled state(s)");
         } catch (BackingStoreException e) {
-            log.severe("Failed to load custom types: " + e.getMessage());
+            log.severe("Failed to load custom type enabled states: " + e.getMessage());
         }
-
-        return customTypes;
+        return result;
     }
 
     /**
-     * Saves a custom type definition to preferences.
-     * Creates a new entry if the type doesn't exist, updates if it does.
+     * Deletes the prefs node for the given type. Used when removing a custom type or
+     * cleaning up stale nodes that have no corresponding access list on disk.
      *
-     * @param def the custom type definition to save
-     */
-    public void saveCustomType(CustomTypeDefinition def) {
-        try {
-            MysterType type = def.toMysterType();
-            String nodeName = type.toHexString();
-
-            Preferences customTypesRoot = prefs.node(CUSTOM_TYPES_NODE);
-            Preferences typeNode = customTypesRoot.node(nodeName);
-
-            def.toPreferences(typeNode);
-            typeNode.flush();
-
-            log.info("Saved custom type: " + def.getName() + " (node: " + nodeName + ")");
-        } catch (BackingStoreException e) {
-            log.severe("Failed to save custom type " + def.getName() + ": " + e.getMessage());
-            throw new IllegalStateException("Failed to save custom type", e);
-        }
-    }
-
-    /**
-     * Deletes a custom type from preferences.
-     *
-     * @param type the MysterType to delete
-     * @throws IllegalArgumentException if the type doesn't exist
+     * @param type the type to remove
      */
     public void deleteCustomType(MysterType type) {
         try {
-            String nodeName = type.toHexString();
             Preferences customTypesRoot = prefs.node(CUSTOM_TYPES_NODE);
-
-            if (!customTypesRoot.nodeExists(nodeName)) {
-                throw new IllegalArgumentException("Custom type does not exist: " + type);
+            String nodeName = type.toHexString();
+            if (customTypesRoot.nodeExists(nodeName)) {
+                customTypesRoot.node(nodeName).removeNode();
+                customTypesRoot.flush();
+                log.info("Deleted prefs node for type: " + nodeName);
             }
-
-            Preferences typeNode = customTypesRoot.node(nodeName);
-            typeNode.removeNode();
-            customTypesRoot.flush();
-
-            log.info("Deleted custom type (node: " + nodeName + ")");
         } catch (BackingStoreException e) {
-            log.severe("Failed to delete custom type " + type + ": " + e.getMessage());
-            throw new IllegalStateException("Failed to delete custom type", e);
-        }
-    }
-
-    /**
-     * Updates an existing custom type definition.
-     * This is equivalent to saving - it overwrites the existing entry.
-     *
-     * @param type the MysterType to update
-     * @param def the new custom type definition
-     */
-    public void updateCustomType(MysterType type, CustomTypeDefinition def) {
-        // Verify the type matches
-        if (!type.equals(def.toMysterType())) {
-            throw new IllegalArgumentException("Type mismatch: cannot change public key during update");
-        }
-
-        saveCustomType(def);
-    }
-
-    /**
-     * Checks if a custom type exists in preferences.
-     *
-     * @param type the MysterType to check
-     * @return true if the type exists, false otherwise
-     */
-    public boolean exists(MysterType type) {
-        try {
-            String nodeName = type.toHexString();
-            Preferences customTypesRoot = prefs.node(CUSTOM_TYPES_NODE);
-            return customTypesRoot.nodeExists(nodeName);
-        } catch (BackingStoreException e) {
-            log.warning("Failed to check if custom type exists: " + e.getMessage());
-            return false;
+            log.severe("Failed to delete prefs node for type " + type.toHexString() + ": " + e.getMessage());
+            // no throws best effort only
         }
     }
 }
-
