@@ -65,6 +65,13 @@ public interface PromiseFuture<T> extends Cancellable, Future<T> {
 
     PromiseFuture<T> addCancelLisener(Runnable cancelLisener);
 
+    /**
+     * Adds a standard exception handler that logs the exception and shows a dialog to the user.
+     * All PromiseFutures must have an exception handler, so this is a convenient way to add a standard one if you don't care about the details of the exception.
+     * If you don't add any exception handler the exception will be swallowed and you'll never know about it, which is bad. So please add an exception handler, either a custom one or this standard one.
+     * The code might even throw an exception complaining about an unregistered exception handler if you forget to add one, but don't rely on that.
+     * @return myself, for chaining
+     */
     PromiseFuture<T> addStandardExceptionHandler();
     
     /**
