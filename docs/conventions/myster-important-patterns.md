@@ -2,6 +2,14 @@
 
 This document describes key architectural and design patterns used throughout the Myster codebase. Understanding these patterns is essential for maintaining consistency when adding new features or modifying existing code.
 
+**Quick index** — what lives here:
+- **Event System** — `NewGenericDispatcher`, how to fire and subscribe to events
+- **Promise/Future** — `PromiseFuture<T>`, `addResultListener`, `addCallListener`/`CallAdapter`, async I/O
+- **Listener Pattern** — use private inner classes, not `implements SomeListener`
+- **Dependency Injection** — `MysterFrameContext`, constructor injection, no static singletons
+- **Threading & Concurrency** — EDT rules, virtual threads, `synchronized`, `Invoker`, `Util.invokeLater`, don't double-dispatch
+- **FlatLaf Theming** — `UIManager.getColor("Actions.Red")` and friends; never hardcode colours
+
 ## Table of Contents
 
 - [Event System](#event-system)
@@ -9,6 +17,9 @@ This document describes key architectural and design patterns used throughout th
 - [Listener Pattern](#listener-pattern)
 - [Dependency Injection](#dependency-injection)
 - [Threading & Concurrency](#threading--concurrency)
+  - [Util.invokeLater vs SwingUtilities.invokeLater](#utilinvokelater-vs-swingutilitiesinvokelater)
+  - [PromiseFuture addCallListener / CallAdapter](#promisefuture--addcalllistener--calladapter)
+- [FlatLaf Theming](#flatlaf-theming)
 
 ---
 
@@ -57,6 +68,14 @@ PromiseFuture<Result> future = PromiseFutures.execute(() -> longOperation());
 future.addResultListener(result -> handleResult(result));
 future.addExceptionListener(ex -> handleError(ex));
 ```
+ prefer chaining when possible:
+```java
+PromiseFutures.execute(() -> longOperation())
+    .addResultListener(result -> handleResult(result))
+    .addExceptionListener(ex -> handleError(ex));
+```
+
+Note that you need and add an exception handler and invoker if one has not already been added.
 
 ### Key Features
 
@@ -124,6 +143,8 @@ public class MyComponent extends JPanel {
     }
 }
 ```
+
+Even better would be to use annonymous inner classes or lambda expressions for simple one-liner callbacks, but for more complex implementations, the private method + inner class approach is preferred.
 
 ### Guidelines
 
@@ -224,7 +245,7 @@ PromiseFutures.execute(() -> {
 }).addResultListener(result -> {
     // Result listener runs on EDT automatically
     displayResult(result);
-});
+}).addStandardExceptionHandler();
 ```
 
 #### 3. Synchronization
@@ -242,6 +263,49 @@ The `Invoker` class provides thread scheduling utilities:
 
 - **`Invoker.EDT_NOW_OR_LATER`** - Run on EDT (immediately if already on EDT, otherwise enqueue)
 - **Custom invokers** - For background work on specific threads
+
+### `Util.invokeLater` vs `SwingUtilities.invokeLater`
+
+**`Util.invokeLater(Runnable)`** (`com.general.util.Util`) is Myster's preferred way to
+dispatch to the EDT from a background thread. It is equivalent to
+`SwingUtilities.invokeLater` but is the idiom used throughout the older parts of the
+codebase (e.g. `TypeListerThread`'s internal listener wrapper).
+
+**Rule**: When adding new background→EDT dispatch in code that already uses `Util.invokeLater`,
+stay consistent and use `Util.invokeLater`. In newer code, `SwingUtilities.invokeLater` or
+`PromiseFutures` result listeners are equally acceptable.
+
+**Critical — don't double-dispatch**: If a callback is already going to be dispatched to the
+EDT by a wrapper (e.g. `TypeListerThread`'s constructor wraps all `TypeListener` calls with
+`Util.invokeLater`), do **not** add another `invokeLater` inside the callback body. The
+wrapper is the single dispatch point.
+
+### `PromiseFuture` — `addCallListener` / `CallAdapter`
+
+In addition to `addResultListener` / `addExceptionListener`, `PromiseFuture` supports
+`addCallListener(CallAdapter<T>)` for handling both result and error in one object. This is
+the preferred pattern in UI code where you need to react to both outcomes:
+
+```java
+someFuture.addCallListener(new CallAdapter<MyResult>() {
+    @Override
+    public void handleResult(MyResult result) {
+        // called on EDT — update UI here
+    }
+
+    @Override
+    public void handleError(Exception e) {
+        // called on EDT — show error here
+        msg.sayError("Failed: " + e.getMessage());
+    }
+});
+```
+
+`CallAdapter` provides no-op default implementations for both methods, so you only override
+what you need. Used extensively in `ClientWindow` for datagram and stream callbacks.
+
+**Threading**: Like `addResultListener`, the `handleResult` and `handleError` callbacks run
+on the EDT by default — no `invokeLater` needed inside them.
 
 ### Examples
 
@@ -261,7 +325,7 @@ PromiseFutures.execute(() -> {
 }).addResultListener(result -> {
     // Result listener runs on EDT automatically
     displayResult(result);
-});
+}).addStandardExceptionHandler();
 ```
 
 #### Bad: Blocking the EDT
@@ -282,5 +346,49 @@ public void actionPerformed(ActionEvent e) {
 
 ---
 
-*Last updated: February 2026*
+## FlatLaf Theming
 
+### Rule: Never Hardcode Visual Feedback Colors
+
+All semantic UI colours (errors, warnings, success) must be sourced from the active Look &
+Feel rather than hardcoded. Myster uses FlatLaf as its primary L&F, which provides a rich set
+of semantic UIManager keys that adapt automatically to light, dark, and custom themes.
+
+**Pattern for Java code**:
+```java
+// Resolve from the active theme; fall back only for non-FlatLaf L&Fs
+Color errorColor = Optional.ofNullable(UIManager.getColor("Actions.Red"))
+                           .orElse(new Color(0xDB, 0x58, 0x60));
+
+// Always reset using the theme key, not a hardcoded colour
+setForeground(UIManager.getColor("Label.foreground"));
+```
+
+**Pattern for SVG icons**: Use the corresponding FlatLaf magic hex in the SVG source.
+FlatLaf substitutes the magic hex with the same theme-appropriate colour it would return
+for the UIManager key, so icon and text always match.
+
+| Semantic state | UIManager key | SVG magic hex |
+|---|---|---|
+| Error / destructive | `"Actions.Red"` | `#DB5860` |
+| Warning | `"Actions.Yellow"` | `#EDA200` |
+| Success | `"Actions.Green"` | `#59A869` |
+| Normal foreground | `"Label.foreground"` | `#6E6E6E` |
+
+Full key list: [`FlatIconColors.java`](https://github.com/JFormDesigner/FlatLaf/blob/main/flatlaf-core/src/main/java/com/formdev/flatlaf/FlatIconColors.java)
+
+### Why This Matters
+
+Hardcoded colours break on dark themes (dark-red text is invisible on a dark background)
+and on high-contrast themes. The UIManager key approach costs nothing and is correct by
+default.
+
+### Where to Find It
+
+- `com.myster.util.ThemeUtil` — theme setup and switching
+- `com.general.util.MessageField` — example of `sayError` using `"Actions.Red"`
+- See also the SVG icon convention in `myster-coding-conventions.md`
+
+---
+
+*Last updated: March 2026*

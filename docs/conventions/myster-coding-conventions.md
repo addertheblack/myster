@@ -2,20 +2,46 @@
 
 This document captures Myster-specific coding conventions, preferred libraries, and architectural patterns. It serves as a reference for AI agents and developers working on the codebase.
 
+**Quick index** — what lives here:
+- **AnswerDialog** — never use `JOptionPane`; use `AnswerDialog` instead
+- **JMCList** — prefer over raw `JTable` for multi-column lists
+- **Modal Dialogs** — must extend `JDialog`, not `JFrame`
+- **SVG Icons & FlatLaf colors** — `IconLoader.loadSvg`, magic hex colors, `#6E6E6E` / `#DB5860` etc.
+- **GridBagLayout** — use `GridBagBuilder`; never `setLayout(null)`
+- **Preferences** — Java `Preferences` API; `MysterType.toShortBytes()` as key
+- **Testing** — add `main()` to UI panels for standalone testing
+- **Preference Panel save semantics** — add = immediate; edit/delete = on save
+- **Naming** — no banner comments; `Utils` suffix for static-only classes
+- **Extensible Enums** — `final class` + `static final` constants, not Java `enum`
+- **Serialization** — use `MessagePak` for forward-compatible binary formats
+- **Access Lists** — single source of truth; `AccessListManager` singleton; key-file edit gate
+- **Prefs enabled/disabled** — store only identifier + `enabled` boolean
+- **Code commenting style** — see [`Code Comments.md`](Code%20Comments.md)
+
+**For architectural patterns**, see **[myster-important-patterns.md](myster-important-patterns.md)**:
+- Event System, Promise/Future, Listener Pattern, Dependency Injection, Threading
+- **FlatLaf Theming** — `UIManager.getColor("Actions.Red")` etc.; never hardcode `new Color(...)`
+
+---
+
 ## Table of Contents
 
 - [UI Components](#ui-components)
+  - [Dialogs — AnswerDialog not JOptionPane](#dialogs--use-answerdialog-not-joptionpane)
+  - [JMCList](#jmclist-preferences)
+  - [Modal Dialogs](#modal-dialogs)
+  - [Icon Loading & SVG Colors](#icon-loading-convention)
 - [Layout](#layout)
 - [Data Persistence](#data-persistence)
 - [Testing](#testing)
 - [Preference Panels](#preference-panels)
 - [Naming Conventions](#naming-conventions)
-- [Null Checks / Argument Validation](#null-checks--argument-validation)
+  - [No Banner Comments](#no-section-divider-banner-comments)
+  - [Utils Classes](#utils-classes)
 - [Extensible Enums](#extensible-enums)
 - [Serialization Extensibility](#serialization-extensibility)
-
-**For architectural patterns** (Event System, Promise/Future, Listener Pattern, Dependency Injection, Threading), see:
-- **[Important Patterns](myster-important-patterns.md)** - Key architectural and design patterns
+- [Access Lists as Canonical Metadata](#access-lists-as-canonical-metadata)
+- [Prefs-Based Enabled/Disabled Index](#prefs-based-enableddisabled-index)
 
 ---
 
@@ -124,6 +150,9 @@ public class MyDialog extends JDialog {
 
 **Magic Colors** (auto-substituted by FlatLaf):
 - `#6E6E6E` - Standard foreground color (changes with theme)
+- `#DB5860` - Error / red action color (maps to `UIManager.getColor("Actions.Red")`)
+- `#EDA200` - Warning / yellow action color (maps to `UIManager.getColor("Actions.Yellow")`)
+- `#59A869` - Success / green action color (maps to `UIManager.getColor("Actions.Green")`)
 - See [FlatIconColors.java](https://github.com/JFormDesigner/FlatLaf/blob/main/flatlaf-core/src/main/java/com/formdev/flatlaf/FlatIconColors.java) for full list
 
 **SVG Example**:
@@ -175,6 +204,10 @@ toolbar.add(pauseAction); // Adds icon-only button with tooltip
 ```
 
 **Note**: FlatLaf's automatic color substitution handles theme changes for icons that use the magic hex colors like `#6E6E6E`. You only need `ColorFilter` for special cases like menu item selection states.
+
+> **Using these colours in Java code** (not SVGs): use `UIManager.getColor("Actions.Red")` etc.
+> rather than hardcoding `new Color(...)`. See the **FlatLaf Theming** section in
+> [`myster-important-patterns.md`](myster-important-patterns.md) for the full pattern and rationale.
 
 ## Layout
 
@@ -363,4 +396,3 @@ on read. Missing access list → delete the stale prefs node; log a WARNING; ski
 ---
 
 *Last updated: February 2026*
-
