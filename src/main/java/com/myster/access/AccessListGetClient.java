@@ -7,8 +7,6 @@ import java.util.List;
 import java.util.Optional;
 import java.util.logging.Logger;
 
-import com.general.thread.PromiseFuture;
-import com.general.thread.PromiseFutures;
 import com.myster.net.MysterAddress;
 import com.myster.net.MysterSocket;
 import com.myster.net.stream.client.MysterDataInputStream;
@@ -22,6 +20,9 @@ import com.myster.type.MysterType;
  *
  * <p>Protocol matches {@link AccessListGetServer}: sends 16-byte MysterType and 32-byte
  * known_tip_hash, receives status + total_bytes_remaining + size-prefixed block stream.
+ *
+ * <p>All methods are plain blocking calls on the calling thread. Callers that need async
+ * behaviour should wrap with {@link com.general.thread.PromiseFutures#execute}.
  */
 public class AccessListGetClient {
     private static final Logger log = Logger.getLogger(AccessListGetClient.class.getName());
@@ -39,12 +40,13 @@ public class AccessListGetClient {
     /**
      * Fetches a complete access list from a server (full chain from genesis).
      *
-     * @param server the server address
+     * @param server     the server address
      * @param mysterType the type to fetch
-     * @return future containing the AccessList, or empty if the server has no blocks
+     * @return the AccessList, or empty if the server has no blocks for this type
+     * @throws IOException if the connection fails or the server returns an error
      */
-    public static PromiseFuture<Optional<AccessList>> fetchAccessList(MysterAddress server,
-                                                                      MysterType mysterType) {
+    public static Optional<AccessList> fetchAccessList(MysterAddress server,
+                                                       MysterType mysterType) throws IOException {
         return fetchAccessList(server, mysterType, new byte[32]);
     }
 
@@ -54,50 +56,48 @@ public class AccessListGetClient {
      * <p>Returns {@code Optional.empty()} if the client is already up-to-date (the server
      * responded OK but sent zero blocks because known_tip_hash matched the tip).
      *
-     * @param server the server address
-     * @param mysterType the type to fetch
+     * @param server       the server address
+     * @param mysterType   the type to fetch
      * @param knownTipHash hash of the client's latest block (all zeros for full fetch)
-     * @return future containing the AccessList if new blocks were received, or empty if up-to-date
+     * @return the AccessList if new blocks were received, or empty if already up-to-date
+     * @throws IOException if the connection fails or the server returns an error
      */
-    public static PromiseFuture<Optional<AccessList>> fetchAccessList(MysterAddress server,
-                                                                      MysterType mysterType,
-                                                                      byte[] knownTipHash) {
-        return PromiseFutures.execute(() -> {
-            log.info("Fetching access list from " + server + " for type: " + mysterType.toHexString());
+    public static Optional<AccessList> fetchAccessList(MysterAddress server,
+                                                       MysterType mysterType,
+                                                       byte[] knownTipHash) throws IOException {
+        log.info("Fetching access list from " + server + " for type: " + mysterType.toHexString());
 
-            try (MysterSocket socket = MysterSocketFactory.makeStreamConnection(server)) {
-                MysterDataOutputStream out = socket.out;
-                MysterDataInputStream in = socket.in;
+        try (MysterSocket socket = MysterSocketFactory.makeStreamConnection(server)) {
+            MysterDataOutputStream out = socket.out;
+            MysterDataInputStream in = socket.in;
 
-                out.writeInt(SECTION_NUMBER);
+            out.writeInt(SECTION_NUMBER);
 
-                int response = in.read();
-                if (response != 1) {
-                    throw new IOException("Server rejected protocol section: " + response);
-                }
-
-                // Send request: 16-byte MysterType + 32-byte known_tip_hash
-                out.write(mysterType.toBytes());
-                out.write(knownTipHash);
-                out.flush();
-
-                int status = in.readInt();
-
-                switch (status) {
-                    case STATUS_OK -> {
-                        return readAccessList(mysterType, in);
-                    }
-                    case STATUS_NOT_FOUND -> throw new IOException("Access list not found on server");
-                    case STATUS_FORK_DETECTED -> throw new IOException("Fork detected: known_tip_hash not in server's chain");
-                    case STATUS_ERROR -> throw new IOException("Server error processing request");
-                    default -> throw new IOException("Unknown status code: " + status);
-                }
-
-            } catch (IOException e) {
-                log.severe("Failed to fetch access list: " + e.getMessage());
-                throw e;
+            int response = in.read();
+            if (response != 1) {
+                throw new IOException("Server rejected protocol section: " + response);
             }
-        });
+
+            // Send request: 16-byte MysterType + 32-byte known_tip_hash
+            out.write(mysterType.toBytes());
+            out.write(knownTipHash);
+            out.flush();
+
+            int status = in.readInt();
+
+            switch (status) {
+                case STATUS_OK -> {
+                    return readAccessList(mysterType, in);
+                }
+                case STATUS_NOT_FOUND -> throw new IOException("Access list not found on server");
+                case STATUS_FORK_DETECTED -> throw new IOException("Fork detected: known_tip_hash not in server's chain");
+                case STATUS_ERROR -> throw new IOException("Server error processing request");
+                default -> throw new IOException("Unknown status code: " + status);
+            }
+        } catch (IOException e) {
+            log.severe("Failed to fetch access list: " + e.getMessage());
+            throw e;
+        }
     }
 
     private static Optional<AccessList> readAccessList(MysterType mysterType,
@@ -122,7 +122,6 @@ public class AccessListGetClient {
 
         if (blocks.isEmpty()) {
             log.info("Already up-to-date for type: " + mysterType.toHexString());
-
             return Optional.empty();
         }
 
@@ -133,37 +132,36 @@ public class AccessListGetClient {
         }
 
         log.info("Fetched " + blocks.size() + " blocks");
-
         return Optional.of(accessList);
     }
 
     /**
-     * Tries to fetch an access list from multiple onramp servers in order.
+     * Tries to fetch an access list from multiple onramp servers in order, returning
+     * the result from the first server that responds successfully.
      *
      * @param mysterType the type to fetch
-     * @param onramps list of server addresses ("host:port" or "host")
-     * @return future containing the AccessList from the first successful server, or empty
+     * @param onramps    list of server addresses ("host:port" or "host")
+     * @return the AccessList from the first successful server, or empty
+     * @throws IOException if all onramps fail or none are provided
      */
-    public static PromiseFuture<Optional<AccessList>> fetchFromOnramps(MysterType mysterType,
-                                                                       List<String> onramps) {
-        return PromiseFutures.execute(() -> {
-            IOException lastException = null;
+    public static Optional<AccessList> fetchFromOnramps(MysterType mysterType,
+                                                        List<String> onramps) throws IOException {
+        IOException lastException = null;
 
-            for (String onramp : onramps) {
-                try {
-                    MysterAddress address = MysterAddress.createMysterAddress(onramp);
-                    return fetchAccessList(address, mysterType).get();
-                } catch (Exception e) {
-                    lastException = new IOException("Failed to fetch from " + onramp, e);
-                    log.warning("Failed to fetch from onramp " + onramp + ": " + e.getMessage());
-                }
+        for (String onramp : onramps) {
+            try {
+                MysterAddress address = MysterAddress.createMysterAddress(onramp);
+                return fetchAccessList(address, mysterType);
+            } catch (IOException e) {
+                lastException = new IOException("Failed to fetch from " + onramp, e);
+                log.warning("Failed to fetch from onramp " + onramp + ": " + e.getMessage());
             }
+        }
 
-            if (lastException != null) {
-                throw lastException;
-            }
-            throw new IOException("No onramps provided");
-        });
+        if (lastException != null) {
+            throw lastException;
+        }
+        throw new IOException("No onramps provided");
     }
 }
 

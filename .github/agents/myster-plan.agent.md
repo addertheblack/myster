@@ -56,3 +56,8 @@ Your `docs/plans/<feature-slug>.md` must include, at minimum:
 - Write the plan in Markdown.
 - If you make assumptions, list them explicitly.
 - If you asked clarifying questions, keep the current best plan in the file and mark open questions clearly.
+
+## Code conventions
+If you find something specific to this codebase that is surprising. Please note it in the docs/conventions/* files somewhere.
+- `docs/conventions/myster-coding-conventions.md` for Myster coding conventions
+- `docs/conventions/myster-important-patterns.md` for important patterns and architectural styles

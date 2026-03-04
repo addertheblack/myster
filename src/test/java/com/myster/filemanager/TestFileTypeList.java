@@ -515,5 +515,10 @@ class TestFileTypeList {
         public Optional<CustomTypeDefinition> getCustomTypeDefinition(MysterType type) {
             return Optional.empty();
         }
+
+        @Override
+        public void importType(com.myster.access.AccessList accessList) {
+            // No-op for testing
+        }
     }
 }

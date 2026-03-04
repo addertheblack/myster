@@ -1,428 +1,377 @@
-# Private Types Access Lists — Milestone 3: Type Metadata Resolution & Import
+# Private Types — Milestone 3: Type Metadata Resolution & Import
 
-## Summary
-
-Two distinct features that both involve access lists from remote nodes, but serve
-fundamentally different purposes:
-
-1. **Type metadata resolution** — when the `ClientWindow` (`TypeListerThread`) receives a
-   `MysterType` from a remote server that is not in the local `TypeDescriptionList`, it
-   currently displays the raw hex string. After this milestone, the app can fetch the access
-   list for that type from the remote node on-demand and display a human-readable name instead.
-   Nothing is saved to disk; this is a transient, display-only lookup.
-
-2. **Type import** — a deliberate user action that permanently adds a remote type to the local
-   `TypeDescriptionList` so it can be enabled, searched, and used going forward.  The access
-   list is fetched, verified, and saved to disk.  No admin key is created (the user is not the
-   type owner), so the type opens as read-only in `TypeEditorPanel`.
-
-These are separated because they have completely different lifecycles, user intent, and
-persistence requirements.
+**Milestone**: 3 of N  
+**Depends on**: M2 complete (`private-types-access-lists-milestone2.md`)  
+**Status**: Implemented  
+**Last revised**: 2026-03-03
 
 ---
 
-## Goals
+## 1. Summary
 
-1. **Metadata resolution**: unknown `MysterType` hex strings in `ClientWindow` are resolved
-   to human-readable names by fetching the type's access list from the remote node.
-2. **Resolution is transient**: fetched-for-display metadata is cached in memory for the
-   session but not written to disk or to `CustomTypeManager`.
-3. **Type import**: user can import a type (by hex, by URL, or from the `ClientWindow` type
-   list), which fetches the access list, verifies its integrity, saves it to disk via
-   `AccessListManager`, and registers the type in `CustomTypeManager` as enabled/disabled.
-4. **Imported types are read-only in the editor**: no `.key` file is created; `TypeEditorPanel`
-   opens in read-only mode automatically (key-file gate, already implemented in M2).
-5. **`TypeDescriptionList.get(MysterType)`** is the single resolution point: code that already
-   calls it (like `ClientWindow.addItemToTypeList`) gets the resolved name for free once the
-   type is known, whether it was imported or just resolved in-memory.
+Two related features, both driven by the same underlying operation — fetching a type's access
+list from a remote node over TCP:
 
----
+1. **Transient name resolution** — `ClientWindow` currently shows unknown types as raw hex
+   strings. After this milestone the app silently fetches the access list from the connected
+   server and replaces the hex string with a human-readable name. Nothing is saved; it
+   resolves again each session.
 
-## Non-Goals (Milestone 3)
-
-- Access-control enforcement in file serving or search (later milestone).
-- Multi-admin / multi-writer flows.
-- Pushing updates to a remote access list (admin-only, not applicable for imported types).
-- Resolving types in the Tracker window or Search window (can follow the same pattern later).
-- Auto-importing all types seen on the network (user must explicitly import).
+2. **Right-click import** — the user right-clicks an unrecognised type in `ClientWindow` and
+   chooses "Add this type". The app fetches the access list, permanently saves it, enables the
+   type, and the rest of the app sees it immediately via the existing `typeEnabled` event.
 
 ---
 
-## Background: How the Current Display Works
+## 2. Non-Goals
 
-`ClientWindow.addItemToTypeList(MysterType t)` already does the right thing:
+- Standalone import dialog / paste-hex / disk-file import (later milestone).
+- "Import…" button in `TypeManagerPreferences`.
+- Access-control enforcement in file serving or search.
+- Resolving type names anywhere other than `ClientWindow` (Tracker, Search, etc.).
+- Auto-importing types seen on the network — import is always an explicit user action.
+
+---
+
+## 3. Assumptions & Open Questions
+
+None outstanding. All design questions from pre-planning review resolved.
+
+---
+
+## 4. Proposed Design
+
+### Name resolution (transient)
+
+When `TypeListerThread` finishes listing types from a server, for each type not already in
+`TypeDescriptionList` it fires an async fetch of that type's access list. On success the
+display name in the existing row is updated in-place. The cache is per-`ClientWindow`,
+in-memory only, and discarded when the window closes or reconnects.
+
+The row update uses a mutable name cell (`MutableSortableString`) stored alongside the row at
+insert time, so the name can be replaced without removing and re-adding the row. This avoids
+any selection disruption or row movement.
+
+### Import (permanent)
+
+Right-clicking an unrecognised type row shows a single menu item: "Add this type". Clicking
+it fetches the access list from the currently-connected server (address already known),
+validates and saves it via `TypeDescriptionList.importType()`, and enables the type. The
+`typeEnabled` event then propagates to all subscribers (`TypeManagerPreferences`,
+`FileTypeListManager`, `Tracker`) without any additional wiring.
+
+Imported types have no admin key file on this machine, so `TypeEditorPanel` opens them
+read-only automatically (key-file gate from M2).
+
+Watchout for the case where the server doesn't have the access list for that type AND/OR where the types might not YET be populated with their access lists.
+
+### Error feedback
+
+`MessageField` (the status bar `JLabel` in `ClientWindow`) gains a `sayError()` mode: FlatLaf
+themeable red foreground (`UIManager.getColor("Actions.Red")`) and a bundled warning SVG icon
+sized to the font height to avoid layout reflow. The next `say()` call resets to normal.
+See `myster-coding-conventions.md` → Icon Loading and `myster-important-patterns.md` →
+FlatLaf Theming for the conventions behind this.
+
+---
+
+## 5. Architecture Connections
+
+### New objects and how they plug in
+
+| New / changed thing | Owned / created by | Called / used by | Connects to (existing) |
+|---|---|---|---|
+| `TypeMetadataCache` | `ClientWindow` (one per window) | `TypeListerThread`, `ClientWindow` | `MysterStream.getAccessList` |
+| `MysterStream.getAccessList` | n/a — new method on existing interface | `TypeMetadataCache`, `ClientWindow.importSelectedType` | `AccessListGetClient` (static, existing) |
+| `TypeDescriptionList.importType` | n/a — new method on existing interface | `ClientWindow.importSelectedType` | `AccessListManager`, `CustomTypeManager`, `typeEnabled` event |
+| `MutableSortableString` | `ClientWindow.addItemToTypeList` | `ClientWindow.refreshTypeDisplay` | `MCList` row (replaces bare `SortableString` for the name cell) |
+| `MessageField.sayError` | n/a — new method on existing class | `ClientWindow.importSelectedType` | FlatLaf `UIManager` colour keys |
+
+### Data flow — name resolution
+
+`TypeListerThread` receives types from the server → for each unknown type, calls
+`cache.resolveAsync(type, address, callback)` → cache fires `MysterStream.getAccessList` on a
+background thread → on success updates the cached name → fires callback →
+`TypeListerThread`'s `Util.invokeLater` wrapper dispatches to EDT →
+`ClientWindow.refreshTypeDisplay` mutates the `MutableSortableString` in the existing row
+and repaints.
+
+### Data flow — import
+
+User right-clicks → "Add this type" → `ClientWindow.importSelectedType` →
+`protocol.getStream().getAccessList(address, type)` → on success →
+`typeDescriptionList.importType(accessList)` → saves access list to disk, enables type, fires
+`typeEnabled` → `TypeManagerPreferences`, `FileTypeListManager`, `Tracker` all update via
+existing listener wiring → `ClientWindow.refreshTypeDisplay` updates the row name immediately.
+
+### Key interface changes (architecture-level)
+
+- **`MysterStream`** (`com.myster.net.client`) gains `getAccessList(MysterAddress, MysterType)`.
+  Access list fetching belongs in the standard stream suite alongside `getTypes`,
+  `getServerStats`, etc. `AccessListGetClient` stays all-static; `MysterStreamImpl` delegates
+  to it. Only one implementation exists.
+
+  **Note**: unlike all other `MysterStream` methods, `getAccessList` takes a `MysterAddress`
+  rather than an existing `MysterSocket` — because `AccessListGetClient` opens its own
+  fresh TCP connection internally. This is intentional: the access list fetch is a
+  separate, independent connection, not piggybacked on the type-listing socket.
+
+- **`TypeDescriptionList`** (`com.myster.type`) gains `importType(AccessList)`. This is the
+  permanent-save path, distinct from `addCustomType` (which requires an admin key). It fires
+  `typeEnabled`; there is no separate "type added" event.
+
+- **`TypeListerThread.TypeListener`** (inner interface, `com.myster.client.ui`) gains
+  `refreshTypeDisplay(MysterType)`. The constructor's `Util.invokeLater` wrapper already
+  dispatches all listener calls to the EDT; the new method is covered by the same wrapper.
+  Currently only `ClientWindow.startConnect()`'s anonymous class implements this interface.
+
+---
+
+## 6. Key Decisions & Edge Cases
+
+**Access list fetching goes through `MysterStream`, not a new class.** `AccessListGetClient`
+is all-static; the right integration point is the existing standard stream suite interface so
+callers receive it through the normal `protocol.getStream()` dependency path.
+
+**Resolution is transient by design.** Names are not saved. Import is the explicit opt-in
+path. This avoids silently populating the type list.
+
+**Import enables the type immediately.** The `typeEnabled` event handles all UI propagation
+for free — no manual refresh calls needed anywhere in the app.
+
+**Concurrent resolution prevented by sentinel.** `TypeMetadataCache` uses
+`ConcurrentHashMap.putIfAbsent` with an empty-string sentinel so only one fetch per type runs,
+even under concurrent access.
+
+**`Util.invokeLater` double-dispatch hazard.** `TypeListerThread`'s constructor already wraps
+all `TypeListener` calls with `Util.invokeLater`. The `onResolved` callback must be fired on
+the background thread — do not add a second `invokeLater` inside `TypeMetadataCache`. See
+`myster-important-patterns.md` → Threading & Concurrency.
+
+**`typeDisplayNames` must be cleared on reconnect.** Every call site in `ClientWindow` that
+clears `fileTypeList` must also clear `typeDisplayNames`, or stale `MutableSortableString`
+references will accumulate.
+
+---
+
+## 7. Acceptance Criteria
+
+- [ ] Unknown `MysterType` hex strings in `ClientWindow` resolve to human-readable names
+      without row movement or selection disruption.
+- [ ] Resolution is transient — reopening the window starts with hex strings again.
+- [ ] Right-clicking any type row shows a popup. "Add this type" is enabled for unrecognised
+      types and disabled (reading "Type already added") for known types.
+- [ ] "Add this type" imports the type, enables it, and updates the row name immediately.
+- [ ] Imported type appears in `TypeManagerPreferences` and all type pickers via `typeEnabled`
+      propagation — no manual refresh required.
+- [ ] Imported type opens read-only in the editor (no admin key on this machine).
+- [ ] Import failure surfaces as a dark-red + warning-icon status bar message; no modal dialog.
+- [ ] Error appearance adapts correctly on both light and dark FlatLaf themes.
+- [ ] `say(...)` after an error resets the status bar to normal appearance.
+- [ ] All M1/M2 tests still pass.
+
+---
+
+---
+## ✦ IMPLEMENTATION DETAILS (for the implementation agent)
+---
+
+## 8. Affected Files / Classes
+
+**New:**
+- `com/general/mclist/MutableSortableString.java`
+- `com/myster/client/ui/TypeMetadataCache.java`
+- `src/main/resources/com/general/util/warning-icon.svg`
+
+**Modified:**
+- `com/myster/net/client/MysterStream.java` — add `getAccessList`
+- `com/myster/net/stream/client/MysterStreamImpl.java` — implement `getAccessList`
+- `com/myster/type/TypeDescriptionList.java` — add `importType`
+- `com/myster/type/DefaultTypeDescriptionList.java` — implement `importType`
+- `com/myster/client/ui/TypeListerThread.java` — new `TypeListener` method; new constructor params; refactor `run()`
+- `com/myster/client/ui/ClientWindow.java` — cache field; mutable name cells; right-click menu; `importSelectedType`
+- `com/general/util/MessageField.java` — add `sayError`; update `say` to reset foreground/icon
+
+---
+
+## 9. Step-by-Step Implementation
+
+### Phase 0 — `getAccessList` on `MysterStream`
+
+1. Add to `MysterStream` interface:
+   ```java
+   PromiseFuture<Optional<AccessList>> getAccessList(MysterAddress server, MysterType type);
+   ```
+2. Implement in `MysterStreamImpl`:
+   ```java
+   @Override
+   public PromiseFuture<Optional<AccessList>> getAccessList(MysterAddress server, MysterType type) {
+       return AccessListGetClient.fetchAccessList(server, type);
+   }
+   ```
+3. Compile — only `MysterStreamImpl` implements `MysterStream`.
+
+### Phase 1 — `MutableSortableString`
 
 ```java
-typeDescriptionList.get(t)
-    .map(TypeDescription::getDescription)
-    .orElse(t.toString())   // ← falls back to hex string today
+/** SortableString whose display value can be updated in-place on the EDT. */
+public class MutableSortableString extends SortableString {
+    public MutableSortableString(String s) { super(s); }
+    public void setValue(String s) { this.string = s; }
+}
 ```
 
-So the fix for metadata resolution is: make `typeDescriptionList.get(t)` return a result for
-previously-unknown types by fetching their access list on-demand, without persisting anything.
+### Phase 2 — `warning-icon.svg` + `MessageField.sayError`
 
-`TypeListerThread` fetches the list of `MysterType` values from the remote server (UDP or TCP)
-and calls `listener.addItemToTypeList(type)` for each.  It does **not** currently fetch any
-metadata — that is the gap this milestone fills.
+1. Create `src/main/resources/com/general/util/warning-icon.svg`:
+   ```xml
+   <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16">
+     <path d="M8 1 L15 14 L1 14 Z" fill="none" stroke="#DB5860" stroke-width="1.5"
+           stroke-linejoin="round"/>
+     <line x1="8" y1="6" x2="8" y2="10" stroke="#DB5860" stroke-width="1.5"
+           stroke-linecap="round"/>
+     <circle cx="8" cy="12" r="0.75" fill="#DB5860"/>
+   </svg>
+   ```
+2. Update `MessageField`:
+   - `say(String)`: reset with `setForeground(UIManager.getColor("Label.foreground"))`,
+     `setIcon(null)`, then `setText(...)`.
+   - Add `sayError(String)`:
+     ```java
+     public void sayError(String s) {
+         setForeground(Optional.ofNullable(UIManager.getColor("Actions.Red"))
+                               .orElse(new Color(0xDB, 0x58, 0x60)));
+         int h = getFontMetrics(getFont()).getHeight();
+         try { setIcon(IconLoader.loadSvg(MessageField.class, "warning-icon", h)); }
+         catch (Exception ignored) { setIcon(null); }
+         setText(s);
+     }
+     ```
+3. Manual test on light + dark FlatLaf theme.
 
----
-
-## Proposed Design (High-Level)
-
-### Concept 1: Transient Type Name Cache
-
-A new lightweight component — `TypeMetadataCache` — sits between `TypeListerThread` and
-`ClientWindow`.  After receiving a `MysterType` from the remote server:
-
-1. Check `TypeDescriptionList.get(type)` — if already known, nothing to do.
-2. Check `TypeMetadataCache.get(type)` — if previously resolved this session, use cached name.
-3. Otherwise, fetch the access list from the remote server via `AccessListGetClient`
-   (already implemented in M1).  This is a background TCP call.
-4. On success: parse the access list, extract name from `AccessListState`; store in
-   `TypeMetadataCache` (in-memory only).
-5. Call `listener.addItemToTypeList(type)` — the `ClientWindow` calls
-   `typeDescriptionList.get(t).orElseGet(() -> cache.getName(t))` to get the display name.
-6. On failure: display raw hex string (existing behaviour, no regression).
-
-The cache is keyed by `MysterType`, value is the name string (or a sentinel for "tried and
-failed").  It is per-`ClientWindow` session — there is no global name cache.
-
-> **Note**: The remote node whose type list we're browsing is the natural server to ask for the
-> access list, since it presumably serves that type.  The fetch goes to `mysterAddress` (the
-> node already connected to in `TypeListerThread`).
-
-### Concept 2: Type Import
-
-Import flow:
-
-1. User initiates import. Entry points (any one suffices for M3):
-   - **"Import" button in `TypeManagerPreferences`** — user pastes a hex `MysterType` string
-     and an optional server address to fetch from.
-   - **Right-click "Import this type"** on an unrecognised type row in `ClientWindow`'s type
-     list (where the type is showing as a hex string because it's unrecognised).
-2. App fetches the access list from the specified (or connected) server via `AccessListGetClient`.
-3. Verify the access list: call `accessList.validate()`.
-4. Confirm with user: show name, description, policy from `accessList.getState()`.  Ask
-   "Add this type to your type list?"
-5. On confirm:
-   - `accessListManager.saveAccessList(accessList)` — saves to disk.
-   - `customTypeManager.saveEnabled(mysterType, false)` — registers as disabled by default.
-   - `defaultTypeDescriptionList` fires a type-added event.
-6. The type now appears in `TypeManagerPreferences` where the user can enable it.
-7. The type opens as read-only in `TypeEditorPanel` (no `.key` file — already handled by M2).
-
----
-
-## Affected Modules / Packages
-
-| Package | Component | Change |
-|---|---|---|
-| `com.myster.client.ui` | `TypeListerThread` | After fetching type list, also kick off background metadata resolution for unknown types |
-| `com.myster.client.ui` | `ClientWindow` | Use `TypeMetadataCache` for display fallback; add right-click "Import" on unknown type rows |
-| `com.myster.client.ui` | `TypeMetadataCache` (new) | In-memory transient name cache keyed by `MysterType`; fetches access list on miss |
-| `com.myster.type.ui` | `TypeManagerPreferences` | Add "Import" button; show import dialog |
-| `com.myster.type.ui` | `TypeImportDialog` (new) | Dialog for paste-hex / confirm-import flow |
-| `com.myster.access` | `AccessListGetClient` | Already implemented in M1; no changes needed |
-| `com.myster.type` | `DefaultTypeDescriptionList` | Add `importType(AccessList)` convenience method (wraps saveAccessList + saveEnabled) |
-
----
-
-## Files / Classes to Create or Change
-
-### Create
-
-#### 1. `com/myster/client/ui/TypeMetadataCache.java`
+### Phase 3 — `TypeMetadataCache`
 
 ```java
 /**
- * Transient, in-memory cache of type names fetched from remote nodes.
- *
- * <p>Used when a {@link MysterType} is not in the local {@link TypeDescriptionList}.
- * Fetches the type's access list from the remote node and caches the name for
- * the duration of the session. Nothing is written to disk.
- *
- * <p>A failed lookup is cached as a sentinel so we don't retry on every UI refresh.
+ * Per-ClientWindow transient cache of type display names fetched from remote nodes.
+ * Nothing is written to disk. Thread-safe. resolveAsync fires its callback on the
+ * background thread — EDT dispatch is the caller's responsibility.
  */
 public class TypeMetadataCache {
-    /** Returns the cached name, or the hex string if not yet resolved. */
-    public String getDisplayName(MysterType type) { ... }
+    interface Fetcher { // package-private for testing
+        PromiseFuture<Optional<AccessList>> fetch(MysterAddress address, MysterType type);
+    }
+    private final Fetcher fetcher;
+    private final ConcurrentHashMap<MysterType, String> cache = new ConcurrentHashMap<>();
 
-    /**
-     * Asynchronously fetches metadata for an unknown type from the given address.
-     * On success, updates the cache and fires the provided callback on the EDT.
-     * On failure, caches a sentinel and fires the callback with the hex string.
-     */
-    public void resolveAsync(MysterType type, MysterAddress from,
-                             AccessListGetClient client,
-                             Runnable onResolved) { ... }
+    public TypeMetadataCache(MysterStream stream) { this.fetcher = stream::getAccessList; }
+    TypeMetadataCache(Fetcher fetcher) { this.fetcher = fetcher; }
 
-    /** Returns true if a resolution attempt (successful or not) has been made. */
-    public boolean hasAttempted(MysterType type) { ... }
+    public String getDisplayName(MysterType type) {
+        String v = cache.get(type);
+        return (v != null && !v.isEmpty()) ? v : type.toHexString();
+    }
+    public boolean hasAttempted(MysterType type) { return cache.containsKey(type); }
+
+    public void resolveAsync(MysterType type, MysterAddress from, Runnable onResolved) {
+        if (cache.putIfAbsent(type, "") != null) return; // sentinel guards duplicate fetches
+        PromiseFutures.execute(() -> {
+            try {
+                fetcher.fetch(from, type).get().ifPresent(al -> {
+                    String name = al.getState().getName();
+                    cache.put(type, (name != null && !name.isBlank()) ? name : type.toHexString());
+                });
+            } catch (Exception ignored) { /* sentinel stays; getDisplayName returns hex */ }
+            onResolved.run(); // NOT on EDT — TypeListerThread's wrapper dispatches it
+            return null;
+        });
+    }
 }
 ```
 
-#### 2. `com/myster/type/ui/TypeImportDialog.java`
+### Phase 4 — `TypeDescriptionList.importType`
 
-```java
-/**
- * Dialog for importing a remote type into the local TypeDescriptionList.
- *
- * <p>Accepts a hex MysterType string and optional server address.
- * Fetches the access list, shows the type's metadata for confirmation,
- * then saves and registers it on user approval.
- */
-public class TypeImportDialog extends JDialog {
-    public TypeImportDialog(Frame parent,
-                            AccessListGetClient client,
-                            AccessListManager accessListManager,
-                            DefaultTypeDescriptionList tdList) { ... }
-}
-```
+1. Add to `TypeDescriptionList` interface:
+   ```java
+   /** Saves the access list to disk, enables the type, fires typeEnabled.
+    *  @throws IllegalArgumentException if the type is already known
+    *  @throws IllegalStateException    if chain validation fails
+    *  @throws IOException              if disk write fails */
+   void importType(AccessList accessList) throws IOException;
+   ```
+2. Implement in `DefaultTypeDescriptionList` (synchronized): validate chain, guard duplicate
+   with `getIndexFromType`, save via `accessListManager.saveAccessList`, enable via
+   `customTypeManager.saveEnabled(type, true)`, build `TypeDescription`, add to `types` list,
+   fire `dispatcher.fire().typeEnabled(new TypeDescriptionEvent(this, type))`.
 
-### Modify
+### Phase 5 — Wire into `TypeListerThread` and `ClientWindow`
 
-#### 3. `com/myster/client/ui/TypeListerThread.java`
+1. Add `refreshTypeDisplay(MysterType)` to `TypeListerThread.TypeListener`. Add it to the
+   constructor's `Util.invokeLater` wrapper alongside existing methods.
 
-- After the loop that calls `listener.addItemToTypeList(types[i])`, kick off background
-  metadata resolution for each type not already in `TypeDescriptionList`:
-  ```java
-  for (MysterType type : types) {
-      listener.addItemToTypeList(type);
-      if (!tdList.get(type).isPresent() && !cache.hasAttempted(type)) {
-          cache.resolveAsync(type, mysterAddress, accessListGetClient,
-                             () -> listener.refreshTypeDisplay(type));
-      }
-  }
-  ```
-- `TypeListener` gains a new method `refreshTypeDisplay(MysterType)` so `ClientWindow` can
-  update the display name of an already-added row when the async fetch completes.
-- Constructor gains `TypeDescriptionList tdList`, `TypeMetadataCache cache`, and
-  `AccessListGetClient accessListGetClient` parameters.
+2. Add nullable `TypeDescriptionList tdList` and `TypeMetadataCache cache` to
+   `TypeListerThread` constructor. Existing callers pass `null`; null skips resolution.
 
-#### 4. `com/myster/client/ui/ClientWindow.java`
+3. Refactor `TypeListerThread.run()`: compute `MysterAddress.createMysterAddress(ip)` **once
+   at the top** before the try/catch. Extract `resolveUnknownTypes(MysterType[], MysterAddress)`
+   that skips known types and already-attempted types and calls `cache.resolveAsync` for the
+   rest.
 
-- Add a `TypeMetadataCache` field (one per window).
-- In `addItemToTypeList`: use `cache.getDisplayName(type)` as the display-name fallback
-  instead of `t.toString()`.
-- Implement `refreshTypeDisplay(MysterType type)`: find the row in `fileTypeList` for that
-  type and update its display string from the cache.
-- Add right-click context menu on `fileTypeList` rows: if the selected type is not in
-  `TypeDescriptionList`, show "Import this type…" which opens `TypeImportDialog`.
+4. Run **Find Usages** on `TypeListener` before adding the new method — confirm only
+   `ClientWindow.startConnect()` implements it.
 
-#### 5. `com/myster/type/ui/TypeManagerPreferences.java`
+5. In `ClientWindow`:
+   - Construct `typeMetadataCache = new TypeMetadataCache(protocol.getStream())` in
+     constructor body.
+   - Add `Map<MysterType, MutableSortableString> typeDisplayNames = new HashMap<>()`.
+   - Update `addItemToTypeList`: use `MutableSortableString` for the name cell, store ref in
+     `typeDisplayNames`.
+   - Add `refreshTypeDisplay(MysterType)`: look up cell, set value from `typeDescriptionList`
+     (if now imported) or `typeMetadataCache`, then call `fileTypeList.repaint()`.
+     **No re-sort required** — `init()` calls `fileTypeList.sortBy(-1)` which disables
+     auto-sort on this list. Mutating the name cell is safe without re-sorting.
+   - Update `startConnect()`: pass `typeDescriptionList` and `typeMetadataCache` to
+     `TypeListerThread`; add `refreshTypeDisplay` to anonymous `TypeListener`.
+   - `fileTypeList.clearAll()` is called in exactly one place: `stopConnect()`. Clear
+     `typeDisplayNames` there too.
 
-- Add an "Import Type…" button to the button bar alongside "Add" and "Edit".
-- Opens `TypeImportDialog` with a blank initial state (user pastes hex manually).
+6. Add right-click `JPopupMenu` to `fileTypeList` in `init()`. Single item "Add this type".
+   Use `mousePressed` + `mouseReleased` with `isPopupTrigger()` (cross-platform). Only show
+   when the row's type is absent from `typeDescriptionList`.
 
-#### 6. `com/myster/type/DefaultTypeDescriptionList.java`
-
-- Add convenience method:
-  ```java
-  /**
-   * Imports a type from a remotely-fetched access list.
-   * Saves the access list to disk and registers the type as disabled.
-   * No admin key is created; the type will be read-only in the editor.
-   *
-   * @throws IllegalArgumentException if the type is already known
-   */
-  public void importType(AccessList accessList) throws IOException { ... }
-  ```
+7. Implement `importSelectedType()`: guard on selection and type not already known; resolve
+   `currentip` to `MysterAddress` (call `sayError` if invalid); call
+   `protocol.getStream().getAccessList(address, type).addCallListener(new CallAdapter<>(){...})`;
+   `handleResult` calls `importType`, `refreshTypeDisplay`, `msg.say(...)`; `handleError`
+   calls `msg.sayError(...)`. Both callbacks run on EDT by default — no `invokeLater` needed.
 
 ---
 
-## Step-by-Step Implementation Plan
+## 10. Tests to Write
 
-### Phase 1: `TypeMetadataCache`
-
-**Goal**: in-memory transient resolution of unknown type names.
-
-1. Create `src/main/java/com/myster/client/ui/TypeMetadataCache.java`.
-2. Internal map: `ConcurrentHashMap<MysterType, String>` where the value is either a name
-   or `""` (sentinel for "tried and failed, use hex string").
-3. `getDisplayName(MysterType type)`:
-   - `String cached = map.get(type)` — if non-null and non-empty, return it; if empty string
-     sentinel, return `type.toHexString()`; if null, return `type.toHexString()` (not yet resolved).
-4. `resolveAsync(MysterType, MysterAddress, AccessListGetClient, Runnable onResolved)`:
-   - If `hasAttempted(type)`, return immediately.
-   - Put a sentinel immediately to prevent concurrent duplicate fetches.
-   - Start a background thread / executor task: call
-     `accessListGetClient.getAccessList(address, type)`.
-   - On success: `map.put(type, state.getName())`.
-   - On failure: leave sentinel (`""`).
-   - Either way: `SwingUtilities.invokeLater(onResolved)`.
-5. `hasAttempted(MysterType)` → `map.containsKey(type)`.
-6. **Unit test** `TestTypeMetadataCache`:
-   - Successful resolve → `getDisplayName` returns name.
-   - Failed resolve → `getDisplayName` returns hex string.
-   - Second call to `resolveAsync` on an already-attempted type is a no-op.
-
-### Phase 2: `DefaultTypeDescriptionList.importType()`
-
-**Goal**: clean single entry-point for the import operation.
-
-1. Add `importType(AccessList accessList) throws IOException` to
-   `DefaultTypeDescriptionList`:
-   - Call `accessList.validate()` — throws if chain is invalid.
-   - Derive `MysterType` from `accessList.getMysterType()`.
-   - If `get(type).isPresent()` → throw `IllegalArgumentException("Type already known")`.
-   - `accessListManager.saveAccessList(accessList)`.
-   - `customTypeManager.saveEnabled(type, false)`.
-   - Build `CustomTypeDefinition` from `accessList.getState()` (same as `buildCustomTypeDefinition`).
-   - Add to in-memory type list.
-   - Fire type-added event.
-2. **Unit test**: import a valid access list → type appears in `getAllTypes()`; import same
-   type again → `IllegalArgumentException`.
-
-### Phase 3: `TypeImportDialog`
-
-**Goal**: UI for the manual import flow.
-
-1. Create `TypeImportDialog` as a modal `JDialog`.
-2. Fields:
-   - "Type ID (hex):" text field.
-   - "Server address (optional):" text field.
-   - "Fetch" button.
-3. On Fetch:
-   - Parse hex → `MysterType`. Show error if invalid.
-   - If server address provided, use it; otherwise show error "Server address required."
-   - Fetch access list via `AccessListGetClient`. Show progress indicator.
-   - On success: populate a read-only preview panel with name, description, policy from state.
-     Enable "Import" button.
-   - On failure: show error message.
-4. On Import:
-   - Call `tdList.importType(accessList)`.
-   - Close dialog.
-   - Show brief confirmation: "Type '{name}' added. Enable it in the Type Manager."
-5. **Manual test**: paste a valid type hex + server address → fetch → confirm → type appears
-   in `TypeManagerPreferences`.
-
-### Phase 4: Wire Metadata Resolution into `TypeListerThread` / `ClientWindow`
-
-**Goal**: unknown types in `ClientWindow` get their names resolved automatically.
-
-1. Add `refreshTypeDisplay(MysterType)` to `TypeListerThread.TypeListener` interface.
-2. `TypeListerThread` constructor: add `TypeDescriptionList`, `TypeMetadataCache`,
-   `AccessListGetClient` parameters.
-3. In the type-listing loop: after `listener.addItemToTypeList(type)`, call
-   `cache.resolveAsync(type, address, client, () -> listener.refreshTypeDisplay(type))` if the
-   type is not already in `tdList`.
-4. `ClientWindow`:
-   - Add `TypeMetadataCache cache` field (constructed per-window).
-   - `addItemToTypeList`: use `cache.getDisplayName(type)` as fallback.
-   - Implement `refreshTypeDisplay(MysterType type)`: scan `fileTypeList`, find the row whose
-     `getObject().equals(type)`, update its display string, repaint.
-   - Pass `cache`, `tdList`, and `accessListGetClient` to `TypeListerThread` constructor.
-5. Add `AccessListGetClient` singleton (or per-connection instance) where `ClientWindow` is
-   constructed — likely same place `AccessListManager` is wired in Phase 5 of M2.
-
-### Phase 5: Import from `ClientWindow` Right-Click
-
-**Goal**: one-click import for types visible in the connection window.
-
-1. Add right-click `JPopupMenu` to `fileTypeList` in `ClientWindow`.
-2. Show "Import this type…" menu item only when the selected type is not in `tdList`
-   (i.e. it's currently displaying as hex or cache-resolved name but not locally known).
-3. On click: open `TypeImportDialog` pre-filled with:
-   - Type hex from the selected row's `MysterType`.
-   - Current connected server address as the default server.
-4. After successful import, the row in `fileTypeList` updates its display name from the
-   `TypeDescriptionList` (via `typeDescriptionList.get(type)` which now returns a result).
-
-### Phase 6: Import button in `TypeManagerPreferences`
-
-**Goal**: allow import without needing a `ClientWindow` open.
-
-1. Add "Import…" `JButton` to the button panel in `TypeManagerPreferences`.
-2. On click: open `TypeImportDialog` with no pre-filled values.
-3. No other changes needed — `importType()` fires the type-added event which
-   `TypeManagerPreferences` already listens to.
-
----
-
-## Tests / Verification
-
-### Unit Tests (new or updated)
-
-| Test class | What to test |
+| Test class | Verifies |
 |---|---|
-| `TestTypeMetadataCache` | Successful resolve; failed resolve; no-op on second call |
-| `TestDefaultTypeDescriptionListImport` | Import valid access list → type added; duplicate → exception; `validate()` failure → exception |
+| `TestTypeMetadataCache` | resolve success; failure → hex; duplicate call → fetcher called once; null/blank name → hex |
+| `TestDefaultTypeDescriptionListImport` | valid import → enabled + event fired; duplicate → `IllegalArgumentException`; bad chain → `IllegalStateException` |
 
-### Manual QA Checklist
-
-- [ ] Connect to a remote server in `ClientWindow`. Types with no local description show as hex strings initially.
-- [ ] After a brief moment, unknown type hex strings resolve to human-readable names (async fetch).
-- [ ] Closing and reopening `ClientWindow` starts fresh — names re-resolve (no disk persistence).
-- [ ] Right-click an unrecognised type → "Import this type…" → confirm → type appears in Type Manager.
-- [ ] Open Type Manager → Import button → paste hex + server → fetch → confirm → type appears.
-- [ ] Imported type is disabled by default.
-- [ ] Imported type opens read-only in the editor (no admin key).
-- [ ] Importing a type that already exists shows an error.
-- [ ] Importing a type with a corrupted/invalid access list shows an error (validation fails).
+Manual QA:
+- [ ] Unknown types show hex then resolve in-place; no row movement.
+- [ ] Reopen window → hex again (not persisted).
+- [ ] Right-click unrecognised type → menu appears. Right-click known type → no menu.
+- [ ] Import succeeds → row updates, type in Type Manager enabled, opens read-only.
+- [ ] Import failure (server has no access list) → red + icon in status bar.
+- [ ] Dark FlatLaf theme → colours adapt correctly.
+- [ ] `say(...)` after error → status bar resets to normal.
+- [ ] `typeEnabled` propagates to `Tracker`, `FileTypeListManager` without NPE.
 
 ---
 
-## Docs / Comments to Update
+## 11. Docs / Javadoc to Update
 
-1. `TypeMetadataCache.java` — full Javadoc explaining transient-only semantics.
-2. `DefaultTypeDescriptionList.importType()` — Javadoc distinguishing import from create.
-3. `TypeListerThread` — update Javadoc to mention metadata resolution side-effect.
-4. `docs/impl_summary/private-types-import.md` (create after implementation).
-
----
-
-## Acceptance Criteria
-
-- [ ] Unknown `MysterType` hex strings in `ClientWindow` resolve to names after access list fetch.
-- [ ] Resolution is never written to disk — restart shows hex, then resolves again.
-- [ ] User can import a type via `TypeManagerPreferences` Import button.
-- [ ] User can import a type via right-click in `ClientWindow`.
-- [ ] Imported types are registered as disabled and open as read-only in the editor.
-- [ ] Importing a duplicate type fails gracefully with a user-visible error.
-- [ ] Importing an access list that fails `validate()` fails gracefully.
-- [ ] All new unit tests pass.
-- [ ] All M1 and M2 tests still pass.
-
----
-
-## Risks / Edge Cases / Rollout Notes
-
-### Risks
-
-1. **`AccessListGetClient` availability in `ClientWindow`** — `ClientWindow` is currently
-   constructed without any reference to M1/M2 infrastructure. It will need `AccessListGetClient`
-   and `TypeDescriptionList` injected. Check the constructor call site carefully.
-
-2. **Race condition in `TypeMetadataCache`**: if `resolveAsync` is called twice for the same
-   type before the first fetch completes, two fetches would fire. The sentinel written
-   immediately before the fetch prevents this — the second call checks `hasAttempted()` and
-   returns early.
-
-3. **`TypeListener.refreshTypeDisplay` is a new interface method** — any other implementations
-   of `TypeListener` (check if there are any beyond `ClientWindow`) must be updated.
-
-4. **Server that served the type list may not serve that type's access list** — the access
-   list is fetched from the same remote node, but that node might not have the access list
-   on disk (it might not be the type's origin server). In that case the fetch fails silently
-   and the hex string remains. This is acceptable for M3; a future milestone could try
-   fetching from onramps listed in the access list.
-
-### Edge Cases
-
-- **Type is resolved in cache but then imported** — after import, `typeDescriptionList.get(type)`
-  returns a real result, so the cache is bypassed. The display updates correctly.
-- **Multiple `ClientWindow` instances open simultaneously** — each has its own `TypeMetadataCache`.
-  Resolved names may differ momentarily between windows until both complete their fetches.
-  This is fine; they will converge.
-- **Import during active connection** — after import, `typeDescriptionList.get(type)` returns
-  a result, so future `addItemToTypeList` calls will use it. Any existing row in `fileTypeList`
-  won't retroactively update unless `refreshTypeDisplay` is called; that's acceptable.
-
----
-
-**Plan Version**: 1.0
-**Created**: 2026-02-24
-**Milestone**: 3 of 3
-**Depends on**: Milestone 2 (`private-types-access-lists-milestone2.md`) complete
-**Status**: Ready for review
-
+- `MutableSortableString` — class Javadoc: EDT-only mutation; repaint required after.
+- `TypeMetadataCache` — class Javadoc: transient; `onResolved` fires on background thread.
+- `MessageField.sayError` — resets on next `say()`; uses `"Actions.Red"` UIManager key.
+- `MysterStream.getAccessList` — delegates to `AccessListGetClient`; standard suite member.
+- `TypeDescriptionList.importType` — no admin key required; fires `typeEnabled`; contrast with `addCustomType`.
+- `TypeListerThread` — class Javadoc: note async name-resolution side-effect.
+- `docs/impl_summary/private-types-access-lists-milestone3.md` — create after implementation.

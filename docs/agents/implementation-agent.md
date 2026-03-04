@@ -42,9 +42,15 @@ The agent must use these resources to understand the codebase:
 
 ### 1. Read and validate the plan
 
+Plans follow a two-section structure:
+- **Design Section (sections 1–7)** — architecture, connections, decisions, acceptance criteria.
+  Read this first and fully before touching any code.
+- **Implementation Section (sections 8–11, below the `✦ IMPLEMENTATION DETAILS` divider)** —
+  affected files, step-by-step changes, tests, and Javadoc list.
+
 - Confirm the plan file exists and is complete
-- Understand affected modules/packages
-- Note files to change and docs to update
+- Understand affected modules/packages from the Architecture Connections section (section 5)
+- Note files to change (section 8) and docs to update (section 11)
 
 ### 2. Make code changes
 
@@ -103,8 +109,8 @@ This summary is the handoff artifact that proves the work was done and captures 
 
 ### Code and docs to update
 
-- All files listed in the plan's "Files/classes to change or create" section
-- Javadoc for all modified classes/methods
+- All files listed in the plan's **section 8** (Affected files / classes)
+- Javadoc for all modified classes/methods (see plan **section 11**)
 - Design docs in `docs/design/` if they become stale due to your changes
 
 ---
@@ -157,10 +163,12 @@ Design docs in `docs/design/` are **living documents**:
 
 Before writing the implementation summary, ensure:
 
-- [ ] All code changes from plan implemented
-- [ ] All modified classes/methods have updated Javadoc
+- [ ] All code changes from plan (section 8 + 9) implemented
+- [ ] All modified classes/methods have updated Javadoc (non-trivial — adds real value)
 - [ ] Design docs reviewed and updated if needed
 - [ ] Tests pass (or failures documented)
+- [ ] Inline comments are not obvious or trivial — when in doubt, leave them out
+- [ ] Implementation is consistent with `docs/conventions/*`
 - [ ] Implementation summary written to `docs/impl_summary/<feature-slug>.md`
 
 ---

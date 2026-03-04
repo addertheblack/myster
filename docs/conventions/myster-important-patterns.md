@@ -280,7 +280,24 @@ EDT by a wrapper (e.g. `TypeListerThread`'s constructor wraps all `TypeListener`
 `Util.invokeLater`), do **not** add another `invokeLater` inside the callback body. The
 wrapper is the single dispatch point.
 
-### `PromiseFuture` — `addCallListener` / `CallAdapter`
+### Stream-suite methods are always blocking
+
+Methods on `MysterStream` (and stream-suite clients like `AccessListGetClient`) must be plain
+blocking calls that throw `IOException`. They must **never** return `PromiseFuture` or start
+their own thread. Callers choose their own threading model:
+
+```java
+// In a background thread / TypeMetadataCache:
+PromiseFutures.execute(() -> stream.getAccessList(addr, type))
+              .addResultListener(result -> { ... });
+
+// In a MysterThread subclass (run() method):
+Optional<AccessList> al = AccessListGetClient.fetchAccessList(addr, type);
+```
+
+Rationale: returning a `PromiseFuture` from a stream method creates an abstraction inversion —
+the method takes over threading decisions that belong to the caller. Any caller that needs async
+behaviour can trivially wrap with `PromiseFutures.execute`.
 
 In addition to `addResultListener` / `addExceptionListener`, `PromiseFuture` supports
 `addCallListener(CallAdapter<T>)` for handling both result and error in one object. This is

@@ -2,7 +2,10 @@ package com.myster.net.stream.client;
 
 import java.io.IOException;
 import java.util.List;
+import java.util.Optional;
 
+import com.myster.access.AccessList;
+import com.myster.access.AccessListGetClient;
 import com.myster.hash.FileHash;
 import com.myster.mml.MessagePak;
 import com.myster.net.MysterAddress;
@@ -66,5 +69,10 @@ public class MysterStreamImpl implements MysterStream {
     @Override
     public boolean ping(MysterSocket socket) {
         return StandardSuiteStream.ping(socket);
+    }
+
+    @Override
+    public Optional<AccessList> getAccessList(MysterAddress server, MysterType type) throws IOException {
+        return AccessListGetClient.fetchAccessList(server, type);
     }
 }

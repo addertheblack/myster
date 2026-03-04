@@ -223,7 +223,12 @@ public class DefaultTypeDescriptionList implements TypeDescriptionList {
         if (types.get(index).enabled == enable) return;
 
         types.get(index).setEnabled(enable);
-        saveEverythingToDisk();
+
+        if (types.get(index).getTypeDescription().getSource() == TypeSource.CUSTOM) {
+            customTypeManager.saveEnabled(type, enable);
+        } else {
+            saveEverythingToDisk();
+        }
 
         if (enable) {
             dispatcher.fire().typeEnabled(new TypeDescriptionEvent(this, type));
@@ -345,6 +350,33 @@ public class DefaultTypeDescriptionList implements TypeDescriptionList {
         }
         return accessListManager.loadAccessList(type)
                 .map(al -> buildCustomTypeDefinition(al.getState()));
+    }
+
+    /**
+     * Imports a type from a remotely-fetched access list. Saves the access list to disk,
+     * enables the type immediately, and fires {@code typeEnabled} so all subscribers update.
+     *
+     * <p>The imported type has no admin key on this machine, so it opens read-only in the
+     * editor (the key-file gate in {@code TypeEditorPanel} handles this automatically).
+     *
+     * @throws IllegalArgumentException if the type is already registered
+     * @throws IllegalStateException    if the access list chain fails validation
+     * @throws IOException              if saving the access list to disk fails
+     */
+    @Override
+    public synchronized void importType(AccessList accessList) throws IOException {
+        accessList.validate();
+        MysterType type = accessList.getMysterType();
+        if (getIndexFromType(type) != -1) {
+            throw new IllegalArgumentException("Type already known: " + type.toHexString());
+        }
+        accessListManager.saveAccessList(accessList);
+        customTypeManager.saveEnabled(type, true);
+        CustomTypeDefinition def = buildCustomTypeDefinition(accessList.getState());
+        TypeDescription customDesc = buildTypeDescription(type, def);
+        types.add(new TypeDescriptionElement(customDesc, true));
+        log.info("Imported (enabled) custom type: " + def.getName());
+        dispatcher.fire().typeEnabled(new TypeDescriptionEvent(this, type));
     }
 
 

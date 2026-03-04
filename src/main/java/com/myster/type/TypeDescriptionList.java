@@ -1,6 +1,9 @@
 package com.myster.type;
 
+import java.io.IOException;
 import java.util.Optional;
+
+import com.myster.access.AccessList;
 
 /**
  * The TypeDescriptionList contains some basic type information for most file
@@ -94,6 +97,24 @@ public interface TypeDescriptionList {
      * @return Optional containing the CustomTypeDefinition if this is a custom type, empty otherwise
      */
     Optional<CustomTypeDefinition> getCustomTypeDefinition(MysterType type);
+
+    /**
+     * Imports a type from a remotely-fetched access list, permanently adding it to the local
+     * type registry as enabled.
+     *
+     * <p>Saves the access list to disk, enables the type in the prefs index, and fires a
+     * {@code typeEnabled} event so all subscribers ({@code TypeManagerPreferences},
+     * {@code FileTypeListManager}, {@code Tracker}) pick it up automatically.
+     *
+     * <p>Unlike {@link #addCustomType}, this method does not require an admin key — imported
+     * types are read-only in the editor (the key-file gate in {@code TypeEditorPanel} applies).
+     *
+     * @param accessList the access list fetched from the remote server
+     * @throws IllegalArgumentException if a type with the same identifier is already registered
+     * @throws IllegalStateException    if the access list chain fails validation
+     * @throws IOException              if saving the access list to disk fails
+     */
+    void importType(AccessList accessList) throws IOException;
 }
 
 

@@ -10,6 +10,14 @@
 
 package com.myster.client.ui;
 
+import javax.swing.JButton;
+import javax.swing.JMenuItem;
+import javax.swing.JPanel;
+import javax.swing.JPopupMenu;
+import javax.swing.JSplitPane;
+import javax.swing.JTextArea;
+import javax.swing.JTextField;
+import javax.swing.ListSelectionModel;
 import java.awt.Dimension;
 import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
@@ -18,6 +26,8 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.FocusEvent;
 import java.awt.event.FocusListener;
+import java.awt.event.MouseAdapter;
+import java.awt.event.MouseEvent;
 import java.net.UnknownHostException;
 import java.nio.file.Path;
 import java.util.Arrays;
@@ -29,14 +39,6 @@ import java.util.Optional;
 import java.util.function.BiConsumer;
 import java.util.prefs.Preferences;
 
-import javax.swing.JButton;
-import javax.swing.JMenuItem;
-import javax.swing.JPanel;
-import javax.swing.JSplitPane;
-import javax.swing.JTextArea;
-import javax.swing.JTextField;
-import javax.swing.ListSelectionModel;
-
 import com.general.mclist.ColumnSortable;
 import com.general.mclist.GenericMCListItem;
 import com.general.mclist.JMCList;
@@ -45,6 +47,7 @@ import com.general.mclist.MCListEvent;
 import com.general.mclist.MCListEventAdapter;
 import com.general.mclist.MCListFactory;
 import com.general.mclist.MCListItemInterface;
+import com.general.mclist.MutableSortableString;
 import com.general.mclist.Sortable;
 import com.general.mclist.SortableByte;
 import com.general.mclist.SortableString;
@@ -53,11 +56,13 @@ import com.general.mclist.TreeMCListTableModel;
 import com.general.mclist.TreeMCListTableModel.TreeMCListItem;
 import com.general.mclist.TreeMCListTableModel.TreePath;
 import com.general.mclist.TreeMCListTableModel.TreePathString;
+import com.general.thread.PromiseFutures;
 import com.general.util.IconLoader;
 import com.general.util.MessageField;
 import com.general.util.MessagePanel;
 import com.general.util.StandardWindowBehavior;
 import com.general.util.Util;
+import com.myster.access.AccessList;
 import com.myster.client.ui.FileListerThread.FileRecord;
 import com.myster.net.MysterAddress;
 import com.myster.net.client.MysterProtocol;
@@ -110,7 +115,10 @@ public class ClientWindow extends MysterFrame implements Sayable {
     private TypeListerThread connectToThread;
     private FileListerThread fileListThread;
     private FileInfoListerThread fileInfoListerThread;
-    
+
+    private TypeMetadataCache typeMetadataCache;
+    private final Map<MysterType, MutableSortableString> typeDisplayNames = new HashMap<>();
+
     private final MysterFrameContext context;
     private Runnable savePrefs;
     
@@ -166,6 +174,7 @@ public class ClientWindow extends MysterFrame implements Sayable {
         this.typeDescriptionList = typeDescriptionList;
 
         init();
+        typeMetadataCache = new TypeMetadataCache(protocol.getStream());
     }
 
     /**
@@ -390,7 +399,27 @@ public class ClientWindow extends MysterFrame implements Sayable {
         fileTypeList = MCListFactory.buildMCList(1, true, this);
         fileTypeList.sortBy(-1);
         fileTypeList.setColumnName(0, "Type");
-        
+
+        JMenuItem addTypeItem = new JMenuItem("Add this type");
+        JPopupMenu typePopup = new JPopupMenu();
+        typePopup.add(addTypeItem);
+        addTypeItem.addActionListener(_ -> importSelectedType());
+        ((javax.swing.JTable) fileTypeList).addMouseListener(new MouseAdapter() {
+            public void mouseReleased(MouseEvent e) { maybeShowTypePopup(e); }
+            public void mousePressed(MouseEvent e)  { maybeShowTypePopup(e); }
+            private void maybeShowTypePopup(MouseEvent e) {
+                if (!e.isPopupTrigger()) return;
+                int row = ((javax.swing.JTable) fileTypeList).rowAtPoint(e.getPoint());
+                if (row < 0) return;
+                fileTypeList.select(row);
+                MysterType rowType = fileTypeList.getItem(row);
+                boolean alreadyKnown = typeDescriptionList.get(rowType).isPresent();
+                addTypeItem.setEnabled(!alreadyKnown);
+                addTypeItem.setText(alreadyKnown ? "Type already added" : "Add this type");
+                typePopup.show(e.getComponent(), e.getX(), e.getY());
+            }
+        });
+
         fileList = TreeMCList.create(new String[]{"Name", "Size"}, new TreePathString(new String[] {}));
         fileList.setSelectionMode(ListSelectionModel.MULTIPLE_INTERVAL_SELECTION);
 
@@ -577,11 +606,13 @@ public class ClientWindow extends MysterFrame implements Sayable {
     }
 
     public void addItemToTypeList(MysterType t) {
-        fileTypeList.addItem(new GenericMCListItem<MysterType>(new Sortable[] {
-                                     new SortableString(typeDescriptionList.get(t)
-                                             .map(TypeDescription::getDescription)
-                                             .orElse(t.toString())),
-                                     new SortableString(t.toString()) }, t));
+        String displayName = typeDescriptionList.get(t)
+                .map(TypeDescription::getDescription)
+                .orElseGet(() -> typeMetadataCache.getDisplayName(t));
+        MutableSortableString nameCell = new MutableSortableString(displayName);
+        typeDisplayNames.put(t, nameCell);
+        fileTypeList.addItem(new GenericMCListItem<MysterType>(
+                new Sortable[] { nameCell, new SortableString(t.toString()) }, t));
 
         initiaData.ifPresent(data -> {
             if (t.equals(data.type().orElse(null))) {
@@ -592,6 +623,26 @@ public class ClientWindow extends MysterFrame implements Sayable {
                 }
             }
         });
+    }
+
+    /**
+     * Updates the display name of an existing type row in-place. Called when a transient name
+     * resolution completes or immediately after a type is imported (so the row reflects the real
+     * name without removal/re-insertion).
+     *
+     * <p>Safe to call even if the row is no longer present (e.g. after reconnect cleared the
+     * list) — the missing-key case is a no-op.
+     *
+     * @param type the type whose row should be refreshed
+     */
+    public void refreshTypeDisplay(MysterType type) {
+        MutableSortableString nameCell = typeDisplayNames.get(type);
+        if (nameCell == null) return;
+        String resolved = typeDescriptionList.get(type)
+                .map(TypeDescription::getDescription)
+                .orElseGet(() -> typeMetadataCache.getDisplayName(type));
+        nameCell.setValue(resolved);
+        fileTypeList.repaint();
     }
 
     // this containers map is cleared when the filelist is cleared
@@ -791,6 +842,7 @@ public class ClientWindow extends MysterFrame implements Sayable {
             connectToThread.flagToEnd();
         }
         fileTypeList.clearAll();
+        typeDisplayNames.clear();
         stopFileListing();
     }
 
@@ -818,19 +870,26 @@ public class ClientWindow extends MysterFrame implements Sayable {
             currentip = "127.0.0.1:" + serverPreferences.getServerPort();
         }
         
-        connectToThread =
-                new TypeListerThread(protocol, new TypeListerThread.TypeListener() {
+        connectToThread = new TypeListerThread(
+                protocol,
+                new TypeListerThread.TypeListener() {
                     public void addItemToTypeList(MysterType s) {
                         ClientWindow.this.addItemToTypeList(s);
                     }
-
                     public void refreshIP(MysterAddress address) {
                         ClientWindow.this.refreshIP(address);
                     }
-                }, this::say, getCurrentIP());
+                    public void refreshTypeDisplay(MysterType type) {
+                        ClientWindow.this.refreshTypeDisplay(type);
+                    }
+                },
+                this::say,
+                getCurrentIP(),
+                typeDescriptionList,
+                typeMetadataCache);
         connectToThread.start();
         
-        
+
         savePrefs.run();
     }
 
@@ -895,6 +954,52 @@ public class ClientWindow extends MysterFrame implements Sayable {
         fileInfoListerThread.start();
     }
     
+
+    /**
+     * Imports the currently-selected type using the connected server as the access-list source.
+     * No-op if nothing is selected or the type is already known.
+     *
+     * <p>Fetches the access list from the server, saves it, and enables the type. The
+     * {@code typeEnabled} event propagates to all subscribers automatically. On any failure,
+     * a themed error message is shown in the status bar.
+     */
+    private void importSelectedType() {
+        int idx = fileTypeList.getSelectedIndex();
+        if (idx < 0) return;
+        MysterType type = fileTypeList.getItem(idx);
+        if (typeDescriptionList.get(type).isPresent()) return;
+
+        MysterAddress address;
+        try {
+            address = MysterAddress.createMysterAddress(currentip);
+        } catch (UnknownHostException e) {
+            msg.sayError("Cannot import: invalid server address.");
+            return;
+        }
+
+        msg.say("Fetching type info...");
+        PromiseFutures.execute(() -> protocol.getStream().getAccessList(address, type))
+                .addResultListener((Optional<AccessList> result) -> {
+            if (result.isEmpty()) {
+                msg.sayError("Server has no access list for this type.");
+                return;
+            }
+            try {
+                typeDescriptionList.importType(result.get());
+                refreshTypeDisplay(type);
+                String name = typeDescriptionList.get(type)
+                        .map(TypeDescription::getDescription)
+                        .orElse(type.toHexString());
+                msg.say("Type '" + name + "' added.");
+            } catch (IllegalArgumentException e) {
+                msg.sayError("This type is already in your list.");
+            } catch (Exception e) {
+                msg.sayError("Could not save type: " + e.getMessage());
+            }
+        }).addExceptionListener(e -> {
+            msg.sayError("Could not fetch type info: " + e.getMessage());
+        });
+    }
 
     public static class FolderMCListItem<E> extends TreeMCListItem<E> {
         private long sizeOfContents = 0;
