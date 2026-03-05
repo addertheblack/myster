@@ -18,6 +18,7 @@ import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
 import java.awt.Insets;
 import java.awt.event.ActionEvent;
+import java.awt.event.HierarchyEvent;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -39,7 +40,9 @@ import com.myster.pref.ui.PreferencesPanel;
 import com.myster.type.CustomTypeDefinition;
 import com.myster.type.MysterType;
 import com.myster.type.TypeDescription;
+import com.myster.type.TypeDescriptionEvent;
 import com.myster.type.TypeDescriptionList;
+import com.myster.type.TypeListener;
 import com.myster.type.TypeSource;
 
 /**
@@ -99,6 +102,22 @@ public class TypeManagerPreferences extends PreferencesPanel {
 
         // Add container to main panel
         add(containerPanel, gbc.withGridLoc(0, 0).withWeight(1.0, 1.0).withFill(GridBagConstraints.BOTH));
+
+        // Reload the list whenever a type is enabled or disabled (e.g. imported from ClientWindow)
+        TypeListener typeChangeListener = new TypeListener() {
+            public void typeEnabled(TypeDescriptionEvent e)  { loadList(); }
+            public void typeDisabled(TypeDescriptionEvent e) { loadList(); }
+        };
+        tdList.addTypeListener(typeChangeListener);
+
+        // Unsubscribe when the panel is removed from the preferences window
+        addHierarchyListener(e -> {
+            if ((e.getChangeFlags() & HierarchyEvent.PARENT_CHANGED) != 0
+                    && e.getChanged() == TypeManagerPreferences.this
+                    && getParent() == null) {
+                tdList.removeTypeListener(typeChangeListener);
+            }
+        });
 
         // Initial load
         reset();

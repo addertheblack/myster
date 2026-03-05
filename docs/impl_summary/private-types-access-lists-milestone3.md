@@ -92,7 +92,7 @@ Two related features both driven by a single underlying operation — fetching a
 
 ## Follow-Up Work / Issues Discovered
 
-- **Blank name in access list shows hex** — a type with a blank name falls back to hex both in the cache and in `addItemToTypeList`. This is correct behaviour but worth noting: if a server publishes a type with no name set, users see the hex string even after "Add this type" succeeds. The fix would be a UI-layer fallback (e.g. "(unnamed)") but that's a polish item.
+- **`TypeManagerPreferences` only reacts to `typeEnabled`/`typeDisabled`** — if a type is ever added in a disabled state (e.g. a future "import but don't enable" flow), the panel won't refresh to show it. Not an issue today since `importType` always enables. Fix if that changes: add a `typeAdded` event to `TypeListener` and subscribe to it in `TypeManagerPreferences.loadList()`. — a type with a blank name falls back to hex both in the cache and in `addItemToTypeList`. This is correct behaviour but worth noting: if a server publishes a type with no name set, users see the hex string even after "Add this type" succeeds. The fix would be a UI-layer fallback (e.g. "(unnamed)") but that's a polish item.
 
 - **`TypeMetadataCache` is not cleared on `stopConnect`** — the cache is per-window and lives for the window's lifetime. On reconnect to a *different* server, the cache may return stale names from the previous server for types that happen to match. For M3 this is acceptable (names are stable and derived from the access list chain); if it becomes an issue a `clear()` call in `stopConnect` would fix it.
 

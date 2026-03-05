@@ -979,6 +979,7 @@ public class ClientWindow extends MysterFrame implements Sayable {
 
         msg.say("Fetching type info...");
         PromiseFutures.execute(() -> protocol.getStream().getAccessList(address, type))
+                .useEdt()
                 .addResultListener((Optional<AccessList> result) -> {
             if (result.isEmpty()) {
                 msg.sayError("Server has no access list for this type.");
