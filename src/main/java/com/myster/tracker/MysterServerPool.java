@@ -32,6 +32,23 @@ public interface MysterServerPool {
 
     Optional<MysterIdentity> lookupIdentityFromName(ExternalName externalName);
 
+    /**
+     * Looks up the RSA public key for a server identified by its {@link Cid128}.
+     *
+     * <p>Returns {@code Optional<PublicKey>} — not {@code Optional<MysterIdentity>} — because
+     * only servers with a {@link PublicKeyIdentity} have a {@code Cid128} in the first place.
+     * To obtain a {@link MysterIdentity} for use with
+     * {@link #getCachedMysterServer(MysterIdentity)}, wrap the result:
+     * <pre>
+     *   pool.lookupIdentityFromCid(cid)
+     *       .map(PublicKeyIdentity::new)
+     *       .flatMap(pool::getCachedMysterServer)
+     *       .map(MysterServer::getServerName);
+     * </pre>
+     *
+     * @param cid the 128-bit truncated SHA-256 identity hash of the server's RSA public key
+     * @return the server's RSA public key, or empty if not found in the pool
+     */
     Optional<PublicKey> lookupIdentityFromCid(Cid128 cid);
 
     /**

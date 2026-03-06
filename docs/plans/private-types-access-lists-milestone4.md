@@ -79,9 +79,12 @@ Read-only edit mode (no admin key) and create mode keep the flat layout unchange
 **Members tab layout**:
 - `MCList` with columns: `Server Name | Role | Identity (Cid128 hex, abbreviated)`.
 - Buttons: **Add Member…**, **Remove Member**, **Change Role** (toggles MEMBER ↔ ADMIN).
-- Server name column resolved via `pool.lookupIdentityFromCid(cid)` →
-  `pool.getCachedMysterServer(identity)` → `getServerName()`, falling back to Cid128 hex if
-  the server is not in the pool.
+- Server name column resolved via:
+  `pool.lookupIdentityFromCid(cid)` → `Optional<PublicKey>`
+  → `.map(PublicKeyIdentity::new)` → `Optional<MysterIdentity>`
+  → `.flatMap(pool::getCachedMysterServer)` → `Optional<MysterServer>`
+  → `.map(MysterServer::getServerName)`
+  falling back to `cid.asHex().substring(0, 12) + "…"` if not found.
 
 **Add Member…**:
 1. Opens `ServerPickerDialog`.
@@ -215,9 +218,9 @@ public class ServerPickerDialog extends JDialog {
    - Creates `MCList` with three columns.
    - Calls `populateMembers()` to fill rows from
      `editAccessList.get().getState().getMembers().entrySet()`.
-   - Name resolution: for each `Cid128`, call `pool.lookupIdentityFromCid(cid)` →
-     `pool.getCachedMysterServer(identity)` → `getServerName()`. Fall back to
-     `cid.asHex().substring(0, 12) + "…"` if not found.
+   - Name resolution: for each `Cid128`, call
+     `pool.lookupIdentityFromCid(cid).map(PublicKeyIdentity::new).flatMap(pool::getCachedMysterServer).map(MysterServer::getServerName)`.
+     Fall back to `cid.asHex().substring(0, 12) + "…"` if not found.
    - Wires the three buttons.
 4. `addMember()`: opens `ServerPickerDialog(SwingUtilities.getWindowAncestor(this), pool)`,
    gets result, appends block, saves, refreshes.

@@ -1,10 +1,5 @@
 package com.myster.tracker;
 
-import static com.myster.tracker.MysterServer.DOWN;
-import static com.myster.tracker.MysterServer.UNTRIED;
-import static com.myster.tracker.MysterServerImplementation.computeNodeNameFromIdentity;
-import static com.myster.tracker.TrackerUtils.INVOKER;
-
 import java.net.InetAddress;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -27,6 +22,11 @@ import com.myster.net.MysterAddress;
 import com.myster.net.datagram.client.PingResponse;
 import com.myster.net.server.ServerUtils;
 
+import static com.myster.tracker.MysterServer.DOWN;
+import static com.myster.tracker.MysterServer.UNTRIED;
+import static com.myster.tracker.MysterServerImplementation.computeNodeNameFromIdentity;
+import static com.myster.tracker.TrackerUtils.INVOKER;
+
 /**
  * This is responsible for tracking which internet addresses (MysterAddress) map to which server identities
  * (MysterIdentity).
@@ -42,7 +42,7 @@ class IdentityTracker implements IdentityProvider {
     private final Map<InetAddress, Set<MysterAddress>> ipToServerAddresses = new HashMap<>();
     private final Map<MysterIdentity, List<MysterAddress>> identityToAddresses = new HashMap<>();
     private final Map<Cid128, MysterIdentity> cid128ToIdentity = new HashMap<>();
-    
+
     private final Consumer<PingResponse> pingListener;
     private final Consumer<MysterIdentity> deadServerListener;
 
