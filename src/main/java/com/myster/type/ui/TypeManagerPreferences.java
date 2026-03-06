@@ -103,10 +103,36 @@ public class TypeManagerPreferences extends PreferencesPanel {
         // Add container to main panel
         add(containerPanel, gbc.withGridLoc(0, 0).withWeight(1.0, 1.0).withFill(GridBagConstraints.BOTH));
 
-        // Reload the list whenever a type is enabled or disabled (e.g. imported from ClientWindow)
+        // When a type is enabled externally (e.g. imported from ClientWindow), add it to the list
+        // without rebuilding from scratch — rebuilding would discard unsaved enable/disable toggles
+        // and un-hide pending-deletion types.
+        // When a type is disabled/deleted externally, remove its row if present.
         TypeListener typeChangeListener = new TypeListener() {
-            public void typeEnabled(TypeDescriptionEvent e)  { loadList(); }
-            public void typeDisabled(TypeDescriptionEvent e) { loadList(); }
+            public void typeEnabled(TypeDescriptionEvent e) {
+                MysterType type = e.getType();
+                // Only add if not already shown and not pending deletion
+                if (pendingDeletions.contains(type)) return;
+                for (int i = 0; i < mcList.length(); i++) {
+                    if (mcList.getItem(i).equals(type)) return; // already in list
+                }
+                for (TypeDescription desc : tdList.getAllTypes()) {
+                    if (desc.getType().equals(type)) {
+                        mcList.addItem(new TypeMCListItem(desc, tdList.isTypeEnabledInPrefs(type)));
+                        updateButtonStates();
+                        return;
+                    }
+                }
+            }
+            public void typeDisabled(TypeDescriptionEvent e) {
+                MysterType type = e.getType();
+                for (int i = 0; i < mcList.length(); i++) {
+                    if (mcList.getItem(i).equals(type)) {
+                        mcList.removeItem(i);
+                        updateButtonStates();
+                        return;
+                    }
+                }
+            }
         };
         tdList.addTypeListener(typeChangeListener);
 
@@ -337,10 +363,10 @@ public class TypeManagerPreferences extends PreferencesPanel {
 
     private void onEditorSave() {
         // TypeEditorPanel has already persisted the access list and updated tdList;
-        // just return to the list view and refresh.
+        // just return to the list view and refresh without clearing pending deletions.
         cardLayout.show(containerPanel, LIST_VIEW);
         editingType = null;
-        reset();
+        loadList();
     }
 
     private void onEditorCancel() {

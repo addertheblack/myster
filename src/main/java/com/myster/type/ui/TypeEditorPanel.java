@@ -292,12 +292,6 @@ public class TypeEditorPanel extends JPanel {
         }
 
         List<String> extList = ExtensionNormalizer.parseToList(extensionsField.getText());
-        if (extList.isEmpty()) {
-            String answer = AnswerDialog.simpleAlert(AnswerDialog.getCenteredFrame(),
-                    "No file extensions specified. This type will match all files. Continue?",
-                    new String[] { "Continue", "Cancel" });
-            if (!"Continue".equals(answer)) return;
-        }
 
         String[] extensions  = extList.toArray(new String[0]);
         String description   = descriptionArea.getText().trim();
