@@ -165,10 +165,11 @@ public class TypeEditorPanel extends JPanel {
         privateRadio = new JRadioButton("Members only");
         saveButton = new JButton("Save");
 
+        membersTable = MCListFactory.buildMCList(3, true, this);
+
         initComponents();
         layoutComponents();
 
-        membersTable = MCListFactory.buildMCList(3, true, this);
 
         if (existingType != null) {
             populateFromAccessList();
