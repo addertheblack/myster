@@ -5,7 +5,7 @@ import java.security.PublicKey;
 
 import com.myster.identity.Util;
 
-class PublicKeyIdentity implements MysterIdentity {
+public class PublicKeyIdentity implements MysterIdentity {
     private final PublicKey key;
     
     public PublicKeyIdentity(PublicKey key) {
@@ -31,7 +31,7 @@ class PublicKeyIdentity implements MysterIdentity {
         return Util.keyToString(key);
     }
     
-    PublicKey getPublicKey() {
+    public PublicKey getPublicKey() {
         return key;
     }
 }

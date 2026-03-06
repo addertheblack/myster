@@ -395,4 +395,25 @@ on read. Missing access list → delete the stale prefs node; log a WARNING; ski
 
 ---
 
-*Last updated: February 2026*
+## Collection Helpers
+
+Prefer `com.general.util.Util.filter` and `Util.map` over the Java stream API for simple
+filter and map operations. They are more concise and faster for typical Myster collection sizes.
+
+```java
+// Preferred
+List<ServerPickerItem> filtered = Util.filter(allItems,
+        item -> term.isEmpty() || item.getServerName().contains(term));
+
+// Avoid for simple cases — too verbose
+List<ServerPickerItem> filtered = allItems.stream()
+        .filter(item -> term.isEmpty() || item.getServerName().contains(term))
+        .toList();
+```
+
+Use streams only when you need operations not covered by `Util` (e.g. `flatMap`, `reduce`,
+`collect` to a non-list type).
+
+---
+
+*Last updated: March 2026*

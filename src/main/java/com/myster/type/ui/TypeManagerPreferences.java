@@ -21,6 +21,7 @@ import java.awt.event.ActionEvent;
 import java.awt.event.HierarchyEvent;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 
 import com.formdev.flatlaf.extras.FlatSVGIcon;
 import com.general.mclist.GenericMCListItem;
@@ -63,6 +64,7 @@ import com.myster.type.TypeSource;
 public class TypeManagerPreferences extends PreferencesPanel {
     private final TypeDescriptionList tdList;
     private final AccessListManager accessListManager;
+    private final Optional<TypeEditorServerSource> serverSource;
     private MCList<MysterType> mcList;
     private Action addAction;
     private Action editAction;
@@ -85,10 +87,14 @@ public class TypeManagerPreferences extends PreferencesPanel {
      *
      * @param tdList            the type description list to manage
      * @param accessListManager used when opening the type editor to create/edit access lists
+     * @param serverSource      server source for the Members tab; empty omits the tab
      */
-    public TypeManagerPreferences(TypeDescriptionList tdList, AccessListManager accessListManager) {
+    public TypeManagerPreferences(TypeDescriptionList tdList,
+                                  AccessListManager accessListManager,
+                                  Optional<TypeEditorServerSource> serverSource) {
         this.tdList = tdList;
         this.accessListManager = accessListManager;
+        this.serverSource = serverSource;
         setLayout(new GridBagLayout());
 
         cardLayout = new CardLayout();
@@ -349,7 +355,7 @@ public class TypeManagerPreferences extends PreferencesPanel {
         }
 
         // Create editor panel with callbacks
-        editorPanel = new TypeEditorPanel(tdList, accessListManager, existingType,
+        editorPanel = new TypeEditorPanel(tdList, accessListManager, existingType, serverSource,
             this::onEditorSave,
             this::onEditorCancel
         );
@@ -533,7 +539,7 @@ public class TypeManagerPreferences extends PreferencesPanel {
             com.myster.access.AccessListManager alm = new com.myster.access.AccessListManager();
             TypeDescriptionList typeList = new com.myster.type.DefaultTypeDescriptionList(
                 java.util.prefs.Preferences.userRoot().node("MysterTypes"), alm);
-            TypeManagerPreferences panel = new TypeManagerPreferences(typeList, alm);
+            TypeManagerPreferences panel = new TypeManagerPreferences(typeList, alm, Optional.<TypeEditorServerSource>empty());
 
             // Add to frame and set it on the panel
             testFrame.add(panel);

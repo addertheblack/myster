@@ -454,7 +454,24 @@ public class Myster {
                 
                 preferencesGui.addPanel(new FmiChooser(fileManager, tdList));
                 preferencesGui.addPanel(new MessagePreferencesPanel(preferences));
-                preferencesGui.addPanel(new com.myster.type.ui.TypeManagerPreferences(tdList, accessListManager));
+                com.myster.type.ui.TypeEditorServerSource typeEditorServerSource =
+                        new com.myster.type.ui.TypeEditorServerSource() {
+                            public void forEachServer(java.util.function.BiConsumer<com.myster.tracker.MysterServer, com.myster.identity.Cid128> c) {
+                                pool.forEach(server -> {
+                                    if (server.getIdentity() instanceof com.myster.tracker.PublicKeyIdentity pki) {
+                                        c.accept(server, com.myster.identity.Util.generateCid(pki.getPublicKey()));
+                                    }
+                                });
+                            }
+
+                            public java.util.Optional<String> resolveDisplayName(com.myster.identity.Cid128 cid) {
+                                return pool.lookupIdentityFromCid(cid)
+                                        .map(com.myster.tracker.PublicKeyIdentity::new)
+                                        .flatMap(pool::getCachedMysterServer)
+                                        .map(com.myster.tracker.MysterServer::getServerName);
+                            }
+                        };
+                preferencesGui.addPanel(new com.myster.type.ui.TypeManagerPreferences(tdList, accessListManager, java.util.Optional.of(typeEditorServerSource)));
                 preferencesGui.addPanel(new ThemePane(preferences));
 
                 INSTRUMENTATION.info("-------->>   EDT init other GUI sub systems " + (System.currentTimeMillis() - startTime));
