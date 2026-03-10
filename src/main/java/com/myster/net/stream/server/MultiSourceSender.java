@@ -7,6 +7,7 @@ import java.io.InputStream;
 import java.io.RandomAccessFile;
 import java.util.logging.Logger;
 
+import com.myster.access.AccessListReader;
 import com.myster.filemanager.FileTypeListManager;
 import com.myster.mml.MessagePak;
 import com.myster.net.MysterAddress;
@@ -47,9 +48,11 @@ public class MultiSourceSender extends ServerStreamHandler {
     public static final int SECTION_NUMBER = 90;
 
     private final ServerPreferences preferences;
+    private final AccessListReader accessListReader;
 
-    public MultiSourceSender(ServerPreferences preferences) {
+    public MultiSourceSender(ServerPreferences preferences, AccessListReader accessListReader) {
         this.preferences = preferences;
+        this.accessListReader = accessListReader;
     }
 
     public int getSectionNumber() {
@@ -64,7 +67,9 @@ public class MultiSourceSender extends ServerStreamHandler {
         MultiSourceDownloadInstance download =
                 new MultiSourceDownloadInstance((ServerDownloadDispatcher) (context.sectionObject()),
                                                 context.transferQueue(),
-                                                new MysterAddress(context.socket().getInetAddress()));
+                                                new MysterAddress(context.socket().getInetAddress()),
+                                                accessListReader,
+                                                context.callerCid());
 
         try {
             download.download(context.socket(), context.fileManager());
@@ -97,6 +102,8 @@ public class MultiSourceSender extends ServerStreamHandler {
         private final MysterAddress remoteIP;
         private final DownloadInfo downloadInfo;
         private final TransferQueue transferQueue;
+        private final AccessListReader instanceAccessListReader;
+        private final java.util.Optional<com.myster.identity.Cid128> callerCid;
 
         private volatile MysterSocket socket;
 
@@ -112,25 +119,33 @@ public class MultiSourceSender extends ServerStreamHandler {
 
         public MultiSourceDownloadInstance(ServerDownloadDispatcher dispatcher,
                                            TransferQueue transferQueue,
-                                           MysterAddress remoteIP) {
+                                           MysterAddress remoteIP,
+                                           AccessListReader accessListReader,
+                                           java.util.Optional<com.myster.identity.Cid128> callerCid) {
             this.dispatcher = dispatcher;
             this.downloadInfo = new Stats();
             this.transferQueue = transferQueue;
             this.remoteIP = remoteIP;
+            this.instanceAccessListReader = accessListReader;
+            this.callerCid = callerCid;
 
             fire().downloadSectionStarted(newEvent(-1));
         }
 
         public void download(final MysterSocket socket, FileTypeListManager fileManager) throws IOException {
             try {
-                this.socket = socket;//this is so I can disconnect the stupid
-                // socket.
+                this.socket = socket;
 
                 final MysterDataOutputStream out = socket.out;
                 final MysterDataInputStream in = socket.in;
                 
                 type = in.readType();
                 fileName = in.readUTF();
+
+                if (!com.myster.access.AccessEnforcementUtils.isAllowed(type, callerCid, instanceAccessListReader)) {
+                    out.write(0);
+                    return;
+                }
 
                 final File file = fileManager.getFile(type, fileName);
 

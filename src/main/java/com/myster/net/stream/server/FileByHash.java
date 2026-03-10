@@ -1,28 +1,31 @@
 package com.myster.net.stream.server;
 
-/*
- * 
- * Title: Myster Open Source Author: Andrew Trumper Description: Generic Myster
- * Code
- * 
- * This code is under GPL
- * 
- * Copyright Andrew Trumper 2000-2001
- */
-
 import java.io.IOException;
 
+import com.myster.access.AccessEnforcementUtils;
+import com.myster.access.AccessListReader;
 import com.myster.hash.FileHash;
 import com.myster.hash.SimpleFileHash;
 import com.myster.net.server.ConnectionContext;
 import com.myster.type.MysterType;
 
+/**
+ * Section 150 — resolves a file hash to a filename for a given type.
+ *
+ * <p>Non-members of a private type receive the "not found" response ({@code writeUTF("")}).
+ */
 public class FileByHash extends ServerStreamHandler {
     public static final int NUMBER = 150;
 
     public static final String HASH_TYPE = "/Hash Type";
 
     public static final String HASH = "/Hash";
+
+    private final AccessListReader accessListReader;
+
+    public FileByHash(AccessListReader accessListReader) {
+        this.accessListReader = accessListReader;
+    }
 
     public int getSectionNumber() {
         return NUMBER;
@@ -34,8 +37,7 @@ public class FileByHash extends ServerStreamHandler {
 
             FileHash md5Hash = null;
 
-            for (;;) { //get hash name, get hash length, get hash data until
-                // hashname is ""
+            for (;;) {
                 String hashType = context.socket().in.readUTF();
                 if (hashType.equals("")) {
                     break;
@@ -48,6 +50,11 @@ public class FileByHash extends ServerStreamHandler {
                 if (hashType.equalsIgnoreCase(com.myster.hash.HashManager.MD5)) {
                     md5Hash = SimpleFileHash.buildFileHash(hashType, hashBytes);
                 }
+            }
+
+            if (!AccessEnforcementUtils.isAllowed(type, context.callerCid(), accessListReader)) {
+                context.socket().out.writeUTF("");
+                return;
             }
 
             com.myster.filemanager.FileItem file = null;
@@ -67,3 +74,4 @@ public class FileByHash extends ServerStreamHandler {
         }
     }
 }
+

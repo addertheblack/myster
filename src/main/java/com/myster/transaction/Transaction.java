@@ -26,8 +26,11 @@ import java.io.ByteArrayOutputStream;
 import java.io.DataOutputStream;
 import java.io.IOException;
 
+import java.util.Optional;
+
 import com.general.net.ImmutableDatagramPacket;
 import com.general.util.Util;
+import com.myster.identity.Cid128;
 import com.myster.net.MysterAddress;
 import com.myster.net.datagram.DataPacket;
 import com.myster.net.datagram.DatagramConstants;
@@ -50,6 +53,8 @@ public final class Transaction implements DataPacket { //Immutable (Java needs
      */
     private final byte errorByte;
     private final byte[] data;
+    /** Identity of the caller on encrypted channels; empty for plaintext. */
+    private final Optional<Cid128> callerCid;
 
 
     ///note: put in checks for length etc...
@@ -95,6 +100,7 @@ public final class Transaction implements DataPacket { //Immutable (Java needs
 
         data = new byte[bytes.length - getHeaderSize()];
         System.arraycopy(bytes, getHeaderSize(), data, 0, data.length);
+        this.callerCid = Optional.empty();
     }
 
     /**
@@ -131,6 +137,19 @@ public final class Transaction implements DataPacket { //Immutable (Java needs
         this.isForClient = isForClient;
         this.data = bytes;
         this.errorByte = errorByte;
+        this.callerCid = Optional.empty();
+    }
+
+    private Transaction(MysterAddress address, int transactionCode,
+            int connectionNumber, byte[] bytes, boolean isForClient,
+            byte errorByte, Optional<Cid128> callerCid) {
+        this.address = address;
+        this.transactionCode = transactionCode;
+        this.connectionNumber = connectionNumber;
+        this.isForClient = isForClient;
+        this.data = bytes;
+        this.errorByte = errorByte;
+        this.callerCid = callerCid;
     }
 
     public Transaction withDifferentPayload(byte[] bytes, int transactionCode) {
@@ -139,7 +158,32 @@ public final class Transaction implements DataPacket { //Immutable (Java needs
                                getConnectionNumber(),
                                bytes,
                                isForClient(),
-                               errorByte);
+                               errorByte,
+                               callerCid);
+    }
+
+    /**
+     * Returns a copy of this transaction with the caller's identity set.
+     * Used by {@link com.myster.net.server.datagram.EncryptedDatagramServer} after decrypting an
+     * MSD packet to stamp the verified caller identity onto the forwarded transaction.
+     *
+     * @param cid the caller's {@link Cid128}, or {@link Optional#empty()} for anonymous/plaintext
+     * @return a new {@code Transaction} with all fields identical except {@code callerCid}
+     */
+    public Transaction withCallerCid(Optional<Cid128> cid) {
+        return new Transaction(address, transactionCode, connectionNumber, data, isForClient,
+                errorByte, cid);
+    }
+
+    /**
+     * Returns the caller's identity for this transaction.
+     * Present only when the packet arrived via an encrypted (MSD) channel and the caller's key
+     * was successfully verified; empty for plaintext or unverified senders.
+     *
+     * @return the caller's {@link Cid128}, or empty if identity is unknown
+     */
+    public Optional<Cid128> callerCid() {
+        return callerCid;
     }
     
     public MysterAddress getAddress() {

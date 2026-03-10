@@ -2,20 +2,30 @@ package com.myster.net.stream.server;
 
 import java.io.IOException;
 
+import com.myster.access.AccessEnforcementUtils;
+import com.myster.access.AccessListReader;
 import com.myster.net.MysterAddress;
 import com.myster.net.server.ConnectionContext;
 import com.myster.net.stream.client.MysterDataInputStream;
 import com.myster.net.stream.client.MysterDataOutputStream;
 import com.myster.tracker.MysterServer;
 import com.myster.tracker.Tracker;
+import com.myster.type.MysterType;
 
+/**
+ * Section 10 — returns a list of known servers for a given type.
+ *
+ * <p>Non-members of a private type receive only the empty-string terminator (no server addresses).
+ */
 public class MysterServerLister extends ServerStreamHandler {
     public static final int NUMBER = 10;
     
     private final Tracker tracker;
+    private final AccessListReader accessListReader;
 
-    public MysterServerLister(Tracker tracker) {
+    public MysterServerLister(Tracker tracker, AccessListReader accessListReader) {
         this.tracker = tracker;
+        this.accessListReader = accessListReader;
     }
 
     public int getSectionNumber() {
@@ -30,25 +40,32 @@ public class MysterServerLister extends ServerStreamHandler {
         MysterDataInputStream in = context.socket().in;
         MysterDataOutputStream out = context.socket().getOutputStream();
 
-        MysterServer[] topten;
-
         tracker.addIp(new MysterAddress(context.socket().getInetAddress()));
 
-        topten = tracker.getTop(in.readType(), 100);
-        
+        MysterType type = in.readType();
+
+        if (!AccessEnforcementUtils.isAllowed(type, context.callerCid(), accessListReader)) {
+            out.writeUTF("");
+            return;
+        }
+
+        MysterServer[] topten = tracker.getTop(type, 100);
+
         if (topten != null) {
             for (int i = 0; i < topten.length; i++) {
                 if (topten[i] == null)
                     break;
-                
+
                 var addresses = topten[i].getUpAddresses();
-                
+
                 for (MysterAddress address : addresses) {
                     out.writeUTF(address.toString());
                 }
             }
         }
-        
+
         out.writeUTF(""); //"" Signals the end of the list!
     }
 }
+
+

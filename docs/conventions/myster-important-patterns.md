@@ -7,6 +7,7 @@ This document describes key architectural and design patterns used throughout th
 - **Promise/Future** — `PromiseFuture<T>`, `addResultListener`, `addCallListener`/`CallAdapter`, async I/O
 - **Listener Pattern** — use private inner classes, not `implements SomeListener`
 - **Dependency Injection** — `MysterFrameContext`, constructor injection, no static singletons
+- **`*Utils` Classes** — extract static helpers from large classes into a companion `FooUtils`; `*Util`/`*Utilities` are legacy names being renamed as touched
 - **Threading & Concurrency** — EDT rules, virtual threads, `synchronized`, `Invoker`, `Util.invokeLater`, don't double-dispatch
 - **FlatLaf Theming** — `UIManager.getColor("Actions.Red")` and friends; never hardcode colours
 
@@ -16,6 +17,7 @@ This document describes key architectural and design patterns used throughout th
 - [Promise/Future Pattern](#promisefuture-pattern)
 - [Listener Pattern](#listener-pattern)
 - [Dependency Injection](#dependency-injection)
+- [`*Utils` Classes](#utils-classes)
 - [Threading & Concurrency](#threading--concurrency)
   - [Util.invokeLater vs SwingUtilities.invokeLater](#utilinvokelater-vs-swingutilitiesinvokelater)
   - [PromiseFuture addCallListener / CallAdapter](#promisefuture--addcalllistener--calladapter)
@@ -204,6 +206,67 @@ public record MysterFrameContext(
 - **Use constructor injection**: Pass dependencies through constructors
 - **Avoid static singletons**: Use dependency injection instead where possible
 - **Service locator pattern**: Avoid - prefer explicit dependency injection
+
+---
+
+## `*Utils` Classes
+
+### Pattern: Companion utility class for a large class
+
+When a class `Foo` grows large (approaching ~1 000 lines) and some of its methods:
+
+- do **not** access any private members of `Foo`, **and**
+- could logically be `static`,
+
+extract them into a companion class named **`FooUtils`**.
+
+**Recognition rule**: you know you have the right pattern when every method in `FooUtils`
+takes a `Foo` (or the relevant domain type) as its first argument and operates purely on
+the public API of that type.
+
+### Conventions
+
+- `FooUtils` (or `FooUtil`) contains **only `static` methods** — no instance state, no
+  constructor (or a private no-arg constructor to suppress instantiation).
+- All methods are `public static` unless they are private helpers used only within the
+  `FooUtils` class itself.
+- The companion class lives in the **same package** as `Foo`.
+- The name suffix is always **`Utils`** (plural). `*Util` and `*Utilities` are legacy names;
+  rename them to `*Utils` whenever you touch the file (don't do a mass rename — keeps diffs
+  clean). See `TODO.txt` for the full list of classes still to be renamed.
+
+### Example
+
+```java
+// Foo.java — core class, kept focused
+public class Foo {
+    private final int value;
+    // ... ~900 lines of core logic ...
+}
+
+// FooUtils.java — extracted static helpers; Foo is always the first argument
+public final class FooUtils {
+    private FooUtils() {}   // no instances
+
+    public static boolean isValid(Foo foo) { ... }
+    public static String describe(Foo foo) { ... }
+}
+```
+
+### When NOT to use this pattern
+
+- If the helper method needs access to private state → keep it inside `Foo` as a
+  `private` method.
+- If the method is not logically tied to `Foo` at all → put it in a more general
+  `Util` class or its own class.
+- If `Foo` is still small → don't pre-emptively split; wait until the class actually
+  becomes hard to navigate.
+
+### Examples in the codebase
+
+- `com.myster.access.AccessEnforcementUtils` — enforcement helpers that operate on
+  `AccessListManager` / `AccessListState`; extracted because `AccessListManager` itself
+  does not need to know about TCP/UDP enforcement policy.
 
 ---
 
@@ -408,4 +471,4 @@ default.
 
 ---
 
-*Last updated: March 2026*
+*Last updated: March 2026 — added `*Utils`/`*Util` class pattern*

@@ -21,7 +21,7 @@ import com.myster.type.MysterType;
  * <p>Maintains an in-memory cache keyed by {@link MysterType} for performance.
  * Thread-safe via {@link ConcurrentHashMap}.
  */
-public class AccessListManager {
+public class AccessListManager implements AccessListReader {
     private static final Logger log = Logger.getLogger(AccessListManager.class.getName());
 
     private final Map<MysterType, AccessList> cache = new ConcurrentHashMap<>();

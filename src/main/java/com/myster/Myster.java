@@ -562,18 +562,18 @@ public class Myster {
                                                     MysterServerPool pool,
                                                     com.myster.access.AccessListManager accessListManager) {
 
-        serverFacade.addConnectionSection(new com.myster.net.stream.server.MysterServerLister(tracker));
-        serverFacade.addConnectionSection(new com.myster.net.stream.server.RequestDirThread());
-        serverFacade.addConnectionSection(new com.myster.net.stream.server.FileTypeLister());
-        serverFacade.addConnectionSection(new com.myster.net.stream.server.RequestSearchThread());
+        serverFacade.addConnectionSection(new com.myster.net.stream.server.MysterServerLister(tracker, accessListManager));
+        serverFacade.addConnectionSection(new com.myster.net.stream.server.RequestDirThread(accessListManager));
+        serverFacade.addConnectionSection(new com.myster.net.stream.server.FileTypeLister(accessListManager));
+        serverFacade.addConnectionSection(new com.myster.net.stream.server.RequestSearchThread(accessListManager));
         serverFacade
                 .addConnectionSection(new com.myster.net.stream.server.ServerStats(preferences::getIdentityName,
                                                                                preferences::getServerPort,
                                                                                identity));
-        serverFacade.addConnectionSection(new com.myster.net.stream.server.FileStatsStreamServer());
-        serverFacade.addConnectionSection(new com.myster.net.stream.server.FileStatsBatchStreamServer());
-        serverFacade.addConnectionSection(new com.myster.net.stream.server.FileByHash());
-        serverFacade.addConnectionSection(new com.myster.net.stream.server.MultiSourceSender(preferences));
+        serverFacade.addConnectionSection(new com.myster.net.stream.server.FileStatsStreamServer(accessListManager));
+        serverFacade.addConnectionSection(new com.myster.net.stream.server.FileStatsBatchStreamServer(accessListManager));
+        serverFacade.addConnectionSection(new com.myster.net.stream.server.FileByHash(accessListManager));
+        serverFacade.addConnectionSection(new com.myster.net.stream.server.MultiSourceSender(preferences, accessListManager));
 
         // Private types access list server
         serverFacade.addConnectionSection(new com.myster.access.AccessListGetServer(accessListManager));
@@ -583,7 +583,7 @@ public class Myster {
 
         serverFacade
                 .addDatagramTransactions(new TopTenDatagramServer(tracker),
-                                         new TypeDatagramServer(fileManager),
+                                         new TypeDatagramServer(fileManager, accessListManager),
                                          new SearchDatagramServer(fileManager),
                                          new ServerStatsDatagramServer(preferences::getIdentityName,
                                                                        preferences::getServerPort,

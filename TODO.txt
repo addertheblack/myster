@@ -1,0 +1,21 @@
+# Myster TODO
+
+## Standing Refactors
+# See docs/conventions/standing-refactors.md — apply directives when you touch an affected file.
+
+## Red List
+# (Named for a literal list of issues written in red pen — circa 2000, shared with a friend
+#  as a low-tech issue tracker before the age of ticketing systems.)
+- Make MSDownload auto-reconnect based on the servers that were being downloaded from at the time (continues downloads instantly).
+- Implement private networks:
+    - Find a format for sharing a network file (public key, primary servers, maybe other public keys).
+    - Be able to share the network config file (might be similar to network file, or a superset).
+- Add reverse connection protocol.
+- Pick a default place for downloads in progress (e.g. ~/mysterdata or platform app-data dir on Windows).
+- Split off concurrency library from Myster and publish to Maven.
+- Make Myster modules compatible.
+- Fix naming — probably want to use myster.org.
+- Fix website links so that everything uses https (make them relative links).
+- Implement DoS / packet-amplification defence (don't be a target vector for attacks on others).
+- Fix DefaultTypeDescriptionList to interact with preferences in a sane way (not using MML).
+

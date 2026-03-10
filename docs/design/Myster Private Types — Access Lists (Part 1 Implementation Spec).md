@@ -208,14 +208,25 @@ Nodes MAY cache full chain bytes.
 
 ## 4.1 Membership Verification at Request Time
 
-When a server receives a file listing, search, or download request for a type with `listFilesPublic == false`:
+The sole allow/deny policy is encoded in `AccessEnforcementUtils.isAllowed(MysterType, Optional<Cid128>, AccessListReader)`:
 
-1. Extract the requester's RSA public key from the TLS connection (`TLSSocket.getPeerPublicKey()`)
-2. Derive `Cid128` from that key: `Cid128 = Trunc128(SHA-256(publicKey.getEncoded()))` (via `com.myster.identity.Util.generateCid()`)
-3. Look up that `Cid128` in the access list's members map
-4. If present → allow; if absent → deny (return empty results)
+1. No access list for the type → **allow** (type is effectively public).
+2. `listFilesPublic == true` → **allow**.
+3. Caller identity is unknown (empty `callerCid`) → **deny**. Identity cannot be verified without TLS.
+4. `Cid128` present in the members map → **allow**. (ADMINs are also in the map — ADMIN implies MEMBER.)
+5. Otherwise → **deny**.
 
-This works because every Myster TCP connection is TLS-encrypted using the node's RSA identity key. Both sides present their public key via TLS certificates during the handshake, so the server already has the caller's authenticated public key. No additional authentication step is needed — TLS provides it.
+**TCP path** — caller identity is derived at the STLS upgrade point in `ConnectionRunnable`:
+1. Extract the peer's RSA public key from `TLSSocket.getPeerPublicKey()`.
+2. Derive `Cid128 = Trunc128(SHA-256(publicKey.getEncoded()))` via `com.myster.identity.Util.generateCid()`.
+3. Store in `ConnectionContext.callerCid()` (`Optional.empty()` for plaintext connections).
+4. Each section handler passes it to `AccessEnforcementUtils.isAllowed()` via `AccessListReader`.
+
+**UDP path** — `EncryptedDatagramServer` stamps `Transaction.callerCid()` from `DecryptResult.keyHash` after decryption. `TypeDatagramServer` reads it from the transaction and filters the type list with `AccessEnforcementUtils.isAllowed()`.
+
+Section handlers receive an `AccessListReader` (narrow interface: `Optional<AccessList> loadAccessList(MysterType)`) injected at construction — they never hold a reference to the full `AccessListManager`.
+
+On any `IOException` from the reader the decision **fails open** (allow) — a corrupt or temporarily unreadable access list must not take down the serving thread.
 
 ------
 

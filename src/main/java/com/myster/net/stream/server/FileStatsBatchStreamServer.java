@@ -1,17 +1,9 @@
-/*
- * 
- * Title: Myster Open Source Author: Andrew Trumper Description: Generic Myster
- * Code
- * 
- * This code is under GPL
- * 
- * Copyright Andrew Trumper 2000-2025
- */
-
 package com.myster.net.stream.server;
 
 import java.io.IOException;
 
+import com.myster.access.AccessEnforcementUtils;
+import com.myster.access.AccessListReader;
 import com.myster.filemanager.FileItem;
 import com.myster.mml.MessagePak;
 import com.myster.net.server.ConnectionContext;
@@ -19,8 +11,19 @@ import com.myster.net.stream.client.MysterDataInputStream;
 import com.myster.net.stream.client.MysterDataOutputStream;
 import com.myster.type.MysterType;
 
+/**
+ * Section 177 — returns metadata for a batch of files of a given type.
+ *
+ * <p>Non-members of a private type receive a zero-entry response.
+ */
 public class FileStatsBatchStreamServer extends ServerStreamHandler {
     public static final int NUMBER = 177;
+
+    private final AccessListReader accessListReader;
+
+    public FileStatsBatchStreamServer(AccessListReader accessListReader) {
+        this.accessListReader = accessListReader;
+    }
 
     public int getSectionNumber() {
         return NUMBER;
@@ -31,7 +34,7 @@ public class FileStatsBatchStreamServer extends ServerStreamHandler {
      * in int (number of files)
      * for each file:
      *   in String (filename)
-     * 
+     *
      * out byte (protocol check = 1)
      * for each file:
      *   out MessagePack (file stats or empty if not found)
@@ -42,18 +45,22 @@ public class FileStatsBatchStreamServer extends ServerStreamHandler {
             MysterDataOutputStream out = context.socket().out;
 
             MysterType type = in.readType();
-            // Read all filenames first
+
+            if (!AccessEnforcementUtils.isAllowed(type, context.callerCid(), accessListReader)) {
+                out.writeInt(0);
+                return;
+            }
+
             String[] filenames = context.fileManager().getFileTypeList(type).getFileListAsStrings();
             out.writeInt(filenames.length);
 
-            // Process and send all responses
             for (String filename : filenames) {
                 out.writeUTF(filename);
-                
+
                 FileItem fileItem = context.fileManager().getFileItem(type, filename);
-                MessagePak messagePack = (fileItem == null) 
-                    ? MessagePak.newEmpty() 
-                    : fileItem.getMessagePackRepresentation();
+                MessagePak messagePack = (fileItem == null)
+                        ? MessagePak.newEmpty()
+                        : fileItem.getMessagePackRepresentation();
 
                 out.writeMessagePack(messagePack);
             }
@@ -68,3 +75,5 @@ public class FileStatsBatchStreamServer extends ServerStreamHandler {
         }
     }
 }
+
+

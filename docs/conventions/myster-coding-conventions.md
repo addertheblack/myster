@@ -17,6 +17,7 @@ This document captures Myster-specific coding conventions, preferred libraries, 
 - **Access Lists** — single source of truth; `AccessListManager` singleton; key-file edit gate
 - **Prefs enabled/disabled** — store only identifier + `enabled` boolean
 - **Code commenting style** — see [`Code Comments.md`](Code%20Comments.md)
+- **Standing Refactors** — see [`standing-refactors.md`](standing-refactors.md); apply when you touch an affected file
 
 **For architectural patterns**, see **[myster-important-patterns.md](myster-important-patterns.md)**:
 - Event System, Promise/Future, Listener Pattern, Dependency Injection, Threading

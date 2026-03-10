@@ -2,7 +2,12 @@ package com.myster.net.server.datagram;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
+import java.util.Arrays;
+import java.util.List;
 
+import com.general.util.Util;
+import com.myster.access.AccessEnforcementUtils;
+import com.myster.access.AccessListReader;
 import com.myster.filemanager.FileTypeListManager;
 import com.myster.net.datagram.BadPacketException;
 import com.myster.net.datagram.DatagramConstants;
@@ -13,17 +18,22 @@ import com.myster.transaction.TransactionSender;
 import com.myster.type.MysterType;
 
 /**
- * Server side datagram implementation of Myster type lister conneciton section. 
+ * Server-side datagram handler for the type-listing transaction (section 74 equivalent).
+ *
+ * <p>Private types whose access list does not permit public listing are filtered out for
+ * callers without a verified identity. Membership is checked via {@link AccessEnforcementUtils}.
  */
 public class TypeDatagramServer implements TransactionProtocol {
     public static final int NUMBER_OF_FILE_TYPE_TO_RETURN = 100;
 
     private final FileTypeListManager fileManager;
+    private final AccessListReader accessListReader;
 
-    public TypeDatagramServer(FileTypeListManager fileManager) {
+    public TypeDatagramServer(FileTypeListManager fileManager, AccessListReader accessListReader) {
         this.fileManager = fileManager;
+        this.accessListReader = accessListReader;
     }
-    
+
     @Override
     public int getTransactionCode() {
         return DatagramConstants.TYPE_TRANSACTION_CODE;
@@ -34,17 +44,19 @@ public class TypeDatagramServer implements TransactionProtocol {
                                     Transaction transaction,
                                     Object transactionObject)
             throws BadPacketException {
-        
-        MysterType[] temp;
+
         ByteArrayOutputStream byteOutputStream = new ByteArrayOutputStream();
         try (MysterDataOutputStream out = new MysterDataOutputStream(byteOutputStream)) {
-                temp = fileManager.getFileTypeListing();
+            MysterType[] allTypes = fileManager.getFileTypeListing();
 
-                out.writeInt(temp.length);
+            List<MysterType> filtered = Util.filter(
+                    Arrays.asList(allTypes),
+                    t -> AccessEnforcementUtils.isAllowed(t, transaction.callerCid(), accessListReader));
 
-                for (int i = 0; i < temp.length; i++) {
-                    out.writeType(temp[i]); //BAD protocol
-                }
+            out.writeInt(filtered.size());
+            for (MysterType t : filtered) {
+                out.writeType(t);
+            }
 
             sender.sendTransaction(new Transaction(transaction,
                                                    byteOutputStream.toByteArray(),
@@ -54,3 +66,4 @@ public class TypeDatagramServer implements TransactionProtocol {
         }
     }
 }
+

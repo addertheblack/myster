@@ -1,8 +1,10 @@
 package com.myster.net.server.datagram;
 
 import java.nio.ByteBuffer;
+import java.util.Optional;
 import java.util.logging.Logger;
 
+import com.myster.identity.Cid128;
 import com.myster.net.datagram.BadPacketException;
 import com.myster.net.datagram.DatagramConstants;
 import com.myster.net.datagram.DatagramEncryptUtil;
@@ -64,7 +66,10 @@ public class EncryptedDatagramServer implements TransactionProtocol {
                 originalPayload, 
                 originalTransactionCode
             );
-            
+            // Stamp verified caller identity (present only when the client included its cid in Section 2)
+            decryptedTransaction = decryptedTransaction.withCallerCid(
+                    decryptResult.keyHash.map(Cid128::new));
+
             var encrypterSender = new TransactionSender() {
                 @Override
                 public void sendTransaction(Transaction t) {

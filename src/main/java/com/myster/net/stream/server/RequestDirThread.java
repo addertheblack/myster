@@ -1,27 +1,30 @@
-/*
- * 
- * Title: Myster Open Source Author: Andrew Trumper Description: Generic Myster
- * Code
- * 
- * This code is under GPL
- * 
- * Copyright Andrew Trumper 2000-2001
- */
-
 package com.myster.net.stream.server;
 
 import java.io.IOException;
 import java.util.logging.Logger;
 
-import com.myster.filemanager.FileTypeListManager;
+import com.myster.access.AccessEnforcementUtils;
+import com.myster.access.AccessListReader;
 import com.myster.net.server.ConnectionContext;
 import com.myster.net.stream.client.MysterDataInputStream;
 import com.myster.net.stream.client.MysterDataOutputStream;
+import com.myster.type.MysterType;
 
+/**
+ * Section 78 — returns the file listing for a given type.
+ *
+ * <p>Non-members of a private type receive an empty response ({@code writeInt(0)}).
+ */
 public class RequestDirThread extends ServerStreamHandler {
     public static final int NUMBER = 78;
 
     private static final Logger log = Logger.getLogger(RequestDirThread.class.getName());
+
+    private final AccessListReader accessListReader;
+
+    public RequestDirThread(AccessListReader accessListReader) {
+        this.accessListReader = accessListReader;
+    }
 
     public int getSectionNumber() {
         return NUMBER;
@@ -31,8 +34,14 @@ public class RequestDirThread extends ServerStreamHandler {
         MysterDataInputStream in = context.socket().getInputStream();
         MysterDataOutputStream out = context.socket().getOutputStream();
 
-        var type = in.readType();
+        MysterType type = in.readType();
         log.info("Reading: " + type);
+
+        if (!AccessEnforcementUtils.isAllowed(type, context.callerCid(), accessListReader)) {
+            out.writeInt(0);
+            return;
+        }
+
         String[] array = context.fileManager().getDirList(type);
 
         if (array == null) {
@@ -49,3 +58,4 @@ public class RequestDirThread extends ServerStreamHandler {
         }
     }
 }
+

@@ -14,10 +14,12 @@ package com.myster.net.server;
 import java.io.IOException;
 import java.net.Socket;
 import java.util.Map;
+import java.util.Optional;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.logging.Logger;
 
 import com.myster.filemanager.FileTypeListManager;
+import com.myster.identity.Cid128;
 import com.myster.identity.Identity;
 import com.myster.net.MysterAddress;
 import com.myster.net.TLSSocket;
@@ -121,7 +123,7 @@ public class ConnectionRunnable implements Runnable {
 
         int sectionCounter = 0;
         try (var tempTcpSocket = new com.myster.net.stream.client.TCPSocket(socket)) {
-            ConnectionContext context = new ConnectionContext(tempTcpSocket, new MysterAddress(socket.getInetAddress()), null, transferQueue, fileManager);
+            ConnectionContext context = new ConnectionContext(tempTcpSocket, new MysterAddress(socket.getInetAddress()), null, transferQueue, fileManager, Optional.empty());
 
             MysterDataInputStream inputStream = context.socket().in;
 
@@ -154,9 +156,16 @@ public class ConnectionRunnable implements Runnable {
                         context.socket().out.flush();
                         
                         TLSSocket tlsSocket = TLSSocket.upgradeServerSocket(socket, identity);
-                        
-                        // Update context to use encrypted connection
-                        context = new ConnectionContext(tlsSocket, context.serverAddress(), context.sectionObject(), transferQueue, fileManager);
+
+                        Optional<Cid128> callerCid;
+                        try {
+                            callerCid = Optional.of(com.myster.identity.Util.generateCid(tlsSocket.getPeerPublicKey()));
+                        } catch (IOException ignored) {
+                            callerCid = Optional.empty();
+                        }
+
+                        // Update context to use encrypted connection with verified caller identity
+                        context = new ConnectionContext(tlsSocket, context.serverAddress(), context.sectionObject(), transferQueue, fileManager, callerCid);
                         inputStream = context.socket().in;
                         
                         log.fine("STLS upgrade successful - connection is now encrypted");

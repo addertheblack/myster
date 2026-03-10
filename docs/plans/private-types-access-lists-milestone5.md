@@ -1,433 +1,202 @@
 # Private Types Access Lists — Milestone 5: Access Enforcement (TCP & UDP)
 
-## Summary
-
-Turn on the locks. After Milestone 4 the access list is fully manageable. This milestone makes
-it meaningful by enforcing membership in all TCP and UDP file-serving handlers.
-
-1. **TCP enforcement** — all file-serving connection section handlers check the caller's
-   `Cid128` (derived from the TLS peer certificate, already available after the handshake)
-   against the access list before serving any data.
-2. **UDP enforcement** — `TypeDatagramServer` checks the caller's `Cid128` (from the MSD
-   Section 2 `/cid` field, plumbed through `Transaction.callerCid()`) before including a
-   private type in the type-listing response.
-
-A single shared `AccessEnforcementUtils` class (static methods only) is the one place where
-the allow/deny logic lives, used by both TCP and UDP paths.
-
-> **Note on M6 dependency**: Phase 4 (UDP enforcement) requires `Transaction.callerCid()`
-> which is also needed by Milestone 6 (join requests). Implement it here as **Phase 0** so
-> that M5 does not depend on the deferred M6. Phases 1–3 (TCP enforcement) have no dependency
-> on M6 at all.
-
+---
+## Design (for the owner/reviewer)
 ---
 
-## Goals
+### 1. Summary
 
-1. **`ConnectionContext.callerCid()`** — add `Optional<Cid128>` to the `ConnectionContext`
-   record, derived once from the TLS peer certificate when the connection is accepted. All
-   TCP section handlers read it from context rather than re-deriving it.
-2. **`AccessEnforcementUtils`** — a new `com.myster.access.AccessEnforcementUtils` (static
-   methods only per the "Utils" convention) with a single `isAllowed(type, callerCid, alm)`
-   method shared by all enforcement points.
-3. **TCP enforcement** in all file-serving handlers:
-   - `FileTypeLister` (74) — filter the returned type list.
-   - `RequestDirThread` (78) — deny if caller is not a member.
-   - `FileStatsStreamServer` (77) — deny if caller is not a member.
-   - `FileStatsBatchStreamServer` (177) — deny if caller is not a member.
-   - `FileByHash` (150) — deny if caller is not a member.
-   - `MultiSourceSender` — deny if caller is not a member.
-   - `RequestSearchThread` (35) — return empty results if caller is not a member.
-   - `MysterServerLister` (10) — deny if caller is not a member of the requested type.
-4. **UDP enforcement** in `TypeDatagramServer` — filter out private types the caller cannot
-   access, using `Transaction.callerCid()`.
+Turn on the locks. After M4 the access list is fully manageable. This milestone makes it
+meaningful by enforcing membership at every TCP file-serving handler and in the UDP type-lister.
+A single `AccessEnforcementUtils.isAllowed()` method is the one place the allow/deny logic lives.
 
----
-
-## Non-Goals (Milestone 5)
+### 2. Non-Goals
 
 - Any new GUI changes.
-- Enforcement in other UDP transaction types (only the type-lister is in scope).
+- Enforcement in UDP transaction types other than the type-lister.
 - Multi-writer or multi-admin changes.
 - Policy fields beyond `listFilesPublic`.
 - Automatic access list distribution to members.
 
----
+### 3. Assumptions & Open Questions
 
-## Background
+All open questions from the original draft are now resolved:
 
-### How TCP caller identity is established
+- **OQ-1 (Transaction mutability) RESOLVED** — `Transaction` is a regular `final class`, not
+  a record. Adding `Optional<Cid128> callerCid` as a field with `Optional.empty()` default is
+  not compile-breaking. A `withCallerCid(Optional<Cid128>)` method follows the existing
+  `withDifferentPayload` pattern.
+- **`AccessListState.isMember` RESOLVED** — already exists and is tested. No change needed.
+- **TCP accept loop location RESOLVED** — `ConnectionRunnable.run()` at the
+  `STLS_CONNECTION_SECTION` case is where the `TLSSocket` is available and `ConnectionContext`
+  is rebuilt. That is the injection point.
+- **UDP callerCid injection site RESOLVED** — `EncryptedDatagramServer.transactionReceived`,
+  after `DatagramEncryptUtil.decryptRequestPacket`, has `decryptResult.keyHash`. Call
+  `withCallerCid` on the decrypted transaction before `manager.resendTransaction`.
 
-Every Myster TCP connection uses `TLSSocket`.  After the TLS handshake, the server side can
-call `TLSSocket.getPeerPublicKey()` to get the caller's RSA public key.
-`com.myster.identity.Util.generateCid(PublicKey)` produces the corresponding `Cid128`.
+### 4. Proposed Design
 
-This derivation happens once at connection-accept time and is stored in
-`ConnectionContext.callerCid()`.  Legacy plaintext connections (no TLS) produce
-`Optional.empty()`, which causes enforcement to deny access to private types — correct
-behaviour since identity cannot be verified over plaintext.
+**Phase 0** — add `callerCid` to `Transaction` via a new `withCallerCid()` method; populate it
+in `EncryptedDatagramServer` from `decryptResult.keyHash`.
 
-### How UDP caller identity is established
+**Phase 1** — add `Optional<Cid128> callerCid` to the `ConnectionContext` record; derive it at
+the STLS upgrade site in `ConnectionRunnable` from `TLSSocket.getPeerPublicKey()`. Plaintext
+connections keep `Optional.empty()`.
 
-`DatagramEncryptUtil.decrypt()` returns a `DecryptResult` containing `Optional<byte[]> keyHash`
-— the MSD Section 2 `/cid` field, already 16 bytes matching `Cid128`.  Adding
-`Transaction.callerCid()` (Phase 0 of this milestone) plumbs this into the transaction layer.
-`TypeDatagramServer` reads it from there.
+**Phase 2** — create `AccessListReader` (a single-method interface in `com.myster.access`) and
+`AccessEnforcementUtils` in the same package. `AccessListReader` exposes only
+`Optional<AccessList> loadAccessList(MysterType)`. `AccessListManager` implements it.
+`isAllowed(MysterType, Optional<Cid128>, AccessListReader)` contains the sole allow/deny logic.
 
-### `AccessEnforcementUtils.isAllowed` logic
+**Phase 3** — inject `AccessListReader` into each of the eight TCP file-serving handlers and
+call `isAllowed` at the top of `section()`. `FileTypeLister` filters the array; the others
+short-circuit with a deny response.
 
-```
-isAllowed(type, callerCid, alm):
-  accessList = alm.loadAccessList(type)
-  if accessList is absent  →  true   (no list = public)
-  if accessList.state.policy.listFilesPublic  →  true
-  if callerCid is empty  →  false   (no identity on a private type)
-  return accessList.state.isMember(callerCid.get())
-```
+**Phase 4** — inject `AccessListReader` into `TypeDatagramServer`; filter the type array
+with `isAllowed(type, transaction.callerCid(), accessListReader)`.
 
-`isMember` returns `true` for any entry in the members map regardless of role (ADMIN implies
-MEMBER).
+### 5. Architecture Connections
 
-### Why `ConnectionContext` must change
+Identity flows in from two directions into a single enforcement point:
 
-`ConnectionContext` is a Java record:
+- **TCP path**: `TLSSocket.getPeerPublicKey()` → `Util.generateCid()` → `ConnectionContext.callerCid()` → section handler → `AccessEnforcementUtils`
+- **UDP path**: `DatagramEncryptUtil.decryptRequestPacket()` → `DecryptResult.keyHash` → `Transaction.callerCid()` → `TypeDatagramServer` → `AccessEnforcementUtils`
 
-```java
-public record ConnectionContext(MysterSocket socket,
-                                MysterAddress serverAddress,
-                                Object sectionObject,
-                                TransferQueue transferQueue,
-                                FileTypeListManager fileManager)
-```
+Both paths converge on `AccessEnforcementUtils.isAllowed()`, which reads from an `AccessListReader`
+and delegates membership checks to `AccessListState.isMember()`. The handlers never see the full
+`AccessListManager`; they only know how to ask "does a list exist for this type?"
 
-Adding `Optional<Cid128> callerCid` to the record is a compile-breaking change — every
-construction site must be updated simultaneously.  The implementation agent must find all
-`new ConnectionContext(...)` call sites (compiler will flag them) before making the edit.
-
-### Deny responses per section
-
-Each section has its own wire protocol.  On deny, use the minimal "nothing found" response the
-existing client already handles:
-
-| Section | Deny response |
-|---|---|
-| `FileTypeLister` (74) | Write `0` (count) then nothing — filtered array of length 0 |
-| `RequestDirThread` (78) | Write `0` (count) |
-| `FileStatsStreamServer` (77) | Write empty `MessagePak` |
-| `FileStatsBatchStreamServer` (177) | Write protocol check byte + empty responses for each file |
-| `FileByHash` (150) | Write the "not found" sentinel the protocol already defines |
-| `MultiSourceSender` | Write the "file not found" response the protocol already defines |
-| `RequestSearchThread` (35) | Write `0` (count) |
-| `MysterServerLister` (10) | Write empty string sentinel immediately (no addresses) |
-
-> **Implementation note**: verify the exact wire format for each by reading the corresponding
-> client-side parser before implementing the deny path.
-
----
-
-## Proposed Design (High-Level)
-
-### 1. `ConnectionContext` — add `callerCid`
-
-```java
-public record ConnectionContext(MysterSocket socket,
-                                MysterAddress serverAddress,
-                                Object sectionObject,
-                                TransferQueue transferQueue,
-                                FileTypeListManager fileManager,
-                                Optional<Cid128> callerCid) {
-
-    public ConnectionContext withSectionObject(Object newSectionObject) {
-        return new ConnectionContext(socket, serverAddress, newSectionObject,
-                                     transferQueue, fileManager, callerCid);
-    }
-}
-```
-
-The accept loop derives `callerCid` after TLS completes:
-
-```java
-Optional<Cid128> callerCid = Optional.empty();
-if (socket instanceof TLSSocket tls) {
-    try { callerCid = Optional.of(Util.generateCid(tls.getPeerPublicKey())); }
-    catch (IOException ignored) {}
-}
-```
-
-### 2. `AccessEnforcementUtils` — single enforcement method
-
-```java
-public final class AccessEnforcementUtils {
-    private AccessEnforcementUtils() {}
-
-    public static boolean isAllowed(MysterType type,
-                                    Optional<Cid128> callerCid,
-                                    AccessListManager alm) { ... }
-}
-```
-
-### 3. TCP enforcement pattern (per section)
-
-```java
-// At the top of section(), after reading the type:
-if (!AccessEnforcementUtils.isAllowed(type, context.callerCid(), accessListManager)) {
-    writeDenyResponse(context.socket().out);
-    return;
-}
-// ... normal serving logic ...
-```
-
-`FileTypeLister` is the exception: it filters the array rather than short-circuiting, since
-a single TCP connection can ask about multiple types.
-
-### 4. UDP enforcement in `TypeDatagramServer`
-
-```java
-// After getting the full type list:
-MysterType[] visible = Arrays.stream(allTypes)
-    .filter(t -> AccessEnforcementUtils.isAllowed(t, transaction.callerCid(), alm))
-    .toArray(MysterType[]::new);
-// use visible instead of allTypes in the response
-```
-
----
-
-## Affected Modules / Packages
-
-| Package | Component | Change |
-|---|---|---|
-| `com.myster.net.server` | `ConnectionContext` | Add `Optional<Cid128> callerCid` field |
-| `com.myster.net.server` | TCP accept loop | Derive `callerCid` from TLS peer key |
-| `com.myster.transaction` | `Transaction` (or equivalent) | Add `Optional<Cid128> callerCid()` (Phase 0) |
-| `com.myster.transaction` | Transaction accept loop | Populate from `DecryptResult.keyHash` (Phase 0) |
-| `com.myster.access` | `AccessEnforcementUtils` (new) | `isAllowed(type, callerCid, alm)` |
-| `com.myster.access` | `AccessListState` | Add `isMember(Cid128)` if not already present |
-| `com.myster.net.stream.server` | `FileTypeLister` (74) | Inject `AccessListManager`; filter array |
-| `com.myster.net.stream.server` | `RequestDirThread` (78) | Inject `AccessListManager`; deny |
-| `com.myster.net.stream.server` | `FileStatsStreamServer` (77) | Inject `AccessListManager`; deny |
-| `com.myster.net.stream.server` | `FileStatsBatchStreamServer` (177) | Inject `AccessListManager`; deny |
-| `com.myster.net.stream.server` | `FileByHash` (150) | Inject `AccessListManager`; deny |
-| `com.myster.net.stream.server` | `MultiSourceSender` | Inject `AccessListManager`; deny |
-| `com.myster.net.stream.server` | `RequestSearchThread` (35) | Inject `AccessListManager`; deny |
-| `com.myster.net.stream.server` | `MysterServerLister` (10) | Inject `AccessListManager`; deny |
-| `com.myster.net.server.datagram` | `TypeDatagramServer` | Inject `AccessListManager`; filter |
-| `com.myster.Myster` | main wiring | Pass `AccessListManager` to all newly-injected classes |
-
----
-
-## Files / Classes to Create or Change
-
-### Create
-
-#### 1. `com/myster/access/AccessEnforcementUtils.java`
-
-```java
-/**
- * Static utility methods for enforcing access list permissions at TCP and UDP request points.
- *
- * <p>All enforcement points call {@link #isAllowed} to decide whether to serve or deny.
- * Public types (absent access list, or {@code listFilesPublic == true}) always pass.
- * Private types require a non-empty {@code callerCid} that appears in the members map.
- */
-public final class AccessEnforcementUtils {
-    private AccessEnforcementUtils() {}
-
-    /**
-     * Returns true if the caller is permitted to access files of the given type.
-     *
-     * @param type      the type being accessed
-     * @param callerCid the caller's identity hash; empty for unauthenticated connections
-     * @param alm       the access list manager
-     */
-    public static boolean isAllowed(MysterType type,
-                                    Optional<Cid128> callerCid,
-                                    AccessListManager alm) { ... }
-}
-```
-
-### Modify
-
-#### 2. `com/myster/net/server/ConnectionContext.java`
-
-Add `Optional<Cid128> callerCid` as the last component of the record.  Update
-`withSectionObject` to propagate it.  Update all construction sites (compiler-guided).
-
-#### 3. TCP accept loop (location TBD — search for `new ConnectionContext(`)
-
-Derive `callerCid` from `TLSSocket.getPeerPublicKey()` after TLS handshake completes.
-
-#### 4. `com/myster/transaction/Transaction.java` (or equivalent) — Phase 0
-
-Add `Optional<Cid128> callerCid()`.  The transaction accept loop populates this from
-`DecryptResult.keyHash` (wrap as `new Cid128(keyHash.get())`).
-
-> **OQ-1**: If `Transaction` is a record, adding a field is a compile-breaking change. Inspect
-> the class before editing. If mutability is limited, prefer a wrapper or companion object.
-> Note: this same field will also be consumed by Milestone 6 (`JoinRequestServer`), so the
-> change only needs to be made once.
-
-#### 5. `com/myster/access/AccessListState.java`
-
-Add `public boolean isMember(Cid128 cid)` if not already present:
-
-```java
-public boolean isMember(Cid128 cid) {
-    return members.containsKey(cid);
-}
-```
-
-#### 6–13. TCP section classes
-
-Each receives `AccessListManager` via constructor injection.  Enforce at the top of `section()`.
-
-| # | Class | Section | Deny response |
+| New / changed thing | Owned by | Called / used by | Connects to (existing) |
 |---|---|---|---|
-| 6 | `FileTypeLister` | 74 | Filter array (write 0-length if all denied) |
-| 7 | `RequestDirThread` | 78 | Write `0` (count) |
-| 8 | `FileStatsStreamServer` | 77 | Write empty `MessagePak` |
-| 9 | `FileStatsBatchStreamServer` | 177 | Write check byte + empty responses |
-| 10 | `FileByHash` | 150 | Write "not found" sentinel |
-| 11 | `MultiSourceSender` | (verify #) | Write "file not found" |
-| 12 | `RequestSearchThread` | 35 | Write `0` (count) |
-| 13 | `MysterServerLister` | 10 | Write empty string sentinel |
+| `AccessListReader` (new interface) | `com.myster.access` | `AccessEnforcementUtils`; 8 TCP handlers; `TypeDatagramServer` | `AccessListManager` (implements it) |
+| `AccessEnforcementUtils` (new) | `com.myster.access` | 8 TCP handlers; `TypeDatagramServer` | `AccessListReader`, `AccessListState.isMember()` |
+| `ConnectionContext.callerCid()` | `com.myster.net.server` | All TCP section handlers | `TLSSocket.getPeerPublicKey()` + `Util.generateCid()` |
+| `Transaction.callerCid()` | `com.myster.transaction` | `TypeDatagramServer` | `EncryptedDatagramServer` populates via `withCallerCid()` |
+| 8 TCP section handlers (modified) | `com.myster.net.stream.server` | `Myster.java` (wiring) | `AccessEnforcementUtils`, `ConnectionContext` |
+| `TypeDatagramServer` (modified) | `com.myster.net.server.datagram` | `Myster.java` (wiring) | `AccessEnforcementUtils`, `Transaction` |
 
-#### 14. `com/myster/net/server/datagram/TypeDatagramServer.java`
+### 6. Key Decisions & Edge Cases
 
-Inject `AccessListManager` via constructor.  Filter the type array using
-`AccessEnforcementUtils.isAllowed(type, transaction.callerCid(), alm)`.
+- **Fail-open on corrupt/missing access list**: catch `IOException` from `loadAccessList`,
+  log WARNING, treat as public. Don't crash the serving thread.
+- **Plaintext connections denied on private types**: `callerCid = empty` → deny. Correct —
+  identity cannot be verified without TLS.
+- **ADMIN implies MEMBER**: `isMember` checks `members.containsKey(cid)` — ADMINs are in
+  the map and therefore pass.
+- **`FileTypeLister` must write the filtered count first**: write `filtered.length` then
+  the filtered entries — not the original count.
+- **`ConnectionContext` record change is compile-breaking**: use the compiler to find every
+  construction site. Do not rely on text search alone.
 
-#### 15. `com/myster/Myster.java`
+### 7. Acceptance Criteria
 
-Pass `AccessListManager` to each newly-injected class at construction time.
-
----
-
-## Step-by-Step Implementation Plan
-
-### Phase 0: `Transaction.callerCid()` (pulled forward from M6)
-
-1. Locate where `DatagramEncryptUtil.decrypt()` is called in the transaction receive path.
-2. After decryption, build `Optional<Cid128> callerCid` from `decryptResult.keyHash`.
-3. Add `callerCid()` accessor to `Transaction` (see OQ-1).
-4. **Unit test** `TestTransactionCallerCid`: known `keyHash` → correct `Cid128` returned;
-   empty `keyHash` → `Optional.empty()`.
-
-### Phase 1: `ConnectionContext` — add `callerCid`
-
-1. Add `Optional<Cid128> callerCid` to the record.
-2. Update `withSectionObject` to propagate it.
-3. Find all `new ConnectionContext(...)` call sites; add `Optional.empty()` as the last
-   argument everywhere except the TCP accept loop.
-4. In the TCP accept loop: derive `callerCid` from the TLS socket after handshake; pass it.
-5. **Unit test** `TestConnectionContext`: stub TLS socket → correct `Cid128`; stub plaintext
-   socket → `Optional.empty()`.
-
-### Phase 2: `AccessEnforcementUtils`
-
-1. Create `AccessEnforcementUtils.java`.
-2. Implement `isAllowed` as described.
-3. Add `isMember(Cid128)` to `AccessListState` if absent.
-4. **Unit tests** `TestAccessEnforcementUtils` (five cases):
-   - No access list → `true`.
-   - Public policy → `true` regardless of `callerCid`.
-   - Private policy, caller is a member → `true`.
-   - Private policy, caller not a member → `false`.
-   - Private policy, `callerCid` is empty → `false`.
-
-### Phase 3: TCP Section Enforcement
-
-For each section in order (`FileTypeLister` → `RequestDirThread` → `FileStatsStreamServer` →
-`FileStatsBatchStreamServer` → `FileByHash` → `MultiSourceSender` → `RequestSearchThread` →
-`MysterServerLister`):
-
-1. Add `AccessListManager` constructor parameter; store as field.
-2. At the top of `section()`, after reading the type, call `isAllowed`.
-3. On deny: write the appropriate minimal response and return.
-4. Update `Myster.java`.
-
-**Unit tests** per section: empty cid + private type → deny; member cid → allow; public type
-→ always allow.
-
-### Phase 4: UDP `TypeDatagramServer` Enforcement
-
-1. Add `AccessListManager` constructor parameter to `TypeDatagramServer`.
-2. Filter `allTypes` with `isAllowed(type, transaction.callerCid(), alm)`.
-3. Update `Myster.java`.
-4. **Unit tests** `TestTypeDatagramServerEnforcement`: no cid → private filtered; member cid
-   → included; non-member cid → filtered; public type → always included.
-
----
-
-## Tests / Verification
-
-### Unit Tests
-
-| Test class | Coverage |
-|---|---|
-| `TestTransactionCallerCid` | `Cid128` correctly populated; empty when `keyHash` absent |
-| `TestConnectionContext` | `callerCid` from TLS; empty from plaintext |
-| `TestAccessEnforcementUtils` | All five `isAllowed` cases |
-| `TestFileTypeListerEnforcement` | Private type filtered; public type always visible |
-| `TestRequestDirThreadEnforcement` | Member allowed; non-member gets 0-count response |
-| `TestFileStatsStreamServerEnforcement` | Member allowed; non-member gets empty MessagePak |
-| `TestFileStatsBatchStreamServerEnforcement` | Same pattern |
-| `TestFileByHashEnforcement` | Same pattern |
-| `TestMultiSourceSenderEnforcement` | Same pattern |
-| `TestRequestSearchThreadEnforcement` | Same pattern |
-| `TestMysterServerListerEnforcement` | Same pattern |
-| `TestTypeDatagramServerEnforcement` | Private type filtered for non-members; public type passes |
-
-### Manual QA Checklist
-
-- [ ] Instance A has a private type. Instance B is not a member.
-- [ ] B connects to A — A's private type does not appear in B's type list (TCP).
-- [ ] B sends a UDP type-listing request — A's private type is absent from the response.
-- [ ] A adds B as a member (via M4 Members tab). B reconnects.
-- [ ] B now sees A's private type in both TCP type listing and UDP type listing.
-- [ ] B can list files, download, and search under A's private type.
-- [ ] A third instance C (not a member) still cannot see or access the private type.
-- [ ] A removes B. B can no longer access the private type after reconnecting.
-- [ ] Public types are unaffected — visible and accessible by all nodes.
-
----
-
-## Docs / Comments to Update
-
-1. `AccessEnforcementUtils` — full Javadoc including the five `isAllowed` cases.
-2. `ConnectionContext` — update Javadoc to explain `callerCid` and when it is populated.
-3. `Transaction` — document new `callerCid()` field.
-4. Each modified TCP section class — note enforcement added in M5.
-5. `TypeDatagramServer` — note UDP enforcement added in M5.
-6. `docs/design/Encrypted UDP Packet.md` — note MSD Section 2 `/cid` used for enforcement.
-7. `docs/impl_summary/private-types-access-lists-milestone5.md` — create after implementation.
-
----
-
-## Acceptance Criteria
-
-- [ ] `Transaction.callerCid()` populated for authenticated packets; empty otherwise.
+- [ ] `Transaction.callerCid()` returns the correct `Cid128` for encrypted packets; empty otherwise.
 - [ ] `ConnectionContext.callerCid()` populated from TLS peer cert; empty for plaintext.
 - [ ] `AccessEnforcementUtils.isAllowed` passes all five unit-test cases.
 - [ ] All eight TCP section handlers deny non-members with the correct wire response.
-- [ ] `FileTypeLister` filters the type array (does not short-circuit the whole connection).
+- [ ] `FileTypeLister` filters the type array without short-circuiting the connection.
 - [ ] `TypeDatagramServer` filters private types for non-members.
 - [ ] Public types pass all enforcement checks unconditionally.
-- [ ] All new unit tests pass.
-- [ ] All existing M1–M4 tests still pass.
+- [ ] All new unit tests pass; all existing M1-M4 tests still pass.
 
 ---
-
-## Risks / Edge Cases / Rollout Notes
-
-1. **`ConnectionContext` record change is compile-breaking.** Use the compiler to find all
-   call sites; do not rely on text search.
-2. **`Transaction` mutability** — see OQ-1. Potentially also compile-breaking.
-3. **Non-TLS connections** produce `callerCid = empty` → denied on private types. Correct.
-4. **`AccessListManager` cache** — verify it doesn't re-read disk on every request.
-5. **Corrupt access list** — catch load errors, log, treat as public (fail open).
-6. **`isMember` for ADMIN role** — must return `true`; ADMIN implies MEMBER.
-7. **`FileTypeLister` filtered array** — write the filtered count, not the original count.
-8. **UDP no `/cid`** (older client) — `callerCid` empty → private types filtered. Correct.
-
+## Implementation Details (for the implementation agent)
 ---
 
+### 8. Affected Files / Classes
+
+New:
+- `com.myster.access.AccessListReader` (interface: `Optional<AccessList> loadAccessList(MysterType)`)
+- `com.myster.access.AccessEnforcementUtils`
+
+Modified:
+- `com.myster.access.AccessListManager` — implement `AccessListReader`
+- `com.myster.transaction.Transaction` — add `callerCid` field + `withCallerCid()`
+- `com.myster.net.datagram.server.EncryptedDatagramServer` — attach `callerCid` after decrypt
+- `com.myster.net.server.ConnectionContext` — add `Optional<Cid128> callerCid` record component
+- `com.myster.net.server.ConnectionRunnable` — derive `callerCid` at STLS upgrade site
+- `com.myster.net.stream.server.FileTypeLister` — inject `AccessListReader`; filter array
+- `com.myster.net.stream.server.RequestDirThread` — inject `AccessListReader` + deny
+- `com.myster.net.stream.server.FileStatsStreamServer` — inject `AccessListReader` + deny
+- `com.myster.net.stream.server.FileStatsBatchStreamServer` — inject `AccessListReader` + deny
+- `com.myster.net.stream.server.FileByHash` — inject `AccessListReader` + deny
+- `com.myster.net.stream.server.MultiSourceSender` — inject `AccessListReader` + deny
+- `com.myster.net.stream.server.RequestSearchThread` — inject `AccessListReader` + deny
+- `com.myster.net.stream.server.MysterServerLister` — inject `AccessListReader` + deny
+- `com.myster.net.server.datagram.TypeDatagramServer` — inject `AccessListReader` + filter
+- `com.myster.Myster` — pass `AccessListManager` (as `AccessListReader`) into all newly-injected classes
+
+No change needed:
+- `com.myster.access.AccessListState` — `isMember(Cid128)` already exists and is tested.
+
+### 9. Step-by-Step Implementation
+
+#### Phase 0 — Transaction.callerCid()
+
+1. In `Transaction`, add `private final Optional<Cid128> callerCid = Optional.empty()` to all
+   existing constructors (default to empty — not compile-breaking).
+2. Add `public Optional<Cid128> callerCid()` accessor.
+3. Add `public Transaction withCallerCid(Optional<Cid128> cid)` returning a new `Transaction`
+   with all fields copied and `callerCid` replaced.
+4. In `EncryptedDatagramServer.transactionReceived`, after building `decryptedTransaction` via
+   `transaction.withDifferentPayload(...)`, add:
+   `decryptedTransaction = decryptedTransaction.withCallerCid(decryptResult.keyHash.map(Cid128::new));`
+   before `manager.resendTransaction(encrypterSender, decryptedTransaction)`.
+
+#### Phase 1 — ConnectionContext.callerCid()
+
+1. Add `Optional<Cid128> callerCid` as the last record component.
+2. Update `withSectionObject` to propagate it.
+3. Compile — let the compiler find every broken construction site.
+4. Add `Optional.empty()` at every site except the STLS upgrade site.
+5. At the STLS upgrade site in `ConnectionRunnable.run()` (where `tlsSocket` is built), derive:
+
+```
+Optional<Cid128> callerCid;
+try {
+    callerCid = Optional.of(Util.generateCid(tlsSocket.getPeerPublicKey()));
+} catch (IOException ignored) {
+    callerCid = Optional.empty();
+}
+context = new ConnectionContext(tlsSocket, context.serverAddress(), context.sectionObject(), transferQueue, fileManager, callerCid);
+```
+
+#### Phase 2 — AccessListReader + AccessEnforcementUtils
+
+1. Create `AccessListReader` as a `@FunctionalInterface` in `com.myster.access`:
+   ```
+   Optional<AccessList> loadAccessList(MysterType type) throws IOException;
+   ```
+2. Add `implements AccessListReader` to `AccessListManager`.
+3. Implement `isAllowed(MysterType type, Optional<Cid128> callerCid, AccessListReader reader)` in `AccessEnforcementUtils`:
+   - Call `reader.loadAccessList(type)` — catch `IOException`, log WARNING, return `true` (fail-open).
+   - `list.isEmpty()` → return `true`.
+   - `state.getPolicy().isListFilesPublic()` → return `true`.
+   - `callerCid.isEmpty()` → return `false`.
+   - Return `state.isMember(callerCid.get())`.
+
+#### Phase 3 — TCP Section Enforcement
+
+For each class, add `private final AccessListReader accessListReader` + constructor param.
+At top of `section()`, read type, then check `AccessEnforcementUtils.isAllowed(type, context.callerCid(), accessListReader)`. On deny write the minimal response
+(verify exact format by reading the client-side parser for each section first):
+
+| Class | Deny response |
+|---|---|
+| `FileTypeLister` (74) | Write filtered count + filtered entries (not a short-circuit) |
+| `RequestDirThread` (78) | `out.writeInt(0)` |
+| `FileStatsStreamServer` (77) | Write empty `MessagePak` |
+| `FileStatsBatchStreamServer` (177) | Protocol check byte + 0-entry responses |
+| `FileByHash` (150) | Existing "not found" sentinel |
+| `MultiSourceSender` | Existing "file not found" response |
+| `RequestSearchThread` (35) | `out.writeInt(0)` |
+| `MysterServerLister` (10) | Empty string sentinel |
+
+In `Myster.java`, pass the `AccessListManager` instance wherever `AccessListReader` is required.
+
+#### Phase 4 — TypeDatagramServer UDP Enforcement
+
+1. Add `AccessListReader accessListReader` constructor param.
+2. Filter: `Util.filter(Arrays.asList(allTypes), t -> AccessEnforcementUtils.isAllowed(t, transaction.callerCid(), accessListReader))` then convert to array.
+3. Use filtered list in response.
+4. In `Myster.java`, pass the `AccessListManager` instance as `AccessListReader`.
