@@ -222,14 +222,6 @@ public class MysterDatagramImpl implements MysterDatagram {
     }
     
     private Optional<Identity> getClientIdentity(ParamBuilder params) {
-        // Try to get identity from params, or use default client identity
-        if (params.getIdentity().isPresent()) {
-            // Convert MysterIdentity to Identity if needed
-            // This depends on the relationship between these classes
-            return Optional.empty(); // TODO: Implement conversion
-        }
-        
-        // Use default client identity if available
-        return lookup.getDefaultClientIdentity();
+        return Optional.ofNullable(identity);
     }
 }

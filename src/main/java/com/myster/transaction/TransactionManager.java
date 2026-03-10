@@ -208,11 +208,9 @@ public class TransactionManager {
      */
     private static class TransactionTransportImplementation implements DatagramTransport {
         private final Map<Integer, TransactionProtocol> serverProtocols = new HashMap<>();
-
         private final Map<Integer, ListenerRecord> outstandingTransactions = new HashMap<>();
 
         private final ServerEventDispatcher dispatcher;
-
         private final DatagramSender sender;
 
         /**

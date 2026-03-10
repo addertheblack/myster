@@ -4,7 +4,6 @@ import java.security.PublicKey;
 import java.util.Optional;
 
 import com.general.thread.PromiseFuture;
-import com.myster.identity.Identity;
 import com.myster.net.MysterAddress;
 import com.myster.tracker.MysterIdentity;
 
@@ -30,12 +29,5 @@ public interface PublicKeyLookup {
         }
         // For now, return empty - async version would be used in production
         return Optional.empty();
-    }
-    
-    /**
-     * Get the default client identity for signing packets
-     */
-    default Optional<Identity> getDefaultClientIdentity() {
-        return Optional.empty(); // TODO: Implement when identity system is integrated
     }
 }
