@@ -115,7 +115,8 @@ public class DefaultTypeDescriptionList implements TypeDescriptionList {
                 def.getExtensions(),
                 def.isSearchInArchives(),
                 false,                  // custom types disabled by default
-                TypeSource.CUSTOM);
+                TypeSource.CUSTOM,
+                def.isPublic());
     }
 
     private static final String DEFAULT_LIST_KEY = "DefaultTypeDescriptionList saved defaults";

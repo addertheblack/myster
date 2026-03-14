@@ -11,18 +11,6 @@
 
 package com.myster.filemanager.ui;
 
-import java.awt.Color;
-import java.awt.Dimension;
-import java.awt.GridBagConstraints;
-import java.awt.GridBagLayout;
-import java.awt.Insets;
-import java.awt.event.ActionEvent;
-import java.awt.event.ItemEvent;
-import java.io.File;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.logging.Logger;
-
 import javax.swing.BorderFactory;
 import javax.swing.DefaultListModel;
 import javax.swing.JButton;
@@ -33,13 +21,30 @@ import javax.swing.JList;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import javax.swing.SwingUtilities;
+import javax.swing.UIManager;
 import javax.swing.border.TitledBorder;
+import java.awt.Color;
+import java.awt.Dimension;
+import java.awt.GridBagConstraints;
+import java.awt.GridBagLayout;
+import java.awt.Insets;
+import java.awt.event.ActionEvent;
+import java.awt.event.ItemEvent;
+import java.io.File;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Optional;
+import java.util.logging.Logger;
 
+import com.formdev.flatlaf.extras.FlatSVGIcon;
 import com.general.util.GridBagBuilder;
+import com.general.util.IconLoader;
+import com.general.util.MessageField;
 import com.general.util.Timer;
 import com.myster.filemanager.FileTypeListManager;
 import com.myster.pref.ui.PreferencesPanel;
 import com.myster.type.MysterType;
+import com.myster.type.TypeDescription;
 import com.myster.type.TypeDescriptionList;
 import com.myster.util.TypeChoice;
 
@@ -47,6 +52,9 @@ import com.myster.util.TypeChoice;
  * The FMICHooser is the FileManagerInterfaceChooser. It's the GUI for the
  * FileManager prefs panel. It's built to be as independent from the internal
  * working of the FileManager, despite having access to the sweat, sweat inners.
+ * <p>
+ * When the selected type is public (non-members can see shared files), a yellow
+ * warning banner is shown below the type selector to make the sharing scope visible.
  */
 
 public class FmiChooser extends PreferencesPanel {
@@ -56,6 +64,7 @@ public class FmiChooser extends PreferencesPanel {
 	
     private final FileTypeListManager manager;
     private final TypeChoice choice;
+    private final JLabel publicWarningLabel;
     private final JCheckBox checkbox;
     private final JButton button;
     private final JLabel pathLabel;
@@ -82,6 +91,7 @@ public class FmiChooser extends PreferencesPanel {
         choice.addItemListener((ItemEvent _) -> {
             restoreState();
             titledBorder.setTitle(choice.getSelectedDescription());
+            updateWarningBanner();
         });
         add(choice,
             outterGbc.withGridLoc(0, 0)
@@ -89,6 +99,16 @@ public class FmiChooser extends PreferencesPanel {
                      .withWeight(1, 0)
                      .withInsets(new Insets(5, 0, 5, 0)));
         titledBorder.setTitle(choice.getSelectedDescription());
+
+        publicWarningLabel = new JLabel();
+        publicWarningLabel.setBorder(BorderFactory.createEmptyBorder(3, 6, 3, 6));
+        publicWarningLabel.setVisible(false);
+        add(publicWarningLabel,
+            outterGbc.withGridLoc(0, 1)
+                     .withSize(2, 1)
+                     .withWeight(1, 0)
+                     .withFill(GridBagConstraints.HORIZONTAL)
+                     .withInsets(new Insets(0, 4, 4, 4)));
 
         setAllButton = new JButton("Set all paths to this path");
         setAllButton.addActionListener((ActionEvent _) -> {
@@ -190,7 +210,7 @@ public class FmiChooser extends PreferencesPanel {
                           .withInsets(new Insets(5, 5, 5, 5)));
 
         add(panel,
-            outterGbc.withGridLoc(0, 1)
+            outterGbc.withGridLoc(0, 2)
                     .withSize(2, 1)
                     .withFill(GridBagConstraints.BOTH)
                     .withWeight(1, 1)
@@ -199,6 +219,7 @@ public class FmiChooser extends PreferencesPanel {
         repaint();
         reset();
         restoreState();
+        updateWarningBanner();
     }
 
     private void setPathLabel(String newPath) {
@@ -291,6 +312,42 @@ public class FmiChooser extends PreferencesPanel {
             }, 100);
         } else {
             restoreState();
+        }
+    }
+
+    /**
+     * Shows or hides the public-type warning banner depending on whether the currently
+     * selected type is public.
+     * <p>
+     * Uses a translucent yellow background ({@code "Actions.Yellow"} at ~35% alpha) with the
+     * theme's normal label foreground. This is legible on both light and dark themes: on light
+     * it renders as a warm amber tint; on dark it reads as a subtle golden highlight. The icon
+     * uses the full-saturation yellow so it stays visible at any opacity.
+     */
+    private void updateWarningBanner() {
+        boolean isPublic = choice.getSelectedTypeDescription()
+                                 .map(TypeDescription::isPublic)
+                                 .orElse(false);
+        if (isPublic) {
+            Color yellow = Optional.ofNullable(UIManager.getColor("Actions.Yellow"))
+                                   .orElse(new Color(0xED, 0xA2, 0x00));
+            // Translucent background tint — readable against both light and dark panel backgrounds
+            publicWarningLabel.setBackground(new Color(yellow.getRed(), yellow.getGreen(), yellow.getBlue(), 90));
+            publicWarningLabel.setForeground(UIManager.getColor("Label.foreground"));
+            publicWarningLabel.setOpaque(true);
+            int h = publicWarningLabel.getFontMetrics(publicWarningLabel.getFont()).getHeight();
+            try {
+                FlatSVGIcon icon = IconLoader.loadSvg(MessageField.class, "warning-icon", h);
+                publicWarningLabel.setIcon(icon);
+            } catch (Exception ignored) {
+                publicWarningLabel.setIcon(null);
+            }
+            publicWarningLabel.setText(
+                    "Public type — files in this folder are visible to everyone on the network.");
+            publicWarningLabel.setVisible(true);
+        } else {
+            publicWarningLabel.setOpaque(false);
+            publicWarningLabel.setVisible(false);
         }
     }
 

@@ -85,6 +85,7 @@ class TestDefaultTypeDescriptionListImport {
             assertTrue(tdl.isTypeEnabled(type), "Imported type should be enabled");
             assertTrue(tdl.get(type).isPresent(), "Imported type should be in the list");
             assertEquals("Movies", tdl.get(type).get().getDescription());
+            assertFalse(tdl.get(type).get().isPublic(), "Restrictive-policy type should report isPublic() == false");
             assertEquals(type, fired.get().getType(),
                     "typeEnabled event should fire with correct type");
         }

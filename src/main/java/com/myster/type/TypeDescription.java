@@ -18,7 +18,11 @@ package com.myster.type;
  * "isEnabledByDefault" flag and an "isArchived" flag to signal whether the file
  * manager should search inside .zip files and other archives for files with the
  * previously indicated extensions.
- * 
+ *
+ * <p>The {@link #isPublic()} flag indicates whether non-members may list and download
+ * files of this type. Built-in types are always public ({@code true}). Custom types
+ * carry the value from their access-list policy ({@link com.myster.access.Policy#isListFilesPublic()}).
+ *
  * @see TypeDescriptionList where TypeDescription is used
  * @author Andrew Trumper
  */
@@ -31,35 +35,33 @@ public class TypeDescription {
     private final boolean isEnabledByDefault;
     private final String internalName;
     private final TypeSource source;
+    private final boolean isPublic;
 
     public TypeDescription(MysterType type, String internalName, String description, String[] extensions,
-            boolean isArchived, boolean isEnabledByDefault ) {
+            boolean isArchived, boolean isEnabledByDefault) {
         this(type, internalName, description, extensions, isArchived, isEnabledByDefault, TypeSource.DEFAULT);
     }
 
     /**
-     * Creates a TypeDescription object with an explicit source.
+     * Creates a TypeDescription object with an explicit source. Defaults {@code isPublic} to
+     * {@code true} — appropriate for all built-in types.
      *
-     * @param type
-     *            The MysterType this description is for.
-     * @param internalName
-     *            Internal name for this type (used for StandardTypes lookup)
-     * @param description
-     *            A short description of this type
-     * @param extensions
-     *            an array of file extensions to filter by. If this array is of
-     *            size 0 then no files will be filtered.
-     * @param isArchived
-     *            a flag to indicate to the FileManager to look for this type of
-     *            file inside .zip like archive files.
-     * @param isEnabledByDefault
-     *            a flag to indicate that this file type should be enabled by
-     *            default
-     * @param source
-     *            whether this is a DEFAULT (built-in) or CUSTOM (user-created) type
+     * @param source whether this is a DEFAULT (built-in) or CUSTOM (user-created) type
      */
     public TypeDescription(MysterType type, String internalName, String description, String[] extensions,
             boolean isArchived, boolean isEnabledByDefault, TypeSource source) {
+        this(type, internalName, description, extensions, isArchived, isEnabledByDefault, source, true);
+    }
+
+    /**
+     * Creates a TypeDescription object with an explicit source and public/private policy flag.
+     *
+     * @param source   whether this is a DEFAULT (built-in) or CUSTOM (user-created) type
+     * @param isPublic {@code true} if non-members may list and download files of this type;
+     *                 {@code false} for private types where only members may access files
+     */
+    public TypeDescription(MysterType type, String internalName, String description, String[] extensions,
+            boolean isArchived, boolean isEnabledByDefault, TypeSource source, boolean isPublic) {
         this.type = type;
         this.internalName = internalName;
         this.description = description;
@@ -67,6 +69,7 @@ public class TypeDescription {
         this.isArchived = isArchived;
         this.isEnabledByDefault = isEnabledByDefault;
         this.source = source;
+        this.isPublic = isPublic;
     }
 
     public String getTypeAsString() {
@@ -143,6 +146,16 @@ public class TypeDescription {
      */
     public boolean isEditable() {
         return source == TypeSource.CUSTOM;
+    }
+
+    /**
+     * Returns whether non-members can list and download files of this type.
+     * Built-in types are always public. Custom types reflect their access-list policy.
+     *
+     * @return {@code true} if this is a public type, {@code false} if private (members only)
+     */
+    public boolean isPublic() {
+        return isPublic;
     }
 
     public String toString() {

@@ -1291,4 +1291,7 @@ keys for myster types.
   Add custom/private types. So Myster Types are now user configurable.
     It's been a long road... Getting from there to here.
 
+2026-03-12
+  Add ability to set who can join/see/search/download from a private type via an access list.
+
 (See TODO.txt for the outstanding work list.)

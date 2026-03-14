@@ -21,7 +21,7 @@ This document captures Myster-specific coding conventions, preferred libraries, 
 
 **For architectural patterns**, see **[myster-important-patterns.md](myster-important-patterns.md)**:
 - Event System, Promise/Future, Listener Pattern, Dependency Injection, Threading
-- **FlatLaf Theming** — `UIManager.getColor("Actions.Red")` etc.; never hardcode `new Color(...)`
+- **FlatLaf Theming** — `UIManager.getColor("Actions.Red")` etc.; never hardcode `new Color(...)` (https://github.com/JFormDesigner/FlatLaf/blob/main/flatlaf-core/src/main/java/com/formdev/flatlaf/FlatIconColors.java)
 
 ---
 

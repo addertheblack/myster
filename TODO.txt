@@ -15,7 +15,6 @@
 - Split off concurrency library from Myster and publish to Maven.
 - Make Myster modules compatible.
 - Fix naming — probably want to use myster.org.
-- Fix website links so that everything uses https (make them relative links).
 - Implement DoS / packet-amplification defence (don't be a target vector for attacks on others).
 - Fix DefaultTypeDescriptionList to interact with preferences in a sane way (not using MML).
 
