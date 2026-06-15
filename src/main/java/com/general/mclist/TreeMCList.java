@@ -1,5 +1,10 @@
 package com.general.mclist;
 
+import javax.swing.Icon;
+import javax.swing.ImageIcon;
+import javax.swing.JTable;
+import javax.swing.border.EmptyBorder;
+import javax.swing.table.DefaultTableCellRenderer;
 import java.awt.Component;
 import java.awt.Graphics;
 import java.awt.Graphics2D;
@@ -8,12 +13,6 @@ import java.awt.RenderingHints;
 import java.awt.event.KeyAdapter;
 import java.awt.event.KeyEvent;
 import java.awt.image.BufferedImage;
-
-import javax.swing.Icon;
-import javax.swing.ImageIcon;
-import javax.swing.JTable;
-import javax.swing.border.EmptyBorder;
-import javax.swing.table.DefaultTableCellRenderer;
 
 import com.formdev.flatlaf.extras.FlatSVGIcon;
 import com.general.mclist.TreeMCListTableModel.TreeMCListItem;
@@ -111,7 +110,23 @@ public class TreeMCList {
                 }
                 
                 super.processMouseMotionEvent(e);
-                
+            }
+
+            @Override
+            public void tableChanged(javax.swing.event.TableModelEvent e) {
+                // A structure change (HEADER_ROW) causes JTable to recreate all TableColumn
+                // objects via createDefaultColumnsFromModel(), wiping any custom cell renderers.
+                // Column 0 carries the tree renderer (icons, indentation, chevrons), so save
+                // and restore it around the super call.
+                javax.swing.table.TableCellRenderer col0Renderer = null;
+                if (e.getFirstRow() == javax.swing.event.TableModelEvent.HEADER_ROW
+                        && getColumnCount() > 0) {
+                    col0Renderer = getColumnModel().getColumn(0).getCellRenderer();
+                }
+                super.tableChanged(e);
+                if (col0Renderer != null) {
+                    getColumnModel().getColumn(0).setCellRenderer(col0Renderer);
+                }
             }
         };
 

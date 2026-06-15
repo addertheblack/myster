@@ -17,4 +17,9 @@
 - Fix naming — probably want to use myster.org.
 - Implement DoS / packet-amplification defence (don't be a target vector for attacks on others).
 - Fix DefaultTypeDescriptionList to interact with preferences in a sane way (not using MML).
-
+- Add audio chat
+- Add video chat
+- Add text chat
+- Add group calls
+- Add text forums
+- Add 3DNS for resolving public keys to hosted ip addresses.

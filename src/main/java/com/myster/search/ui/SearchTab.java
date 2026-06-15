@@ -78,7 +78,7 @@ public class SearchTab extends JPanel implements SearchResultListener, Sayable {
     private final Tracker tracker;
 
     private SearchEngine searchEngine;
-    private ClientHandleObject metaDateHandler;
+    private FileTypeColumnHandler metaDateHandler;
     private int resultCount = 0;
     private String lastSearchString = "";
     private String lastSearchTypeName = "New Search";
@@ -263,8 +263,9 @@ public class SearchTab extends JPanel implements SearchResultListener, Sayable {
     }
 
     private void recolumnize() {
-        metaDateHandler = ClientInfoFactoryUtilities.getHandler(tdList, getMysterType());
-        int max = metaDateHandler.getNumberOfColumns();
+        FileTypeColumnHandler typeHandler = ClientInfoFactoryUtilities.getHandler(tdList, getMysterType());
+        metaDateHandler = new SearchColumnDecorator(typeHandler);
+        int max = metaDateHandler.getColumnCount();
         fileList.setNumberOfColumns(max);
 
         for (int i = 0; i < max; i++) {
@@ -277,7 +278,7 @@ public class SearchTab extends JPanel implements SearchResultListener, Sayable {
     public boolean addSearchResults(SearchResult[] resultArray) {
         @SuppressWarnings("unchecked")
         MCListItemInterface<SearchResult>[] m = java.util.Arrays.stream(resultArray)
-            .map(metaDateHandler::getMCListItem)
+            .map(metaDateHandler::getSearchItem)
             .toArray(MCListItemInterface[]::new);
         fileList.addItem(m);
         resultCount = fileList.length();

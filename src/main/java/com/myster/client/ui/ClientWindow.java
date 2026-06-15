@@ -64,6 +64,9 @@ import com.general.util.StandardWindowBehavior;
 import com.general.util.Util;
 import com.myster.access.AccessList;
 import com.myster.client.ui.FileListerThread.FileRecord;
+import com.myster.search.ui.ClientGenericHandleObject;
+import com.myster.search.ui.ClientInfoFactoryUtilities;
+import com.myster.search.ui.FileTypeColumnHandler;
 import com.myster.net.MysterAddress;
 import com.myster.net.client.MysterProtocol;
 import com.myster.net.server.ServerPreferences;
@@ -118,6 +121,7 @@ public class ClientWindow extends MysterFrame implements Sayable {
 
     private TypeMetadataCache typeMetadataCache;
     private final Map<MysterType, MutableSortableString> typeDisplayNames = new HashMap<>();
+    private FileTypeColumnHandler currentTypeHandler = new ClientGenericHandleObject();
 
     private final MysterFrameContext context;
     private Runnable savePrefs;
@@ -570,7 +574,6 @@ public class ClientWindow extends MysterFrame implements Sayable {
                 stopStats();
             }
         });
-        fileList.setColumnWidth(0, 300);
 
         addWindowListener(new StandardWindowBehavior());
     }
@@ -659,7 +662,7 @@ public class ClientWindow extends MysterFrame implements Sayable {
             
             var path = new TreePathString(parentPath);
 
-            mkdir(localContainers, parentPath);
+            mkdir(localContainers, parentPath, currentTypeHandler);
 
             final var file = files[i];
             
@@ -691,7 +694,7 @@ public class ClientWindow extends MysterFrame implements Sayable {
         fileList.addItem(newContainersToAdd.toArray(new TreeMCListItem[] {}));
     }
 
-    private static void mkdir(HashMap<TreePath, FolderMCListItem<String>> knownContainers, String[] p) {
+    private static void mkdir(HashMap<TreePath, FolderMCListItem<String>> knownContainers, String[] p, FileTypeColumnHandler handler) {
         loopBackThroughParents(p, (current, parent) -> {
             if (knownContainers.containsKey(new TreePathString(current))) {
                 return; // we've already done this one so skip
@@ -700,7 +703,7 @@ public class ClientWindow extends MysterFrame implements Sayable {
             knownContainers
                     .put(new TreePathString(current),
                          new FolderMCListItem<String>(new TreePathString(parent),
-                                                      extractDirElement(current[current.length - 1]),
+                                                      extractDirElement(current[current.length - 1], handler),
                                                       Optional.of(new TreePathString(current))));
         });
     }
@@ -720,30 +723,28 @@ public class ClientWindow extends MysterFrame implements Sayable {
         }
     }
 
-    private ColumnSortable<String> extractFileRecordElement(final FileRecord file) {
-        return new ColumnSortable<String>() {
-            public Sortable getValueOfColumn(int column) {
-                return new Sortable[] { new SortableString(file.file()), new SortableByte(file.metaData()
-                        .getLong("/size")
-                        .orElse((long) 0)) }[column];
-            }
-
-            public String getObject() {
-                return file.file();
-            }
-        };
+    /**
+     * Reconfigures the file list columns based on the currently selected type.
+     * Called at the start of every file listing so the columns match the type handler
+     * (e.g. MPG3 gets extra metadata columns; generic types get only Name and Size).
+     */
+    private void recolumnizeFileList() {
+        currentTypeHandler = ClientInfoFactoryUtilities.getHandler(typeDescriptionList, getCurrentType());
+        int count = currentTypeHandler.getColumnCount();
+        fileList.setNumberOfColumns(count);
+        for (int i = 0; i < count; i++) {
+            fileList.setColumnName(i, currentTypeHandler.getHeader(i));
+            fileList.setColumnWidth(i, currentTypeHandler.getHeaderSize(i));
+        }
+        fileList.sortBy(0);
     }
-    
-    private static ColumnSortable<String> extractDirElement(final String name) {
-        return new ColumnSortable<String>() {
-            public Sortable getValueOfColumn(int column) {
-                return new Sortable[] { new SortableString(name), new SortableByte(-2) }[column];
-            }
 
-            public String getObject() {
-                return name;
-            }
-        };
+    private ColumnSortable<String> extractFileRecordElement(final FileRecord file) {
+        return currentTypeHandler.getFileItem(file);
+    }
+
+    private static ColumnSortable<String> extractDirElement(final String name, FileTypeColumnHandler handler) {
+        return handler.getFolderItem(name);
     }
     
     private static String[] extractPath(FileRecord file) {
@@ -895,6 +896,7 @@ public class ClientWindow extends MysterFrame implements Sayable {
 
     public void startFileList() {
         stopFileListing();
+        recolumnizeFileList();
         fileListThread = new FileListerThread(new FileListerThread.ItemListListener() {
                                                     public void addItemsToFileList(FileRecord[] files) {
                                                         ClientWindow.this.addItemsToFileList(files);

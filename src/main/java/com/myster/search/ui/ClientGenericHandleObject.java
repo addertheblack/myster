@@ -1,20 +1,25 @@
 package com.myster.search.ui;
 
 import com.general.mclist.AbstractMCListItemInterface;
+import com.general.mclist.ColumnSortable;
 import com.general.mclist.MCListItemInterface;
 import com.general.mclist.Sortable;
 import com.general.mclist.SortableByte;
 import com.general.mclist.SortableString;
+import com.myster.client.ui.FileListerThread.FileRecord;
 import com.myster.search.SearchResult;
-import com.myster.tracker.MysterServer;
 
-public class ClientGenericHandleObject implements ClientHandleObject {
-    protected final String[] headerarray = { "File Name", "File Size", "Server",
-            "Ping" };
+/**
+ * Generic (non-type-specific) column handler covering "File Name" and "File Size".
+ * Does not include search-context columns ("Server", "Ping") — those are appended by
+ * {@link SearchColumnDecorator}.
+ */
+public class ClientGenericHandleObject implements FileTypeColumnHandler {
+    protected final String[] headerarray = { "File Name", "File Size" };
 
-    protected final int[] headerSize = { 300, 70, 150, 70 };
+    protected final int[] headerSize = { 300, 70 };
 
-    protected final String[] keyarray = { "n/a", "/size", "n/a", "n/a" };
+    protected final String[] keyarray = { "n/a", "/size" };
 
     public String getHeader(int index) {
         return headerarray[index];
@@ -24,39 +29,53 @@ public class ClientGenericHandleObject implements ClientHandleObject {
         return headerSize[index];
     }
 
-    public int getNumberOfColumns() {
+    public int getColumnCount() {
         return headerarray.length;
     }
 
-    /**
-     * factory... chugga chugga...
-     */
-    public MCListItemInterface<SearchResult> getMCListItem(SearchResult s) {
+    @Override
+    public MCListItemInterface<SearchResult> getSearchItem(SearchResult s) {
         return new GenericSearchItem(s);
+    }
+
+    @Override
+    public ColumnSortable<String> getFileItem(FileRecord record) {
+        return new ColumnSortable<String>() {
+            public Sortable getValueOfColumn(int column) {
+                return switch (column) {
+                    case 0 -> new SortableString(record.file());
+                    case 1 -> new SortableByte(record.metaData().getLong("/size").orElse(0L));
+                    default -> throw new RuntimeException("Column " + column + " doesn't exist");
+                };
+            }
+            public String getObject() { return record.file(); }
+        };
+    }
+
+    @Override
+    public ColumnSortable<String> getFolderItem(String folderName) {
+        return new ColumnSortable<String>() {
+            public Sortable getValueOfColumn(int column) {
+                return switch (column) {
+                    case 0 -> new SortableString(folderName);
+                    case 1 -> new SortableByte(-2); // placeholder; overridden by FolderMCListItem
+                    default -> throw new RuntimeException("Column " + column + " doesn't exist");
+                };
+            }
+            public String getObject() { return folderName; }
+        };
     }
 
     protected class GenericSearchItem extends AbstractMCListItemInterface<SearchResult> {
         private static final SortableByte NOT_IN = new SortableByte(-1);
         private static final SortableByte NUMBER_ERR = new SortableByte(-2);
-        
-        protected final SearchResult result;
-        
-        private final SortableString serverString;
-        private final SortablePing ping;
-        private final SortableString sortableName;
 
+        protected final SearchResult result;
+        private final SortableString sortableName;
         private SortableByte sortableSize;
 
         public GenericSearchItem(SearchResult s) {
             result = s;
-
-            MysterServer server = result.getServer();
-            
-            serverString = new SortableString(server == null ? "N/A" : server
-                    .getServerName());
-            //The Three lines above can be combined into one really long line.
-            // I hope you appreciate this :-)
-            ping = new SortablePing(result.getProtocol(), result.getHostAddress());
             sortableName = new SortableString(result.getName());
         }
 
@@ -70,21 +89,12 @@ public class ClientGenericHandleObject implements ClientHandleObject {
                     if (size != null && sortableSize == null) {
                         sortableSize = new SortableByte(Integer.parseInt(size));
                     }
-
-                    return (size == null ? NOT_IN : sortableSize); //I am in a
-                                                                   // one-line
-                                                                   // mood
-                                                                   // today.
+                    return (size == null ? NOT_IN : sortableSize);
                 } catch (NumberFormatException ex) {
                     return NUMBER_ERR;
                 }
-            case 2:
-                return serverString;
-            case 3:
-                return ping;
             default:
-                throw new RuntimeException(
-                        "Requested a column that doens't exist.");
+                throw new RuntimeException("Requested a column that doesn't exist.");
             }
         }
 

@@ -1,8 +1,10 @@
 package com.myster.search.ui;
 
+import com.general.mclist.ColumnSortable;
 import com.general.mclist.MCListItemInterface;
 import com.general.mclist.Sortable;
 import com.general.mclist.SortableString;
+import com.myster.client.ui.FileListerThread.FileRecord;
 import com.myster.search.SearchResult;
 
 public class ClientMPG3HandleObject extends ClientGenericHandleObject {
@@ -18,31 +20,71 @@ public class ClientMPG3HandleObject extends ClientGenericHandleObject {
 
     public ClientMPG3HandleObject() {
         super();
-        numOfColumns = super.getNumberOfColumns();
+        numOfColumns = super.getColumnCount();
     }
 
-    public int getNumberOfColumns() {
-        return headerarray.length + super.getNumberOfColumns();
+    public int getColumnCount() {
+        return headerarray.length + super.getColumnCount();
     }
 
     public String getHeader(int index) {
-        if (index < super.getNumberOfColumns()) {
+        if (index < super.getColumnCount()) {
             return super.getHeader(index);
         } else {
-            return headerarray[index - super.getNumberOfColumns()];
+            return headerarray[index - super.getColumnCount()];
         }
     }
 
     public int getHeaderSize(int index) {
-        if (index < super.getNumberOfColumns()) {
+        if (index < super.getColumnCount()) {
             return super.getHeaderSize(index);
         } else {
-            return headerSize[index - super.getNumberOfColumns()];
+            return headerSize[index - super.getColumnCount()];
         }
     }
 
-    public MCListItemInterface<SearchResult> getMCListItem(SearchResult s) {
+    @Override
+    public MCListItemInterface<SearchResult> getSearchItem(SearchResult s) {
         return new MPG3SearchItem(s);
+    }
+
+    @Override
+    public ColumnSortable<String> getFileItem(FileRecord record) {
+        ColumnSortable<String> base = super.getFileItem(record);
+        return new ColumnSortable<String>() {
+            public Sortable getValueOfColumn(int column) {
+                if (column < numOfColumns) return base.getValueOfColumn(column);
+                int extra = column - numOfColumns;
+                return switch (extra) {
+                    case 0 -> {
+                        try { yield new SortableBit(Long.parseLong(record.metaData().get(keyarray[extra]).orElse("-1"))); }
+                        catch (Exception e) { yield new SortableBit(-1); }
+                    }
+                    case 1 -> {
+                        try { yield new SortableHz(Long.parseLong(record.metaData().get(keyarray[extra]).orElse("-1"))); }
+                        catch (Exception e) { yield new SortableHz(-1); }
+                    }
+                    case 2, 3, 4 -> {
+                        String v = record.metaData().get(keyarray[extra]).orElse("-");
+                        yield new SortableString(v.isBlank() ? "-" : v);
+                    }
+                    default -> throw new RuntimeException("Column " + column + " doesn't exist");
+                };
+            }
+            public String getObject() { return record.file(); }
+        };
+    }
+
+    @Override
+    public ColumnSortable<String> getFolderItem(String folderName) {
+        ColumnSortable<String> base = super.getFolderItem(folderName);
+        return new ColumnSortable<String>() {
+            public Sortable getValueOfColumn(int column) {
+                if (column < numOfColumns) return base.getValueOfColumn(column);
+                return new SortableString("-");
+            }
+            public String getObject() { return folderName; }
+        };
     }
 
     private class MPG3SearchItem extends GenericSearchItem {

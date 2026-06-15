@@ -34,7 +34,7 @@ import com.myster.type.TypeListener;
  * Myster knows about. Basically it maintains the list of the top XXX number of
  * servers on the network for a given file type. All the servers kept by the
  * tracker have associated misc. statistics about themselves kept. These
- * statistics are kept current n a best effort basis. These statistics are used
+ * statistics are kept current on a best effort basis. These statistics are used
  * to generate a "rank". This "rank" determines if the server is to be kept
  * about in memory on one of the server lists.
  * <p>
@@ -43,8 +43,6 @@ import com.myster.type.TypeListener;
  * <p>
  * The Tracker now supports dynamic type addition/removal by listening for
  * TypeEnabled and TypeDisabled events from the TypeDescriptionList.
- *
- * @see com.myster.tracker.IPListManagerSingleton
  */
 public class Tracker {
     private static final Logger log = Logger.getLogger(Tracker.class.getName());
@@ -61,11 +59,9 @@ public class Tracker {
     private final TypeDescriptionList tdList;
 
     public interface ListChangedListener {
-        public void serverAddedRemoved(MysterType type);
-        
-        public void lanServerAddedRemoved();
-        
-        public void bookmarkServerAddedRemoved();
+        void serverAddedRemoved(MysterType type);
+        void lanServerAddedRemoved();
+        void bookmarkServerAddedRemoved();
     }
     
     public Tracker(MysterServerPool pool, Preferences preferences, TypeDescriptionList typeDescriptionList) {
@@ -163,7 +159,7 @@ public class Tracker {
         // This could result in extra pings but whatever. It's on the LAN
         // anyway.
         // For servers on a LAN we use the default port to allow servers to be
-        // discoverable.. So this code path is a nice to have.
+        // discoverable. So this code path is a nice to have.
         if (!ServerUtils.isLanAddress(ip.getInetAddress())) {
             return;
         }
@@ -175,13 +171,6 @@ public class Tracker {
         pool.receivedDownNotification(ip);
     }
     
-    /**
-     * Calls getTop(type, 10).
-     */
-    public synchronized MysterServer[] getTopTen(MysterType type) {
-        return getTop(type, 10);
-    }
-
     /**
      * Returns a list of Myster servers ordered by rank. Returns only server
      * currently thought to be available (up). If there are not enough UP
@@ -346,8 +335,7 @@ public class Tracker {
     /**
      * Returns the index in the list of IPLists for the type passed.
      *
-     * @param type
-     * @return the index in the list array for this type or -1 if there is not
+     * @return the index in the list array for this type or -1 if there is not a
      *         list for this type.
      */
     private synchronized int getIndex(MysterType type) {

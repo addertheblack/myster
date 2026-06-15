@@ -1,17 +1,5 @@
 package com.general.mclist;
 
-import java.awt.BorderLayout;
-import java.awt.Color;
-import java.awt.Component;
-import java.awt.Container;
-import java.awt.Graphics;
-import java.awt.event.MouseAdapter;
-import java.awt.event.MouseEvent;
-import java.lang.reflect.InvocationTargetException;
-import java.util.ArrayList;
-import java.util.Iterator;
-import java.util.List;
-
 import javax.swing.JFrame;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
@@ -25,6 +13,17 @@ import javax.swing.event.ListSelectionListener;
 import javax.swing.event.TableModelEvent;
 import javax.swing.table.JTableHeader;
 import javax.swing.table.TableCellRenderer;
+import java.awt.BorderLayout;
+import java.awt.Color;
+import java.awt.Component;
+import java.awt.Container;
+import java.awt.Graphics;
+import java.awt.event.MouseAdapter;
+import java.awt.event.MouseEvent;
+import java.lang.reflect.InvocationTargetException;
+import java.util.ArrayList;
+import java.util.Iterator;
+import java.util.List;
 
 public class JMCList<E> extends JTable implements MCList<E> {
     private final JScrollPane scrollPane;
@@ -319,17 +318,17 @@ public class JMCList<E> extends JTable implements MCList<E> {
     // update anchor and lead selection (for keyboard focus) but NOT clear our actual selection.
     // Solution: temporarily swap in a no-op selection model during table changes.
     private ListSelectionModel realSelectionModel = null;
-    
+
     @Override
     public void tableChanged(TableModelEvent e) {
         // Save the real selection model and temporarily install a no-op model
         realSelectionModel = getSelectionModel();
-        
+
         // set the selection model but don't use setSelectionModel() because that fire events and we're trying to be sneaky
         selectionModel = new NoOpSelectionModel();
-        
+
         super.tableChanged(e);
-        
+
         // Restore the real selection model
         // no events. be sneaky.
         selectionModel = realSelectionModel;
