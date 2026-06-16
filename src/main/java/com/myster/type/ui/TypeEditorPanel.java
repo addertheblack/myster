@@ -79,6 +79,7 @@ public class TypeEditorPanel extends JPanel {
     private final CustomTypeDefinition existingType;
     private final AccessListManager accessListManager;
     private final Optional<TypeEditorServerSource> serverSource;
+    private final Optional<Cid128> localServerCid;
 
     private final Runnable onSave;
     private final Runnable onCancel;
@@ -103,32 +104,38 @@ public class TypeEditorPanel extends JPanel {
     private final MCList<Cid128> membersTable;
 
     /**
-     * Creates a panel for creating a new custom type (no Members tab).
+     * Creates a panel for creating a new custom type (no Members tab, no self-seeding).
+     * Intended for tests only.
      */
     public TypeEditorPanel(TypeDescriptionList typeList,
                            AccessListManager accessListManager,
                            Runnable onSave,
                            Runnable onCancel) {
-        this(typeList, accessListManager, null, Optional.empty(), onSave, onCancel);
+        this(typeList, accessListManager, null, Optional.empty(), Optional.empty(), onSave, onCancel);
     }
 
     /**
      * Creates a panel for creating or editing a custom type.
      *
-     * @param existingType the type to edit, or {@code null} to create a new type
-     * @param serverSource server source used to populate the Members tab;
-     *                     empty Optional omits the tab
+     * @param existingType  the type to edit, or {@code null} to create a new type
+     * @param serverSource  server source used to populate the Members tab;
+     *                      empty Optional omits the tab
+     * @param localServerCid the Cid128 of this server; when present and creating a new type,
+     *                       it is automatically added as an {@code ADMIN} member in the genesis
+     *                       block so the creator is always in the member list
      */
     public TypeEditorPanel(TypeDescriptionList typeList,
                            AccessListManager accessListManager,
                            CustomTypeDefinition existingType,
                            Optional<TypeEditorServerSource> serverSource,
+                           Optional<Cid128> localServerCid,
                            Runnable onSave,
                            Runnable onCancel) {
         this.typeList = typeList;
         this.accessListManager = accessListManager;
         this.existingType = existingType;
         this.serverSource = serverSource;
+        this.localServerCid = localServerCid;
         this.onSave = onSave;
         this.onCancel = onCancel;
 
@@ -467,10 +474,16 @@ public class TypeEditorPanel extends JPanel {
             KeyPair rsa = rsaKeyPair.get();
             KeyPair admin = adminKeyPair.get();
 
+            // Seed the creating server as an ADMIN member so it is always present
+            // in its own member list and cannot be locked out of its own type.
+            List<AddMemberOp> initialMembers = localServerCid
+                    .map(cid -> List.of(new AddMemberOp(cid, Role.ADMIN)))
+                    .orElse(Collections.emptyList());
+
             AccessList accessList = AccessList.createGenesis(
                     rsa.getPublic(),
                     admin,
-                    Collections.emptyList(),
+                    initialMembers,
                     Collections.emptyList(),
                     policy,
                     name,

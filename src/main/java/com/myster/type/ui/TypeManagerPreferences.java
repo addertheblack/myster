@@ -37,6 +37,7 @@ import com.general.util.GridBagBuilder;
 import com.general.util.IconLoader;
 import com.general.util.MessagePanel;
 import com.myster.access.AccessListManager;
+import com.myster.identity.Cid128;
 import com.myster.pref.ui.PreferencesPanel;
 import com.myster.type.CustomTypeDefinition;
 import com.myster.type.MysterType;
@@ -65,6 +66,7 @@ public class TypeManagerPreferences extends PreferencesPanel {
     private final TypeDescriptionList tdList;
     private final AccessListManager accessListManager;
     private final Optional<TypeEditorServerSource> serverSource;
+    private final Optional<Cid128> localServerCid;
     private MCList<MysterType> mcList;
     private Action addAction;
     private Action editAction;
@@ -88,13 +90,17 @@ public class TypeManagerPreferences extends PreferencesPanel {
      * @param tdList            the type description list to manage
      * @param accessListManager used when opening the type editor to create/edit access lists
      * @param serverSource      server source for the Members tab; empty omits the tab
+     * @param localServerCid    this server's own identity; when present, new types are seeded
+     *                          with the creator as an ADMIN member in the genesis block
      */
     public TypeManagerPreferences(TypeDescriptionList tdList,
                                   AccessListManager accessListManager,
-                                  Optional<TypeEditorServerSource> serverSource) {
+                                  Optional<TypeEditorServerSource> serverSource,
+                                  Optional<Cid128> localServerCid) {
         this.tdList = tdList;
         this.accessListManager = accessListManager;
         this.serverSource = serverSource;
+        this.localServerCid = localServerCid;
         setLayout(new GridBagLayout());
 
         cardLayout = new CardLayout();
@@ -356,6 +362,7 @@ public class TypeManagerPreferences extends PreferencesPanel {
 
         // Create editor panel with callbacks
         editorPanel = new TypeEditorPanel(tdList, accessListManager, existingType, serverSource,
+            localServerCid,
             this::onEditorSave,
             this::onEditorCancel
         );
@@ -539,7 +546,7 @@ public class TypeManagerPreferences extends PreferencesPanel {
             com.myster.access.AccessListManager alm = new com.myster.access.AccessListManager();
             TypeDescriptionList typeList = new com.myster.type.DefaultTypeDescriptionList(
                 java.util.prefs.Preferences.userRoot().node("MysterTypes"), alm);
-            TypeManagerPreferences panel = new TypeManagerPreferences(typeList, alm, Optional.<TypeEditorServerSource>empty());
+            TypeManagerPreferences panel = new TypeManagerPreferences(typeList, alm, Optional.<TypeEditorServerSource>empty(), Optional.empty());
 
             // Add to frame and set it on the panel
             testFrame.add(panel);

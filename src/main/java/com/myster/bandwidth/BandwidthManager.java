@@ -1,5 +1,9 @@
 package com.myster.bandwidth;
 
+import javax.swing.JCheckBox;
+import javax.swing.JLabel;
+import javax.swing.JPanel;
+import javax.swing.JTextField;
 import java.awt.Component;
 import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
@@ -10,11 +14,6 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
-
-import javax.swing.JCheckBox;
-import javax.swing.JLabel;
-import javax.swing.JPanel;
-import javax.swing.JTextField;
 
 import com.general.util.GridBagBuilder;
 import com.general.util.MessagePanel;
@@ -220,7 +219,7 @@ class BlockedThread {
     // so plus 1 is 2 millis
     // We use this to make sure we include the overhead of calling wait on this machine
     // when we start our wait(x)
-    private static volatile int waitLatency = 100;
+    private static volatile long waitLatency = 100;
 
     BlockedThread(int bytesLeft, List<BlockedThread> threads, double rate) {
         this.bytesLeft = bytesLeft;
@@ -249,28 +248,35 @@ class BlockedThread {
                 return;
             }
 
-            int wl = waitLatency;
+            //below is voodoo.
+            long waitLatency = BlockedThread.waitLatency;
 
-            // if the sleepAmount we need it > than the wait latency then just wait(1)
-            // if it is < than the wait latency then we substract the wait latency and wait
-            // for that amount
-            if (sleepAmount > wl) {
-                sleepAmount -= wl;
+            if (sleepAmount > waitLatency) {
+                sleepAmount -= waitLatency;
             } else {
-                sleepAmount = 1;
+                long randomNumber = (long) (Math.random() * (double)waitLatency);
+                if (randomNumber < (waitLatency - sleepAmount)) {
+                    thread = null;
+                    return;
+                } else {
+                    sleepAmount = 1;
+                }
             }
 
             try {
                 if (sleepAmount == 1) {
                     long sstartTime = System.currentTimeMillis();
                     wait(sleepAmount);
-                    waitLatency = Math.max(1,(int) (System.currentTimeMillis() - sstartTime)); //the +1 is important because 
+                    waitLatency = System.currentTimeMillis() - sstartTime + 1
+                            - sleepAmount; //the +1 is important
+                    //System.out.println("Wait latency: "+WAIT_LATENCY);
+                    BlockedThread.waitLatency = waitLatency;
                 } else {
                     wait(sleepAmount);
                 }
-            } catch (InterruptedException _) {
+            } catch (InterruptedException ex) {
                 Thread.currentThread().interrupt();
-                
+
                 throw new IOException("Thread was interrupted.");
             } //unexpected error!
 

@@ -471,7 +471,11 @@ public class Myster {
                                         .map(com.myster.tracker.MysterServer::getServerName);
                             }
                         };
-                preferencesGui.addPanel(new com.myster.type.ui.TypeManagerPreferences(tdList, accessListManager, java.util.Optional.of(typeEditorServerSource)));
+                preferencesGui.addPanel(new com.myster.type.ui.TypeManagerPreferences(
+                        tdList,
+                        accessListManager,
+                        java.util.Optional.of(typeEditorServerSource),
+                        identity.getMainIdentity().map(kp -> com.myster.identity.Util.generateCid(kp.getPublic()))));
                 preferencesGui.addPanel(new ThemePane(preferences));
 
                 INSTRUMENTATION.info("-------->>   EDT init other GUI sub systems " + (System.currentTimeMillis() - startTime));
