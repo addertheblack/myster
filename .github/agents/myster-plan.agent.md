@@ -1,14 +1,9 @@
 ---
-description: Repo-backed Planning/Design agent for Myster. Produces an actionable implementation plan saved in the repo.
-tools:
-  - file_search
-  - semantic_search
-  - read_file
-  - list_dir
-  - create_file
-  - insert_edit_into_file
+description: >-
+  Repo-backed Planning/Design agent for Myster. Produces an actionable
+  implementation plan saved in the repo.
+tools: ['file_search', 'semantic_search', 'read_file', 'list_dir', 'create_file', 'insert_edit_into_file', 'replace_string_in_file', 'run_in_terminal', 'get_errors', 'validate_cves']
 ---
-
 You are the Planning/Design agent for the Myster project.
 
 ## Goal

@@ -307,25 +307,26 @@ public class TypeEditorPanel extends JPanel {
         // Toolbar buttons
         JButton addMemberBtn    = new JButton("Add Member…");
         JButton removeMemberBtn = new JButton("Remove Member");
+        // "Change Role" is disabled until ADMIN→writer linkage and multi-node
+        // consensus are implemented. The role flag has no enforcement yet.
         JButton changeRoleBtn   = new JButton("Change Role");
         removeMemberBtn.setEnabled(false);
         changeRoleBtn.setEnabled(false);
+        changeRoleBtn.setToolTipText("Role management is not yet implemented.");
 
         membersTable.addMCListEventListener(new MCListEventListener() {
             public void selectItem(MCListEvent e) {
                 removeMemberBtn.setEnabled(true);
-                changeRoleBtn.setEnabled(true);
+                // changeRoleBtn intentionally stays disabled
             }
             public void unselectItem(MCListEvent e) {
                 removeMemberBtn.setEnabled(false);
-                changeRoleBtn.setEnabled(false);
             }
             public void doubleClick(MCListEvent e) {}
         });
 
         addMemberBtn.addActionListener(e -> addMember());
         removeMemberBtn.addActionListener(e -> removeMember());
-        changeRoleBtn.addActionListener(e -> changeRole());
 
         JPanel toolbar = new JPanel(new FlowLayout(FlowLayout.LEFT, 4, 0));
         toolbar.add(addMemberBtn);
@@ -378,23 +379,6 @@ public class TypeEditorPanel extends JPanel {
         }
     }
 
-    private void changeRole() {
-        if (editAdminKeyPair.isEmpty() || editAccessList.isEmpty()) return;
-        int idx = membersTable.getSelectedIndex();
-        if (idx < 0) return;
-        Cid128 cid = membersTable.getItem(idx);
-        Role current = editAccessList.get().getState().getRole(cid);
-        if (current == null) return;
-        Role toggled = current.equals(Role.ADMIN) ? Role.MEMBER : Role.ADMIN;
-        try {
-            editAccessList.get().appendBlock(
-                    new AddMemberOp(cid, toggled), editAdminKeyPair.get());
-            accessListManager.saveAccessList(editAccessList.get());
-            populateMembers();
-        } catch (IOException e) {
-            AnswerDialog.simpleAlert("Could not change role: " + e.getMessage());
-        }
-    }
 
     /** Sets all form fields to read-only and disables Save. */
     private void setReadOnly() {

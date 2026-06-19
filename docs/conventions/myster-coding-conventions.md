@@ -18,6 +18,7 @@ This document captures Myster-specific coding conventions, preferred libraries, 
 - **Prefs enabled/disabled** — store only identifier + `enabled` boolean
 - **Code commenting style** — see [`Code Comments.md`](Code%20Comments.md)
 - **Standing Refactors** — see [`standing-refactors.md`](standing-refactors.md); apply when you touch an affected file
+- **Exception Handling** — avoid broad `Throwable`/`Exception`; map incoming-data parse errors to `IOException`
 
 **For architectural patterns**, see **[myster-important-patterns.md](myster-important-patterns.md)**:
 - Event System, Promise/Future, Listener Pattern, Dependency Injection, Threading
@@ -41,8 +42,8 @@ This document captures Myster-specific coding conventions, preferred libraries, 
   - [Utils Classes](#utils-classes)
 - [Extensible Enums](#extensible-enums)
 - [Serialization Extensibility](#serialization-extensibility)
+- [Exception Handling](#exception-handling)
 - [Access Lists as Canonical Metadata](#access-lists-as-canonical-metadata)
-- [Prefs-Based Enabled/Disabled Index](#prefs-based-enableddisabled-index)
 
 ---
 
@@ -357,6 +358,62 @@ public static Policy fromMessagePakBytes(byte[] bytes) throws IOException {
 }
 ```
 
+## Exception Handling
+
+### Catch/Throw Specific Types (Effective Java rule)
+
+**Rule**: Do not throw or catch `Throwable`, and avoid broad `Exception` unless you are at a
+true boundary where every checked exception is handled identically.
+
+- Prefer the most specific checked exception your API contract can express.
+- Do not catch `Error` subclasses (`OutOfMemoryError`, etc.) in normal application flow.
+- Do not use broad multi-catch forms that include `Error` or `RuntimeException`
+  (e.g., `catch (Exception | Error e)` or `catch (RuntimeException | Error e)`).
+- Runtime exceptions should usually propagate unless you can recover locally.
+
+```java
+// Prefer
+try {
+    parsePacket(bytes);
+} catch (IOException e) {
+    // transport or payload problem handled here
+}
+
+// Avoid
+try {
+    parsePacket(bytes);
+} catch (Throwable t) {
+    // catches Error + RuntimeException + checked exceptions
+}
+
+// Also avoid
+try {
+    parsePacket(bytes);
+} catch (Exception | Error e) {
+    // accidentally swallows RuntimeException paths and Error paths together
+}
+```
+
+### Incoming-data parse failures map to IOException
+
+**Myster-specific convention**: parsing errors in incoming network/file payloads should usually be
+mapped to `IOException` so they share the same handling path as broken TCP sockets, truncated
+packets, and other transport-level failures.
+
+Rationale: in most call paths, a corrupt payload and a broken/missing packet are operationally the
+same outcome: stop processing this payload/connection and surface an I/O failure.
+
+```java
+// Preferred
+try {
+    return MessagePak.fromBytes(payload);
+} catch (RuntimeException parseFailure) {
+    throw new IOException("Invalid payload", parseFailure);
+}
+```
+
+Use a more specific subtype only when callers need to branch on that distinction.
+
 ---
 
 ## Access Lists as Canonical Metadata
@@ -417,4 +474,4 @@ Use streams only when you need operations not covered by `Util` (e.g. `flatMap`,
 
 ---
 
-*Last updated: March 2026*
+*Last updated: June 2026*
