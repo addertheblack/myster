@@ -10,7 +10,7 @@ public class SortableBit extends SortableLong {
 
     public String toString() {
         if (number < 0)
-            return "??";
+            return "-";
         return "" + (getValue().longValue() / 1000) + "Kbps";
     }
 

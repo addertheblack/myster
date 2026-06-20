@@ -1,5 +1,6 @@
 package com.myster.filemanager;
 
+import java.io.BufferedInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.file.Files;
@@ -8,8 +9,6 @@ import java.util.OptionalDouble;
 import java.util.OptionalLong;
 import java.util.logging.Logger;
 
-import com.drew.imaging.mp3.Mp3MetadataReader;
-import com.drew.metadata.mp3.Mp3Directory;
 import com.myster.mml.MessagePak;
 import org.apache.tika.metadata.Metadata;
 import org.apache.tika.metadata.TikaCoreProperties;
@@ -75,7 +74,7 @@ public class MPG3FileItem extends FileItem {
      */
     public static void patchFunction2(MessagePak messagePack, Path path) {
         Metadata tikaMetadata = new Metadata();
-        try (InputStream in = Files.newInputStream(path)) {
+        try (InputStream in = new BufferedInputStream(Files.newInputStream(path))) {
             new Mp3Parser().parse(in, new DefaultHandler(), tikaMetadata, new ParseContext());
         } catch (Throwable ex) {
             log.warning("Could not read ID3 tag info for: " + path + " - " + ex.getMessage());
@@ -94,31 +93,11 @@ public class MPG3FileItem extends FileItem {
         putIfNotBlank(messagePack, "/ID3Name", tikaMetadata.get(TikaCoreProperties.TITLE));
         putIfNotBlank(messagePack, "/Artist", tikaMetadata.get(XMPDM.ARTIST));
         putIfNotBlank(messagePack, "/Album", tikaMetadata.get(XMPDM.ALBUM));
-        // /OriginalArtist intentionally not emitted — ID3v2 TOPE frame not surfaced by Tika
     }
 
     private static void addMp3SpecificInformation(MessagePak messagePack, Path path, OptionalDouble durationSeconds, Metadata tikaMetadata) {
-        boolean wroteBitRate = false;
-
-        // Bitrate via metadata-extractor (returns kbps; multiply to bps for protocol).
-        // For VBR files this may be missing or represent only the first frame bitrate.
-        try {
-            com.drew.metadata.Metadata drewMetadata =
-                    Mp3MetadataReader.readMetadata(path.toFile());
-            Mp3Directory mp3Dir = drewMetadata.getFirstDirectoryOfType(Mp3Directory.class);
-            if (mp3Dir != null && mp3Dir.containsTag(Mp3Directory.TAG_BITRATE)) {
-                OptionalLong bitRate = parseBitrateKbpsToBps(mp3Dir.getString(Mp3Directory.TAG_BITRATE));
-                if (bitRate.isPresent()) {
-                    messagePack.putLong("/BitRate", bitRate.getAsLong());
-                    wroteBitRate = true;
-                }
-            }
-        } catch (IOException ex) {
-            log.fine("Could not read bitrate for: " + path + " - " + ex.getMessage());
-        }
-
         // Fallback for VBR files without explicit bitrate tag: compute average and clamp.
-        if (!wroteBitRate && durationSeconds.isPresent()) {
+        if (durationSeconds.isPresent()) {
             try {
                 estimateAverageBitrateBps(Files.size(path), durationSeconds.getAsDouble())
                         .ifPresent(bps -> messagePack.putLong("/BitRate", bps));

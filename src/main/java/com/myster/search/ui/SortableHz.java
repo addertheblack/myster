@@ -10,7 +10,7 @@ public class SortableHz extends SortableLong {
 
     public String toString() {
         if (number < 0)
-            return "??";
+            return "-";
         return "" + (((Long) getValue()).longValue()) + "Hz";
     }
 

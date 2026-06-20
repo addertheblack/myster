@@ -9,12 +9,12 @@ import com.myster.search.SearchResult;
 
 public class ClientMPG3HandleObject extends ClientGenericHandleObject {
     protected String[] headerarray = { "Bit Rate", "Hz", "Song Title",
-            "Artist", "Album" };
+            "Artist", "Album", "Length" };
 
     protected String[] keyarray = { "/BitRate", "/Hz", "/ID3Name", "/Artist",
-            "/Album" };
+            "/Album", "/LengthSec" };
 
-    protected int[] headerSize = { 100, 100, 100, 100, 100 };
+    protected int[] headerSize = { 100, 100, 100, 100, 100, 70 };
 
     private int numOfColumns;
 
@@ -67,6 +67,15 @@ public class ClientMPG3HandleObject extends ClientGenericHandleObject {
                     case 2, 3, 4 -> {
                         String v = record.metaData().get(keyarray[extra]).orElse("-");
                         yield new SortableString(v.isBlank() ? "-" : v);
+                    }
+                    case 5 -> {
+                        try {
+                            yield new SortableLength(Long.parseLong(record.metaData()
+                                    .get(keyarray[extra])
+                                    .orElse("-1")));
+                        } catch (NumberFormatException e) {
+                            yield new SortableLength(-1);
+                        }
                     }
                     default -> throw new RuntimeException("Column " + column + " doesn't exist");
                 };
@@ -126,6 +135,14 @@ public class ClientMPG3HandleObject extends ClientGenericHandleObject {
                 case 4:
                     String s_temp = result.getMetaData(keyarray[newIndex]);
                     return new SortableString(s_temp == null ? "-" : s_temp);
+
+                case 5:
+                    try {
+                        return new SortableLength(Long.parseLong(result
+                                .getMetaData(keyarray[newIndex])));
+                    } catch (NumberFormatException ex) {
+                        return new SortableLength(-1);
+                    }
 
                 default:
                     // This should crash the thread nicely.
