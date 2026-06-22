@@ -401,7 +401,7 @@ Before implementing Step 3, read `com/myster/mml/MessagePak.java` and confirm th
   - `getHeader(wrappedCount)` = "Server", `getHeader(wrappedCount + 1)` = "Ping".
   - `getSearchItem(result).getValueOfColumn(wrappedCount)` returns the server-name string.
 
-- **`ClientMPG3HandleObjectTest`** (new unit test):
+- **`TestClientMPG3HandleObject`** (new unit test):
   - `getColumnCount()` returns 7.
   - `getFileItem(record).getValueOfColumn(2)` returns a `SortableBit` for a record with a `/BitRate` metadata entry.
   - `getFolderItem("Albums").getValueOfColumn(3)` returns `SortableString("-")`.
@@ -422,4 +422,3 @@ Before implementing Step 3, read `com/myster/mml/MessagePak.java` and confirm th
 - **`ClientGenericHandleObject`** — update class Javadoc to remove the mention of Server/Ping columns.
 - **`ClientInfoFactoryUtilities.getHandler()`** — update return-type Javadoc to reference `FileTypeColumnHandler`.
 - **`ClientWindow.recolumnizeFileList()`** — brief Javadoc explaining it is called on every type selection.
-

@@ -23,6 +23,7 @@
 package com.myster.filemanager;
 
 import java.io.File;
+import java.nio.file.FileSystems;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -37,6 +38,7 @@ public class FileTypeListManager {
     private final Map<MysterType, FileTypeList> fileListMap; // Map of type -> FileTypeList
     private final HashProvider hashProvider;
     private final TypeDescriptionList tdList;
+    private final MetadataProvider metadataProvider;
 
     public static final String PATH = "/File Lists/"; //Path the File Lists
 
@@ -44,16 +46,20 @@ public class FileTypeListManager {
      * Constructor that initializes the FileTypeListManager and registers
      * as a listener for type enable/disable events.
      */
-    public FileTypeListManager(HashProvider hashProvider, TypeDescriptionList tdList) {
+    public FileTypeListManager(HashProvider hashProvider,
+                               TypeDescriptionList tdList,
+                               MetadataProvider metadataProvider) {
         this.hashProvider = hashProvider;
         this.tdList = tdList;
+        this.metadataProvider = metadataProvider;
         this.fileListMap = new HashMap<>();
 
         // Initialize file lists for all currently enabled types
         TypeDescription[] list = tdList.getEnabledTypes();
         for (TypeDescription typeDesc : list) {
             MysterType type = typeDesc.getType();
-            FileTypeList fileList = new FileTypeList(type, PATH, hashProvider, tdList);
+            FileTypeList fileList = new FileTypeList(type, PATH, hashProvider, tdList,
+                    FileSystems.getDefault(), metadataProvider);
             fileList.getNumOfFiles(); // This forces the list to load
             fileListMap.put(type, fileList);
         }
@@ -331,7 +337,8 @@ public class FileTypeListManager {
         }
 
         // Create and initialize new FileTypeList
-        FileTypeList fileList = new FileTypeList(type, PATH, hashProvider, tdList);
+        FileTypeList fileList = new FileTypeList(type, PATH, hashProvider, tdList,
+                FileSystems.getDefault(), metadataProvider);
         fileList.getNumOfFiles(); // This forces the list to load
         fileListMap.put(type, fileList);
     }
@@ -359,4 +366,3 @@ public class FileTypeListManager {
         }
     }
 }
-

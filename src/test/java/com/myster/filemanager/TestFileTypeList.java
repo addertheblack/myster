@@ -46,7 +46,8 @@ class TestFileTypeList {
         Files.createDirectories(testRoot);
         createTestFileStructure();
 
-        fileTypeList = new FileTypeList(testType, testPrefPath, hashProvider, typeDescriptionList, fileSystem);
+        fileTypeList = new FileTypeList(testType, testPrefPath, hashProvider, typeDescriptionList,
+                fileSystem, new NoOpMetadataProvider());
     }
 
     @AfterEach

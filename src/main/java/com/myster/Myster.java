@@ -23,9 +23,11 @@ import java.net.InetAddress;
 import java.net.NetworkInterface;
 import java.net.SocketException;
 import java.net.UnknownHostException;
+import java.nio.file.Path;
 import java.security.KeyPair;
 import java.security.PublicKey;
 import java.util.Enumeration;
+import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.Executors;
 import java.util.logging.LogManager;
@@ -39,7 +41,14 @@ import com.general.util.Timer;
 import com.general.util.Util;
 import com.myster.application.MysterGlobals;
 import com.myster.bandwidth.BandwidthManager;
+import com.myster.filemanager.CachingMetadataProvider;
+import com.myster.filemanager.FileMetadataCache;
 import com.myster.filemanager.FileTypeListManager;
+import com.myster.filemanager.MetadataProvider;
+import com.myster.filemanager.MetadataType;
+import com.myster.filemanager.ShardedFileMetadataCache;
+import com.myster.filemanager.TikaAudioMetadataProvider;
+import com.myster.filemanager.TypeResolvingMetadataProvider;
 import com.myster.filemanager.ui.FmiChooser;
 import com.myster.hash.HashManager;
 import com.myster.hash.ui.HashManagerGUI;
@@ -235,7 +244,9 @@ public class Myster {
         INSTRUMENTATION.info("-------->> HashManager created " + (System.currentTimeMillis() - startTime));
 
         INSTRUMENTATION.info("-------->> Creating FileTypeListManager " + (System.currentTimeMillis() - startTime));
-        FileTypeListManager fileManager = new FileTypeListManager((f, l) -> hashManager.findHash(f, l), tdList);
+        MetadataProvider metadataProvider = createMetadataProvider();
+        FileTypeListManager fileManager = new FileTypeListManager(
+                (f, l) -> hashManager.findHash(f, l), tdList, metadataProvider);
         INSTRUMENTATION.info("-------->> FileTypeListManager created " + (System.currentTimeMillis() - startTime));
 
         INSTRUMENTATION.info("-------->> Init client protocol impl " + (System.currentTimeMillis() - startTime));
@@ -556,6 +567,14 @@ public class Myster {
 
         ServerUtils.massPing(protocol, tracker);
     } // Utils, globals etc.. //These variables are System wide variables //
+
+    private static MetadataProvider createMetadataProvider() {
+        Path cacheRoot = MysterGlobals.getPrivateDataPath().toPath().resolve("MetadataCache");
+        FileMetadataCache cache = new ShardedFileMetadataCache(cacheRoot);
+        MetadataProvider resolver = new TypeResolvingMetadataProvider(Map.of(MetadataType.AUDIO,
+                new TikaAudioMetadataProvider()));
+        return new CachingMetadataProvider(cache, resolver);
+    }
 
     private static void addServerConnectionSettings(ServerFacade serverFacade,
                                                     Tracker tracker,

@@ -54,7 +54,7 @@
 
 ## Known issues / follow-up work
 
-- **No unit tests added yet.** The plan called for `ClientGenericHandleObjectTest`, `SearchColumnDecoratorTest`, and `ClientMPG3HandleObjectTest`. These should be added.
+- **No unit tests added yet.** The plan called for `TestClientGenericHandleObject`, `TestSearchColumnDecorator`, and `TestClientMPG3HandleObject`. These should be added.
 - **FolderMCListItem with extra columns**: For MPG3 type in `ClientWindow`, folder rows correctly show "-" for columns 2–6 (returned by `ClientMPG3HandleObject.getFolderItem()`). However, `FolderMCListItem.getValueOfColumn(1)` overrides size as before. Columns 2+ fall through to the delegate which returns `-`. This is correct behaviour but should be verified in a live MPG3 test.
 - **MPG3 metadata key types**: `/BitRate` and `/Hz` may be stored as `Long` in MessagePak (not String). The implementation uses `record.metaData().get(key)` which converts any type to String via `MessagePak.convertToString()`. If they are stored as `Long`, the string will be a plain decimal number, which `Long.parseLong()` can parse. Should work correctly; verify in smoke test.
 
@@ -64,12 +64,11 @@
 
 - `ClientGenericHandleObjectTest`: verify column count = 2, headers, `getSearchItem` cell values, `getFileItem` name/size cells, `getFolderItem` name cell.
 - `SearchColumnDecoratorTest`: verify column count = type count + 2, Server/Ping headers at the right indices, `getSearchItem` delegates type columns and adds server/ping.
-- `ClientMPG3HandleObjectTest`: verify column count = 7, `getFileItem` BitRate/Hz parsing, `getFolderItem` returns "-" for extra columns.
+- `TestClientMPG3HandleObject`: verify column count = 7, `getFileItem` BitRate/Hz parsing, `getFolderItem` returns "-" for extra columns.
 
 ---
 
 ## Anything else to know
 
 The `ClientHandleObject` interface is gone. Any external plugins or forks referencing it will need to migrate to `FileTypeColumnHandler` and rename `getMCListItem` → `getSearchItem`. The method signatures are otherwise identical.
-
 

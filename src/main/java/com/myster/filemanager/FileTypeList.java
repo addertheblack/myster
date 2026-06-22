@@ -19,7 +19,6 @@ package com.myster.filemanager;
 
 import java.io.IOException;
 import java.nio.file.FileSystem;
-import java.nio.file.FileSystems;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
@@ -88,6 +87,7 @@ public class FileTypeList {
 
     private final HashProvider hashProvider;
     private final TypeDescriptionList tdList;
+    private final MetadataProvider metadataProvider;
 
     private volatile boolean initialized = false;
 
@@ -108,22 +108,14 @@ public class FileTypeList {
     public FileTypeList(MysterType type,
                         String path,
                         HashProvider hashProvider,
-                        TypeDescriptionList tdList) {
-        this(type, path, hashProvider, tdList, FileSystems.getDefault());
-    }
-    
-    /**
-     * Creates a new FileTypeList with a custom file system (useful for testing with Jimfs).
-     */
-    public FileTypeList(MysterType type,
-                        String path,
-                        HashProvider hashProvider,
                         TypeDescriptionList tdList,
-                        FileSystem fileSystem) {
+                        FileSystem fileSystem,
+                        MetadataProvider metadataProvider) {
         this.type = type;
         this.hashProvider = hashProvider;
         this.tdList = tdList;
         this.fileSystem = fileSystem;
+        this.metadataProvider = metadataProvider;
         this.pref_key = PREF_KEY + "." + type.toHexString();
 
         try {
@@ -514,7 +506,8 @@ public class FileTypeList {
             Path rootPath = fileSystem.getPath(rootdir);
             
             indexingFuture = PromiseFutures
-                    .execute(new FileListIndexCall(type, rootPath, hashProvider, tdList))
+                    .execute(new FileListIndexCall(type, rootPath, hashProvider, tdList,
+                            metadataProvider))
                     .addResultListener(this::setFileList)
                     .addFinallyListener(this::resetIndexingVariables)
                     .addFinallyListener(() -> initialized = true)
@@ -528,14 +521,20 @@ public class FileTypeList {
         private final Path rootPath;
         private final HashProvider hashProvider;
         private final TypeDescriptionList tdList;
+        private final MetadataProvider metadataProvider;
         
         private volatile boolean endFlag = false;
 
-        public FileListIndexCall(MysterType type, Path rootPath, HashProvider hashProvider, TypeDescriptionList tdList) {
+        public FileListIndexCall(MysterType type,
+                                 Path rootPath,
+                                 HashProvider hashProvider,
+                                 TypeDescriptionList tdList,
+                                 MetadataProvider metadataProvider) {
             this.type = type;
             this.rootPath = rootPath;
             this.hashProvider = hashProvider;
             this.tdList = tdList;
+            this.metadataProvider = metadataProvider;
         }
 
         /*
@@ -655,7 +654,7 @@ public class FileTypeList {
          */
         private FileItem createFileItem(Path path) {
             FileItem fileItem = tdList.getType(StandardTypes.MPG3).equals(type) 
-                ? new MPG3FileItem(rootPath, path) 
+                ? new MPG3FileItem(rootPath, path, metadataProvider)
                 : new FileItem(rootPath, path);
             
             hashProvider.findHashNonBlocking(path, new FileHashListener() {
@@ -785,4 +784,3 @@ public class FileTypeList {
         return initialized;
     }
 }
-

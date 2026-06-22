@@ -1,30 +1,19 @@
 package com.myster.filemanager;
 
-import java.io.BufferedInputStream;
-import java.io.IOException;
-import java.io.InputStream;
-import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.Objects;
 import java.util.OptionalDouble;
 import java.util.OptionalLong;
-import java.util.logging.Logger;
 
 import com.myster.mml.MessagePak;
-import org.apache.tika.metadata.Metadata;
-import org.apache.tika.metadata.TikaCoreProperties;
-import org.apache.tika.metadata.XMPDM;
-import org.apache.tika.parser.ParseContext;
-import org.apache.tika.parser.mp3.Mp3Parser;
-import org.xml.sax.helpers.DefaultHandler;
 
 /**
  * Enriches the base {@link FileItem} metadata with audio-specific and ID3 tag
  * fields for files managed under the {@code MPG3} Myster type.
  *
- * <p>Metadata is extracted using Apache Tika's {@code Mp3Parser} (ID3 tags,
- * sample rate, and duration) and the {@code metadata-extractor} library
- * (bitrate), which is a transitive dependency of the Tika audiovideo parser
- * module.
+ * <p>Metadata enrichment is delegated to an injected {@link MetadataProvider}
+ * so production indexing can use a persistent disk cache while tests can supply
+ * a fake provider.
  *
  * <p>The following {@link MessagePak} keys are part of the Myster file-metadata
  * protocol and must not change without a corresponding protocol version bump:
@@ -38,77 +27,28 @@ import org.xml.sax.helpers.DefaultHandler;
  * </ul>
  */
 public class MPG3FileItem extends FileItem {
-    private static final Logger log = Logger.getLogger(MPG3FileItem.class.getName());
-
     // Common user-facing MP3 bitrates used for clamping computed VBR averages.
     private static final long[] LIKELY_MP3_KBPS = {
             32, 40, 48, 56, 64, 80, 96, 112, 128, 160, 192, 224, 256, 320
     };
 
+    private final MetadataProvider metadataProvider;
     private MessagePak messagePackRepresentation;
 
-    public MPG3FileItem(Path root, Path path) {
+    public MPG3FileItem(Path root, Path path, MetadataProvider metadataProvider) {
         super(root, path);
+        this.metadataProvider = Objects.requireNonNull(metadataProvider);
     }
 
     public synchronized MessagePak getMessagePackRepresentation() {
+        // If then we didn't need the date modified then we could just rely on the cache but meh.
         if (messagePackRepresentation != null)
             return messagePackRepresentation;
 
         messagePackRepresentation = super.getMessagePackRepresentation();
 
-        patchFunction2(messagePackRepresentation, getPath());
+        metadataProvider.enrich(MetadataType.AUDIO, messagePackRepresentation, getPath());
         return messagePackRepresentation;
-    }
-
-    /**
-     * Enriches {@code messagePack} with audio and ID3 metadata extracted from the
-     * file at {@code path}. If the file cannot be parsed, enrichment is skipped and
-     * the generic metadata already present in {@code messagePack} is left unchanged.
-     *
-     * <p>{@code /BitRate} and {@code /Hz} are only written for files whose name ends
-     * with {@code ".mp3"}, preserving the existing protocol convention for this type.
-     *
-     * @param messagePack the {@link MessagePak} to enrich in-place
-     * @param path        path of the audio file to read metadata from
-     */
-    public static void patchFunction2(MessagePak messagePack, Path path) {
-        Metadata tikaMetadata = new Metadata();
-        try (InputStream in = new BufferedInputStream(Files.newInputStream(path))) {
-            new Mp3Parser().parse(in, new DefaultHandler(), tikaMetadata, new ParseContext());
-        } catch (Throwable ex) {
-            log.warning("Could not read ID3 tag info for: " + path + " - " + ex.getMessage());
-            return;
-        }
-
-        OptionalDouble durationSeconds = parseDurationSeconds(tikaMetadata.get(XMPDM.DURATION));
-        if (durationSeconds.isPresent()) {
-            messagePack.putLong("/LengthSec", Math.round(durationSeconds.getAsDouble()));
-        }
-
-        if (path.getFileName().toString().endsWith(".mp3")) {
-            addMp3SpecificInformation(messagePack, path, durationSeconds, tikaMetadata);
-        }
-
-        putIfNotBlank(messagePack, "/ID3Name", tikaMetadata.get(TikaCoreProperties.TITLE));
-        putIfNotBlank(messagePack, "/Artist", tikaMetadata.get(XMPDM.ARTIST));
-        putIfNotBlank(messagePack, "/Album", tikaMetadata.get(XMPDM.ALBUM));
-    }
-
-    private static void addMp3SpecificInformation(MessagePak messagePack, Path path, OptionalDouble durationSeconds, Metadata tikaMetadata) {
-        // Fallback for VBR files without explicit bitrate tag: compute average and clamp.
-        if (durationSeconds.isPresent()) {
-            try {
-                estimateAverageBitrateBps(Files.size(path), durationSeconds.getAsDouble())
-                        .ifPresent(bps -> messagePack.putLong("/BitRate", bps));
-            } catch (IOException ex) {
-                log.fine("Could not estimate bitrate for: " + path + " - " + ex.getMessage());
-            }
-        }
-
-        // Sample rate from Tika's XMPDM property (Hz as a string, e.g. "44100").
-        parseSampleRateHz(tikaMetadata.get(XMPDM.AUDIO_SAMPLE_RATE))
-                .ifPresent(hz -> messagePack.putLong("/Hz", hz));
     }
 
     /**

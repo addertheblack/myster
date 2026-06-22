@@ -1,0 +1,7 @@
+interface:
+  display_name: "Myster Impl"
+  short_description: "Execute Myster plans and summarize."
+  default_prompt: "Use $myster-impl to execute the specified docs/plans plan, verify it, and write the implementation summary."
+
+policy:
+  allow_implicit_invocation: true

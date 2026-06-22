@@ -1,0 +1,7 @@
+interface:
+  display_name: "Myster Plan"
+  short_description: "Write repo-backed implementation plans."
+  default_prompt: "Use $myster-plan to design the requested Myster change and write the authoritative plan under docs/plans."
+
+policy:
+  allow_implicit_invocation: true

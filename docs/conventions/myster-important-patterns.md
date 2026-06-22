@@ -319,6 +319,9 @@ PromiseFutures.execute(() -> {
 - Example: `DefaultTypeDescriptionList` synchronizes most methods
 - Prefer explicit synchronization over implicit patterns when state is shared
 - Use `synchronized` keyword for method-level or block-level locking
+- Use `ReentrantReadWriteLock` only when concurrent readers on the same state are expected to be
+  common enough that `synchronized` would create avoidable contention. Keep lock ownership local
+  to the protected state, and do not hold the lock while doing slow parsing or network work.
 
 ### Invoker Utility
 
