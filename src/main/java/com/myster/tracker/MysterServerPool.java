@@ -52,6 +52,19 @@ public interface MysterServerPool {
     Optional<PublicKey> lookupIdentityFromCid(Cid128 cid);
 
     /**
+     * Finds currently usable public-key identities nearest to a CID. The exact
+     * result is present only when the target CID maps to an up server. Left
+     * results are predecessor-side candidates and right results are
+     * successor-side candidates. Sparse sides return fewer entries than
+     * requested.
+     *
+     * @param target target CID in the unsigned 128-bit ring
+     * @param perSideLimit requested maximum number of left and right
+     *        candidates; non-positive values use the pool default
+     */
+    IdentityNeighborSet findClosestByCid(Cid128 target, int perSideLimit);
+
+    /**
      * @return The MysterServer for this address assuming it's already in the cache. Empty Optional otherwise.
      */
     Optional<MysterServer> getCachedMysterServer(MysterIdentity identity);

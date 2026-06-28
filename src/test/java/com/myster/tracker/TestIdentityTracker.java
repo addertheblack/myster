@@ -1,16 +1,15 @@
 package com.myster.tracker;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertFalse;
-import static org.junit.jupiter.api.Assertions.assertTrue;
-
 import java.io.File;
 import java.io.IOException;
 import java.io.UncheckedIOException;
 import java.net.UnknownHostException;
 import java.security.PublicKey;
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Comparator;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.CountDownLatch;
@@ -19,17 +18,21 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Consumer;
 
+import com.general.thread.PromiseFuture;
+import com.myster.identity.Cid128;
+import com.myster.identity.Identity;
+import com.myster.identity.Util;
+import com.myster.net.MysterAddress;
+import com.myster.net.datagram.client.PingResponse;
+import com.myster.tracker.IdentityTracker.Pinger;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 
-import com.general.thread.PromiseFuture;
-import com.myster.identity.Identity;
-import com.myster.net.MysterAddress;
-import com.myster.net.datagram.client.PingResponse;
-import com.myster.tracker.IdentityTracker.Pinger;
+import static com.myster.identity.Util.generateCid;
+import static org.junit.jupiter.api.Assertions.*;
 
 public class TestIdentityTracker {
     @Nested
@@ -42,7 +45,7 @@ public class TestIdentityTracker {
         private static MysterIdentity mysterIdentity;
 
         @BeforeAll
-        private static void setUpAll() throws IOException {
+        public static void setUpAll() throws IOException {
             PublicKey publicKey = createTestPublicKey();
             mysterIdentity = new PublicKeyIdentity(publicKey);
         }
@@ -287,18 +290,100 @@ public class TestIdentityTracker {
     }
 
     @Nested
+    class TestCidIndex {
+        private IdentityTracker identityTracker;
+
+        @BeforeEach
+        public void setup() {
+            Pinger pinger = (a) -> PromiseFuture
+                    .<PingResponse> newPromiseFuture(c -> c.setResult(new PingResponse(a, 1)))
+                    .setInvoker(TrackerUtils.INVOKER);
+            identityTracker = new IdentityTracker(pinger, (_) -> {}, (_) -> {});
+        }
+
+        @Test
+        void addressOnlyIdentitiesAreExcludedFromCidWalk() throws Exception {
+            PublicKeyIdentity publicKeyIdentity = new PublicKeyIdentity(new FakePublicKey(1));
+            MysterAddress publicKeyAddress = MysterAddress.createMysterAddress("10.1.1.1");
+            MysterAddress addressOnlyAddress = MysterAddress.createMysterAddress("10.1.1.2");
+            MysterIdentity addressOnlyIdentity = new MysterAddressIdentity(addressOnlyAddress);
+
+            identityTracker.addIdentity(publicKeyIdentity, publicKeyAddress);
+            identityTracker.addIdentity(addressOnlyIdentity, addressOnlyAddress);
+
+            assertEquals(publicKeyIdentity, identityTracker.getIdentityFromCid(Util.generateCid(publicKeyIdentity.getPublicKey())).get());
+
+            List<PublicKeyIdentity> right = new ArrayList<>();
+            identityTracker.findClosest(Util.generateCid(publicKeyIdentity.getPublicKey()).plusPowerOfTwo(1),
+                                        IdentityTracker.Direction.RIGHT,
+                                        candidate -> {
+                                            right.add(candidate);
+                                            return true;
+                                        });
+
+            assertEquals(List.of(publicKeyIdentity), right);
+        }
+
+        @Test
+        void publicKeyCidIndexIsRemovedOnlyAfterLastAddress() throws Exception {
+            PublicKeyIdentity identity = new PublicKeyIdentity(new FakePublicKey(2));
+            MysterAddress first = MysterAddress.createMysterAddress("10.1.2.1");
+            MysterAddress second = MysterAddress.createMysterAddress("10.1.2.2");
+
+            identityTracker.addIdentity(identity, first);
+            identityTracker.addIdentity(identity, second);
+            assertEquals(identity, identityTracker.getIdentityFromCid(Util.generateCid(identity.getPublicKey())).get());
+
+            identityTracker.removeIdentity(identity, first);
+            assertEquals(identity, identityTracker.getIdentityFromCid(Util.generateCid(identity.getPublicKey())).get());
+
+            identityTracker.removeIdentity(identity, second);
+            assertTrue(identityTracker.getIdentityFromCid(Util.generateCid(identity.getPublicKey())).isEmpty());
+        }
+
+        @Test
+        void directionalWalksReturnClosestOutwardWithWraparound() throws Exception {
+            List<PublicKeyIdentity> ordered = new ArrayList<>();
+            for (int i = 0; i < 6; i++) {
+                ordered.add(new PublicKeyIdentity(new FakePublicKey(100 + i)));
+            }
+            ordered.sort(Comparator.comparing(identity -> generateCid(identity.getPublicKey())));
+
+            for (int i = 0; i < ordered.size(); i++) {
+                identityTracker.addIdentity(ordered.get(i), MysterAddress.createMysterAddress("10.2.2." + (i + 1)));
+            }
+
+            Cid128 target = Util.generateCid(ordered.get(2).getPublicKey());
+            List<PublicKeyIdentity> left = collect(target, IdentityTracker.Direction.LEFT, 4);
+            List<PublicKeyIdentity> right = collect(target, IdentityTracker.Direction.RIGHT, 4);
+
+            assertEquals(List.of(ordered.get(1), ordered.get(0), ordered.get(5), ordered.get(4)), left);
+            assertEquals(List.of(ordered.get(3), ordered.get(4), ordered.get(5), ordered.get(0)), right);
+        }
+
+        private List<PublicKeyIdentity> collect(Cid128 target, IdentityTracker.Direction direction, int limit) {
+            List<PublicKeyIdentity> results = new ArrayList<>();
+            identityTracker.findClosest(target, direction, candidate -> {
+                results.add(candidate);
+                return results.size() < limit;
+            });
+            return results;
+        }
+    }
+
+    @Nested
     class TestOfflinePinger {
         private IdentityTracker identityTracker;
         private static PublicKeyIdentity mysterIdentity;
 
         @BeforeAll
-        private static void setUpAll() throws IOException {
+        public static void setUpAll() throws IOException {
             PublicKey publicKey = createTestPublicKey();
             mysterIdentity = new PublicKeyIdentity(publicKey);
         }
 
         @BeforeEach
-        private void setup() {
+        public void setup() {
             Pinger pinger = (a) -> {
                 return PromiseFuture
                         .<PingResponse> newPromiseFuture(c -> c.setResult(new PingResponse(a, -1)))
@@ -371,7 +456,7 @@ public class TestIdentityTracker {
         private Pinger pinger;        
         
         @BeforeEach
-        private void setup() throws IOException {
+        public void setup() throws IOException {
             pinger = (a) -> {
                 int responseTime = -1;
                 try {
@@ -482,7 +567,7 @@ public class TestIdentityTracker {
         private Pinger pinger;
 
         @BeforeEach
-        private void setup() throws IOException {
+        public void setup() throws IOException {
             pinger = (a) -> {
                 return PromiseFuture
                         .<PingResponse> newPromiseFuture(c -> c.setResult(new PingResponse(a, -1)))
@@ -522,5 +607,31 @@ public class TestIdentityTracker {
 
         PublicKey publicKey = identity.getMainIdentity().get().getPublic();
         return publicKey;
+    }
+
+    private static class FakePublicKey implements PublicKey {
+        private final byte[] encoded;
+
+        private FakePublicKey(int seed) {
+            encoded = new byte[32];
+            for (int i = 0; i < encoded.length; i++) {
+                encoded[i] = (byte) (seed + i);
+            }
+        }
+
+        @Override
+        public String getAlgorithm() {
+            return "RSA";
+        }
+
+        @Override
+        public String getFormat() {
+            return "X.509";
+        }
+
+        @Override
+        public byte[] getEncoded() {
+            return encoded.clone();
+        }
     }
 }

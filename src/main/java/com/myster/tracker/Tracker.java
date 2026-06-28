@@ -18,9 +18,12 @@ import java.util.prefs.BackingStoreException;
 import java.util.prefs.Preferences;
 
 import com.general.events.NewGenericDispatcher;
+import com.myster.identity.Cid128;
 import com.myster.net.MysterAddress;
 import com.myster.net.datagram.client.PingResponse;
 import com.myster.net.server.ServerUtils;
+import com.myster.threedns.ThreeDnsFingerEntry;
+import com.myster.threedns.ThreeDnsServerList;
 import com.myster.type.MysterType;
 import com.myster.type.TypeDescription;
 import com.myster.type.TypeDescriptionEvent;
@@ -58,13 +61,19 @@ public class Tracker {
     private final NewGenericDispatcher<ListChangedListener> dispatcher;
     private final TypeDescriptionList tdList;
 
+    // TODO: Make it so that having a private key for the server is mandatory
+    private final Optional<ThreeDnsServerList> threeDns;
+
     public interface ListChangedListener {
         void serverAddedRemoved(MysterType type);
         void lanServerAddedRemoved();
         void bookmarkServerAddedRemoved();
     }
     
-    public Tracker(MysterServerPool pool, Preferences preferences, TypeDescriptionList typeDescriptionList) {
+    public Tracker(MysterServerPool pool,
+                   Preferences preferences,
+                   TypeDescriptionList typeDescriptionList,
+                   Optional<Cid128> localCid) {
         this.pool = pool;
         this.preferences = preferences.node(PATH);
         this.dispatcher = new NewGenericDispatcher<>(ListChangedListener.class, TrackerUtils.INVOKER);
@@ -83,6 +92,7 @@ public class Tracker {
         
         lan = new LanMysterServerList(pool, dispatcher.fire()::lanServerAddedRemoved);
         bookmarks = new BookmarkMysterServerList(pool, this.preferences, dispatcher);
+        threeDns = localCid.map(cid -> new ThreeDnsServerList(cid, pool, this.preferences, () -> {}));
 
         pool.addPoolListener(new MysterPoolListener() {
             @Override
@@ -93,6 +103,7 @@ public class Tracker {
             @Override
             public void serverPing(PingResponse server) {
                 lan.serverPing(server.address(), !server.isTimeout());
+                threeDns.ifPresent(list -> list.serverPing(server.address(), !server.isTimeout()));
             }
 
             @Override
@@ -101,10 +112,7 @@ public class Tracker {
             }
         });
         
-        pool.clearHardLinks();
-
-        
-        // since we''ve missed events while the tracker was being constructed
+        // since we've missed events while the tracker was being constructed
         // we need to recheck the pool for lan servers
         pool.forEach(server -> {
             MysterAddress[] upAddresses = server.getUpAddresses();
@@ -115,11 +123,14 @@ public class Tracker {
                 }
             }
         });
+
+        pool.clearHardLinks();
     }
     
     private void notifyAllListsDeadServer(MysterIdentity identity) {
         list.forEach(l -> l.notifyDeadServer(identity));
         bookmarks.notifyDeadServer(identity);
+        threeDns.ifPresent(l -> l.removeIdentity(identity));
     }
 
     /**
@@ -288,6 +299,20 @@ public class Tracker {
         }
 
         lan.addIP(server);
+        threeDns.ifPresent(l -> l.consider(server));
+    }
+
+    public synchronized List<PublicKeyIdentity> getThreeDnsSeeds(int limit) {
+        return threeDns.map(list -> list.seeds(limit)).orElseGet(List::of);
+    }
+
+    public synchronized IdentityNeighborSet getThreeDnsForTarget(Cid128 target, int perSideLimit) {
+        return threeDns.map(list -> list.forTarget(target, perSideLimit))
+                .orElseGet(IdentityNeighborSet::empty);
+    }
+
+    public synchronized List<ThreeDnsFingerEntry> getThreeDnsSnapshot() {
+        return threeDns.map(ThreeDnsServerList::snapshot).orElseGet(List::of);
     }
 
     /**
@@ -453,4 +478,3 @@ public class Tracker {
         }
     }
 }
-

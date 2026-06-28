@@ -267,7 +267,12 @@ public class Myster {
         INSTRUMENTATION.info("-------->> Init IPListManager "
                 + (System.currentTimeMillis() - startTime));
         MysterServerPoolImpl pool = new MysterServerPoolImpl(Preferences.userRoot(), protocol);
-        Tracker tracker = new Tracker(pool, Preferences.userRoot().node("Tracker.IpListManager"), tdList);
+        Optional<Cid128> localCid =
+                identity.getMainIdentity().map(kp -> com.myster.identity.Util.generateCid(kp.getPublic()));
+        Tracker tracker = new Tracker(pool,
+                                      Preferences.userRoot().node("Tracker.IpListManager"),
+                                      tdList,
+                                      localCid);
         var lastResort = Tracker.getOnRamps();
         for (String ip : lastResort) {
             Executors.newVirtualThreadPerTaskExecutor().execute(() -> {

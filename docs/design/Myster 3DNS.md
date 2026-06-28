@@ -6,7 +6,7 @@
 
 In Myster, each server already has a stable cryptographic identity represented by a CID. 3DNS treats these CIDs as positions in a circular 128-bit address space. Each server maintains knowledge of other servers positioned throughout that space and routes requests by repeatedly asking peers for nodes closer to a target CID.
 
-The system is intentionally narrow in scope. Rather than acting as a general distributed key-value store, 3DNS focuses on a single primitive: given a target CID, return one or more known CID/IP pairs that are closer to that target. Routing emerges from repeatedly applying that primitive.
+The system is intentionally narrow in scope. Rather than acting as a general distributed key-value store, 3DNS focuses on a single primitive: given a target CID, return known public-key/address candidates that are closer to that target. Routing emerges from repeatedly applying that primitive.
 
 The protocol is implemented using Myster’s UDP transaction model. In this context, a “transaction” is a request-response interaction where requests are idempotent and can be safely retried. This is important for robustness over UDP and aligns naturally with lookup operations.
 
@@ -28,15 +28,15 @@ The distinguishing aspect of 3DNS in Myster is that it is identity-driven. The C
 
 ## 4. CID Representation and Numeric Model
 
-For routing to be efficient, CIDs must support fast numeric operations. The existing byte-array representation is not ideal for this purpose. The proposed approach is to represent CIDs internally as two unsigned 64-bit values.
+For routing to be efficient, CIDs must support fast numeric operations. `Cid128` keeps the existing byte-array constructor and `bytes()` serialization contract, but internally caches two unsigned 64-bit values for comparison and ring arithmetic.
 
 ```java
-public record Cid128(long hi, long lo) implements Comparable<Cid128>
+public final class Cid128 implements Comparable<Cid128> {}
 ```
 
 This representation allows efficient unsigned comparison, natural wraparound arithmetic, and direct use as keys in ordered data structures such as TreeMap. It also avoids repeated allocation and copying of byte arrays in routing code.
 
-Serialization remains fixed at 16 bytes. Conversion methods such as `fromBytes` and `toBytes` are used at protocol boundaries.
+Serialization remains fixed at 16 bytes. The public constructor accepts exactly 16 bytes and `bytes()` returns a defensive copy in the same fixed-width big-endian form used by existing access-list and datagram code.
 
 The essential operations supported by this representation are unsigned comparison, addition of powers of two with wraparound, and comparison of closeness between candidate CIDs relative to a target CID on the circular space.
 
@@ -44,23 +44,25 @@ Rather than exposing distance as a first-class value, the system defines a compa
 
 ## 5. Routing Table Structure
 
-The routing table is implemented as a single ordered map:
+The ordered CID index is owned by `IdentityTracker`, not by `MysterServerPoolImpl`. The existing CID lookup map is upgraded to a navigable map:
 
 ```java
-NavigableMap<Cid128, ServerInfo> routingTable = new TreeMap<>();
+NavigableMap<Cid128, MysterIdentity> cid128ToIdentity = new TreeMap<>();
 ```
 
-This structure provides both exact lookup and ordered access to neighboring entries. Exact lookup remains logarithmic in complexity but is sufficiently fast given the expected size of the routing table. Avoiding a second structure such as a HashMap reduces memory usage and eliminates the need to maintain consistency between multiple data structures.
+This structure provides both exact lookup and ordered access to neighboring entries. Exact lookup remains logarithmic in complexity but is sufficiently fast given the expected size of the routing table. Avoiding a second CID index in the pool reduces memory usage and eliminates the need to maintain consistency between multiple data structures.
 
-The routing table is not intended to store the entire network. It contains a curated set of useful peers discovered through the tracker and through routing operations.
+Only `PublicKeyIdentity` entries are inserted into the CID index. Address-only identities have no stable CID position and are excluded until normal stats refresh learns a public key.
+
+The local 3DNS retention structure is `ThreeDnsServerList`, a tracker-owned finger list around the local node's positive exponential offset targets. It is not a normal type-shaped `ServerList`.
 
 ## 6. Core Lookup Operation
 
-The central local operation is finding the known node closest to a target CID.
+The central local operation is finding known nodes closest to a target CID.
 
-This is implemented by locating the nearest known entries on either side of the target in the ordered map and then comparing which one is closer on the circular space. Because the space wraps, the implementation must handle the transition between the maximum and minimum values correctly.
+This is implemented by walking the ordered map from closest outward on the requested side. `LEFT` means predecessor side and `RIGHT` means successor side in unsigned CID order, with wraparound at both ends of the 128-bit space.
 
-This operation relies on a comparison of ring closeness rather than linear distance. The closest node must always be one of the two adjacent nodes around the target position in the ordered set.
+The pool-facing result is split into optional exact, left, and right groups. Pool results are already filtered to currently responsive `PublicKeyIdentity` servers with at least one usable up address.
 
 ## 7. UDP Transaction Protocol
 
@@ -70,15 +72,18 @@ This operation relies on a comparison of ring closeness rather than linear dista
 FIND_CLOSEST(targetCid)
 ```
 
-The response returns a list of CID/IP pairs that are closest to the requested target.
+The response returns exact, left, and right groups of public-key/address candidates that are closest to the requested target. The public key is sent as encoded X.509 bytes; the recipient derives the candidate CID locally from that public key.
 
 Represented in JSON form (as a MessagePak structure), the response looks like:
 
 ```json
 {
-  "results": [
-    { "cid": "...", "ip": "...", "port": 1234 },
-    { "cid": "...", "ip": "...", "port": 1234 }
+  "exact": { "publicKey": "...", "ip": "...", "port": 1234 },
+  "left": [
+    { "publicKey": "...", "ip": "...", "port": 1234 }
+  ],
+  "right": [
+    { "publicKey": "...", "ip": "...", "port": 1234 }
   ]
 }
 ```
@@ -101,9 +106,9 @@ In practice, maintaining a visited set and always selecting a strictly closer no
 
 Routing table maintenance is driven by usage and periodic refresh.
 
-Each node maintains entries corresponding to its ideal positions in the space, defined by adding powers of two to its own CID. For a 128-bit space, this results in 128 target positions.
+Each node maintains entries corresponding to its ideal positions in the space, defined by adding powers of two to its own CID. For a 128-bit space, this results in 128 target positions. The retained list keeps a small balanced set on both the left/predecessor and right/successor sides of each target.
 
-Maintenance consists of issuing FIND_CLOSEST requests for these target positions and updating the routing table with the results. Over time, this causes the node’s view of the network to converge toward a useful distribution of peers.
+Part 1 maintenance is driven by tracker/pool events: refreshed up public-key servers are considered for retained slots, and down/dead servers are removed and replaced from the pool's nearest-CID API. Later protocol maintenance can issue FIND_CLOSEST requests for these target positions and let normal pool/listener behavior update the retained list.
 
 Maintenance does not require a complex interface. A periodic process, for example running roughly once per hour, is sufficient. In practice, normal usage of the routing system will also naturally keep entries fresh.
 
@@ -111,14 +116,15 @@ Maintenance does not require a complex interface. A periodic process, for exampl
 
 3DNS augments, rather than replaces, the existing Myster tracker system.
 
-The tracker already maintains a ServerPool containing CID-to-server mappings and multiple ServerLists that organize servers according to different criteria, such as file type or local network presence.
+The tracker already maintains a ServerPool containing identity-to-server mappings and multiple lists that organize servers according to different criteria, such as file type, local network presence, and bookmarks.
 
-3DNS introduces an additional ServerList dedicated to routing. This list is populated from both tracker data and routing discoveries. The tracker continues to serve its existing roles, including file discovery and server indexing.
+3DNS introduces a dedicated `ThreeDnsServerList` dedicated to routing retention. It is populated from tracker data and, later, routing discoveries. The tracker continues to serve its existing roles, including file discovery and server indexing.
 
 The integration works as follows:
 
-* The routing table is initially seeded from known servers in the ServerPool.
-* Newly discovered servers from 3DNS can be added to the 3DNS ServerList.
+* The ordered CID index is maintained in `IdentityTracker`.
+* The 3DNS retained list is initially seeded from known public-key servers in the ServerPool.
+* Newly discovered servers from 3DNS can be suggested to the pool and then retained after normal validation.
 * Existing liveness checks and onboarding logic ensure that only reachable and valid servers are retained.
 
 This approach allows 3DNS to benefit from existing infrastructure without creating duplication or tight coupling.
@@ -127,7 +133,7 @@ This approach allows 3DNS to benefit from existing infrastructure without creati
 
 Failures are handled pragmatically.
 
-Returned CID/IP pairs may be stale or unreachable. This is addressed by returning multiple candidates and by relying on existing Myster mechanisms that validate and onboard servers into the tracker. Failed nodes naturally fall out of the routing table as they are no longer refreshed.
+Returned public-key/address candidates may be stale or unreachable. This is addressed by returning multiple candidates and by relying on existing Myster mechanisms that validate and onboard servers into the tracker. Failed nodes naturally fall out of the retained list as they are no longer refreshed or become nonresponsive.
 
 To avoid routing loops, each lookup tracks the set of visited CIDs and avoids revisiting them. Ensuring that each hop moves strictly closer to the target CID further guarantees progress.
 
@@ -137,13 +143,13 @@ A lookup only truly fails if there are no reachable nodes in the network. In all
 
 Security is largely handled by existing Myster identity mechanisms.
 
-Each server’s CID corresponds to a cryptographic identity. When connecting to a server, its certificate must match its CID. If it does not, the server is rejected and not incorporated into the routing structures.
+Each server’s CID corresponds to a cryptographic identity. A remote 3DNS response is only a hint until the candidate address proves it owns the returned public key through normal Myster validation. Exact target success requires the validated public key to hash to the target CID.
 
 This ensures that nodes cannot impersonate arbitrary CIDs. While the system does not attempt to resist all Byzantine behavior, it maintains basic identity integrity through existing mechanisms.
 
 ## 13. Configuration Decisions
 
-The system maintains one routing target for each bit position in the 128-bit space, resulting in 128 ideal positions. Links are not maintained symmetrically; the system relies on forward progress toward targets.
+The system maintains one routing target for each bit position in the 128-bit space, resulting in 128 ideal positions. Retention keeps an even left/right split when enough responsive peers exist, while current target generation still uses positive exponential offsets from the local CID.
 
 Maintenance runs periodically but is also driven by normal routing activity. No special scoring system for “stale entries” is required beyond existing liveness checks in the tracker and routing logic.
 

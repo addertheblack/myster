@@ -4,30 +4,24 @@ import java.io.File;
 import java.io.IOException;
 import java.net.UnknownHostException;
 import java.nio.file.Path;
+import java.security.PublicKey;
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Consumer;
 import java.util.logging.Logger;
 import java.util.prefs.Preferences;
 
-import org.junit.jupiter.api.Assertions;
-import org.junit.jupiter.api.BeforeAll;
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.io.TempDir;
-import org.junit.jupiter.params.ParameterizedTest;
-import org.junit.jupiter.params.provider.ValueSource;
-import org.mockito.Mockito;
-import org.mockito.invocation.InvocationOnMock;
-import org.mockito.stubbing.Answer;
-
 import com.general.thread.PromiseFuture;
 import com.general.util.MapPreferences;
 import com.general.util.Semaphore;
+import com.myster.identity.Cid128;
 import com.myster.identity.Identity;
 import com.myster.mml.MessagePak;
 import com.myster.net.MysterAddress;
@@ -38,11 +32,21 @@ import com.myster.net.client.MysterStream;
 import com.myster.net.client.ParamBuilder;
 import com.myster.net.datagram.client.PingResponse;
 import com.myster.type.MysterType;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.io.TempDir;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.ValueSource;
+import org.mockito.Mockito;
+import org.mockito.invocation.InvocationOnMock;
 
 class TestMysterServerPoolImpl {
     private static final Logger log = Logger.getLogger(TestMysterServerPoolImpl.class.getName());
     
     private Map<MysterAddress, MessagePak> lookup;
+    private Set<MysterAddress> downPingAddresses;
     
     // JUnit 5 will automatically create and clean up this temporary directory
     @TempDir
@@ -66,20 +70,14 @@ class TestMysterServerPoolImpl {
     }
     
     @BeforeEach
-    void setUp() throws UnknownHostException {
+    void setUp() throws Exception {
 
         lookup = new HashMap<>();
+        downPingAddresses = new HashSet<>();
         
         // Build MessagePack server stats similar to TestMysterServerImplementation
         var pubKey = identity.getMainIdentity().get().getPublic();
-        byte[] keyBytes = pubKey.getEncoded();
-        
-        MessagePak baseStats = MessagePak.newEmpty();
-        baseStats.putString(com.myster.net.stream.server.ServerStats.SERVER_NAME, "Mr. Magoo");
-        baseStats.putString(com.myster.net.stream.server.ServerStats.MYSTER_VERSION, "10");
-        baseStats.putByteArray(com.myster.net.stream.server.ServerStats.IDENTITY, keyBytes);
-        baseStats.putLong(com.myster.net.stream.server.ServerStats.UPTIME, 1000L);
-        baseStats.putInt(com.myster.net.stream.server.ServerStats.NUMBER_OF_FILES + type, 42);
+        MessagePak baseStats = serverStatsFor(pubKey, "Mr. Magoo");
         
         // Addresses without explicit port
         lookup.put(MysterAddress.createMysterAddress("127.0.0.1"), copyOf(baseStats));
@@ -95,86 +93,7 @@ class TestMysterServerPoolImpl {
         lookup.put(MysterAddress.createMysterAddress("24.20.25.66:6000"), copyOf(portStats));
         
         pref = new MapPreferences();
-        protocol = new MysterProtocol() {
-            @Override
-            public MysterStream getStream() {
-                MysterStream streamMock = Mockito.mock(MysterStream.class);
-                
-                try {
-                    // Mock makeStreamConnection to return a valid MysterSocket
-                    Mockito.when(streamMock.makeStreamConnection(Mockito.any()))
-                            .thenAnswer(_ -> {
-                                MysterSocket socketMock = Mockito.mock(MysterSocket.class);
-                                // Make close() do nothing
-                                Mockito.doNothing().when(socketMock).close();
-                                return socketMock;
-                            });
-                    
-                    // Mock ping to return true
-                    Mockito.when(streamMock.ping(Mockito.any())).thenReturn(true);
-                    
-                } catch (IOException e) {
-                    throw new RuntimeException(e);
-                }
-                
-                return streamMock;
-            }
-
-            @Override
-            public MysterDatagram getDatagram() {
-                MysterDatagram myMock = Mockito.mock(MysterDatagram.class);
-
-                // Fix the ping mock - extract address from ParamBuilder
-                Mockito.when(myMock.ping(Mockito.any()))
-                        .thenAnswer(new Answer<PromiseFuture<PingResponse>>() {
-                            @Override
-                            public PromiseFuture<PingResponse> answer(InvocationOnMock invocation)
-                                    throws Throwable {
-                                ParamBuilder params = invocation.getArgument(0);
-                                MysterAddress address = params.getAddress().orElseThrow();
-                                return PromiseFuture.newPromiseFuture(new PingResponse(address, 1));
-                            }
-                        });
-
-                // Fix the getServerStats mock - extract address from ParamBuilder  
-                Mockito.when(myMock.getServerStats(Mockito.any()))
-                        .thenAnswer(new Answer<PromiseFuture<MessagePak>>() {
-                            @Override
-                            public PromiseFuture<MessagePak> answer(InvocationOnMock invocation)
-                                    throws Throwable {
-                                ParamBuilder params = invocation.getArgument(0);
-                                MysterAddress address = params.getAddress().orElseThrow();
-                                MessagePak stats = lookup.get(address);
-                                
-                                if (stats == null) {
-                                    return PromiseFuture.newPromiseFutureException(new IOException("Fake timeout"));
-                                }
-                                
-                                return PromiseFuture.newPromiseFuture(stats);
-                            }
-                        });
-
-                // Mock getBidirectionalServerStats - same logic as getServerStats
-                Mockito.when(myMock.getBidirectionalServerStats(Mockito.any()))
-                        .thenAnswer(new Answer<PromiseFuture<MessagePak>>() {
-                            @Override
-                            public PromiseFuture<MessagePak> answer(InvocationOnMock invocation)
-                                    throws Throwable {
-                                ParamBuilder params = invocation.getArgument(0);
-                                MysterAddress address = params.getAddress().orElseThrow();
-                                MessagePak stats = lookup.get(address);
-
-                                if (stats == null) {
-                                    return PromiseFuture.newPromiseFutureException(new IOException("Fake timeout"));
-                                }
-
-                                return PromiseFuture.newPromiseFuture(stats);
-                            }
-                        });
-
-                return myMock;
-            }
-        };
+        protocol = createProtocol();
         
         // public static final String NUMBER_OF_FILES = "/NumberOfFiles";
 //        
@@ -606,6 +525,45 @@ class TestMysterServerPoolImpl {
                 .toString());
     }
 
+    @Test
+    void testFindClosestByCidReturnsExactLeftAndRight() throws Exception {
+        List<PublicKeyIdentity> identities = addThreeDnsPreferenceServers(6, 80);
+        pool = new MysterServerPoolImpl(pref, protocol);
+        TrackerUtils.INVOKER.waitForThread();
+
+        List<PublicKeyIdentity> ordered = new ArrayList<>(identities);
+        ordered.sort(Comparator.comparing(TestMysterServerPoolImpl::cid));
+
+        PublicKeyIdentity exact = ordered.get(2);
+        IdentityNeighborSet neighbors = pool.findClosestByCid(cid(exact), 2);
+
+        Assertions.assertEquals(exact, neighbors.exact().get());
+        Assertions.assertEquals(List.of(ordered.get(1), ordered.get(0)), neighbors.left());
+        Assertions.assertEquals(List.of(ordered.get(3), ordered.get(4)), neighbors.right());
+    }
+
+    @Test
+    void testFindClosestByCidFiltersDownServers() throws Exception {
+        List<PublicKeyIdentity> identities = addThreeDnsPreferenceServers(5, 100);
+        List<PublicKeyIdentity> ordered = new ArrayList<>(identities);
+        ordered.sort(Comparator.comparing(TestMysterServerPoolImpl::cid));
+        PublicKeyIdentity downIdentity = ordered.get(2);
+
+        MysterAddress downAddress = addressForIdentity(downIdentity);
+        downPingAddresses.add(downAddress);
+
+        pool = new MysterServerPoolImpl(pref, protocol);
+        TrackerUtils.INVOKER.waitForThread();
+
+        IdentityNeighborSet neighbors = pool.findClosestByCid(cid(downIdentity), 2);
+
+        Assertions.assertTrue(neighbors.exact().isEmpty());
+        Assertions.assertFalse(neighbors.left().contains(downIdentity));
+        Assertions.assertFalse(neighbors.right().contains(downIdentity));
+        Assertions.assertEquals(2, neighbors.left().size());
+        Assertions.assertEquals(2, neighbors.right().size());
+    }
+
     private static MysterPoolListener convert(Consumer<MysterServer> c) {
         return new MysterPoolListener() {
             @Override
@@ -633,5 +591,127 @@ class TestMysterServerPoolImpl {
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
+    }
+
+    private List<PublicKeyIdentity> addThreeDnsPreferenceServers(int count, int firstOctet)
+            throws UnknownHostException {
+        List<PublicKeyIdentity> identities = new ArrayList<>();
+        for (int i = 0; i < count; i++) {
+            Identity identity = new Identity("threeDnsPool-" + firstOctet + "-" + i + ".keystore",
+                                             tempDir.toFile());
+            PublicKeyIdentity publicKeyIdentity =
+                    new PublicKeyIdentity(identity.getMainIdentity().get().getPublic());
+            identities.add(publicKeyIdentity);
+
+            MysterAddress address = MysterAddress.createMysterAddress("24.20." + firstOctet + "." + (i + 1));
+            String serverName = "Neighbor fixture " + i;
+            lookup.put(address, serverStatsFor(publicKeyIdentity.getPublicKey(), serverName));
+            saveServerPreference(publicKeyIdentity, address, serverName);
+        }
+
+        return identities;
+    }
+
+    private MysterAddress addressForIdentity(PublicKeyIdentity identity) {
+        for (Map.Entry<MysterAddress, MessagePak> entry : lookup.entrySet()) {
+            byte[] encoded = entry.getValue()
+                    .getByteArray(com.myster.net.stream.server.ServerStats.IDENTITY)
+                    .orElseThrow();
+            if (java.util.Arrays.equals(encoded, identity.getPublicKey().getEncoded())) {
+                return entry.getKey();
+            }
+        }
+        throw new IllegalArgumentException("No address for identity");
+    }
+
+    private void saveServerPreference(PublicKeyIdentity identity,
+                                      MysterAddress address,
+                                      String serverName) {
+        Preferences serverNode = pref.node("Tracker.MysterIPPool")
+                .node(MysterServerImplementation.computeNodeNameFromIdentity(identity).toString());
+        serverNode.put(MysterServerImplementation.SPEED, "1");
+        serverNode.put(MysterServerImplementation.TIMEUP, "0");
+        serverNode.put(MysterServerImplementation.TIMEDOWN, "0");
+        serverNode.put(MysterServerImplementation.NUMBEROFHITS, "0");
+        serverNode.put(MysterServerImplementation.TIMESINCEUPDATE, "0");
+        serverNode.put(MysterServerImplementation.UPTIME, "1000");
+        serverNode.put(MysterServerImplementation.SERVER_NAME, serverName);
+        serverNode.put(MysterServerImplementation.IDENTITY_PUBLIC_KEY, identity.toString());
+        serverNode.put(MysterServerImplementation.ADDRESSES, address.toString());
+    }
+
+    private static MessagePak serverStatsFor(PublicKey publicKey, String serverName) {
+        MessagePak stats = MessagePak.newEmpty();
+        stats.putString(com.myster.net.stream.server.ServerStats.SERVER_NAME, serverName);
+        stats.putString(com.myster.net.stream.server.ServerStats.MYSTER_VERSION, "10");
+        stats.putByteArray(com.myster.net.stream.server.ServerStats.IDENTITY, publicKey.getEncoded());
+        stats.putLong(com.myster.net.stream.server.ServerStats.UPTIME, 1000L);
+        stats.putInt(com.myster.net.stream.server.ServerStats.NUMBER_OF_FILES + type, 42);
+        return stats;
+    }
+
+    private static Cid128 cid(PublicKeyIdentity identity) {
+        return com.myster.identity.Util.generateCid(identity.getPublicKey());
+    }
+
+    private MysterProtocol createProtocol() throws IOException {
+        MysterDatagram datagram = Mockito.mock(MysterDatagram.class, this::unexpectedProtocolCall);
+        Mockito.doAnswer(invocation -> serverStats(invocation.getArgument(0)))
+                .when(datagram)
+                .getServerStats(Mockito.any(ParamBuilder.class));
+        Mockito.doAnswer(invocation -> serverStats(invocation.getArgument(0)))
+                .when(datagram)
+                .getBidirectionalServerStats(Mockito.any(ParamBuilder.class));
+        Mockito.doAnswer(invocation -> ping(invocation.getArgument(0)))
+                .when(datagram)
+                .ping(Mockito.any(ParamBuilder.class));
+
+        MysterStream stream = Mockito.mock(MysterStream.class, this::unexpectedProtocolCall);
+        Mockito.doAnswer(invocation -> streamSocket())
+                .when(stream)
+                .makeStreamConnection(Mockito.any(MysterAddress.class));
+        Mockito.doReturn(true).when(stream).ping(Mockito.any(MysterSocket.class));
+
+        MysterProtocol protocol = Mockito.mock(MysterProtocol.class, this::unexpectedProtocolCall);
+        Mockito.doReturn(datagram).when(protocol).getDatagram();
+        Mockito.doReturn(stream).when(protocol).getStream();
+        return protocol;
+    }
+
+    private Object unexpectedProtocolCall(InvocationOnMock invocation) {
+        String name = invocation.getMethod().getName();
+        if (name.equals("toString")) {
+            return "Unexpected-call mock for " + invocation.getMock().getClass().getInterfaces()[0].getSimpleName();
+        }
+        if (name.equals("hashCode")) {
+            return System.identityHashCode(invocation.getMock());
+        }
+        if (name.equals("equals")) {
+            return invocation.getMock() == invocation.getArgument(0);
+        }
+
+        throw new AssertionError("Unexpected protocol call: " + invocation.getMethod());
+    }
+
+    private PromiseFuture<MessagePak> serverStats(ParamBuilder params) {
+        MysterAddress address = params.getAddress().orElseThrow();
+        MessagePak stats = lookup.get(address);
+        if (stats == null) {
+            return PromiseFuture.newPromiseFutureException(new IOException("Fake timeout"));
+        }
+
+        return PromiseFuture.newPromiseFuture(stats);
+    }
+
+    private PromiseFuture<PingResponse> ping(ParamBuilder params) {
+        MysterAddress address = params.getAddress().orElseThrow();
+        int ping = downPingAddresses.contains(address) ? -1 : 1;
+        return PromiseFuture.newPromiseFuture(new PingResponse(address, ping));
+    }
+
+    private MysterSocket streamSocket() throws IOException {
+        MysterSocket socket = Mockito.mock(MysterSocket.class, this::unexpectedProtocolCall);
+        Mockito.doNothing().when(socket).close();
+        return socket;
     }
 }

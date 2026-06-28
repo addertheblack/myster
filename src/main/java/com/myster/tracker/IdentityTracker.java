@@ -7,8 +7,10 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.NavigableMap;
 import java.util.Optional;
 import java.util.Set;
+import java.util.TreeMap;
 import java.util.function.Consumer;
 import java.util.logging.Logger;
 import java.util.stream.Collectors;
@@ -41,7 +43,7 @@ class IdentityTracker implements IdentityProvider {
     private final Map<MysterAddress, MysterIdentity> addressToIdentity = new HashMap<>();
     private final Map<InetAddress, Set<MysterAddress>> ipToServerAddresses = new HashMap<>();
     private final Map<MysterIdentity, List<MysterAddress>> identityToAddresses = new HashMap<>();
-    private final Map<Cid128, MysterIdentity> cid128ToIdentity = new HashMap<>();
+    private final NavigableMap<Cid128, MysterIdentity> cid128ToIdentity = new TreeMap<>();
 
     private final Consumer<PingResponse> pingListener;
     private final Consumer<MysterIdentity> deadServerListener;
@@ -108,6 +110,32 @@ class IdentityTracker implements IdentityProvider {
     @Override
     public synchronized Optional<MysterIdentity> getIdentityFromCid(Cid128 cid128) {
         return Optional.ofNullable(cid128ToIdentity.get(cid128));
+    }
+
+    /**
+     * Produces public-key identities from closest to farthest on one side of a
+     * target CID. The walk wraps around the unsigned 128-bit ring and stops
+     * when all indexed candidates have been offered or the consumer returns
+     * {@code false}. The exact target CID is not produced; callers that care
+     * about exact matches should use {@link #getIdentityFromCid(Cid128)}
+     * separately.
+     */
+    synchronized void findClosest(Cid128 target, Direction direction, CandidateConsumer consumer) {
+        if (cid128ToIdentity.isEmpty()) {
+            return;
+        }
+
+        Entry<Cid128, MysterIdentity> entry = neighborEntry(target, direction);
+
+        for (int visited = 0; entry != null && visited < cid128ToIdentity.size(); visited++) {
+            if (!entry.getKey().equals(target) && entry.getValue() instanceof PublicKeyIdentity candidate) {
+                if (!consumer.consume(candidate)) {
+                    return;
+                }
+            }
+
+            entry = neighborEntry(entry.getKey(), direction);
+        }
     }
     
     @Override
@@ -227,7 +255,7 @@ class IdentityTracker implements IdentityProvider {
      * address to force a check again. This method protects against being called
      * too many times.
      * 
-     * @param identity
+     * @param a
      *            to scan for down addresses to check.
      */
     public synchronized void receivedUpNotification(MysterAddress a) {
@@ -486,5 +514,28 @@ class IdentityTracker implements IdentityProvider {
         if (timer != null) {
             timer.cancelTimer();
         }
+    }
+
+    private Entry<Cid128, MysterIdentity> neighborEntry(Cid128 target, Direction direction) {
+        return switch (direction) {
+            case LEFT -> {
+                Entry<Cid128, MysterIdentity> entry = cid128ToIdentity.lowerEntry(target);
+                yield entry != null ? entry : cid128ToIdentity.lastEntry();
+            }
+            case RIGHT -> {
+                Entry<Cid128, MysterIdentity> entry = cid128ToIdentity.higherEntry(target);
+                yield entry != null ? entry : cid128ToIdentity.firstEntry();
+            }
+        };
+    }
+
+    enum Direction {
+        LEFT,
+        RIGHT
+    }
+
+    @FunctionalInterface
+    interface CandidateConsumer {
+        boolean consume(PublicKeyIdentity candidate);
     }
 }

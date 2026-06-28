@@ -14,7 +14,7 @@
 - Pick a default place for downloads in progress (e.g. ~/mysterdata or platform app-data dir on Windows).
 - Split off concurrency library from Myster and publish to Maven.
 - Make Myster modules compatible.
-- Fix naming — probably want to use myster.org.
+- Fix naming — probably want to use myster.org and not the current com.myster etc....
 - Implement DoS / packet-amplification defence (don't be a target vector for attacks on others).
 - Fix DefaultTypeDescriptionList to interact with preferences in a sane way (not using MML).
 - Add audio chat
@@ -23,3 +23,17 @@
 - Add group calls
 - Add text forums
 - Add 3DNS for resolving public keys to hosted ip addresses.
+- Add type meta data for video files (e.g. length, resolution, bit rate etc.)
+
+- Important things to do to get private types working
+    - Implement type file that allows someone to import a type into myster.
+        This requires 3DNS to work so that we can be server cids and not just ips in the type file.
+        It requires a way to request that someone be allowed to join a type (basically a simple message notification system)
+        Import network type command that allows you to import a type file into your myster.
+        Add system file type binding so that if someone opens a myster network file it automatically imports the type into myster.
+        Add business cards .. send server stats without being requested in order to get your node discovered if it's on a different port.
+
+
+
+- We also need to enable multiple admins on a type history file. This requires a voting system or other way in which a
+type file can be sent to other admins

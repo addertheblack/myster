@@ -128,39 +128,52 @@ public class MapPreferences extends Preferences {
 
     @Override
     public Preferences parent() {
-        return parent.get();
+        return parent.orElse(null);
     }
 
     @Override
     public Preferences node(String pathName) {
-        if (pathName.startsWith("/")) {
-            return root.node(pathName.substring(1));
-        }
-        
-        int indexOfSlash = pathName.indexOf("/");
-        String nameOfNode = null;
-        if (indexOfSlash == -1) {
-            nameOfNode = pathName;
-        } else {
-            nameOfNode = pathName.substring(0, indexOfSlash);
-        }
-        
-        MapPreferences zoik = children.get(nameOfNode);
-        if (zoik == null) {
-            zoik = new MapPreferences(this, root, nameOfNode);
-            children.put(nameOfNode, zoik);
-        }
-        
-        return zoik;
+        return findNode(pathName, true).orElseThrow();
     }
 
     @Override
     public boolean nodeExists(String pathName) throws BackingStoreException {
-        throw new IllegalStateException("Not implemented");
+        return findNode(pathName, false).isPresent();
+    }
+
+    private Optional<MapPreferences> findNode(String pathName, boolean createMissing) {
+        if (pathName.equals("")) {
+            return Optional.of(this);
+        }
+        if (pathName.equals("/")) {
+            return Optional.of(root);
+        }
+        if (pathName.startsWith("/")) {
+            return root.findNode(pathName.substring(1), createMissing);
+        }
+
+        int indexOfSlash = pathName.indexOf("/");
+        String nameOfNode = indexOfSlash == -1 ? pathName : pathName.substring(0, indexOfSlash);
+        String remainingPath = indexOfSlash == -1 ? "" : pathName.substring(indexOfSlash + 1);
+
+        MapPreferences child = children.get(nameOfNode);
+        if (child == null) {
+            if (!createMissing) {
+                return Optional.empty();
+            }
+            child = new MapPreferences(this, root, nameOfNode);
+            children.put(nameOfNode, child);
+        }
+
+        return remainingPath.equals("") ? Optional.of(child) : child.findNode(remainingPath, createMissing);
     }
 
     @Override
     public void removeNode() throws BackingStoreException {
+        if (parent.isEmpty()) {
+            throw new UnsupportedOperationException("Cannot remove root node");
+        }
+        parent.get().children.remove(name);
         values.clear();
         children.clear();
     }
@@ -172,7 +185,11 @@ public class MapPreferences extends Preferences {
 
     @Override
     public String absolutePath() {
-        return null;
+        if (parent.isEmpty()) {
+            return "/";
+        }
+        String parentPath = parent.get().absolutePath();
+        return parentPath.equals("/") ? parentPath + name : parentPath + "/" + name;
     }
 
     @Override

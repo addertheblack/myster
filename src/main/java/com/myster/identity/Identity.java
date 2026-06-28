@@ -101,6 +101,7 @@ public class Identity {
         return keyStore;
     }
 
+    // TODO: Make it so that having a private key for the server is mandatory
     public synchronized Optional<KeyPair> getMainIdentity() {
         // Return cached value if available
         if (cachedMainIdentity != null) {

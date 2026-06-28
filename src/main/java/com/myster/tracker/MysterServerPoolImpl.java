@@ -39,6 +39,8 @@ import com.myster.net.stream.server.ServerStats;
 public class MysterServerPoolImpl implements MysterServerPool {
     private static final Logger log = Logger.getLogger(MysterServerPoolImpl.class.getName());
     private static final java.util.Timer timer = new java.util.Timer();
+    private static final int DEFAULT_NEIGHBORS_PER_SIDE = 2;
+    private static final int MAX_NEIGHBORS_PER_SIDE = 4;
 
     // MysterIPPool stores all its ips
     private static final String PREF_NODE_NAME = "Tracker.MysterIPPool";
@@ -141,8 +143,26 @@ public class MysterServerPoolImpl implements MysterServerPool {
             return Optional.empty();
         }
         
-        return identity.map(k -> ((PublicKeyIdentity) k).getPublicKey());
+        return identity
+                .filter(PublicKeyIdentity.class::isInstance)
+                .map(PublicKeyIdentity.class::cast)
+                .map(PublicKeyIdentity::getPublicKey);
 
+    }
+
+    @Override
+    public synchronized IdentityNeighborSet findClosestByCid(Cid128 target, int perSideLimit) {
+        int limit = normalizeNeighborLimit(perSideLimit);
+
+        Optional<PublicKeyIdentity> exact = identityTracker.getIdentityFromCid(target)
+                .filter(PublicKeyIdentity.class::isInstance)
+                .map(PublicKeyIdentity.class::cast)
+                .filter(this::isUsableThreeDnsIdentity);
+
+        List<PublicKeyIdentity> left = collectClosest(target, IdentityTracker.Direction.LEFT, limit, exact);
+        List<PublicKeyIdentity> right = collectClosest(target, IdentityTracker.Direction.RIGHT, limit, exact);
+
+        return new IdentityNeighborSet(exact, left, right);
     }
 
     @Override
@@ -360,6 +380,41 @@ public class MysterServerPoolImpl implements MysterServerPool {
         }
 
         return Optional.ofNullable(s.get());
+    }
+
+    private List<PublicKeyIdentity> collectClosest(Cid128 target,
+                                                   IdentityTracker.Direction direction,
+                                                   int limit,
+                                                   Optional<PublicKeyIdentity> exact) {
+        List<PublicKeyIdentity> results = new ArrayList<>();
+        identityTracker.findClosest(target, direction, candidate -> {
+            if (exact.filter(candidate::equals).isPresent()) {
+                return true;
+            }
+
+            if (isUsableThreeDnsIdentity(candidate)) {
+                results.add(candidate);
+            }
+
+            return results.size() < limit;
+        });
+
+        return results;
+    }
+
+    private boolean isUsableThreeDnsIdentity(PublicKeyIdentity identity) {
+        return getMysterIP(identity)
+                .map(MysterServerImplementation::getInterface)
+                .filter(server -> server.getStatus() && server.getUpAddresses().length > 0)
+                .isPresent();
+    }
+
+    private static int normalizeNeighborLimit(int perSideLimit) {
+        if (perSideLimit <= 0) {
+            return DEFAULT_NEIGHBORS_PER_SIDE;
+        }
+
+        return Math.min(perSideLimit, MAX_NEIGHBORS_PER_SIDE);
     }
     
     private MysterServerImplementation create(Preferences node,
