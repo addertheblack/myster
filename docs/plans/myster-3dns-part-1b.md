@@ -33,7 +33,7 @@ TrackerWindow gets a new 3DNS selection alongside file types, LAN, and bookmarks
 
 TrackerWindow's extraction and refresh paths treat 3DNS like LAN/bookmarks: no selected `MysterType`, existing row objects, existing context menus. Bookmark actions should continue to work because the selected rows are still `MysterServer` objects.
 
-Selection persistence should be updated so a user who closes TrackerWindow on the 3DNS view reopens on the 3DNS view. Existing saved file-type selections, LAN, and bookmarks should continue to restore as before.
+Selection persistence should reuse TrackerWindow's existing `SELECTED_TYPE` / `SELECTED_ITEM` scheme. Today the window stores `SELECTED_TYPE` as `Type`, `LAN`, or `Bookmark` and stores the selected type hex in `SELECTED_ITEM` only for real Myster types. Part 1b should add a `THREE_DNS` marker beside those existing markers, save an empty `SELECTED_ITEM` for it, and restore it through `choice.selectThreeDns()`. Existing saved file-type selections, LAN, and bookmarks should continue to restore as before.
 
 ## 5. Architecture connections
 
@@ -90,13 +90,14 @@ The UI flow is: the user selects "3DNS" in `TypeChoice`, TrackerWindow asks `Tra
    - Add a selectable "3DNS" extra item beside LAN/bookmarks.
    - Add helpers such as `isThreeDns()` and `selectThreeDns()`.
    - Ensure `getType()` returns empty when 3DNS is selected.
-   - Update rebuild/preservation logic so 3DNS remains selected across type-list refreshes.
+   - Update `rebuildTypeList()` alongside its existing `wasLan` / `wasBookmark` handling: capture `wasThreeDns`, rebuild the model, then call `selectThreeDns()` if that was the selected extra item.
    - Keep LAN and bookmark selection behavior unchanged.
 
 3. Update TrackerWindow selection persistence.
-   - Add a `THREE_DNS` selected-type marker beside the existing type/LAN/bookmark persisted values.
-   - Restore the 3DNS selection during window initialization when that marker is saved.
-   - Save the 3DNS marker when the window closes or preference data is written.
+   - Add a `THREE_DNS` selected-type marker beside the existing `TYPE`, `LAN`, and `BOOKMARK` persisted values.
+   - In the `WindowPrefDataKeeper.addFrame(...)` saver, extend the existing ternary so `choice.isThreeDns()` writes `THREE_DNS`; keep `SELECTED_ITEM` as the selected type hex only for real types.
+   - In `initWindowLocations(...)`, extend the existing restore chain so `data.selectedType().equals(THREE_DNS)` calls `choice.selectThreeDns()`.
+   - Keep the existing `SELECTED_TYPE` values compatible with old saved choices. While touching this code, prefer content checks such as `!data.selectedItem().isEmpty()` rather than reference comparison against `""`.
    - Confirm existing `SELECTED_TYPE` values still restore old choices.
 
 4. Update TrackerWindow data extraction.

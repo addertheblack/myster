@@ -11,6 +11,7 @@
 package com.myster.tracker;
 
 import java.util.ArrayList;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Optional;
 import java.util.logging.Logger;
@@ -68,6 +69,7 @@ public class Tracker {
         void serverAddedRemoved(MysterType type);
         void lanServerAddedRemoved();
         void bookmarkServerAddedRemoved();
+        void threeDnsServerAddedRemoved();
     }
     
     public Tracker(MysterServerPool pool,
@@ -92,7 +94,10 @@ public class Tracker {
         
         lan = new LanMysterServerList(pool, dispatcher.fire()::lanServerAddedRemoved);
         bookmarks = new BookmarkMysterServerList(pool, this.preferences, dispatcher);
-        threeDns = localCid.map(cid -> new ThreeDnsServerList(cid, pool, this.preferences, () -> {}));
+        threeDns = localCid.map(cid -> new ThreeDnsServerList(cid,
+                                                              pool,
+                                                              this.preferences,
+                                                              dispatcher.fire()::threeDnsServerAddedRemoved));
 
         pool.addPoolListener(new MysterPoolListener() {
             @Override
@@ -254,6 +259,19 @@ public class Tracker {
      */
     public synchronized List<MysterServer> getAllBookmarks() {
         return bookmarks.getAll();
+    }
+
+    /**
+     * Returns unique servers currently retained by the local 3DNS finger list in
+     * snapshot order. This is a UI/debug view of retained server references, not
+     * a routed lookup result.
+     */
+    public synchronized List<MysterServer> getAllThreeDns() {
+        LinkedHashMap<MysterIdentity, MysterServer> servers = new LinkedHashMap<>();
+        threeDns.map(ThreeDnsServerList::snapshot)
+                .orElseGet(List::of)
+                .forEach(entry -> servers.putIfAbsent(entry.server().getIdentity(), entry.server()));
+        return List.copyOf(servers.values());
     }
 
     /**

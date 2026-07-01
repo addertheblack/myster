@@ -56,6 +56,9 @@ public class TrackerWindow extends MysterFrame {
 
     private static final String LAN = "LAN";
 
+    // Persisted marker for the 3DNS tracker view; this is not a MysterType.
+    private static final String THREE_DNS = "3DNS";
+
     private static final String SELECTED_ITEM = "Selected Item";
 
     private static final String SELECTED_TYPE = "Selected Type";
@@ -89,8 +92,10 @@ public class TrackerWindow extends MysterFrame {
                 choice.selectLan();
             } else if (data.selectedType().equals(BOOKMARK)) {
                 choice.selectBookmarks();
-            } else if (data.selectedItem() != "") {
-                for (int i = 0; !choice.getType(i).isEmpty(); i++) {
+            } else if (data.selectedType().equals(THREE_DNS)) {
+                choice.selectThreeDns();
+            } else if (!data.selectedItem().isEmpty()) {
+                for (int i = 0; i < choice.getItemCount(); i++) {
                     if (choice.getType(i).map(t -> t.toHexString()).orElse("").equals(data.selectedItem())) {
                         choice.setSelectedIndex(i);
                         break;
@@ -115,6 +120,7 @@ public class TrackerWindow extends MysterFrame {
         var windowDataSaver = c.keeper().addFrame(this, (p) -> {
             var selectedType =  choice.isLan() ? LAN
                             : choice.isBookmark() ? BOOKMARK 
+                            : choice.isThreeDns() ? THREE_DNS
                             : TYPE;
                             
             p.put(SELECTED_TYPE, selectedType);
@@ -269,7 +275,7 @@ public class TrackerWindow extends MysterFrame {
             @Override
             public void serverAddedRemoved(MysterType type) {
                 Util.invokeLater(() -> {
-                    if (type.equals(getMysterType())) {
+                    if (getMysterType().filter(type::equals).isPresent()) {
                         reloadList.set(true);
                         TrackerWindow.this.resetTimer();
                     }
@@ -300,6 +306,16 @@ public class TrackerWindow extends MysterFrame {
                     // instant update for the icon.. tiny delay for the delete..
                     // note that this handler applied whatever TYPE is selected!
                     checkForRefresh(); 
+                });
+            }
+
+            @Override
+            public void threeDnsServerAddedRemoved() {
+                Util.invokeLater(() -> {
+                    if (choice.isThreeDns()) {
+                        reloadList.set(true);
+                        TrackerWindow.this.resetTimer();
+                    }
                 });
             }
         });
@@ -377,6 +393,8 @@ public class TrackerWindow extends MysterFrame {
             return tracker.getAllLan();
         } else if (choice.isBookmark()) {
             return tracker.getAllBookmarks();
+        } else if (choice.isThreeDns()) {
+            return tracker.getAllThreeDns();
         } else {
             return tracker.getAll(getMysterType().get());
         }

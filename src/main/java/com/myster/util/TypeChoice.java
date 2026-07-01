@@ -47,6 +47,7 @@ import com.myster.type.TypeListener;
 public class TypeChoice extends JComboBox<String> {
     private static final String LOCAL_NETWORK = "Local Network";
     private static final String BOOKMARKS = "Bookmarks";
+    private static final String THREE_DNS = "3DNS";
 
     /**
      * Null-byte prefix that marks a combo-box item as a non-selectable section header.
@@ -154,6 +155,10 @@ public class TypeChoice extends JComboBox<String> {
         return BOOKMARKS.equals(getSelectedItem());
     }
 
+    public boolean isThreeDns() {
+        return THREE_DNS.equals(getSelectedItem());
+    }
+
     public void selectLan() {
         setSelectedItem(LOCAL_NETWORK);
     }
@@ -162,19 +167,24 @@ public class TypeChoice extends JComboBox<String> {
         setSelectedItem(BOOKMARKS);
     }
 
+    public void selectThreeDns() {
+        setSelectedItem(THREE_DNS);
+    }
+
     public Optional<MysterType> getType() {
         return getType(getSelectedIndex());
     }
 
     /**
      * Maps a combo-box index to the corresponding {@link MysterType}, skipping headers,
-     * separators, and the extra items (LAN, Bookmarks).
+     * separators, and the extra tracker-view items.
      */
     public Optional<MysterType> getType(int comboIndex) {
         int typeIdx = 0;
         for (int i = 0; i < getItemCount(); i++) {
             String item = getItemAt(i);
-            if (isNonSelectable(item) || LOCAL_NETWORK.equals(item) || BOOKMARKS.equals(item)) {
+            if (isNonSelectable(item) || LOCAL_NETWORK.equals(item) || BOOKMARKS.equals(item)
+                    || THREE_DNS.equals(item)) {
                 continue;
             }
             if (i == comboIndex) {
@@ -187,7 +197,7 @@ public class TypeChoice extends JComboBox<String> {
 
     /**
      * Returns the {@link TypeDescription} for the currently selected type.
-     * Returns empty if a non-type item (LAN, Bookmarks, or a header) is selected.
+     * Returns empty if a non-type item (LAN, Bookmarks, 3DNS, or a header) is selected.
      */
     public Optional<TypeDescription> getSelectedTypeDescription() {
         return getType(getSelectedIndex())
@@ -208,7 +218,8 @@ public class TypeChoice extends JComboBox<String> {
                 int typeIdx = 0;
                 for (int ci = 0; ci < getItemCount(); ci++) {
                     String item = getItemAt(ci);
-                    if (isNonSelectable(item) || LOCAL_NETWORK.equals(item) || BOOKMARKS.equals(item)) {
+                    if (isNonSelectable(item) || LOCAL_NETWORK.equals(item) || BOOKMARKS.equals(item)
+                            || THREE_DNS.equals(item)) {
                         continue;
                     }
                     if (typeIdx == i) {
@@ -265,6 +276,9 @@ public class TypeChoice extends JComboBox<String> {
             addItem(LOCAL_NETWORK);
             addItem(Util.SEPARATOR);
             addItem(BOOKMARKS);
+            // 3DNS is a tracker view, not a MysterType.
+            addItem(Util.SEPARATOR);
+            addItem(THREE_DNS);
         }
 
         // Ensure the initial selection is a real type, not a header.
@@ -282,9 +296,10 @@ public class TypeChoice extends JComboBox<String> {
      * Preserves the current selection if the type still exists.
      */
     private void rebuildTypeList() {
-        MysterType currentSelection = (!isLan() && !isBookmark()) ? getType().orElse(null) : null;
+        MysterType currentSelection = (!isLan() && !isBookmark() && !isThreeDns()) ? getType().orElse(null) : null;
         boolean wasLan      = isLan();
         boolean wasBookmark = isBookmark();
+        boolean wasThreeDns = isThreeDns();
 
         var listeners = getItemListeners();
         Arrays.stream(listeners).forEach(this::removeItemListener);
@@ -299,6 +314,8 @@ public class TypeChoice extends JComboBox<String> {
             selectLan();
         } else if (wasBookmark) {
             selectBookmarks();
+        } else if (wasThreeDns) {
+            selectThreeDns();
         } else if (currentSelection != null) {
             setType(currentSelection);
         }
