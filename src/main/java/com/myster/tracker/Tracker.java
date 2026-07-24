@@ -25,6 +25,7 @@ import com.myster.net.datagram.client.PingResponse;
 import com.myster.net.server.ServerUtils;
 import com.myster.threedns.ThreeDnsFingerEntry;
 import com.myster.threedns.ThreeDnsServerList;
+import com.myster.threedns.ThreeDnsTargetSlotSnapshot;
 import com.myster.type.MysterType;
 import com.myster.type.TypeDescription;
 import com.myster.type.TypeDescriptionEvent;
@@ -331,6 +332,15 @@ public class Tracker {
 
     public synchronized List<ThreeDnsFingerEntry> getThreeDnsSnapshot() {
         return threeDns.map(ThreeDnsServerList::snapshot).orElseGet(List::of);
+    }
+
+    /**
+     * Returns immutable 3DNS target-slot snapshots for UI/debug inspection.
+     * This preserves per-target and per-side retained entries, including duplicate
+     * servers that appear in more than one target slot.
+     */
+    public synchronized List<ThreeDnsTargetSlotSnapshot> getThreeDnsTargetSlots() {
+        return threeDns.map(ThreeDnsServerList::snapshotTargetSlots).orElseGet(List::of);
     }
 
     /**

@@ -37,7 +37,7 @@ public class ThreeDnsServerList {
     private final MysterServerPool pool;
     private final Preferences preferences;
     private final Runnable listChanged;
-    private final List<TargetSlots> targets = new ArrayList<>();
+    private final List<TargetSlot> targets = new ArrayList<>();
 
     public ThreeDnsServerList(Cid128 localCid,
                               MysterServerPool pool,
@@ -49,7 +49,7 @@ public class ThreeDnsServerList {
         this.listChanged = listChanged;
 
         for (int bitIndex = 0; bitIndex < TARGET_COUNT; bitIndex++) {
-            targets.add(new TargetSlots(bitIndex, localCid.plusPowerOfTwo(bitIndex)));
+            targets.add(new TargetSlot(bitIndex, localCid.plusPowerOfTwo(bitIndex)));
         }
 
         load();
@@ -67,7 +67,7 @@ public class ThreeDnsServerList {
 
         boolean changed = false;
         long now = System.currentTimeMillis();
-        for (TargetSlots target : targets) {
+        for (TargetSlot target : targets) {
             changed |= addLiveEntry(target, ThreeDnsFingerEntry.Side.LEFT, server, now);
             changed |= addLiveEntry(target, ThreeDnsFingerEntry.Side.RIGHT, server, now);
         }
@@ -89,15 +89,15 @@ public class ThreeDnsServerList {
 
     public synchronized void removeIdentity(MysterIdentity identity) {
         boolean changed = false;
-        List<TargetSlots> changedTargets = new ArrayList<>();
-        for (TargetSlots target : targets) {
+        List<TargetSlot> changedTargets = new ArrayList<>();
+        for (TargetSlot target : targets) {
             if (target.remove(identity)) {
                 changed = true;
                 changedTargets.add(target);
             }
         }
 
-        for (TargetSlots target : changedTargets) {
+        for (TargetSlot target : changedTargets) {
             changed |= refill(target);
         }
 
@@ -164,11 +164,28 @@ public class ThreeDnsServerList {
      */
     public synchronized List<ThreeDnsFingerEntry> snapshot() {
         List<ThreeDnsFingerEntry> snapshot = new ArrayList<>();
-        for (TargetSlots target : targets) {
+        for (TargetSlot target : targets) {
             snapshot.addAll(target.left);
             snapshot.addAll(target.right);
         }
         return snapshot;
+    }
+
+    /**
+     * Returns immutable snapshots of every local target slot in bit-index order.
+     * Restored entries that are not currently up remain visible in these snapshots;
+     * callers that need only usable nodes should use {@link #seeds(int)} or
+     * {@link #forTarget(Cid128, int)}.
+     */
+    public synchronized List<ThreeDnsTargetSlotSnapshot> snapshotTargetSlots() {
+        List<ThreeDnsTargetSlotSnapshot> snapshot = new ArrayList<>(targets.size());
+        for (TargetSlot target : targets) {
+            snapshot.add(new ThreeDnsTargetSlotSnapshot(target.bitIndex,
+                                                        target.targetCid,
+                                                        target.left,
+                                                        target.right));
+        }
+        return List.copyOf(snapshot);
     }
 
     private List<PublicKeyIdentity> closest(List<ThreeDnsFingerEntry> entries,
@@ -201,7 +218,7 @@ public class ThreeDnsServerList {
         return distance != 0 ? distance : a.serverCid().compareTo(b.serverCid());
     }
 
-    private boolean addLiveEntry(TargetSlots target,
+    private boolean addLiveEntry(TargetSlot target,
                                  ThreeDnsFingerEntry.Side side,
                                  MysterServer server,
                                  long now) {
@@ -209,7 +226,7 @@ public class ThreeDnsServerList {
         return entry.filter(e -> target.add(e, DEFAULT_PER_SIDE_LIMIT)).isPresent();
     }
 
-    private boolean addRestoredEntry(TargetSlots target, ThreeDnsFingerEntry.Side side, MysterServer server) {
+    private boolean addRestoredEntry(TargetSlot target, ThreeDnsFingerEntry.Side side, MysterServer server) {
         Optional<ThreeDnsFingerEntry> entry = createEntry(target.targetCid, side, server, 0);
         return entry.filter(e -> target.add(e, DEFAULT_PER_SIDE_LIMIT)).isPresent();
     }
@@ -236,7 +253,7 @@ public class ThreeDnsServerList {
                                                         updateTimeMs));
     }
 
-    private boolean refill(TargetSlots target) {
+    private boolean refill(TargetSlot target) {
         boolean changed = false;
         IdentityNeighborSet neighbors = pool.findClosestByCid(target.targetCid, DEFAULT_PER_SIDE_LIMIT);
 
@@ -254,7 +271,7 @@ public class ThreeDnsServerList {
         return changed;
     }
 
-    private boolean addIdentityCandidate(TargetSlots target,
+    private boolean addIdentityCandidate(TargetSlot target,
                                          ThreeDnsFingerEntry.Side side,
                                          PublicKeyIdentity identity,
                                          long now) {
@@ -272,7 +289,7 @@ public class ThreeDnsServerList {
     }
 
     private void load() {
-        for (TargetSlots target : targets) {
+        for (TargetSlot target : targets) {
             loadSide(target, ThreeDnsFingerEntry.Side.LEFT);
             loadSide(target, ThreeDnsFingerEntry.Side.RIGHT);
         }
@@ -283,7 +300,7 @@ public class ThreeDnsServerList {
      * node. Restored servers are retained even if they are not currently up;
      * usable result methods apply current up filtering.
      */
-    private void loadSide(TargetSlots target, ThreeDnsFingerEntry.Side side) {
+    private void loadSide(TargetSlot target, ThreeDnsFingerEntry.Side side) {
         StringTokenizer tokenizer = new StringTokenizer(preferences.get(key(target.bitIndex, side), ""));
         while (tokenizer.hasMoreTokens()) {
             ExternalName externalName = new ExternalName(tokenizer.nextToken());
@@ -303,7 +320,7 @@ public class ThreeDnsServerList {
      * that the retained servers are currently reachable.
      */
     private synchronized void save() {
-        for (TargetSlots target : targets) {
+        for (TargetSlot target : targets) {
             preferences.put(key(target.bitIndex, ThreeDnsFingerEntry.Side.LEFT), externalNames(target.left));
             preferences.put(key(target.bitIndex, ThreeDnsFingerEntry.Side.RIGHT), externalNames(target.right));
         }
@@ -340,13 +357,13 @@ public class ThreeDnsServerList {
         return perSideLimit;
     }
 
-    private final class TargetSlots {
+    private final class TargetSlot {
         private final int bitIndex;
         private final Cid128 targetCid;
         private final List<ThreeDnsFingerEntry> left = new ArrayList<>();
         private final List<ThreeDnsFingerEntry> right = new ArrayList<>();
 
-        private TargetSlots(int bitIndex, Cid128 targetCid) {
+        private TargetSlot(int bitIndex, Cid128 targetCid) {
             this.bitIndex = bitIndex;
             this.targetCid = targetCid;
         }

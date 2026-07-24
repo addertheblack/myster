@@ -71,6 +71,8 @@ if (!"Continue".equals(answer)) return;
 
 **When to use**: Lists with sortable columns, selection, and custom rendering needs.
 
+**Text clipping**: Do not manually append ellipses to table cell strings. JMCList/Swing renderers clip long text for the visible column width, so model values should remain complete for copying, sorting, and future renderer changes.
+
 **Checkbox Columns**:
 For boolean columns, use a custom TableCellRenderer and TableCellEditor to provide checkbox widgets:
 

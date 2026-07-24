@@ -2,6 +2,7 @@ package com.myster.threedns;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.net.UnknownHostException;
@@ -105,6 +106,33 @@ class TestThreeDnsServerList {
 
         assertEquals(retainedCount, restored.snapshot().size());
         assertTrue(restored.seeds(10).isEmpty());
+    }
+
+    @Test
+    void targetSlotSnapshotsExposeImmutableSlotsInBitOrder() throws Exception {
+        FakePool pool = new FakePool();
+        Cid128 localCid = cid(0, 0);
+        ThreeDnsServerList list = new ThreeDnsServerList(localCid, pool, new MapPreferences(), () -> {});
+        FakeServer server = pool.addPublicServer(40, true);
+
+        list.consider(server);
+
+        List<ThreeDnsTargetSlotSnapshot> snapshots = list.snapshotTargetSlots();
+        assertEquals(ThreeDnsServerList.TARGET_COUNT, snapshots.size());
+        for (int i = 0; i < snapshots.size(); i++) {
+            assertEquals(i, snapshots.get(i).bitIndex());
+            assertEquals(localCid.plusPowerOfTwo(i), snapshots.get(i).targetCid());
+        }
+
+        ThreeDnsTargetSlotSnapshot firstPopulated = snapshots.stream()
+                .filter(snapshot -> !snapshot.entries().isEmpty())
+                .findFirst()
+                .orElseThrow();
+
+        assertThrows(UnsupportedOperationException.class,
+                     () -> firstPopulated.left().add(firstPopulated.entries().get(0)));
+        assertThrows(UnsupportedOperationException.class,
+                     () -> firstPopulated.entries().clear());
     }
 
     private static boolean containsIdentity(List<ThreeDnsFingerEntry> entries, MysterIdentity identity) {

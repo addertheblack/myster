@@ -1,8 +1,9 @@
 package com.myster.tracker.ui;
 
-import static com.myster.tracker.MysterServer.DOWN;
-import static com.myster.tracker.MysterServer.UNTRIED;
-
+import javax.swing.JLabel;
+import javax.swing.JMenuItem;
+import javax.swing.JPanel;
+import java.awt.CardLayout;
 import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
 import java.awt.Insets;
@@ -18,11 +19,6 @@ import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.stream.Stream;
-
-import javax.swing.JLabel;
-import javax.swing.JMenuItem;
-import javax.swing.JPanel;
-import javax.swing.JPopupMenu;
 
 import com.general.mclist.AbstractMCListItemInterface;
 import com.general.mclist.JMCList;
@@ -49,7 +45,14 @@ import com.myster.ui.WindowPrefDataKeeper.PrefData;
 import com.myster.util.ContextMenu;
 import com.myster.util.TypeChoice;
 
+import static com.myster.tracker.MysterServer.DOWN;
+import static com.myster.tracker.MysterServer.UNTRIED;
+
 public class TrackerWindow extends MysterFrame {
+    private static final String SERVER_LIST_CARD = "Servers";
+
+    private static final String THREE_DNS_CARD = "3DNS";
+
     private static final String TYPE = "Type";
 
     private static final String BOOKMARK = "Bookmark";
@@ -66,6 +69,9 @@ public class TrackerWindow extends MysterFrame {
     private static TrackerWindow me;
 
     private final JMCList<MysterServer> list;
+    private final TrackerThreeDnsPanel threeDnsPanel;
+    private final CardLayout listCardLayout;
+    private final JPanel listHolder;
     private final TypeChoice choice;
     private Timer timer = null;
     
@@ -136,12 +142,17 @@ public class TrackerWindow extends MysterFrame {
 
 
         list = MCListFactory.buildMCList(8, true, this);
+        threeDnsPanel = new TrackerThreeDnsPanel(tracker, c);
+        listCardLayout = new CardLayout();
+        listHolder = new JPanel(listCardLayout);
+        listHolder.add(list.getPane(), SERVER_LIST_CARD);
+        listHolder.add(threeDnsPanel, THREE_DNS_CARD);
 
         //add Objects
         add(new JLabel("Tracked servers on network: "), builder.withGridLoc(0, 0).withSize(1, 1).withWeight(0, 0));
         add(choice, builder.withGridLoc(1, 0).withSize(1, 1).withWeight(1, 0));
         add(new JPanel(), builder.withGridLoc(2, 0).withSize(1, 1).withWeight(1, 0));
-        add(list.getPane(), builder.withGridLoc(0, 1).withSize(3, 1).withWeight(99, 99));
+        add(listHolder, builder.withGridLoc(0, 1).withSize(3, 1).withWeight(99, 99));
 
         //Add Event handlers
 
@@ -322,13 +333,13 @@ public class TrackerWindow extends MysterFrame {
 
         addComponentListener(new ComponentAdapter() {
             public void componentShown(ComponentEvent e) {
-                refreshTheList();
+                refreshActiveView();
             }
         });
     }
     
     private void resetTimer() {
-        if (!list.getPane().isShowing()) {
+        if (!listHolder.isShowing()) {
             return;
         }
         
@@ -340,7 +351,7 @@ public class TrackerWindow extends MysterFrame {
     }
 
     public void show() {
-        loadTheList();
+        showSelectedViewAndLoad();
         super.show();
     }
 
@@ -362,10 +373,20 @@ public class TrackerWindow extends MysterFrame {
         return choice.getType();
     }
 
-    private List<TrackerMCListItem> itemsinlist;
+    private List<TrackerMCListItem> itemsInList;
 
     private final AtomicBoolean refreshList;
     private final AtomicBoolean reloadList;
+
+    private void showSelectedViewAndLoad() {
+        if (choice.isThreeDns()) {
+            listCardLayout.show(listHolder, THREE_DNS_CARD);
+            threeDnsPanel.load();
+        } else {
+            listCardLayout.show(listHolder, SERVER_LIST_CARD);
+            loadTheList();
+        }
+    }
 
     /**
      * Remakes the MCList. This routine is called every few minutes to update the tracker window
@@ -374,13 +395,13 @@ public class TrackerWindow extends MysterFrame {
     private void loadTheList() {
         int currentIndex = list.getSelectedIndex();
         list.clearAll();
-        itemsinlist = new ArrayList<>();
+        itemsInList = new ArrayList<>();
         List<MysterServer> servers = extractServers();
         TrackerMCListItem[] m = new TrackerMCListItem[servers.size()];
 
         for (int i = 0; i < servers.size(); i++) {
             m[i] = new TrackerMCListItem((servers.get(i)), getMysterType());
-            itemsinlist.add(m[i]);
+            itemsInList.add(m[i]);
         }
         list.addItem(m);
         list.select(currentIndex); //not a problem if out of bounds..
@@ -411,17 +432,36 @@ public class TrackerWindow extends MysterFrame {
         reloadList.set(false);
 
         if (reload) {
-            loadTheList();
+            loadActiveView();
         } else if (refresh) {
-            refreshTheList();
+            refreshActiveView();
         }
 
         cancelTimer();
     }
 
+    private void loadActiveView() {
+        if (choice.isThreeDns()) {
+            threeDnsPanel.load();
+        } else {
+            loadTheList();
+        }
+    }
+
+    private void refreshActiveView() {
+        if (choice.isThreeDns()) {
+            threeDnsPanel.refresh();
+        } else {
+            refreshTheList();
+        }
+    }
+
     private void refreshTheList() {
-        for (int i = 0; i < itemsinlist.size(); i++) {
-            (itemsinlist.get(i)).refresh();
+        if (itemsInList == null) {
+            return;
+        }
+        for (int i = 0; i < itemsInList.size(); i++) {
+            (itemsInList.get(i)).refresh();
         }
         list.repaint();
     }
@@ -438,7 +478,7 @@ public class TrackerWindow extends MysterFrame {
         }
 
         public void itemStateChanged(ItemEvent e) {
-            loadTheList();
+            showSelectedViewAndLoad();
         }
     }
 

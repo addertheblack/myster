@@ -8,17 +8,16 @@ import com.myster.tracker.MysterServer;
 import com.myster.tracker.PublicKeyIdentity;
 
 /**
- * One retained 3DNS finger entry. Live entries store a currently up address;
- * restored entries may temporarily hold the server's best known address until
- * normal pool pings decide whether the server is usable.
+ * One retained 3DNS finger entry. Live entries store a currently up address; restored entries may temporarily hold the
+ * server's best known address until normal pool pings decide whether the server is usable.
  */
 public record ThreeDnsFingerEntry(
-    Cid128 targetCid,
-    Cid128 serverCid,
-    MysterServer server,
-    MysterAddress address,
-    Side side,
-    long updateTimeMs
+        Cid128 targetCid,
+        Cid128 serverCid,
+        MysterServer server,
+        MysterAddress address,
+        Side side,
+        long updateTimeMs
 ) {
     public ThreeDnsFingerEntry {
         Objects.requireNonNull(targetCid);
