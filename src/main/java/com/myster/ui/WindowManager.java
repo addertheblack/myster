@@ -1,6 +1,7 @@
 package com.myster.ui;
 
-import java.awt.Desktop;
+import javax.swing.JFrame;
+import javax.swing.JMenu;
 import java.awt.EventQueue;
 import java.awt.Frame;
 import java.awt.event.ActionEvent;
@@ -10,9 +11,6 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-
-import javax.swing.JFrame;
-import javax.swing.JMenu;
 
 import com.myster.application.MysterGlobals;
 import com.myster.ui.menubar.MysterMenuBar;
@@ -107,16 +105,9 @@ public class WindowManager {
         boolean yep = windows.remove(frame);
         windowMenuMap.remove(frame);
         if (yep) {
-            // Timer t=new Timer(doUpdateClass, 1); //might cause deadlocks.
             updateMenu();
             
             fireWidowListenerEvent();
-            if (windows.size() == 0) {
-                // TODO: Fix this hack.
-                if (MysterGlobals.ON_LINUX) { // hack hack hack!
-                    MysterGlobals.quit();
-                }
-            }
         }
     }
      

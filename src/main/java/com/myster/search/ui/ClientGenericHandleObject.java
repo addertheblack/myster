@@ -87,7 +87,7 @@ public class ClientGenericHandleObject implements FileTypeColumnHandler {
                 String size = result.getMetaData(keyarray[1]);
                 try {
                     if (size != null && sortableSize == null) {
-                        sortableSize = new SortableByte(Integer.parseInt(size));
+                        sortableSize = new SortableByte(Long.parseLong(size));
                     }
                     return (size == null ? NOT_IN : sortableSize);
                 } catch (NumberFormatException ex) {

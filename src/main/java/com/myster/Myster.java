@@ -30,6 +30,7 @@ import java.util.Enumeration;
 import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.Executors;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.logging.LogManager;
 import java.util.logging.Logger;
 import java.util.prefs.Preferences;
@@ -181,14 +182,8 @@ public class Myster {
 
         INSTRUMENTATION.info("-------->> before Appl init " + (System.currentTimeMillis() - startTime));
 
-        ApplicationSingletonListener applicationSingletonListener =
-                new ApplicationSingletonListener() {
-                    public void requestLaunch(String[] args) {}
-
-                    public void errored(Exception ignore) {
-                        // nothing
-                    }
-                };
+        SingleInstanceLaunchHandler applicationSingletonListener =
+                new SingleInstanceLaunchHandler();
         
         ApplicationContext applicationContext =
                 new ApplicationContext(10457, applicationSingletonListener, args);
@@ -545,6 +540,8 @@ public class Myster {
                 }
                 
                 MysterTray.init();
+
+                applicationSingletonListener.setReady(context);
                 
                 INSTRUMENTATION.info("-------->>   EDT AWT GUI init complete " + (System.currentTimeMillis() - startTime));
             });
@@ -572,6 +569,55 @@ public class Myster {
 
         ServerUtils.massPing(protocol, tracker);
     } // Utils, globals etc.. //These variables are System wide variables //
+
+    private static final class SingleInstanceLaunchHandler implements ApplicationSingletonListener {
+        private final AtomicBoolean relaunchRequestedBeforeGuiReady = new AtomicBoolean(false);
+        private volatile MysterFrameContext context;
+
+        @Override
+        public void requestLaunch(String[] args) {
+            MysterFrameContext readyContext = context;
+            if (readyContext == null) {
+                relaunchRequestedBeforeGuiReady.set(true);
+                return;
+            }
+
+            Util.invokeNowOrLater(() -> showWindowForRelaunch(readyContext));
+        }
+
+        public void setReady(MysterFrameContext context) {
+            this.context = context;
+            if (relaunchRequestedBeforeGuiReady.getAndSet(false)) {
+                requestLaunch(new String[] {});
+            }
+        }
+
+        @Override
+        public void errored(Exception ignore) {
+            // nothing
+        }
+
+        private void showWindowForRelaunch(MysterFrameContext context) {
+            Util.ensureEventDispatchThread();
+
+            WindowManager windowManager = context.windowManager();
+            var windows = windowManager.getWindowListCopy();
+
+            if (windows.isEmpty()) {
+                SearchWindow window = new SearchWindow(context);
+                window.setVisible(true);
+                return;
+            }
+
+            var frontMost = windowManager.getFrontMostWindow();
+            if (frontMost == null || !windows.contains(frontMost)) {
+                frontMost = windows.get(windows.size() - 1);
+            }
+
+            frontMost.setVisible(true);
+            frontMost.toFrontAndUnminimize();
+        }
+    }
 
     private static MetadataProvider createMetadataProvider() {
         Path cacheRoot = MysterGlobals.getPrivateDataPath().toPath().resolve("MetadataCache");
