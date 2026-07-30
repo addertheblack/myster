@@ -2,21 +2,28 @@ package com.myster.progress.ui;
 
 import java.io.File;
 import java.io.IOException;
+import java.nio.file.Path;
 
 import com.general.thread.Cancellable;
 import com.general.util.AnswerDialog;
 import com.myster.hash.FileHash;
+import com.myster.net.stream.client.msdownload.DownloadStartException;
 import com.myster.net.stream.client.msdownload.DownloadInitiator.DownloadInitiatorListener;
+import com.myster.net.stream.client.msdownload.ExistingDownloadTargetHandler;
 import com.myster.net.stream.client.msdownload.ObsoleteHandler;
 import com.myster.net.stream.client.msdownload.MSDownloadParams;
 import com.myster.net.stream.client.msdownload.MSPartialFile;
 import com.myster.net.stream.client.msdownload.MultiSourceDownload;
 import com.myster.net.stream.client.msdownload.MultiSourceEvent;
-import com.myster.net.stream.client.msdownload.MultiSourceUtilities;
+import com.myster.net.stream.client.msdownload.MultiSourceUtils;
 import com.myster.search.MysterFileStub;
 import com.myster.ui.MysterFrameContext;
 
 public class EdtFileProgressWindow implements DownloadInitiatorListener {
+    private static final String STOP_DOWNLOAD = "Kill";
+
+    private static final String CANCEL = "Don't Kill";
+
     private final FileProgressWindow progress;
     private final MSDownloadParams params;
     
@@ -35,7 +42,7 @@ public class EdtFileProgressWindow implements DownloadInitiatorListener {
         
         progress.addWindowListener(new java.awt.event.WindowAdapter() {
             public void windowClosing(java.awt.event.WindowEvent e) {
-                if (!done && !MultiSourceUtilities.confirmCancel(progress)) {
+                if (!done && !confirmCancel()) {
                     return;
                 }
 
@@ -46,6 +53,13 @@ public class EdtFileProgressWindow implements DownloadInitiatorListener {
         });
         
         progress.show();
+    }
+
+    private boolean confirmCancel() {
+        final String choice = AnswerDialog.simpleAlert(progress,
+                "Are you sure you want to kill this download?", new String[] { STOP_DOWNLOAD,
+                        CANCEL });
+        return choice.equals(STOP_DOWNLOAD);
     }
 
     @Override
@@ -71,11 +85,21 @@ public class EdtFileProgressWindow implements DownloadInitiatorListener {
     }
 
     @Override
-    public File getFileToDownloadTo(MysterFileStub stub) {
-        return MultiSourceUtilities.getFileToDownloadTo(stub.name(),
-                                                        progress,
-                                                        params.targetDir(),
-                                                        params.subDirectory());
+    public File getFileToDownloadTo(MysterFileStub stub) throws DownloadStartException {
+        return MultiSourceUtils.getFileToDownloadTo(stub.name(),
+                                                    params.targetDir(),
+                                                    params.subDirectory(),
+                                                    this::chooseForExistingTarget);
+    }
+
+    private ExistingDownloadTargetHandler.Decision chooseForExistingTarget(Path partialFile,
+                                                                          Path finalFile) {
+        String answer = AnswerDialog.simpleAlert(progress,
+                "A file by the name of " + partialFile.getFileName()
+                        + " already exists. What do you want to do?",
+                new String[] { "Write-Over", "Cancel" });
+        return "Write-Over".equals(answer) ? ExistingDownloadTargetHandler.Decision.OVERWRITE
+                : ExistingDownloadTargetHandler.Decision.CANCEL;
     }
 
     @Override
@@ -103,6 +127,6 @@ public class EdtFileProgressWindow implements DownloadInitiatorListener {
 
     @Override
     public void moveFileToFinalDestination(File sourceFile) {
-        MultiSourceUtilities.moveFileToFinalDestination(sourceFile, s -> AnswerDialog.simpleAlert(progress, s));
+        MultiSourceUtils.moveFileToFinalDestination(sourceFile, s -> AnswerDialog.simpleAlert(progress, s));
     }
 }

@@ -12,14 +12,18 @@ package com.myster.search.ui;
 import javax.swing.JButton;
 import javax.swing.JMenuItem;
 import javax.swing.JPanel;
+import javax.swing.SwingUtilities;
 import javax.swing.JTextField;
 import javax.swing.ListSelectionModel;
 import java.awt.Dimension;
+import java.awt.Frame;
 import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
 import java.awt.Insets;
+import java.awt.Window;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.nio.file.Path;
 import java.util.Optional;
 import java.util.function.Consumer;
 import java.util.logging.Logger;
@@ -30,12 +34,14 @@ import com.general.mclist.MCListEvent;
 import com.general.mclist.MCListEventAdapter;
 import com.general.mclist.MCListFactory;
 import com.general.mclist.MCListItemInterface;
+import com.general.util.AnswerDialog;
 import com.general.util.GridBagBuilder;
 import com.general.util.IconLoader;
 import com.general.util.MessageField;
 import com.general.util.Util;
 import com.myster.client.ui.ClientWindow;
 import com.myster.net.client.MysterProtocol;
+import com.myster.net.stream.client.msdownload.DownloadStartException;
 import com.myster.search.HashCrawlerManager;
 import com.myster.search.SearchEngine;
 import com.myster.search.SearchResult;
@@ -45,7 +51,9 @@ import com.myster.tracker.MysterServer;
 import com.myster.tracker.Tracker;
 import com.myster.type.MysterType;
 import com.myster.type.TypeDescriptionList;
+import com.myster.ui.DownloadStartErrorDialog;
 import com.myster.ui.MysterFrameContext;
+import com.myster.ui.DownloadDirectoryChooser;
 import com.myster.util.ContextMenu;
 import com.myster.util.Sayable;
 import com.myster.util.TypeChoice;
@@ -147,7 +155,7 @@ public class SearchTab extends JPanel implements SearchResultListener, Sayable {
         fileList.addMCListEventListener(new MCListEventAdapter() {
             public synchronized void doubleClick(MCListEvent a) {
                 MCList<SearchResult> list = (MCList<SearchResult>) a.getParent();
-                downloadFile(list.getItem(list.getSelectedIndex()));
+                downloadRows(new int[] { list.getSelectedIndex() }, false);
             }
         });
 
@@ -176,18 +184,10 @@ public class SearchTab extends JPanel implements SearchResultListener, Sayable {
         });
 
         JMenuItem downloadMenuItem = ContextMenu.createDownloadItem(fileList, _ -> {
-            int[] indexes = fileList.getSelectedRows();
-
-            for (int i : indexes) {
-                fileList.getMCListItem(i).getObject().download();
-            }
+            downloadRows(fileList.getSelectedRows(), false);
         });
         JMenuItem downloadToMenuItem = ContextMenu.createDownloadToItem(fileList, _ -> {
-            int[] indexes = fileList.getSelectedRows();
-
-            for (int i : indexes) {
-                fileList.getMCListItem(i).getObject().downloadTo();
-            }
+            downloadRows(fileList.getSelectedRows(), true);
         });
         JMenuItem bookmarkMenuItem = ContextMenu.createBookmarkServerItem(fileList, _ -> {
             int[] indexes = fileList.getSelectedRows();
@@ -202,6 +202,46 @@ public class SearchTab extends JPanel implements SearchResultListener, Sayable {
         });
 
         ContextMenu.addPopUpMenu(fileList, ()->{}, openContainingFolder, null, downloadMenuItem, downloadToMenuItem, null, bookmarkMenuItem);
+    }
+
+    private void downloadRows(int[] indexes, boolean alwaysAskForDirectory) {
+        if (indexes.length == 0) {
+            return;
+        }
+
+        Optional<Path> baseDirectory = resolveDownloadDirectory(alwaysAskForDirectory);
+        if (baseDirectory.isEmpty()) {
+            return;
+        }
+
+        for (int index : indexes) {
+            try {
+                fileList.getMCListItem(index)
+                        .getObject()
+                        .downloadTo(baseDirectory.get(),
+                                    DownloadStartErrorDialog.handler(getParentFrame()));
+            } catch (DownloadStartException exception) {
+                DownloadStartErrorDialog.showOnEdt(getParentFrame(), exception);
+            }
+        }
+    }
+
+    private Optional<Path> resolveDownloadDirectory(boolean alwaysAskForDirectory) {
+        return DownloadDirectoryChooser
+                .chooseWritableDownloadDirectory(getParentFrame(),
+                                                 "Select a folder to save the file in",
+                                                 alwaysAskForDirectory,
+                                                 context.fileManager(),
+                                                 getMysterType());
+    }
+
+    private Frame getParentFrame() {
+        Window window = SwingUtilities.getWindowAncestor(this);
+        if (window instanceof Frame frame) {
+            return frame;
+        }
+
+        return AnswerDialog.getCenteredFrame();
     }
 
 
@@ -399,10 +439,6 @@ public class SearchTab extends JPanel implements SearchResultListener, Sayable {
         return searchButton;
     }
 
-    private static void downloadFile(Object s) {
-        ((SearchResult) (s)).download();
-    }
-
     @Override
     public void say(String s) {
         log.fine(s);
@@ -427,4 +463,3 @@ public class SearchTab extends JPanel implements SearchResultListener, Sayable {
         }
     }
 }
-

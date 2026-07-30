@@ -3,12 +3,14 @@ package com.myster.search;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Optional;
+import java.util.function.Consumer;
 
 import com.general.util.Util;
 import com.myster.mml.MessagePak;
 import com.myster.net.MysterAddress;
 import com.myster.net.client.MysterProtocol;
+import com.myster.net.stream.client.msdownload.DownloadDirectoryValidator;
+import com.myster.net.stream.client.msdownload.DownloadStartException;
 import com.myster.net.stream.client.msdownload.MSDownloadParams;
 import com.myster.search.ui.ServerStatsFromCache;
 import com.myster.tracker.MysterServer;
@@ -39,26 +41,20 @@ public class MysterSearchResult implements SearchResult {
         Util.invokeNowOrLater(() -> mml = m);
     }
 
-    // is called when the user decides to download the item
     @Override
-    public void download() {
-        getProtocol().getStream()
-                .downloadFile(new MSDownloadParams(context,
-                                                   hashCrawler,
-                                                   stub,
-                                                   Optional.of(Path.of(context.fileManager()
-                                                           .getPathFromType(stub.getType()))),
-                                                   Path.of("")));
-    }
+    public void downloadTo(Path baseDirectory,
+                           Consumer<DownloadStartException> startFailureHandler)
+            throws DownloadStartException {
+        Path validatedBaseDirectory =
+                DownloadDirectoryValidator.validateDownloadDirectory(baseDirectory);
 
-    @Override
-    public void downloadTo() {
         getProtocol().getStream()
                 .downloadFile(new MSDownloadParams(context,
                                                    hashCrawler,
                                                    stub,
-                                                   Optional.empty(),
-                                                   Path.of("")));
+                                                   validatedBaseDirectory,
+                                                   Path.of(""),
+                                                   startFailureHandler));
     }
 
     // returns the network the search result is on.

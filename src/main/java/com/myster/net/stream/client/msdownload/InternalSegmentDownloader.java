@@ -372,7 +372,7 @@ class InternalSegmentDownloader implements SegmentDownloader {
     }
 
     private static void debug(String string) {
-        MultiSourceUtilities.debug(string);
+        MultiSourceUtils.debug(string);
     }
 
     /**

@@ -69,9 +69,9 @@ import com.myster.search.ui.ClientInfoFactoryUtilities;
 import com.myster.search.ui.FileTypeColumnHandler;
 import com.myster.net.MysterAddress;
 import com.myster.net.client.MysterProtocol;
+import com.myster.net.stream.client.msdownload.DownloadServerConnectionException;
 import com.myster.net.server.ServerPreferences;
 import com.myster.net.stream.client.msdownload.MSDownloadParams;
-import com.myster.net.stream.client.msdownload.MultiSourceUtilities.DefaultDialogProvider;
 import com.myster.search.HashCrawlerManager;
 import com.myster.search.MysterFileStub;
 import com.myster.tracker.MysterServer;
@@ -79,8 +79,10 @@ import com.myster.tracker.Tracker;
 import com.myster.type.MysterType;
 import com.myster.type.TypeDescription;
 import com.myster.type.TypeDescriptionList;
+import com.myster.ui.DownloadStartErrorDialog;
 import com.myster.ui.MysterFrame;
 import com.myster.ui.MysterFrameContext;
+import com.myster.ui.DownloadDirectoryChooser;
 import com.myster.ui.WindowPrefDataKeeper;
 import com.myster.ui.WindowPrefDataKeeper.PrefData;
 import com.myster.util.ContextMenu;
@@ -255,7 +257,10 @@ public class ClientWindow extends MysterFrame implements Sayable {
         initiaData = Optional.empty();
     }
     
-    private void recursivelyStartDownloads(TreeMCListTableModel<String> model, TreeMCListItem<String> item, Optional<Path> baseDirectory, Path relativePath) {
+    private void recursivelyStartDownloads(TreeMCListTableModel<String> model,
+                                           TreeMCListItem<String> item,
+                                           Path baseDirectory,
+                                           Path relativePath) {
         if (item.isContainer()) {
             TreePath myPathOrFail = item.getMyPathOrFail();
             for (TreeMCListItem<String> i : model.getChildrenAtPath(myPathOrFail)) {
@@ -267,15 +272,27 @@ public class ClientWindow extends MysterFrame implements Sayable {
                         .downloadFile(new MSDownloadParams(context,
                                                            hashManager,
                                                            new MysterFileStub(MysterAddress
-                                                                   .createMysterAddress(currentip),
+                                                                               .createMysterAddress(currentip),
                                                                               getCurrentType(),
                                                                               item.getObject()),
                                                            baseDirectory,
-                                                           relativePath));
+                                                           relativePath,
+                                                           DownloadStartErrorDialog.handler(this)));
             } catch (UnknownHostException e1) {
-                e1.printStackTrace();
+                DownloadStartErrorDialog
+                        .showOnEdt(this,
+                                   new DownloadServerConnectionException(currentip, e1));
             }
         }
+    }
+
+    private Optional<Path> resolveDownloadDirectory(boolean alwaysAskForDirectory) {
+        return DownloadDirectoryChooser
+                .chooseWritableDownloadDirectory(this,
+                                                 "Select a folder to save the file in",
+                                                 alwaysAskForDirectory,
+                                                 context.fileManager(),
+                                                 getCurrentType());
     }
     
     /**
@@ -434,24 +451,15 @@ public class ClientWindow extends MysterFrame implements Sayable {
                 return;
             }
             
-            // Get the base directory (ask only once for all downloads)
-            String pathFromType = context.fileManager().getPathFromType(getCurrentType());
-            Optional<Path> baseDir = pathFromType == null ? Optional.empty()
-                    : Optional.of(Path.of(pathFromType));
-            
+            Optional<Path> baseDir = resolveDownloadDirectory(false);
             if (baseDir.isEmpty()) {
-                var p = new DefaultDialogProvider().askForFolder("Select a folder to save the file in");
-                if (p == null) {
-                    return;
-                }
-                
-                baseDir = Optional.of(p);
+                return;
             }
             
             // Download each top-level item
             TreeMCListTableModel<String> model = (TreeMCListTableModel<String>) fileList.getModel();
             for (TreeMCListItem<String> treeItem : itemsToDownload) {
-                recursivelyStartDownloads(model, treeItem, baseDir, Path.of(""));
+                recursivelyStartDownloads(model, treeItem, baseDir.get(), Path.of(""));
             }
         });
         JMenuItem downloadToMenuItem = ContextMenu.createDownloadToItem(fileList, _ -> {
@@ -461,18 +469,15 @@ public class ClientWindow extends MysterFrame implements Sayable {
                 return;
             }
             
-            // Ask user for base directory via dialog (always ask, don't use preferences)
-            var p = new DefaultDialogProvider().askForFolder("Select a folder to save the file in");
-            if (p == null) {
-                return; // User cancelled
+            Optional<Path> baseDir = resolveDownloadDirectory(true);
+            if (baseDir.isEmpty()) {
+                return;
             }
-            
-            Optional<Path> baseDir = Optional.of(p);
             
             // Download each top-level item
             TreeMCListTableModel<String> model = (TreeMCListTableModel<String>) fileList.getModel();
             for (TreeMCListItem<String> treeItem : itemsToDownload) {
-                recursivelyStartDownloads(model, treeItem, baseDir, Path.of(""));
+                recursivelyStartDownloads(model, treeItem, baseDir.get(), Path.of(""));
             }
         });
         JMenuItem bookmarkMenuItem = ContextMenu.createBookmarkServerItem(fileList, e -> {
@@ -1025,5 +1030,3 @@ public class ClientWindow extends MysterFrame implements Sayable {
         }
     }
 }
-
-

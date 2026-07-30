@@ -1,27 +1,16 @@
 
 package com.myster.net.stream.client.msdownload;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertFalse;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
-import static org.junit.jupiter.api.Assertions.assertNull;
-import static org.junit.jupiter.api.Assertions.assertThrows;
-import static org.junit.jupiter.api.Assertions.assertTrue;
-import static org.junit.jupiter.api.Assertions.fail;
-
-import java.awt.Frame;
 import java.io.File;
-import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.Optional;
 
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 
-import com.myster.net.stream.client.msdownload.MultiSourceUtilities.DialogProvider;
+import static org.junit.jupiter.api.Assertions.*;
 
-public class TestMultiSourceUtilities {
+public class TestMultiSourceUtils {
     // JUnit 5 will create and clean up a temporary directory for us
     @TempDir
     File tempDir;
@@ -31,7 +20,7 @@ public class TestMultiSourceUtilities {
      * "example.txt.i" should be renamed to "example.txt".
      */
     @Test
-    public void testValidRenameNoConflict() throws IOException {
+    public void testValidRenameNoConflict() throws Exception {
         // Create the source file "example.txt.i" with some content.
         File sourceFile = new File(tempDir, "example.txt.i");
         Files.writeString(sourceFile.toPath(), "Hello, world!");
@@ -41,7 +30,7 @@ public class TestMultiSourceUtilities {
         assertFalse(targetFile.exists(), "Target file should not exist before rename.");
 
         // Attempt the rename.
-        MultiSourceUtilities.moveFileToFinalDestination(sourceFile, _ -> {});
+        MultiSourceUtils.moveFileToFinalDestination(sourceFile, _ -> {});
 
         // After renaming, the original file should be gone and the target
         // should exist.
@@ -60,7 +49,7 @@ public class TestMultiSourceUtilities {
      * "example-2.txt".
      */
     @Test
-    public void testRenameWithConflict() throws IOException {
+    public void testRenameWithConflict() throws Exception {
         // Create the source file "example.txt.i".
         File sourceFile = new File(tempDir, "example.txt.i");
         Files.writeString(sourceFile.toPath(), "New content");
@@ -73,7 +62,7 @@ public class TestMultiSourceUtilities {
         File expectedFile = new File(tempDir, "example-2.txt");
 
         // Attempt the rename.
-        MultiSourceUtilities.moveFileToFinalDestination(sourceFile, _ -> {});
+        MultiSourceUtils.moveFileToFinalDestination(sourceFile, _ -> {});
 
         // The source file should be renamed to "example-2.txt".
         assertFalse(sourceFile.exists(), "Source file should have been renamed.");
@@ -94,13 +83,13 @@ public class TestMultiSourceUtilities {
      * happens.
      */
     @Test
-    public void testInvalidSuffix() throws IOException {
+    public void testInvalidSuffix() throws Exception {
         // Create a file with an invalid suffix (missing ".i").
         File sourceFile = new File(tempDir, "example.txt");
         Files.writeString(sourceFile.toPath(), "Data");
 
         // Attempt the rename.
-        MultiSourceUtilities.moveFileToFinalDestination(sourceFile, _ -> {});
+        MultiSourceUtils.moveFileToFinalDestination(sourceFile, _ -> {});
 
         // Since the file name is invalid, it should not be renamed.
         assertTrue(sourceFile.exists(), "File should remain unchanged if suffix is invalid.");
@@ -112,7 +101,7 @@ public class TestMultiSourceUtilities {
      * the file.
      */
     @Test
-    public void testRenameConflictExhausted() throws IOException {
+    public void testRenameConflictExhausted() throws Exception {
         // Create the source file "example.txt.i".
         File sourceFile = new File(tempDir, "example.txt.i");
         Files.writeString(sourceFile.toPath(), "Final content");
@@ -129,7 +118,7 @@ public class TestMultiSourceUtilities {
         }
 
         // Attempt the rename.
-        MultiSourceUtilities.moveFileToFinalDestination(sourceFile, _ -> {});
+        MultiSourceUtils.moveFileToFinalDestination(sourceFile, _ -> {});
 
         // Since no available candidate could be found, the source file should
         // remain.
@@ -140,34 +129,18 @@ public class TestMultiSourceUtilities {
     // ========== Tests for getFileToDownloadTo ==========
     
     @Test
-    public void testGetFileToDownloadTo_WithValidBasePath() throws IOException {
+    public void testGetFileToDownloadTo_WithValidBasePath() throws Exception {
         // Setup
         Path baseDir = tempDir.toPath();
         Path relativePath = Path.of("music/albums");
         String fileName = "song";
         
-        // Create a mock dialog provider that doesn't show any dialogs
-        DialogProvider mockProvider = new DialogProvider() {
-            @Override
-            public String showAlert(Frame parentFrame, String message, String[] buttons) {
-                fail("Should not show any dialogs when base path is valid");
-                return null;
-            }
-            
-            @Override
-            public Path askForFolder(String title) {
-                fail("Should not ask for folder when base path is provided");
-                return null;
-            }
-        };
-        
         // Execute
-        File result = MultiSourceUtilities.getFileToDownloadTo(
+        File result = MultiSourceUtils.getFileToDownloadTo(
             fileName, 
-            null, 
-            Optional.of(baseDir), 
+            baseDir,
             relativePath,
-            mockProvider
+            failIfAsked()
         );
         
         // Verify
@@ -178,7 +151,7 @@ public class TestMultiSourceUtilities {
     }
     
     @Test
-    public void testGetFileToDownloadTo_WithExistingFile_Overwrite() throws IOException {
+    public void testGetFileToDownloadTo_WithExistingFile_Overwrite() throws Exception {
         // Setup
         Path baseDir = tempDir.toPath();
         Path relativePath = Path.of("music");
@@ -189,31 +162,12 @@ public class TestMultiSourceUtilities {
         Path existingFile = baseDir.resolve(relativePath).resolve(fileName + ".i");
         Files.createFile(existingFile);
         
-        // Mock provider that chooses to overwrite
-        DialogProvider mockProvider = new DialogProvider() {
-            @Override
-            public String showAlert(Frame parentFrame, String message, String[] buttons) {
-                if (message.contains("already exists")) {
-                    return "Write-Over";
-                }
-                fail("Unexpected dialog: " + message);
-                return null;
-            }
-            
-            @Override
-            public Path askForFolder(String title) {
-                fail("Should not ask for folder");
-                return null;
-            }
-        };
-        
         // Execute
-        File result = MultiSourceUtilities.getFileToDownloadTo(
+        File result = MultiSourceUtils.getFileToDownloadTo(
             fileName,
-            null,
-            Optional.of(baseDir),
+            baseDir,
             relativePath,
-            mockProvider
+            (partialFile, finalFile) -> ExistingDownloadTargetHandler.Decision.OVERWRITE
         );
         
         // Verify
@@ -222,7 +176,7 @@ public class TestMultiSourceUtilities {
     }
     
     @Test
-    public void testGetFileToDownloadTo_WithExistingFile_Cancel() throws IOException {
+    public void testGetFileToDownloadTo_WithExistingFile_Cancel() throws Exception {
         // Setup
         Path baseDir = tempDir.toPath();
         Path relativePath = Path.of("music");
@@ -232,31 +186,12 @@ public class TestMultiSourceUtilities {
         Files.createDirectories(baseDir.resolve(relativePath));
         Files.createFile(baseDir.resolve(relativePath).resolve(fileName + ".i"));
         
-        // Mock provider that cancels
-        DialogProvider mockProvider = new DialogProvider() {
-            @Override
-            public String showAlert(Frame parentFrame, String message, String[] buttons) {
-                if (message.contains("already exists")) {
-                    return "Cancel";
-                }
-                fail("Unexpected dialog: " + message);
-                return null;
-            }
-            
-            @Override
-            public Path askForFolder(String title) {
-                fail("Should not ask for folder");
-                return null;
-            }
-        };
-        
         // Execute
-        File result = MultiSourceUtilities.getFileToDownloadTo(
+        File result = MultiSourceUtils.getFileToDownloadTo(
             fileName,
-            null,
-            Optional.of(baseDir),
+            baseDir,
             relativePath,
-            mockProvider
+            (partialFile, finalFile) -> ExistingDownloadTargetHandler.Decision.CANCEL
         );
         
         // Verify
@@ -264,105 +199,41 @@ public class TestMultiSourceUtilities {
     }
     
     @Test
-    public void testGetFileToDownloadTo_NoBasePath_UserSelectsFolder() throws IOException {
-        // Setup
-        Path selectedDir = tempDir.toPath();
-        Path relativePath = Path.of("downloads");
-        String fileName = "file";
-        
-        // Mock provider that returns a selected folder
-        DialogProvider mockProvider = new DialogProvider() {
-            @Override
-            public String showAlert(Frame parentFrame, String message, String[] buttons) {
-                fail("Should not show any dialogs");
-                return null;
-            }
-            
-            @Override
-            public Path askForFolder(String title) {
-                return selectedDir;
-            }
-        };
-        
-        // Execute
-        File result = MultiSourceUtilities.getFileToDownloadTo(
-            fileName,
-            null,
-            Optional.empty(), // No base path provided
-            relativePath,
-            mockProvider
-        );
-        
-        // Verify
-        assertNotNull(result);
-        assertEquals(selectedDir.resolve(relativePath).resolve(fileName + ".i").toFile(), result);
-    }
-    
-    @Test
-    public void testGetFileToDownloadTo_NoBasePath_UserCancels() {
+    public void testGetFileToDownloadTo_InvalidBasePath_ThrowsDownloadTargetException()
+            throws Exception {
         // Setup
         Path relativePath = Path.of("downloads");
         String fileName = "file";
+        Path missingDirectory = tempDir.toPath().resolve("missing").toAbsolutePath();
         
-        // Mock provider that returns null (user cancelled)
-        DialogProvider mockProvider = new DialogProvider() {
-            @Override
-            public String showAlert(Frame parentFrame, String message, String[] buttons) {
-                fail("Should not show any dialogs");
-                return null;
-            }
-            
-            @Override
-            public Path askForFolder(String title) {
-                return null; // User cancelled
-            }
-        };
-        
-        // Execute
-        File result = MultiSourceUtilities.getFileToDownloadTo(
+        assertThrows(InvalidDownloadDirectoryException.class, () -> MultiSourceUtils.getFileToDownloadTo(
             fileName,
-            null,
-            Optional.empty(),
+            missingDirectory,
             relativePath,
-            mockProvider
-        );
-        
-        // Verify
-        assertNull(result); // Cancelled
-    }
-    
-    @Test
-    public void testGetFileToDownloadTo_RelativePathValidation() {
-        // Setup - try to pass an absolute path as relativePath
-        // Use tempDir to get a valid absolute path on any platform (Windows, Linux, macOS)
-        Path absolutePath = tempDir.toPath().toAbsolutePath();
-        
-        // Execute & Verify
-        assertThrows(IllegalArgumentException.class, () -> {
-            MultiSourceUtilities.getFileToDownloadTo(
-                "file",
-                null,
-                Optional.empty(),
-                absolutePath,
-                null
-            );
-        });
+            failIfAsked()
+        ));
     }
     
     @Test
     public void testGetFileToDownloadTo_BasePathValidation() {
         // Setup - try to pass a relative path as base path
         Path relativePath = Path.of("relative/path");
-        
+
         // Execute & Verify
         assertThrows(IllegalArgumentException.class, () -> {
-            MultiSourceUtilities.getFileToDownloadTo(
+            MultiSourceUtils.getFileToDownloadTo(
                 "file",
-                null,
-                Optional.of(relativePath),
+                relativePath,
                 Path.of("subdir"),
                 null
             );
         });
+    }
+
+    private static ExistingDownloadTargetHandler failIfAsked() {
+        return (partialFile, finalFile) -> {
+            fail("Should not ask about existing download targets");
+            return ExistingDownloadTargetHandler.Decision.CANCEL;
+        };
     }
 }

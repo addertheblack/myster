@@ -13,7 +13,7 @@ import com.general.mclist.SortableByte;
 import com.general.mclist.SortableString;
 import com.general.util.Util;
 import com.myster.net.server.DownloadInfo;
-import com.myster.net.stream.client.msdownload.MultiSourceUtilities;
+import com.myster.net.stream.client.msdownload.MultiSourceUtils;
 import com.myster.server.event.ServerDownloadDispatcher;
 import com.myster.server.event.ServerDownloadEvent;
 import com.myster.server.event.ServerDownloadListener;
@@ -196,7 +196,7 @@ public class DownloadMCListItem extends AbstractMCListItemInterface<ServerDownlo
                 if (endFlag) {
                     info.disconnectClient();
                 }
-                MultiSourceUtilities.debug("Here and " + info);
+                MultiSourceUtils.debug("Here and " + info);
             }
         }
 

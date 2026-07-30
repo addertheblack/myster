@@ -168,7 +168,7 @@ public class MultiSourceDownload implements Task, Cancellable {
         this.chunkSize = (int) partialFile.getBlockSize();
         this.partialFile = partialFile;
 
-        MultiSourceUtilities.debug("Block Size : " + partialFile.getBlockSize()
+        MultiSourceUtils.debug("Block Size : " + partialFile.getBlockSize()
                 + " First un-downloaded block " + partialFile.getFirstUndownloadedBlock());
         
         this.fileProgress = partialFile.getFirstUndownloadedBlock() * partialFile.getBlockSize();
@@ -415,7 +415,7 @@ public class MultiSourceDownload implements Task, Cancellable {
                 - fileProgress);
 
         var tempFileProgress = (readLength == 0 ? 0 : fileProgress);
-        MultiSourceUtilities.debug("Main Thread -> Adding Work Segment " + tempFileProgress + " "
+        MultiSourceUtils.debug("Main Thread -> Adding Work Segment " + tempFileProgress + " "
                 + readLength);
 
         // generate an end signal.
@@ -628,12 +628,12 @@ public class MultiSourceDownload implements Task, Cancellable {
     private class MSHashSearchListener implements HashSearchListener {
         public void searchResult(MysterFileStub stub) {
 
-            MultiSourceUtilities.debug(stub == null ? "Search Lstnr-> No file with that hash here."
+            MultiSourceUtils.debug(stub == null ? "Search Lstnr-> No file with that hash here."
                     : "Search Lstnr-> Got result " + stub);
 
             if (stub != null) {
                 newDownload(stub);
-                MultiSourceUtilities
+                MultiSourceUtils
                         .debug("Search Lstnr-> Starting another segment downloader (another source)");
             }
         }

@@ -18,6 +18,7 @@ import com.general.util.Timer;
 import com.general.util.Util;
 import com.myster.hash.FileHash;
 import com.myster.net.stream.client.msdownload.DownloadInitiator.DownloadInitiatorListener;
+import com.myster.net.stream.client.msdownload.DownloadStartException;
 import com.myster.net.stream.client.msdownload.ObsoleteHandler;
 import com.myster.net.stream.client.msdownload.MSDownloadParams;
 import com.myster.net.stream.client.msdownload.MSPartialFile;
@@ -252,12 +253,25 @@ public class FileProgressWindow extends ProgressWindow {
             }
 
             @Override
-            public File getFileToDownloadTo(MysterFileStub stub) {
-                return Util.callAndWaitNoThrows(()-> {
+            public File getFileToDownloadTo(MysterFileStub stub) throws DownloadStartException {
+                final File[] result = new File[1];
+                final DownloadStartException[] exception = new DownloadStartException[1];
+
+                Util.invokeAndWaitNoThrows(()-> {
                     init();
-                    
-                    return w.getFileToDownloadTo(stub);
+
+                    try {
+                        result[0] = w.getFileToDownloadTo(stub);
+                    } catch (DownloadStartException ex) {
+                        exception[0] = ex;
+                    }
                 });
+
+                if (exception[0] != null) {
+                    throw exception[0];
+                }
+
+                return result[0];
             }
 
             @Override

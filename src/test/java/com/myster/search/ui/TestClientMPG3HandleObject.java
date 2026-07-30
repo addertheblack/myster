@@ -2,7 +2,9 @@ package com.myster.search.ui;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
+import java.nio.file.Path;
 import java.util.Map;
+import java.util.function.Consumer;
 
 import org.junit.jupiter.api.Test;
 
@@ -12,6 +14,7 @@ import com.myster.client.ui.FileListerThread.FileRecord;
 import com.myster.mml.MessagePak;
 import com.myster.net.MysterAddress;
 import com.myster.net.client.MysterProtocol;
+import com.myster.net.stream.client.msdownload.DownloadStartException;
 import com.myster.search.SearchResult;
 import com.myster.tracker.MysterServer;
 
@@ -71,10 +74,8 @@ class TestClientMPG3HandleObject {
 
     private record StubSearchResult(Map<String, String> metadata) implements SearchResult {
         @Override
-        public void download() {}
-
-        @Override
-        public void downloadTo() {}
+        public void downloadTo(Path baseDirectory,
+                               Consumer<DownloadStartException> startFailureHandler) {}
 
         @Override
         public String getNetwork() {

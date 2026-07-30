@@ -2,16 +2,19 @@ package com.myster.progress.ui;
 
 import java.io.File;
 import java.io.IOException;
+import java.nio.file.Path;
 
 import com.general.thread.Cancellable;
 import com.general.util.AnswerDialog;
 import com.myster.hash.FileHash;
+import com.myster.net.stream.client.msdownload.DownloadStartException;
 import com.myster.net.stream.client.msdownload.DownloadInitiator.DownloadInitiatorListener;
+import com.myster.net.stream.client.msdownload.ExistingDownloadTargetHandler;
 import com.myster.net.stream.client.msdownload.MSDownloadListener;
 import com.myster.net.stream.client.msdownload.MSDownloadParams;
 import com.myster.net.stream.client.msdownload.MSPartialFile;
 import com.myster.net.stream.client.msdownload.MultiSourceDownload;
-import com.myster.net.stream.client.msdownload.MultiSourceUtilities;
+import com.myster.net.stream.client.msdownload.MultiSourceUtils;
 import com.myster.progress.ui.ProgressBannerManager.Banner;
 import com.myster.search.MysterFileStub;
 
@@ -79,11 +82,11 @@ public class ProgressManagerDownloadListener implements DownloadInitiatorListene
     }
 
     @Override
-    public File getFileToDownloadTo(MysterFileStub stub) {
-        File file = MultiSourceUtilities.getFileToDownloadTo(stub.name(),
-                                                             window,
-                                                             params.targetDir(),
-                                                             params.subDirectory());
+    public File getFileToDownloadTo(MysterFileStub stub) throws DownloadStartException {
+        File file = MultiSourceUtils.getFileToDownloadTo(stub.name(),
+                                                         params.targetDir(),
+                                                         params.subDirectory(),
+                                                         this::chooseForExistingTarget);
 
         // Set the .i file on the download item so the user can reveal it
         // while downloading
@@ -91,6 +94,16 @@ public class ProgressManagerDownloadListener implements DownloadInitiatorListene
             downloadHandler.setFile(file);
         }
         return file;
+    }
+
+    private ExistingDownloadTargetHandler.Decision chooseForExistingTarget(Path partialFile,
+                                                                          Path finalFile) {
+        String answer = AnswerDialog.simpleAlert(window,
+                "A file by the name of " + partialFile.getFileName()
+                        + " already exists. What do you want to do?",
+                new String[] { "Write-Over", "Cancel" });
+        return "Write-Over".equals(answer) ? ExistingDownloadTargetHandler.Decision.OVERWRITE
+                : ExistingDownloadTargetHandler.Decision.CANCEL;
     }
 
     @Override
@@ -118,7 +131,7 @@ public class ProgressManagerDownloadListener implements DownloadInitiatorListene
     @Override
     public void moveFileToFinalDestination(File sourceFile) {
         // Move the file to final destination (removes .i extension)
-        MultiSourceUtilities.moveFileToFinalDestination(sourceFile, 
+        MultiSourceUtils.moveFileToFinalDestination(sourceFile,
                                                         s -> AnswerDialog.simpleAlert(window, s));
         
         // Update the download item with the final file (without .i extension)

@@ -5,6 +5,7 @@ import java.io.IOException;
 
 import com.general.thread.Cancellable;
 import com.general.util.Util;
+import com.myster.net.stream.client.msdownload.DownloadStartException;
 import com.myster.hash.FileHash;
 import com.myster.net.stream.client.msdownload.DownloadInitiator.DownloadInitiatorListener;
 import com.myster.net.stream.client.msdownload.MSDownloadListener;
@@ -54,10 +55,23 @@ public class EdtDownloadInitiatorListener implements DownloadInitiatorListener {
     }
 
     @Override
-    public File getFileToDownloadTo(MysterFileStub stub) {
-        return Util.callAndWaitNoThrows(() -> {
-            return impl.getFileToDownloadTo(stub);
+    public File getFileToDownloadTo(MysterFileStub stub) throws DownloadStartException {
+        final File[] result = new File[1];
+        final DownloadStartException[] exception = new DownloadStartException[1];
+
+        Util.invokeAndWaitNoThrows(() -> {
+            try {
+                result[0] = impl.getFileToDownloadTo(stub);
+            } catch (DownloadStartException ex) {
+                exception[0] = ex;
+            }
         });
+
+        if (exception[0] != null) {
+            throw exception[0];
+        }
+
+        return result[0];
     }
 
     @Override

@@ -20,10 +20,8 @@ Rename the class and update all references when you touch the file.
 | `com.general.tab.TabUtilities` | `TabUtils` |
 | `com.myster.net.datagram.DatagramEncryptUtil` | `DatagramEncryptUtils` |
 | `com.myster.net.datagram.client.DatagramUtilities` | `DatagramUtils` |
-| `com.myster.net.stream.client.msdownload.MultiSourceUtilities` | `MultiSourceUtils` |
 | `com.myster.search.ui.ClientInfoFactoryUtilities` | `ClientInfoFactoryUtils` |
 | `com.myster.util.ThemeUtil` | `ThemeUtils` |
 
 > `com.general.util.Util` is a general-purpose catch-all referenced almost everywhere.
 > Rename it only if there is already another reason to touch it broadly.
-

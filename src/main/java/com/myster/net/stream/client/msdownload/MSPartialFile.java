@@ -70,7 +70,7 @@ public class MSPartialFile implements AutoCloseable {
                                        long fileLength)
             throws IOException {
         File fileReference =
-                new File(MultiSourceUtilities.getIncomingDirectory(), filename + FILE_ENDING);
+                new File(MultiSourceUtils.getIncomingDirectory(), filename + FILE_ENDING);
 
         if (fileReference.exists()) {
             if (!fileReference.delete()) {
@@ -95,7 +95,7 @@ public class MSPartialFile implements AutoCloseable {
     }
 
     public static MSPartialFile[] list() throws IOException {
-        File incomingDir = MultiSourceUtilities.getIncomingDirectory();
+        File incomingDir = MultiSourceUtils.getIncomingDirectory();
 
         String[] file_list = incomingDir.list((File dir, String name) -> {
             if (!name.endsWith(".p"))
@@ -162,7 +162,7 @@ public class MSPartialFile implements AutoCloseable {
             file = new File(dir, incompleteFilename);
         }
         
-        MultiSourceUtilities.debug("GMResuming:" + file);
+        MultiSourceUtils.debug("GMResuming:" + file);
 
         for (int loopCounter = 0; (loopCounter < 3)
                 && ((!dir.exists()) || (!dir.isDirectory()) || (!file.exists()) || (!file.isFile())); loopCounter++) {
@@ -207,7 +207,7 @@ public class MSPartialFile implements AutoCloseable {
 
         FileMover fileMover = (f) -> {
             EventQueue.invokeLater(() -> {
-                MultiSourceUtilities.moveFileToFinalDestination(f, s -> AnswerDialog.simpleAlert(downloadListener.getFrame(), s));
+                MultiSourceUtils.moveFileToFinalDestination(f, s -> AnswerDialog.simpleAlert(downloadListener.getFrame(), s));
             });
         };
 
@@ -397,7 +397,7 @@ public class MSPartialFile implements AutoCloseable {
         dispose();
 
         if (!fileReference.delete()) {
-            MultiSourceUtilities.debug("Could not delete partial file.");
+            MultiSourceUtils.debug("Could not delete partial file.");
         }
     }
 
@@ -511,7 +511,7 @@ public class MSPartialFile implements AutoCloseable {
                     return hashes[i];
             }
 
-            MultiSourceUtilities.debug("Could not find hash of type " + hashType);
+            MultiSourceUtils.debug("Could not find hash of type " + hashType);
             
             return null;
         }

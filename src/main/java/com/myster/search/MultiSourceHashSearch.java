@@ -17,7 +17,7 @@ import com.myster.hash.FileHash;
 import com.myster.net.MysterAddress;
 import com.myster.net.client.MysterProtocol;
 import com.myster.net.client.ParamBuilder;
-import com.myster.net.stream.client.msdownload.MultiSourceUtilities;
+import com.myster.net.stream.client.msdownload.MultiSourceUtils;
 import com.myster.search.AsyncNetworkCrawler.SearchIp;
 import com.myster.tracker.Tracker;
 import com.myster.tracker.MysterServer;
@@ -139,7 +139,7 @@ public class MultiSourceHashSearch implements HashCrawlerManager {
 
         stopCrawler(type);
         if (getEntriesForType(type).size() > 0) { // are we still relevant?
-            MultiSourceUtilities.debug("Retarting crawler!");
+            MultiSourceUtils.debug("Retarting crawler!");
             delayStart(type);
         } else {
             log.fine("Not calling restartCrawler(" + type

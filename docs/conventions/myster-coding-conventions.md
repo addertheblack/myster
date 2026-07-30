@@ -10,6 +10,8 @@ This document captures Myster-specific coding conventions, preferred libraries, 
 - **GridBagLayout** — use `GridBagBuilder`; never `setLayout(null)`
 - **Preferences** — Java `Preferences` API; `MysterType.toShortBytes()` as key
 - **Testing** — add `main()` to UI panels for standalone testing
+- **Test mocks** — prefer Mockito for mocks/stubs
+- **Unused code** — do not keep methods whose only callers are tests
 - **Preference Panel save semantics** — add = immediate; edit/delete = on save
 - **Naming** — no banner comments; `Utils` suffix for static-only classes
 - **Extensible Enums** — `final class` + `static final` constants, not Java `enum`
@@ -36,6 +38,8 @@ This document captures Myster-specific coding conventions, preferred libraries, 
 - [Layout](#layout)
 - [Data Persistence](#data-persistence)
 - [Testing](#testing)
+  - [Use Mockito for Mocks](#use-mockito-for-mocks)
+  - [Do Not Keep Test-Only Production Methods](#do-not-keep-test-only-production-methods)
 - [Preference Panels](#preference-panels)
 - [Naming Conventions](#naming-conventions)
   - [No Banner Comments](#no-section-divider-banner-comments)
@@ -273,6 +277,22 @@ public static void main(String[] args) {
 }
 ```
 
+### Use Mockito for Mocks
+
+**Rule**: Prefer Mockito for test mocks, stubs, spies, and interaction verification.
+
+Avoid hand-written fake/mock classes when Mockito can express the behavior clearly. Hand-written fakes are still acceptable when they model meaningful domain behavior, are reused across several tests, or are simpler than Mockito setup.
+
+### Do Not Keep Test-Only Production Methods
+
+**Rule**: Do not leave production methods in place when their only callers are unit tests.
+
+If a method has no production callers, remove it or make it private/package-private as appropriate. Unit tests should verify real production behavior; they should not be the only reason a public or protected method exists.
+
+**Exception**: A narrow test seam is acceptable when it is intentionally package-private, documented by its visibility and use, and supports testing behavior that is otherwise hard to exercise without UI, network, or filesystem side effects.
+
+Before keeping an apparently unused method, check callers with `rg` and decide whether the method is real API surface or stale code left behind by a refactor.
+
 ## Preference Panels
 
 **Save Semantics**:
@@ -300,7 +320,7 @@ Methods and fields speak for themselves. If a class needs section headers to be 
 
 **Pattern**: Classes that contain only static methods (no instances) should have `Utils` appended to the class name.
 
-**Examples**: `AccessListStorageUtils`, `FooUtils`, `MultiSourceUtilities`
+**Examples**: `AccessListStorageUtils`, `FooUtils`, `MultiSourceUtils`
 
 **Note**: The codebase has some historical inconsistency between `Util`, `Utils`, and `Utilities` suffixes, but the convention going forward is `Utils`. The intent is the same in all cases: the class is a collection of static methods, not something you instantiate.
 

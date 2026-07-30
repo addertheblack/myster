@@ -8,10 +8,15 @@ import java.util.List;
 import java.util.Map;
 
 import com.general.thread.Cancellable;
+import com.general.util.AnswerDialog;
 import com.myster.net.stream.client.MysterDataInputStream;
 import com.myster.progress.ui.FileProgressWindow;
 
 public class ObsoleteHandler implements MSDownloadListener {
+    private static final String STOP_DOWNLOAD = "Kill";
+
+    private static final String CANCEL = "Don't Kill";
+
     private final FileProgressWindow progress;
     private final List<Integer> freeBars;
     private final Map<SegmentDownloader, SegmentDownloaderHandler> segmentListeners;
@@ -26,7 +31,7 @@ public class ObsoleteHandler implements MSDownloadListener {
 
         progress.addWindowListener(new java.awt.event.WindowAdapter() {
             public void windowClosing(java.awt.event.WindowEvent e) {
-                if (!done&& !MultiSourceUtilities.confirmCancel(progress))
+                if (!done&& !confirmCancel(progress))
                     return;
 
                 cancellable.cancel();
@@ -40,6 +45,13 @@ public class ObsoleteHandler implements MSDownloadListener {
         segmentListeners = new HashMap<>();
 
         this.progressBannerManager = new ProgressBannerManager(progress);
+    }
+
+    private static boolean confirmCancel(Frame progress) {
+        final String choice = AnswerDialog.simpleAlert(progress,
+                "Are you sure you want to kill this download?", new String[] { STOP_DOWNLOAD,
+                        CANCEL });
+        return (choice.equals(STOP_DOWNLOAD));
     }
     
     @Override

@@ -22,7 +22,9 @@ import com.myster.net.client.MysterProtocol;
 import com.myster.net.stream.client.msdownload.MSDownloadParams;
 import com.myster.search.HashCrawlerManager;
 import com.myster.search.MysterFileStub;
+import com.myster.ui.DownloadStartErrorDialog;
 import com.myster.ui.MysterFrameContext;
+import com.myster.ui.DownloadDirectoryChooser;
 
 public class FileListAction extends MCListEventAdapter {
     private final HashCrawlerManager hashManager;
@@ -55,16 +57,30 @@ public class FileListAction extends MCListEventAdapter {
                                        w.getCurrentType(),
                                        w.getCurrentFile());
 
-            var baseDir = Path.of(mysterFrameContext.fileManager().getPathFromType(stub.getType()));
+            Optional<Path> baseDir = resolveDownloadDirectory(stub);
+            if (baseDir.isEmpty()) {
+                return;
+            }
+
             protocol.getStream()
                     .downloadFile(new MSDownloadParams(mysterFrameContext,
                                                        hashManager,
                                                        stub,
-                                                       Optional.of(baseDir),
-                                                       Path.of("")));
+                                                       baseDir.get(),
+                                                       Path.of(""),
+                                                       DownloadStartErrorDialog.handler(w)));
         } catch (java.io.IOException _) {
             com.general.util.AnswerDialog.simpleAlert(w, "Could not connect to server.");
         }
+    }
+
+    private Optional<Path> resolveDownloadDirectory(MysterFileStub stub) {
+        return DownloadDirectoryChooser
+                .chooseWritableDownloadDirectory(w,
+                                                 "Select a folder to save the file in",
+                                                 false,
+                                                 mysterFrameContext.fileManager(),
+                                                 stub.getType());
     }
 
 }

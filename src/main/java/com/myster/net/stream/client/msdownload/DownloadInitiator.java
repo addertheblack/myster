@@ -53,7 +53,7 @@ public class DownloadInitiator implements Runnable {
         
         MSDownloadListener getMsDownloadListener();
 
-        File getFileToDownloadTo(MysterFileStub stub);
+        File getFileToDownloadTo(MysterFileStub stub) throws DownloadStartException;
 
         MSPartialFile createMSPartialFile(MysterFileStub stub,
                                           File fileToDownloadTo,
@@ -82,21 +82,23 @@ public class DownloadInitiator implements Runnable {
         } catch (InterruptedException ex) {
             Thread.currentThread().interrupt();
             log.severe("Thread interrupted while waiting for connection permit: " + ex.toString());
-            
-            com.general.util.AnswerDialog.simpleAlert("Download interrupted.");
+            reportStartFailure(progress, new DownloadInterruptedException(ex));
             
             return;
         } catch (Exception ex) {
             ex.printStackTrace();
             log.severe("Could not connect to server: " + ex.toString());
-            
-            com.general.util.AnswerDialog.simpleAlert("Could not connect to server.");
+            reportStartFailure(progress,
+                               new DownloadServerConnectionException(stub.getMysterAddress()
+                                       .toString(), ex));
             
             return;
         }
 
         try {
             downloadFile(socket, crawlerManager, stub, progress);
+        } catch (DownloadStartException ex) {
+            reportStartFailure(progress, ex);
         } catch (IOException ex) {
             ex.printStackTrace();
         } finally {
@@ -110,7 +112,7 @@ public class DownloadInitiator implements Runnable {
                               final HashCrawlerManager crawlerManager,
                               final MysterFileStub stub,
                               final DownloadInitiatorListener progress)
-            throws IOException {
+            throws IOException, DownloadStartException {
 
         try {
             progress.setText( "Getting File Statistics...");
@@ -135,10 +137,21 @@ public class DownloadInitiator implements Runnable {
             if (!tryMultiSourceDownload(stub, crawlerManager, progress, fileStats, theFile)) {
                 throw new IOException("MultiSourceDownload failed");
             }
+        } catch (DownloadStartException ex) {
+            throw ex;
         } catch (IOException ex) {
             ex.printStackTrace();
+            throw new DownloadServerConnectionException(stub.getMysterAddress().toString(), ex);
+        }
+    }
 
-            progress.setText("Could not download file...");
+    private void reportStartFailure(DownloadInitiatorListener progress,
+                                    DownloadStartException exception) {
+        progress.setText(exception.getMessage());
+        try {
+            params.reportStartFailure(exception);
+        } catch (RuntimeException callbackException) {
+            log.warning("Download start failure handler failed: " + callbackException);
         }
     }
 
@@ -149,11 +162,11 @@ public class DownloadInitiator implements Runnable {
                                            MessagePak fileStats,
                                            final File theFile)
             throws IOException {
-        FileHash hash = MultiSourceUtilities.getHashFromStats(fileStats);
+        FileHash hash = MultiSourceUtils.getHashFromStats(fileStats);
         if (hash == null)
             return false;
 
-        long fileLengthFromStats = MultiSourceUtilities.getLengthFromStats(fileStats);
+        long fileLengthFromStats = MultiSourceUtils.getLengthFromStats(fileStats);
         MSPartialFile partialFile = downloadInitListener
                 .createMSPartialFile(stub, theFile, fileLengthFromStats, new FileHash[] { hash });
 
