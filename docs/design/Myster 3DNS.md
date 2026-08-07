@@ -12,6 +12,15 @@ The protocol is implemented using Myster’s UDP transaction model. In this cont
 
 All protocol payloads are encoded using MessagePak. For documentation purposes, structures may be represented in JSON form, but this is understood to be a JSON-equivalent representation of a MessagePak structure. MessagePak allows additional value types such as integers and byte arrays, while keys remain strings.
 
+Implementation is staged across these plans:
+
+- [Part 1a: Core Data Structures](../plans/myster-3dns-part-1a.md)
+- [Part 1b: Tracker UI Integration](../plans/myster-3dns-part-1b.md)
+- [Part 2a: FIND_CLOSEST Protocol and Candidate Validation](../plans/myster-3dns-part-2a.md)
+- [Part 2b: Routing-Table Maintenance and Bootstrap](../plans/myster-3dns-part-2b.md)
+- [Part 3: Iterative CID Resolution](../plans/myster-3dns-part-3.md)
+- [Target-Slot Inspection UI](../plans/tracker-3dns-target-slots-ui.md)
+
 ## 2. Conceptual Model
 
 3DNS treats the live network of servers as the routing structure itself. Each server occupies a position in a circular numeric space defined by its CID. Routing is performed by moving through known servers toward a target CID, rather than by querying a central authority or retrieving a stored record.
@@ -72,21 +81,25 @@ The pool-facing result is split into optional exact, left, and right groups. Poo
 FIND_CLOSEST(targetCid)
 ```
 
-The response returns exact, left, and right groups of public-key/address candidates that are closest to the requested target. The public key is sent as encoded X.509 bytes; the recipient derives the candidate CID locally from that public key.
+Its permanently reserved UDP transaction code is `303`.
+
+The request carries schema version `1`, a fixed 16-byte target CID, and an optional per-side limit. The limit defaults to two and is clamped to four. The response returns exact, left, and right groups of public-key/address candidates that are closest to the requested target. The public key is sent as encoded X.509 bytes; the recipient derives the candidate CID locally from that public key.
 
 Represented in JSON form (as a MessagePak structure), the response looks like:
 
 ```json
 {
-  "exact": { "publicKey": "...", "ip": "...", "port": 1234 },
-  "left": [
-    { "publicKey": "...", "ip": "...", "port": 1234 }
-  ],
-  "right": [
-    { "publicKey": "...", "ip": "...", "port": 1234 }
-  ]
+  "schemaVersion": 1,
+  "exactCount": 1,
+  "exact": { "publicKey": "X.509 bytes", "ip": "192.0.2.1", "port": 6669 },
+  "leftCount": 1,
+  "left": { "0": { "publicKey": "X.509 bytes", "ip": "192.0.2.2", "port": 6669 } },
+  "rightCount": 1,
+  "right": { "0": { "publicKey": "X.509 bytes", "ip": "192.0.2.3", "port": 6669 } }
 }
 ```
+
+The exact group contains zero or one candidate. Left and right each contain at most the clamped per-side limit. Responses are bounded to 16 KiB, addresses must be literal IP values with ports in `1..65535`, and malformed candidate groups reject the response. Candidate CIDs are intentionally absent from the wire format.
 
 Returning multiple results is preferred over returning a single closest node. This improves robustness in the presence of node failure, stale information, or malicious responses. If one candidate fails, the caller can immediately try another without restarting the lookup process.
 
@@ -94,13 +107,13 @@ Because the protocol is transaction-based and idempotent, requests can be retrie
 
 ## 8. Lookup Flow
 
-A lookup proceeds by repeatedly issuing FIND_CLOSEST requests.
+A lookup proceeds by repeatedly issuing FIND_CLOSEST requests. The wire operation remains side-neutral and returns explicit exact, left/predecessor, and right/successor groups; caller policy chooses the appropriate group.
 
 The caller begins with any known server, typically obtained from the tracker or local state. It sends a request for the target CID and receives a list of candidates. If one of the returned CIDs matches the target, the lookup is complete. Otherwise, the caller selects the closest candidate not yet tried and repeats the process.
 
 To prevent loops, the caller must track which CIDs have already been queried. Additionally, each step should ensure that progress is being made toward the target. If no closer node is found, the lookup terminates at the closest known position.
 
-In practice, maintaining a visited set and always selecting a strictly closer node ensures forward progress and prevents cycles.
+In practice, maintaining identity and address visited sets and always selecting a strictly closer node ensures forward progress and prevents cycles. Because the current routing table is built from positive power-of-two offsets, normal resolution approaches a target from its left/predecessor side and must not select a right/successor candidate that overshoots the target. Exact candidates still take priority.
 
 ## 9. Routing Table Maintenance
 
@@ -110,7 +123,7 @@ Each node maintains entries corresponding to its ideal positions in the space, d
 
 Part 1 maintenance is driven by tracker/pool events: refreshed up public-key servers are considered for retained slots, and down/dead servers are removed and replaced from the pool's nearest-CID API. Later protocol maintenance can issue FIND_CLOSEST requests for these target positions and let normal pool/listener behavior update the retained list.
 
-Maintenance does not require a complex interface. A periodic process, for example running roughly once per hour, is sufficient. In practice, normal usage of the routing system will also naturally keep entries fresh.
+Healthy maintenance runs roughly hourly with broad independent jitter across nodes and targets. It must not refresh all 128 targets in one synchronized burst. When a retained entry becomes damaged, down, or dead, the affected target is re-queried immediately, subject to in-flight deduplication and failure backoff. Since targets are positive offsets, maintenance prefers exact and then left/predecessor candidates so it does not overshoot the target.
 
 ## 10. Interaction with Existing Myster Tracker
 
@@ -124,7 +137,7 @@ The integration works as follows:
 
 * The ordered CID index is maintained in `IdentityTracker`.
 * The 3DNS retained list is initially seeded from known public-key servers in the ServerPool.
-* Newly discovered servers from 3DNS can be suggested to the pool and then retained after normal validation.
+* Newly discovered servers from 3DNS are passed to `MysterServerPool.validateCandidate(...)` and retained only after expected-key validation and normal onboarding.
 * Existing liveness checks and onboarding logic ensure that only reachable and valid servers are retained.
 
 This approach allows 3DNS to benefit from existing infrastructure without creating duplication or tight coupling.
@@ -143,7 +156,7 @@ A lookup only truly fails if there are no reachable nodes in the network. In all
 
 Security is largely handled by existing Myster identity mechanisms.
 
-Each server’s CID corresponds to a cryptographic identity. A remote 3DNS response is only a hint until the candidate address proves it owns the returned public key through normal Myster validation. Exact target success requires the validated public key to hash to the target CID.
+Each server’s CID corresponds to a cryptographic identity. A remote 3DNS response is only a hint until the candidate address proves it owns the returned public key through normal Myster validation. `ParamBuilder.withExpectedServerPublicKey(...)` carries an address and expected key together without first trusting or caching that association. `MysterDatagramImpl` always encrypts such a request to the explicit key, even if the tracker has no key or a different cached key for the address. A request encrypted to that key can only be understood by the holder of its private key; candidate validation then requires the normal stats response `/Identity` bytes to match before onboarding. Exact target success requires the validated public key to hash to the target CID.
 
 This ensures that nodes cannot impersonate arbitrary CIDs. While the system does not attempt to resist all Byzantine behavior, it maintains basic identity integrity through existing mechanisms.
 
@@ -151,7 +164,7 @@ This ensures that nodes cannot impersonate arbitrary CIDs. While the system does
 
 The system maintains one routing target for each bit position in the 128-bit space, resulting in 128 ideal positions. Retention keeps an even left/right split when enough responsive peers exist, while current target generation still uses positive exponential offsets from the local CID.
 
-Maintenance runs periodically but is also driven by normal routing activity. No special scoring system for “stale entries” is required beyond existing liveness checks in the tracker and routing logic.
+Maintenance runs on a broadly jittered hourly schedule, is also driven immediately by damaged-node events, and is refreshed by normal routing activity. No separate stale-entry scoring system is required beyond existing liveness checks, immediate repair, and bounded retry backoff.
 
 The protocol always returns a list of candidates rather than a single node, improving resilience without increasing conceptual complexity.
 

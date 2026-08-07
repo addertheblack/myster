@@ -3,7 +3,9 @@
 Companion plans:
 
 - [Myster 3DNS - Part 1b: Tracker UI Integration](myster-3dns-part-1b.md)
-- [Myster 3DNS - Part 2: Protocol and Lookup](myster-3dns-part-2.md)
+- [Myster 3DNS - Part 2a: FIND_CLOSEST Protocol and Candidate Validation](myster-3dns-part-2a.md)
+- [Myster 3DNS - Part 2b: Routing-Table Maintenance and Bootstrap](myster-3dns-part-2b.md)
+- [Myster 3DNS - Part 3: Iterative CID Resolution](myster-3dns-part-3.md)
 
 ## 1. Summary
 
@@ -29,7 +31,7 @@ Implement the local 3DNS core: efficient `Cid128` ordering, an `IdentityTracker`
 - Assumption: current maintenance targets are positive exponential offsets, `localCid + 2^bitIndex`.
 - Assumption: "down" means operationally not responsive/offline. A 3DNS candidate is eligible only when the server is currently considered up and has a usable up address.
 - Decision: `IdentityTracker` exposes a package-private directional candidate producer. The pool consumes candidates until it has enough currently up identities or the tracker runs out.
-- Decision: the pool-facing API returns an `IdentityNeighborSet` of `PublicKeyIdentity` entries. Address-bearing wire candidates are a Part 2 protocol concern.
+- Decision: the pool-facing API returns an `IdentityNeighborSet` of `PublicKeyIdentity` entries. Address-bearing wire candidates are a Part 2a protocol concern.
 - Decision: persist the 3DNS retained finger list like the normal file/type server lists: store external names in preferences and restore whatever retained entries were there at startup. Restored entries are retained as list references first, then runtime APIs decide whether they are currently usable/up.
 
 ## 4. Proposed design
@@ -48,14 +50,14 @@ Part 1a adds only local data structures and tracker/pool behavior.
 
 ## 5. Architecture connections
 
-Part 1a plugs into the existing tracker and pool layer only. It prepares local state that Part 2 can expose over UDP and that Part 1b can display in the tracker UI.
+Part 1a plugs into the existing tracker and pool layer only. It prepares local state that Part 2a can expose over UDP, Part 2b can maintain, Part 3 can resolve through, and Part 1b can display in the tracker UI.
 
 | New / changed thing | Owned / created by | Called / used by | Connects to (existing) |
 |---|---|---|---|
 | Ordered CID identity index and iterator | `IdentityTracker` | `MysterServerPoolImpl.findClosestByCid(...)`, existing CID lookup | `cid128ToIdentity`, `MysterIdentity`, `PublicKeyIdentity`, `Cid128` |
-| Pool closest-node API | `MysterServerPool` / `MysterServerPoolImpl` | `ThreeDnsServerList`, Part 2 protocol server | `IdentityTracker`, weak server cache, `MysterServer`, `MysterAddress` |
-| `IdentityNeighborSet` | `com.myster.tracker` | Pool, finger list, Part 2 protocol server | Optional exact identity, left/predecessor identities, right/successor identities |
-| `ThreeDnsServerList` | `Tracker` | Part 1a tests, Part 1b UI accessor, Part 2 lookup seed selection | pool listener events, `MysterServerPool`, local server identity |
+| Pool closest-node API | `MysterServerPool` / `MysterServerPoolImpl` | `ThreeDnsServerList`, Part 2a protocol server | `IdentityTracker`, weak server cache, `MysterServer`, `MysterAddress` |
+| `IdentityNeighborSet` | `com.myster.tracker` | Pool, finger list, Part 2a protocol server | Optional exact identity, left/predecessor identities, right/successor identities |
+| `ThreeDnsServerList` | `Tracker` | Part 1a tests, Part 1b UI, Part 2b maintenance, Part 3 seed selection | pool listener events, `MysterServerPool`, local server identity |
 | 3DNS retained-list persistence | `ThreeDnsServerList` | Tracker startup/shutdown and retention updates | `Preferences`, `ExternalName`, `MysterServerPool` |
 | CID ring operations | `Cid128` | IdentityTracker neighbor lookup and progress checks | Existing identity/access-list CID usage |
 
@@ -101,7 +103,7 @@ On disk, the 3DNS retained list stores external-name strings grouped by target b
 - `src/main/java/com/myster/tracker/IdentityProvider.java` - add only if closest lookup must be exposed outside `IdentityTracker`; otherwise keep new closest methods package-private.
 - `src/main/java/com/myster/tracker/MysterServerPool.java` - add closest-by-CID API returning `IdentityNeighborSet`.
 - `src/main/java/com/myster/tracker/MysterServerPoolImpl.java` - delegate candidate iteration to `IdentityTracker`, resolve identities through the weak cache, and filter to up servers.
-- New `src/main/java/com/myster/tracker/IdentityNeighborSet.java` - immutable exact/left/right `PublicKeyIdentity` result used by pool, retention list, and Part 2 protocol server.
+- New `src/main/java/com/myster/tracker/IdentityNeighborSet.java` - immutable exact/left/right `PublicKeyIdentity` result used by pool, retention list, and Part 2a protocol server.
 - New `src/main/java/com/myster/threedns/ThreeDnsFingerEntry.java` - retained local finger entry wrapping target CID, server, address, derived server CID, side, and update time.
 - New `src/main/java/com/myster/threedns/ThreeDnsServerList.java` - tracker-owned 128-target finger/retention list fed by pool events.
 - `src/main/java/com/myster/tracker/Tracker.java` - accept the local CID, own/expose the 3DNS finger list, and feed it from pool listener events.
@@ -176,7 +178,7 @@ On disk, the 3DNS retained list stores external-name strings grouped by target b
    - On `serverRefresh`, call `threeDns.consider(server)` in addition to existing list updates.
    - On `serverPing`, remove/refill retained entries when ping timed out; reconsider cached server when ping succeeds.
    - On `deadServer`, call `threeDns.removeIdentity(identity)`.
-   - Add accessors for seeds and snapshots needed by Part 1b and Part 2. Keep UI-specific list-change methods in Part 1b unless a tiny hook is cheaper to add here.
+   - Add accessors for seeds and snapshots needed by Part 1b, Part 2b, and Part 3. Keep UI-specific list-change methods in Part 1b unless a tiny hook is cheaper to add here.
 
 7. Stop Part 1a here.
    - Do not add `TrackerWindow` or `TypeChoice` changes.

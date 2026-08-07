@@ -1,5 +1,7 @@
 # Implementation Summary: Bidirectional Server Stats Exchange
 
+Authoritative plan: [Business Card Feature: Bidirectional Stats Protocol](../plans/business-card-feature.md).
+
 ## What Was Implemented
 
 Successfully implemented a bidirectional server stats exchange feature that allows two Myster servers to exchange their server statistics in a single UDP transaction. This is an elegant improvement over the original "business card" concept that would have required two separate transactions.
@@ -79,16 +81,11 @@ None - all Javadoc was carefully written and reviewed during implementation.
 
 ### Future Enhancements (Nice-to-Have)
 
-1. **Fallback Strategy**: Implement automatic fallback from bidirectional (102) to one-way (101) if server doesn't support bidirectional
-   - Try 102 first
-   - If server responds with `TRANSACTION_TYPE_UNKNOWN`, retry with 101
-   - Would provide graceful degradation for old servers
-
-2. **Feature Flag**: Add preference to enable/disable bidirectional exchange
+1. **Feature Flag**: Add preference to enable/disable bidirectional exchange
    - Default to bidirectional
    - Allow users to force one-way if desired
 
-3. **Monitoring/Metrics**: Add metrics to track:
+2. **Monitoring/Metrics**: Add metrics to track:
    - Ratio of bidirectional (102) vs one-way (101) transactions
    - Success rate of bidirectional exchanges
    - Request/response payload sizes
@@ -116,10 +113,10 @@ None - all Javadoc was carefully written and reviewed during implementation.
    - This is unrelated to bidirectional server stats implementation
    - Should be addressed separately
 
-2. **Backwards Compatibility**: Current implementation always uses bidirectional (102) for new servers
-   - Old servers (using one-way 101) continue to work
-   - New clients connecting to old servers will get `TRANSACTION_TYPE_UNKNOWN` error
-   - Consider implementing fallback strategy (see Future Enhancements)
+2. **Compatibility Boundary**: Current server discovery intentionally uses bidirectional transaction `102` without fallback
+   - Transaction `101` remains registered so older clients can request stats from current servers
+   - Current clients connecting to pre-102 servers receive `TRANSACTION_TYPE_UNKNOWN`
+   - Transaction `102` has been deployed long enough that a client downgrade path is no longer planned
 
 ## Tests Status
 
@@ -142,7 +139,7 @@ The implementation is well-covered by existing tests since it reuses the same te
 5. ✅ Client processes server's stats using existing logic
 6. ✅ **Both parties learn about each other** in a single round-trip
 7. ✅ Bidirectional exchange is used in `refreshMysterServer()`
-8. ✅ Backwards compatibility maintained (old one-way transaction 101 still exists)
+8. ✅ Server-side compatibility retained (old one-way transaction 101 still exists for older clients)
 9. ✅ Bidirectional exchange works with encrypted datagram protocol (infrastructure already supports it)
 10. ✅ Existing tests pass with updated mocks
 11. ✅ Code is properly documented with Javadoc
@@ -157,13 +154,12 @@ The bidirectional approach (transaction 102) is superior to the original one-way
 2. **Atomic Exchange**: Both parties learn about each other atomically
 3. **Same Performance**: One round-trip in both cases, but bidirectional is more efficient
 4. **Symmetric Protocol**: Both client and server have same responsibilities
-5. **Backwards Compatible**: Old one-way transaction (101) remains for old clients
+5. **Server-Side Compatible**: Old one-way transaction (101) remains available for old clients
 
 ### Migration Path
 
 - **Old Client → Old Server**: Uses transaction 101 (one-way) ✅
-- **New Client → Old Server**: Client tries 102, server returns `TRANSACTION_TYPE_UNKNOWN`
-  - Currently no fallback (future enhancement)
+- **New Client → Old Server**: Client tries 102 and the server returns `TRANSACTION_TYPE_UNKNOWN`; no fallback is planned
 - **Old Client → New Server**: Client uses 101, server responds normally ✅
 - **New Client → New Server**: Uses transaction 102 (bidirectional), mutual discovery! ✅
 
@@ -194,4 +190,3 @@ The bidirectional approach (transaction 102) is superior to the original one-way
 ✅ **Production ready**
 
 I feel good about the quality of this implementation! The bidirectional approach is elegant, efficient, and well-integrated into the existing codebase.
-

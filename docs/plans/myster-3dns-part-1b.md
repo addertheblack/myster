@@ -2,7 +2,7 @@
 
 Prerequisite plan: [Myster 3DNS - Part 1a: Core Data Structures](myster-3dns-part-1a.md).
 
-Companion plan: [Myster 3DNS - Part 2: Protocol and Lookup](myster-3dns-part-2.md).
+Follow-on plans: [Part 2a: FIND_CLOSEST Protocol and Candidate Validation](myster-3dns-part-2a.md), [Part 2b: Routing-Table Maintenance and Bootstrap](myster-3dns-part-2b.md), and [Part 3: Iterative CID Resolution](myster-3dns-part-3.md).
 
 ## 1. Summary
 
@@ -23,7 +23,7 @@ Expose the Part 1a `ThreeDnsServerList` in TrackerWindow through a dedicated 3DN
 - Assumption: the first UI view can reuse the existing `JMCList<MysterServer>` and existing TrackerWindow columns.
 - Assumption: type-specific file count and rank cells can remain blank in the 3DNS view because no `MysterType` is selected.
 - Assumption: `TypeChoice` is the right place to add a selectable 3DNS extra item beside LAN/bookmarks.
-- Decision: Part 1b is a visibility/debugging bridge. Protocol, maintenance lookup, and richer 3DNS diagnostics remain in Part 2 or later UI work.
+- Decision: Part 1b is a visibility/debugging bridge. Protocol, maintenance, iterative lookup, and richer 3DNS diagnostics remain in Parts 2a, 2b, 3, or later UI work.
 
 ## 4. Proposed design
 

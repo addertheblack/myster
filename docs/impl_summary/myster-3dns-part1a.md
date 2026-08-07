@@ -8,7 +8,7 @@ Implemented the local 3DNS core from `docs/plans/myster-3dns-part-1a.md`:
 - `IdentityTracker` now stores its existing CID index as a `NavigableMap<Cid128, MysterIdentity>` and exposes a package-private left/right candidate walk for public-key identities.
 - `MysterServerPool` now exposes `findClosestByCid(Cid128, int)` returning `IdentityNeighborSet` exact/left/right public-key identity groups filtered to currently up servers with up addresses.
 - Added `ThreeDnsServerList` and `ThreeDnsFingerEntry` to retain two left and two right candidates around each local positive exponential offset target.
-- `Tracker` now owns the optional 3DNS retained list, restores it before pool hard links are cleared, feeds it from refresh/ping/dead-server events, and exposes seed/snapshot/target accessors for Part 1b and Part 2.
+- `Tracker` now owns the optional 3DNS retained list, restores it before pool hard links are cleared, feeds it from refresh/ping/dead-server events, and exposes seed/snapshot/target accessors for Part 1b and follow-on Parts 2a, 2b, and 3.
 - `Myster.java` now computes the local CID and passes it to `Tracker`.
 
 ## Files changed
@@ -56,4 +56,4 @@ Implemented the local 3DNS core from `docs/plans/myster-3dns-part-1a.md`:
 ## Follow-up
 
 - Part 1b should connect the `Tracker` 3DNS accessors to TrackerWindow/TypeChoice.
-- Part 2 should add the public-key/address wire candidates and validation flow on top of `findClosestByCid`.
+- [Part 2a](../plans/myster-3dns-part-2a.md) adds public-key/address wire candidates and validation on top of `findClosestByCid`; [Part 2b](../plans/myster-3dns-part-2b.md) owns maintenance/bootstrap; [Part 3](../plans/myster-3dns-part-3.md) owns iterative resolution.
