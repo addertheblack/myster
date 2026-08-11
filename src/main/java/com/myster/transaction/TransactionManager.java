@@ -61,7 +61,7 @@ public class TransactionManager {
      *            packet)
      * @param transactionCode
      *            of the remote datagram connection section to activate
-     * @param listener
+     * @param listener_in
      *            to be notified upon events to do with this transaction
      * @return integer based ID to make references to this outstanding transaction. The id is no
      *         longer valid after the transaction has responded

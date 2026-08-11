@@ -2,7 +2,7 @@
 
 Prerequisite plan: [Myster 3DNS - Part 1a: Core Data Structures](myster-3dns-part-1a.md).
 
-Follow-on plans: [Part 2a: FIND_CLOSEST Protocol and Candidate Validation](myster-3dns-part-2a.md), [Part 2b: Routing-Table Maintenance and Bootstrap](myster-3dns-part-2b.md), and [Part 3: Iterative CID Resolution](myster-3dns-part-3.md).
+Follow-on plans: [Part 2a: FIND_CLOSEST Protocol and Expected-Key Hook](myster-3dns-part-2a.md), [Part 2b: Routing-Table Maintenance and Bootstrap](myster-3dns-part-2b.md), and [Part 3: Iterative CID Resolution](myster-3dns-part-3.md).
 
 ## 1. Summary
 

@@ -16,7 +16,7 @@ Implementation is staged across these plans:
 
 - [Part 1a: Core Data Structures](../plans/myster-3dns-part-1a.md)
 - [Part 1b: Tracker UI Integration](../plans/myster-3dns-part-1b.md)
-- [Part 2a: FIND_CLOSEST Protocol and Candidate Validation](../plans/myster-3dns-part-2a.md)
+- [Part 2a: FIND_CLOSEST Protocol and Expected-Key Hook](../plans/myster-3dns-part-2a.md)
 - [Part 2b: Routing-Table Maintenance and Bootstrap](../plans/myster-3dns-part-2b.md)
 - [Part 3: Iterative CID Resolution](../plans/myster-3dns-part-3.md)
 - [Target-Slot Inspection UI](../plans/tracker-3dns-target-slots-ui.md)
@@ -137,7 +137,7 @@ The integration works as follows:
 
 * The ordered CID index is maintained in `IdentityTracker`.
 * The 3DNS retained list is initially seeded from known public-key servers in the ServerPool.
-* Newly discovered servers from 3DNS are passed to `MysterServerPool.validateCandidate(...)` and retained only after expected-key validation and normal onboarding.
+* Part 2a deliberately does not expose a speculative candidate-validation service. When maintenance is implemented, selected discoveries must prove their address/key association through an expected-key request before normal onboarding and retention.
 * Existing liveness checks and onboarding logic ensure that only reachable and valid servers are retained.
 
 This approach allows 3DNS to benefit from existing infrastructure without creating duplication or tight coupling.
@@ -156,7 +156,7 @@ A lookup only truly fails if there are no reachable nodes in the network. In all
 
 Security is largely handled by existing Myster identity mechanisms.
 
-Each server’s CID corresponds to a cryptographic identity. A remote 3DNS response is only a hint until the candidate address proves it owns the returned public key through normal Myster validation. `ParamBuilder.withExpectedServerPublicKey(...)` carries an address and expected key together without first trusting or caching that association. `MysterDatagramImpl` always encrypts such a request to the explicit key, even if the tracker has no key or a different cached key for the address. A request encrypted to that key can only be understood by the holder of its private key; candidate validation then requires the normal stats response `/Identity` bytes to match before onboarding. Exact target success requires the validated public key to hash to the target CID.
+Each server’s CID corresponds to a cryptographic identity. A remote 3DNS response is only a hint until the candidate address proves it owns the returned public key through normal Myster validation. `ParamBuilder.withExpectedServerPublicKey(...)` carries an address and expected key together without first trusting or caching that association. `MysterDatagramImpl` always encrypts such a request to the explicit key, even if the tracker has no key or a different cached key for the address. A request encrypted to that key can only be understood by the holder of its private key. The production consumer introduced in Part 2b must decide the narrowest way to compare returned identity data and perform normal onboarding; Part 2a intentionally does not add that unused orchestration. Exact target success still requires the proven public key to hash to the target CID.
 
 This ensures that nodes cannot impersonate arbitrary CIDs. While the system does not attempt to resist all Byzantine behavior, it maintains basic identity integrity through existing mechanisms.
 

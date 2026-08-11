@@ -26,7 +26,9 @@ import com.general.mclist.Sortable;
 import com.general.mclist.SortableString;
 import com.general.util.GridBagBuilder;
 import com.myster.identity.Cid128;
+import com.myster.identity.Util;
 import com.myster.tracker.MysterServer;
+import com.myster.tracker.PublicKeyIdentity;
 
 import static com.general.util.Util.filter;
 
@@ -221,4 +223,3 @@ public class ServerPickerDialog extends JDialog {
         }
     }
 }
-

@@ -3,7 +3,7 @@
 Companion plans:
 
 - [Myster 3DNS - Part 1b: Tracker UI Integration](myster-3dns-part-1b.md)
-- [Myster 3DNS - Part 2a: FIND_CLOSEST Protocol and Candidate Validation](myster-3dns-part-2a.md)
+- [Myster 3DNS - Part 2a: FIND_CLOSEST Protocol and Expected-Key Hook](myster-3dns-part-2a.md)
 - [Myster 3DNS - Part 2b: Routing-Table Maintenance and Bootstrap](myster-3dns-part-2b.md)
 - [Myster 3DNS - Part 3: Iterative CID Resolution](myster-3dns-part-3.md)
 

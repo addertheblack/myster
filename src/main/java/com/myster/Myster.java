@@ -9,32 +9,6 @@
 
 package com.myster;
 
-import javax.swing.JFrame;
-import javax.swing.SwingUtilities;
-import java.awt.Desktop;
-import java.awt.Desktop.Action;
-import java.awt.EventQueue;
-import java.awt.Frame;
-import java.io.BufferedInputStream;
-import java.io.IOException;
-import java.io.InputStream;
-import java.lang.reflect.InvocationTargetException;
-import java.net.InetAddress;
-import java.net.NetworkInterface;
-import java.net.SocketException;
-import java.net.UnknownHostException;
-import java.nio.file.Path;
-import java.security.KeyPair;
-import java.security.PublicKey;
-import java.util.Enumeration;
-import java.util.Map;
-import java.util.Optional;
-import java.util.concurrent.Executors;
-import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.logging.LogManager;
-import java.util.logging.Logger;
-import java.util.prefs.Preferences;
-
 import com.general.application.ApplicationContext;
 import com.general.application.ApplicationSingletonListener;
 import com.general.util.AnswerDialog;
@@ -42,14 +16,7 @@ import com.general.util.Timer;
 import com.general.util.Util;
 import com.myster.application.MysterGlobals;
 import com.myster.bandwidth.BandwidthManager;
-import com.myster.filemanager.CachingMetadataProvider;
-import com.myster.filemanager.FileMetadataCache;
-import com.myster.filemanager.FileTypeListManager;
-import com.myster.filemanager.MetadataProvider;
-import com.myster.filemanager.MetadataType;
-import com.myster.filemanager.ShardedFileMetadataCache;
-import com.myster.filemanager.TikaAudioMetadataProvider;
-import com.myster.filemanager.TypeResolvingMetadataProvider;
+import com.myster.filemanager.*;
 import com.myster.filemanager.ui.FmiChooser;
 import com.myster.hash.HashManager;
 import com.myster.hash.ui.HashManagerGUI;
@@ -71,14 +38,7 @@ import com.myster.net.server.BannersManager.BannersPreferences;
 import com.myster.net.server.ServerFacade;
 import com.myster.net.server.ServerPreferences;
 import com.myster.net.server.ServerUtils;
-import com.myster.net.server.datagram.BidirectionalServerStatsDatagramServer;
-import com.myster.net.server.datagram.FileStatsDatagramServer;
-import com.myster.net.server.datagram.PingTransport;
-import com.myster.net.server.datagram.SearchDatagramServer;
-import com.myster.net.server.datagram.SearchHashDatagramServer;
-import com.myster.net.server.datagram.ServerStatsDatagramServer;
-import com.myster.net.server.datagram.TopTenDatagramServer;
-import com.myster.net.server.datagram.TypeDatagramServer;
+import com.myster.net.server.datagram.*;
 import com.myster.net.stream.client.MysterSocketFactory;
 import com.myster.net.stream.client.MysterStreamImpl;
 import com.myster.net.stream.client.msdownload.MSDownloadLocalQueue;
@@ -109,6 +69,29 @@ import com.myster.ui.tray.MysterTray;
 import com.myster.util.I18n;
 import com.myster.util.ThemeUtil;
 import com.simtechdata.waifupnp.UPnP;
+
+import javax.swing.*;
+import java.awt.*;
+import java.awt.Desktop.Action;
+import java.io.BufferedInputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.lang.reflect.InvocationTargetException;
+import java.net.InetAddress;
+import java.net.NetworkInterface;
+import java.net.SocketException;
+import java.net.UnknownHostException;
+import java.nio.file.Path;
+import java.security.KeyPair;
+import java.security.PublicKey;
+import java.util.Enumeration;
+import java.util.Map;
+import java.util.Optional;
+import java.util.concurrent.Executors;
+import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.logging.LogManager;
+import java.util.logging.Logger;
+import java.util.prefs.Preferences;
 
 public class Myster {
     private static final Logger log = Logger.getLogger(Myster.class.getName());
@@ -668,6 +651,7 @@ public class Myster {
                                                                                     identity,
                                                                                     fileManager,
                                                                                     pool),
+                                         new FindClosestDatagramServer(pool),
                                          new FileStatsDatagramServer(fileManager),
                                          new SearchHashDatagramServer(fileManager));
     }

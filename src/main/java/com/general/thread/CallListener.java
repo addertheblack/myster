@@ -21,9 +21,9 @@ package com.general.thread;
  * should be assumed that the callback will happen on the event thread.
  * <p>
  * 
- * @see com.general.thread.CancellableCallable
- * @see com.general.thread.SpecialExecutor
- * @see com.general.thread.Future
+ * @see CancellableCallable
+ * @see java.util.concurrent.Executor
+ * @see PromiseFuture
  */
 public interface CallListener<T> {
     /**

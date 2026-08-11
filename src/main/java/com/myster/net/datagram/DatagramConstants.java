@@ -67,6 +67,9 @@ public class DatagramConstants {
      */
     public static final int BIDIRECTIONAL_SERVER_STATS_TRANSACTION_CODE = 102;
 
+    /** Transaction code for the 3DNS {@code FIND_CLOSEST} request. */
+    public static final int THREE_DNS_FIND_CLOSEST_TRANSACTION_CODE = 303;
+
     /**
      * Transaction code for hash-based search requests
      */

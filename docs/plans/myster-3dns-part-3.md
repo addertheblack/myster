@@ -2,7 +2,7 @@
 
 Prerequisites:
 
-- [Part 2a: FIND_CLOSEST Protocol and Candidate Validation](myster-3dns-part-2a.md)
+- [Part 2a: FIND_CLOSEST Protocol and Expected-Key Hook](myster-3dns-part-2a.md)
 - [Part 2b: Routing-Table Maintenance and Bootstrap](myster-3dns-part-2b.md)
 
 > Preliminary plan: finalize routing limits and caller API after Parts 2a and 2b establish real protocol behavior.
@@ -42,7 +42,7 @@ Visited identities and addresses are tracked separately. Exact resolution comple
 | Resolver API | `ThreeDnsLookup` | Future CID-based features | `MysterProtocol`, tracker seeds, pool |
 | Lookup result | `ThreeDnsLookupResult` | Resolver callers | validated `MysterServer`, target/closest CIDs, status |
 | Direction-aware frontier | Lookup-internal model | Iteration loop | `Cid128` ring distances, Part 2a candidate groups |
-| Candidate proof | Part 2a validation API | Resolver | expected-key UDP/TLS and normal pool onboarding |
+| Candidate proof | Part 2b's production proof/onboarding path when reusable; otherwise a resolver-owned narrow helper | Resolver | Part 2a expected-key transport and normal pool onboarding |
 
 No new wire or disk format is introduced. Part 3 consumes transaction `303` and the local retained state produced by Parts 1/2b.
 

@@ -9,6 +9,7 @@ import java.util.function.Supplier;
 import com.general.thread.PromiseFuture;
 import com.myster.filemanager.FileTypeListManager;
 import com.myster.hash.FileHash;
+import com.myster.identity.Cid128;
 import com.myster.identity.Identity;
 import com.myster.mml.MessagePak;
 import com.myster.net.MysterAddress;
@@ -20,6 +21,7 @@ import com.myster.net.datagram.TimeoutException;
 import com.myster.net.datagram.message.ImClient;
 import com.myster.net.datagram.message.MessagePacket;
 import com.myster.search.MysterFileStub;
+import com.myster.threedns.ThreeDnsAddressCandidateSet;
 import com.myster.transaction.TransactionEvent;
 import com.myster.transaction.TransactionListener;
 import com.myster.transaction.TransactionManager;
@@ -107,6 +109,13 @@ public class MysterDatagramImpl implements MysterDatagram {
     }
 
     @Override
+    public PromiseFuture<ThreeDnsAddressCandidateSet> findClosest(ParamBuilder params,
+                                                                  Cid128 target,
+                                                                  int perSideLimit) {
+        return doSection(params, new FindClosestDatagramClient(target, perSideLimit));
+    }
+
+    @Override
     public PromiseFuture<MessagePak> getFileStats(final MysterFileStub stub) {
         return doSection(new ParamBuilder(stub.getMysterAddress()), new FileStatsDatagramClient(stub));
     }
@@ -131,6 +140,14 @@ public class MysterDatagramImpl implements MysterDatagram {
     private <T> PromiseFuture<T> doSection(final ParamBuilder params,
                                            final StandardDatagramClientImpl<T> impl) {
         final MysterAddress address = extractAddress(params);
+
+        Optional<PublicKey> expectedServerPublicKey = params.getExpectedServerPublicKey();
+        if (expectedServerPublicKey.isPresent()) {
+            return sendPacket(address,
+                              new EncryptingStandardDatagramClientImpl<>(impl,
+                                                                          expectedServerPublicKey.get(),
+                                                                          getClientIdentity(params)));
+        }
         
         StandardDatagramClientImpl<T> actualImpl;
         

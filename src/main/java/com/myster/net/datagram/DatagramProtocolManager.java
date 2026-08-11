@@ -80,7 +80,7 @@ public class DatagramProtocolManager {
         /**
          * Adds transport to port on all addresses.
          * 
-         * @param transport
+         * @param t
          *            to add
          * @return true if protocol was added successfully. false otherwise (usually because it has
          *         already been added or there is already a DatagramTransport registered for that
@@ -228,4 +228,3 @@ public class DatagramProtocolManager {
         }
     }
 }
-

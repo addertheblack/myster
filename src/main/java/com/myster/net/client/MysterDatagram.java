@@ -12,6 +12,8 @@ import com.myster.mml.MessagePak;
 import com.myster.net.datagram.client.PingResponse;
 import com.myster.net.datagram.message.MessagePacket;
 import com.myster.search.MysterFileStub;
+import com.myster.threedns.ThreeDnsAddressCandidateSet;
+import com.myster.identity.Cid128;
 import com.myster.type.MysterType;
 
 public interface MysterDatagram {
@@ -39,6 +41,19 @@ public interface MysterDatagram {
      * @return PromiseFuture containing the remote server's stats
      */
     public PromiseFuture<MessagePak> getBidirectionalServerStats(final ParamBuilder params);
+
+    /**
+     * Requests the live public-key/address candidates closest to a target CID.
+     * Returned candidates are untrusted until validated by the server pool.
+     *
+     * @param params remote address and optional expected server key
+     * @param target target CID in the unsigned 128-bit ring
+     * @param perSideLimit requested candidates per side; non-positive values use the default
+     * @return exact, predecessor, and successor candidate groups
+     */
+    public PromiseFuture<ThreeDnsAddressCandidateSet> findClosest(ParamBuilder params,
+                                                                  Cid128 target,
+                                                                  int perSideLimit);
 
     public PromiseFuture<MessagePak> getFileStats(final MysterFileStub stub);
 

@@ -1,4 +1,4 @@
-# Myster 3DNS - Part 2a: FIND_CLOSEST Protocol and Candidate Validation
+# Myster 3DNS - Part 2a: FIND_CLOSEST Protocol and Expected-Key Hook
 
 Prerequisites and follow-on plans:
 
@@ -9,12 +9,13 @@ Prerequisites and follow-on plans:
 
 ## 1. Summary
 
-Add the 3DNS `FIND_CLOSEST` UDP transaction, reserve transaction code `303`, and add the protocol-stack hook that lets a caller contact a returned address using its advertised public key as the expected peer identity. This milestone exposes local closest-node knowledge and proves candidate identity, but does not maintain the local table or perform multi-hop CID resolution.
+Add the 3DNS `FIND_CLOSEST` UDP transaction, reserve transaction code `303`, and add the protocol-stack hook that lets a future caller contact a returned address using its advertised public key as the expected peer identity. This milestone exposes local closest-node knowledge and the primitive needed to prove candidate identity, but does not orchestrate validation, maintain the local table, or perform multi-hop CID resolution.
 
 ## 2. Non-goals
 
 - Do not implement hourly routing-table maintenance or bootstrap orchestration; that is Part 2b.
 - Do not implement iterative CID-to-server resolution; that is Part 3.
+- Do not add a pool-level candidate-validation/onboarding operation before a production consumer needs it; Part 2b will determine the narrowest required shape.
 - Do not change Part 1a target retention or persistence except for small accessors needed by the protocol.
 - Do not trust a public-key/address pair merely because another peer returned it.
 - Do not add a 3DNS UI, general DHT storage, reputation, proof-of-work, or Sybil resistance.
@@ -25,7 +26,7 @@ Add the 3DNS `FIND_CLOSEST` UDP transaction, reserve transaction code `303`, and
 - `LEFT` means predecessor/negative side and `RIGHT` means successor/positive side in the unsigned 128-bit ring.
 - The wire protocol returns both sides without choosing routing policy. Part 2b and Part 3 decide which group to prefer.
 - Returned public keys are X.509 encoded and CIDs are always derived locally with `Util.generateCid(publicKey)`.
-- Candidate validation should reuse normal Myster identity mechanisms. A request encrypted to the advertised public key can only be understood by the holder of its private key; server stats also carry `/Identity`, and TLS already supports an expected server public key.
+- Future candidate validation should reuse normal Myster identity mechanisms. A request encrypted to the advertised public key can only be understood by the holder of its private key; server stats also carry `/Identity`, and TLS already supports an expected server public key.
 - Transaction code `303` is permanently reserved for `FIND_CLOSEST`.
 - No architecture-blocking questions remain for Part 2a.
 
@@ -33,9 +34,7 @@ Add the 3DNS `FIND_CLOSEST` UDP transaction, reserve transaction code `303`, and
 
 `FIND_CLOSEST` is a small MessagePak request/response transaction over the existing UDP transaction manager. A request contains a target CID and a per-side result limit. The server asks the pool for live closest identities and replies with separate exact, left, and right groups. Each candidate contains its encoded public key and currently usable address; no candidate CID is serialized.
 
-The datagram API gains an explicit expected-peer-key option associated with an address. This must not mutate the normal address-to-identity cache before proof. When present, `MysterDatagramImpl` encrypts the request to that key even if the key is not cached. A successfully decrypted response proves that the remote endpoint could decrypt a request sealed to the advertised public key. Candidate onboarding additionally checks that the returned normal server stats `/Identity` equals the expected key and therefore derives the advertised CID.
-
-`MysterServerPool.validateCandidate(...)` is asynchronous and returns a server only after that proof and the normal refresh/onboarding path succeed. Existing `suggestAddress(...)` stays fire-and-forget. The validation method shares in-flight work for the same address/key pair and never treats an address already mapped to another key as success.
+The datagram API gains an explicit expected-peer-key option associated with an address. This must not mutate the normal address-to-identity cache before proof. When present, `MysterDatagramImpl` encrypts the request to that key even if the key is not cached. A successfully decrypted response proves that the remote endpoint could decrypt a request sealed to the advertised public key. Part 2a deliberately stops at this transport primitive; candidate selection, stats comparison, onboarding, and in-flight sharing are deferred until Part 2b has a production call path.
 
 ## 5. Architecture connections
 
@@ -44,11 +43,10 @@ Part 2a is the boundary between untrusted routing hints and the existing trusted
 | New / changed thing | Owned / created by | Called / used by | Connects to (existing) |
 |---|---|---|---|
 | `FIND_CLOSEST` transaction `303` | Datagram client/server | Peers, later Parts 2b/3 | `TransactionProtocol`, `StandardDatagramClientImpl`, `MessagePak` |
-| Wire candidate models | `com.myster.threedns` | Datagram codec, validation callers | `PublicKeyIdentity`, `Cid128`, `MysterAddress` |
-| Expected-peer-key request hook | `ParamBuilder` and `MysterDatagramImpl` | Candidate validation and later 3DNS queries | `EncryptingStandardDatagramClientImpl`, `PublicKeyLookup`, MSD encryption |
-| Future-returning candidate validation | `MysterServerPool` / implementation | Later maintenance and lookup | Server stats `/Identity`, TLS expected key, existing pool onboarding |
+| Wire candidate models | `com.myster.threedns` | Datagram codec, later Parts 2b/3 | `PublicKeyIdentity`, `Cid128`, `MysterAddress` |
+| Expected-peer-key request hook | `ParamBuilder` and `MysterDatagramImpl` | Later candidate proof and 3DNS queries | `EncryptingStandardDatagramClientImpl`, `PublicKeyLookup`, MSD encryption |
 
-The data flow is: a peer returns a public key and address; the receiver derives the CID; a caller supplies that same key as the expected identity when contacting the address; only a peer holding the matching private key can understand the encrypted request; the stats response must repeat the matching encoded public key; then the existing pool callback may create or refresh the `PublicKeyIdentity` server.
+The Part 2a data flow ends after a peer returns a public key/address and the receiver derives the CID. The expected-key hook lets a later consumer contact that address without first trusting the association. Part 2b decides whether and where to compare returned identity data and invoke normal onboarding.
 
 Wire contract, represented as MessagePak paths:
 
@@ -79,7 +77,7 @@ Public keys are X.509 bytes. IP is the textual address from `MysterAddress`; por
 - An MSD request encrypted to the candidate key is useful proof even though current response-signature verification is incomplete: producing the symmetric-key response requires decrypting the request with the matching private key.
 - Plain unencrypted success is insufficient proof by itself. TLS validation must receive the expected key, or UDP validation must use the expected-key encrypted path.
 - CID equality alone is insufficient; compare encoded public keys and then derive the CID.
-- Validation failure, timeout, mismatched stats key, malformed stats, dead-cache entry, and an existing different identity all return no validated server.
+- Candidate validation/onboarding policy is intentionally not implemented until Part 2b supplies a production consumer.
 
 ## 7. Acceptance criteria
 
@@ -88,9 +86,8 @@ Public keys are X.509 bytes. IP is the textual address from `MysterAddress`; por
 - [ ] Request limits default to two per side and are clamped to four.
 - [ ] Recipients derive every candidate CID locally from its public key.
 - [ ] An address and expected public key can be supplied together to the datagram stack without first inserting that key into trusted pool state.
-- [ ] Candidate validation contacts the address using the advertised key, verifies returned stats identity, and succeeds only when the key and derived CID agree.
 - [ ] Existing datagram behavior is unchanged when no expected key is supplied.
-- [ ] Focused tests cover codec round trips, sparse groups, malformed input, size/limit enforcement, expected-key proof, and mismatched-key rejection.
+- [ ] Focused tests cover codec round trips, sparse groups, malformed input, size/limit enforcement, and the expected-key transport proof.
 - [ ] Part 2a adds no scheduler, bootstrap loop, or iterative lookup implementation.
 
 ---
@@ -107,8 +104,6 @@ Public keys are X.509 bytes. IP is the textual address from `MysterAddress`; por
 - `src/main/java/com/myster/net/client/MysterDatagram.java` - expose one-hop `findClosest(...)`.
 - `src/main/java/com/myster/net/client/ParamBuilder.java` - retain an address plus an expected public-key identity/key.
 - `src/main/java/com/myster/net/datagram/client/MysterDatagramImpl.java` - prefer explicit expected key over cache lookup for a request.
-- `src/main/java/com/myster/tracker/MysterServerPool.java` - add future-returning `validateCandidate(...)`.
-- `src/main/java/com/myster/tracker/MysterServerPoolImpl.java` - await expected-key stats validation and reuse normal onboarding.
 - `src/main/java/com/myster/Myster.java` - register the transaction server only.
 - Focused tests under `src/test/java/com/myster/net/datagram`, `.../tracker`, and `.../threedns`.
 
@@ -119,20 +114,18 @@ Public keys are X.509 bytes. IP is the textual address from `MysterAddress`; por
 3. Implement the client codec and `MysterDatagram.findClosest(ParamBuilder, Cid128, int)`. Preserve exact/left/right groups and never accept a serialized CID as authoritative.
 4. Extend `ParamBuilder` with a distinct expected-peer identity/key field that does not clear its address. Keep the existing address/identity targeting behavior compatible.
 5. In `MysterDatagramImpl.doSection(...)`, use the explicit expected key ahead of `PublicKeyLookup`. Force the encrypted decorator for expected-key validation; fail if encryption cannot be constructed rather than silently sending plaintext.
-6. Add `MysterServerPool.validateCandidate(...)`. Reuse/share in-flight work by address plus expected key, issue normal server stats through the expected-key datagram path (or TLS with its existing expected-key hook), compare `/Identity` bytes to the candidate key, derive/compare the CID, and only then invoke/refactor the normal `serverStatsCallback(...)` onboarding path.
-7. Register `FindClosestDatagramServer` next to existing datagram transactions in `Myster.addServerConnectionSettings(...)`. Do not start maintenance or construct iterative lookup.
-8. Run focused tests and write `docs/impl_summary/myster-3dns-part2a.md` after implementation.
+6. Register `FindClosestDatagramServer` next to existing datagram transactions in `Myster.addServerConnectionSettings(...)`. Do not start maintenance or construct iterative lookup.
+7. Run focused tests and write `docs/impl_summary/myster-3dns-part-2a.md` after implementation.
 
 ## 10. Tests to write
 
 - Codec tests: full and sparse groups, ring-edge CIDs, invalid CID length, invalid key, invalid address/port, limit default/clamp, deterministic grouping, response-byte cap.
 - Server tests: only currently up identities with usable addresses are serialized; liveness changes during encoding are excluded.
 - Expected-key tests: address and key coexist in `ParamBuilder`; explicit key overrides an absent or conflicting cache entry; plaintext fallback is impossible in validation mode.
-- Validation tests: matching encrypted stats succeeds; wrong private key cannot answer; stats `/Identity` mismatch fails; address mapped to another key fails; timeouts and dead-cache entries fail; same address/key shares outstanding work.
 - Regression tests: ordinary cached-key encrypted and no-key plaintext datagram calls retain current behavior.
 
 ## 11. Docs / Javadoc to update
 
 - Update `docs/design/Myster 3DNS.md` with code `303`, the exact wire fields, validation proof, and milestone links.
-- Javadoc the trust boundary on `ThreeDnsAddressCandidate`, `ParamBuilder` expected-key state, `MysterDatagram.findClosest(...)`, and `MysterServerPool.validateCandidate(...)`.
+- Javadoc the trust boundary on `ThreeDnsAddressCandidate`, `ParamBuilder` expected-key state, and `MysterDatagram.findClosest(...)`.
 - Add `docs/impl_summary/myster-3dns-part2a.md` during implementation.

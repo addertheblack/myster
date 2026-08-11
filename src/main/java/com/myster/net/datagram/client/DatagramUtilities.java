@@ -8,8 +8,6 @@ public class DatagramUtilities {
     
     /**
      * This function must be called from the event thread.
-     * @param transaction
-     * @param listener
      */
     public static <R> boolean dealWithError(Transaction transaction,
                                         AsyncContext<R> context) {

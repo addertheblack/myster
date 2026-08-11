@@ -20,11 +20,9 @@ public class ServerDownloadEvent extends ServerEvent {
 
     /**
      * 
-     * @param id
      * @param addressOfRemote
      * @param section
      * @param filename
-     * @param type
      * @param blockType or NO_DATA_OFFSET
      * @param filesofar
      * @param filelength

@@ -1,5 +1,6 @@
 package com.myster.net;
 
+import java.util.concurrent.Callable;
 import java.util.concurrent.Executor;
 import java.util.concurrent.Executors;
 
@@ -18,7 +19,7 @@ import com.general.thread.PromiseFutures;
  * responsible for prioritise requests. Well behaved clients should throttle
  * their own number of requests so as to not monopolize this resource.
  * 
- * @see com.general.thread.SpecialExecutor
+ * @see BoundedExecutor
  */
 
 /*
@@ -31,7 +32,7 @@ public class MysterClientSocketPool {
      * Don't use this. It sucks.
      * 
      * @return yo moma
-     * @deprecated {@link PromiseFutures#execute(CancellableCallable, Executor)}
+     * @deprecated use {@link PromiseFutures#execute(Callable, Executor)}
      */
     @Deprecated
     public static synchronized MysterClientSocketPool getInstance() {
