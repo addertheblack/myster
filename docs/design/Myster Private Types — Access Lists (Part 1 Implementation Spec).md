@@ -71,7 +71,7 @@ Fields:
 
 - `magic` (fixed constant, 0x4D595354 = "MYST")
 - `version = 1`
-- `myster_type` (16 bytes — MysterType shortBytes)
+- `myster_type` (16 bytes — `MysterTypeCid`)
 - `hash_alg = SHA256`
 - `sig_alg = Ed25519`
 
@@ -194,7 +194,7 @@ Fork handling is undefined in Part 1.
 Nodes MUST maintain derived state:
 
 - Current writers set
-- Current members map (Cid128 → Role, where Role uses extensible string-based enum)
+- Current members map (ServerCid → Role, where Role uses extensible string-based enum)
 - Current policy (Policy object with MessagePak-backed extensible fields)
 - Current onramps
 - Current tip hash
@@ -208,21 +208,21 @@ Nodes MAY cache full chain bytes.
 
 ## 4.1 Membership Verification at Request Time
 
-The sole allow/deny policy is encoded in `AccessEnforcementUtils.isAllowed(MysterType, Optional<Cid128>, AccessListReader)`:
+The sole allow/deny policy is encoded in `AccessEnforcementUtils.isAllowed(MysterType, Optional<ServerCid>, AccessListReader)`:
 
 1. No access list for the type → **allow** (type is effectively public).
 2. `listFilesPublic == true` → **allow**.
 3. Caller identity is unknown (empty `callerCid`) → **deny**. Identity cannot be verified without TLS.
-4. `Cid128` present in the members map → **allow**. (ADMINs are also in the map — ADMIN implies MEMBER.)
+4. `ServerCid` present in the members map → **allow**. (ADMINs are also in the map — ADMIN implies MEMBER.)
 5. Otherwise → **deny**.
 
 **TCP path** — caller identity is derived at the STLS upgrade point in `ConnectionRunnable`:
 1. Extract the peer's RSA public key from `TLSSocket.getPeerPublicKey()`.
-2. Derive `Cid128 = Trunc128(SHA-256(publicKey.getEncoded()))` via `com.myster.identity.Util.generateCid()`.
+2. Derive `ServerCid = Trunc128(SHA-256(publicKey.getEncoded()))` via `ServerCid.fromPublicKey()`.
 3. Store in `ConnectionContext.callerCid()` (`Optional.empty()` for plaintext connections).
 4. Each section handler passes it to `AccessEnforcementUtils.isAllowed()` via `AccessListReader`.
 
-**UDP path** — `EncryptedDatagramServer` stamps `Transaction.callerCid()` from `DecryptResult.keyHash` after decryption. `TypeDatagramServer` reads it from the transaction and filters the type list with `AccessEnforcementUtils.isAllowed()`.
+**UDP path** — `DatagramEncryptUtil` parses the signed Section 2 identity as a `ServerCid`, and `EncryptedDatagramServer` stamps it into `Transaction.callerCid()` after decryption. `TypeDatagramServer` reads it from the transaction and filters the type list with `AccessEnforcementUtils.isAllowed()`.
 
 Section handlers receive an `AccessListReader` (narrow interface: `Optional<AccessList> loadAccessList(MysterType)`) injected at construction — they never hold a reference to the full `AccessListManager`.
 
@@ -246,7 +246,7 @@ TCP-only.
 
 Fields:
 
-- `myster_type` (16 bytes — MysterType shortBytes)
+- `myster_type` (16 bytes — `MysterTypeCid`)
 - `known_tip_hash` (32 bytes — hash of client's latest block, all zeros if client has no chain)
 
 The server uses `known_tip_hash` to determine where the client's chain ends and sends only blocks after that point.
@@ -333,7 +333,7 @@ Each action creates and signs a new block.
 
 Export bootstrap bundle containing:
 
-- `mysterType` (hex — MysterType shortBytes)
+- `mysterType` (hex — `MysterTypeCid`)
 - `genesis_hash` (for integrity verification)
 - `onramps`
 - Optional expected writer pubkeys
@@ -362,5 +362,4 @@ Not implemented:
 5. Implement GUI create/edit/share flow
 
 This completes Part 1.
-
 

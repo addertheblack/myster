@@ -12,6 +12,7 @@ import static com.myster.net.datagram.MSDConstants.SECTION2_SIG_ALG;
 import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.security.InvalidKeyException;
+import java.security.Key;
 import java.security.KeyFactory;
 import java.security.KeyPair;
 import java.security.MessageDigest;
@@ -38,8 +39,8 @@ import org.bouncycastle.crypto.params.KeyParameter;
 import org.bouncycastle.crypto.params.ParametersWithIV;
 import org.bouncycastle.jce.provider.BouncyCastleProvider;
 
+import com.myster.cid.ServerCid;
 import com.myster.identity.Identity;
-import com.myster.identity.Util;
 import com.myster.mml.MessagePak;
 
 /**
@@ -216,7 +217,7 @@ public class DatagramEncryptUtil {
             
             // Create signature with appropriate algorithm
             byte[] signature = createSignature(section1Ciphertext, section3Ciphertext, timestamp, privateKey, MSD_REQUEST_CONTEXT);
-            byte[] cid = Util.generateNakedCid(publicKey);
+            byte[] cid = ServerCid.fromPublicKey(publicKey).bytes();
             
             section2.putByteArray(SECTION2_SIGNATURE, signature);
 //            section2.putByteArray(SECTION2_PUBLIC_KEY, publicKey.getEncoded());
@@ -245,7 +246,7 @@ public class DatagramEncryptUtil {
             
             // Create response signature
             byte[] signature = createSignature(section1Plaintext, section3Ciphertext, timestamp, privateKey, MSD_RESPONSE_CONTEXT);
-            byte[] cid = Util.generateNakedCid(publicKey);
+            byte[] cid = ServerCid.fromPublicKey(publicKey).bytes();
             
             section2.putByteArray(MSDConstants.SECTION2_SIGNATURE, signature);
 //            section2.putByteArray(MSDConstants.SECTION2_PUBLIC_KEY, publicKey.getEncoded());
@@ -296,11 +297,9 @@ public class DatagramEncryptUtil {
         }
     }
     
-    /**
-     * Determine the appropriate signature algorithm based on the private key type
-     */
-    private static String getSignatureAlgorithm(PrivateKey privateKey) {
-        String algorithm = privateKey.getAlgorithm();
+    /** Returns the signature algorithm associated with the supplied key type. */
+    private static String getSignatureAlgorithm(Key key) {
+        String algorithm = key.getAlgorithm();
         switch (algorithm) {
             case "RSA":
                 return "SHA256withRSA";
@@ -312,25 +311,6 @@ public class DatagramEncryptUtil {
                 return "EdDSA";
             default:
                 // Default to RSA for unknown key types
-                return "SHA256withRSA";
-        }
-    }
-    
-    /**
-     * Get signature algorithm for public key (used for verification)
-     */
-    private static String getSignatureAlgorithm(PublicKey publicKey) {
-        String algorithm = publicKey.getAlgorithm();
-        switch (algorithm) {
-            case "RSA":
-                return "SHA256withRSA";
-            case "EC":
-                return "SHA256withECDSA";
-            case "Ed25519":
-                return "Ed25519";
-            case "EdDSA":
-                return "EdDSA";
-            default:
                 return "SHA256withRSA";
         }
     }
@@ -437,7 +417,7 @@ public class DatagramEncryptUtil {
      */
     public static class R {
         public final Optional<PublicKey> publicKey;
-        public final Optional<byte[]> keyHash; // Changed to byte[] for CID
+        public final Optional<ServerCid> callerCid;
         public final byte[] payload;
         public final byte[] syncDecryptKey;
         
@@ -445,40 +425,43 @@ public class DatagramEncryptUtil {
             this(Optional.empty(), Optional.empty(), new byte[] {}, new byte[] {});
         }
         
-        private R(Optional<PublicKey> publicKey, Optional<byte[]> keyHash, byte[] payload, byte[] syncDecryptKey) {
+        private R(Optional<PublicKey> publicKey,
+                  Optional<ServerCid> callerCid,
+                  byte[] payload,
+                  byte[] syncDecryptKey) {
             this.publicKey = publicKey;
-            this.keyHash = keyHash;
+            this.callerCid = callerCid;
             this.payload = payload;
             this.syncDecryptKey = syncDecryptKey;
         }
 
         public R withPublicKey(Optional<PublicKey> publicKey) {
-            return new R(publicKey, this.keyHash, this.payload, this.syncDecryptKey);
+            return new R(publicKey, this.callerCid, this.payload, this.syncDecryptKey);
         }
 
-        public R withKeyHash(Optional<byte[]> keyHash) {
-            return new R(this.publicKey, keyHash, this.payload, this.syncDecryptKey);
+        public R withCallerCid(Optional<ServerCid> callerCid) {
+            return new R(this.publicKey, callerCid, this.payload, this.syncDecryptKey);
         }
 
         public R withPayload(byte[] payload) {
-            return new R(this.publicKey, this.keyHash, payload, this.syncDecryptKey);
+            return new R(this.publicKey, this.callerCid, payload, this.syncDecryptKey);
         }
         
         public R withSyncDecryptKey(byte[] syncDecryptKey) {
-            return new R(this.publicKey, this.keyHash, this.payload, syncDecryptKey);
+            return new R(this.publicKey, this.callerCid, this.payload, syncDecryptKey);
         }
     }
     
     /**
-     * This is typically implemented by looking up the keyHash in the MysterServerPool which contains a cache of all the servers we "know".
+     * Resolves public keys for known server identities and supplies the local decryption key.
      * If we "know" the server we have its public key.. assuming it has one..
      */
     public interface Lookup {
         /**
-         * @param keyHash The key of the client sending the transaction
+         * @param serverCid compact identity of the peer that signed the transaction
          * @return the public key of the client sending us the transaction if we know it. If we don't know it that's fine we just won't verify the sig.
          */
-        Optional<PublicKey> findPublicKey(byte[]  keyHash); // Changed to byte[] for CID
+        Optional<PublicKey> findPublicKey(ServerCid serverCid);
         
         /**
          * Private key of the server handling
@@ -535,11 +518,11 @@ public class DatagramEncryptUtil {
             
             // Verify signature if present
             Optional<PublicKey> clientPublicKey = Optional.empty();
-            Optional<byte[]> cid = Optional.empty();
+            Optional<ServerCid> callerCid = Optional.empty();
             
             if (section2Data.getByteArray(MSDConstants.SECTION2_SIGNATURE).isPresent()) {
                 clientPublicKey = verifySignature(section1Ciphertext, section3Ciphertext, section2Data, lookup, MSDConstants.MSD_REQUEST_CONTEXT);
-                cid = section2Data.getByteArray(MSDConstants.SECTION2_CLIENT_ID);
+                callerCid = readServerCid(section2Data);
             }
             
             // Decrypt Section 3 payload
@@ -547,7 +530,7 @@ public class DatagramEncryptUtil {
             
             return new R()
                 .withPublicKey(clientPublicKey)
-                .withKeyHash(cid)
+                .withCallerCid(callerCid)
                 .withPayload(payload)
                 .withSyncDecryptKey(symmetricKey);
                 
@@ -612,7 +595,7 @@ public class DatagramEncryptUtil {
             // Try to decode the X.509-encoded public key using several common algorithms
             publicKey = tryDecodePublicKey(pubKeyBytes.get());
         } else {
-            Optional<byte[]> cidOpt = section2Data.getByteArray(MSDConstants.SECTION2_CLIENT_ID);
+            Optional<ServerCid> cidOpt = readServerCid(section2Data);
             if (cidOpt.isPresent()) {
                 Optional<PublicKey> foundKey = lookup.findPublicKey(cidOpt.get());
                 if (foundKey.isPresent()) {
@@ -654,6 +637,19 @@ public class DatagramEncryptUtil {
         }
         
         return Optional.of(publicKey);
+    }
+
+    private static Optional<ServerCid> readServerCid(MessagePak section2Data)
+            throws DecryptionException {
+        Optional<byte[]> bytes = section2Data.getByteArray(MSDConstants.SECTION2_CLIENT_ID);
+        if (bytes.isEmpty()) {
+            return Optional.empty();
+        }
+        try {
+            return Optional.of(new ServerCid(bytes.get()));
+        } catch (IllegalArgumentException exception) {
+            throw new DecryptionException("Invalid server CID in Section 2", exception);
+        }
     }
 
     /**

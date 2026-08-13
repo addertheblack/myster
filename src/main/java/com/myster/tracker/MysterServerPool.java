@@ -15,7 +15,7 @@ import java.security.PublicKey;
 import java.util.Optional;
 import java.util.function.Consumer;
 
-import com.myster.identity.Cid128;
+import com.myster.cid.ServerCid;
 import com.myster.net.MysterAddress;
 
 /**
@@ -33,10 +33,10 @@ public interface MysterServerPool {
     Optional<MysterIdentity> lookupIdentityFromName(ExternalName externalName);
 
     /**
-     * Looks up the RSA public key for a server identified by its {@link Cid128}.
+     * Looks up the RSA public key for a server identified by its {@link ServerCid}.
      *
      * <p>Returns {@code Optional<PublicKey>} — not {@code Optional<MysterIdentity>} — because
-     * only servers with a {@link PublicKeyIdentity} have a {@code Cid128} in the first place.
+     * only servers with a {@link PublicKeyIdentity} have a {@code ServerCid} in the first place.
      * To obtain a {@link MysterIdentity} for use with
      * {@link #getCachedMysterServer(MysterIdentity)}, wrap the result:
      * <pre>
@@ -49,7 +49,7 @@ public interface MysterServerPool {
      * @param cid the 128-bit truncated SHA-256 identity hash of the server's RSA public key
      * @return the server's RSA public key, or empty if not found in the pool
      */
-    Optional<PublicKey> lookupIdentityFromCid(Cid128 cid);
+    Optional<PublicKey> lookupIdentityFromCid(ServerCid cid);
 
     /**
      * Finds currently usable public-key identities nearest to a CID. The exact
@@ -62,7 +62,7 @@ public interface MysterServerPool {
      * @param perSideLimit requested maximum number of left and right
      *        candidates; non-positive values use the pool default
      */
-    IdentityNeighborSet findClosestByCid(Cid128 target, int perSideLimit);
+    IdentityNeighborSet findClosestByCid(ServerCid target, int perSideLimit);
 
     /**
      * @return The MysterServer for this address assuming it's already in the cache. Empty Optional otherwise.

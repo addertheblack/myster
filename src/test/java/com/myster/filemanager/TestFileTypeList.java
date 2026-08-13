@@ -36,7 +36,7 @@ class TestFileTypeList {
         // Create in-memory file system (Unix-style for consistency)
         fileSystem = Jimfs.newFileSystem(Configuration.unix());
 
-        testType = new MysterType(new byte[]{0x01, 0x02, 0x03, 0x04});
+        testType = new MysterType(testTypeCid());
         hashProvider = new TestHashProvider();
         typeDescriptionList = new TestTypeDescriptionList();
         testPrefPath = "/test/path";
@@ -443,7 +443,7 @@ class TestFileTypeList {
 
         public TestTypeDescriptionList() {
             testTypeDescription = new TypeDescription(
-                new MysterType(new byte[]{0x01, 0x02, 0x03, 0x04}),
+                new MysterType(testTypeCid()),
                 "TestType",           // internalName
                 "Test Type",          // description
                 new String[]{".txt"}, // extensions
@@ -521,5 +521,14 @@ class TestFileTypeList {
         public void importType(com.myster.access.AccessList accessList) {
             // No-op for testing
         }
+    }
+
+    private static byte[] testTypeCid() {
+        byte[] bytes = new byte[16];
+        bytes[0] = 0x01;
+        bytes[1] = 0x02;
+        bytes[2] = 0x03;
+        bytes[3] = 0x04;
+        return bytes;
     }
 }

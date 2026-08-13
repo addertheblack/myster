@@ -312,7 +312,7 @@ public class AccessList {
         return operations;
     }
 
-    /** Returns the MysterType for this access list (MD5 shortBytes of the type's RSA public key). */
+    /** Returns the MysterType backed by this access list's MysterTypeCid. */
     public MysterType getMysterType() {
         return mysterType;
     }
@@ -380,4 +380,3 @@ public class AccessList {
                "}";
     }
 }
-

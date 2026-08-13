@@ -20,7 +20,7 @@ import com.myster.filemanager.*;
 import com.myster.filemanager.ui.FmiChooser;
 import com.myster.hash.HashManager;
 import com.myster.hash.ui.HashManagerGUI;
-import com.myster.identity.Cid128;
+import com.myster.cid.ServerCid;
 import com.myster.identity.Identity;
 import com.myster.message.ui.MessagePreferencesPanel;
 import com.myster.net.MysterAddress;
@@ -245,8 +245,8 @@ public class Myster {
         INSTRUMENTATION.info("-------->> Init IPListManager "
                 + (System.currentTimeMillis() - startTime));
         MysterServerPoolImpl pool = new MysterServerPoolImpl(Preferences.userRoot(), protocol);
-        Optional<Cid128> localCid =
-                identity.getMainIdentity().map(kp -> com.myster.identity.Util.generateCid(kp.getPublic()));
+        Optional<ServerCid> localCid =
+                identity.getMainIdentity().map(kp -> ServerCid.fromPublicKey(kp.getPublic()));
         Tracker tracker = new Tracker(pool,
                                       Preferences.userRoot().node("Tracker.IpListManager"),
                                       tdList,
@@ -330,8 +330,8 @@ public class Myster {
             }
 
             @Override
-            public Optional<PublicKey> findPublicKey(byte[] keyHash) {
-                return pool.lookupIdentityFromCid(new Cid128(keyHash));
+            public Optional<PublicKey> findPublicKey(ServerCid serverCid) {
+                return pool.lookupIdentityFromCid(serverCid);
             }
         });
         INSTRUMENTATION.info("-------->> Encryption support added " + (System.currentTimeMillis() - startTime));
@@ -450,15 +450,15 @@ public class Myster {
                 preferencesGui.addPanel(new MessagePreferencesPanel(preferences));
                 com.myster.type.ui.TypeEditorServerSource typeEditorServerSource =
                         new com.myster.type.ui.TypeEditorServerSource() {
-                            public void forEachServer(java.util.function.BiConsumer<com.myster.tracker.MysterServer, com.myster.identity.Cid128> c) {
+                            public void forEachServer(java.util.function.BiConsumer<com.myster.tracker.MysterServer, ServerCid> c) {
                                 pool.forEach(server -> {
                                     if (server.getIdentity() instanceof com.myster.tracker.PublicKeyIdentity pki) {
-                                        c.accept(server, com.myster.identity.Util.generateCid(pki.getPublicKey()));
+                                        c.accept(server, ServerCid.fromPublicKey(pki.getPublicKey()));
                                     }
                                 });
                             }
 
-                            public java.util.Optional<String> resolveDisplayName(com.myster.identity.Cid128 cid) {
+                            public java.util.Optional<String> resolveDisplayName(ServerCid cid) {
                                 return pool.lookupIdentityFromCid(cid)
                                         .map(com.myster.tracker.PublicKeyIdentity::new)
                                         .flatMap(pool::getCachedMysterServer)
@@ -469,7 +469,7 @@ public class Myster {
                         tdList,
                         accessListManager,
                         java.util.Optional.of(typeEditorServerSource),
-                        identity.getMainIdentity().map(kp -> com.myster.identity.Util.generateCid(kp.getPublic()))));
+                        identity.getMainIdentity().map(kp -> ServerCid.fromPublicKey(kp.getPublic()))));
                 preferencesGui.addPanel(new ThemePane(preferences));
 
                 INSTRUMENTATION.info("-------->>   EDT init other GUI sub systems " + (System.currentTimeMillis() - startTime));

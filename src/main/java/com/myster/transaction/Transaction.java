@@ -30,7 +30,7 @@ import java.util.Optional;
 
 import com.general.net.ImmutableDatagramPacket;
 import com.general.util.Util;
-import com.myster.identity.Cid128;
+import com.myster.cid.ServerCid;
 import com.myster.net.MysterAddress;
 import com.myster.net.datagram.DataPacket;
 import com.myster.net.datagram.DatagramConstants;
@@ -54,7 +54,7 @@ public final class Transaction implements DataPacket { //Immutable (Java needs
     private final byte errorByte;
     private final byte[] data;
     /** Identity of the caller on encrypted channels; empty for plaintext. */
-    private final Optional<Cid128> callerCid;
+    private final Optional<ServerCid> callerCid;
 
 
     ///note: put in checks for length etc...
@@ -142,7 +142,7 @@ public final class Transaction implements DataPacket { //Immutable (Java needs
 
     private Transaction(MysterAddress address, int transactionCode,
             int connectionNumber, byte[] bytes, boolean isForClient,
-            byte errorByte, Optional<Cid128> callerCid) {
+            byte errorByte, Optional<ServerCid> callerCid) {
         this.address = address;
         this.transactionCode = transactionCode;
         this.connectionNumber = connectionNumber;
@@ -167,10 +167,10 @@ public final class Transaction implements DataPacket { //Immutable (Java needs
      * Used by {@link com.myster.net.server.datagram.EncryptedDatagramServer} after decrypting an
      * MSD packet to stamp the verified caller identity onto the forwarded transaction.
      *
-     * @param cid the caller's {@link Cid128}, or {@link Optional#empty()} for anonymous/plaintext
+     * @param cid the caller's {@link ServerCid}, or {@link Optional#empty()} for anonymous/plaintext
      * @return a new {@code Transaction} with all fields identical except {@code callerCid}
      */
-    public Transaction withCallerCid(Optional<Cid128> cid) {
+    public Transaction withCallerCid(Optional<ServerCid> cid) {
         return new Transaction(address, transactionCode, connectionNumber, data, isForClient,
                 errorByte, cid);
     }
@@ -180,9 +180,9 @@ public final class Transaction implements DataPacket { //Immutable (Java needs
      * Present only when the packet arrived via an encrypted (MSD) channel and the caller's key
      * was successfully verified; empty for plaintext or unverified senders.
      *
-     * @return the caller's {@link Cid128}, or empty if identity is unknown
+     * @return the caller's {@link ServerCid}, or empty if identity is unknown
      */
-    public Optional<Cid128> callerCid() {
+    public Optional<ServerCid> callerCid() {
         return callerCid;
     }
     

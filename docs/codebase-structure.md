@@ -64,9 +64,11 @@ Application-specific logic for the Myster P2P network:
   - **`filemanager.ui`** - File manager UI components (`FmiChooser`)
 
 #### Identity & Security
+- **`com.myster.cid`** - Domain-specific compact identities
+  - `MysterTypeCid` - 16-byte MD5-derived identity of a Myster type
+  - `ServerCid` - 16-byte truncated-SHA-256 identity of a public-key-backed server
 - **`com.myster.identity`** - Cryptographic identity system
   - `Identity` - Server identity with public/private key pairs
-  - `Cid128` - 128-bit compact identity digest (hash of public key)
   - Public key-based server identification
 
 #### Access Lists (Private Types)
@@ -221,7 +223,7 @@ Myster uses both **TCP (stream)** and **UDP (datagram)** protocols:
 
 ### 3. **Type System**
 
-- **`MysterType`** - Immutable type identifier based on a public key (stores MD5 shortBytes of the key, 16 bytes)
+- **`MysterType`** - Immutable type identifier that composes the public key's 16-byte `MysterTypeCid`
 - **`TypeDescription`** - Name, extensions, description, source
 - **`TypeDescriptionList`** - Registry with enable/disable state
   - Fires events (`TypeListener`) when types are added/removed/enabled/disabled
@@ -256,7 +258,7 @@ Myster uses both **TCP (stream)** and **UDP (datagram)** protocols:
   - `PublicKeyIdentity` - Identity based on public key (preferred)
   - `MysterAddressIdentity` - Fallback for servers without crypto
   
-- **`Cid128`** - Compact 128-bit identity hash (first 128 bits of SHA-256(public key))
+- **`ServerCid`** - Compact server identity in `com.myster.cid` (first 128 bits of SHA-256(public key))
 
 ### 6. **Search Engine**
 
@@ -326,4 +328,3 @@ Myster uses both **TCP (stream)** and **UDP (datagram)** protocols:
 
 **Last Updated**: 2026-02-07  
 **Maintainer**: This document should be updated when major architectural changes occur.
-

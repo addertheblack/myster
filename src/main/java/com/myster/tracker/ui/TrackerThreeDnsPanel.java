@@ -21,6 +21,7 @@ import com.general.mclist.Sortable;
 import com.general.mclist.SortableLong;
 import com.general.mclist.SortableString;
 import com.general.util.IconLoader;
+import com.myster.cid.ServerCid;
 import com.myster.client.ui.ClientWindow;
 import com.myster.threedns.ThreeDnsFingerEntry;
 import com.myster.threedns.ThreeDnsTargetSlotSnapshot;
@@ -264,27 +265,27 @@ public class TrackerThreeDnsPanel extends JPanel {
             }
         }
 
-        private static final class SortableCid implements Sortable<com.myster.identity.Cid128> {
-            private final com.myster.identity.Cid128 cid;
+        private static final class SortableCid implements Sortable<ServerCid> {
+            private final ServerCid cid;
             private final String hex;
 
-            private SortableCid(com.myster.identity.Cid128 cid) {
+            private SortableCid(ServerCid cid) {
                 this.cid = cid;
                 this.hex = cid.asHex();
             }
 
             @Override
-            public boolean isLessThan(Sortable<com.myster.identity.Cid128> other) {
+            public boolean isLessThan(Sortable<ServerCid> other) {
                 return cid.compareTo(other.getValue()) < 0;
             }
 
             @Override
-            public boolean isGreaterThan(Sortable<com.myster.identity.Cid128> other) {
+            public boolean isGreaterThan(Sortable<ServerCid> other) {
                 return cid.compareTo(other.getValue()) > 0;
             }
 
             @Override
-            public com.myster.identity.Cid128 getValue() {
+            public ServerCid getValue() {
                 return cid;
             }
 

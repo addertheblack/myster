@@ -7,7 +7,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 
-import com.myster.identity.Cid128;
+import com.myster.cid.ServerCid;
 import com.myster.type.MysterType;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
@@ -71,7 +71,7 @@ class TestAccessEnforcementUtils {
 
         assertTrue(AccessEnforcementUtils.isAllowed(type, Optional.empty(), emptyReader),
                    "No access list should allow anonymous caller");
-        Cid128 cid = com.myster.identity.Util.generateCid(ed25519KeyPair.getPublic());
+        ServerCid cid = com.myster.cid.ServerCid.fromPublicKey(ed25519KeyPair.getPublic());
         assertTrue(AccessEnforcementUtils.isAllowed(type, Optional.of(cid), emptyReader),
                    "No access list should allow identified caller");
     }
@@ -85,7 +85,7 @@ class TestAccessEnforcementUtils {
 
         assertTrue(AccessEnforcementUtils.isAllowed(type, Optional.empty(), reader),
                    "Public policy should allow anonymous caller");
-        Cid128 cid = com.myster.identity.Util.generateCid(ed25519KeyPair.getPublic());
+        ServerCid cid = com.myster.cid.ServerCid.fromPublicKey(ed25519KeyPair.getPublic());
         assertTrue(AccessEnforcementUtils.isAllowed(type, Optional.of(cid), reader),
                    "Public policy should allow identified caller");
     }
@@ -105,7 +105,7 @@ class TestAccessEnforcementUtils {
     @Test
     void privateTypeAllowsKnownMember() throws Exception {
         KeyPair memberKeyPair = KeyPairGenerator.getInstance("Ed25519").generateKeyPair();
-        Cid128 memberCid = com.myster.identity.Util.generateCid(memberKeyPair.getPublic());
+        ServerCid memberCid = com.myster.cid.ServerCid.fromPublicKey(memberKeyPair.getPublic());
 
         AccessList privateList = buildPrivateList();
         privateList.appendBlock(new AddMemberOp(memberCid, Role.MEMBER), ed25519KeyPair);
@@ -121,7 +121,7 @@ class TestAccessEnforcementUtils {
     @Test
     void privateTypeDeniesUnknownCaller() throws Exception {
         KeyPair unknownKeyPair = KeyPairGenerator.getInstance("Ed25519").generateKeyPair();
-        Cid128 unknownCid = com.myster.identity.Util.generateCid(unknownKeyPair.getPublic());
+        ServerCid unknownCid = com.myster.cid.ServerCid.fromPublicKey(unknownKeyPair.getPublic());
 
         AccessList privateList = buildPrivateList();
         MysterType type = privateList.getMysterType();

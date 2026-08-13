@@ -37,11 +37,11 @@ The core split is between the 3DNS maintenance structure and the tracker UI. `Th
 
 | New / changed thing | Owned / created by | Called / used by | Connects to (existing) |
 |---|---|---|---|
-| Immutable target-slot snapshot | `com.myster.threedns.ThreeDnsTargetSlotSnapshot` | `ThreeDnsServerList.snapshotTargetSlots()`, `Tracker.getThreeDnsTargetSlots()` | Private `ThreeDnsServerList.TargetSlot`, `ThreeDnsFingerEntry`, `Cid128` |
+| Immutable target-slot snapshot | `com.myster.threedns.ThreeDnsTargetSlotSnapshot` | `ThreeDnsServerList.snapshotTargetSlots()`, `Tracker.getThreeDnsTargetSlots()` | Private `ThreeDnsServerList.TargetSlot`, `ThreeDnsFingerEntry`, `ServerCid` |
 | 3DNS tracker row model | `com.myster.tracker.ui.ThreeDnsTrackerRow` | `TrackerThreeDnsPanel` / `JMCList` | `ThreeDnsTargetSlotSnapshot`, `ThreeDnsFingerEntry`, `MysterServer` |
 | Dedicated 3DNS panel | `com.myster.tracker.ui.TrackerThreeDnsPanel` | `TrackerWindow` | `JMCList`, `Tracker.getThreeDnsTargetSlots()`, bookmark APIs, `ClientWindow` |
 | View switching in TrackerWindow | `TrackerWindow` | user selection through `TypeChoice` | Existing `TypeChoice.isThreeDns()`, existing generic tracker list |
-| CID/offset display helpers | `TrackerThreeDnsPanel` initially, or small `Cid128` helper if needed | 3DNS row sortables/renderers | `Cid128.asHex()`, `Cid128.bytes()`, `bitIndex`, Swing JLabel HTML |
+| CID/offset display helpers | `TrackerThreeDnsPanel` initially, or small `ServerCid` helper if needed | 3DNS row sortables/renderers | `ServerCid.asHex()`, `ServerCid.bytes()`, `bitIndex`, Swing JLabel HTML |
 
 Data flow:
 
@@ -102,7 +102,7 @@ No on-disk or network format changes are required. The existing 3DNS preferences
    - Create `com.myster.threedns.ThreeDnsTargetSlotSnapshot`.
    - Shape:
      - `int bitIndex`
-     - `Cid128 targetCid`
+     - `ServerCid targetCid`
      - `List<ThreeDnsFingerEntry> left`
      - `List<ThreeDnsFingerEntry> right`
    - In the compact constructor, validate non-null fields and use `List.copyOf(...)` for both entry lists.
@@ -125,8 +125,8 @@ No on-disk or network format changes are required. The existing 3DNS preferences
    - Create `com.myster.tracker.ui.ThreeDnsTrackerRow` as an immutable denormalized row record, not as a nested type in `TrackerWindow`.
    - Shape:
      - `MysterServer server`
-     - `Cid128 targetCid`
-     - `Cid128 serverCid`
+     - `ServerCid targetCid`
+     - `ServerCid serverCid`
      - `int bitIndex`
      - `ThreeDnsFingerEntry.Side side`
      - `MysterAddress retainedAddress`
@@ -146,7 +146,7 @@ No on-disk or network format changes are required. The existing 3DNS preferences
      - status
      - ping
      - uptime
-   - Use short CID display in table cells, for example first 12 hex characters plus ellipsis, but sort on the full hex string or `Cid128`.
+   - Use short CID display in table cells, for example first 12 hex characters plus ellipsis, but sort on the full hex string or `ServerCid`.
    - Reuse or extract the existing tracker sortables for bookmark, status, ping, and uptime if practical. If extraction creates too much churn, duplicate these tiny private sortables in the new panel for this milestone.
 
 5. Implement `TrackerThreeDnsPanel`.

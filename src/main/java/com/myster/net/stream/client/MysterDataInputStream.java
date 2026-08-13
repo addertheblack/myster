@@ -159,7 +159,12 @@ public class MysterDataInputStream extends InputStream {
     }
 
     public MysterType readType() throws IOException {
-        return new MysterType(readFully(readUnsignedShort()));
+        byte[] bytes = readFully(readUnsignedShort());
+        try {
+            return new MysterType(bytes);
+        } catch (IllegalArgumentException exception) {
+            throw new IOException("Invalid MysterType CID length: " + bytes.length, exception);
+        }
     }
 
     @Override

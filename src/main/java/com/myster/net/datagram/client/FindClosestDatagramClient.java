@@ -8,7 +8,7 @@ import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
 
-import com.myster.identity.Cid128;
+import com.myster.cid.ServerCid;
 import com.myster.identity.Util;
 import com.myster.mml.MessagePak;
 import com.myster.net.MysterAddress;
@@ -24,10 +24,10 @@ public class FindClosestDatagramClient implements StandardDatagramClientImpl<Thr
     private static final String TARGET_CID = "/targetCid";
     private static final String PER_SIDE_LIMIT = "/perSideLimit";
 
-    private final Cid128 target;
+    private final ServerCid target;
     private final int perSideLimit;
 
-    public FindClosestDatagramClient(Cid128 target, int perSideLimit) {
+    public FindClosestDatagramClient(ServerCid target, int perSideLimit) {
         this.target = Objects.requireNonNull(target, "target");
         this.perSideLimit = ThreeDnsAddressCandidateSet.normalizePerSideLimit(perSideLimit);
     }

@@ -10,7 +10,7 @@ import java.util.logging.Logger;
 import java.util.prefs.BackingStoreException;
 import java.util.prefs.Preferences;
 
-import com.myster.identity.Cid128;
+import com.myster.cid.ServerCid;
 import com.myster.net.MysterAddress;
 import com.myster.tracker.ExternalName;
 import com.myster.tracker.IdentityNeighborSet;
@@ -28,18 +28,18 @@ import com.myster.tracker.PublicKeyIdentity;
  */
 public class ThreeDnsServerList {
     public static final int DEFAULT_PER_SIDE_LIMIT = 2;
-    public static final int TARGET_COUNT = Cid128.LENGTH * Byte.SIZE;
+    public static final int TARGET_COUNT = ServerCid.LENGTH * Byte.SIZE;
 
     private static final Logger log = Logger.getLogger(ThreeDnsServerList.class.getName());
     private static final String PREF_NODE = "ThreeDns";
 
-    private final Cid128 localCid;
+    private final ServerCid localCid;
     private final MysterServerPool pool;
     private final Preferences preferences;
     private final Runnable listChanged;
     private final List<TargetSlot> targets = new ArrayList<>();
 
-    public ThreeDnsServerList(Cid128 localCid,
+    public ThreeDnsServerList(ServerCid localCid,
                               MysterServerPool pool,
                               Preferences preferences,
                               Runnable listChanged) {
@@ -133,7 +133,7 @@ public class ThreeDnsServerList {
      * Returns currently usable retained identities closest to an arbitrary
      * target. This searches the retained finger cache, not the entire pool.
      */
-    public synchronized IdentityNeighborSet forTarget(Cid128 target, int perSideLimit) {
+    public synchronized IdentityNeighborSet forTarget(ServerCid target, int perSideLimit) {
         int limit = normalizeLimit(perSideLimit);
         List<ThreeDnsFingerEntry> usable = snapshot().stream()
                 .filter(entry -> isUsable(entry.server()))
@@ -175,7 +175,7 @@ public class ThreeDnsServerList {
      * Returns immutable snapshots of every local target slot in bit-index order.
      * Restored entries that are not currently up remain visible in these snapshots;
      * callers that need only usable nodes should use {@link #seeds(int)} or
-     * {@link #forTarget(Cid128, int)}.
+     * {@link #forTarget(ServerCid, int)}.
      */
     public synchronized List<ThreeDnsTargetSlotSnapshot> snapshotTargetSlots() {
         List<ThreeDnsTargetSlotSnapshot> snapshot = new ArrayList<>(targets.size());
@@ -189,7 +189,7 @@ public class ThreeDnsServerList {
     }
 
     private List<PublicKeyIdentity> closest(List<ThreeDnsFingerEntry> entries,
-                                            Cid128 target,
+                                            ServerCid target,
                                             int limit,
                                             Optional<PublicKeyIdentity> exact,
                                             DistanceComparator distanceComparator) {
@@ -210,7 +210,7 @@ public class ThreeDnsServerList {
         return List.copyOf(results.values());
     }
 
-    private int compareEntries(Cid128 target,
+    private int compareEntries(ServerCid target,
                                DistanceComparator distanceComparator,
                                ThreeDnsFingerEntry a,
                                ThreeDnsFingerEntry b) {
@@ -231,7 +231,7 @@ public class ThreeDnsServerList {
         return entry.filter(e -> target.add(e, DEFAULT_PER_SIDE_LIMIT)).isPresent();
     }
 
-    private Optional<ThreeDnsFingerEntry> createEntry(Cid128 target,
+    private Optional<ThreeDnsFingerEntry> createEntry(ServerCid target,
                                                      ThreeDnsFingerEntry.Side side,
                                                      MysterServer candidateServer,
                                                      long updateTimeMs) {
@@ -239,7 +239,7 @@ public class ThreeDnsServerList {
             return Optional.empty();
         }
 
-        Cid128 candidateServerCid = com.myster.identity.Util.generateCid(identity.getPublicKey());
+        ServerCid candidateServerCid = ServerCid.fromPublicKey(identity.getPublicKey());
         if (candidateServerCid.equals(localCid)) { // is this me?
             return Optional.empty();
         }
@@ -359,11 +359,11 @@ public class ThreeDnsServerList {
 
     private final class TargetSlot {
         private final int bitIndex;
-        private final Cid128 targetCid;
+        private final ServerCid targetCid;
         private final List<ThreeDnsFingerEntry> left = new ArrayList<>();
         private final List<ThreeDnsFingerEntry> right = new ArrayList<>();
 
-        private TargetSlot(int bitIndex, Cid128 targetCid) {
+        private TargetSlot(int bitIndex, ServerCid targetCid) {
             this.bitIndex = bitIndex;
             this.targetCid = targetCid;
         }
@@ -404,6 +404,6 @@ public class ThreeDnsServerList {
 
     @FunctionalInterface
     private interface DistanceComparator {
-        int compare(Cid128 a, Cid128 b);
+        int compare(ServerCid a, ServerCid b);
     }
 }

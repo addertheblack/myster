@@ -6,7 +6,7 @@ import java.security.KeyPairGenerator;
 import java.util.Collections;
 import java.util.List;
 
-import com.myster.identity.Cid128;
+import com.myster.cid.ServerCid;
 import com.myster.type.MysterType;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
@@ -54,12 +54,13 @@ class TestAccessList {
     }
 
     @Test
-    void mysterTypeIs16BytesNotOld32Bytes() throws IOException {
+    void mysterTypeIs16BytesNotOld32Bytes() throws Exception {
         AccessList list = createTestChain();
         byte[] mysterTypeBytes = list.getMysterType().toBytes();
         assertEquals(16, mysterTypeBytes.length, "MysterType must be 16 bytes (MD5), not 32 (SHA-256)");
 
-        byte[] expected = MysterType.toShortBytes(rsaKeyPair.getPublic());
+        byte[] expected = java.security.MessageDigest.getInstance("MD5")
+                .digest(rsaKeyPair.getPublic().getEncoded());
         assertArrayEquals(expected, mysterTypeBytes);
     }
 
@@ -122,7 +123,7 @@ class TestAccessList {
         AccessList original = createTestChain();
         original.appendBlock(new SetNameOp("After genesis"), ed25519KeyPair);
 
-        Cid128 cid = com.myster.identity.Util.generateCid(rsaKeyPair.getPublic());
+        ServerCid cid = com.myster.cid.ServerCid.fromPublicKey(rsaKeyPair.getPublic());
         original.appendBlock(new AddMemberOp(cid, Role.ADMIN), ed25519KeyPair);
         original.appendBlock(new SetPolicyOp(Policy.defaultPermissive()), ed25519KeyPair);
 
@@ -195,7 +196,7 @@ class TestAccessList {
 
     @Test
     void genesisWithMembersAndOnramps() throws IOException {
-        Cid128 cid = com.myster.identity.Util.generateCid(rsaKeyPair.getPublic());
+        ServerCid cid = com.myster.cid.ServerCid.fromPublicKey(rsaKeyPair.getPublic());
 
         AccessList list = AccessList.createGenesis(
                 rsaKeyPair.getPublic(),
@@ -212,7 +213,7 @@ class TestAccessList {
 
     @Test
     void serializeAndDeserializeChainWithAllOperationTypes() throws IOException {
-        Cid128 cid = com.myster.identity.Util.generateCid(rsaKeyPair.getPublic());
+        ServerCid cid = com.myster.cid.ServerCid.fromPublicKey(rsaKeyPair.getPublic());
 
         AccessList list = AccessList.createGenesis(
                 rsaKeyPair.getPublic(),

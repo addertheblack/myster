@@ -6,7 +6,7 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
 
-import com.myster.identity.Cid128;
+import com.myster.cid.ServerCid;
 import com.myster.mml.MessagePak;
 import com.myster.net.MysterAddress;
 import com.myster.net.datagram.BadPacketException;
@@ -47,14 +47,14 @@ public class FindClosestDatagramServer implements TransactionProtocol {
             requireSchemaVersion(request);
             byte[] targetBytes = request.getByteArray(TARGET_CID)
                     .orElseThrow(() -> new BadPacketException("Missing 3DNS target CID"));
-            if (targetBytes.length != Cid128.LENGTH) {
+            if (targetBytes.length != ServerCid.LENGTH) {
                 throw new BadPacketException("3DNS target CID must be 16 bytes");
             }
 
             int requestedLimit = request.getInt(PER_SIDE_LIMIT)
                     .orElse(ThreeDnsAddressCandidateSet.DEFAULT_PER_SIDE_LIMIT);
             int limit = ThreeDnsAddressCandidateSet.normalizePerSideLimit(requestedLimit);
-            IdentityNeighborSet neighbors = pool.findClosestByCid(new Cid128(targetBytes), limit);
+            IdentityNeighborSet neighbors = pool.findClosestByCid(new ServerCid(targetBytes), limit);
 
             MessagePak response = MessagePak.newEmpty();
             response.putInt(SCHEMA_VERSION, ThreeDnsAddressCandidateSet.SCHEMA_VERSION);

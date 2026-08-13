@@ -3,7 +3,7 @@ package com.myster.net.server;
 import java.util.Optional;
 
 import com.myster.filemanager.FileTypeListManager;
-import com.myster.identity.Cid128;
+import com.myster.cid.ServerCid;
 import com.myster.net.MysterAddress;
 import com.myster.net.MysterSocket;
 import com.myster.net.stream.server.transferqueue.TransferQueue;
@@ -20,7 +20,7 @@ public record ConnectionContext(MysterSocket socket,
                                 Object sectionObject,
                                 TransferQueue transferQueue,
                                 FileTypeListManager fileManager,
-                                Optional<Cid128> callerCid) {
+                                Optional<ServerCid> callerCid) {
 
     public ConnectionContext withSectionObject(Object newSectionObject) {
         return new ConnectionContext(socket, serverAddress, newSectionObject, transferQueue, fileManager, callerCid);

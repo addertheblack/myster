@@ -21,7 +21,7 @@ import java.util.stream.Collectors;
 import org.junit.jupiter.api.Test;
 
 import com.general.util.MapPreferences;
-import com.myster.identity.Cid128;
+import com.myster.cid.ServerCid;
 import com.myster.net.MysterAddress;
 import com.myster.net.datagram.client.PingResponse;
 import com.myster.tracker.ExternalName;
@@ -111,7 +111,7 @@ class TestThreeDnsServerList {
     @Test
     void targetSlotSnapshotsExposeImmutableSlotsInBitOrder() throws Exception {
         FakePool pool = new FakePool();
-        Cid128 localCid = cid(0, 0);
+        ServerCid localCid = cid(0, 0);
         ThreeDnsServerList list = new ThreeDnsServerList(localCid, pool, new MapPreferences(), () -> {});
         FakeServer server = pool.addPublicServer(40, true);
 
@@ -139,11 +139,11 @@ class TestThreeDnsServerList {
         return entries.stream().anyMatch(entry -> entry.server().getIdentity().equals(identity));
     }
 
-    private static Cid128 cid(long hi, long lo) {
-        byte[] bytes = new byte[Cid128.LENGTH];
+    private static ServerCid cid(long hi, long lo) {
+        byte[] bytes = new byte[ServerCid.LENGTH];
         writeLong(bytes, 0, hi);
         writeLong(bytes, Long.BYTES, lo);
-        return new Cid128(bytes);
+        return new ServerCid(bytes);
     }
 
     private static void writeLong(byte[] bytes, int offset, long value) {
@@ -153,8 +153,8 @@ class TestThreeDnsServerList {
         }
     }
 
-    private static Cid128 cid(PublicKeyIdentity identity) {
-        return com.myster.identity.Util.generateCid(identity.getPublicKey());
+    private static ServerCid cid(PublicKeyIdentity identity) {
+        return com.myster.cid.ServerCid.fromPublicKey(identity.getPublicKey());
     }
 
     private static final class FakePool implements MysterServerPool {
@@ -192,7 +192,7 @@ class TestThreeDnsServerList {
         }
 
         @Override
-        public Optional<PublicKey> lookupIdentityFromCid(Cid128 cid) {
+        public Optional<PublicKey> lookupIdentityFromCid(ServerCid cid) {
             return byIdentity.keySet().stream()
                     .filter(PublicKeyIdentity.class::isInstance)
                     .map(PublicKeyIdentity.class::cast)
@@ -202,7 +202,7 @@ class TestThreeDnsServerList {
         }
 
         @Override
-        public IdentityNeighborSet findClosestByCid(Cid128 target, int perSideLimit) {
+        public IdentityNeighborSet findClosestByCid(ServerCid target, int perSideLimit) {
             int limit = perSideLimit <= 0 ? ThreeDnsServerList.DEFAULT_PER_SIDE_LIMIT : perSideLimit;
             List<PublicKeyIdentity> usable = byIdentity.values().stream()
                     .filter(FakeServer::getStatus)

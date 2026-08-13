@@ -11,36 +11,37 @@
 package com.myster.type;
 
 import java.io.IOException;
-import java.security.MessageDigest;
-import java.security.NoSuchAlgorithmException;
 import java.security.PublicKey;
-import java.util.Arrays;
 
-import com.general.util.Util; 
+import com.myster.cid.MysterTypeCid;
 
 /**
  * This class represents a MysterType.
  * <p>
- * Is immutable! MysterType is based on a public key, but only stores a short hash of the key for compactness.
- * The short hash varient of the MysterType is computed using MD5 of the public key's encoded bytes.
+ * Immutable Myster type backed by its 16-byte {@link MysterTypeCid}. The compact identity is
+ * computed using MD5 of the encoded type public key for compatibility with the Myster type format.
  */
 public final class MysterType {
-    private final byte[] shortBytes;
+    private final MysterTypeCid cid;
 
     public MysterType(PublicKey key) {
-        this(toShortBytes(key));
+        this(MysterTypeCid.fromPublicKey(key));
     }
     
     public MysterType(byte[] shortBytes) {
-        this.shortBytes = shortBytes.clone();
+        this(new MysterTypeCid(shortBytes));
+    }
+
+    private MysterType(MysterTypeCid cid) {
+        this.cid = cid;
     }
 
     public byte[] toBytes() {
-        return this.shortBytes.clone();
+        return cid.bytes();
     }
     
     public String toHexString() {
-        return Util.asHex(shortBytes);
+        return cid.asHex();
     }
 
     /**
@@ -49,45 +50,25 @@ public final class MysterType {
      *
      * @param hex the hex string to parse
      * @return the corresponding MysterType
-     * @throws IllegalArgumentException if the string is not valid hex or has the wrong length
+     * @throws IOException if the string is not valid hexadecimal or does not contain 16 bytes
      */
     public static MysterType fromHexString(String hex) throws IOException {
-        try {
-            byte[] bytes = Util.fromHexString(hex);
-            if (bytes.length != 16) {
-                throw new IOException(
-                    "MysterType hex string must be 32 characters (16 bytes), got: " + hex);
-            }
-            return new MysterType(bytes);
-        } catch (NumberFormatException e) {
-            throw new IOException("Invalid hex string for MysterType: " + hex, e);
-        }
+        return new MysterType(MysterTypeCid.fromHexString(hex));
     }
 
     public String toString() {
         return toHexString();
     }
     
-    public static byte[] toShortBytes(PublicKey key) {
-        try {
-            // Compute the MD5 digest of the bytes
-            MessageDigest md = MessageDigest.getInstance("MD5");
-            return md.digest(key.getEncoded());
-        } catch (NoSuchAlgorithmException ex) {
-            throw new IllegalStateException("Algorythm should exist but does not", ex);
-        }
-    }
-
     public boolean equals(Object o) {
         if (o instanceof MysterType other) {
-           return Arrays.equals(shortBytes, other.shortBytes);
+           return cid.equals(other.cid);
         }
         
         return false;
     }
 
     public int hashCode() {
-        return Arrays.hashCode(shortBytes);
+        return cid.hashCode();
     }
 }
-

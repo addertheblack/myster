@@ -2,8 +2,7 @@ package com.myster.threedns;
 
 import java.util.Objects;
 
-import com.myster.identity.Cid128;
-import com.myster.identity.Util;
+import com.myster.cid.ServerCid;
 import com.myster.net.MysterAddress;
 import com.myster.tracker.PublicKeyIdentity;
 
@@ -17,11 +16,11 @@ import com.myster.tracker.PublicKeyIdentity;
  */
 public record ThreeDnsAddressCandidate(
     PublicKeyIdentity identity,
-    Cid128 cid,
+    ServerCid cid,
     MysterAddress address
 ) {
     public ThreeDnsAddressCandidate(PublicKeyIdentity identity, MysterAddress address) {
-        this(identity, Util.generateCid(Objects.requireNonNull(identity, "identity").getPublicKey()), address);
+        this(identity, ServerCid.fromPublicKey(Objects.requireNonNull(identity, "identity").getPublicKey()), address);
     }
 
     public ThreeDnsAddressCandidate {
@@ -29,7 +28,7 @@ public record ThreeDnsAddressCandidate(
         Objects.requireNonNull(cid, "cid");
         Objects.requireNonNull(address, "address");
 
-        Cid128 derivedCid = Util.generateCid(identity.getPublicKey());
+        ServerCid derivedCid = ServerCid.fromPublicKey(identity.getPublicKey());
         if (!derivedCid.equals(cid)) {
             throw new IllegalArgumentException("Candidate CID must be derived from its public key");
         }

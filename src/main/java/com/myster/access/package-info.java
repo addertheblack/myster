@@ -7,10 +7,10 @@
  * types allow anyone to discover and access files, while private types restrict access to
  * listed members.
  *
- * <p>Types are identified by {@link com.myster.type.MysterType} (MD5 shortBytes of the type's
- * RSA public key). The full public key is stored in the genesis block via a
- * {@code SET_TYPE_PUBLIC_KEY} operation, allowing remote nodes to resolve shortBytes to the
- * full key by downloading the access list.
+ * <p>Types are identified by {@link com.myster.type.MysterType}, which composes the
+ * {@link com.myster.cid.MysterTypeCid} derived from the type public key. Access-list members are
+ * separately identified by {@link com.myster.cid.ServerCid}. The full type public key is stored
+ * in the genesis block so remote nodes can resolve the compact type identity.
  *
  * <h2>Core Components</h2>
  * <ul>
@@ -40,4 +40,3 @@
  * @see com.myster.type.CustomTypeDefinition
  */
 package com.myster.access;
-

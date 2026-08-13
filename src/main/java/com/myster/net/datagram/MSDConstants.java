@@ -123,11 +123,6 @@ public class MSDConstants {
     public static final int NONCE_SIZE = 12;
     
     /**
-     * Size of client identifier (CID) in bytes (128 bits)
-     */
-    public static final int CID_SIZE = 16;
-    
-    /**
      * Hash algorithm used for CID generation and signatures
      */
     public static final String HASH_ALGORITHM = "SHA-256";

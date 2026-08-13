@@ -51,7 +51,7 @@ import com.myster.access.SetExtensionsOp;
 import com.myster.access.SetNameOp;
 import com.myster.access.SetPolicyOp;
 import com.myster.access.SetSearchInArchivesOp;
-import com.myster.identity.Cid128;
+import com.myster.cid.ServerCid;
 import com.myster.type.CustomTypeDefinition;
 import com.myster.type.MysterType;
 import com.myster.type.TypeDescriptionList;
@@ -79,7 +79,7 @@ public class TypeEditorPanel extends JPanel {
     private final CustomTypeDefinition existingType;
     private final AccessListManager accessListManager;
     private final Optional<TypeEditorServerSource> serverSource;
-    private final Optional<Cid128> localServerCid;
+    private final Optional<ServerCid> localServerCid;
 
     private final Runnable onSave;
     private final Runnable onCancel;
@@ -101,7 +101,7 @@ public class TypeEditorPanel extends JPanel {
     private final JButton saveButton;
 
     // members tab — only present in edit mode with admin key and a serverSource
-    private final MCList<Cid128> membersTable;
+    private final MCList<ServerCid> membersTable;
 
     /**
      * Creates a panel for creating a new custom type (no Members tab, no self-seeding).
@@ -120,7 +120,7 @@ public class TypeEditorPanel extends JPanel {
      * @param existingType  the type to edit, or {@code null} to create a new type
      * @param serverSource  server source used to populate the Members tab;
      *                      empty Optional omits the tab
-     * @param localServerCid the Cid128 of this server; when present and creating a new type,
+     * @param localServerCid the ServerCid of this server; when present and creating a new type,
      *                       it is automatically added as an {@code ADMIN} member in the genesis
      *                       block so the creator is always in the member list
      */
@@ -128,7 +128,7 @@ public class TypeEditorPanel extends JPanel {
                            AccessListManager accessListManager,
                            CustomTypeDefinition existingType,
                            Optional<TypeEditorServerSource> serverSource,
-                           Optional<Cid128> localServerCid,
+                           Optional<ServerCid> localServerCid,
                            Runnable onSave,
                            Runnable onCancel) {
         this.typeList = typeList;
@@ -342,8 +342,8 @@ public class TypeEditorPanel extends JPanel {
     private void populateMembers() {
         if (membersTable == null || editAccessList.isEmpty()) return;
         membersTable.clearAll();
-        Map<Cid128, Role> members = editAccessList.get().getState().getMembers();
-        for (Map.Entry<Cid128, Role> entry : members.entrySet()) {
+        Map<ServerCid, Role> members = editAccessList.get().getState().getMembers();
+        for (Map.Entry<ServerCid, Role> entry : members.entrySet()) {
             membersTable.addItem(new MemberItem(entry.getKey(), entry.getValue(), serverSource.get()));
         }
     }
@@ -368,7 +368,7 @@ public class TypeEditorPanel extends JPanel {
         if (editAdminKeyPair.isEmpty() || editAccessList.isEmpty()) return;
         int idx = membersTable.getSelectedIndex();
         if (idx < 0) return;
-        Cid128 cid = membersTable.getItem(idx);
+        ServerCid cid = membersTable.getItem(idx);
         try {
             editAccessList.get().appendBlock(
                     new RemoveMemberOp(cid), editAdminKeyPair.get());
@@ -580,8 +580,8 @@ public class TypeEditorPanel extends JPanel {
     }
 
     /** MCList item representing one member row in the Members tab. */
-    private static class MemberItem extends GenericMCListItem<Cid128> {
-        MemberItem(Cid128 cid, Role role, TypeEditorServerSource serverSource) {
+    private static class MemberItem extends GenericMCListItem<ServerCid> {
+        MemberItem(ServerCid cid, Role role, TypeEditorServerSource serverSource) {
             super(new Sortable[0], cid);
             this.cid = cid;
             this.role = role;
@@ -589,7 +589,7 @@ public class TypeEditorPanel extends JPanel {
                     .orElse(cid.asHex().substring(0, 12) + "…");
         }
 
-        private final Cid128 cid;
+        private final ServerCid cid;
         private final Role role;
         private final String displayName;
 

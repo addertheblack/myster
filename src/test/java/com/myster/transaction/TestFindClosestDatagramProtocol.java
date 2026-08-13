@@ -17,8 +17,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 
-import com.myster.identity.Cid128;
-import com.myster.identity.Util;
+import com.myster.cid.ServerCid;
 import com.myster.mml.MessagePak;
 import com.myster.net.MysterAddress;
 import com.myster.net.datagram.BadPacketException;
@@ -66,7 +65,7 @@ class TestFindClosestDatagramProtocol {
         assertEquals(DatagramConstants.NO_ERROR, replies.getFirst().getErrorCode());
         ThreeDnsAddressCandidateSet decoded = client.getObjectFromTransaction(replies.getFirst());
         assertEquals(exact, decoded.exact().orElseThrow().identity());
-        assertEquals(Util.generateCid(exactKey.getPublic()), decoded.exact().orElseThrow().cid());
+        assertEquals(ServerCid.fromPublicKey(exactKey.getPublic()), decoded.exact().orElseThrow().cid());
         assertEquals(exactAddress, decoded.exact().orElseThrow().address());
         assertEquals(List.of(left), decoded.left().stream().map(c -> c.identity()).toList());
         assertEquals(leftAddress, decoded.left().getFirst().address());
@@ -196,7 +195,7 @@ class TestFindClosestDatagramProtocol {
         return server;
     }
 
-    private static byte[] request(Cid128 target, Optional<Integer> limit) throws Exception {
+    private static byte[] request(ServerCid target, Optional<Integer> limit) throws Exception {
         MessagePak request = MessagePak.newEmpty();
         request.putInt("/schemaVersion", ThreeDnsAddressCandidateSet.SCHEMA_VERSION);
         request.putByteArray("/targetCid", target.bytes());
@@ -215,9 +214,9 @@ class TestFindClosestDatagramProtocol {
         return new Transaction(request(new byte[0]), payload, DatagramConstants.NO_ERROR);
     }
 
-    private static Cid128 cid(int lastByte) {
-        byte[] bytes = new byte[Cid128.LENGTH];
+    private static ServerCid cid(int lastByte) {
+        byte[] bytes = new byte[ServerCid.LENGTH];
         bytes[bytes.length - 1] = (byte) lastByte;
-        return new Cid128(bytes);
+        return new ServerCid(bytes);
     }
 }

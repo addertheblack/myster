@@ -12,6 +12,7 @@ import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 
+import com.myster.cid.ServerCid;
 import com.myster.identity.Identity;
 import com.myster.net.datagram.DatagramEncryptUtil.DecryptionException;
 import com.myster.net.datagram.DatagramEncryptUtil.EncryptedRequest;
@@ -114,8 +115,8 @@ class TestDatagramEncryptUtil {
         Assertions.assertArrayEquals(originalPayload, decryptResult.payload);
         Assertions.assertArrayEquals(encryptedRequest.symmetricKey, decryptResult.syncDecryptKey);
         Assertions.assertTrue(decryptResult.publicKey.isPresent());
-        Assertions.assertTrue(decryptResult.keyHash.isPresent()); // CID should be present
-        Assertions.assertEquals(16, decryptResult.keyHash.get().length); // CID is 16 bytes
+        Assertions.assertEquals(ServerCid.fromPublicKey(clientKeyPair.getPublic()),
+                                decryptResult.callerCid.orElseThrow());
     }
     
     @Test
@@ -144,7 +145,7 @@ class TestDatagramEncryptUtil {
         Assertions.assertArrayEquals(originalPayload, decryptResult.payload);
         Assertions.assertArrayEquals(encryptedRequest.symmetricKey, decryptResult.syncDecryptKey);
         Assertions.assertTrue(decryptResult.publicKey.isEmpty()); // No signature
-        Assertions.assertTrue(decryptResult.keyHash.isEmpty()); // No CID
+        Assertions.assertTrue(decryptResult.callerCid.isEmpty()); // No authenticated caller
     }
     
     @Test
@@ -340,9 +341,8 @@ class TestDatagramEncryptUtil {
     private Lookup createMockLookup(KeyPair serverKeyPair) {
         return new Lookup() {
             @Override
-            public Optional<PublicKey> findPublicKey(byte[] keyHash) {
-                // For testing, return the client's public key if we have a hash
-                if (keyHash != null && keyHash.length == 16) {
+            public Optional<PublicKey> findPublicKey(ServerCid serverCid) {
+                if (serverCid.equals(ServerCid.fromPublicKey(clientKeyPair.getPublic()))) {
                     return Optional.of(clientKeyPair.getPublic());
                 }
                 return Optional.empty();

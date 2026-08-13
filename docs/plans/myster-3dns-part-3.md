@@ -23,13 +23,13 @@ Implement the public lookup operation that resolves a target CID by iteratively 
 
 - The routing table uses positive power-of-two offsets. Resolution therefore follows a monotonic positive-ring route and normally approaches the target from its LEFT/predecessor side; exact is preferred first.
 - Both wire sides remain available for resilience and future routing policies. The next-hop selector must explicitly score the appropriate side rather than depend on response ordering.
-- Every queried address is contacted with its candidate public key as the expected identity. A peer that can decrypt and answer the request proves possession; final exact success also requires `generateCid(validatedKey) == target`.
+- Every queried address is contacted with its candidate public key as the expected identity. A peer that can decrypt and answer the request proves possession; final exact success also requires `ServerCid.fromPublicKey(validatedKey) == target`.
 - Open question for finalization: whether the public result should return only exact/not-found or also expose closest validated predecessor/successor diagnostics. Preliminary recommendation: a structured result with status and closest-known candidates.
 - Open question for finalization: tune hop, queue, parallelism, and byte budgets after Part 2a testing. Preliminary values are 16 hops, queue 64, per-side limit 2, and low parallelism.
 
 ## 4. Proposed design
 
-`ThreeDnsLookup.resolve(Cid128)` starts from tracker/pool seeds and maintains a bounded frontier of validated or expected-key-address candidates. It queries the best unvisited peer for the target, derives CIDs from every returned key, rejects malformed/non-progressing hints, validates useful candidates, and repeats.
+`ThreeDnsLookup.resolve(ServerCid)` starts from tracker/pool seeds and maintains a bounded frontier of validated or expected-key-address candidates. It queries the best unvisited peer for the target, derives CIDs from every returned key, rejects malformed/non-progressing hints, validates useful candidates, and repeats.
 
 The selector is direction-aware. With positive-offset routing, exact candidates win; otherwise candidates on the LEFT/predecessor side of the target are favored, ordered by predecessor distance. A candidate is eligible as a next hop only if it makes strict positive-ring progress from the current best position toward the target. RIGHT/successor results are retained as fallback/diagnostic information but cannot silently cause an overshoot or a loop.
 
@@ -41,7 +41,7 @@ Visited identities and addresses are tracked separately. Exact resolution comple
 |---|---|---|---|
 | Resolver API | `ThreeDnsLookup` | Future CID-based features | `MysterProtocol`, tracker seeds, pool |
 | Lookup result | `ThreeDnsLookupResult` | Resolver callers | validated `MysterServer`, target/closest CIDs, status |
-| Direction-aware frontier | Lookup-internal model | Iteration loop | `Cid128` ring distances, Part 2a candidate groups |
+| Direction-aware frontier | Lookup-internal model | Iteration loop | `ServerCid` ring distances, Part 2a candidate groups |
 | Candidate proof | Part 2b's production proof/onboarding path when reusable; otherwise a resolver-owned narrow helper | Resolver | Part 2a expected-key transport and normal pool onboarding |
 
 No new wire or disk format is introduced. Part 3 consumes transaction `303` and the local retained state produced by Parts 1/2b.
@@ -83,7 +83,7 @@ No new wire or disk format is introduced. Part 3 consumes transaction `303` and 
 ## 9. Step-by-step implementation
 
 1. Finalize the public async method/result shape and injectable limits after Parts 2a/2b.
-2. Implement a pure candidate scorer using `Cid128` ring comparisons: exact first, then strict predecessor-side progress toward the target for positive routing, with deterministic tie-breaking.
+2. Implement a pure candidate scorer using `ServerCid` ring comparisons: exact first, then strict predecessor-side progress toward the target for positive routing, with deterministic tie-breaking.
 3. Seed from retained usable 3DNS entries, local pool closest results, and an optional explicit bootstrap candidate.
 4. Track visited CIDs, identities, and addresses; maintain a bounded priority frontier.
 5. Query the best candidate with `findClosest(...)` using its expected public key. Validate useful returned candidates before promotion to trusted/validated state.

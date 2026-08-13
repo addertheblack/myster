@@ -13,7 +13,7 @@ import com.myster.net.datagram.client.PingResponse;
 import com.myster.net.datagram.message.MessagePacket;
 import com.myster.search.MysterFileStub;
 import com.myster.threedns.ThreeDnsAddressCandidateSet;
-import com.myster.identity.Cid128;
+import com.myster.cid.ServerCid;
 import com.myster.type.MysterType;
 
 public interface MysterDatagram {
@@ -52,7 +52,7 @@ public interface MysterDatagram {
      * @return exact, predecessor, and successor candidate groups
      */
     public PromiseFuture<ThreeDnsAddressCandidateSet> findClosest(ParamBuilder params,
-                                                                  Cid128 target,
+                                                                  ServerCid target,
                                                                   int perSideLimit);
 
     public PromiseFuture<MessagePak> getFileStats(final MysterFileStub stub);

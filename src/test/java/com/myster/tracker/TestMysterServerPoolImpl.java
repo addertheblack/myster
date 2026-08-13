@@ -22,7 +22,7 @@ import java.util.prefs.Preferences;
 import com.general.thread.PromiseFuture;
 import com.general.util.MapPreferences;
 import com.general.util.Semaphore;
-import com.myster.identity.Cid128;
+import com.myster.cid.ServerCid;
 import com.myster.identity.Identity;
 import com.myster.mml.MessagePak;
 import com.myster.net.MysterAddress;
@@ -651,8 +651,8 @@ class TestMysterServerPoolImpl {
         return stats;
     }
 
-    private static Cid128 cid(PublicKeyIdentity identity) {
-        return com.myster.identity.Util.generateCid(identity.getPublicKey());
+    private static ServerCid cid(PublicKeyIdentity identity) {
+        return com.myster.cid.ServerCid.fromPublicKey(identity.getPublicKey());
     }
 
     private MysterProtocol createProtocol() throws IOException {

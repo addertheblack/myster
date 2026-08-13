@@ -4,7 +4,7 @@ import java.security.KeyPair;
 import java.security.KeyPairGenerator;
 import java.security.PublicKey;
 
-import com.myster.identity.Cid128;
+import com.myster.cid.ServerCid;
 import com.myster.type.MysterType;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
@@ -65,7 +65,7 @@ class TestAccessListState {
         PublicKey writer = ed25519KeyPair.getPublic();
         state.applyOperation(new AddWriterOp(writer), writer);
 
-        Cid128 cid = com.myster.identity.Util.generateCid(rsaKeyPair.getPublic());
+        ServerCid cid = com.myster.cid.ServerCid.fromPublicKey(rsaKeyPair.getPublic());
         state.applyOperation(new AddMemberOp(cid, Role.MEMBER), writer);
         assertTrue(state.isMember(cid));
         assertEquals(Role.MEMBER, state.getRole(cid));
@@ -81,7 +81,7 @@ class TestAccessListState {
         PublicKey writer = ed25519KeyPair.getPublic();
         state.applyOperation(new AddWriterOp(writer), writer);
 
-        Cid128 cid = com.myster.identity.Util.generateCid(rsaKeyPair.getPublic());
+        ServerCid cid = com.myster.cid.ServerCid.fromPublicKey(rsaKeyPair.getPublic());
         state.applyOperation(new AddMemberOp(cid, Role.ADMIN), writer);
         assertTrue(state.isAdmin(cid));
     }

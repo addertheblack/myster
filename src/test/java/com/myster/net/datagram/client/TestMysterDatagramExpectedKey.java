@@ -19,7 +19,7 @@ import java.util.concurrent.atomic.AtomicReference;
 import org.junit.jupiter.api.Test;
 
 import com.myster.filemanager.FileTypeListManager;
-import com.myster.identity.Cid128;
+import com.myster.cid.ServerCid;
 import com.myster.net.MysterAddress;
 import com.myster.net.client.ParamBuilder;
 import com.myster.net.datagram.DataPacket;
@@ -75,7 +75,7 @@ class TestMysterDatagramExpectedKey {
                                                              null,
                                                              mock(FileTypeListManager.class));
 
-        datagram.findClosest(params, new Cid128(new byte[Cid128.LENGTH]), 2);
+        datagram.findClosest(params, new ServerCid(new byte[ServerCid.LENGTH]), 2);
 
         assertEquals(DatagramConstants.STLS_CODE, sentCode.get());
         assertThrows(DatagramEncryptUtil.DecryptionException.class,
@@ -89,13 +89,13 @@ class TestMysterDatagramExpectedKey {
         assertEquals(DatagramConstants.THREE_DNS_FIND_CLOSEST_TRANSACTION_CODE, payload.getInt());
         byte[] innerPayload = new byte[payload.remaining()];
         payload.get(innerPayload);
-        assertTrue(innerPayload.length > Cid128.LENGTH);
+        assertTrue(innerPayload.length > ServerCid.LENGTH);
     }
 
     private static DatagramEncryptUtil.Lookup keyLookup(KeyPair keyPair) {
         return new DatagramEncryptUtil.Lookup() {
             @Override
-            public Optional<PublicKey> findPublicKey(byte[] keyHash) {
+            public Optional<PublicKey> findPublicKey(ServerCid serverCid) {
                 return Optional.empty();
             }
 

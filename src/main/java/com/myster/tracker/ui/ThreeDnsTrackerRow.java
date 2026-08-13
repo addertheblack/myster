@@ -2,7 +2,7 @@ package com.myster.tracker.ui;
 
 import java.util.Objects;
 
-import com.myster.identity.Cid128;
+import com.myster.cid.ServerCid;
 import com.myster.net.MysterAddress;
 import com.myster.threedns.ThreeDnsFingerEntry;
 import com.myster.tracker.MysterServer;
@@ -16,8 +16,8 @@ import com.myster.tracker.MysterServer;
  */
 public record ThreeDnsTrackerRow(
         MysterServer server,
-        Cid128 targetCid,
-        Cid128 serverCid,
+        ServerCid targetCid,
+        ServerCid serverCid,
         int bitIndex,
         ThreeDnsFingerEntry.Side side,
         MysterAddress retainedAddress,

@@ -19,9 +19,8 @@ import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Consumer;
 
 import com.general.thread.PromiseFuture;
-import com.myster.identity.Cid128;
+import com.myster.cid.ServerCid;
 import com.myster.identity.Identity;
-import com.myster.identity.Util;
 import com.myster.net.MysterAddress;
 import com.myster.net.datagram.client.PingResponse;
 import com.myster.tracker.IdentityTracker.Pinger;
@@ -31,7 +30,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 
-import static com.myster.identity.Util.generateCid;
+import static com.myster.cid.ServerCid.fromPublicKey;
 import static org.junit.jupiter.api.Assertions.*;
 
 public class TestIdentityTracker {
@@ -311,10 +310,10 @@ public class TestIdentityTracker {
             identityTracker.addIdentity(publicKeyIdentity, publicKeyAddress);
             identityTracker.addIdentity(addressOnlyIdentity, addressOnlyAddress);
 
-            assertEquals(publicKeyIdentity, identityTracker.getIdentityFromCid(Util.generateCid(publicKeyIdentity.getPublicKey())).get());
+            assertEquals(publicKeyIdentity, identityTracker.getIdentityFromCid(ServerCid.fromPublicKey(publicKeyIdentity.getPublicKey())).get());
 
             List<PublicKeyIdentity> right = new ArrayList<>();
-            identityTracker.findClosest(Util.generateCid(publicKeyIdentity.getPublicKey()).plusPowerOfTwo(1),
+            identityTracker.findClosest(ServerCid.fromPublicKey(publicKeyIdentity.getPublicKey()).plusPowerOfTwo(1),
                                         IdentityTracker.Direction.RIGHT,
                                         candidate -> {
                                             right.add(candidate);
@@ -332,13 +331,13 @@ public class TestIdentityTracker {
 
             identityTracker.addIdentity(identity, first);
             identityTracker.addIdentity(identity, second);
-            assertEquals(identity, identityTracker.getIdentityFromCid(Util.generateCid(identity.getPublicKey())).get());
+            assertEquals(identity, identityTracker.getIdentityFromCid(ServerCid.fromPublicKey(identity.getPublicKey())).get());
 
             identityTracker.removeIdentity(identity, first);
-            assertEquals(identity, identityTracker.getIdentityFromCid(Util.generateCid(identity.getPublicKey())).get());
+            assertEquals(identity, identityTracker.getIdentityFromCid(ServerCid.fromPublicKey(identity.getPublicKey())).get());
 
             identityTracker.removeIdentity(identity, second);
-            assertTrue(identityTracker.getIdentityFromCid(Util.generateCid(identity.getPublicKey())).isEmpty());
+            assertTrue(identityTracker.getIdentityFromCid(ServerCid.fromPublicKey(identity.getPublicKey())).isEmpty());
         }
 
         @Test
@@ -347,13 +346,13 @@ public class TestIdentityTracker {
             for (int i = 0; i < 6; i++) {
                 ordered.add(new PublicKeyIdentity(new FakePublicKey(100 + i)));
             }
-            ordered.sort(Comparator.comparing(identity -> generateCid(identity.getPublicKey())));
+            ordered.sort(Comparator.comparing(identity -> fromPublicKey(identity.getPublicKey())));
 
             for (int i = 0; i < ordered.size(); i++) {
                 identityTracker.addIdentity(ordered.get(i), MysterAddress.createMysterAddress("10.2.2." + (i + 1)));
             }
 
-            Cid128 target = Util.generateCid(ordered.get(2).getPublicKey());
+            ServerCid target = ServerCid.fromPublicKey(ordered.get(2).getPublicKey());
             List<PublicKeyIdentity> left = collect(target, IdentityTracker.Direction.LEFT, 4);
             List<PublicKeyIdentity> right = collect(target, IdentityTracker.Direction.RIGHT, 4);
 
@@ -361,7 +360,7 @@ public class TestIdentityTracker {
             assertEquals(List.of(ordered.get(3), ordered.get(4), ordered.get(5), ordered.get(0)), right);
         }
 
-        private List<PublicKeyIdentity> collect(Cid128 target, IdentityTracker.Direction direction, int limit) {
+        private List<PublicKeyIdentity> collect(ServerCid target, IdentityTracker.Direction direction, int limit) {
             List<PublicKeyIdentity> results = new ArrayList<>();
             identityTracker.findClosest(target, direction, candidate -> {
                 results.add(candidate);

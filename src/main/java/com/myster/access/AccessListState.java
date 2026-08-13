@@ -9,7 +9,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-import com.myster.identity.Cid128;
+import com.myster.cid.ServerCid;
 import com.myster.type.MysterType;
 
 /**
@@ -24,7 +24,7 @@ import com.myster.type.MysterType;
  */
 public class AccessListState {
     private final Set<PublicKey> writers;
-    private final Map<Cid128, Role> members;
+    private final Map<ServerCid, Role> members;
     private Policy policy;
     private final List<String> onramps;
     private byte[] tipHash;
@@ -77,9 +77,9 @@ public class AccessListState {
             writers.remove(((RemoveWriterOp) operation).getWriterPubkey());
         } else if (opType.equals(OpType.ADD_MEMBER)) {
             AddMemberOp op = (AddMemberOp) operation;
-            members.put(op.getMemberIdentity(), op.getRole());
+            members.put(op.memberIdentity(), op.role());
         } else if (opType.equals(OpType.REMOVE_MEMBER)) {
-            members.remove(((RemoveMemberOp) operation).getMemberIdentity());
+            members.remove(((RemoveMemberOp) operation).memberIdentity());
         } else if (opType.equals(OpType.ADD_ONRAMP)) {
             String ep = ((AddOnrampOp) operation).getEndpoint();
             if (!onramps.contains(ep)) {
@@ -117,15 +117,15 @@ public class AccessListState {
         return false;
     }
 
-    public boolean isMember(Cid128 identity) {
+    public boolean isMember(ServerCid identity) {
         return members.containsKey(identity);
     }
 
-    public Role getRole(Cid128 identity) {
+    public Role getRole(ServerCid identity) {
         return members.get(identity);
     }
 
-    public boolean isAdmin(Cid128 identity) {
+    public boolean isAdmin(ServerCid identity) {
         return Role.ADMIN.equals(getRole(identity));
     }
 
@@ -133,7 +133,7 @@ public class AccessListState {
         return Collections.unmodifiableSet(writers);
     }
 
-    public Map<Cid128, Role> getMembers() {
+    public Map<ServerCid, Role> getMembers() {
         return Collections.unmodifiableMap(members);
     }
 

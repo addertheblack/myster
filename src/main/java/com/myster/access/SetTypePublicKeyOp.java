@@ -13,8 +13,9 @@ import java.util.Objects;
 /**
  * Operation to set the type's RSA public key. Required in the genesis block.
  *
- * <p>This key's MD5 hash produces the {@link com.myster.type.MysterType} shortBytes.
- * Remote nodes download the access list to resolve shortBytes back to the full public key.
+ * <p>This key's MD5 hash produces the {@link com.myster.cid.MysterTypeCid} composed by
+ * {@link com.myster.type.MysterType}. Remote nodes download the access list to resolve the
+ * compact identity back to the full public key.
  */
 public class SetTypePublicKeyOp implements BlockOperation {
     private final PublicKey typePublicKey;
@@ -68,4 +69,3 @@ public class SetTypePublicKeyOp implements BlockOperation {
         return "SetTypePublicKeyOp{algorithm=" + typePublicKey.getAlgorithm() + "}";
     }
 }
-

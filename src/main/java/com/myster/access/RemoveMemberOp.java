@@ -5,21 +5,16 @@ import java.io.DataOutputStream;
 import java.io.IOException;
 import java.util.Objects;
 
-import com.myster.identity.Cid128;
+import com.drew.lang.annotations.NotNull;
+import com.myster.cid.ServerCid;
 
 /**
  * Operation to remove a member from the access list.
  * After removal, the member can no longer access files of this type.
  */
-public class RemoveMemberOp implements BlockOperation {
-    private final Cid128 memberIdentity;
-
-    public RemoveMemberOp(Cid128 memberIdentity) {
+public record RemoveMemberOp(ServerCid memberIdentity) implements BlockOperation {
+    public RemoveMemberOp(ServerCid memberIdentity) {
         this.memberIdentity = Objects.requireNonNull(memberIdentity, "Member identity cannot be null");
-    }
-
-    public Cid128 getMemberIdentity() {
-        return memberIdentity;
     }
 
     @Override
@@ -33,12 +28,13 @@ public class RemoveMemberOp implements BlockOperation {
     }
 
     static RemoveMemberOp deserializePayload(DataInputStream in) throws IOException {
-        byte[] cidBytes = new byte[16];
+        byte[] cidBytes = new byte[ServerCid.LENGTH];
         in.readFully(cidBytes);
-        return new RemoveMemberOp(new Cid128(cidBytes));
+        return new RemoveMemberOp(new ServerCid(cidBytes));
     }
 
     @Override
+    @NotNull
     public String toString() {
         return "RemoveMemberOp{identity=" + memberIdentity + "}";
     }

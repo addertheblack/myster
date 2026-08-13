@@ -37,10 +37,10 @@ The distinguishing aspect of 3DNS in Myster is that it is identity-driven. The C
 
 ## 4. CID Representation and Numeric Model
 
-For routing to be efficient, CIDs must support fast numeric operations. `Cid128` keeps the existing byte-array constructor and `bytes()` serialization contract, but internally caches two unsigned 64-bit values for comparison and ring arithmetic.
+For routing to be efficient, server CIDs must support fast numeric operations. The public `ServerCid` composes a package-private 128-bit value that caches two unsigned 64-bit values for comparison and ring arithmetic. This prevents a Myster type CID from being passed to the server-identity ring while retaining the existing byte representation.
 
 ```java
-public final class Cid128 implements Comparable<Cid128> {}
+public final class ServerCid implements Comparable<ServerCid> {}
 ```
 
 This representation allows efficient unsigned comparison, natural wraparound arithmetic, and direct use as keys in ordered data structures such as TreeMap. It also avoids repeated allocation and copying of byte arrays in routing code.
@@ -56,7 +56,7 @@ Rather than exposing distance as a first-class value, the system defines a compa
 The ordered CID index is owned by `IdentityTracker`, not by `MysterServerPoolImpl`. The existing CID lookup map is upgraded to a navigable map:
 
 ```java
-NavigableMap<Cid128, MysterIdentity> cid128ToIdentity = new TreeMap<>();
+NavigableMap<ServerCid, MysterIdentity> serverCidToIdentity = new TreeMap<>();
 ```
 
 This structure provides both exact lookup and ordered access to neighboring entries. Exact lookup remains logarithmic in complexity but is sufficiently fast given the expected size of the routing table. Avoiding a second CID index in the pool reduces memory usage and eliminates the need to maintain consistency between multiple data structures.

@@ -37,7 +37,7 @@ import com.general.util.GridBagBuilder;
 import com.general.util.IconLoader;
 import com.general.util.MessagePanel;
 import com.myster.access.AccessListManager;
-import com.myster.identity.Cid128;
+import com.myster.cid.ServerCid;
 import com.myster.pref.ui.PreferencesPanel;
 import com.myster.type.CustomTypeDefinition;
 import com.myster.type.MysterType;
@@ -66,7 +66,7 @@ public class TypeManagerPreferences extends PreferencesPanel {
     private final TypeDescriptionList tdList;
     private final AccessListManager accessListManager;
     private final Optional<TypeEditorServerSource> serverSource;
-    private final Optional<Cid128> localServerCid;
+    private final Optional<ServerCid> localServerCid;
     private MCList<MysterType> mcList;
     private Action addAction;
     private Action editAction;
@@ -96,7 +96,7 @@ public class TypeManagerPreferences extends PreferencesPanel {
     public TypeManagerPreferences(TypeDescriptionList tdList,
                                   AccessListManager accessListManager,
                                   Optional<TypeEditorServerSource> serverSource,
-                                  Optional<Cid128> localServerCid) {
+                                  Optional<ServerCid> localServerCid) {
         this.tdList = tdList;
         this.accessListManager = accessListManager;
         this.serverSource = serverSource;

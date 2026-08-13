@@ -4,7 +4,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 
-import com.myster.identity.Cid128;
+import com.myster.cid.ServerCid;
 
 /**
  * Immutable structural snapshot of one local 3DNS target slot.
@@ -15,7 +15,7 @@ import com.myster.identity.Cid128;
  */
 public record ThreeDnsTargetSlotSnapshot(
         int bitIndex,
-        Cid128 targetCid,
+        ServerCid targetCid,
         List<ThreeDnsFingerEntry> left,
         List<ThreeDnsFingerEntry> right
 ) {

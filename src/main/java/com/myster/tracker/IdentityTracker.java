@@ -19,7 +19,7 @@ import com.general.net.NetUtils;
 import com.general.thread.PromiseFuture;
 import com.general.util.Timer;
 import com.general.util.Util;
-import com.myster.identity.Cid128;
+import com.myster.cid.ServerCid;
 import com.myster.net.MysterAddress;
 import com.myster.net.datagram.client.PingResponse;
 import com.myster.net.server.ServerUtils;
@@ -43,7 +43,7 @@ class IdentityTracker implements IdentityProvider {
     private final Map<MysterAddress, MysterIdentity> addressToIdentity = new HashMap<>();
     private final Map<InetAddress, Set<MysterAddress>> ipToServerAddresses = new HashMap<>();
     private final Map<MysterIdentity, List<MysterAddress>> identityToAddresses = new HashMap<>();
-    private final NavigableMap<Cid128, MysterIdentity> cid128ToIdentity = new TreeMap<>();
+    private final NavigableMap<ServerCid, MysterIdentity> serverCidToIdentity = new TreeMap<>();
 
     private final Consumer<PingResponse> pingListener;
     private final Consumer<MysterIdentity> deadServerListener;
@@ -108,8 +108,8 @@ class IdentityTracker implements IdentityProvider {
     }
     
     @Override
-    public synchronized Optional<MysterIdentity> getIdentityFromCid(Cid128 cid128) {
-        return Optional.ofNullable(cid128ToIdentity.get(cid128));
+    public synchronized Optional<MysterIdentity> getIdentityFromCid(ServerCid serverCid) {
+        return Optional.ofNullable(serverCidToIdentity.get(serverCid));
     }
 
     /**
@@ -117,17 +117,17 @@ class IdentityTracker implements IdentityProvider {
      * target CID. The walk wraps around the unsigned 128-bit ring and stops
      * when all indexed candidates have been offered or the consumer returns
      * {@code false}. The exact target CID is not produced; callers that care
-     * about exact matches should use {@link #getIdentityFromCid(Cid128)}
+     * about exact matches should use {@link #getIdentityFromCid(ServerCid)}
      * separately.
      */
-    synchronized void findClosest(Cid128 target, Direction direction, CandidateConsumer consumer) {
-        if (cid128ToIdentity.isEmpty()) {
+    synchronized void findClosest(ServerCid target, Direction direction, CandidateConsumer consumer) {
+        if (serverCidToIdentity.isEmpty()) {
             return;
         }
 
-        Entry<Cid128, MysterIdentity> entry = neighborEntry(target, direction);
+        Entry<ServerCid, MysterIdentity> entry = neighborEntry(target, direction);
 
-        for (int visited = 0; entry != null && visited < cid128ToIdentity.size(); visited++) {
+        for (int visited = 0; entry != null && visited < serverCidToIdentity.size(); visited++) {
             if (!entry.getKey().equals(target) && entry.getValue() instanceof PublicKeyIdentity candidate) {
                 if (!consumer.consume(candidate)) {
                     return;
@@ -306,7 +306,7 @@ class IdentityTracker implements IdentityProvider {
         ipToServerAddresses.get(address.getInetAddress()).add(address);
         addressToIdentity.put(address, key);
         externalNameToIdentity.put(computeNodeNameFromIdentity(key), key);
-        computerCidFromIdentity(key).ifPresent(k ->  cid128ToIdentity.put(k, key));
+        computeServerCidFromIdentity(key).ifPresent(k -> serverCidToIdentity.put(k, key));
 
         if (!identityToAddresses.containsKey(key)) {
             identityToAddresses.put(key, new ArrayList<>());
@@ -333,9 +333,9 @@ class IdentityTracker implements IdentityProvider {
         refreshElementIfNeeded(address, addressState);
     }
     
-    private static Optional<Cid128> computerCidFromIdentity(MysterIdentity key) {
+    private static Optional<ServerCid> computeServerCidFromIdentity(MysterIdentity key) {
         if (key instanceof PublicKeyIdentity pki) {
-            return Optional.of(com.myster.identity.Util.generateCid(pki.getPublicKey()));
+            return Optional.of(ServerCid.fromPublicKey(pki.getPublicKey()));
         }
         
         return Optional.empty();
@@ -366,9 +366,9 @@ class IdentityTracker implements IdentityProvider {
 
             addresses.remove(address);
             
-            if(addresses.size()==0) {
+            if(addresses.isEmpty()) {
                 externalNameToIdentity.remove(computeNodeNameFromIdentity(key));
-                computerCidFromIdentity(key).ifPresent(k ->  cid128ToIdentity.remove(k, key));
+                computeServerCidFromIdentity(key).ifPresent(k -> serverCidToIdentity.remove(k, key));
                 identityToAddresses.remove(key);
 
                 var l = deadServerListener;
@@ -476,7 +476,7 @@ class IdentityTracker implements IdentityProvider {
             return state.up;
         }).toList();
         
-        if (upAddresses.size()==0) {
+        if (upAddresses.isEmpty()) {
             return;
         }
         
@@ -516,15 +516,15 @@ class IdentityTracker implements IdentityProvider {
         }
     }
 
-    private Entry<Cid128, MysterIdentity> neighborEntry(Cid128 target, Direction direction) {
+    private Entry<ServerCid, MysterIdentity> neighborEntry(ServerCid target, Direction direction) {
         return switch (direction) {
             case LEFT -> {
-                Entry<Cid128, MysterIdentity> entry = cid128ToIdentity.lowerEntry(target);
-                yield entry != null ? entry : cid128ToIdentity.lastEntry();
+                Entry<ServerCid, MysterIdentity> entry = serverCidToIdentity.lowerEntry(target);
+                yield entry != null ? entry : serverCidToIdentity.lastEntry();
             }
             case RIGHT -> {
-                Entry<Cid128, MysterIdentity> entry = cid128ToIdentity.higherEntry(target);
-                yield entry != null ? entry : cid128ToIdentity.firstEntry();
+                Entry<ServerCid, MysterIdentity> entry = serverCidToIdentity.higherEntry(target);
+                yield entry != null ? entry : serverCidToIdentity.firstEntry();
             }
         };
     }

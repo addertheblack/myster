@@ -8,7 +8,7 @@ import java.io.IOException;
 import java.security.KeyPair;
 import java.security.KeyPairGenerator;
 
-import com.myster.identity.Cid128;
+import com.myster.cid.ServerCid;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 
@@ -64,30 +64,30 @@ class TestBlockOperation {
 
     @Test
     void addMemberRoundTrip() throws IOException {
-        Cid128 cid = com.myster.identity.Util.generateCid(rsaKeyPair.getPublic());
+        ServerCid cid = com.myster.cid.ServerCid.fromPublicKey(rsaKeyPair.getPublic());
         AddMemberOp original = new AddMemberOp(cid, Role.ADMIN);
         AddMemberOp restored = (AddMemberOp) roundTrip(original);
-        assertEquals(cid, restored.getMemberIdentity());
-        assertEquals(Role.ADMIN, restored.getRole());
+        assertEquals(cid, restored.memberIdentity());
+        assertEquals(Role.ADMIN, restored.role());
     }
 
     @Test
     void addMemberWithNonCanonicalRoleRoundTrip() throws IOException {
-        Cid128 cid = com.myster.identity.Util.generateCid(rsaKeyPair.getPublic());
+        ServerCid cid = com.myster.cid.ServerCid.fromPublicKey(rsaKeyPair.getPublic());
         Role futureRole = Role.fromString("SUPER_ADMIN");
         AddMemberOp original = new AddMemberOp(cid, futureRole);
         AddMemberOp restored = (AddMemberOp) roundTrip(original);
-        assertEquals(cid, restored.getMemberIdentity());
-        assertEquals("SUPER_ADMIN", restored.getRole().getIdentifier());
-        assertFalse(restored.getRole().isCanonical());
+        assertEquals(cid, restored.memberIdentity());
+        assertEquals("SUPER_ADMIN", restored.role().getIdentifier());
+        assertFalse(restored.role().isCanonical());
     }
 
     @Test
     void removeMemberRoundTrip() throws IOException {
-        Cid128 cid = com.myster.identity.Util.generateCid(rsaKeyPair.getPublic());
+        ServerCid cid = com.myster.cid.ServerCid.fromPublicKey(rsaKeyPair.getPublic());
         RemoveMemberOp original = new RemoveMemberOp(cid);
         RemoveMemberOp restored = (RemoveMemberOp) roundTrip(original);
-        assertEquals(cid, restored.getMemberIdentity());
+        assertEquals(cid, restored.memberIdentity());
     }
 
     @Test

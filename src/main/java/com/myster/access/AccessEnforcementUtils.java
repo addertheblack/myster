@@ -4,7 +4,7 @@ import java.io.IOException;
 import java.util.Optional;
 import java.util.logging.Logger;
 
-import com.myster.identity.Cid128;
+import com.myster.cid.ServerCid;
 import com.myster.type.MysterType;
 
 /**
@@ -16,7 +16,7 @@ import com.myster.type.MysterType;
  *   <li>{@link Policy#isListFilesPublic()} is {@code true} → <b>allow</b>.</li>
  *   <li>Caller identity is unknown (empty {@code callerCid}) → <b>deny</b>. Identity cannot
  *       be verified on a plaintext connection.</li>
- *   <li>Caller's {@link Cid128} is in the members map (admins are always members) → <b>allow</b>.</li>
+ *   <li>Caller's {@link ServerCid} is in the members map (admins are always members) → <b>allow</b>.</li>
  *   <li>Otherwise → <b>deny</b>.</li>
  * </ol>
  *
@@ -25,7 +25,7 @@ import com.myster.type.MysterType;
  * thread.
  *
  * @see AccessListReader
- * @see AccessListState#isMember(Cid128)
+ * @see AccessListState#isMember(ServerCid)
  */
 public class AccessEnforcementUtils {
     private static final Logger log = Logger.getLogger(AccessEnforcementUtils.class.getName());
@@ -43,7 +43,7 @@ public class AccessEnforcementUtils {
      * @return {@code true} if access is permitted, {@code false} if it must be denied
      */
     public static boolean isAllowed(MysterType type,
-                                    Optional<Cid128> callerCid,
+                                    Optional<ServerCid> callerCid,
                                     AccessListReader reader) {
         Optional<AccessList> listOpt;
         try {

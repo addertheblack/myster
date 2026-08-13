@@ -2,7 +2,7 @@ package com.myster.threedns;
 
 import java.util.Objects;
 
-import com.myster.identity.Cid128;
+import com.myster.cid.ServerCid;
 import com.myster.net.MysterAddress;
 import com.myster.tracker.MysterServer;
 import com.myster.tracker.PublicKeyIdentity;
@@ -12,8 +12,8 @@ import com.myster.tracker.PublicKeyIdentity;
  * server's best known address until normal pool pings decide whether the server is usable.
  */
 public record ThreeDnsFingerEntry(
-        Cid128 targetCid,
-        Cid128 serverCid,
+        ServerCid targetCid,
+        ServerCid serverCid,
         MysterServer server,
         MysterAddress address,
         Side side,

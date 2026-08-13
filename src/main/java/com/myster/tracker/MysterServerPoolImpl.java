@@ -22,7 +22,7 @@ import com.general.events.NewGenericDispatcher;
 import com.general.thread.PromiseFuture;
 import com.general.thread.PromiseFutures;
 import com.general.util.Util;
-import com.myster.identity.Cid128;
+import com.myster.cid.ServerCid;
 import com.myster.mml.MessagePak;
 import com.myster.net.MysterAddress;
 import com.myster.net.client.MysterProtocol;
@@ -137,7 +137,7 @@ public class MysterServerPoolImpl implements MysterServerPool {
     }
     
     @Override
-    public Optional<PublicKey> lookupIdentityFromCid(Cid128 cid) {
+    public Optional<PublicKey> lookupIdentityFromCid(ServerCid cid) {
         var identity = identityTracker.getIdentityFromCid(cid);
         if (identity.isEmpty()) {
             return Optional.empty();
@@ -151,7 +151,7 @@ public class MysterServerPoolImpl implements MysterServerPool {
     }
 
     @Override
-    public synchronized IdentityNeighborSet findClosestByCid(Cid128 target, int perSideLimit) {
+    public synchronized IdentityNeighborSet findClosestByCid(ServerCid target, int perSideLimit) {
         int limit = normalizeNeighborLimit(perSideLimit);
 
         Optional<PublicKeyIdentity> exact = identityTracker.getIdentityFromCid(target)
@@ -382,7 +382,7 @@ public class MysterServerPoolImpl implements MysterServerPool {
         return Optional.ofNullable(s.get());
     }
 
-    private List<PublicKeyIdentity> collectClosest(Cid128 target,
+    private List<PublicKeyIdentity> collectClosest(ServerCid target,
                                                    IdentityTracker.Direction direction,
                                                    int limit,
                                                    Optional<PublicKeyIdentity> exact) {

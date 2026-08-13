@@ -5,27 +5,16 @@ import java.io.DataOutputStream;
 import java.io.IOException;
 import java.util.Objects;
 
-import com.myster.identity.Cid128;
+import com.myster.cid.ServerCid;
 
 /**
  * Operation to add a member to the access list.
- * Members are identified by their {@link Cid128} (derived from their RSA identity).
+ * Members are identified by their {@link ServerCid} (derived from their RSA identity).
  */
-public class AddMemberOp implements BlockOperation {
-    private final Cid128 memberIdentity;
-    private final Role role;
-
-    public AddMemberOp(Cid128 memberIdentity, Role role) {
+public record AddMemberOp(ServerCid memberIdentity, Role role) implements BlockOperation {
+    public AddMemberOp(ServerCid memberIdentity, Role role) {
         this.memberIdentity = Objects.requireNonNull(memberIdentity, "Member identity cannot be null");
         this.role = Objects.requireNonNull(role, "Role cannot be null");
-    }
-
-    public Cid128 getMemberIdentity() {
-        return memberIdentity;
-    }
-
-    public Role getRole() {
-        return role;
     }
 
     @Override
@@ -40,9 +29,9 @@ public class AddMemberOp implements BlockOperation {
     }
 
     static AddMemberOp deserializePayload(DataInputStream in) throws IOException {
-        byte[] cidBytes = new byte[16];
+        byte[] cidBytes = new byte[ServerCid.LENGTH];
         in.readFully(cidBytes);
-        Cid128 identity = new Cid128(cidBytes);
+        ServerCid identity = new ServerCid(cidBytes);
         String roleString = in.readUTF();
         Role role = Role.fromString(roleString);
         return new AddMemberOp(identity, role);

@@ -25,7 +25,7 @@ import com.myster.type.MysterType;
  * [Header]
  *   magic:       0x4D595354 ("MYST")
  *   version:     1
- *   myster_type: [16 bytes] (MysterType shortBytes — MD5 of type's RSA public key)
+ *   myster_type: [16 bytes] (MysterTypeCid — MD5 of type's RSA public key)
  *   hash_alg:    0x01 (SHA-256)
  *   sig_alg:     0x01 (Ed25519)
  * [Block 0: Genesis]
@@ -44,7 +44,7 @@ public class AccessListStorageUtils {
      * Writes an access list header to the output stream.
      *
      * @param out output stream
-     * @param mysterTypeBytes the MysterType shortBytes (16 bytes)
+     * @param mysterTypeBytes the 16-byte MysterTypeCid
      * @throws IOException if an I/O error occurs
      */
     public static void writeHeader(OutputStream out, byte[] mysterTypeBytes) throws IOException {
@@ -64,7 +64,7 @@ public class AccessListStorageUtils {
      * Reads and validates the access list header.
      *
      * @param in input stream
-     * @return the MysterType shortBytes read from the header (16 bytes)
+     * @return the 16-byte MysterTypeCid read from the header
      * @throws IOException if an I/O error occurs or header is invalid
      */
     public static byte[] readHeader(InputStream in) throws IOException {
@@ -250,4 +250,3 @@ public class AccessListStorageUtils {
         throw new IOException("Could not decode public key with any known algorithm");
     }
 }
-

@@ -25,8 +25,7 @@ import com.general.mclist.MCListFactory;
 import com.general.mclist.Sortable;
 import com.general.mclist.SortableString;
 import com.general.util.GridBagBuilder;
-import com.myster.identity.Cid128;
-import com.myster.identity.Util;
+import com.myster.cid.ServerCid;
 import com.myster.tracker.MysterServer;
 import com.myster.tracker.PublicKeyIdentity;
 
@@ -36,20 +35,20 @@ import static com.general.util.Util.filter;
  * Modal dialog for picking a Myster server from the known server pool.
  *
  * <p>Used by {@link TypeEditorPanel}'s Members tab to resolve a server selection to a
- * {@link Cid128} for use in an {@link com.myster.access.AddMemberOp}.
+ * {@link ServerCid} for use in an {@link com.myster.access.AddMemberOp}.
  *
  * <p>Only servers with a {@link PublicKeyIdentity} are listed — a public key is required
- * to derive the {@link Cid128} via {@link Util#generateCid}.
+ * to derive its {@link ServerCid}.
  *
  * <p>Call {@link #showAndWait()} to display the dialog modally. Returns a {@link PickedServer}
  * on confirmation, or {@code null} if the user cancelled.
  */
 public class ServerPickerDialog extends JDialog {
     /**
-     * The result of a successful server selection. Contains the {@link Cid128} derived from
+     * The result of a successful server selection. Contains the {@link ServerCid} derived from
      * the server's RSA public key and a human-readable display name.
      */
-    public record PickedServer(Cid128 cid, String displayName) {}
+    public record PickedServer(ServerCid cid, String displayName) {}
 
     private final TypeEditorServerSource pool;
 
@@ -182,9 +181,9 @@ public class ServerPickerDialog extends JDialog {
 
     private static class ServerPickerItem extends GenericMCListItem<MysterServer> {
         final MysterServer server;
-        final Cid128 cid;
+        final ServerCid cid;
 
-        ServerPickerItem(MysterServer server, Cid128 cid) {
+        ServerPickerItem(MysterServer server, ServerCid cid) {
             super(new Sortable[0], server);
             this.server = server;
             this.cid = cid;

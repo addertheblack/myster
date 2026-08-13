@@ -19,7 +19,7 @@ import java.util.prefs.BackingStoreException;
 import java.util.prefs.Preferences;
 
 import com.general.events.NewGenericDispatcher;
-import com.myster.identity.Cid128;
+import com.myster.cid.ServerCid;
 import com.myster.net.MysterAddress;
 import com.myster.net.datagram.client.PingResponse;
 import com.myster.net.server.ServerUtils;
@@ -76,7 +76,7 @@ public class Tracker {
     public Tracker(MysterServerPool pool,
                    Preferences preferences,
                    TypeDescriptionList typeDescriptionList,
-                   Optional<Cid128> localCid) {
+                   Optional<ServerCid> localCid) {
         this.pool = pool;
         this.preferences = preferences.node(PATH);
         this.dispatcher = new NewGenericDispatcher<>(ListChangedListener.class, TrackerUtils.INVOKER);
@@ -325,7 +325,7 @@ public class Tracker {
         return threeDns.map(list -> list.seeds(limit)).orElseGet(List::of);
     }
 
-    public synchronized IdentityNeighborSet getThreeDnsForTarget(Cid128 target, int perSideLimit) {
+    public synchronized IdentityNeighborSet getThreeDnsForTarget(ServerCid target, int perSideLimit) {
         return threeDns.map(list -> list.forTarget(target, perSideLimit))
                 .orElseGet(IdentityNeighborSet::empty);
     }

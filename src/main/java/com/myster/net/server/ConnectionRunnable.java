@@ -19,7 +19,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.logging.Logger;
 
 import com.myster.filemanager.FileTypeListManager;
-import com.myster.identity.Cid128;
+import com.myster.cid.ServerCid;
 import com.myster.identity.Identity;
 import com.myster.net.MysterAddress;
 import com.myster.net.TLSSocket;
@@ -157,9 +157,9 @@ public class ConnectionRunnable implements Runnable {
                         
                         TLSSocket tlsSocket = TLSSocket.upgradeServerSocket(socket, identity);
 
-                        Optional<Cid128> callerCid;
+                        Optional<ServerCid> callerCid;
                         try {
-                            callerCid = Optional.of(com.myster.identity.Util.generateCid(tlsSocket.getPeerPublicKey()));
+                            callerCid = Optional.of(ServerCid.fromPublicKey(tlsSocket.getPeerPublicKey()));
                         } catch (IOException ignored) {
                             callerCid = Optional.empty();
                         }

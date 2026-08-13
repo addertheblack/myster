@@ -96,7 +96,7 @@ public class AccessBlock {
      * Computes the canonical bytes that are signed.
      * Format: mysterTypeBytes || prevHash || height || timestamp || writerPubkey || payloadHash
      *
-     * @param mysterTypeBytes the MysterType shortBytes for this access list (16 bytes, MD5 of type's RSA public key)
+     * @param mysterTypeBytes the 16-byte MysterTypeCid for this access list
      * @return canonical bytes for signature verification
      */
     public byte[] toCanonicalBytes(byte[] mysterTypeBytes) {
@@ -128,7 +128,7 @@ public class AccessBlock {
     /**
      * Verifies the signature on this block.
      *
-     * @param mysterTypeBytes the MysterType shortBytes for this access list (16 bytes)
+     * @param mysterTypeBytes the 16-byte MysterTypeCid for this access list
      * @return true if signature is valid
      */
     public boolean verifySignature(byte[] mysterTypeBytes) {
@@ -233,4 +233,3 @@ public class AccessBlock {
         return result;
     }
 }
-

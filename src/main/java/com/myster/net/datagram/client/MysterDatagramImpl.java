@@ -9,7 +9,7 @@ import java.util.function.Supplier;
 import com.general.thread.PromiseFuture;
 import com.myster.filemanager.FileTypeListManager;
 import com.myster.hash.FileHash;
-import com.myster.identity.Cid128;
+import com.myster.cid.ServerCid;
 import com.myster.identity.Identity;
 import com.myster.mml.MessagePak;
 import com.myster.net.MysterAddress;
@@ -110,7 +110,7 @@ public class MysterDatagramImpl implements MysterDatagram {
 
     @Override
     public PromiseFuture<ThreeDnsAddressCandidateSet> findClosest(ParamBuilder params,
-                                                                  Cid128 target,
+                                                                  ServerCid target,
                                                                   int perSideLimit) {
         return doSection(params, new FindClosestDatagramClient(target, perSideLimit));
     }

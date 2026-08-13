@@ -8,6 +8,7 @@ import java.io.RandomAccessFile;
 import java.util.logging.Logger;
 
 import com.myster.access.AccessListReader;
+import com.myster.cid.ServerCid;
 import com.myster.filemanager.FileTypeListManager;
 import com.myster.mml.MessagePak;
 import com.myster.net.MysterAddress;
@@ -103,7 +104,7 @@ public class MultiSourceSender extends ServerStreamHandler {
         private final DownloadInfo downloadInfo;
         private final TransferQueue transferQueue;
         private final AccessListReader instanceAccessListReader;
-        private final java.util.Optional<com.myster.identity.Cid128> callerCid;
+        private final java.util.Optional<ServerCid> callerCid;
 
         private volatile MysterSocket socket;
 
@@ -121,7 +122,7 @@ public class MultiSourceSender extends ServerStreamHandler {
                                            TransferQueue transferQueue,
                                            MysterAddress remoteIP,
                                            AccessListReader accessListReader,
-                                           java.util.Optional<com.myster.identity.Cid128> callerCid) {
+                                           java.util.Optional<ServerCid> callerCid) {
             this.dispatcher = dispatcher;
             this.downloadInfo = new Stats();
             this.transferQueue = transferQueue;
@@ -222,9 +223,7 @@ public class MultiSourceSender extends ServerStreamHandler {
         private UploadBlock startNewBlock(MysterSocket socket, File file) throws IOException {
             startTime = System.currentTimeMillis();
 
-            UploadBlock uploadBlock = getNextBlockToSend(socket, file);
-
-            return uploadBlock;
+            return getNextBlockToSend(socket, file);
         }
 
         //NOTE: The first loop is not done here.
@@ -259,7 +258,7 @@ public class MultiSourceSender extends ServerStreamHandler {
             MessagePak pak = MessagePak.newEmpty();
 
             pak.putInt(QUEUED_PATH, queued); //no queing
-            if (!message.equals(""))
+            if (!message.isEmpty())
                 pak.putString(MESSAGE_PATH, message);
 
             out.writeMessagePack(pak); //this would loop until 1
@@ -307,10 +306,6 @@ public class MultiSourceSender extends ServerStreamHandler {
 
             file = BannersManager.getFileFromImageName(imageName);
 
-            if (file == null) { //is needed (Threading issue)
-                return;
-            }
-
             try {
                 in = new MysterDataInputStream(new FileInputStream(file));
 
@@ -339,9 +334,6 @@ public class MultiSourceSender extends ServerStreamHandler {
         public static void sendURLFromImageName(MysterDataOutputStream out,
                 String imageName) throws IOException {
             String url = BannersManager.getURLFromImageName(imageName);
-
-            if (url == null)
-                return;
 
             sendURL(out, url);
         }

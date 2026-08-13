@@ -8,12 +8,13 @@ This document captures Myster-specific coding conventions, preferred libraries, 
 - **Modal Dialogs** — must extend `JDialog`, not `JFrame`
 - **SVG Icons & FlatLaf colors** — `IconLoader.loadSvg`, magic hex colors, `#6E6E6E` / `#DB5860` etc.
 - **GridBagLayout** — use `GridBagBuilder`; never `setLayout(null)`
-- **Preferences** — Java `Preferences` API; `MysterType.toShortBytes()` as key
+- **Preferences** — Java `Preferences` API; `MysterType.toHexString()` as key
 - **Testing** — add `main()` to UI panels for standalone testing
 - **Test mocks** — prefer Mockito for mocks/stubs
 - **Unused code** — do not keep methods whose only callers are tests
 - **Preference Panel save semantics** — add = immediate; edit/delete = on save
 - **Naming** — no banner comments; `Utils` suffix for static-only classes
+- **CID types** — use `MysterTypeCid` or `ServerCid`; never expose raw `Cid128` or CID byte arrays internally
 - **Extensible Enums** — `final class` + `static final` constants, not Java `enum`
 - **Serialization** — use `MessagePak` for forward-compatible binary formats
 - **Access Lists** — single source of truth; `AccessListManager` singleton; key-file edit gate
@@ -44,6 +45,7 @@ This document captures Myster-specific coding conventions, preferred libraries, 
 - [Naming Conventions](#naming-conventions)
   - [No Banner Comments](#no-section-divider-banner-comments)
   - [Utils Classes](#utils-classes)
+  - [Domain-Specific CID Types](#domain-specific-cid-types)
 - [Extensible Enums](#extensible-enums)
 - [Serialization Extensibility](#serialization-extensibility)
 - [Exception Handling](#exception-handling)
@@ -250,7 +252,7 @@ prefs.getInt("key", defaultValue);
 
 ### Preferences for Custom Types
 
-**Pattern**: Use `MysterType.toShortBytes()` as a key/identifier when storing custom types in preferences.
+**Pattern**: Use `MysterType.toHexString()` as a key/identifier when storing custom types in preferences.
 
 **Purpose**: Creates a shorter identifier for a type than the full public key.
 
@@ -323,6 +325,15 @@ Methods and fields speak for themselves. If a class needs section headers to be 
 **Examples**: `AccessListStorageUtils`, `FooUtils`, `MultiSourceUtils`
 
 **Note**: The codebase has some historical inconsistency between `Util`, `Utils`, and `Utilities` suffixes, but the convention going forward is `Utils`. The intent is the same in all cases: the class is a collection of static methods, not something you instantiate.
+
+### Domain-Specific CID Types
+
+Use `MysterTypeCid` for the compact identity derived from a type public key and `ServerCid` for
+the compact identity derived from a server public key. Do not expose the package-private raw
+`Cid128`, and convert wire byte arrays to the appropriate domain type at the parsing boundary.
+
+Access lists use both domains: the list is identified by the `MysterTypeCid` composed by
+`MysterType`, while members and administrators are identified by `ServerCid`.
 
 ---
 

@@ -17,7 +17,7 @@ import com.myster.type.MysterType;
  * <p>Protocol:
  * <pre>
  * Request:
- *   [16 bytes] myster_type (MysterType shortBytes)
+ *   [16 bytes] myster_type (MysterTypeCid)
  *   [32 bytes] known_tip_hash (all zeros = full chain request)
  *
  * Response:
@@ -60,7 +60,6 @@ public class AccessListGetServer extends ServerStreamHandler {
     @Override
     public void section(ConnectionContext context) throws IOException {
         try {
-            // Read 16-byte MysterType shortBytes
             byte[] mysterTypeBytes = new byte[16];
             context.socket().in.readFully(mysterTypeBytes);
             MysterType mysterType = new MysterType(mysterTypeBytes);
