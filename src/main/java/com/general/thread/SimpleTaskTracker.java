@@ -11,8 +11,8 @@ public class SimpleTaskTracker implements Cancellable, TaskTracker {
     private boolean cancelled;
 
     @Override
-    public synchronized void registerDependentTask(Cancellable... c) {
-        List<Cancellable> tasksToAdd = Arrays.asList(c);
+    public synchronized void trackForCancellation(Cancellable... tasks) {
+        List<Cancellable> tasksToAdd = Arrays.asList(tasks);
         
         if (cancelled) {
             tasksToAdd.forEach(Cancellable::cancel);

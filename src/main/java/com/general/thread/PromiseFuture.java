@@ -75,12 +75,18 @@ public interface PromiseFuture<T> extends Cancellable, Future<T> {
     PromiseFuture<T> addStandardExceptionHandler();
     
     /**
-     * Maps the result of this PromiseFuture to another PromiseFuture
-     * asynchronously. Does NOT map the invoker
-     * 
-     * @param <R>
+     * Maps a successful result to a second asynchronous operation. An exception
+     * or cancellation from this source future is forwarded without invoking the
+     * mapper. The invoker is not mapped.
+     *
+     * <p>Cancelling the returned future cancels the mapped operation once it
+     * exists, but does not cancel this source future.
+     *
+     * @param <R> mapped result type
+     * @param mapper operation to start after this future succeeds
+     * @return future completed from the operation returned by {@code mapper}
      */
-    default <R> PromiseFuture<R> mapAsync(Function<T, PromiseFuture<R>> mapAsync) {
+    default <R> PromiseFuture<R> mapAsync(Function<T, PromiseFuture<R>> mapper) {
         return PromiseFuture.newPromiseFuture(context -> {
             addSynchronousCallback(c -> {
                 if (c.isException()) {
@@ -88,11 +94,10 @@ public interface PromiseFuture<T> extends Cancellable, Future<T> {
                 } else if (c.isCancelled()) {
                     context.cancel();
                 } else {
-                    context.registerDependentTask(mapAsync.apply(c.getResult())
+                    context.trackForCancellation(mapper.apply(c.getResult())
                             .addSynchronousCallback(context::setCallResult));
                 }
             });
         });
     }
 }
-

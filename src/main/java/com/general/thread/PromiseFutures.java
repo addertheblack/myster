@@ -18,7 +18,7 @@ public final class PromiseFutures {
      public static <T> PromiseFuture<T> execute(Callable<T> callable, Executor executor) {
          return PromiseFuture.<T> newPromiseFuture((context) -> {
              if (callable instanceof Cancellable c) {
-                 context.registerDependentTask(c);
+                 context.trackForCancellation(c);
              }
 
              executor.execute(() -> {

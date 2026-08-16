@@ -20,11 +20,18 @@ import org.junit.jupiter.api.Test;
 
 import com.myster.filemanager.FileTypeListManager;
 import com.myster.cid.ServerCid;
+import com.myster.mml.MessagePak;
 import com.myster.net.MysterAddress;
 import com.myster.net.client.ParamBuilder;
 import com.myster.net.datagram.DataPacket;
 import com.myster.net.datagram.DatagramConstants;
 import com.myster.net.datagram.DatagramEncryptUtil;
+import com.myster.threedns.ThreeDnsAddressCandidate;
+import com.myster.threedns.ThreeDnsPeerClient;
+import com.myster.threedns.ThreeDnsVerifiedQueryResult;
+import com.myster.tracker.PublicKeyIdentity;
+import com.myster.transaction.Transaction;
+import com.myster.transaction.TransactionEvent;
 import com.myster.transaction.TransactionListener;
 import com.myster.transaction.TransactionManager;
 
@@ -43,11 +50,13 @@ class TestMysterDatagramExpectedKey {
 
         AtomicReference<DataPacket> sentPacket = new AtomicReference<>();
         AtomicInteger sentCode = new AtomicInteger();
+        AtomicReference<TransactionListener> sentListener = new AtomicReference<>();
         TransactionManager transactionManager = mock(TransactionManager.class);
         when(transactionManager.sendTransaction(any(), anyInt(), any(TransactionListener.class)))
                 .thenAnswer(invocation -> {
                     sentPacket.set(invocation.getArgument(0));
                     sentCode.set(invocation.getArgument(1));
+                    sentListener.set(invocation.getArgument(2));
                     return 1;
                 });
         PublicKeyLookup lookup = new PublicKeyLookup() {
@@ -75,7 +84,10 @@ class TestMysterDatagramExpectedKey {
                                                              null,
                                                              mock(FileTypeListManager.class));
 
-        datagram.findClosest(params, new ServerCid(new byte[ServerCid.LENGTH]), 2);
+        ThreeDnsAddressCandidate candidate = new ThreeDnsAddressCandidate(
+                new PublicKeyIdentity(expectedKey.getPublic()), address);
+        ServerCid target = new ServerCid(new byte[ServerCid.LENGTH]);
+        var verifiedFuture = new ThreeDnsPeerClient(datagram).findClosest(candidate, target, 2);
 
         assertEquals(DatagramConstants.STLS_CODE, sentCode.get());
         assertThrows(DatagramEncryptUtil.DecryptionException.class,
@@ -90,6 +102,31 @@ class TestMysterDatagramExpectedKey {
         byte[] innerPayload = new byte[payload.remaining()];
         payload.get(innerPayload);
         assertTrue(innerPayload.length > ServerCid.LENGTH);
+
+        MessagePak response = MessagePak.newEmpty();
+        response.putInt("/schemaVersion", 1);
+        response.putInt("/exactCount", 0);
+        response.putInt("/leftCount", 0);
+        response.putInt("/rightCount", 0);
+        byte[] encryptedResponse = DatagramEncryptUtil.encryptResponsePacket(
+                response.toBytes(), decrypted.syncDecryptKey, Optional.of(expectedKey));
+        Transaction reply = mock(Transaction.class);
+        when(reply.isError()).thenReturn(false);
+        when(reply.getData()).thenReturn(encryptedResponse);
+        when(reply.withDifferentPayload(any(byte[].class), anyInt())).thenAnswer(invocation -> {
+            Transaction decryptedReply = mock(Transaction.class);
+            when(decryptedReply.getData()).thenReturn(invocation.getArgument(0));
+            return decryptedReply;
+        });
+        TransactionEvent event = mock(TransactionEvent.class);
+        when(event.getTransaction()).thenReturn(reply);
+
+        sentListener.get().transactionReply(event);
+        ThreeDnsVerifiedQueryResult verified = verifiedFuture.get();
+        assertEquals(candidate.identity(), verified.responder().identity());
+        assertEquals(candidate.cid(), verified.responder().cid());
+        assertEquals(candidate.address(), verified.responder().address());
+        assertTrue(verified.candidates().exact().isEmpty());
     }
 
     private static DatagramEncryptUtil.Lookup keyLookup(KeyPair keyPair) {

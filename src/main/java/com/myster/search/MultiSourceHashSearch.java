@@ -79,9 +79,10 @@ public class MultiSourceHashSearch implements HashCrawlerManager {
 
     /**
      * Add a new HashSearchListener and associate it with a type and hash.
-     * 
+     * <p>
      * Starts the crawler for the type
      */
+    @Override
     public synchronized void addHash(MysterType type, FileHash hash, HashSearchListener listener) {
         log.fine("Adding hash to crawler " + hash);
 
@@ -97,14 +98,14 @@ public class MultiSourceHashSearch implements HashCrawlerManager {
 
 
         log.fine("Size of entriesVector " + entriesVector.size());
-        if ((entriesVector.size() >= 1)) {
+        if ((!entriesVector.isEmpty())) {
             restartCrawler(type);
         }
     }
 
     /**
      * Add a new HashSearchListener and associate it with a type and hash.
-     * 
+     * <p>
      * Stops the crawler for the type if there are not more hashes to search
      */
     public synchronized void removeHash(MysterType type,
@@ -116,7 +117,7 @@ public class MultiSourceHashSearch implements HashCrawlerManager {
 
         entriesVector.remove(new SearchEntry(hash, listener));
 
-        if (entriesVector.size() == 0) {
+        if (entriesVector.isEmpty()) {
             stopCrawler(type);
         }
     }
@@ -138,7 +139,7 @@ public class MultiSourceHashSearch implements HashCrawlerManager {
         log.fine("restartCrawler(" + type + ")");
 
         stopCrawler(type);
-        if (getEntriesForType(type).size() > 0) { // are we still relevant?
+        if (!getEntriesForType(type).isEmpty()) { // are we still relevant?
             MultiSourceUtils.debug("Retarting crawler!");
             delayStart(type);
         } else {
@@ -146,7 +147,7 @@ public class MultiSourceHashSearch implements HashCrawlerManager {
                     + ") because there are no more hashes");
         }
     }
-    
+
     private synchronized void delayStart(MysterType type) {
         log.fine("delayStart(" + type + ")");
         if (tracker == null) {
@@ -168,10 +169,10 @@ public class MultiSourceHashSearch implements HashCrawlerManager {
                 if (batchedType.asyncTracker == null) {
                     return;
                 }
-                
+
                 batchedType.asyncTracker.doAsync(() -> sleep(5000)
-                                                 .addStandardExceptionHandler()
-                                                 .addResultListener(_ -> startCrawler(type)));
+                        .addStandardExceptionHandler()
+                        .addResultListener(_ -> startCrawler(type)));
             }
         });
     }
@@ -194,17 +195,17 @@ public class MultiSourceHashSearch implements HashCrawlerManager {
         final IPQueue ipQueue = new IPQueue();
 
         MysterServer[] top = tracker.getTop(type, 200);
-        
+
         // when Myster is first started, pings have not yet run.. So if we get no up servers then
         // just use everything
-        if (top.length==0) {
+        if (top.length == 0) {
             top = tracker.getAll(type).toArray(MysterServer[]::new);
         }
 
         for (MysterServer s : top) {
             s.getBestAddress().ifPresent(ipQueue::addIP);
         }
-        
+
         var asyncTaskTracker = batchedType.asyncTracker;
 
         List<SearchEntry> entries = new ArrayList<>(batchedType.entries);
@@ -252,20 +253,11 @@ public class MultiSourceHashSearch implements HashCrawlerManager {
         return PromiseFuture.newPromiseFuture(c -> {
             Timer t = new Timer(() -> c.setResult(null), ms);
 
-            c.registerDependentTask(() -> t.cancelTimer());
+            c.trackForCancellation(t::cancelTimer);
         });
     }
 
-    private static class SearchEntry {
-        public final FileHash hash;
-
-        public final HashSearchListener listener;
-
-        public SearchEntry(FileHash hash, HashSearchListener listener) {
-            this.hash = hash;
-            this.listener = listener;
-        }
-
+    private record SearchEntry(FileHash hash, HashSearchListener listener) {
         public boolean equals(Object o) {
             SearchEntry other;
 

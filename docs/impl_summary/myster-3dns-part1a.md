@@ -56,4 +56,4 @@ Implemented the local 3DNS core from `docs/plans/myster-3dns-part-1a.md`:
 ## Follow-up
 
 - Part 1b should connect the `Tracker` 3DNS accessors to TrackerWindow/TypeChoice.
-- [Part 2a](../plans/myster-3dns-part-2a.md) adds public-key/address wire candidates and validation on top of `findClosestByCid`; [Part 2b](../plans/myster-3dns-part-2b.md) owns maintenance/bootstrap; [Part 3](../plans/myster-3dns-part-3.md) owns iterative resolution.
+- [Part 2a](../plans/myster-3dns-part-2a.md) adds public-key/address wire candidates and the expected-key transport hook; [Part 2b](../plans/myster-3dns-part-2b.md) owns verified candidate queries; [Part 3](../plans/myster-3dns-part-3.md) owns iterative resolution; and [Part 4](../plans/myster-3dns-part-4.md) owns maintenance/bootstrap.

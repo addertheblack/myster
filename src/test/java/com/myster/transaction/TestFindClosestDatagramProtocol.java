@@ -55,7 +55,8 @@ class TestFindClosestDatagramProtocol {
                                                                  List.of()),
                                                 exact, exactAddress,
                                                 left, leftAddress);
-        FindClosestDatagramClient client = new FindClosestDatagramClient(cid(9), 2);
+        ServerCid exactCid = ServerCid.fromPublicKey(exactKey.getPublic());
+        FindClosestDatagramClient client = new FindClosestDatagramClient(exactCid, 2);
         Transaction request = request(client.getDataForOutgoingPacket());
         List<Transaction> replies = new ArrayList<>();
 
@@ -70,6 +71,22 @@ class TestFindClosestDatagramProtocol {
         assertEquals(List.of(left), decoded.left().stream().map(c -> c.identity()).toList());
         assertEquals(leftAddress, decoded.left().getFirst().address());
         assertTrue(decoded.right().isEmpty());
+    }
+
+    @Test
+    void mismatchedExactClaimRejectsWholeResponse() throws Exception {
+        FindClosestDatagramClient client = new FindClosestDatagramClient(cid(9), 2);
+        MessagePak response = MessagePak.newEmpty();
+        response.putInt("/schemaVersion", ThreeDnsAddressCandidateSet.SCHEMA_VERSION);
+        response.putInt("/exactCount", 1);
+        response.putByteArray("/exact/publicKey", exactKey.getPublic().getEncoded());
+        response.putString("/exact/ip", "127.0.0.1");
+        response.putInt("/exact/port", 7000);
+        response.putInt("/leftCount", 0);
+        response.putInt("/rightCount", 0);
+
+        assertThrows(java.io.IOException.class,
+                     () -> client.getObjectFromTransaction(reply(response.toBytes())));
     }
 
     @Test

@@ -44,12 +44,15 @@ public interface MysterDatagram {
 
     /**
      * Requests the live public-key/address candidates closest to a target CID.
-     * Returned candidates are untrusted until validated by the server pool.
+     * Returned candidates are untrusted hints. Supplying an expected server key
+     * authenticates the responding peer, but does not transitively verify any
+     * candidate inside that peer's response.
      *
      * @param params remote address and optional expected server key
      * @param target target CID in the unsigned 128-bit ring
      * @param perSideLimit requested candidates per side; non-positive values use the default
-     * @return exact, predecessor, and successor candidate groups
+     * @return exact, predecessor, and successor candidate groups; an exact
+     *         entry's locally derived CID is guaranteed to match {@code target}
      */
     public PromiseFuture<ThreeDnsAddressCandidateSet> findClosest(ParamBuilder params,
                                                                   ServerCid target,

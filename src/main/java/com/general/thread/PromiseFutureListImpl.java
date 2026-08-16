@@ -100,8 +100,8 @@ public class PromiseFutureListImpl<T> extends PromiseFutureImpl<List<T>> impleme
         }
 
         @Override
-        public void registerDependentTask(Cancellable... c) {
-            asyncContext.registerDependentTask(c);
+        public void trackForCancellation(Cancellable... tasks) {
+            asyncContext.trackForCancellation(tasks);
         }
 
         @Override
@@ -147,7 +147,7 @@ public class PromiseFutureListImpl<T> extends PromiseFutureImpl<List<T>> impleme
     @Override
     public PromiseFutureList<T> clearInvoker() {
         return PromiseFutureList.newPromiseFutureList(context -> {
-            context.registerDependentTask(this);
+            context.trackForCancellation(this);
             this.addSynchronousPartialCallback(context::addResult);  
             this.addSynchronousCallback(e -> context.done());
         });

@@ -18,7 +18,11 @@ import com.myster.threedns.ThreeDnsAddressCandidateSet;
 import com.myster.tracker.PublicKeyIdentity;
 import com.myster.transaction.Transaction;
 
-/** Serializes one 3DNS {@code FIND_CLOSEST} request and validates its response shape. */
+/**
+ * Serializes one 3DNS {@code FIND_CLOSEST} request and validates its response.
+ * An exact-group candidate is accepted only when its locally derived CID equals
+ * the request target.
+ */
 public class FindClosestDatagramClient implements StandardDatagramClientImpl<ThreeDnsAddressCandidateSet> {
     private static final String SCHEMA_VERSION = "/schemaVersion";
     private static final String TARGET_CID = "/targetCid";
@@ -42,9 +46,7 @@ public class FindClosestDatagramClient implements StandardDatagramClientImpl<Thr
         requireSchemaVersion(response);
 
         int exactCount = requireCount(response, "/exactCount", 1);
-        Optional<ThreeDnsAddressCandidate> exact = exactCount == 0
-                ? Optional.empty()
-                : Optional.of(readCandidate(response, "/exact"));
+        Optional<ThreeDnsAddressCandidate> exact = readExactCandidate(response, exactCount);
         int leftCount = requireCount(response,
                                      "/leftCount",
                                      ThreeDnsAddressCandidateSet.MAX_PER_SIDE_LIMIT);
@@ -90,6 +92,20 @@ public class FindClosestDatagramClient implements StandardDatagramClientImpl<Thr
             throw new IOException("Invalid 3DNS candidate count at " + path + ": " + count);
         }
         return count;
+    }
+
+    private Optional<ThreeDnsAddressCandidate> readExactCandidate(MessagePak response,
+                                                                  int exactCount)
+            throws IOException {
+        if (exactCount == 0) {
+            return Optional.empty();
+        }
+
+        ThreeDnsAddressCandidate candidate = readCandidate(response, "/exact");
+        if (!candidate.cid().equals(target)) {
+            throw new IOException("3DNS exact candidate CID does not match request target");
+        }
+        return Optional.of(candidate);
     }
 
     private static List<ThreeDnsAddressCandidate> readCandidates(MessagePak response,

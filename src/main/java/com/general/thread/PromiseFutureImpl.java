@@ -84,14 +84,14 @@ public class PromiseFutureImpl<T> implements PromiseFuture<T> {
 		
 
         @Override
-        public void registerDependentTask(Cancellable... c) {
+        public void trackForCancellation(Cancellable... tasks) {
             synchronized (PromiseFutureImpl.this) {
                 if (isCancelled()) {
-                    for (Cancellable cancellable : c) {
+                    for (Cancellable cancellable : tasks) {
                         cancellable.cancel();
                     }
                 } else {
-                    cancellables.addAll(Arrays.asList(c));
+                    cancellables.addAll(Arrays.asList(tasks));
                 }
             }
         }
@@ -258,7 +258,7 @@ public class PromiseFutureImpl<T> implements PromiseFuture<T> {
     @Override
     public PromiseFuture<T> clearInvoker() {
         return PromiseFuture.newPromiseFuture(c -> {
-            c.registerDependentTask(this);
+            c.trackForCancellation(this);
             this.addSynchronousCallback(c::setCallResult);
         });
     }

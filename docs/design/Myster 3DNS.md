@@ -17,8 +17,9 @@ Implementation is staged across these plans:
 - [Part 1a: Core Data Structures](../plans/myster-3dns-part-1a.md)
 - [Part 1b: Tracker UI Integration](../plans/myster-3dns-part-1b.md)
 - [Part 2a: FIND_CLOSEST Protocol and Expected-Key Hook](../plans/myster-3dns-part-2a.md)
-- [Part 2b: Routing-Table Maintenance and Bootstrap](../plans/myster-3dns-part-2b.md)
+- [Part 2b: Candidate Identity Verification](../plans/myster-3dns-part-2b.md)
 - [Part 3: Iterative CID Resolution](../plans/myster-3dns-part-3.md)
+- [Part 4: Routing-Table Maintenance and Bootstrap](../plans/myster-3dns-part-4.md)
 - [Target-Slot Inspection UI](../plans/tracker-3dns-target-slots-ui.md)
 
 ## 2. Conceptual Model
@@ -107,9 +108,11 @@ Because the protocol is transaction-based and idempotent, requests can be retrie
 
 ## 8. Lookup Flow
 
-A lookup proceeds by repeatedly issuing FIND_CLOSEST requests. The wire operation remains side-neutral and returns explicit exact, left/predecessor, and right/successor groups; caller policy chooses the appropriate group.
+A lookup proceeds by repeatedly issuing expected-key `FIND_CLOSEST` requests. The wire operation remains side-neutral and returns explicit exact, left/predecessor, and right/successor groups; caller policy derives every CID locally and chooses the appropriate candidate.
 
-The caller begins with any known server, typically obtained from the tracker or local state. It sends a request for the target CID and receives a list of candidates. If one of the returned CIDs matches the target, the lookup is complete. Otherwise, the caller selects the closest candidate not yet tried and repeats the process.
+The caller begins with any known address/key candidate, typically obtained from the tracker or local state. A successful expected-key encrypted response verifies the responding peer, while every candidate inside that response remains an untrusted hint. If a returned candidate's derived CID matches the target, the resolver queries that candidate next; lookup completes only when the target candidate itself returns an authenticated response. Otherwise, the caller selects the closest valid candidate not yet tried and repeats the process.
+
+`ThreeDnsPeerClient` owns this one-hop trust transition. It performs one expected-key UDP `FIND_CLOSEST` operation and returns a `ThreeDnsVerifiedQueryResult`: its `VerifiedThreeDnsPeer` responder is verified for that completed operation, while its `ThreeDnsAddressCandidateSet` remains untrusted. Cancelling the wrapper cancels the underlying UDP transaction, and late completion cannot create a verified result. The decoder also rejects an entry labelled exact when the entry's locally derived CID differs from the request target.
 
 To prevent loops, the caller must track which CIDs have already been queried. Additionally, each step should ensure that progress is being made toward the target. If no closer node is found, the lookup terminates at the closest known position.
 
@@ -121,9 +124,9 @@ Routing table maintenance is driven by usage and periodic refresh.
 
 Each node maintains entries corresponding to its ideal positions in the space, defined by adding powers of two to its own CID. For a 128-bit space, this results in 128 target positions. The retained list keeps a small balanced set on both the left/predecessor and right/successor sides of each target.
 
-Part 1 maintenance is driven by tracker/pool events: refreshed up public-key servers are considered for retained slots, and down/dead servers are removed and replaced from the pool's nearest-CID API. Later protocol maintenance can issue FIND_CLOSEST requests for these target positions and let normal pool/listener behavior update the retained list.
+Part 1 maintenance is driven by tracker/pool events: refreshed up public-key servers are considered for retained slots, and down/dead servers are removed and replaced from the pool's nearest-CID API. Part 4 active maintenance invokes the Part 3 resolver for these target positions, securely onboards selected verified peers, and lets normal pool/listener behavior update the retained list.
 
-Healthy maintenance runs roughly hourly with broad independent jitter across nodes and targets. It must not refresh all 128 targets in one synchronized burst. When a retained entry becomes damaged, down, or dead, the affected target is re-queried immediately, subject to in-flight deduplication and failure backoff. Since targets are positive offsets, maintenance prefers exact and then left/predecessor candidates so it does not overshoot the target.
+Healthy Part 4 maintenance runs roughly hourly with broad independent jitter across nodes and targets. It must not refresh all 128 targets in one synchronized burst. When a retained entry becomes damaged, down, or dead, the affected target is resolved immediately, subject to in-flight deduplication and failure backoff. Direction and progress policy remain owned by Part 3 instead of being duplicated in the scheduler.
 
 ## 10. Interaction with Existing Myster Tracker
 
@@ -137,8 +140,9 @@ The integration works as follows:
 
 * The ordered CID index is maintained in `IdentityTracker`.
 * The 3DNS retained list is initially seeded from known public-key servers in the ServerPool.
-* Part 2a deliberately does not expose a speculative candidate-validation service. When maintenance is implemented, selected discoveries must prove their address/key association through an expected-key request before normal onboarding and retention.
-* Existing liveness checks and onboarding logic ensure that only reachable and valid servers are retained.
+* Part 2a provides the expected-key UDP transport hook; Part 2b wraps a useful `FIND_CLOSEST` query around it and returns a verified responder without mutating tracker state.
+* Part 3 returns verified exact or closest peers. Part 4 performs expected-key stats identity comparison and normal pool onboarding when a discovery must become persistent retained state.
+* Existing liveness checks continue to determine which onboarded servers remain usable and retained.
 
 This approach allows 3DNS to benefit from existing infrastructure without creating duplication or tight coupling.
 
@@ -146,17 +150,19 @@ This approach allows 3DNS to benefit from existing infrastructure without creati
 
 Failures are handled pragmatically.
 
-Returned public-key/address candidates may be stale or unreachable. This is addressed by returning multiple candidates and by relying on existing Myster mechanisms that validate and onboard servers into the tracker. Failed nodes naturally fall out of the retained list as they are no longer refreshed or become nonresponsive.
+Returned public-key/address candidates may be stale or unreachable. Multiple candidates provide fallback, but none is trusted transitively: each queried peer must complete an expected-key encrypted round trip. Part 4 separately onboards selected verified peers when persistent tracker state is needed. Failed nodes naturally fall out of the retained list as they are no longer refreshed or become nonresponsive.
 
 To avoid routing loops, each lookup tracks the set of visited CIDs and avoids revisiting them. Ensuring that each hop moves strictly closer to the target CID further guarantees progress.
 
-A lookup only truly fails if there are no reachable nodes in the network. In all other cases, the system will return either the exact node or the closest known node.
+A lookup terminates explicitly when it reaches the verified exact peer, exhausts strict progress, has no route/seed, reaches a resource limit, is cancelled, or encounters an unrecoverable failure. Non-exact termination can include the closest verified peer for diagnostics and Part 4 maintenance.
 
 ## 12. Security Considerations
 
 Security is largely handled by existing Myster identity mechanisms.
 
-Each server’s CID corresponds to a cryptographic identity. A remote 3DNS response is only a hint until the candidate address proves it owns the returned public key through normal Myster validation. `ParamBuilder.withExpectedServerPublicKey(...)` carries an address and expected key together without first trusting or caching that association. `MysterDatagramImpl` always encrypts such a request to the explicit key, even if the tracker has no key or a different cached key for the address. A request encrypted to that key can only be understood by the holder of its private key. The production consumer introduced in Part 2b must decide the narrowest way to compare returned identity data and perform normal onboarding; Part 2a intentionally does not add that unused orchestration. Exact target success still requires the proven public key to hash to the target CID.
+Each server’s CID corresponds to a cryptographic identity. A remote 3DNS response is only a hint until the candidate address proves it owns the returned public key. `ParamBuilder.withExpectedServerPublicKey(...)` carries an address and expected key together without first trusting or caching that association. `MysterDatagramImpl` always encrypts such a request to the explicit key, even if the tracker has no key or a different cached key for the address. Only the matching private-key holder can decrypt the request and recover the one-time symmetric key required to create an authenticated response. Part 2b fuses that proof with the useful `FIND_CLOSEST` query and promotes only the responder; candidates returned inside the response remain untrusted. Exact target success still requires the verified responder's locally derived CID to equal the target.
+
+TCP has the same underlying identity concept: `TLSSocket.createClientSocket(...)` can compare the peer certificate public key with an expected key. The ordinary `MysterStream`/`MysterSocketFactory` surface does not yet expose that argument, so current 3DNS verification is UDP-first while its verified-peer model remains transport-neutral.
 
 This ensures that nodes cannot impersonate arbitrary CIDs. While the system does not attempt to resist all Byzantine behavior, it maintains basic identity integrity through existing mechanisms.
 
@@ -164,7 +170,7 @@ This ensures that nodes cannot impersonate arbitrary CIDs. While the system does
 
 The system maintains one routing target for each bit position in the 128-bit space, resulting in 128 ideal positions. Retention keeps an even left/right split when enough responsive peers exist, while current target generation still uses positive exponential offsets from the local CID.
 
-Maintenance runs on a broadly jittered hourly schedule, is also driven immediately by damaged-node events, and is refreshed by normal routing activity. No separate stale-entry scoring system is required beyond existing liveness checks, immediate repair, and bounded retry backoff.
+Part 4 maintenance runs on a broadly jittered hourly schedule, is also driven immediately by damaged-node events, and reuses Part 3 lookup rather than implementing another routing loop. No separate stale-entry scoring system is required beyond existing liveness checks, immediate repair, and bounded retry backoff.
 
 The protocol always returns a list of candidates rather than a single node, improving resilience without increasing conceptual complexity.
 

@@ -221,7 +221,7 @@ public class MSPartialFile implements AutoCloseable {
                                         fileMover,
                                         partialFile,
                                         queue);
-        cancellable.registerDependentTask(download);
+        cancellable.trackForCancellation(download);
 
         if (partialFile.getServerAddress() != null) {
             download.addInitialServers(new MysterFileStub[] {

@@ -9,10 +9,15 @@ import com.myster.tracker.PublicKeyIdentity;
 /**
  * An untrusted public-key/address hint returned by the 3DNS protocol.
  *
- * <p>The CID is always derived from the encoded public key. Possessing this
- * object does not mean that the server at {@link #address()} has proved it owns
- * the key. A consumer must perform an expected-key request before treating the
- * address/key association as trusted tracker state.
+ * <p>The CID is always derived from the encoded public key, and construction
+ * rejects an explicit CID that does not match that derivation. This local
+ * invariant does not prove that the server at {@link #address()} owns the key.
+ * A consumer must complete an expected-key operation before treating the
+ * address/key association as verified.
+ *
+ * @param identity advertised public-key identity
+ * @param cid CID derived from {@code identity}; an inconsistent value is rejected
+ * @param address advertised endpoint for the candidate
  */
 public record ThreeDnsAddressCandidate(
     PublicKeyIdentity identity,

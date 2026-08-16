@@ -12,5 +12,5 @@ public interface AsyncContextList<T>extends Cancellable, TaskTracker {
     void cancel();
     
     boolean isCancelled();
-    void registerDependentTask(Cancellable... c);
+    void trackForCancellation(Cancellable... tasks);
 }

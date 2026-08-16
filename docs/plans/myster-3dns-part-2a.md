@@ -4,8 +4,9 @@ Prerequisites and follow-on plans:
 
 - [Part 1a: Core Data Structures](myster-3dns-part-1a.md)
 - [Part 1b: Tracker UI Integration](myster-3dns-part-1b.md)
-- [Part 2b: Routing-Table Maintenance and Bootstrap](myster-3dns-part-2b.md)
+- [Part 2b: Candidate Identity Verification](myster-3dns-part-2b.md)
 - [Part 3: Iterative CID Resolution](myster-3dns-part-3.md)
+- [Part 4: Routing-Table Maintenance and Bootstrap](myster-3dns-part-4.md)
 
 ## 1. Summary
 
@@ -13,7 +14,7 @@ Add the 3DNS `FIND_CLOSEST` UDP transaction, reserve transaction code `303`, and
 
 ## 2. Non-goals
 
-- Do not implement hourly routing-table maintenance or bootstrap orchestration; that is Part 2b.
+- Do not implement hourly routing-table maintenance or bootstrap orchestration; that is Part 4.
 - Do not implement iterative CID-to-server resolution; that is Part 3.
 - Do not add a pool-level candidate-validation/onboarding operation before a production consumer needs it; Part 2b will determine the narrowest required shape.
 - Do not change Part 1a target retention or persistence except for small accessors needed by the protocol.
@@ -24,7 +25,7 @@ Add the 3DNS `FIND_CLOSEST` UDP transaction, reserve transaction code `303`, and
 
 - Part 1a is implemented and provides `IdentityNeighborSet`, `MysterServerPool.findClosestByCid(...)`, and tracker-held public-key servers.
 - `LEFT` means predecessor/negative side and `RIGHT` means successor/positive side in the unsigned 128-bit ring.
-- The wire protocol returns both sides without choosing routing policy. Part 2b and Part 3 decide which group to prefer.
+- The wire protocol returns both sides without choosing routing policy. Part 3 decides which candidates provide valid progress; Part 4 reuses that resolver for maintenance.
 - Returned public keys are X.509 encoded and CIDs are always derived locally with `Util.generateCid(publicKey)`.
 - Future candidate validation should reuse normal Myster identity mechanisms. A request encrypted to the advertised public key can only be understood by the holder of its private key; server stats also carry `/Identity`, and TLS already supports an expected server public key.
 - Transaction code `303` is permanently reserved for `FIND_CLOSEST`.
@@ -34,7 +35,7 @@ Add the 3DNS `FIND_CLOSEST` UDP transaction, reserve transaction code `303`, and
 
 `FIND_CLOSEST` is a small MessagePak request/response transaction over the existing UDP transaction manager. A request contains a target CID and a per-side result limit. The server asks the pool for live closest identities and replies with separate exact, left, and right groups. Each candidate contains its encoded public key and currently usable address; no candidate CID is serialized.
 
-The datagram API gains an explicit expected-peer-key option associated with an address. This must not mutate the normal address-to-identity cache before proof. When present, `MysterDatagramImpl` encrypts the request to that key even if the key is not cached. A successfully decrypted response proves that the remote endpoint could decrypt a request sealed to the advertised public key. Part 2a deliberately stops at this transport primitive; candidate selection, stats comparison, onboarding, and in-flight sharing are deferred until Part 2b has a production call path.
+The datagram API gains an explicit expected-peer-key option associated with an address. This must not mutate the normal address-to-identity cache before proof. When present, `MysterDatagramImpl` encrypts the request to that key even if the key is not cached. A successfully decrypted response proves that the remote endpoint could decrypt a request sealed to the advertised public key. Part 2a deliberately stops at this transport primitive; Part 2b wraps it around a useful query and exposes the verified-responder trust boundary.
 
 ## 5. Architecture connections
 
@@ -42,11 +43,11 @@ Part 2a is the boundary between untrusted routing hints and the existing trusted
 
 | New / changed thing | Owned / created by | Called / used by | Connects to (existing) |
 |---|---|---|---|
-| `FIND_CLOSEST` transaction `303` | Datagram client/server | Peers, later Parts 2b/3 | `TransactionProtocol`, `StandardDatagramClientImpl`, `MessagePak` |
-| Wire candidate models | `com.myster.threedns` | Datagram codec, later Parts 2b/3 | `PublicKeyIdentity`, `Cid128`, `MysterAddress` |
+| `FIND_CLOSEST` transaction `303` | Datagram client/server | Peers, later Parts 2b/3/4 | `TransactionProtocol`, `StandardDatagramClientImpl`, `MessagePak` |
+| Wire candidate models | `com.myster.threedns` | Datagram codec, later Parts 2b/3/4 | `PublicKeyIdentity`, `Cid128`, `MysterAddress` |
 | Expected-peer-key request hook | `ParamBuilder` and `MysterDatagramImpl` | Later candidate proof and 3DNS queries | `EncryptingStandardDatagramClientImpl`, `PublicKeyLookup`, MSD encryption |
 
-The Part 2a data flow ends after a peer returns a public key/address and the receiver derives the CID. The expected-key hook lets a later consumer contact that address without first trusting the association. Part 2b decides whether and where to compare returned identity data and invoke normal onboarding.
+The Part 2a data flow ends after a peer returns a public key/address and the receiver derives the CID. The expected-key hook lets Part 2b contact that address without first trusting the association, promote only a successfully responding peer, and leave pool onboarding to Part 4.
 
 Wire contract, represented as MessagePak paths:
 
@@ -77,7 +78,7 @@ Public keys are X.509 bytes. IP is the textual address from `MysterAddress`; por
 - An MSD request encrypted to the candidate key is useful proof even though current response-signature verification is incomplete: producing the symmetric-key response requires decrypting the request with the matching private key.
 - Plain unencrypted success is insufficient proof by itself. TLS validation must receive the expected key, or UDP validation must use the expected-key encrypted path.
 - CID equality alone is insufficient; compare encoded public keys and then derive the CID.
-- Candidate validation/onboarding policy is intentionally not implemented until Part 2b supplies a production consumer.
+- Candidate query verification and pool onboarding are intentionally separate: Part 2b owns verified query results, while Part 4 owns persistent pool onboarding.
 
 ## 7. Acceptance criteria
 

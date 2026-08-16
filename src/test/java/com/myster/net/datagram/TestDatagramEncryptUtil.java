@@ -205,6 +205,19 @@ class TestDatagramEncryptUtil {
         
         Assertions.assertArrayEquals(responsePayload, decryptedResponse);
     }
+
+    @Test
+    void responseDecryptionWithWrongSymmetricKeyFails() {
+        byte[] responsePayload = "Authenticated response".getBytes();
+        byte[] expectedKey = new byte[32];
+        byte[] wrongKey = new byte[32];
+        wrongKey[0] = 1;
+        byte[] encryptedResponse = DatagramEncryptUtil.encryptResponsePacket(
+                responsePayload, expectedKey, Optional.empty());
+
+        Assertions.assertThrows(DecryptionException.class,
+                () -> DatagramEncryptUtil.decryptResponsePacket(encryptedResponse, wrongKey));
+    }
     
     @Test
     void testSTLSCodeConstant() {

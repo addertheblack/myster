@@ -5,7 +5,7 @@ public class AsyncTaskTracker implements Cancellable {
     public static AsyncTaskTracker create(TaskTracker context, Invoker invoker) {
         AsyncTaskTracker task =  new AsyncTaskTracker(invoker);
         
-        context.registerDependentTask(task);
+        context.trackForCancellation(task);
         
         return task;
     }
@@ -41,7 +41,7 @@ public class AsyncTaskTracker implements Cancellable {
         PromiseFuture<T> future = c.call().setInvoker(invoker).addFinallyListener(this::taskFinished);
         
         // if this object is cancelled this will be auto- cancelled by the SimpleTaskTracker
-        tasks.registerDependentTask(future);
+        tasks.trackForCancellation(future);
         
         return future;
     }

@@ -15,11 +15,11 @@ Implemented the authenticated 3DNS `FIND_CLOSEST` protocol foundation from
 - Added an expected-server-public-key option to `ParamBuilder`. When present, datagram requests
   always use encrypted MSD with that exact key, bypassing the learned-key cache and plaintext
   policy without inserting the supplied key into the cache.
-- Candidate-validation/onboarding orchestration was deliberately deferred until Part 2b has a
-  production consumer and can justify the narrowest useful API.
+- Candidate verification orchestration was deliberately deferred until Part 2b could wrap the
+  expected-key transport around a useful production query.
 
-This part intentionally does not implement table maintenance/bootstrap or iterative CID lookup;
-those remain Parts 2b and 3.
+This part intentionally does not implement candidate verification orchestration, iterative CID
+lookup, or table maintenance/bootstrap; those remain Parts 2b, 3, and 4 respectively.
 
 ## Files changed
 
@@ -52,8 +52,8 @@ those remain Parts 2b and 3.
 - The plan left the response budget configurable by implementation; this implementation fixes it at
   16 KiB for both encoding and decoding.
 - The expected-key hook uses encrypted UDP rather than adding a separate TLS path. It remains a
-  transport primitive; selection, stats comparison, onboarding, and in-flight sharing are deferred
-  to Part 2b if its production flow requires them.
+  transport primitive; Part 2b will fuse it with a useful `FIND_CLOSEST` query, while persistent
+  stats onboarding belongs to Part 4.
 - Literal-IP validation is stricter than the minimum wire description. Existing `MysterAddress`
   construction can resolve hostnames, so this restriction prevents untrusted 3DNS responses from
   triggering local resolver lookups.
@@ -82,10 +82,10 @@ those remain Parts 2b and 3.
 
 ## Follow-up
 
-- [Part 2b](../plans/myster-3dns-part-2b.md) owns highly jittered hourly maintenance, immediate
-  repair of damaged entries, bootstrap behavior, and any candidate-proof/onboarding helper its
-  production flow demonstrates is required.
+- [Part 2b](../plans/myster-3dns-part-2b.md) owns the reusable expected-key verified-query boundary.
 - [Part 3](../plans/myster-3dns-part-3.md) owns iterative CID resolution and direction-aware query
   selection.
+- [Part 4](../plans/myster-3dns-part-4.md) owns highly jittered maintenance, repair, bootstrap
+  scheduling, and secure pool onboarding for retained discoveries.
 - The legacy project-wide Javadoc errors and sandbox-dependent full-suite tests remain outside the
   scope of Part 2a.

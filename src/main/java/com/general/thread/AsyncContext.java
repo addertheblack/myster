@@ -26,13 +26,16 @@ public interface AsyncContext<R> extends Cancellable, TaskTracker {
     }
     
     boolean isCancelled();
-    void registerDependentTask(Cancellable... c);
+    @Override
+    void trackForCancellation(Cancellable... tasks);
     
     /**
-     * If you create sub tasks you need to be sure to register them with this async context
-     * or else task cancellation won't work correctly
+     * Tracks future-backed operations that this context owns so cancellation
+     * reaches them. Their completion is not propagated to this context.
+     *
+     * @param futures futures to cancel with this context
      */
-    default void registerDependentTask(PromiseFuture<?>... p) {
-        registerDependentTask((Cancellable[]) p);
+    default void trackForCancellation(PromiseFuture<?>... futures) {
+        trackForCancellation((Cancellable[]) futures);
     }
 }

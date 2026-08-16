@@ -1,75 +1,82 @@
-# Myster 3DNS - Part 2b: Routing-Table Maintenance and Bootstrap
+# Myster 3DNS - Part 2b: Candidate Identity Verification
 
-Related plans:
+Prerequisites and follow-on plans:
 
-- [Part 1a: Core Data Structures](myster-3dns-part-1a.md)
 - [Part 2a: FIND_CLOSEST Protocol and Expected-Key Hook](myster-3dns-part-2a.md)
 - [Part 3: Iterative CID Resolution](myster-3dns-part-3.md)
-
-> Preliminary plan: revisit constants and scheduling details after Part 2a is implemented and measured.
+- [Part 4: Routing-Table Maintenance and Bootstrap](myster-3dns-part-4.md)
 
 ## 1. Summary
 
-Bootstrap and maintain the tracker-owned 3DNS target table by querying positive power-of-two targets on startup and roughly hourly thereafter, with broad per-node/per-target jitter and immediate repair when retained nodes become damaged or unreachable.
+Turn Part 2a's expected-key UDP transport hook into the smallest reusable 3DNS query primitive: query an untrusted public-key/address candidate with `FIND_CLOSEST`, accept the result only after an authenticated encrypted response proves possession of the advertised private key, and return a transport-neutral verified-peer value alongside the still-untrusted candidates in the response.
 
 ## 2. Non-goals
 
-- Do not define or change the `FIND_CLOSEST` wire protocol; that is Part 2a.
-- Do not expose the general CID resolution API; that is Part 3.
-- Do not replace pool liveness checks or 3DNS persistence.
-- Do not require all 128 targets to run simultaneously or on a synchronized wall-clock boundary.
+- Do not implement iterative CID lookup; that is Part 3.
+- Do not bootstrap or periodically maintain the retained finger table; that is Part 4.
+- Do not fetch server stats, insert candidates into `MysterServerPool`, or persist verified peers.
+- Do not add a second verification round trip before every `FIND_CLOSEST`; the useful query response is itself the proof.
+- Do not add general in-flight deduplication or caching before concurrent production callers demonstrate a need.
+- Do not expose expected-key TCP connections through `MysterStream` in this milestone.
+- Do not treat a verified peer as honest, permanently reachable, or authorized to make trusted claims about other peers.
 
 ## 3. Assumptions & open questions
 
-- Targets remain `localCid + 2^bitIndex`, so maintenance approaches each target from the predecessor/LEFT side and must not prefer a successor that overshoots it.
-- Exact is always best; otherwise LEFT/predecessor candidates are the primary maintenance path. RIGHT results may be retained as resilience information but are not preferred for the next maintenance query for a positive-offset target.
-- Healthy entries receive an approximately hourly refresh with very broad jitter. Jitter applies both to a node's cycle start and to individual target work so fleets do not synchronize or burst 128 requests.
-- A damaged target slot is re-queried immediately, subject to in-flight deduplication and a small failure backoff to avoid a tight retry loop.
-- Startup uses persisted usable fingers and existing pool servers as seeds; an empty installation still needs at least one externally learned seed from bookmark/mDNS/manual discovery.
-- Part 2a intentionally provides no candidate-validation service. Part 2b should first confirm that maintenance needs one, then implement the narrowest production-facing validation/onboarding path rather than a speculative general pool API.
-- Open question for finalization: choose exact jitter bounds after measuring request cost. Initial proposal is a random interval in the 30-90 minute range per healthy target, with target dispatch spread across the cycle.
+- 3DNS lookup is primarily a UDP operation. `ParamBuilder.withExpectedServerPublicKey(...)` already forces the UDP request through `EncryptingStandardDatagramClientImpl`, independently of the address-to-key cache.
+- The expected private key is required to decrypt the request and recover its one-time symmetric response key. A response that passes ChaCha20-Poly1305 decryption therefore proves possession of that private key even though the current optional server-signature section is not checked separately.
+- `ThreeDnsAddressCandidate` already derives its CID locally from the candidate's X.509 public key and rejects construction with an inconsistent explicit CID. No candidate CID is accepted from the wire.
+- Verification binds one successful transaction to the candidate key and reachable address/path. It does not make subsequent plaintext traffic safe; later traffic that relies on the identity must continue to supply the expected key or use an equivalently authenticated connection.
+- `TLSSocket.createClientSocket(...)` already accepts an expected server public key and checks the peer certificate, but `MysterSocketFactory` and `MysterStream` do not currently expose that argument. The verified-peer model should not depend on UDP so a future TCP adapter can produce the same type.
+- No architecture-blocking questions remain. UDP is the only verification transport implemented in Part 2b; TCP exposure can be added when a real streaming caller requires it.
 
 ## 4. Proposed design
 
-`ThreeDnsMaintenance` owns scheduling and bootstrap state; `ThreeDnsServerList` continues to own retained slots. On startup, maintenance inspects immutable target snapshots, prioritizes empty/damaged slots, and schedules healthy slots across a jittered window.
+Add a narrow `ThreeDnsPeerClient` in `com.myster.threedns`. Its asynchronous `findClosest(...)` operation accepts an untrusted `ThreeDnsAddressCandidate`, the lookup target, and the per-side limit. It calls the existing datagram API with the candidate address and `withExpectedServerPublicKey(candidate.identity().getPublicKey())`.
 
-For each positive-offset target, the worker asks known seeds for `FIND_CLOSEST(target, limit)`. It selects exact and LEFT/predecessor candidates, proves the selected address/key association through Part 2a's expected-key hook, and only then uses normal onboarding so pool/listener behavior can reconsider the server for retention. It does not select RIGHT/successor as the normal next query because that crosses the target in the positive routing direction.
+There is no standalone ping or proof exchange. If the encrypted `FIND_CLOSEST` transaction succeeds and its response authenticates under the one-time response key, `ThreeDnsPeerClient` creates a `VerifiedThreeDnsPeer` for the responder and returns it with the decoded `ThreeDnsAddressCandidateSet`. The candidates returned by that peer remain untrusted hints; each becomes verified only when it is itself queried through the same expected-key path.
 
-Down/dead/list-removal events enqueue an immediate repair for the affected bit/side rather than waiting for the hourly cycle. A per-target state machine deduplicates repair against scheduled or running work. Failures use bounded exponential backoff with jitter while successful healthy targets return to the broad hourly schedule.
+`VerifiedThreeDnsPeer` is a trust-typed value with read-only identity, derived CID, and address accessors. Construction is restricted to the verification package/path so ordinary wire decoding cannot accidentally promote a hint. The value means only that this key answered at this address/path during the completed operation.
+
+The client codec also checks any response entry labelled `exact`: after deriving its CID from its public key, it must equal the target in the request. A mismatch rejects the response as malformed. Part 3 still independently scores all candidates and decides whether an exact verified responder or returned hint satisfies the caller's target.
 
 ## 5. Architecture connections
 
+Part 2b is the trust boundary between wire hints and the iterative resolver. It composes existing encryption and codec behavior; it does not introduce another network protocol.
+
 | New / changed thing | Owned / created by | Called / used by | Connects to (existing) |
 |---|---|---|---|
-| Maintenance scheduler | `ThreeDnsMaintenance` | Myster lifecycle | `MysterGlobals` shutdown, scheduler/timer |
-| Target repair notifications | `ThreeDnsServerList` / `Tracker` | Maintenance | Existing down/dead/list-change paths |
-| One-target maintenance query and candidate proof | `ThreeDnsMaintenance` (plus a narrow shared helper only if justified) | Scheduled and damage-triggered work | Part 2a `findClosest`, expected-key requests, normal onboarding |
-| Bootstrap seed selection | Tracker/maintenance | Startup work | persisted fingers, pool closest results, bookmarks/mDNS discoveries |
+| Expected-key 3DNS query | `ThreeDnsPeerClient` | Part 3 resolver, later Part 4 maintenance | `MysterDatagram.findClosest(...)`, `ParamBuilder.withExpectedServerPublicKey(...)` |
+| Verified responder value | `VerifiedThreeDnsPeer` | Part 3 lookup result/frontier, later authenticated transports | `ThreeDnsAddressCandidate`, `PublicKeyIdentity`, `ServerCid`, `MysterAddress` |
+| Verified query result | `ThreeDnsVerifiedQueryResult` | Part 3 iteration | verified responder plus untrusted `ThreeDnsAddressCandidateSet` |
+| Exact-claim validation | `FindClosestDatagramClient` | Every decoded `FIND_CLOSEST` response | locally derived candidate CID and request target |
 
-Data flows from a scheduled or damage event to one target job, then through one-hop `FIND_CLOSEST`, selected-candidate proof, and normal onboarding, then back into the pool refresh listener that updates `ThreeDnsServerList`. Maintenance does not directly write retained entries or preferences.
+The data flow is: an earlier peer supplies an untrusted public-key/address hint; `ThreeDnsPeerClient` encrypts a useful `FIND_CLOSEST` request to that key; only its private-key holder can recover the response key; successful authenticated response decoding promotes the responder to `VerifiedThreeDnsPeer`; returned neighbors remain untrusted inputs for later iterations.
 
-There is no new wire or disk format.
+There is no new wire or disk format. Transaction `303` and the Part 2a MessagePak schema remain unchanged.
 
 ## 6. Key decisions & edge cases
 
-- Positive-offset target maintenance is predecessor-biased: exact, then LEFT. This avoids overshooting the target.
-- Very jittered means independent randomized scheduling, not one hourly task that refreshes every target at once.
-- Damaged entries trigger immediate repair; healthy entries are hourly-ish.
-- Immediate repair is deduplicated and backs off after failures so an offline region cannot spin.
-- Shutdown cancels queued/running ownership cleanly; late futures must not reschedule after stop.
-- Empty seed sets are a valid idle state. New external pool discoveries should wake bootstrap work.
-- Sparse or malicious responses are tolerated; only validated candidates influence trusted retention.
+- Verification is fused with the useful UDP query, avoiding a duplicate proof request at each hop.
+- CID derivation and address/key possession are different checks: local hashing establishes the key's CID, while the encrypted round trip establishes possession at the contacted endpoint/path.
+- An `exact` wire-group entry whose derived CID differs from the requested target invalidates the response.
+- A successfully verified responder need not have the target CID; intermediate peers are expected. Target equality is evaluated explicitly by Part 3.
+- A verified responder's returned candidates are not transitively trusted.
+- Timeout, malformed response, decryption/authentication failure, wrong-key response, and cancellation produce failure/cancellation, never a verified value.
+- Verification is evidence from one completed operation, not a permanent liveness assertion or a cache mutation.
+- The result types must make the trust distinction visible without claiming that a peer's routing answers are truthful.
+- TCP expected-key support remains compatible but is not silently used as fallback; UDP failure stays an explicit failure.
 
 ## 7. Acceptance criteria
 
-- [ ] Empty/damaged target slots are queried promptly at startup when a usable seed exists.
-- [ ] Healthy targets refresh at broadly jittered hourly intervals without a synchronized 128-request burst.
-- [ ] A retained node becoming down/dead triggers immediate deduplicated repair of affected targets.
-- [ ] Positive-offset maintenance prefers exact then LEFT/predecessor candidates and does not overshoot via RIGHT as its normal next hop.
-- [ ] Every retained discovery proves its advertised key through an expected-key request before normal pool/list retention.
-- [ ] Failed repairs back off with jitter and successful repairs return to the healthy schedule.
-- [ ] Maintenance stops cleanly on application shutdown.
-- [ ] Existing retained-list persistence remains the only 3DNS maintenance state on disk.
+- [ ] A caller can issue `FIND_CLOSEST` to an untrusted candidate using that candidate's advertised public key without first caching the address/key association.
+- [ ] A verified-peer value is returned only after the encrypted UDP response authenticates with the one-time key from the expected-key request.
+- [ ] Candidate CIDs are derived locally from public keys; no remote CID claim is trusted.
+- [ ] A candidate labelled exact is rejected unless its derived CID equals the request target.
+- [ ] Candidates inside a verified peer's response remain explicitly untrusted until individually queried.
+- [ ] Verification performs one useful `FIND_CLOSEST` round trip, not a proof round trip followed by a duplicate query.
+- [ ] Failures and cancellation cannot produce or cache a verified-peer value.
+- [ ] Part 2b does not mutate the server pool, retained finger table, preferences, or scheduler state.
+- [ ] The verified-peer model is not tied to UDP internals, leaving room for a future expected-key TLS producer.
 
 ---
 ## ✦ IMPLEMENTATION DETAILS (for the implementation agent)
@@ -77,34 +84,38 @@ There is no new wire or disk format.
 
 ## 8. Affected files / classes
 
-- New `src/main/java/com/myster/threedns/ThreeDnsMaintenance.java` - lifecycle, target scheduling, and repair orchestration.
-- `src/main/java/com/myster/threedns/ThreeDnsServerList.java` - expose affected-target notifications or immutable repair inputs without exposing mutable slots.
-- `src/main/java/com/myster/tracker/Tracker.java` - supply snapshots/seeds and bridge damage events.
-- Optional narrow candidate-proof/onboarding helper, introduced only if the maintenance implementation demonstrates reuse or ownership that does not fit `ThreeDnsMaintenance`.
-- `src/main/java/com/myster/Myster.java` - construct/start/stop maintenance after Part 2a protocol wiring exists.
-- Focused scheduler tests under `src/test/java/com/myster/threedns`.
+- New `src/main/java/com/myster/threedns/ThreeDnsPeerClient.java` - expected-key `FIND_CLOSEST` orchestration and verified-result creation.
+- New `src/main/java/com/myster/threedns/VerifiedThreeDnsPeer.java` - trust-typed responder identity/CID/address with restricted construction.
+- New `src/main/java/com/myster/threedns/ThreeDnsVerifiedQueryResult.java` - verified responder plus immutable untrusted response candidates.
+- `src/main/java/com/myster/net/datagram/client/FindClosestDatagramClient.java` - reject a mismatched exact-group CID after deriving it from the key.
+- Focused tests under `src/test/java/com/myster/threedns` and `src/test/java/com/myster/net/datagram/client`.
 
 ## 9. Step-by-step implementation
 
-1. Finalize scheduling constants after Part 2a measurement. Keep time/random/scheduler injectable for deterministic tests.
-2. Model per-target state: healthy due time, queued, running, damaged, consecutive failures, and generation/cancellation token.
-3. Add a narrow tracker/list notification that identifies affected bit indices when retained entries are removed or become unusable. Do not expose mutable `TargetSlot`.
-4. Bootstrap from persisted usable fingers, tracker seeds, and pool closest candidates. Listen for later seed availability when startup has none.
-5. For a target job, query bounded seeds and process exact then LEFT candidates. Implement the smallest required expected-key proof/onboarding path here; share it outside maintenance only if a concrete caller justifies that API. Rely on normal pool events to populate retention.
-6. Schedule successful targets independently around one hour with broad jitter; spread initial healthy target work. Schedule damaged targets immediately unless equivalent work is queued/running.
-7. Apply bounded jittered backoff after failure and cancel all future rescheduling on shutdown.
-8. Write `docs/impl_summary/myster-3dns-part2b.md` after implementation.
+1. Add `VerifiedThreeDnsPeer` as an immutable public read type whose constructor or promotion factory is package-private. Preserve the candidate's `PublicKeyIdentity`, derived `ServerCid`, and `MysterAddress`; do not expose a public constructor that lets arbitrary callers claim verification.
+2. Add immutable `ThreeDnsVerifiedQueryResult` containing the verified responder and decoded `ThreeDnsAddressCandidateSet`. Document that only the responder is verified.
+3. Implement `ThreeDnsPeerClient.findClosest(ThreeDnsAddressCandidate peer, ServerCid target, int perSideLimit)` over an injected `MysterDatagram`.
+   - Build `ParamBuilder` with `peer.address()` and `withExpectedServerPublicKey(peer.identity().getPublicKey())`.
+   - Call the existing `MysterDatagram.findClosest(...)` once.
+   - Promote the input peer only in the successful authenticated result callback.
+   - Preserve exception and cancellation behavior and never retain a successful value after cancellation.
+4. In `FindClosestDatagramClient`, compare a decoded exact candidate's locally derived CID to the request target and reject the entire malformed response on mismatch. Do not add candidate CIDs to the wire schema.
+5. Keep pool lookup, stats fetch, persistence, retry, and deduplication out of this layer.
+6. Write `docs/impl_summary/myster-3dns-part-2b.md` after implementation.
 
 ## 10. Tests to write
 
-- Deterministic fake-clock tests for broad jitter bounds and absence of a synchronized batch.
-- Startup tests for persisted seeds, pool seeds, empty seed state, and wake-up on later discovery.
-- Direction tests proving exact then LEFT selection for positive-offset targets and no normal RIGHT overshoot.
-- Damage tests for immediate scheduling, affected-target scoping, in-flight deduplication, and backoff.
-- Lifecycle tests for shutdown and late-future completion.
+- `ThreeDnsPeerClient` passes the candidate address and exact expected key to `MysterDatagram.findClosest(...)`.
+- A successful expected-key response produces a verified responder and leaves every returned candidate unverified.
+- Timeout, malformed response, decryption failure, and cancellation do not produce a verified value.
+- A conflicting cached address key cannot replace the explicit candidate key; retain the Part 2a lower-level regression test.
+- `FindClosestDatagramClient` accepts an exact candidate derived to the requested CID and rejects a mismatched exact-group key.
+- `VerifiedThreeDnsPeer` cannot be constructed through the public wire-model API and preserves the candidate identity/CID/address exactly.
+- Focused crypto coverage demonstrates that a response encrypted with any key other than the request's one-time symmetric key fails authentication.
 
 ## 11. Docs / Javadoc to update
 
-- Update `docs/design/Myster 3DNS.md` with the finalized jitter range and predecessor-biased maintenance rule.
-- Document why `ThreeDnsMaintenance` does not directly mutate the retained table.
-- Add `docs/impl_summary/myster-3dns-part2b.md` during implementation.
+- Update `docs/design/Myster 3DNS.md` with the distinction between untrusted hints, verified responders, and pool-retained servers.
+- Javadoc `ThreeDnsPeerClient`, `VerifiedThreeDnsPeer`, and `ThreeDnsVerifiedQueryResult`, especially the operation-scoped meaning of verification.
+- Clarify in `ThreeDnsAddressCandidate` Javadoc that CID derivation is already enforced but does not prove address/key possession.
+- Add `docs/impl_summary/myster-3dns-part-2b.md` during implementation.
