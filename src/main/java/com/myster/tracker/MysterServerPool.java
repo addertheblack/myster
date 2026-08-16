@@ -110,8 +110,20 @@ public interface MysterServerPool {
      * Note this method only does something if the address is a LAN address.
      *
      * @param address to check
+     * @deprecated use {@link #suggestAddress(MysterAddress, PublicKeyIdentity)}
      */
+    @Deprecated
     void suggestAddress(MysterAddress address);
+
+    /**
+     * Suggests an untrusted address/identity pair and verifies that association
+     * with an expected-key server-stats exchange before adding it to pool state.
+     *
+     * @param address advertised server address
+     * @param identity public-key identity, and therefore derived CID, claimed
+     *        for that address
+     */
+    void suggestAddress(MysterAddress address, PublicKeyIdentity identity);
 
     void receivedDownNotification(MysterAddress address);
 }

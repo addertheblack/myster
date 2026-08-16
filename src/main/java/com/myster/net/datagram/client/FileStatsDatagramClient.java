@@ -30,14 +30,12 @@ public class FileStatsDatagramClient implements StandardDatagramClientImpl<Messa
     }
 
     @Override
-    public byte[] getDataForOutgoingPacket() {
+    public byte[] getDataForOutgoingPacket() throws IOException {
         ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
 
         try (final var out = new MysterDataOutputStream(byteArrayOutputStream)) {
             out.writeType(stub.getType());
             out.writeUTF(stub.getName());
-        } catch (IOException ex) {
-            throw new com.general.util.UnexpectedException(ex);
         }
         
         return byteArrayOutputStream.toByteArray();

@@ -19,9 +19,10 @@ public interface StandardDatagramClientImpl<T> {
             throws IOException;
 
     /**
-     * @return data to send over the wire to the remote (serialzer)
+     * @return serialized data to send to the remote peer
+     * @throws IOException if the request cannot be serialized
      */
-    public byte[] getDataForOutgoingPacket();
+    public byte[] getDataForOutgoingPacket() throws IOException;
 
     /**
      * @return the int representing this transaction protocol

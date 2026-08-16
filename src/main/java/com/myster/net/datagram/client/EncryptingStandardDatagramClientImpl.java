@@ -33,30 +33,21 @@ public class EncryptingStandardDatagramClientImpl<T> implements StandardDatagram
     }
     
     @Override
-    public byte[] getDataForOutgoingPacket() {
-        try {
-            // Get original payload and transaction code from the delegate
-            byte[] originalPayload = delegate.getDataForOutgoingPacket();
-            int originalTransactionCode = delegate.getCode();
-            
-            // Build encrypted payload: [original_transaction_code (4 bytes) | original_payload]
-            // This format allows the server to extract the original transaction code after decryption
-            ByteBuffer encryptedPayload = ByteBuffer.allocate(4 + originalPayload.length);
-            encryptedPayload.putInt(originalTransactionCode);  // First 32 bits = original transaction code
-            encryptedPayload.put(originalPayload);             // Rest = original payload
-            
-            // Encrypt using MSD protocol - unsigned if no client identity
-            lastEncryptedRequest = DatagramEncryptUtil.encryptPacket(
-                encryptedPayload.array(), 
-                serverPublicKey, 
-                clientIdentity
-            );
-            
-            return lastEncryptedRequest.encryptedPacket;
-            
-        } catch (Exception e) {
-            throw new RuntimeException("Failed to encrypt packet", e);
-        }
+    public byte[] getDataForOutgoingPacket() throws IOException {
+        byte[] originalPayload = delegate.getDataForOutgoingPacket();
+        int originalTransactionCode = delegate.getCode();
+
+        ByteBuffer encryptedPayload = ByteBuffer.allocate(4 + originalPayload.length);
+        encryptedPayload.putInt(originalTransactionCode);
+        encryptedPayload.put(originalPayload);
+
+        lastEncryptedRequest = DatagramEncryptUtil.encryptPacket(
+            encryptedPayload.array(),
+            serverPublicKey,
+            clientIdentity
+        );
+
+        return lastEncryptedRequest.encryptedPacket;
     }
     
     @Override
@@ -67,25 +58,16 @@ public class EncryptingStandardDatagramClientImpl<T> implements StandardDatagram
     
     @Override
     public T getObjectFromTransaction(Transaction encryptedReply) throws IOException {
-        try {
-            // Decrypt the response using our stored symmetric key from the request
-            byte[] encryptedResponseData = encryptedReply.getData();
-            byte[] decryptedResponse = DatagramEncryptUtil.decryptResponsePacket(
-                encryptedResponseData, 
-                lastEncryptedRequest.symmetricKey
-            );
-            
-            // Create new transaction with decrypted data and original transaction code
-            Transaction decryptedTransaction = encryptedReply.withDifferentPayload(
-                decryptedResponse, 
-                delegate.getCode()
-            );
-            
-            // Forward to original implementation with the decrypted transaction
-            return delegate.getObjectFromTransaction(decryptedTransaction);
-            
-        } catch (Exception e) {
-            throw new IOException("Failed to decrypt response", e);
-        }
+        byte[] decryptedResponse = DatagramEncryptUtil.decryptResponsePacket(
+            encryptedReply.getData(),
+            lastEncryptedRequest.symmetricKey
+        );
+
+        Transaction decryptedTransaction = encryptedReply.withDifferentPayload(
+            decryptedResponse,
+            delegate.getCode()
+        );
+
+        return delegate.getObjectFromTransaction(decryptedTransaction);
     }
 }

@@ -21,7 +21,7 @@ This document captures Myster-specific coding conventions, preferred libraries, 
 - **Prefs enabled/disabled** — store only identifier + `enabled` boolean
 - **Code commenting style** — see [`Code Comments.md`](Code%20Comments.md)
 - **Standing Refactors** — see [`standing-refactors.md`](standing-refactors.md); apply when you touch an affected file
-- **Exception Handling** — avoid broad `Throwable`/`Exception`; map incoming-data parse errors to `IOException`
+- **Exception Handling** — catch only expected failures with a concrete handling strategy; let unexpected runtime exceptions propagate; never use `UncheckedIOException`
 
 **For architectural patterns**, see **[myster-important-patterns.md](myster-important-patterns.md)**:
 - Event System, Promise/Future, Listener Pattern, Dependency Injection, Threading
@@ -398,11 +398,24 @@ public static Policy fromMessagePakBytes(byte[] bytes) throws IOException {
 **Rule**: Do not throw or catch `Throwable`, and avoid broad `Exception` unless you are at a
 true boundary where every checked exception is handled identically.
 
+- Do not catch an exception unless the failure is expected and the catch block has a concrete
+  recovery, translation, cleanup, or boundary-handling responsibility.
 - Prefer the most specific checked exception your API contract can express.
 - Do not catch `Error` subclasses (`OutOfMemoryError`, etc.) in normal application flow.
 - Do not use broad multi-catch forms that include `Error` or `RuntimeException`
   (e.g., `catch (Exception | Error e)` or `catch (RuntimeException | Error e)`).
-- Runtime exceptions should usually propagate unless you can recover locally.
+- Treat an unexpected `RuntimeException` like a panic: let it propagate. Do not catch it merely
+  to log it, turn it into a failed future, return a fallback value, or make a method appear safer.
+- Catch a runtime exception only when that exact failure is an expected part of a library/API
+  contract and can be handled meaningfully, or at a genuine process/task boundary responsible
+  for isolating failures. Keep such catches as narrow as possible.
+- Do not use `UncheckedIOException`. A synchronous API that can fail because of I/O should declare
+  `IOException`. An asynchronous or non-throwing API should carry the value or error through its
+  established result abstraction, such as `PromiseFuture`, rather than hiding the error in a
+  runtime wrapper.
+- If a callback type cannot declare a checked I/O failure, move the fallible work outside the
+  callback or return an explicit result/error value. Do not use `UncheckedIOException` to escape
+  the callback signature.
 
 ```java
 // Prefer

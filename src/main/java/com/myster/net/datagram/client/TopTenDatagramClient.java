@@ -45,12 +45,10 @@ public class TopTenDatagramClient implements StandardDatagramClientImpl<String[]
         return DatagramConstants.TOP_TEN_TRANSACTION_CODE;
     }
 
-    public byte[] getDataForOutgoingPacket() {
+    public byte[] getDataForOutgoingPacket() throws IOException {
         var byteStream = new ByteArrayOutputStream();
         try (final var out = new MysterDataOutputStream(byteStream )) {
             out.writeType(type);
-        } catch (IOException exception) {
-            throw new IllegalStateException(exception);
         }
         
         return byteStream.toByteArray();

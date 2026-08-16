@@ -105,6 +105,33 @@ public class ServerStats extends ServerStreamHandler {
 
     }
 
+    /**
+     * Builds the identity and addressing subset of server stats used while file
+     * listings are unavailable.
+     *
+     * @param serverName server name to include when non-blank
+     * @param port advertised Myster server port
+     * @param identity identity whose public key is included when available
+     * @return server stats containing the port and all available identity fields
+     */
+    public static MessagePak getMinimalServerStatsMessagePack(String serverName,
+                                                               int port,
+                                                               Identity identity) {
+        MessagePak serverStats = MessagePak.newEmpty();
+        serverStats.putInt(PORT, port);
+
+        if (serverName != null && !serverName.isBlank()) {
+            serverStats.putString(SERVER_NAME, serverName);
+        }
+
+        if (identity != null) {
+            identity.getMainIdentity().ifPresent(pair ->
+                    serverStats.putByteArray(IDENTITY, pair.getPublic().getEncoded()));
+        }
+
+        return serverStats;
+    }
+
     private static MessagePak getNumberOfFilesMessagePack(MessagePak numOfFileStats, FileTypeListManager fileManager) throws NotInitializedException { // in-line
         MysterType[] filetypelist = fileManager.getFileTypeListing();
 

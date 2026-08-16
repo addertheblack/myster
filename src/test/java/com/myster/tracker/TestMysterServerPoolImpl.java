@@ -183,6 +183,62 @@ class TestMysterServerPoolImpl {
         Assertions.assertTrue(pool.existsInPool(MysterAddress.createMysterAddress("127.0.0.1")));
         Assertions.assertTrue(pool.existsInPool(pool.lookupIdentityFromName(externalName).get()));
     }
+
+    @Test
+    void businessCardSuggestionCarriesExpectedIdentityIntoStatsRefresh() throws Exception {
+        pool = new MysterServerPoolImpl(pref, protocol);
+        MysterAddress address = MysterAddress.createMysterAddress("127.0.0.1");
+        PublicKeyIdentity expectedIdentity = new PublicKeyIdentity(
+                identity.getMainIdentity().orElseThrow().getPublic());
+        MysterDatagram datagram = protocol.getDatagram();
+        org.mockito.ArgumentCaptor<ParamBuilder> params =
+                org.mockito.ArgumentCaptor.forClass(ParamBuilder.class);
+
+        pool.suggestAddress(address, expectedIdentity);
+
+        Mockito.verify(datagram, Mockito.timeout(2_000))
+                .getBidirectionalServerStats(params.capture());
+        Assertions.assertEquals(address, params.getValue().getAddress().orElseThrow());
+        Assertions.assertEquals(expectedIdentity.getPublicKey(),
+                                params.getValue().getExpectedServerPublicKey().orElseThrow());
+    }
+
+    @Test
+    void businessCardSuggestionRejectsMismatchedStatsIdentity() throws Exception {
+        pool = new MysterServerPoolImpl(pref, protocol);
+        MysterAddress address = MysterAddress.createMysterAddress("127.0.0.1");
+        Identity otherIdentity = new Identity("business-card-mismatch.keystore", tempDir.toFile());
+        PublicKeyIdentity advertisedIdentity = new PublicKeyIdentity(
+                otherIdentity.getMainIdentity().orElseThrow().getPublic());
+        MysterPoolListener listener = Mockito.mock(MysterPoolListener.class);
+        pool.addPoolListener(listener);
+
+        pool.suggestAddress(address, advertisedIdentity);
+
+        Mockito.verify(protocol.getDatagram(), Mockito.timeout(2_000))
+                .getBidirectionalServerStats(Mockito.any(ParamBuilder.class));
+        Mockito.verify(listener, Mockito.after(500).never())
+                .serverRefresh(Mockito.any(MysterServer.class));
+        Assertions.assertFalse(pool.existsInPool(advertisedIdentity));
+    }
+
+    @Test
+    void unsupportedBidirectionalStatsDoesNotRetryLegacyStats() throws Exception {
+        pool = new MysterServerPoolImpl(pref, protocol);
+        MysterAddress address = MysterAddress.createMysterAddress("127.0.0.1");
+        MysterDatagram datagram = protocol.getDatagram();
+        Mockito.doReturn(PromiseFuture.newPromiseFutureException(
+                new IOException("Transaction type unknown")))
+                .when(datagram)
+                .getBidirectionalServerStats(Mockito.any(ParamBuilder.class));
+
+        pool.suggestAddress(address);
+
+        Mockito.verify(datagram, Mockito.timeout(2_000))
+                .getBidirectionalServerStats(Mockito.any(ParamBuilder.class));
+        Mockito.verify(datagram, Mockito.after(300).never())
+                .getServerStats(Mockito.any(ParamBuilder.class));
+    }
     
 
     @Test

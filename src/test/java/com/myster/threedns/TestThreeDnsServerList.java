@@ -269,6 +269,9 @@ class TestThreeDnsServerList {
         public void suggestAddress(MysterAddress address) {}
 
         @Override
+        public void suggestAddress(MysterAddress address, PublicKeyIdentity identity) {}
+
+        @Override
         public void receivedDownNotification(MysterAddress address) {}
     }
 

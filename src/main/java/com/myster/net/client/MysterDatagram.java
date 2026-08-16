@@ -35,7 +35,12 @@ public interface MysterDatagram {
     /**
      * Performs a bidirectional server stats exchange with the remote server.
      * Sends our server stats in the request and receives the remote server's
-     * stats in the response. Both parties learn about each other in one transaction.
+     * stats in the response. When the parameters include an expected server
+     * key, the exchange is encrypted to that key independently of tracker state.
+     * Before all local shared file lists are initialized, this operation sends
+     * legacy transaction {@code 101} because a complete local card is not yet
+     * available; it does not retry {@code 101} after a remote {@code 102}
+     * failure.
      *
      * @param params connection parameters including the remote server address
      * @return PromiseFuture containing the remote server's stats

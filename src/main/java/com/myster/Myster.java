@@ -546,6 +546,7 @@ public class Myster {
         log.info("External UPnP gateway: " + UPnP.getDefaultGatewayIP());
         log.info("External IP: " + UPnP.getExternalIP());
         log.info("Local IP: " + UPnP.getLocalIP());
+        log.info("serverPreferences.getServerPort(): " + serverPreferences.getServerPort());
         log.info("isMappedTCP(): " + UPnP.isMappedTCP(serverPreferences.getServerPort()));
         log.info("External TCP/IP port enabled: " + UPnP.openPortTCP(serverPreferences.getServerPort()));
         log.info("External UDP/IP port enabled: " + UPnP.openPortUDP(serverPreferences.getServerPort()));

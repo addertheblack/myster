@@ -177,9 +177,21 @@ public class MysterServerPoolImpl implements MysterServerPool {
 
     @Override
     public synchronized void suggestAddress(MysterAddress address) {
+        suggestAddress(address, Optional.empty());
+    }
+
+    @Override
+    public synchronized void suggestAddress(MysterAddress address, PublicKeyIdentity identity) {
+        suggestAddress(address, Optional.of(identity));
+    }
+
+    private void suggestAddress(MysterAddress address,
+                                Optional<PublicKeyIdentity> expectedIdentity) {
         Optional<MysterIdentity> identity = identityTracker.getIdentity(address);
 
-        if (identity.isPresent()) {
+        boolean knownIdentityMatchesHint = expectedIdentity.isEmpty()
+                || identity.filter(expectedIdentity.get()::equals).isPresent();
+        if (knownIdentityMatchesHint && identity.isPresent()) {
             Optional<MysterServer> cachedServer = getCachedMysterServer(identity.get());
             if (cachedServer.isPresent()) {
                 // If the identity and server are known but someone is
@@ -198,7 +210,7 @@ public class MysterServerPoolImpl implements MysterServerPool {
             return;
         }
 
-        refreshMysterServer(address);
+        refreshMysterServer(address, expectedIdentity);
     }
     
     @Override
@@ -282,6 +294,11 @@ public class MysterServerPoolImpl implements MysterServerPool {
      * Package protected for unit tests
      */
     void refreshMysterServer(MysterAddress address) {
+        refreshMysterServer(address, Optional.empty());
+    }
+
+    private void refreshMysterServer(MysterAddress address,
+                                     Optional<PublicKeyIdentity> expectedIdentity) {
         PromiseFuture<MessagePak> getServerStatsFuture =
                         PromiseFutures.execute(() -> {
                             try (var s = protocol.getStream().makeStreamConnection(address)) {
@@ -291,11 +308,23 @@ public class MysterServerPoolImpl implements MysterServerPool {
                             }
                         }).mapAsync(result -> {
                             if (result) {
-                                // Use bidirectional exchange - sends our stats and receives theirs
-                                return protocol.getDatagram().getBidirectionalServerStats(new ParamBuilder(address));
+                                ParamBuilder params = new ParamBuilder(address);
+                                if (expectedIdentity.isPresent()) {
+                                    params = params.withExpectedServerPublicKey(
+                                            expectedIdentity.get().getPublicKey());
+                                }
+                                return protocol.getDatagram().getBidirectionalServerStats(params);
                             } else {
                                 return PromiseFuture.newPromiseFutureException(new IOException("TCP PING Failed"));
                             }
+                        }).mapAsync(statsMessage -> {
+                            if (expectedIdentity.isPresent()
+                                    && !hasExpectedIdentity(statsMessage,
+                                                            expectedIdentity.get())) {
+                                return PromiseFuture.newPromiseFutureException(
+                                        new IOException("Server stats identity did not match business card"));
+                            }
+                            return PromiseFuture.newPromiseFuture(statsMessage);
                         }).setInvoker(TrackerUtils.INVOKER)
                         .addResultListener(statsMessage -> {
                             serverStatsCallback(address, statsMessage);
@@ -309,6 +338,14 @@ public class MysterServerPoolImpl implements MysterServerPool {
                         });
 
         outstandingServerFutures.put(address, getServerStatsFuture);
+    }
+
+    private static boolean hasExpectedIdentity(MessagePak serverStats,
+                                               PublicKeyIdentity expectedIdentity) {
+        return serverStats.getByteArray(ServerStats.IDENTITY)
+                .map(encoded -> Arrays.equals(encoded,
+                                              expectedIdentity.getPublicKey().getEncoded()))
+                .orElse(false);
     }
 
     private synchronized void serverStatsCallback(MysterAddress addressIn,

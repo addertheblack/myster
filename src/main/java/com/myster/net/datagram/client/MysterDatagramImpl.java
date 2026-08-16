@@ -100,12 +100,25 @@ public class MysterDatagramImpl implements MysterDatagram {
 
     @Override
     public PromiseFuture<MessagePak> getBidirectionalServerStats(final ParamBuilder params) {
+        if (!hasInitializedLocalServerStats()) {
+            return getServerStats(params);
+        }
+
         return doSection(params, new BidirectionalServerStatsDatagramClient(
             serverName.get(),
             serverPort.get(),
             identity,
             fileManager
         ));
+    }
+
+    private boolean hasInitializedLocalServerStats() {
+        for (MysterType type : fileManager.getFileTypeListing()) {
+            if (!fileManager.hasInitialized(type)) {
+                return false;
+            }
+        }
+        return true;
     }
 
     @Override
@@ -180,9 +193,16 @@ public class MysterDatagramImpl implements MysterDatagram {
     }
     
     private <T> PromiseFuture<T> sendPacket(MysterAddress address, StandardDatagramClientImpl<T> impl) {
+        final byte[] outgoingData;
+        try {
+            outgoingData = impl.getDataForOutgoingPacket();
+        } catch (IOException exception) {
+            return PromiseFuture.<T>newPromiseFutureException(exception).useEdt();
+        }
+
         return PromiseFuture.<T>newPromiseFuture((context) -> {
             transactionManager.sendTransaction(
-                new SimpleDataPacket(address, impl.getDataForOutgoingPacket()),
+                new SimpleDataPacket(address, outgoingData),
                 impl.getCode(),  // This will be STLS_CODE for encrypted packets, original code for unencrypted
                 new TransactionListener() {
                     public void transactionReply(TransactionEvent e) {

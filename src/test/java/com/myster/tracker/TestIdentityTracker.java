@@ -2,7 +2,6 @@ package com.myster.tracker;
 
 import java.io.File;
 import java.io.IOException;
-import java.io.UncheckedIOException;
 import java.net.UnknownHostException;
 import java.security.PublicKey;
 import java.util.ArrayList;
@@ -130,6 +129,11 @@ public class TestIdentityTracker {
             for (MysterAddress mysterAddress : addresses) {
                 assertEquals(mysterIdentity2, identityTracker.getIdentity(mysterAddress).get());
             }
+            PublicKey originalPublicKey = ((PublicKeyIdentity) mysterIdentity).getPublicKey();
+            assertTrue(identityTracker.getIdentityFromCid(
+                    fromPublicKey(originalPublicKey)).isEmpty());
+            assertEquals(mysterIdentity2,
+                         identityTracker.getIdentityFromCid(fromPublicKey(publicKey2)).orElseThrow());
         }
 
         @Test
@@ -456,15 +460,13 @@ public class TestIdentityTracker {
         
         @BeforeEach
         public void setup() throws IOException {
+            MysterAddress firstOnlineAddress =
+                    MysterAddress.createMysterAddress("10.10.10.1");
+            MysterAddress secondOnlineAddress =
+                    MysterAddress.createMysterAddress("222.1.2.3");
             pinger = (a) -> {
-                int responseTime = -1;
-                try {
-                    if (a.equals(MysterAddress.createMysterAddress("10.10.10.1"))|| a.equals(MysterAddress.createMysterAddress("222.1.2.3"))) {
-                        responseTime = 1;
-                    }
-                } catch (UnknownHostException e) {
-                    throw new UncheckedIOException(e);
-                }
+                int responseTime = a.equals(firstOnlineAddress)
+                        || a.equals(secondOnlineAddress) ? 1 : -1;
                 
                 final int stupidWorkAround = responseTime;
                 

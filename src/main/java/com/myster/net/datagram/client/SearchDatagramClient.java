@@ -40,14 +40,12 @@ public class SearchDatagramClient implements StandardDatagramClientImpl<List<Str
         }
     }
 
-    public byte[] getDataForOutgoingPacket() {
+    public byte[] getDataForOutgoingPacket() throws IOException {
         ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
 
         try (var out = new MysterDataOutputStream(byteArrayOutputStream)) {
             out.writeType(type);
             out.writeUTF(searchString);
-        } catch (IOException ex) {
-            throw new com.general.util.UnexpectedException(ex);
         }
 
         return byteArrayOutputStream.toByteArray();

@@ -3,10 +3,15 @@ package com.myster.net.server.datagram;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
+import java.security.GeneralSecurityException;
+import java.security.KeyFactory;
+import java.security.PublicKey;
+import java.security.spec.X509EncodedKeySpec;
 import java.util.Optional;
 import java.util.function.Supplier;
 import java.util.logging.Logger;
 
+import com.myster.cid.ServerCid;
 import com.myster.filemanager.FileTypeListManager;
 import com.myster.identity.Identity;
 import com.myster.mml.MessagePak;
@@ -18,6 +23,7 @@ import com.myster.net.stream.client.MysterDataOutputStream;
 import com.myster.net.stream.server.NotInitializedException;
 import com.myster.net.stream.server.ServerStats;
 import com.myster.tracker.MysterServerPool;
+import com.myster.tracker.PublicKeyIdentity;
 import com.myster.transaction.Transaction;
 import com.myster.transaction.TransactionProtocol;
 import com.myster.transaction.TransactionSender;
@@ -34,7 +40,7 @@ import com.myster.transaction.TransactionSender;
  * <ol>
  *   <li>Parse the client's server stats from the request</li>
  *   <li>Extract the client's advertised port and identity</li>
- *   <li>Register the client in our server pool via {@link MysterServerPool#suggestAddress}</li>
+ *   <li>Suggest the address/identity pair for expected-key verification by the pool</li>
  *   <li>Generate and return our own server stats in the response</li>
  * </ol>
  *
@@ -81,60 +87,76 @@ public class BidirectionalServerStatsDatagramServer implements TransactionProtoc
                                     Transaction transaction,
                                     Object transactionObject)
             throws BadPacketException {
-        try (var in = new MysterDataInputStream(new ByteArrayInputStream(transaction.getData()))) {
-            MessagePak clientStats = in.readMessagePack();
+        MessagePak clientStats = readClientStats(transaction);
+        int advertisedPort = clientStats.getInt(ServerStats.PORT)
+                .filter(port -> port >= 1 && port <= 0xFFFF)
+                .orElseThrow(() -> new BadPacketException(
+                        "Business card requires a port in the range 1..65535"));
+        MysterAddress correctedAddress = new MysterAddress(
+                transaction.getAddress().getInetAddress(), advertisedPort);
+        Optional<PublicKeyIdentity> advertisedIdentity = extractIdentity(clientStats);
 
-            MysterAddress senderAddress = transaction.getAddress();
-            Optional<Integer> advertisedPort = clientStats.getInt(ServerStats.PORT);
-
-            MysterAddress correctedAddress;
-            if (advertisedPort.isPresent()) {
-                correctedAddress = new MysterAddress(
-                    senderAddress.getInetAddress(),
-                    advertisedPort.get()
-                );
-            } else {
-                // Fallback: use sender's source address
-                correctedAddress = senderAddress;
+        if (transaction.callerCid().isPresent() && advertisedIdentity.isPresent()) {
+            ServerCid advertisedCid = ServerCid.fromPublicKey(
+                    advertisedIdentity.get().getPublicKey());
+            if (!transaction.callerCid().get().equals(advertisedCid)) {
+                throw new BadPacketException(
+                        "Business-card identity does not match authenticated caller");
             }
+        }
 
-            // Add client to our pool
+        if (advertisedIdentity.isPresent()) {
+            pool.suggestAddress(correctedAddress, advertisedIdentity.get());
+        } else {
             pool.suggestAddress(correctedAddress);
+        }
+        log.fine("Received bidirectional server stats from " + correctedAddress);
 
-            log.fine("Received bidirectional server stats from " + correctedAddress);
+        MessagePak responseStats;
+        try {
+            responseStats = ServerStats.getServerStatsMessagePack(
+                    getServerName.get(), getPort.get(), identity, fileManager);
+        } catch (NotInitializedException exception) {
+            responseStats = ServerStats.getMinimalServerStatsMessagePack(
+                    getServerName.get(), getPort.get(), identity);
+        }
 
-            // Generate our server stats response
+        try {
             ByteArrayOutputStream byteOutputStream = new ByteArrayOutputStream();
             try (var out = new MysterDataOutputStream(byteOutputStream)) {
-                out.writeMessagePack(ServerStats.getServerStatsMessagePack(
-                    getServerName.get(),
-                    getPort.get(),
-                    identity,
-                    fileManager));
+                out.writeMessagePack(responseStats);
+            }
+            sender.sendTransaction(new Transaction(transaction,
+                                                   byteOutputStream.toByteArray(),
+                                                   DatagramConstants.NO_ERROR));
+        } catch (IOException exception) {
+            throw new BadPacketException("Failed to serialize server stats response: "
+                    + exception.getMessage());
+        }
+    }
 
-                sender.sendTransaction(new Transaction(transaction,
-                                                       byteOutputStream.toByteArray(),
-                                                       DatagramConstants.NO_ERROR));
-            }
-        } catch (NotInitializedException ex) {
-            log.warning("File manager not initialized, sending minimal stats");
-            // Send minimal stats response
-            try {
-                ByteArrayOutputStream byteOutputStream = new ByteArrayOutputStream();
-                try (var out = new MysterDataOutputStream(byteOutputStream)) {
-                    MessagePak minimalStats = MessagePak.newEmpty();
-                    minimalStats.putInt(ServerStats.PORT, getPort.get());
-                    out.writeMessagePack(minimalStats);
-                }
-                sender.sendTransaction(new Transaction(transaction,
-                                                       byteOutputStream.toByteArray(),
-                                                       DatagramConstants.NO_ERROR));
-            } catch (IOException e2) {
-                throw new BadPacketException("Failed to send minimal stats: " + e2.getMessage());
-            }
-        } catch (IOException ex) {
-            throw new BadPacketException("Bad packet: " + ex.getMessage());
+    private static MessagePak readClientStats(Transaction transaction) throws BadPacketException {
+        try (var in = new MysterDataInputStream(
+                new ByteArrayInputStream(transaction.getData()))) {
+            return in.readMessagePack();
+        } catch (IOException exception) {
+            throw new BadPacketException("Malformed business card: " + exception.getMessage());
+        }
+    }
+
+    private static Optional<PublicKeyIdentity> extractIdentity(MessagePak clientStats)
+            throws BadPacketException {
+        Optional<byte[]> encodedIdentity = clientStats.getByteArray(ServerStats.IDENTITY);
+        if (encodedIdentity.isEmpty()) {
+            return Optional.empty();
+        }
+
+        try {
+            PublicKey publicKey = KeyFactory.getInstance("RSA")
+                    .generatePublic(new X509EncodedKeySpec(encodedIdentity.get()));
+            return Optional.of(new PublicKeyIdentity(publicKey));
+        } catch (GeneralSecurityException exception) {
+            throw new BadPacketException("Business card contains an invalid identity");
         }
     }
 }
-

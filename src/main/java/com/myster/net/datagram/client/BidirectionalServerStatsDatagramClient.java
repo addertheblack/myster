@@ -3,7 +3,6 @@ package com.myster.net.datagram.client;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
-import java.util.logging.Logger;
 
 import com.myster.filemanager.FileTypeListManager;
 import com.myster.identity.Identity;
@@ -29,8 +28,6 @@ import com.myster.transaction.Transaction;
  * <p>This is the client-side counterpart to {@link com.myster.net.server.datagram.BidirectionalServerStatsDatagramServer}.
  */
 public class BidirectionalServerStatsDatagramClient implements StandardDatagramClientImpl<MessagePak> {
-    private static final Logger log = Logger.getLogger(BidirectionalServerStatsDatagramClient.class.getName());
-
     private final String serverName;
     private final int port;
     private final Identity identity;
@@ -62,44 +59,32 @@ public class BidirectionalServerStatsDatagramClient implements StandardDatagramC
     /**
      * Generates the outgoing packet data containing our server stats.
      *
-     * <p>If the file manager is not initialized, sends minimal stats containing
-     * only our port. If serialization fails entirely, returns an empty array.
+     * <p>The caller must ensure all shared file lists are initialized before
+     * selecting transaction {@code 102}. Serialization failures abort the
+     * datagram call instead of emitting an invalid payload.
      *
      * @return serialized MessagePak containing our server stats
+     * @throws IOException if the business card cannot be serialized
+     * @throws IllegalStateException if transaction {@code 102} was selected
+     *         before all shared file lists were initialized
      */
     @Override
-    public byte[] getDataForOutgoingPacket() {
+    public byte[] getDataForOutgoingPacket() throws IOException {
         try {
-            MessagePak ourStats = ServerStats.getServerStatsMessagePack(
-                serverName, port, identity, fileManager
-            );
-            ByteArrayOutputStream byteOut = new ByteArrayOutputStream();
-            try (var out = new MysterDataOutputStream(byteOut)) {
-                out.writeMessagePack(ourStats);
-            }
-            return byteOut.toByteArray();
-        } catch (NotInitializedException e) {
-            log.warning("File manager not initialized, sending minimal stats");
-            // Send minimal stats with just port
-            try {
-                MessagePak minimalStats = MessagePak.newEmpty();
-                minimalStats.putInt(ServerStats.PORT, port);
-                if (serverName != null && !serverName.isEmpty()) {
-                    minimalStats.putString(ServerStats.SERVER_NAME, serverName);
-                }
-                ByteArrayOutputStream byteOut = new ByteArrayOutputStream();
-                try (var out = new MysterDataOutputStream(byteOut)) {
-                    out.writeMessagePack(minimalStats);
-                }
-                return byteOut.toByteArray();
-            } catch (IOException e2) {
-                log.severe("Failed to create minimal stats: " + e2.getMessage());
-                return new byte[0];
-            }
-        } catch (IOException e) {
-            log.severe("Failed to serialize stats: " + e.getMessage());
-            return new byte[0];
+            return serialize(ServerStats.getServerStatsMessagePack(
+                    serverName, port, identity, fileManager));
+        } catch (NotInitializedException exception) {
+            throw new IllegalStateException(
+                    "Transaction 102 requires initialized shared file lists", exception);
         }
+    }
+
+    private static byte[] serialize(MessagePak serverStats) throws IOException {
+        ByteArrayOutputStream byteOut = new ByteArrayOutputStream();
+        try (var out = new MysterDataOutputStream(byteOut)) {
+            out.writeMessagePack(serverStats);
+        }
+        return byteOut.toByteArray();
     }
 
     /**
@@ -117,4 +102,3 @@ public class BidirectionalServerStatsDatagramClient implements StandardDatagramC
         }
     }
 }
-

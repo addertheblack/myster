@@ -60,16 +60,12 @@ public class FindClosestDatagramClient implements StandardDatagramClientImpl<Thr
     }
 
     @Override
-    public byte[] getDataForOutgoingPacket() {
+    public byte[] getDataForOutgoingPacket() throws IOException {
         MessagePak request = MessagePak.newEmpty();
         request.putInt(SCHEMA_VERSION, ThreeDnsAddressCandidateSet.SCHEMA_VERSION);
         request.putByteArray(TARGET_CID, target.bytes());
         request.putInt(PER_SIDE_LIMIT, perSideLimit);
-        try {
-            return request.toBytes();
-        } catch (IOException exception) {
-            throw new IllegalStateException("Could not serialize 3DNS FIND_CLOSEST request", exception);
-        }
+        return request.toBytes();
     }
 
     @Override

@@ -33,7 +33,7 @@ public class SearchHashDatagramClient implements StandardDatagramClientImpl<Stri
                 .getData()))).readUTF());
     }
 
-    public byte[] getDataForOutgoingPacket() {
+    public byte[] getDataForOutgoingPacket() throws IOException {
         ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
 
         try (var out = new MysterDataOutputStream(byteArrayOutputStream)) {
@@ -51,9 +51,6 @@ public class SearchHashDatagramClient implements StandardDatagramClientImpl<Stri
 
             out.writeUTF("");
             
-            out.close();
-        } catch (IOException ex) {
-            throw new com.general.util.UnexpectedException(ex);
         }
 
         return byteArrayOutputStream.toByteArray();

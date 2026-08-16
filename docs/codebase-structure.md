@@ -196,7 +196,7 @@ Myster uses both **TCP (stream)** and **UDP (datagram)** protocols:
 - **Transaction System**: `TransactionManager` routes packets to `TransactionProtocol` handlers
 - **Operations**:
   - Ping/pong with encryption
-  - Server stats exchange
+  - Legacy server stats (`101`) and bidirectional server stats (`102`)
   - Search (newer UDP-based search)
 
 #### Server Side
