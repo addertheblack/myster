@@ -170,7 +170,9 @@ public final class AsyncDatagramSocket {
                 byte[] data = new byte[readBuffer.remaining()];
                 readBuffer.get(data);
                 ImmutableDatagramPacket packet =
-                        new ImmutableDatagramPacket(sourceAddress.getAddress(), port, data);
+                        new ImmutableDatagramPacket(sourceAddress.getAddress(),
+                                                    sourceAddress.getPort(),
+                                                    data);
                 
                 // switch threads - it's important we don't do the callback on this thread
                 invoker.invoke(() -> portListener.packetReceived(packet));

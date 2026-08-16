@@ -82,6 +82,7 @@ public class TestAsyncDatagramSocket {
             byte[] expected = payload;
             byte[] actual = result.getData();
             assertArrayEquals(expected, actual);
+            assertEquals(dsocket.getLocalPort(), result.getPort());
         }
 
         asyncDatagramSocket.close();
@@ -194,5 +195,6 @@ public class TestAsyncDatagramSocket {
         asyncDatagramSocket.close();
 
         assertArrayEquals(payload, receivedPacket.getData());
+        assertEquals(usedPort, receivedPacket.getPort());
     }
 }
