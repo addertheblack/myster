@@ -56,7 +56,7 @@ your new type.
 		<Description>Macintosh</Description>
 		<Extensions>
 		         <0>.bin</0> <1>.hqx</1> <2>.sit</2> <3>.cpt</3> <4>.dmg</4> <5>.sea</5>
-		         <6>.nfs</6> <7>.sitx</7> <8>.image</8> <9>.img</9> <10>.pkg</10> <11>.smi</11>
+		         <6>.nfs</6> <7>.sitx</7> <8>.image</8> <9>.img</9> <10>.pkg</10> <11>.smi</11> <12>.zip</12>
 		</Extensions>
 		<Enabled By Default>true</Enabled By Default>
 	</2>
