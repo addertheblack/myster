@@ -108,15 +108,19 @@ Because the protocol is transaction-based and idempotent, requests can be retrie
 
 ## 8. Lookup Flow
 
-A lookup proceeds by repeatedly issuing expected-key `FIND_CLOSEST` requests. The wire operation remains side-neutral and returns explicit exact, left/predecessor, and right/successor groups; caller policy derives every CID locally and chooses the appropriate candidate.
+A lookup proceeds by repeatedly issuing expected-key `FIND_CLOSEST` requests. The wire operation remains side-neutral and returns explicit exact, left/predecessor, and right/successor groups; the resolver derives every CID locally, merges all three groups into one scored frontier, and chooses candidates by positive-ring predecessor distance to the target. A useful wraparound candidate may originate in either wire group, so the group label never determines eligibility.
 
-The caller begins with any known address/key candidate, typically obtained from the tracker or local state. A successful expected-key encrypted response verifies the responding peer, while every candidate inside that response remains an untrusted hint. If a returned candidate's derived CID matches the target, the resolver queries that candidate next; lookup completes only when the target candidate itself returns an authenticated response. Otherwise, the caller selects the closest valid candidate not yet tried and repeats the process.
+The public `ThreeDnsLookup.resolve(target)` operation automatically takes one immutable target-specific seed snapshot from `Tracker`. The snapshot is backed by the live pool-wide CID index, includes currently usable address/key candidates, and remains available even when the optional local retained 3DNS list is absent. A successful expected-key encrypted response verifies the responding peer, while every candidate inside that response remains an untrusted hint. If a returned candidate's derived CID matches the target, the resolver queries that candidate next; lookup completes only when the target candidate itself returns an authenticated response. Otherwise, the resolver selects the closest eligible candidate not yet tried and repeats the process.
 
 `ThreeDnsPeerClient` owns this one-hop trust transition. It performs one expected-key UDP `FIND_CLOSEST` operation and returns a `ThreeDnsVerifiedQueryResult`: its `VerifiedThreeDnsPeer` responder is verified for that completed operation, while its `ThreeDnsAddressCandidateSet` remains untrusted. Cancelling the wrapper cancels the underlying UDP transaction, and late completion cannot create a verified result. The decoder also rejects an entry labelled exact when the entry's locally derived CID differs from the request target.
 
-To prevent loops, the caller must track which CIDs have already been queried. Additionally, each step should ensure that progress is being made toward the target. If no closer node is found, the lookup terminates at the closest known position.
+The resolver tracks identities and addresses, permits at most one alternate address after a failed transport attempt, and requires every newly launched non-exact candidate to be strictly closer than the best verified responder. Exact candidates always take priority. Two queries may run concurrently, so a slower response can still improve the verified position or contribute a better untrusted hint without regressing global lookup state.
 
-In practice, maintaining identity and address visited sets and always selecting a strictly closer node ensures forward progress and prevents cycles. Because the current routing table is built from positive power-of-two offsets, normal resolution approaches a target from its left/predecessor side and must not select a right/successor candidate that overshoots the target. Exact candidates still take priority.
+Traversal is bounded to a 64-entry frontier, 32 total query attempts, two concurrent queries, two attempted addresses per identity, and a 60-second overall deadline. The per-response 16 KiB decoder bound also caps accepted response data across 32 attempts at 512 KiB. Exact success, deadline, caller cancellation, and other terminal completion cancel outstanding queries and prevent late callbacks from changing the result.
+
+Per-lookup state is actor-confined to the 3DNS lookup invoker. `AsyncTaskTracker` owns the dynamic set of peer-query promises, propagates cancellation, and signals natural exhaustion after response callbacks have had an opportunity to enqueue newly discovered work. The frontier, closest verified peer, query counters, and terminal policy are therefore mutated only on the lookup invoker and require no additional locking. The overall deadline is a separately tracked lifetime task because counting it as search work would prevent normal frontier exhaustion.
+
+`ThreeDnsLookupResult` distinguishes verified exact success, verified closest exhaustion, no route, query-limit exhaustion, and deadline exhaustion. Limit and deadline results may preserve the closest verified peer. Cancellation remains cancellation of the returned `PromiseFuture`. Unexpected runtime failures inside the lookup implementation are programmer errors and propagate through the executing framework thread rather than being converted into failed lookup promises.
 
 ## 9. Routing Table Maintenance
 
@@ -141,7 +145,7 @@ The integration works as follows:
 * The ordered CID index is maintained in `IdentityTracker`.
 * The 3DNS retained list is initially seeded from known public-key servers in the ServerPool.
 * Part 2a provides the expected-key UDP transport hook; Part 2b wraps a useful `FIND_CLOSEST` query around it and returns a verified responder without mutating tracker state.
-* Part 3 returns verified exact or closest peers. Part 4 performs expected-key stats identity comparison and normal pool onboarding when a discovery must become persistent retained state.
+* Part 3's auto-seeded `ThreeDnsLookup` returns verified exact or bounded closest peers without mutating tracker state. Part 4 performs expected-key stats identity comparison and normal pool onboarding when a discovery must become persistent retained state.
 * Existing liveness checks continue to determine which onboarded servers remain usable and retained.
 
 This approach allows 3DNS to benefit from existing infrastructure without creating duplication or tight coupling.
@@ -152,9 +156,9 @@ Failures are handled pragmatically.
 
 Returned public-key/address candidates may be stale or unreachable. Multiple candidates provide fallback, but none is trusted transitively: each queried peer must complete an expected-key encrypted round trip. Part 4 separately onboards selected verified peers when persistent tracker state is needed. Failed nodes naturally fall out of the retained list as they are no longer refreshed or become nonresponsive.
 
-To avoid routing loops, each lookup tracks the set of visited CIDs and avoids revisiting them. Ensuring that each hop moves strictly closer to the target CID further guarantees progress.
+To avoid routing loops, each lookup deduplicates identity/address pairs and does not revisit attempted work. The same endpoint may remain eligible under distinct identities/CIDs. Ensuring that each newly launched hop moves strictly closer to the target CID after the first verified response further guarantees progress.
 
-A lookup terminates explicitly when it reaches the verified exact peer, exhausts strict progress, has no route/seed, reaches a resource limit, is cancelled, or encounters an unrecoverable failure. Non-exact termination can include the closest verified peer for diagnostics and Part 4 maintenance.
+A lookup terminates explicitly when it reaches the verified exact peer, exhausts strict progress, has no route/seed, reaches a resource limit, or is cancelled. Non-exact termination can include the closest verified peer for diagnostics and Part 4 maintenance. Unexpected implementation failures are panics, not lookup outcomes.
 
 ## 12. Security Considerations
 

@@ -55,4 +55,26 @@ class TestCancellationTracking {
 
         assertTrue(taskCancelled.get());
     }
+
+    @Test
+    void cancellationListenerRunsForCancellation() {
+        AtomicBoolean listenerCalled = new AtomicBoolean();
+        PromiseFuture<Void> future = PromiseFuture.<Void>newPromiseFuture(_ -> {})
+                .setInvoker(Invoker.SYNCHRONOUS)
+                .addCancelListener(() -> listenerCalled.set(true));
+
+        future.cancel();
+
+        assertTrue(listenerCalled.get());
+    }
+
+    @Test
+    void cancellationListenerDoesNotRunForException() {
+        AtomicBoolean listenerCalled = new AtomicBoolean();
+        PromiseFuture.<Void>newPromiseFutureException(new IllegalStateException("failed"))
+                .setInvoker(Invoker.SYNCHRONOUS)
+                .addCancelListener(() -> listenerCalled.set(true));
+
+        assertFalse(listenerCalled.get());
+    }
 }

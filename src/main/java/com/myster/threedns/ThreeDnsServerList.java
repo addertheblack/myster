@@ -284,7 +284,7 @@ public class ThreeDnsServerList {
 
     private boolean isUsable(MysterServer server) {
         return server.getIdentity() instanceof PublicKeyIdentity
-                && server.getStatus()
+                && server.isUp()
                 && server.getUpAddresses().length > 0;
     }
 

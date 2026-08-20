@@ -182,8 +182,8 @@ public class PromiseFutureListImpl<T> extends PromiseFutureImpl<List<T>> impleme
     }
 
     @Override
-    public PromiseFutureList<T> addCancelLisener(Runnable cancelLisener) {
-        super.addCancelLisener(cancelLisener);
+    public PromiseFutureList<T> addCancelListener(Runnable cancelListener) {
+        super.addCancelListener(cancelListener);
         
         return this;
     }

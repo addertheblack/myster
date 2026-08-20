@@ -22,7 +22,7 @@ public interface PromiseFutureList<T> extends PromiseFuture<List<T>> {
     PromiseFutureList<T> addResultListener(Consumer<List<T>> resultListener);
     PromiseFutureList<T> addExceptionListener(Consumer<Throwable> exceptionListener);
     PromiseFutureList<T> addFinallyListener(Runnable runnable);
-    PromiseFutureList<T> addCancelLisener(Runnable cancelLisener);
+    PromiseFutureList<T> addCancelListener(Runnable cancelListener);
     PromiseFutureList<T> addStandardExceptionHandler();
     
     /**

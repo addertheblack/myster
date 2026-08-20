@@ -27,7 +27,7 @@ Implement the public asynchronous CID resolver that automatically obtains target
 - Tracker candidates are useful local hints, not proof for the current lookup. Every seed is queried through `ThreeDnsPeerClient` with its advertised key before it becomes a `VerifiedThreeDnsPeer`.
 - Positive-ring progress is measured by `target.comparePredecessorDistance(...)`. Exact distance is zero. Wire `left`/`right` grouping is not trusted and does not itself decide eligibility; candidates from either group can make strict progress through wraparound.
 - The public result remains structured because Part 4 needs the closest verified peer when an ideal finger target has no exact node. Exact-address callers use the verified exact peer's address and must not mistake a closest peer for the target.
-- Cancellation is represented by cancellation of the returned `PromiseFuture`, and unexpected implementation failures complete it exceptionally. They are not duplicate lookup-result statuses.
+- Cancellation is represented by cancellation of the returned `PromiseFuture`. Unexpected runtime implementation failures are programmer errors and propagate through the executing framework thread; they are not converted into lookup results or failed promise outcomes.
 - Default resource policy is two candidates per response side, a 64-entry frontier, 32 total query attempts, two concurrent queries, at most two attempted addresses per identity, and a 60-second lookup deadline. These limits are injectable for deterministic tests and later tuning.
 - Each accepted response is already limited to 16 KiB by Part 2a. The 32-query limit therefore bounds accepted response data to 512 KiB without adding a second raw-byte counter above the decoder.
 - No architecture-blocking questions remain.
@@ -38,7 +38,7 @@ Implement the public asynchronous CID resolver that automatically obtains target
 
 The resolver prioritizes an exact derived CID, then orders all other candidates by positive-ring predecessor distance to the target with deterministic identity/address tie-breaking. Once at least one peer has been verified, newly launched non-exact queries must be strictly closer than the best verified peer. Candidates already in flight may finish out of order; their responders and returned hints are accepted only when they improve global lookup state.
 
-At most two candidates are queried concurrently through `ThreeDnsPeerClient.findClosest(...)`. A successful query verifies only its responder. The resolver locally derives and scores every returned hint, deduplicates identities and addresses, and adds bounded useful hints to the frontier. It completes exact only when the authenticated responder's own CID equals the requested target.
+At most two candidates are queried concurrently through `ThreeDnsPeerClient.findClosest(...)`. A successful query verifies only its responder. The resolver locally derives and scores every returned hint, deduplicates identity/address pairs, and adds bounded useful hints to the frontier. It completes exact only when the authenticated responder's own CID equals the requested target.
 
 `ThreeDnsLookupResult` distinguishes verified exact success, verified closest exhaustion, no route, query-limit exhaustion, and deadline exhaustion. It exposes an exact peer only for exact success and may expose the closest verified peer for diagnostics and Part 4. Individual timeouts, wrong-key responses, malformed responses, and unreachable candidates are ordinary candidate failures; the resolver continues while another eligible candidate remains.
 
@@ -65,7 +65,7 @@ There is no new wire or disk format. Part 3 consumes transaction `303` unchanged
 - An exact local or remote hint never completes lookup. That candidate must answer an expected-key query, and the verified responder's locally derived CID must equal the target.
 - Positive-ring predecessor distance is the sole progress metric. A blanket rejection of `right`/successor hints would incorrectly reject valid wraparound progress.
 - Response group labels and ordering are advisory; all candidate CIDs and ordering are recomputed locally.
-- The frontier deduplicates by identity and address. One identity is a single logical node, but one alternate address may be attempted after transport failure; successful verification suppresses all remaining addresses for that identity.
+- The frontier deduplicates identity/address pairs. One identity is a single logical node, but one alternate address may be attempted after transport failure; successful verification suppresses all remaining addresses for that identity. The same endpoint remains eligible under a different identity/CID.
 - A failed query does not become the progress baseline. Only verified responders update the closest-known position.
 - A slower in-flight response may still contribute a better responder or hint, but it cannot regress the global closest peer or re-enqueue visited work.
 - When exact success, deadline, query limit, or caller cancellation terminates the operation, all outstanding queries and the deadline task are cancelled. Late callbacks cannot replace the terminal result.
@@ -81,7 +81,7 @@ There is no new wire or disk format. Part 3 consumes transaction `303` unchanged
 - [ ] Every seed and returned hint remains untrusted until it completes a Part 2b expected-key query.
 - [ ] Exact success is returned only when the authenticated responder's derived CID equals the requested target.
 - [ ] Candidate selection recomputes positive-ring distance locally, accepts valid wraparound progress from either wire group, and never regresses the closest verified position.
-- [ ] Duplicate identities, repeated addresses, cycles, non-progressing hints, and excessive alternate addresses are bounded and cannot loop.
+- [ ] Duplicate identity/address pairs, cycles, non-progressing hints, and excessive alternate addresses are bounded and cannot loop; one address may remain eligible under distinct identities/CIDs.
 - [ ] Individual dead, wrong-key, malformed, or malicious candidates do not prevent fallback to another eligible candidate.
 - [ ] Query count, frontier size, concurrency, addresses per identity, accepted response data, and elapsed time are bounded.
 - [ ] Caller cancellation and terminal completion stop outstanding queries and prevent late result changes.
@@ -113,7 +113,7 @@ There is no new wire or disk format. Part 3 consumes transaction `303` unchanged
    - Enforce invariants between status and optional peers.
    - Expose the exact peer/address only for verified exact success.
    - Allow limit/deadline results to retain the closest verified peer.
-   - Do not add `CANCELLED` or general `FAILED` statuses; use `PromiseFuture` cancellation/exception states.
+   - Do not add `CANCELLED` or general `FAILED` statuses. Use `PromiseFuture` cancellation for caller cancellation, treat expected remote failures as candidate failures, and let unexpected runtime implementation errors propagate.
 4. Define injectable default limits: per-side seed/query limit `2`, frontier `64`, total query attempts `32`, in-flight queries `2`, addresses per identity `2`, and deadline `60` seconds. Validate custom limits at construction.
 5. Implement a pure frontier/scoring component.
    - Merge exact, left, and right seed/response groups and ignore their labels after ingestion.
@@ -126,8 +126,8 @@ There is no new wire or disk format. Part 3 consumes transaction `303` unchanged
    - Track every in-flight query for caller cancellation and separately cancel all outstanding work on early exact/limit/deadline completion.
    - Serialize state transitions through one injected callback executor/invoker or an equivalently explicit synchronized coordinator; never mutate frontier state concurrently from transaction callback threads.
 7. On successful `ThreeDnsPeerClient` completion, update the closest verified responder only when its positive-ring distance improves. If its CID equals the target, cancel other work and complete exact. Otherwise ingest its still-untrusted returned candidates and launch more strict progress.
-8. On candidate timeout, wrong key, malformed response, cancellation caused by that underlying query, or other transport failure, mark only that attempted identity/address failed and continue. Do not turn one candidate failure into whole-lookup exceptional completion.
-9. Arm the overall deadline through an injectable scheduler. Caller cancellation, exact completion, query-limit completion, and deadline completion must cancel the timer and all outstanding queries. Guard every callback with the terminal state; rely on `AsyncContext` rejecting a second terminal result as a final defense.
+8. On candidate timeout, wrong key, malformed response, or other transport failure, mark only that attempted identity/address failed and continue. Do not turn one candidate failure into whole-lookup exceptional completion. Cancellation means the query is moot and needs no outcome handler; final accounting still runs at its registered listener position.
+9. Arm the overall deadline through an injectable scheduler. Caller cancellation, exact completion, query-limit completion, and deadline completion must cancel the timer and all outstanding queries. Actor serialization and promise cancellation prevent late outcome handlers from changing lookup state; rely on `AsyncContext` rejecting a second terminal result as a final defense.
 10. Complete `CLOSEST_VERIFIED` when the frontier and in-flight set are empty after at least one verified response; otherwise complete `NO_ROUTE`. Complete the corresponding bounded status when query count or deadline ends the search.
 11. Update the live 3DNS design and write `docs/impl_summary/myster-3dns-part-3.md` during implementation.
 

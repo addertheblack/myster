@@ -245,9 +245,9 @@ public class TrackerThreeDnsPanel extends JPanel {
             sortables[COLUMN_SERVER_CID] = new SortableCid(row.serverCid());
             sortables[COLUMN_SERVER_NAME] = new SortableString(safeString(server.getServerName()));
             sortables[COLUMN_ADDRESS] = new SortableString(row.retainedAddress().toString());
-            sortables[COLUMN_STATUS] = new SortableStatus(server.getStatus(), server.isUntried());
+            sortables[COLUMN_STATUS] = new SortableStatus(server.isUp(), server.isUntried());
             sortables[COLUMN_PING] = new SortablePing(server.getPingTime());
-            sortables[COLUMN_UPTIME] = new SortableUptime(server.getStatus() ? server.getUptime() : -2);
+            sortables[COLUMN_UPTIME] = new SortableUptime(server.isUp() ? server.getUptime() : -2);
         }
 
         private static String safeString(String value) {

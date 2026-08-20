@@ -16,7 +16,7 @@ public interface MysterServer {
     /**
      * @return true if we think this server is "up"
      */
-    public boolean getStatus();
+    public boolean isUp();
 
     /**
      * @return best address to try and communicate with this server

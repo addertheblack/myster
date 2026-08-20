@@ -512,7 +512,7 @@ public class TrackerWindow extends MysterFrame {
             sortables[1] = new SortableString(server.getServerName());
             sortables[2] = type.isPresent() ? new SortableLong(server.getNumberOfFiles(type.get()))
                     : new SortableString("");
-            sortables[3] = new SortableStatus(server.getStatus(), server.isUntried());
+            sortables[3] = new SortableStatus(server.isUp(), server.isUntried());
             sortables[4] = new SortableString("" + String.join(", ",
                                                                Stream.of(server.getAddresses())
                                                                        .map(Object::toString)
@@ -521,7 +521,7 @@ public class TrackerWindow extends MysterFrame {
             sortables[6] =
                     type.isPresent() ? new SortableRank(((long) (100 * server.getRank(type.get()))))
                             : new SortableString("");
-            sortables[7] = new SortableUptime((server.getStatus() ? server.getUptime() : -2));
+            sortables[7] = new SortableUptime((server.isUp() ? server.getUptime() : -2));
         }
 
         public MysterServer getObject() {

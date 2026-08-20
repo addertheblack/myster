@@ -7,7 +7,6 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.net.UnknownHostException;
 import java.security.PublicKey;
-import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
@@ -23,7 +22,6 @@ import org.junit.jupiter.api.Test;
 import com.general.util.MapPreferences;
 import com.myster.cid.ServerCid;
 import com.myster.net.MysterAddress;
-import com.myster.net.datagram.client.PingResponse;
 import com.myster.tracker.ExternalName;
 import com.myster.tracker.IdentityNeighborSet;
 import com.myster.tracker.MysterIdentity;
@@ -205,7 +203,7 @@ class TestThreeDnsServerList {
         public IdentityNeighborSet findClosestByCid(ServerCid target, int perSideLimit) {
             int limit = perSideLimit <= 0 ? ThreeDnsServerList.DEFAULT_PER_SIDE_LIMIT : perSideLimit;
             List<PublicKeyIdentity> usable = byIdentity.values().stream()
-                    .filter(FakeServer::getStatus)
+                    .filter(FakeServer::isUp)
                     .map(FakeServer::getIdentity)
                     .filter(PublicKeyIdentity.class::isInstance)
                     .map(PublicKeyIdentity.class::cast)
@@ -289,7 +287,7 @@ class TestThreeDnsServerList {
         }
 
         @Override
-        public boolean getStatus() {
+        public boolean isUp() {
             return up;
         }
 

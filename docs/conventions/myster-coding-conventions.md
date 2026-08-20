@@ -14,6 +14,7 @@ This document captures Myster-specific coding conventions, preferred libraries, 
 - **Unused code** — do not keep methods whose only callers are tests
 - **Preference Panel save semantics** — add = immediate; edit/delete = on save
 - **Naming** — no banner comments; `Utils` suffix for static-only classes
+- **Fields** — retain object state, not inlineable method references
 - **CID types** — use `MysterTypeCid` or `ServerCid`; never expose raw `Cid128` or CID byte arrays internally
 - **Extensible Enums** — `final class` + `static final` constants, not Java `enum`
 - **Serialization** — use `MessagePak` for forward-compatible binary formats
@@ -22,6 +23,7 @@ This document captures Myster-specific coding conventions, preferred libraries, 
 - **Code commenting style** — see [`Code Comments.md`](Code%20Comments.md)
 - **Standing Refactors** — see [`standing-refactors.md`](standing-refactors.md); apply when you touch an affected file
 - **Exception Handling** — catch only expected failures with a concrete handling strategy; let unexpected runtime exceptions propagate; never use `UncheckedIOException`
+- **Invoker-confined async state** — actor-style state, `AsyncTaskTracker`, listener and deadline rules
 
 **For architectural patterns**, see **[myster-important-patterns.md](myster-important-patterns.md)**:
 - Event System, Promise/Future, Listener Pattern, Dependency Injection, Threading
@@ -43,12 +45,14 @@ This document captures Myster-specific coding conventions, preferred libraries, 
   - [Do Not Keep Test-Only Production Methods](#do-not-keep-test-only-production-methods)
 - [Preference Panels](#preference-panels)
 - [Naming Conventions](#naming-conventions)
+  - [Fields Represent State](#fields-represent-state)
   - [No Banner Comments](#no-section-divider-banner-comments)
   - [Utils Classes](#utils-classes)
   - [Domain-Specific CID Types](#domain-specific-cid-types)
 - [Extensible Enums](#extensible-enums)
 - [Serialization Extensibility](#serialization-extensibility)
 - [Exception Handling](#exception-handling)
+- [Invoker-Confined Asynchronous State](#invoker-confined-asynchronous-state)
 - [Access Lists as Canonical Metadata](#access-lists-as-canonical-metadata)
 
 ---
@@ -305,6 +309,13 @@ Before keeping an apparently unused method, check callers with `rg` and decide w
 
 ## Naming Conventions
 
+### Fields Represent State
+
+Fields should represent retained object state. Inline a method reference at its use sites when it
+only exposes another method on the same object; do not store it in a field merely to pass it to
+collaborators. Retain a functional object in a field only when its identity, lifecycle, or injected
+behavior is independently meaningful.
+
 ### No Section-Divider Banner Comments
 
 Do not use banner-style section dividers in Java source files:
@@ -459,6 +470,37 @@ try {
 ```
 
 Use a more specific subtype only when callers need to branch on that distinction.
+
+---
+
+## Invoker-Confined Asynchronous State
+
+For asynchronous operations that discover more work as they run, prefer an actor-style state
+object confined to one subsystem `Invoker`. Mutable search/crawl state and ordinary promise
+completion handlers all run on that invoker, so the state object does not also need synchronized
+methods.
+
+- Name an `AsyncTaskTracker` variable or field `taskTracker` or `asyncTracker` but not `tasks`.
+  It owns dynamically created child promises, cancellation propagation, and natural-exhaustion detection.
+- Call `AsyncTaskTracker.doAsync(...)`, mutate actor state, and process ordinary completion
+  listeners only on the actor invoker.
+- Use ordinary promise listeners for application state. `addSynchronousCallback(...)` bypasses
+  invoker confinement and is reserved primarily for low-level promise wrapping and composition.
+- Connect an enclosing promise with `AsyncTaskTracker.create(context, invoker)` so cancellation of
+  the outer operation makes all child work moot. `AsyncTaskTracker.cancel()` is safe from any
+  thread and marshals child cancellation to its invoker.
+- On successful early completion, publish the outer result first and then call
+  `taskTracker.cancel()` to make outstanding and subsequently observed child results moot.
+- Do not count an overall deadline as a child task: doing so prevents natural exhaustion until the
+  deadline fires. Track the deadline separately on the enclosing context, dispatch its state change
+  onto the actor invoker, and cancel it explicitly on normal completion.
+- `AsyncTaskTracker` does not signal done when no child was ever started. Fast-return when the
+  initial candidate/work set is empty.
+
+`PromiseFuture.withInvoker(...)` is the standard boundary adapter when a child promise may already
+have an invoker. It deliberately does not always allocate: it returns the same future for a matching
+invoker, assigns an invoker when absent, and returns a cancellation-linked wrapper when replacing a
+different listener-dispatch context.
 
 ---
 

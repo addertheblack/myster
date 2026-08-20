@@ -95,7 +95,7 @@ class MysterTypeServerList implements ServerList {
         List <MysterServer> servers = new ArrayList<>();
 
         for (MysterServer value : mapOfServers.values()) {
-            if (value.getStatus() && (!value.isUntried())) {
+            if (value.isUp() && (!value.isUntried())) {
                 servers.add(value);
             }
         }

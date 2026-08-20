@@ -442,7 +442,7 @@ public class MysterServerPoolImpl implements MysterServerPool {
     private boolean isUsableThreeDnsIdentity(PublicKeyIdentity identity) {
         return getMysterIP(identity)
                 .map(MysterServerImplementation::getInterface)
-                .filter(server -> server.getStatus() && server.getUpAddresses().length > 0)
+                .filter(server -> server.isUp() && server.getUpAddresses().length > 0)
                 .isPresent();
     }
 

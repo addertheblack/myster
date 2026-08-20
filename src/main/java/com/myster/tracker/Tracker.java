@@ -11,6 +11,7 @@
 package com.myster.tracker;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Optional;
@@ -24,6 +25,8 @@ import com.myster.net.MysterAddress;
 import com.myster.net.datagram.client.PingResponse;
 import com.myster.net.server.ServerUtils;
 import com.myster.threedns.ThreeDnsFingerEntry;
+import com.myster.threedns.ThreeDnsAddressCandidate;
+import com.myster.threedns.ThreeDnsAddressCandidateSet;
 import com.myster.threedns.ThreeDnsServerList;
 import com.myster.threedns.ThreeDnsTargetSlotSnapshot;
 import com.myster.type.MysterType;
@@ -328,6 +331,55 @@ public class Tracker {
     public synchronized IdentityNeighborSet getThreeDnsForTarget(ServerCid target, int perSideLimit) {
         return threeDns.map(list -> list.forTarget(target, perSideLimit))
                 .orElseGet(IdentityNeighborSet::empty);
+    }
+
+    /**
+     * Returns an immutable snapshot of currently usable address/key candidates
+     * nearest to {@code target}. The snapshot is drawn from the live pool-wide
+     * CID index and does not require a local retained 3DNS list.
+     *
+     * <p>This method performs no network I/O. A candidate is only a local hint;
+     * callers must authenticate its advertised key at its address before
+     * treating the association as verified.
+     *
+     * @param target target CID in the unsigned 128-bit ring
+     * @param perSideLimit requested maximum candidates on each side
+     * @return exact, predecessor-side, and successor-side address/key candidates
+     */
+    public synchronized ThreeDnsAddressCandidateSet getThreeDnsCandidatesForTarget(
+            ServerCid target,
+            int perSideLimit) {
+        IdentityNeighborSet neighbors = pool.findClosestByCid(target, perSideLimit);
+        Optional<ThreeDnsAddressCandidate> exact = neighbors.exact().flatMap(this::toThreeDnsCandidate);
+        List<ThreeDnsAddressCandidate> left = toThreeDnsCandidates(neighbors.left());
+        List<ThreeDnsAddressCandidate> right = toThreeDnsCandidates(neighbors.right());
+        return new ThreeDnsAddressCandidateSet(exact, left, right);
+    }
+
+    private List<ThreeDnsAddressCandidate> toThreeDnsCandidates(List<PublicKeyIdentity> identities) {
+        List<ThreeDnsAddressCandidate> candidates = new ArrayList<>(identities.size());
+        for (PublicKeyIdentity identity : identities) {
+            toThreeDnsCandidate(identity).ifPresent(candidates::add);
+        }
+        return List.copyOf(candidates);
+    }
+
+    private Optional<ThreeDnsAddressCandidate> toThreeDnsCandidate(PublicKeyIdentity identity) {
+        return pool.getCachedMysterServer(identity)
+                .filter(MysterServer::isUp)
+                .flatMap(server -> {
+                    List<MysterAddress> upAddresses = Arrays.asList(server.getUpAddresses());
+                    if (upAddresses.isEmpty()) {
+                        return Optional.empty();
+                    }
+                    MysterAddress address = server.getBestAddress()
+                            .filter(upAddresses::contains)
+                            .orElse(upAddresses.getFirst());
+                    if (address.getPort() <= 0 || address.getPort() > 0xFFFF) {
+                        return Optional.empty();
+                    }
+                    return Optional.of(new ThreeDnsAddressCandidate(identity, address));
+                });
     }
 
     public synchronized List<ThreeDnsFingerEntry> getThreeDnsSnapshot() {

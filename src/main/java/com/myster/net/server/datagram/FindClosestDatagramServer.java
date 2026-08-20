@@ -101,7 +101,7 @@ public class FindClosestDatagramServer implements TransactionProtocol {
 
     private Optional<WireCandidate> toWireCandidate(PublicKeyIdentity identity) {
         return pool.getCachedMysterServer(identity)
-                .filter(MysterServer::getStatus)
+                .filter(MysterServer::isUp)
                 .flatMap(server -> {
                     List<MysterAddress> upAddresses = Arrays.asList(server.getUpAddresses());
                     if (upAddresses.isEmpty()) {

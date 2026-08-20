@@ -116,7 +116,7 @@ class TestFindClosestDatagramProtocol {
                                    org.mockito.ArgumentMatchers.anyInt()))
                 .thenReturn(new IdentityNeighborSet(Optional.empty(), List.of(), List.of(right)));
         MysterServer downServer = mock(MysterServer.class);
-        when(downServer.getStatus()).thenReturn(false);
+        when(downServer.isUp()).thenReturn(false);
         when(pool.getCachedMysterServer(right)).thenReturn(Optional.of(downServer));
         FindClosestDatagramClient client = new FindClosestDatagramClient(cid(4), 2);
         List<Transaction> replies = new ArrayList<>();
@@ -206,7 +206,7 @@ class TestFindClosestDatagramProtocol {
     private static MysterServer upServer(PublicKeyIdentity identity, MysterAddress address) {
         MysterServer server = mock(MysterServer.class);
         when(server.getIdentity()).thenReturn(identity);
-        when(server.getStatus()).thenReturn(true);
+        when(server.isUp()).thenReturn(true);
         when(server.getUpAddresses()).thenReturn(new MysterAddress[] { address });
         when(server.getBestAddress()).thenReturn(Optional.of(address));
         return server;

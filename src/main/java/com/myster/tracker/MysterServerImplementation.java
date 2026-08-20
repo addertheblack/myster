@@ -310,7 +310,7 @@ class MysterServerImplementation {
      */
     private class MysterServerReference implements MysterServer {
         @Override
-        public boolean getStatus() {
+        public boolean isUp() {
             return MysterServerImplementation.this.getStatus();
         }
 
@@ -413,7 +413,7 @@ class MysterServerImplementation {
 
         @Override
         public void tryPingAgain(MysterAddress address) {
-            if (isUntried() || getStatus()) {
+            if (isUntried() || isUp()) {
                 return; // no need to ping again if we haven't tried or if we are up
             }
             

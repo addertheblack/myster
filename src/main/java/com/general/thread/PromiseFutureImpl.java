@@ -309,11 +309,11 @@ public class PromiseFutureImpl<T> implements PromiseFuture<T> {
     }
 
     @Override
-    public PromiseFuture<T> addCancelLisener(Runnable cancelLisener) {
+    public PromiseFuture<T> addCancelListener(Runnable cancelListener) {
         return addCallListener(new CallAdapter<>() {
             @Override
-            public void handleException(Throwable exception) {
-                cancelLisener.run();
+            public void handleCancel() {
+                cancelListener.run();
             }
         });
     }
