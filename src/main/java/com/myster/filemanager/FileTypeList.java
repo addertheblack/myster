@@ -47,7 +47,6 @@ import com.myster.mml.MML;
 import com.myster.mml.MMLException;
 import com.myster.pref.MysterPreferences;
 import com.myster.type.MysterType;
-import com.myster.type.StandardTypes;
 import com.myster.type.TypeDescription;
 import com.myster.type.TypeDescriptionList;
 
@@ -87,7 +86,8 @@ public class FileTypeList {
 
     private final HashProvider hashProvider;
     private final TypeDescriptionList tdList;
-    private final MetadataProvider metadataProvider;
+    private final FileMetadataExtractor metadataExtractor;
+    private final MetadataTypeRegistry metadataTypeRegistry;
 
     private volatile boolean initialized = false;
 
@@ -110,12 +110,29 @@ public class FileTypeList {
                         HashProvider hashProvider,
                         TypeDescriptionList tdList,
                         FileSystem fileSystem,
-                        MetadataProvider metadataProvider) {
+                        FileMetadataExtractor metadataExtractor) {
+        this(type,
+             path,
+             hashProvider,
+             tdList,
+             fileSystem,
+             metadataExtractor,
+             new DefaultMetadataTypeRegistry());
+    }
+
+    public FileTypeList(MysterType type,
+                        String path,
+                        HashProvider hashProvider,
+                        TypeDescriptionList tdList,
+                        FileSystem fileSystem,
+                        FileMetadataExtractor metadataExtractor,
+                        MetadataTypeRegistry metadataTypeRegistry) {
         this.type = type;
         this.hashProvider = hashProvider;
         this.tdList = tdList;
         this.fileSystem = fileSystem;
-        this.metadataProvider = metadataProvider;
+        this.metadataExtractor = metadataExtractor;
+        this.metadataTypeRegistry = metadataTypeRegistry;
         this.pref_key = PREF_KEY + "." + type.toHexString();
 
         try {
@@ -507,7 +524,7 @@ public class FileTypeList {
             
             indexingFuture = PromiseFutures
                     .execute(new FileListIndexCall(type, rootPath, hashProvider, tdList,
-                            metadataProvider))
+                            metadataExtractor, metadataTypeRegistry))
                     .addResultListener(this::setFileList)
                     .addFinallyListener(this::resetIndexingVariables)
                     .addFinallyListener(() -> initialized = true)
@@ -521,7 +538,8 @@ public class FileTypeList {
         private final Path rootPath;
         private final HashProvider hashProvider;
         private final TypeDescriptionList tdList;
-        private final MetadataProvider metadataProvider;
+        private final FileMetadataExtractor metadataExtractor;
+        private final MetadataType metadataType;
         
         private volatile boolean endFlag = false;
 
@@ -529,12 +547,14 @@ public class FileTypeList {
                                  Path rootPath,
                                  HashProvider hashProvider,
                                  TypeDescriptionList tdList,
-                                 MetadataProvider metadataProvider) {
+                                 FileMetadataExtractor metadataExtractor,
+                                 MetadataTypeRegistry metadataTypeRegistry) {
             this.type = type;
             this.rootPath = rootPath;
             this.hashProvider = hashProvider;
             this.tdList = tdList;
-            this.metadataProvider = metadataProvider;
+            this.metadataExtractor = metadataExtractor;
+            this.metadataType = MetadataTypeResolver.resolve(tdList, type, metadataTypeRegistry);
         }
 
         /*
@@ -653,14 +673,7 @@ public class FileTypeList {
          * @return FileItem created from path.
          */
         private FileItem createFileItem(Path path) {
-            FileItem fileItem;
-            if (isStandardType(StandardTypes.MPG3)) {
-                fileItem = new MPG3FileItem(rootPath, path, metadataProvider);
-            } else if (isStandardType(StandardTypes.PICT)) {
-                fileItem = new ImageFileItem(rootPath, path, metadataProvider);
-            } else {
-                fileItem = new FileItem(rootPath, path);
-            }
+            FileItem fileItem = metadataType.createFileItem(rootPath, path, metadataExtractor);
             
             hashProvider.findHashNonBlocking(path, new FileHashListener() {
                 public void foundHash(FileHashEvent e) {
@@ -671,13 +684,6 @@ public class FileTypeList {
             return fileItem; 
         }
 
-        private boolean isStandardType(StandardTypes standardType) {
-            try {
-                return tdList.getType(standardType).equals(type);
-            } catch (IllegalStateException ex) {
-                return false;
-            }
-        }
     }
 
     /**

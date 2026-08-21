@@ -158,17 +158,6 @@ public class DefaultTypeDescriptionList implements TypeDescriptionList {
         com.myster.pref.MysterPreferences.getInstance().put(DEFAULT_LIST_KEY, mml);
     }
 
-    @Override
-    public synchronized MysterType getType(StandardTypes standardType) {
-        for (TypeDescriptionElement t : types) {
-            if (t.getTypeDescription().getInternalName().equals(standardType.toString())) {
-                return t.getType();
-            }
-        }
-        throw new IllegalStateException("Unknown standard type: " + standardType);
-    }
-
-    @Override
     public synchronized TypeDescription[] getAllTypes() {
         TypeDescription[] arr = new TypeDescription[types.size()];
         for (int i = 0; i < types.size(); i++) {
@@ -418,6 +407,7 @@ public class DefaultTypeDescriptionList implements TypeDescriptionList {
         String archived = mml.get(path + "Archived");
         String enabled  = mml.get(path + "Enabled By Default");
         String publicKey = mml.get(path + "Public Key");
+        String metadataTypeId = mml.get(path + "Metadata Type");
 
         if (publicKey == null || (internalName == null && description == null)) return null;
 
@@ -437,7 +427,10 @@ public class DefaultTypeDescriptionList implements TypeDescriptionList {
                     new MysterType(Util.publicKeyFromString(publicKey).get()),
                     internalName, description,
                     extList.toArray(new String[0]),
-                    isArchived, isEnabled);
+                    isArchived, isEnabled,
+                    TypeSource.DEFAULT,
+                    true,
+                    metadataTypeId);
         } catch (Exception ex) {
             throw new com.general.util.UnexpectedException(ex);
         }

@@ -14,7 +14,7 @@ import com.myster.mml.MessagePak;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 
-class TestCachingMetadataProvider {
+class TestCachingFileMetadataExtractor {
     @TempDir
     Path tempDir;
 
@@ -24,11 +24,11 @@ class TestCachingMetadataProvider {
         RecordingCache cache = new RecordingCache();
         cache.getResult = Optional.of(metadataWithLength(123));
         AtomicInteger delegateCalls = new AtomicInteger();
-        CachingMetadataProvider provider = new CachingMetadataProvider(cache,
+        CachingFileMetadataExtractor extractor = new CachingFileMetadataExtractor(cache,
                 (metadataType, messagePack, path) -> delegateCalls.incrementAndGet());
         MessagePak messagePack = filePack(file);
 
-        provider.enrich(MetadataType.AUDIO, messagePack, file);
+        extractor.enrich(MetadataType.AUDIO, messagePack, file);
 
         assertEquals(0, delegateCalls.get());
         assertEquals(123L, messagePack.getLong("/LengthSec").orElseThrow());
@@ -39,7 +39,7 @@ class TestCachingMetadataProvider {
         Path file = Files.writeString(tempDir.resolve("song.mp3"), "content");
         RecordingCache cache = new RecordingCache();
         AtomicInteger delegateCalls = new AtomicInteger();
-        CachingMetadataProvider provider = new CachingMetadataProvider(cache,
+        CachingFileMetadataExtractor extractor = new CachingFileMetadataExtractor(cache,
                 (metadataType, messagePack, path) -> {
                     delegateCalls.incrementAndGet();
                     assertTrue(messagePack.getLong("/size").isPresent());
@@ -47,7 +47,7 @@ class TestCachingMetadataProvider {
                 });
         MessagePak messagePack = filePack(file);
 
-        provider.enrich(MetadataType.AUDIO, messagePack, file);
+        extractor.enrich(MetadataType.AUDIO, messagePack, file);
 
         assertEquals(1, delegateCalls.get());
         assertEquals(456L, messagePack.getLong("/LengthSec").orElseThrow());
@@ -59,10 +59,10 @@ class TestCachingMetadataProvider {
     void emptyDelegateResultDoesNotWriteCacheEntry() throws IOException {
         Path file = Files.writeString(tempDir.resolve("song.mp3"), "content");
         RecordingCache cache = new RecordingCache();
-        CachingMetadataProvider provider = new CachingMetadataProvider(cache,
+        CachingFileMetadataExtractor extractor = new CachingFileMetadataExtractor(cache,
                 (metadataType, messagePack, path) -> {});
 
-        provider.enrich(MetadataType.AUDIO, filePack(file), file);
+        extractor.enrich(MetadataType.AUDIO, filePack(file), file);
 
         assertEquals(0, cache.putCalls);
     }
@@ -71,7 +71,7 @@ class TestCachingMetadataProvider {
     void imageMetadataCachesOnlyAllowedImageKeys() throws IOException {
         Path file = Files.writeString(tempDir.resolve("photo.jpg"), "content");
         RecordingCache cache = new RecordingCache();
-        CachingMetadataProvider provider = new CachingMetadataProvider(cache,
+        CachingFileMetadataExtractor extractor = new CachingFileMetadataExtractor(cache,
                 (metadataType, messagePack, path) -> {
                     messagePack.putLong("/ImageWidth", 640);
                     messagePack.putLong("/ImageHeight", 480);
@@ -79,7 +79,7 @@ class TestCachingMetadataProvider {
                     messagePack.putLong("/LengthSec", 12);
                 });
 
-        provider.enrich(MetadataType.IMAGE, filePack(file), file);
+        extractor.enrich(MetadataType.IMAGE, filePack(file), file);
 
         assertEquals(1, cache.putCalls);
         assertEquals(640L, cache.putMetadata.getLong("/ImageWidth").orElseThrow());
@@ -91,11 +91,11 @@ class TestCachingMetadataProvider {
     @Test
     void missingSizeThrowsIllegalStateException() {
         RecordingCache cache = new RecordingCache();
-        CachingMetadataProvider provider = new CachingMetadataProvider(cache,
+        CachingFileMetadataExtractor extractor = new CachingFileMetadataExtractor(cache,
                 (metadataType, messagePack, path) -> messagePack.putLong("/LengthSec", 1));
 
         assertThrows(IllegalStateException.class,
-                () -> provider.enrich(MetadataType.AUDIO, MessagePak.newEmpty(),
+                () -> extractor.enrich(MetadataType.AUDIO, MessagePak.newEmpty(),
                         tempDir.resolve("song.mp3")));
         assertEquals(0, cache.putCalls);
     }
@@ -106,13 +106,13 @@ class TestCachingMetadataProvider {
         MessagePak messagePack = MessagePak.newEmpty();
         messagePack.putLong("/size", 123);
         AtomicInteger delegateCalls = new AtomicInteger();
-        CachingMetadataProvider provider = new CachingMetadataProvider(new RecordingCache(),
+        CachingFileMetadataExtractor extractor = new CachingFileMetadataExtractor(new RecordingCache(),
                 (metadataType, mp, path) -> {
                     delegateCalls.incrementAndGet();
                     mp.putLong("/LengthSec", 1);
                 });
 
-        provider.enrich(MetadataType.AUDIO, messagePack, missingFile);
+        extractor.enrich(MetadataType.AUDIO, messagePack, missingFile);
 
         assertEquals(0, delegateCalls.get());
         assertTrue(messagePack.getLong("/LengthSec").isEmpty());

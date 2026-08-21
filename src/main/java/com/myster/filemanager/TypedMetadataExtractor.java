@@ -7,6 +7,6 @@ import com.myster.mml.MessagePak;
 /**
  * Enriches metadata for one specific {@link MetadataType}.
  */
-public interface TypedMetadataProvider {
+public interface TypedMetadataExtractor {
     void enrich(MessagePak messagePack, Path path);
 }

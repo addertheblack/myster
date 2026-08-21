@@ -13,8 +13,6 @@ import com.myster.access.AccessList;
  *  Can be called from any thread.
  */
 public interface TypeDescriptionList {
-    MysterType getType(StandardTypes t);
-    
     /**
      * Returns a TypeDescription for that MysterType or null if no
      * TypeDescription Exists
@@ -116,8 +114,3 @@ public interface TypeDescriptionList {
      */
     void importType(AccessList accessList) throws IOException;
 }
-
-
-
-
-

@@ -11,9 +11,9 @@ import com.myster.mml.MessagePak;
  * Enriches the base {@link FileItem} metadata with audio-specific and ID3 tag
  * fields for files managed under the {@code MPG3} Myster type.
  *
- * <p>Metadata enrichment is delegated to an injected {@link MetadataProvider}
+ * <p>Metadata enrichment is delegated to an injected {@link FileMetadataExtractor}
  * so production indexing can use a persistent disk cache while tests can supply
- * a fake provider.
+ * a fake extractor.
  *
  * <p>The following {@link MessagePak} keys are part of the Myster file-metadata
  * protocol and must not change without a corresponding protocol version bump:
@@ -32,12 +32,12 @@ public class MPG3FileItem extends FileItem {
             32, 40, 48, 56, 64, 80, 96, 112, 128, 160, 192, 224, 256, 320
     };
 
-    private final MetadataProvider metadataProvider;
+    private final FileMetadataExtractor metadataExtractor;
     private MessagePak messagePackRepresentation;
 
-    public MPG3FileItem(Path root, Path path, MetadataProvider metadataProvider) {
+    public MPG3FileItem(Path root, Path path, FileMetadataExtractor metadataExtractor) {
         super(root, path);
-        this.metadataProvider = Objects.requireNonNull(metadataProvider);
+        this.metadataExtractor = Objects.requireNonNull(metadataExtractor);
     }
 
     public synchronized MessagePak getMessagePackRepresentation() {
@@ -47,7 +47,7 @@ public class MPG3FileItem extends FileItem {
 
         messagePackRepresentation = super.getMessagePackRepresentation();
 
-        metadataProvider.enrich(MetadataType.AUDIO, messagePackRepresentation, getPath());
+        metadataExtractor.enrich(MetadataType.AUDIO, messagePackRepresentation, getPath());
         return messagePackRepresentation;
     }
 

@@ -9,6 +9,32 @@
 
 package com.myster;
 
+import javax.swing.JFrame;
+import javax.swing.SwingUtilities;
+import java.awt.Desktop;
+import java.awt.Desktop.Action;
+import java.awt.EventQueue;
+import java.awt.Frame;
+import java.io.BufferedInputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.lang.reflect.InvocationTargetException;
+import java.net.InetAddress;
+import java.net.NetworkInterface;
+import java.net.SocketException;
+import java.net.UnknownHostException;
+import java.nio.file.Path;
+import java.security.KeyPair;
+import java.security.PublicKey;
+import java.util.Enumeration;
+import java.util.Map;
+import java.util.Optional;
+import java.util.concurrent.Executors;
+import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.logging.LogManager;
+import java.util.logging.Logger;
+import java.util.prefs.Preferences;
+
 import com.general.application.ApplicationContext;
 import com.general.application.ApplicationSingletonListener;
 import com.general.util.AnswerDialog;
@@ -16,11 +42,20 @@ import com.general.util.Timer;
 import com.general.util.Util;
 import com.myster.application.MysterGlobals;
 import com.myster.bandwidth.BandwidthManager;
-import com.myster.filemanager.*;
+import com.myster.cid.ServerCid;
+import com.myster.filemanager.CachingFileMetadataExtractor;
+import com.myster.filemanager.DefaultMetadataTypeRegistry;
+import com.myster.filemanager.FileMetadataCache;
+import com.myster.filemanager.FileMetadataExtractor;
+import com.myster.filemanager.FileTypeListManager;
+import com.myster.filemanager.MetadataType;
+import com.myster.filemanager.MetadataTypeRegistry;
+import com.myster.filemanager.ShardedFileMetadataCache;
+import com.myster.filemanager.TypeResolvingFileMetadataExtractor;
+import com.myster.filemanager.TypedMetadataExtractor;
 import com.myster.filemanager.ui.FmiChooser;
 import com.myster.hash.HashManager;
 import com.myster.hash.ui.HashManagerGUI;
-import com.myster.cid.ServerCid;
 import com.myster.identity.Identity;
 import com.myster.message.ui.MessagePreferencesPanel;
 import com.myster.net.MysterAddress;
@@ -38,7 +73,15 @@ import com.myster.net.server.BannersManager.BannersPreferences;
 import com.myster.net.server.ServerFacade;
 import com.myster.net.server.ServerPreferences;
 import com.myster.net.server.ServerUtils;
-import com.myster.net.server.datagram.*;
+import com.myster.net.server.datagram.BidirectionalServerStatsDatagramServer;
+import com.myster.net.server.datagram.FileStatsDatagramServer;
+import com.myster.net.server.datagram.FindClosestDatagramServer;
+import com.myster.net.server.datagram.PingTransport;
+import com.myster.net.server.datagram.SearchDatagramServer;
+import com.myster.net.server.datagram.SearchHashDatagramServer;
+import com.myster.net.server.datagram.ServerStatsDatagramServer;
+import com.myster.net.server.datagram.TopTenDatagramServer;
+import com.myster.net.server.datagram.TypeDatagramServer;
 import com.myster.net.stream.client.MysterSocketFactory;
 import com.myster.net.stream.client.MysterStreamImpl;
 import com.myster.net.stream.client.msdownload.MSDownloadLocalQueue;
@@ -69,29 +112,6 @@ import com.myster.ui.tray.MysterTray;
 import com.myster.util.I18n;
 import com.myster.util.ThemeUtil;
 import com.simtechdata.waifupnp.UPnP;
-
-import javax.swing.*;
-import java.awt.*;
-import java.awt.Desktop.Action;
-import java.io.BufferedInputStream;
-import java.io.IOException;
-import java.io.InputStream;
-import java.lang.reflect.InvocationTargetException;
-import java.net.InetAddress;
-import java.net.NetworkInterface;
-import java.net.SocketException;
-import java.net.UnknownHostException;
-import java.nio.file.Path;
-import java.security.KeyPair;
-import java.security.PublicKey;
-import java.util.Enumeration;
-import java.util.Map;
-import java.util.Optional;
-import java.util.concurrent.Executors;
-import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.logging.LogManager;
-import java.util.logging.Logger;
-import java.util.prefs.Preferences;
 
 public class Myster {
     private static final Logger log = Logger.getLogger(Myster.class.getName());
@@ -222,9 +242,11 @@ public class Myster {
         INSTRUMENTATION.info("-------->> HashManager created " + (System.currentTimeMillis() - startTime));
 
         INSTRUMENTATION.info("-------->> Creating FileTypeListManager " + (System.currentTimeMillis() - startTime));
-        MetadataProvider metadataProvider = createMetadataProvider();
+        MetadataTypeRegistry metadataTypeRegistry = new DefaultMetadataTypeRegistry();
+        FileMetadataExtractor metadataExtractor = createFileMetadataExtractor(metadataTypeRegistry);
         FileTypeListManager fileManager = new FileTypeListManager(
-                (f, l) -> hashManager.findHash(f, l), tdList, metadataProvider);
+                (f, l) -> hashManager.findHash(f, l), tdList, metadataExtractor,
+                metadataTypeRegistry);
         INSTRUMENTATION.info("-------->> FileTypeListManager created " + (System.currentTimeMillis() - startTime));
 
         INSTRUMENTATION.info("-------->> Init client protocol impl " + (System.currentTimeMillis() - startTime));
@@ -603,14 +625,19 @@ public class Myster {
         }
     }
 
-    private static MetadataProvider createMetadataProvider() {
+    private static FileMetadataExtractor createFileMetadataExtractor(
+            MetadataTypeRegistry metadataTypeRegistry) {
         Path cacheRoot = MysterGlobals.getPrivateDataPath().toPath().resolve("MetadataCache");
         FileMetadataCache cache = new ShardedFileMetadataCache(cacheRoot);
-        MetadataProvider resolver = new TypeResolvingMetadataProvider(Map.of(MetadataType.AUDIO,
-                new TikaAudioMetadataProvider(),
-                MetadataType.IMAGE,
-                new TikaImageMetadataProvider()));
-        return new CachingMetadataProvider(cache, resolver);
+        Map<MetadataType, TypedMetadataExtractor> typedExtractors = metadataTypeRegistry
+                .supportedTypes()
+                .stream()
+                .flatMap(metadataType -> metadataType.typedMetadataExtractor()
+                        .map(extractor -> Map.entry(metadataType, extractor))
+                        .stream())
+                .collect(java.util.stream.Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
+        FileMetadataExtractor resolver = new TypeResolvingFileMetadataExtractor(typedExtractors);
+        return new CachingFileMetadataExtractor(cache, resolver);
     }
 
     private static void addServerConnectionSettings(ServerFacade serverFacade,

@@ -1,45 +1,52 @@
 package com.myster.filemanager;
 
+import java.nio.file.Path;
 import java.util.List;
+import java.util.Optional;
+
+import com.myster.search.ui.FileTypeColumnHandler;
+import com.myster.type.TypeDescriptionList;
 
 /**
- * Identifies a group of cacheable file metadata.
+ * Runtime profile for a type of file metadata that Myster knows how to extract and display.
  * <p>
- * The cache key is a stable on-disk namespace. Changing the cache key intentionally
- * invalidates old cached entries for that metadata type.
+ * A concrete network {@link com.myster.type.MysterType} subscribes to one metadata type by storing
+ * this profile's stable {@link #id()} in its {@link com.myster.type.TypeDescription}. The cache key
+ * is a separate on-disk schema namespace. Changing the cache key intentionally invalidates old
+ * cached entries for that metadata type without changing type subscriptions.
  */
-public enum MetadataType {
-    AUDIO("audio-v1",
-            List.of("/BitRate", "/Hz", "/LengthSec", "/ID3Name", "/Artist", "/Album")),
-    IMAGE("image-v1",
-            List.of("/ImageWidth",
-                    "/ImageHeight",
-                    "/ImageBitDepth",
-                    "/ImageTakenAtMillis",
-                    "/ImageOrientation",
-                    "/CameraMake",
-                    "/CameraModel",
-                    "/ImageSoftware"));
+public interface MetadataType {
+    MetadataType GENERIC = BuiltInMetadataType.GENERIC;
+    MetadataType AUDIO = BuiltInMetadataType.AUDIO;
+    MetadataType IMAGE = BuiltInMetadataType.IMAGE;
 
-    private final String cacheKey;
-    private final List<String> cacheableKeys;
-
-    MetadataType(String cacheKey, List<String> cacheableKeys) {
-        this.cacheKey = cacheKey;
-        this.cacheableKeys = List.copyOf(cacheableKeys);
-    }
+    /**
+     * Returns the stable lowercase id stored by {@link com.myster.type.TypeDescription}.
+     */
+    String id();
 
     /**
      * Returns the stable string used to namespace persistent cache entries.
      */
-    public String cacheKey() {
-        return cacheKey;
-    }
+    String cacheKey();
 
     /**
      * Returns the MessagePak root keys that may be persisted for this metadata type.
      */
-    List<String> cacheableKeys() {
-        return cacheableKeys;
-    }
+    List<String> cacheableKeys();
+
+    /**
+     * Returns the GUI column handler for this metadata type.
+     */
+    FileTypeColumnHandler getHandler(TypeDescriptionList tdList);
+
+    /**
+     * Creates the server-side file item used for files with this metadata type.
+     */
+    FileItem createFileItem(Path root, Path path, FileMetadataExtractor metadataExtractor);
+
+    /**
+     * Returns the typed extractor used to fill this profile's cacheable keys, if any.
+     */
+    Optional<TypedMetadataExtractor> typedMetadataExtractor();
 }

@@ -27,11 +27,11 @@ import org.xml.sax.helpers.DefaultHandler;
 /**
  * Extracts picture metadata using Apache Tika's image parser.
  *
- * <p>This provider emits compact browsing metadata only. It intentionally does
+ * <p>This extractor emits compact browsing metadata only. It intentionally does
  * not copy GPS/location properties into Myster file stats.
  */
-public class TikaImageMetadataProvider implements TypedMetadataProvider {
-    private static final Logger log = Logger.getLogger(TikaImageMetadataProvider.class.getName());
+public class TikaImageMetadataExtractor implements TypedMetadataExtractor {
+    private static final Logger log = Logger.getLogger(TikaImageMetadataExtractor.class.getName());
 
     @Override
     public void enrich(MessagePak messagePack, Path path) {

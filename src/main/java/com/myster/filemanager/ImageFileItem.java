@@ -26,12 +26,12 @@ import com.myster.mml.MessagePak;
  * metadata is intentionally not emitted.
  */
 public class ImageFileItem extends FileItem {
-    private final MetadataProvider metadataProvider;
+    private final FileMetadataExtractor metadataExtractor;
     private MessagePak messagePackRepresentation;
 
-    public ImageFileItem(Path root, Path path, MetadataProvider metadataProvider) {
+    public ImageFileItem(Path root, Path path, FileMetadataExtractor metadataExtractor) {
         super(root, path);
-        this.metadataProvider = Objects.requireNonNull(metadataProvider);
+        this.metadataExtractor = Objects.requireNonNull(metadataExtractor);
     }
 
     @Override
@@ -41,7 +41,7 @@ public class ImageFileItem extends FileItem {
         }
 
         messagePackRepresentation = super.getMessagePackRepresentation();
-        metadataProvider.enrich(MetadataType.IMAGE, messagePackRepresentation, getPath());
+        metadataExtractor.enrich(MetadataType.IMAGE, messagePackRepresentation, getPath());
         return messagePackRepresentation;
     }
 }

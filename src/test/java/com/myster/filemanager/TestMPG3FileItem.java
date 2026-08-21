@@ -137,20 +137,20 @@ class TestMPG3FileItem {
         assertTrue(MPG3FileItem.estimateAverageBitrateBps(10_000, -1).isEmpty());
     }
 
-    // ── TikaAudioMetadataProvider — error handling & protocol constraints ────
+    // ── TikaAudioMetadataExtractor — error handling & protocol constraints ────
 
     @Test
-    void tikaAudioMetadataProvider_doesNotThrowForNonExistentFile() {
+    void tikaAudioFileMetadataExtractor_doesNotThrowForNonExistentFile() {
         MessagePak mp = MessagePak.newEmpty();
         assertDoesNotThrow(() ->
-                new TikaAudioMetadataProvider().enrich(mp,
+                new TikaAudioMetadataExtractor().enrich(mp,
                         Path.of("/nonexistent/completely/fake.mp3")));
     }
 
     @Test
-    void tikaAudioMetadataProvider_leavesMessagePakEmptyOnParseFailure() {
+    void tikaAudioFileMetadataExtractor_leavesMessagePakEmptyOnParseFailure() {
         MessagePak mp = MessagePak.newEmpty();
-        new TikaAudioMetadataProvider().enrich(mp, Path.of("/nonexistent/completely/fake.mp3"));
+        new TikaAudioMetadataExtractor().enrich(mp, Path.of("/nonexistent/completely/fake.mp3"));
         assertTrue(mp.getLong("/BitRate").isEmpty());
         assertTrue(mp.getLong("/Hz").isEmpty());
         assertTrue(mp.getLong("/LengthSec").isEmpty());
@@ -160,19 +160,19 @@ class TestMPG3FileItem {
     }
 
     @Test
-    void tikaAudioMetadataProvider_neverEmitsVbr() {
+    void tikaAudioFileMetadataExtractor_neverEmitsVbr() {
         // /Vbr must never be emitted after the mp3agic migration — consumers rely on
         // missing-key tolerance, and Tika does not provide this as part of the current payload.
         MessagePak mp = MessagePak.newEmpty();
-        new TikaAudioMetadataProvider().enrich(mp, Path.of("/nonexistent/completely/fake.mp3"));
+        new TikaAudioMetadataExtractor().enrich(mp, Path.of("/nonexistent/completely/fake.mp3"));
         assertTrue(mp.getBoolean("/Vbr").isEmpty(), "/Vbr must never be emitted");
     }
 
     @Test
-    void tikaAudioMetadataProvider_neverEmitsOriginalArtist() {
+    void tikaAudioFileMetadataExtractor_neverEmitsOriginalArtist() {
         // /OriginalArtist (ID3v2 TOPE frame) is not surfaced by Tika's Mp3Parser.
         MessagePak mp = MessagePak.newEmpty();
-        new TikaAudioMetadataProvider().enrich(mp, Path.of("/nonexistent/completely/fake.mp3"));
+        new TikaAudioMetadataExtractor().enrich(mp, Path.of("/nonexistent/completely/fake.mp3"));
         assertTrue(mp.getString("/OriginalArtist").isEmpty(),
                 "/OriginalArtist must never be emitted");
     }
@@ -199,16 +199,16 @@ class TestMPG3FileItem {
     }
 
     @Test
-    void getMessagePackRepresentation_usesInjectedProvider() throws Exception {
+    void getMessagePackRepresentation_usesInjectedExtractor() throws Exception {
         Path file = Files.writeString(tempDir.resolve("song.mp3"), "content");
-        MetadataProvider provider = (metadataType, messagePack, path) -> {
+        FileMetadataExtractor extractor = (metadataType, messagePack, path) -> {
             assertEquals(MetadataType.AUDIO, metadataType);
             assertEquals(file, path);
             assertTrue(messagePack.getLong("/size").isPresent());
             messagePack.putLong("/LengthSec", 10);
         };
 
-        MessagePak mp = new MPG3FileItem(tempDir, file, provider).getMessagePackRepresentation();
+        MessagePak mp = new MPG3FileItem(tempDir, file, extractor).getMessagePackRepresentation();
 
         assertEquals(Files.size(file), mp.getLong("/size").orElseThrow());
         assertEquals(10L, mp.getLong("/LengthSec").orElseThrow());
@@ -218,11 +218,11 @@ class TestMPG3FileItem {
     void getMessagePackRepresentation_keepsMessagePakRamCache() throws Exception {
         Path file = Files.writeString(tempDir.resolve("song.mp3"), "content");
         AtomicInteger calls = new AtomicInteger();
-        MetadataProvider provider = (metadataType, messagePack, path) -> {
+        FileMetadataExtractor extractor = (metadataType, messagePack, path) -> {
             calls.incrementAndGet();
             messagePack.putLong("/LengthSec", 10);
         };
-        MPG3FileItem item = new MPG3FileItem(tempDir, file, provider);
+        MPG3FileItem item = new MPG3FileItem(tempDir, file, extractor);
 
         MessagePak first = item.getMessagePackRepresentation();
         MessagePak second = item.getMessagePackRepresentation();

@@ -12,6 +12,6 @@ import com.myster.mml.MessagePak;
  * Providers that participate in persistent caching require the caller to pass a
  * base {@link FileItem} payload that already contains {@code /size}.
  */
-public interface MetadataProvider {
+public interface FileMetadataExtractor {
     void enrich(MetadataType metadataType, MessagePak messagePack, Path path);
 }

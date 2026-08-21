@@ -38,20 +38,19 @@ public class FileTypeListManager {
     private final Map<MysterType, FileTypeList> fileListMap; // Map of type -> FileTypeList
     private final HashProvider hashProvider;
     private final TypeDescriptionList tdList;
-    private final MetadataProvider metadataProvider;
+    private final FileMetadataExtractor metadataExtractor;
+    private final MetadataTypeRegistry metadataTypeRegistry;
 
     public static final String PATH = "/File Lists/"; //Path the File Lists
 
-    /**
-     * Constructor that initializes the FileTypeListManager and registers
-     * as a listener for type enable/disable events.
-     */
     public FileTypeListManager(HashProvider hashProvider,
                                TypeDescriptionList tdList,
-                               MetadataProvider metadataProvider) {
+                               FileMetadataExtractor metadataExtractor,
+                               MetadataTypeRegistry metadataTypeRegistry) {
         this.hashProvider = hashProvider;
         this.tdList = tdList;
-        this.metadataProvider = metadataProvider;
+        this.metadataExtractor = metadataExtractor;
+        this.metadataTypeRegistry = metadataTypeRegistry;
         this.fileListMap = new HashMap<>();
 
         // Initialize file lists for all currently enabled types
@@ -59,7 +58,7 @@ public class FileTypeListManager {
         for (TypeDescription typeDesc : list) {
             MysterType type = typeDesc.getType();
             FileTypeList fileList = new FileTypeList(type, PATH, hashProvider, tdList,
-                    FileSystems.getDefault(), metadataProvider);
+                    FileSystems.getDefault(), metadataExtractor, metadataTypeRegistry);
             fileList.getNumOfFiles(); // This forces the list to load
             fileListMap.put(type, fileList);
         }
@@ -338,7 +337,7 @@ public class FileTypeListManager {
 
         // Create and initialize new FileTypeList
         FileTypeList fileList = new FileTypeList(type, PATH, hashProvider, tdList,
-                FileSystems.getDefault(), metadataProvider);
+                FileSystems.getDefault(), metadataExtractor, metadataTypeRegistry);
         fileList.getNumOfFiles(); // This forces the list to load
         fileListMap.put(type, fileList);
     }

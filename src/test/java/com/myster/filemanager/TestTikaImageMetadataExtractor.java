@@ -16,7 +16,7 @@ import org.apache.tika.metadata.TIFF;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 
-class TestTikaImageMetadataProvider {
+class TestTikaImageMetadataExtractor {
     @TempDir
     Path tempDir;
 
@@ -25,7 +25,7 @@ class TestTikaImageMetadataProvider {
         Metadata metadata = new Metadata();
         metadata.set(TIFF.BITS_PER_SAMPLE, new String[] { "8", "8", "8" });
 
-        assertEquals(OptionalLong.of(24), TikaImageMetadataProvider.deriveBitDepth(metadata));
+        assertEquals(OptionalLong.of(24), TikaImageMetadataExtractor.deriveBitDepth(metadata));
     }
 
     @Test
@@ -34,7 +34,7 @@ class TestTikaImageMetadataProvider {
         metadata.set(TIFF.BITS_PER_SAMPLE, new String[] { "8" });
         metadata.set(TIFF.SAMPLES_PER_PIXEL, 3);
 
-        assertEquals(OptionalLong.of(24), TikaImageMetadataProvider.deriveBitDepth(metadata));
+        assertEquals(OptionalLong.of(24), TikaImageMetadataExtractor.deriveBitDepth(metadata));
     }
 
     @Test
@@ -42,7 +42,7 @@ class TestTikaImageMetadataProvider {
         Metadata metadata = new Metadata();
         metadata.set(TIFF.BITS_PER_SAMPLE, new String[] { "16" });
 
-        assertEquals(OptionalLong.of(16), TikaImageMetadataProvider.deriveBitDepth(metadata));
+        assertEquals(OptionalLong.of(16), TikaImageMetadataExtractor.deriveBitDepth(metadata));
     }
 
     @Test
@@ -50,34 +50,34 @@ class TestTikaImageMetadataProvider {
         Metadata metadata = new Metadata();
         metadata.set(TIFF.BITS_PER_SAMPLE, new String[] { "8", "0", "8" });
 
-        assertTrue(TikaImageMetadataProvider.deriveBitDepth(metadata).isEmpty());
+        assertTrue(TikaImageMetadataExtractor.deriveBitDepth(metadata).isEmpty());
     }
 
     @Test
     void parsePositiveLong_omitsNullBlankInvalidAndNonPositive() {
-        assertTrue(TikaImageMetadataProvider.parsePositiveLong(null).isEmpty());
-        assertTrue(TikaImageMetadataProvider.parsePositiveLong(" ").isEmpty());
-        assertTrue(TikaImageMetadataProvider.parsePositiveLong("abc").isEmpty());
-        assertTrue(TikaImageMetadataProvider.parsePositiveLong("0").isEmpty());
-        assertTrue(TikaImageMetadataProvider.parsePositiveLong("-1").isEmpty());
+        assertTrue(TikaImageMetadataExtractor.parsePositiveLong(null).isEmpty());
+        assertTrue(TikaImageMetadataExtractor.parsePositiveLong(" ").isEmpty());
+        assertTrue(TikaImageMetadataExtractor.parsePositiveLong("abc").isEmpty());
+        assertTrue(TikaImageMetadataExtractor.parsePositiveLong("0").isEmpty());
+        assertTrue(TikaImageMetadataExtractor.parsePositiveLong("-1").isEmpty());
     }
 
     @Test
     void parsePositiveLong_parsesPositiveLong() {
-        assertEquals(OptionalLong.of(6), TikaImageMetadataProvider.parsePositiveLong(" 6 "));
+        assertEquals(OptionalLong.of(6), TikaImageMetadataExtractor.parsePositiveLong(" 6 "));
     }
 
     @Test
     void doesNotThrowForNonExistentFile() {
         MessagePak mp = MessagePak.newEmpty();
-        assertDoesNotThrow(() -> new TikaImageMetadataProvider().enrich(mp,
+        assertDoesNotThrow(() -> new TikaImageMetadataExtractor().enrich(mp,
                 tempDir.resolve("missing.jpg")));
     }
 
     @Test
     void leavesMessagePakWithoutImageKeysOnParseFailure() {
         MessagePak mp = MessagePak.newEmpty();
-        new TikaImageMetadataProvider().enrich(mp, tempDir.resolve("missing.jpg"));
+        new TikaImageMetadataExtractor().enrich(mp, tempDir.resolve("missing.jpg"));
 
         assertTrue(mp.getLong("/ImageWidth").isEmpty());
         assertTrue(mp.getLong("/ImageHeight").isEmpty());
@@ -96,7 +96,7 @@ class TestTikaImageMetadataProvider {
         ImageIO.write(bufferedImage, "png", image.toFile());
         MessagePak mp = MessagePak.newEmpty();
 
-        new TikaImageMetadataProvider().enrich(mp, image);
+        new TikaImageMetadataExtractor().enrich(mp, image);
 
         assertEquals(17L, mp.getLong("/ImageWidth").orElseThrow());
         assertEquals(9L, mp.getLong("/ImageHeight").orElseThrow());

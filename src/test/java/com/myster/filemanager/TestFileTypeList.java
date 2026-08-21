@@ -47,7 +47,7 @@ class TestFileTypeList {
         createTestFileStructure();
 
         fileTypeList = new FileTypeList(testType, testPrefPath, hashProvider, typeDescriptionList,
-                fileSystem, new NoOpMetadataProvider());
+                fileSystem, new NoOpFileMetadataExtractor());
     }
 
     @AfterEach
@@ -450,11 +450,6 @@ class TestFileTypeList {
                 false,                // isArchived
                 true                  // isEnabledByDefault
             );
-        }
-
-        @Override
-        public MysterType getType(com.myster.type.StandardTypes t) {
-            return testTypeDescription.getType();
         }
 
         @Override

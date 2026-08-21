@@ -21,8 +21,8 @@ import org.xml.sax.helpers.DefaultHandler;
 /**
  * Extracts audio metadata using Apache Tika's MP3 parser.
  */
-public class TikaAudioMetadataProvider implements TypedMetadataProvider {
-    private static final Logger log = Logger.getLogger(TikaAudioMetadataProvider.class.getName());
+public class TikaAudioMetadataExtractor implements TypedMetadataExtractor {
+    private static final Logger log = Logger.getLogger(TikaAudioMetadataExtractor.class.getName());
 
     @Override
     public void enrich(MessagePak messagePack, Path path) {

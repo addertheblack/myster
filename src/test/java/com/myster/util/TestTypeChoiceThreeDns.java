@@ -16,7 +16,6 @@ import org.junit.jupiter.api.Test;
 import com.myster.access.AccessList;
 import com.myster.type.CustomTypeDefinition;
 import com.myster.type.MysterType;
-import com.myster.type.StandardTypes;
 import com.myster.type.TypeDescription;
 import com.myster.type.TypeDescriptionEvent;
 import com.myster.type.TypeDescriptionList;
@@ -76,11 +75,6 @@ class TestTypeChoiceThreeDns {
         void fireTypeEnabled() {
             TypeDescriptionEvent event = new TypeDescriptionEvent(this, type.getType());
             listeners.forEach(listener -> listener.typeEnabled(event));
-        }
-
-        @Override
-        public MysterType getType(StandardTypes t) {
-            return type.getType();
         }
 
         @Override

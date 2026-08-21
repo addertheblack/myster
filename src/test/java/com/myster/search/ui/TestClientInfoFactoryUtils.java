@@ -8,7 +8,6 @@ import java.util.Optional;
 import com.myster.access.AccessList;
 import com.myster.type.CustomTypeDefinition;
 import com.myster.type.MysterType;
-import com.myster.type.StandardTypes;
 import com.myster.type.TypeDescription;
 import com.myster.type.TypeDescriptionList;
 import com.myster.type.TypeListener;
@@ -45,16 +44,16 @@ class TestClientInfoFactoryUtils {
 
     private static class TestTypeDescriptionList implements TypeDescriptionList {
         @Override
-        public MysterType getType(StandardTypes t) {
-            return switch (t) {
-                case MPG3 -> AUDIO;
-                case PICT -> IMAGE;
-                default -> throw new IllegalStateException("Unknown standard type: " + t);
-            };
-        }
-
-        @Override
         public Optional<TypeDescription> get(MysterType type) {
+            if (AUDIO.equals(type)) {
+                return Optional.of(typeDescription(AUDIO, "Audio", "audio"));
+            }
+            if (IMAGE.equals(type)) {
+                return Optional.of(typeDescription(IMAGE, "Image", "image"));
+            }
+            if (OTHER.equals(type)) {
+                return Optional.of(typeDescription(OTHER, "Other", null));
+            }
             return Optional.empty();
         }
 
@@ -103,5 +102,19 @@ class TestClientInfoFactoryUtils {
 
         @Override
         public void importType(AccessList accessList) throws IOException {}
+
+        private static TypeDescription typeDescription(MysterType type,
+                                                       String name,
+                                                       String metadataTypeId) {
+            return new TypeDescription(type,
+                    name,
+                    name,
+                    new String[] {},
+                    false,
+                    true,
+                    com.myster.type.TypeSource.DEFAULT,
+                    true,
+                    metadataTypeId);
+        }
     }
 }

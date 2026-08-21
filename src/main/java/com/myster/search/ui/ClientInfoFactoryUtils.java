@@ -1,10 +1,14 @@
 package com.myster.search.ui;
 
+import com.myster.filemanager.DefaultMetadataTypeRegistry;
+import com.myster.filemanager.MetadataTypeRegistry;
+import com.myster.filemanager.MetadataTypeResolver;
 import com.myster.type.MysterType;
-import com.myster.type.StandardTypes;
 import com.myster.type.TypeDescriptionList;
 
 public final class ClientInfoFactoryUtils {
+    private static final MetadataTypeRegistry DEFAULT_REGISTRY = new DefaultMetadataTypeRegistry();
+
     private ClientInfoFactoryUtils() {
     }
 
@@ -20,22 +24,12 @@ public final class ClientInfoFactoryUtils {
      * @return the appropriate {@link FileTypeColumnHandler}
      */
     public static FileTypeColumnHandler getHandler(TypeDescriptionList tdList, MysterType type) {
-        if (isStandardType(tdList, type, StandardTypes.MPG3))
-            return new ClientMPG3HandleObject();
-        else if (isStandardType(tdList, type, StandardTypes.PICT))
-            return new ClientImageHandleObject();
-        else
-            return new ClientGenericHandleObject();
+        return getHandler(tdList, type, DEFAULT_REGISTRY);
     }
 
-    private static boolean isStandardType(TypeDescriptionList tdList,
-                                          MysterType type,
-                                          StandardTypes standardType) {
-        try {
-            return tdList.getType(standardType).equals(type);
-        } catch (IllegalStateException ex) {
-            return false;
-        }
+    public static FileTypeColumnHandler getHandler(TypeDescriptionList tdList,
+                                                   MysterType type,
+                                                   MetadataTypeRegistry registry) {
+        return MetadataTypeResolver.resolve(tdList, type, registry).getHandler(tdList);
     }
-
 }

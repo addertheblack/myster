@@ -10,6 +10,9 @@
 
 package com.myster.type;
 
+import java.util.Locale;
+import java.util.Optional;
+
 /**
  * This class represents a MysterType and the meta data associated with that
  * MysterType (ie: it describes the type). Usually this consists of the
@@ -22,6 +25,9 @@ package com.myster.type;
  * <p>The {@link #isPublic()} flag indicates whether non-members may list and download
  * files of this type. Built-in types are always public ({@code true}). Custom types
  * carry the value from their access-list policy ({@link com.myster.access.Policy#isListFilesPublic()}).
+ * <p>The optional metadata type id is a stable lowercase key, such as {@code audio} or
+ * {@code image}, that tells runtime metadata code which extraction and display profile this
+ * concrete network type subscribes to.
  *
  * @see TypeDescriptionList where TypeDescription is used
  * @author Andrew Trumper
@@ -36,6 +42,7 @@ public class TypeDescription {
     private final String internalName;
     private final TypeSource source;
     private final boolean isPublic;
+    private final String metadataTypeId;
 
     public TypeDescription(MysterType type, String internalName, String description, String[] extensions,
             boolean isArchived, boolean isEnabledByDefault) {
@@ -62,6 +69,26 @@ public class TypeDescription {
      */
     public TypeDescription(MysterType type, String internalName, String description, String[] extensions,
             boolean isArchived, boolean isEnabledByDefault, TypeSource source, boolean isPublic) {
+        this(type,
+             internalName,
+             description,
+             extensions,
+             isArchived,
+             isEnabledByDefault,
+             source,
+             isPublic,
+             null);
+    }
+
+    /**
+     * Creates a TypeDescription object with an explicit source, public/private policy flag, and
+     * optional metadata type id.
+     *
+     * @param metadataTypeId stable metadata profile id, or null/blank for generic behavior
+     */
+    public TypeDescription(MysterType type, String internalName, String description, String[] extensions,
+            boolean isArchived, boolean isEnabledByDefault, TypeSource source, boolean isPublic,
+            String metadataTypeId) {
         this.type = type;
         this.internalName = internalName;
         this.description = description;
@@ -70,6 +97,7 @@ public class TypeDescription {
         this.isEnabledByDefault = isEnabledByDefault;
         this.source = source;
         this.isPublic = isPublic;
+        this.metadataTypeId = normalizeMetadataTypeId(metadataTypeId);
     }
 
     public String getTypeAsString() {
@@ -108,6 +136,13 @@ public class TypeDescription {
     
     public String getInternalName() {
         return internalName;
+    }
+
+    /**
+     * Returns the metadata profile id this concrete type subscribes to, if any.
+     */
+    public Optional<String> getMetadataTypeId() {
+        return Optional.ofNullable(metadataTypeId);
     }
 
     /**
@@ -160,5 +195,13 @@ public class TypeDescription {
 
     public String toString() {
         return description + " ("+ type + ")";
+    }
+
+    private static String normalizeMetadataTypeId(String metadataTypeId) {
+        if (metadataTypeId == null || metadataTypeId.isBlank()) {
+            return null;
+        }
+
+        return metadataTypeId.trim().toLowerCase(Locale.ROOT);
     }
 }

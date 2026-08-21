@@ -17,16 +17,16 @@ class TestImageFileItem {
     Path tempDir;
 
     @Test
-    void getMessagePackRepresentation_usesInjectedProvider() throws Exception {
+    void getMessagePackRepresentation_usesInjectedExtractor() throws Exception {
         Path file = Files.writeString(tempDir.resolve("photo.jpg"), "content");
-        MetadataProvider provider = (metadataType, messagePack, path) -> {
+        FileMetadataExtractor extractor = (metadataType, messagePack, path) -> {
             assertEquals(MetadataType.IMAGE, metadataType);
             assertEquals(file, path);
             assertTrue(messagePack.getLong("/size").isPresent());
             messagePack.putLong("/ImageWidth", 640);
         };
 
-        MessagePak mp = new ImageFileItem(tempDir, file, provider).getMessagePackRepresentation();
+        MessagePak mp = new ImageFileItem(tempDir, file, extractor).getMessagePackRepresentation();
 
         assertEquals(Files.size(file), mp.getLong("/size").orElseThrow());
         assertEquals(640L, mp.getLong("/ImageWidth").orElseThrow());
@@ -36,11 +36,11 @@ class TestImageFileItem {
     void getMessagePackRepresentation_keepsMessagePakRamCache() throws Exception {
         Path file = Files.writeString(tempDir.resolve("photo.jpg"), "content");
         AtomicInteger calls = new AtomicInteger();
-        MetadataProvider provider = (metadataType, messagePack, path) -> {
+        FileMetadataExtractor extractor = (metadataType, messagePack, path) -> {
             calls.incrementAndGet();
             messagePack.putLong("/ImageWidth", 640);
         };
-        ImageFileItem item = new ImageFileItem(tempDir, file, provider);
+        ImageFileItem item = new ImageFileItem(tempDir, file, extractor);
 
         MessagePak first = item.getMessagePackRepresentation();
         MessagePak second = item.getMessagePackRepresentation();
@@ -50,12 +50,12 @@ class TestImageFileItem {
     }
 
     @Test
-    void getMessagePackRepresentation_returnsGenericStatsWhenProviderWritesNothing()
+    void getMessagePackRepresentation_returnsGenericStatsWhenExtractorWritesNothing()
             throws Exception {
         Path file = Files.writeString(tempDir.resolve("photo.jpg"), "content");
-        MetadataProvider provider = (metadataType, messagePack, path) -> {};
+        FileMetadataExtractor extractor = (metadataType, messagePack, path) -> {};
 
-        MessagePak mp = new ImageFileItem(tempDir, file, provider).getMessagePackRepresentation();
+        MessagePak mp = new ImageFileItem(tempDir, file, extractor).getMessagePackRepresentation();
 
         assertEquals(Files.size(file), mp.getLong("/size").orElseThrow());
         assertTrue(mp.getLong("/ImageWidth").isEmpty());

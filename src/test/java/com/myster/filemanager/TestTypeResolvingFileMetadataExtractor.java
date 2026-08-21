@@ -10,18 +10,18 @@ import java.util.concurrent.atomic.AtomicInteger;
 import com.myster.mml.MessagePak;
 import org.junit.jupiter.api.Test;
 
-class TestTypeResolvingMetadataProvider {
+class TestTypeResolvingFileMetadataExtractor {
     @Test
     void routesByMetadataType() {
         AtomicInteger calls = new AtomicInteger();
-        TypeResolvingMetadataProvider provider = new TypeResolvingMetadataProvider(
+        TypeResolvingFileMetadataExtractor extractor = new TypeResolvingFileMetadataExtractor(
                 Map.of(MetadataType.AUDIO, (messagePack, path) -> {
                     calls.incrementAndGet();
                     messagePack.putLong("/LengthSec", 12);
                 }));
         MessagePak messagePack = MessagePak.newEmpty();
 
-        provider.enrich(MetadataType.AUDIO, messagePack, Path.of("song.mp3"));
+        extractor.enrich(MetadataType.AUDIO, messagePack, Path.of("song.mp3"));
 
         assertEquals(1, calls.get());
         assertEquals(12L, messagePack.getLong("/LengthSec").orElseThrow());
@@ -31,7 +31,7 @@ class TestTypeResolvingMetadataProvider {
     void routesImageMetadataIndependently() {
         AtomicInteger audioCalls = new AtomicInteger();
         AtomicInteger imageCalls = new AtomicInteger();
-        TypeResolvingMetadataProvider provider = new TypeResolvingMetadataProvider(
+        TypeResolvingFileMetadataExtractor extractor = new TypeResolvingFileMetadataExtractor(
                 Map.of(MetadataType.AUDIO, (messagePack, path) -> {
                     audioCalls.incrementAndGet();
                     messagePack.putLong("/LengthSec", 12);
@@ -42,7 +42,7 @@ class TestTypeResolvingMetadataProvider {
                         }));
         MessagePak messagePack = MessagePak.newEmpty();
 
-        provider.enrich(MetadataType.IMAGE, messagePack, Path.of("photo.jpg"));
+        extractor.enrich(MetadataType.IMAGE, messagePack, Path.of("photo.jpg"));
 
         assertEquals(0, audioCalls.get());
         assertEquals(1, imageCalls.get());
@@ -52,10 +52,10 @@ class TestTypeResolvingMetadataProvider {
 
     @Test
     void unsupportedTypeNoOps() {
-        TypeResolvingMetadataProvider provider = new TypeResolvingMetadataProvider(Map.of());
+        TypeResolvingFileMetadataExtractor extractor = new TypeResolvingFileMetadataExtractor(Map.of());
         MessagePak messagePack = MessagePak.newEmpty();
 
-        provider.enrich(MetadataType.AUDIO, messagePack, Path.of("song.mp3"));
+        extractor.enrich(MetadataType.AUDIO, messagePack, Path.of("song.mp3"));
 
         assertTrue(messagePack.list("/").isEmpty());
     }
