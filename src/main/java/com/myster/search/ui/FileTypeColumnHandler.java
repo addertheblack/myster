@@ -11,7 +11,7 @@ import com.myster.search.SearchResult;
  * are intentionally excluded; they are appended by {@link SearchColumnDecorator} only when
  * displaying results in the search window.
  *
- * <p>Implementations are returned by {@link ClientInfoFactoryUtilities#getHandler} and may be
+ * <p>Implementations are returned by {@link ClientInfoFactoryUtils#getHandler} and may be
  * used by both {@code SearchTab} (via the decorator) and {@code ClientWindow} directly.
  */
 public interface FileTypeColumnHandler {
@@ -61,4 +61,3 @@ public interface FileTypeColumnHandler {
      */
     ColumnSortable<String> getFolderItem(String folderName);
 }
-

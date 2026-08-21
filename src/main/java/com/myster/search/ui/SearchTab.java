@@ -303,7 +303,7 @@ public class SearchTab extends JPanel implements SearchResultListener, Sayable {
     }
 
     private void recolumnize() {
-        FileTypeColumnHandler typeHandler = ClientInfoFactoryUtilities.getHandler(tdList, getMysterType());
+        FileTypeColumnHandler typeHandler = ClientInfoFactoryUtils.getHandler(tdList, getMysterType());
         metaDateHandler = new SearchColumnDecorator(typeHandler);
         int max = metaDateHandler.getColumnCount();
         fileList.setNumberOfColumns(max);

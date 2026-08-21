@@ -653,9 +653,14 @@ public class FileTypeList {
          * @return FileItem created from path.
          */
         private FileItem createFileItem(Path path) {
-            FileItem fileItem = tdList.getType(StandardTypes.MPG3).equals(type) 
-                ? new MPG3FileItem(rootPath, path, metadataProvider)
-                : new FileItem(rootPath, path);
+            FileItem fileItem;
+            if (isStandardType(StandardTypes.MPG3)) {
+                fileItem = new MPG3FileItem(rootPath, path, metadataProvider);
+            } else if (isStandardType(StandardTypes.PICT)) {
+                fileItem = new ImageFileItem(rootPath, path, metadataProvider);
+            } else {
+                fileItem = new FileItem(rootPath, path);
+            }
             
             hashProvider.findHashNonBlocking(path, new FileHashListener() {
                 public void foundHash(FileHashEvent e) {
@@ -664,6 +669,14 @@ public class FileTypeList {
             });
             
             return fileItem; 
+        }
+
+        private boolean isStandardType(StandardTypes standardType) {
+            try {
+                return tdList.getType(standardType).equals(type);
+            } catch (IllegalStateException ex) {
+                return false;
+            }
         }
     }
 

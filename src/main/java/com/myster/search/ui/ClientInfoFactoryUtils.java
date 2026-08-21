@@ -4,7 +4,10 @@ import com.myster.type.MysterType;
 import com.myster.type.StandardTypes;
 import com.myster.type.TypeDescriptionList;
 
-public class ClientInfoFactoryUtilities {
+public final class ClientInfoFactoryUtils {
+    private ClientInfoFactoryUtils() {
+    }
+
 
     /**
      * Returns the per-type column handler for the given type.
@@ -17,10 +20,22 @@ public class ClientInfoFactoryUtilities {
      * @return the appropriate {@link FileTypeColumnHandler}
      */
     public static FileTypeColumnHandler getHandler(TypeDescriptionList tdList, MysterType type) {
-        if (tdList.getType(StandardTypes.MPG3).equals(type))
+        if (isStandardType(tdList, type, StandardTypes.MPG3))
             return new ClientMPG3HandleObject();
+        else if (isStandardType(tdList, type, StandardTypes.PICT))
+            return new ClientImageHandleObject();
         else
             return new ClientGenericHandleObject();
+    }
+
+    private static boolean isStandardType(TypeDescriptionList tdList,
+                                          MysterType type,
+                                          StandardTypes standardType) {
+        try {
+            return tdList.getType(standardType).equals(type);
+        } catch (IllegalStateException ex) {
+            return false;
+        }
     }
 
 }

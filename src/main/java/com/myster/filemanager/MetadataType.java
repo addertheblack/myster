@@ -10,7 +10,16 @@ import java.util.List;
  */
 public enum MetadataType {
     AUDIO("audio-v1",
-            List.of("/BitRate", "/Hz", "/LengthSec", "/ID3Name", "/Artist", "/Album"));
+            List.of("/BitRate", "/Hz", "/LengthSec", "/ID3Name", "/Artist", "/Album")),
+    IMAGE("image-v1",
+            List.of("/ImageWidth",
+                    "/ImageHeight",
+                    "/ImageBitDepth",
+                    "/ImageTakenAtMillis",
+                    "/ImageOrientation",
+                    "/CameraMake",
+                    "/CameraModel",
+                    "/ImageSoftware"));
 
     private final String cacheKey;
     private final List<String> cacheableKeys;

@@ -65,7 +65,7 @@ import com.general.util.Util;
 import com.myster.access.AccessList;
 import com.myster.client.ui.FileListerThread.FileRecord;
 import com.myster.search.ui.ClientGenericHandleObject;
-import com.myster.search.ui.ClientInfoFactoryUtilities;
+import com.myster.search.ui.ClientInfoFactoryUtils;
 import com.myster.search.ui.FileTypeColumnHandler;
 import com.myster.net.MysterAddress;
 import com.myster.net.client.MysterProtocol;
@@ -734,7 +734,7 @@ public class ClientWindow extends MysterFrame implements Sayable {
      * (e.g. MPG3 gets extra metadata columns; generic types get only Name and Size).
      */
     private void recolumnizeFileList() {
-        currentTypeHandler = ClientInfoFactoryUtilities.getHandler(typeDescriptionList, getCurrentType());
+        currentTypeHandler = ClientInfoFactoryUtils.getHandler(typeDescriptionList, getCurrentType());
         int count = currentTypeHandler.getColumnCount();
         fileList.setNumberOfColumns(count);
         for (int i = 0; i < count; i++) {

@@ -24,6 +24,14 @@
 - Add text forums
 - Add 3DNS for resolving public keys to hosted ip addresses.
 - Add type meta data for video files (e.g. length, resolution, bit rate etc.)
+- Fix search-result metadata access: `SearchResult#getMetaData(String)` currently stringifies
+  typed `MessagePak` values, forcing column handlers to parse numbers back out for sorting.
+  Add a read-only `MessagePak` view/interface for search items so handlers can use typed
+  `getLong`, `getString`, `getDate`, etc. without allowing UI code to mutate file stats.
+- Optional image-content captions for Pictures: use a local/CLI vision model provider
+  (e.g. Ollama, llama.cpp, or a Python Transformers helper) to generate a short
+  `/ImageCaption` description. Keep it opt-in, cached under its own metadata schema,
+  and privacy-reviewed because captions can expose sensitive image contents.
 
 - Important things to do to get private types working
     - Implement type file that allows someone to import a type into myster.

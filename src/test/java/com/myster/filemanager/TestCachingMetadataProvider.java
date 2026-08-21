@@ -68,6 +68,27 @@ class TestCachingMetadataProvider {
     }
 
     @Test
+    void imageMetadataCachesOnlyAllowedImageKeys() throws IOException {
+        Path file = Files.writeString(tempDir.resolve("photo.jpg"), "content");
+        RecordingCache cache = new RecordingCache();
+        CachingMetadataProvider provider = new CachingMetadataProvider(cache,
+                (metadataType, messagePack, path) -> {
+                    messagePack.putLong("/ImageWidth", 640);
+                    messagePack.putLong("/ImageHeight", 480);
+                    messagePack.putLong("/size", 999);
+                    messagePack.putLong("/LengthSec", 12);
+                });
+
+        provider.enrich(MetadataType.IMAGE, filePack(file), file);
+
+        assertEquals(1, cache.putCalls);
+        assertEquals(640L, cache.putMetadata.getLong("/ImageWidth").orElseThrow());
+        assertEquals(480L, cache.putMetadata.getLong("/ImageHeight").orElseThrow());
+        assertTrue(cache.putMetadata.getLong("/size").isEmpty());
+        assertTrue(cache.putMetadata.getLong("/LengthSec").isEmpty());
+    }
+
+    @Test
     void missingSizeThrowsIllegalStateException() {
         RecordingCache cache = new RecordingCache();
         CachingMetadataProvider provider = new CachingMetadataProvider(cache,

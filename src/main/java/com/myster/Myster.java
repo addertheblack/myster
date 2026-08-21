@@ -607,7 +607,9 @@ public class Myster {
         Path cacheRoot = MysterGlobals.getPrivateDataPath().toPath().resolve("MetadataCache");
         FileMetadataCache cache = new ShardedFileMetadataCache(cacheRoot);
         MetadataProvider resolver = new TypeResolvingMetadataProvider(Map.of(MetadataType.AUDIO,
-                new TikaAudioMetadataProvider()));
+                new TikaAudioMetadataProvider(),
+                MetadataType.IMAGE,
+                new TikaImageMetadataProvider()));
         return new CachingMetadataProvider(cache, resolver);
     }
 
