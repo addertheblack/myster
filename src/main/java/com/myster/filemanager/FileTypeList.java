@@ -554,7 +554,7 @@ public class FileTypeList {
             this.hashProvider = hashProvider;
             this.tdList = tdList;
             this.metadataExtractor = metadataExtractor;
-            this.metadataType = MetadataTypeResolver.resolve(tdList, type, metadataTypeRegistry);
+            this.metadataType = metadataTypeRegistry.get(tdList, type);
         }
 
         /*

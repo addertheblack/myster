@@ -14,7 +14,7 @@ import com.myster.type.TypeListener;
 import com.myster.type.TypeSource;
 import org.junit.jupiter.api.Test;
 
-class TestMetadataTypeResolver {
+class TestMetadataTypeRegistryResolution {
     private static final MysterType AUDIO_TYPE = type(1);
     private static final MysterType IMAGE_TYPE = type(2);
     private static final MysterType GENERIC_TYPE = type(3);
@@ -25,33 +25,33 @@ class TestMetadataTypeResolver {
     private final TypeDescriptionList tdList = new TestTypeDescriptionList();
 
     @Test
-    void resolve_returnsAudioProfile() {
+    void get_returnsAudioProfileForMysterType() {
         assertSame(MetadataType.AUDIO,
-                MetadataTypeResolver.resolve(tdList, AUDIO_TYPE, registry));
+                registry.get(tdList, AUDIO_TYPE));
     }
 
     @Test
-    void resolve_returnsImageProfile() {
+    void get_returnsImageProfileForMysterType() {
         assertSame(MetadataType.IMAGE,
-                MetadataTypeResolver.resolve(tdList, IMAGE_TYPE, registry));
+                registry.get(tdList, IMAGE_TYPE));
     }
 
     @Test
-    void resolve_returnsGenericForNoMetadataTypeId() {
+    void get_returnsGenericForNoMetadataTypeId() {
         assertSame(MetadataType.GENERIC,
-                MetadataTypeResolver.resolve(tdList, GENERIC_TYPE, registry));
+                registry.get(tdList, GENERIC_TYPE));
     }
 
     @Test
-    void resolve_returnsGenericForUnknownMetadataTypeId() {
+    void get_returnsGenericForUnknownMetadataTypeId() {
         assertSame(MetadataType.GENERIC,
-                MetadataTypeResolver.resolve(tdList, UNKNOWN_ID_TYPE, registry));
+                registry.get(tdList, UNKNOWN_ID_TYPE));
     }
 
     @Test
-    void resolve_returnsGenericForUnknownMysterType() {
+    void get_returnsGenericForUnknownMysterType() {
         assertSame(MetadataType.GENERIC,
-                MetadataTypeResolver.resolve(tdList, UNKNOWN_TYPE, registry));
+                registry.get(tdList, UNKNOWN_TYPE));
     }
 
     private static MysterType type(int value) {

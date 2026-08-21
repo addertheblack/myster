@@ -56,7 +56,7 @@ The refactor centralizes type-specific decisions currently spread across `FileTy
 | `MetadataType` interface | `com.myster.filemanager` | cache, metadata extractors, file item creation, GUI factory | Replaces current `MetadataType` enum as the type-specific behavior profile |
 | `MetadataTypeRegistry` | `com.myster.filemanager` | `FileTypeList`, `FileTypeListManager`, GUI factory, app startup | Registry/factory keyed by stable metadata type id |
 | `DefaultMetadataTypeRegistry` | `com.myster.filemanager` | production startup and default constructors | Supplies built-in generic, audio, and image profiles |
-| `MetadataTypeResolver` or equivalent helper | `com.myster.filemanager` | `FileTypeList`, GUI factory | Maps `TypeDescription.metadataTypeId()` to a `MetadataType`, with generic fallback |
+| `MetadataTypeRegistry` contextual lookup | `com.myster.filemanager` | `FileTypeList`, GUI factory | Maps `TypeDescription.metadataTypeId()` to a `MetadataType`, with generic fallback |
 | `FileTypeList.FileListIndexCall` | `com.myster.filemanager` | server-side indexing | Delegates `FileItem` creation to selected `MetadataType` |
 | `ClientInfoFactoryUtils` | `com.myster.search.ui` | `SearchTab`, `ClientWindow` | Delegates column handler selection to selected `MetadataType` |
 | `Myster.createFileMetadataExtractor()` | `com.myster` | app startup | Replaces `createFileMetadataExtractor()` and builds `TypeResolvingFileMetadataExtractor` from registry-supplied typed extractors |
@@ -107,9 +107,8 @@ Plain-English data flow: the user enables a concrete Myster file type, indexing 
 - `src/main/resources/com/myster/typedescriptionlist.mml` - add explicit `Metadata Type` entries for built-in metadata-aware types.
 - `src/main/java/com/myster/filemanager/MetadataType.java` - convert from enum to interface with id, cache schema, and type behavior methods.
 - `src/main/java/com/myster/filemanager/BuiltInMetadataType.java` or equivalent - **NEW** built-in implementation enum/class for generic, audio, and image behavior.
-- `src/main/java/com/myster/filemanager/MetadataTypeRegistry.java` - **NEW** registry interface keyed by metadata type id.
+- `src/main/java/com/myster/filemanager/MetadataTypeRegistry.java` - **NEW** registry interface keyed by metadata type id, including concrete `MysterType` assignment lookup.
 - `src/main/java/com/myster/filemanager/DefaultMetadataTypeRegistry.java` - **NEW** default registry for built-in metadata profiles.
-- `src/main/java/com/myster/filemanager/MetadataTypeResolver.java` - **NEW** helper for mapping `MysterType` and `TypeDescriptionList` to a `MetadataType`.
 - `src/main/java/com/myster/filemanager/FileTypeList.java` - replace direct built-in `MPG3`/`PICT` checks with selected `MetadataType.createFileItem(...)`.
 - `src/main/java/com/myster/filemanager/FileTypeListManager.java` - accept/pass `MetadataTypeRegistry`.
 - `src/main/java/com/myster/filemanager/FileMetadataExtractor.java` - rename to `FileMetadataExtractor`.
@@ -119,7 +118,7 @@ Plain-English data flow: the user enables a concrete Myster file type, indexing 
 - `src/main/java/com/myster/filemanager/TypeResolvingFileMetadataExtractor.java` - route by `MetadataType` to registry-derived typed extractors.
 - `src/main/java/com/myster/filemanager/CachingFileMetadataExtractor.java` - continue using `MetadataType.cacheKey()` and `cacheableKeys()` from the interface.
 - `src/main/java/com/myster/filemanager/FileMetadataCacheKey.java` - no behavioral change; update Javadoc/imports if needed after `MetadataType` becomes an interface.
-- `src/main/java/com/myster/search/ui/ClientInfoFactoryUtils.java` - delegate to `MetadataTypeResolver` and `MetadataType.getHandler(...)`.
+- `src/main/java/com/myster/search/ui/ClientInfoFactoryUtils.java` - delegate to `MetadataTypeRegistry` and `MetadataType.getHandler(...)`.
 - `src/main/java/com/myster/Myster.java` - construct one default registry and pass it to file manager, metadata extractor creation, and UI construction where needed.
 - Tests under `src/test/java/com/myster/**` - update references to the old enum and add tests for metadata id resolution and built-in profiles.
 
@@ -175,8 +174,8 @@ Plain-English data flow: the user enables a concrete Myster file type, indexing 
      - missing, blank, unknown -> generic
    - Normalize lookup ids consistently: trim, lowercase ASCII, reject/ignore empty strings.
 
-6. Add a resolver helper:
-   - `MetadataTypeResolver.resolve(TypeDescriptionList tdList, MysterType type, MetadataTypeRegistry registry)`
+6. Add contextual resolution to the registry:
+   - `MetadataTypeRegistry.get(TypeDescriptionList tdList, MysterType type)`
    - It should call `tdList.get(type)`, read `TypeDescription.getMetadataTypeId()`, and ask the registry for that id.
    - It should return generic metadata type when the concrete Myster type is unknown or has no metadata type id.
    - It should not inspect `TypeDescription.getInternalName()`.
@@ -223,7 +222,7 @@ Plain-English data flow: the user enables a concrete Myster file type, indexing 
   - Unknown, blank, and missing ids return generic profile.
   - `supportedTypes()` includes audio and image but excludes duplicate ids.
 
-- `TestMetadataTypeResolver`
+- `TestMetadataTypeRegistryResolution`
   - Resolves a `TypeDescription` carrying `audio` to audio.
   - Resolves a `TypeDescription` carrying `image` to image.
   - Returns generic for an unknown concrete Myster type.
@@ -259,6 +258,6 @@ Plain-English data flow: the user enables a concrete Myster file type, indexing 
 - `MetadataType` - document that this is the type-specific behavior profile and cache schema identity.
 - `MetadataTypeRegistry` - document that it maps stable metadata type ids to runtime metadata profiles.
 - `TypeDescription` - document the explicit optional metadata type id and its relationship to concrete `MysterType`.
-- `MetadataTypeResolver` - document fallback behavior when a type is unknown, has no metadata type id, or names an unregistered id.
+- `MetadataTypeRegistry.get(TypeDescriptionList, MysterType)` - document fallback behavior when a type is unknown, has no metadata type id, or names an unregistered id.
 - `FileTypeList` constructor/Javadoc - update to mention registry-driven metadata type resolution and profile-driven file item creation.
 - `ClientInfoFactoryUtils` - update Javadoc to say handlers come from `MetadataType`, not local type branching.

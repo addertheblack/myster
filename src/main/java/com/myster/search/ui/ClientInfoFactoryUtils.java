@@ -2,7 +2,6 @@ package com.myster.search.ui;
 
 import com.myster.filemanager.DefaultMetadataTypeRegistry;
 import com.myster.filemanager.MetadataTypeRegistry;
-import com.myster.filemanager.MetadataTypeResolver;
 import com.myster.type.MysterType;
 import com.myster.type.TypeDescriptionList;
 
@@ -30,6 +29,6 @@ public final class ClientInfoFactoryUtils {
     public static FileTypeColumnHandler getHandler(TypeDescriptionList tdList,
                                                    MysterType type,
                                                    MetadataTypeRegistry registry) {
-        return MetadataTypeResolver.resolve(tdList, type, registry).getHandler(tdList);
+        return registry.get(tdList, type).getHandler(tdList);
     }
 }

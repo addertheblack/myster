@@ -16,7 +16,7 @@ metadata type id on `TypeDescription`. Built-in `MPG3` carries `audio`; built-in
 - `src/main/resources/com/myster/typedescriptionlist.mml` - marks `MPG3` as `audio`, `PICT` as `image`.
 - `com.myster.filemanager.MetadataType` - converted from enum to runtime profile interface.
 - `com.myster.filemanager.BuiltInMetadataType` - new built-in `generic`, `audio`, and `image` profiles.
-- `com.myster.filemanager.MetadataTypeRegistry`, `DefaultMetadataTypeRegistry`, `MetadataTypeResolver` - new registry/resolution model.
+- `com.myster.filemanager.MetadataTypeRegistry`, `DefaultMetadataTypeRegistry` - registry and concrete Myster type resolution model.
 - `com.myster.filemanager.*MetadataExtractor` - renamed file enrichment classes away from `Provider`.
 - `com.myster.filemanager.FileTypeList` and `FileTypeListManager` - resolve file item creation through metadata profiles.
 - `com.myster.search.ui.ClientInfoFactoryUtils` - resolves handlers through metadata profiles.
@@ -38,7 +38,7 @@ metadata type id on `TypeDescription`. Built-in `MPG3` carries `audio`; built-in
 ## Verification
 
 - Passed: `mvn -q -DskipTests test-compile`
-- Passed: `mvn -q -Djava.awt.headless=true -Dtest=TestDefaultMetadataTypeRegistry,TestMetadataTypeResolver,TestTypeDescriptionMetadataTypeId,TestDefaultTypeDescriptionListMetadataTypeId,TestClientInfoFactoryUtils,TestFileTypeList,TestCachingFileMetadataExtractor,TestTypeResolvingFileMetadataExtractor,TestMPG3FileItem,TestImageFileItem,TestClientImageHandleObject,TestTikaImageMetadataExtractor test`
+- Passed: `mvn -q -Djava.awt.headless=true -Dtest=TestDefaultMetadataTypeRegistry,TestMetadataTypeRegistryResolution,TestTypeDescriptionMetadataTypeId,TestDefaultTypeDescriptionListMetadataTypeId,TestClientInfoFactoryUtils,TestFileTypeList,TestCachingFileMetadataExtractor,TestTypeResolvingFileMetadataExtractor,TestMPG3FileItem,TestImageFileItem,TestClientImageHandleObject,TestTikaImageMetadataExtractor test`
 
 Full suite command run:
 
