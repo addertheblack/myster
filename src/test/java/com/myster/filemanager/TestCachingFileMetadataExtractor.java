@@ -89,6 +89,33 @@ class TestCachingFileMetadataExtractor {
     }
 
     @Test
+    void videoMetadataCachesOnlyAllowedVideoKeys() throws IOException {
+        Path file = Files.writeString(tempDir.resolve("clip.mp4"), "content");
+        RecordingCache cache = new RecordingCache();
+        CachingFileMetadataExtractor extractor = new CachingFileMetadataExtractor(cache,
+                (metadataType, messagePack, path) -> {
+                    messagePack.putLong("/VideoLengthSec", 120);
+                    messagePack.putLong("/VideoWidth", 1920);
+                    messagePack.putLong("/VideoHeight", 1080);
+                    messagePack.putString("/VideoCodec", "H.264");
+                    messagePack.putLong("/VideoBitRate", 4_000_000);
+                    messagePack.putLong("/ImageWidth", 640);
+                });
+
+        extractor.enrich(MetadataType.VIDEO, filePack(file), file);
+
+        assertEquals(1, cache.putCalls);
+        assertEquals(120L, cache.putMetadata.getLong("/VideoLengthSec").orElseThrow());
+        assertEquals(1920L, cache.putMetadata.getLong("/VideoWidth").orElseThrow());
+        assertEquals(1080L, cache.putMetadata.getLong("/VideoHeight").orElseThrow());
+        assertEquals("H.264", cache.putMetadata.getString("/VideoCodec").orElseThrow());
+        assertEquals(4_000_000L,
+                cache.putMetadata.getLong("/VideoBitRate").orElseThrow());
+        assertTrue(cache.putMetadata.getLong("/ImageWidth").isEmpty());
+        assertTrue(cache.putMetadata.getLong("/size").isEmpty());
+    }
+
+    @Test
     void missingSizeThrowsIllegalStateException() {
         RecordingCache cache = new RecordingCache();
         CachingFileMetadataExtractor extractor = new CachingFileMetadataExtractor(cache,

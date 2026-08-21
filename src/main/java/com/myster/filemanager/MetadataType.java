@@ -19,6 +19,7 @@ public interface MetadataType {
     MetadataType GENERIC = BuiltInMetadataType.GENERIC;
     MetadataType AUDIO = BuiltInMetadataType.AUDIO;
     MetadataType IMAGE = BuiltInMetadataType.IMAGE;
+    MetadataType VIDEO = BuiltInMetadataType.VIDEO;
 
     /**
      * Returns the stable lowercase id stored by {@link com.myster.type.TypeDescription}.

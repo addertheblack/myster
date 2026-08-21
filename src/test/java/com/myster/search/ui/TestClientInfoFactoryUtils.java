@@ -16,7 +16,8 @@ import org.junit.jupiter.api.Test;
 class TestClientInfoFactoryUtils {
     private static final MysterType AUDIO = type(1);
     private static final MysterType IMAGE = type(2);
-    private static final MysterType OTHER = type(3);
+    private static final MysterType VIDEO = type(3);
+    private static final MysterType OTHER = type(4);
 
     @Test
     void getHandler_returnsImageHandlerForPicturesType() {
@@ -28,6 +29,12 @@ class TestClientInfoFactoryUtils {
     void getHandler_returnsAudioHandlerForMpg3Type() {
         assertInstanceOf(ClientMPG3HandleObject.class,
                 ClientInfoFactoryUtils.getHandler(new TestTypeDescriptionList(), AUDIO));
+    }
+
+    @Test
+    void getHandler_returnsVideoHandlerForVideoType() {
+        assertInstanceOf(ClientVideoHandleObject.class,
+                ClientInfoFactoryUtils.getHandler(new TestTypeDescriptionList(), VIDEO));
     }
 
     @Test
@@ -50,6 +57,9 @@ class TestClientInfoFactoryUtils {
             }
             if (IMAGE.equals(type)) {
                 return Optional.of(typeDescription(IMAGE, "Image", "image"));
+            }
+            if (VIDEO.equals(type)) {
+                return Optional.of(typeDescription(VIDEO, "Video", "video"));
             }
             if (OTHER.equals(type)) {
                 return Optional.of(typeDescription(OTHER, "Other", null));

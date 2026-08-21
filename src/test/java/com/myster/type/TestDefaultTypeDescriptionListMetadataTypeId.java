@@ -18,6 +18,7 @@ class TestDefaultTypeDescriptionListMetadataTypeId {
 
         assertEquals("audio", builtIn(tdList, "MPG3").getMetadataTypeId().orElseThrow());
         assertEquals("image", builtIn(tdList, "PICT").getMetadataTypeId().orElseThrow());
+        assertEquals("video", builtIn(tdList, "MOOV").getMetadataTypeId().orElseThrow());
         assertTrue(builtIn(tdList, "TEXT").getMetadataTypeId().isEmpty());
     }
 

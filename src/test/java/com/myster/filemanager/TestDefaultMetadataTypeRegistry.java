@@ -23,8 +23,14 @@ class TestDefaultMetadataTypeRegistry {
     }
 
     @Test
+    void get_returnsVideoProfile() {
+        assertSame(MetadataType.VIDEO, registry.get("video"));
+    }
+
+    @Test
     void get_normalizesAndFallsBackToGeneric() {
         assertSame(MetadataType.AUDIO, registry.get(" AUDIO "));
+        assertSame(MetadataType.VIDEO, registry.get(" VIDEO "));
         assertSame(MetadataType.GENERIC, registry.get(null));
         assertSame(MetadataType.GENERIC, registry.get(" "));
         assertSame(MetadataType.GENERIC, registry.get("movie"));
@@ -40,5 +46,6 @@ class TestDefaultMetadataTypeRegistry {
         assertTrue(ids.contains("generic"));
         assertTrue(ids.contains("audio"));
         assertTrue(ids.contains("image"));
+        assertTrue(ids.contains("video"));
     }
 }

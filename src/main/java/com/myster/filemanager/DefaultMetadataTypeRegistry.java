@@ -16,6 +16,7 @@ public class DefaultMetadataTypeRegistry implements MetadataTypeRegistry {
         mutableTypes.put(MetadataType.GENERIC.id(), MetadataType.GENERIC);
         mutableTypes.put(MetadataType.AUDIO.id(), MetadataType.AUDIO);
         mutableTypes.put(MetadataType.IMAGE.id(), MetadataType.IMAGE);
+        mutableTypes.put(MetadataType.VIDEO.id(), MetadataType.VIDEO);
         types = Map.copyOf(mutableTypes);
     }
 

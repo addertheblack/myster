@@ -402,6 +402,21 @@ class TestFileTypeList {
         }
     }
 
+    @Test
+    void videoSubscriptionCreatesVideoFileItems() {
+        FileTypeList.FileListIndexCall indexCall = new FileTypeList.FileListIndexCall(testType,
+                testRoot,
+                hashProvider,
+                new TestTypeDescriptionList("video"),
+                new NoOpFileMetadataExtractor(),
+                new DefaultMetadataTypeRegistry());
+
+        java.util.List<FileItem> files = indexCall.call();
+
+        assertFalse(files.isEmpty());
+        assertTrue(files.stream().allMatch(VideoFileItem.class::isInstance));
+    }
+
     private void waitForIndexing() throws InterruptedException {
         fileTypeList.waitForIndexer();
     }
@@ -442,13 +457,20 @@ class TestFileTypeList {
         private final TypeDescription testTypeDescription;
 
         public TestTypeDescriptionList() {
+            this(null);
+        }
+
+        public TestTypeDescriptionList(String metadataTypeId) {
             testTypeDescription = new TypeDescription(
                 new MysterType(testTypeCid()),
                 "TestType",           // internalName
                 "Test Type",          // description
                 new String[]{".txt"}, // extensions
                 false,                // isArchived
-                true                  // isEnabledByDefault
+                true,                 // isEnabledByDefault
+                com.myster.type.TypeSource.DEFAULT,
+                true,
+                metadataTypeId
             );
         }
 

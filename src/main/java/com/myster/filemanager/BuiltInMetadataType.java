@@ -7,6 +7,7 @@ import java.util.Optional;
 import com.myster.search.ui.ClientGenericHandleObject;
 import com.myster.search.ui.ClientImageHandleObject;
 import com.myster.search.ui.ClientMPG3HandleObject;
+import com.myster.search.ui.ClientVideoHandleObject;
 import com.myster.search.ui.FileTypeColumnHandler;
 import com.myster.type.TypeDescriptionList;
 
@@ -69,6 +70,27 @@ enum BuiltInMetadataType implements MetadataType {
         @Override
         public Optional<TypedMetadataExtractor> typedMetadataExtractor() {
             return Optional.of(new TikaImageMetadataExtractor());
+        }
+    },
+    VIDEO("video", "video-v1",
+            List.of("/VideoLengthSec",
+                    "/VideoWidth",
+                    "/VideoHeight",
+                    "/VideoCodec",
+                    "/VideoBitRate")) {
+        @Override
+        public FileTypeColumnHandler getHandler(TypeDescriptionList tdList) {
+            return new ClientVideoHandleObject();
+        }
+
+        @Override
+        public FileItem createFileItem(Path root, Path path, FileMetadataExtractor metadataExtractor) {
+            return new VideoFileItem(root, path, metadataExtractor);
+        }
+
+        @Override
+        public Optional<TypedMetadataExtractor> typedMetadataExtractor() {
+            return Optional.of(new TikaVideoMetadataExtractor());
         }
     };
 
