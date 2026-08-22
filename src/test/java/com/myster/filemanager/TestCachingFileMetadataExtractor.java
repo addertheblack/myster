@@ -56,7 +56,7 @@ class TestCachingFileMetadataExtractor {
     }
 
     @Test
-    void emptyDelegateResultDoesNotWriteCacheEntry() throws IOException {
+    void emptyDelegateResultWritesNegativeCacheEntry() throws IOException {
         Path file = Files.writeString(tempDir.resolve("song.mp3"), "content");
         RecordingCache cache = new RecordingCache();
         CachingFileMetadataExtractor extractor = new CachingFileMetadataExtractor(cache,
@@ -64,7 +64,39 @@ class TestCachingFileMetadataExtractor {
 
         extractor.enrich(MetadataType.AUDIO, filePack(file), file);
 
+        assertEquals(1, cache.putCalls);
+        assertTrue(MessagePakTreeUtils.isEmpty(cache.putMetadata));
+    }
+
+    @Test
+    void negativeCacheHitDoesNotCallDelegate() throws IOException {
+        Path file = Files.writeString(tempDir.resolve("clip.avi"), "content");
+        RecordingCache cache = new RecordingCache();
+        cache.getResult = Optional.of(MessagePak.newEmpty());
+        AtomicInteger delegateCalls = new AtomicInteger();
+        CachingFileMetadataExtractor extractor = new CachingFileMetadataExtractor(cache,
+                (metadataType, messagePack, path) -> delegateCalls.incrementAndGet());
+
+        extractor.enrich(MetadataType.VIDEO, filePack(file), file);
+
+        assertEquals(0, delegateCalls.get());
         assertEquals(0, cache.putCalls);
+    }
+
+    @Test
+    void emptyResultIsReusedFromPersistentCache() throws IOException {
+        Path file = Files.writeString(tempDir.resolve("clip.avi"), "content");
+        Path cacheRoot = tempDir.resolve("cache");
+        AtomicInteger delegateCalls = new AtomicInteger();
+        FileMetadataExtractor delegate = (metadataType, messagePack, path) ->
+                delegateCalls.incrementAndGet();
+
+        new CachingFileMetadataExtractor(new ShardedFileMetadataCache(cacheRoot), delegate)
+                .enrich(MetadataType.VIDEO, filePack(file), file);
+        new CachingFileMetadataExtractor(new ShardedFileMetadataCache(cacheRoot), delegate)
+                .enrich(MetadataType.VIDEO, filePack(file), file);
+
+        assertEquals(1, delegateCalls.get());
     }
 
     @Test

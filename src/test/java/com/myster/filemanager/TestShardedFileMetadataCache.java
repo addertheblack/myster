@@ -14,6 +14,7 @@ import java.time.Instant;
 import java.time.ZoneOffset;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 import java.util.concurrent.Callable;
 import java.util.concurrent.Executors;
 
@@ -36,6 +37,20 @@ class TestShardedFileMetadataCache {
 
         MessagePak cached = cache.get(key).orElseThrow();
         assertEquals(123L, cached.getLong("/LengthSec").orElseThrow());
+    }
+
+    @Test
+    void emptyMetadataPersistsAsNegativeCacheHit() throws IOException {
+        Path file = Files.writeString(tempDir.resolve("clip.avi"), "content");
+        FileMetadataCacheKey key = FileMetadataCacheKey.from(MetadataType.VIDEO, file,
+                Files.size(file));
+        Path cacheRoot = tempDir.resolve("cache");
+        new ShardedFileMetadataCache(cacheRoot).put(key, MessagePak.newEmpty());
+
+        Optional<MessagePak> cached = new ShardedFileMetadataCache(cacheRoot).get(key);
+
+        assertTrue(cached.isPresent());
+        assertTrue(MessagePakTreeUtils.isEmpty(cached.orElseThrow()));
     }
 
     @Test

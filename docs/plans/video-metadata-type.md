@@ -69,6 +69,9 @@ Older clients ignore these additional keys. New clients display `-` when talking
 - **Partial metadata is valid:** Each key is independent. A file may show codec and duration while resolution or bitrate remains unknown.
 - **Parsing must not block indexing failure recovery:** IOException, Tika, SAX, malformed numeric fields, and unsupported formats must be logged and leave unavailable fields absent.
 - **Cache evolution:** Use `video-v1`. Any future semantic change to the fields, especially bitrate meaning, requires a new cache key.
+- **Negative caching:** A completed extraction with no video fields is a valid cache hit. Persist
+  that empty result so unsupported files are not rescanned after hourly reindexing or restart. File
+  identity changes, cache schema changes, and normal cache expiry invalidate negative entries.
 
 ## 7. Acceptance criteria
 
@@ -81,6 +84,7 @@ Older clients ignore these additional keys. New clients display `-` when talking
 - [ ] Video columns sort by numeric duration, pixel area, codec text, and numeric bitrate rather than formatted display text.
 - [ ] Missing or malformed metadata displays as `-` and does not prevent indexing or viewing the file.
 - [ ] Formats unsupported by the installed Tika parsers retain generic file metadata without throwing.
+- [ ] Empty extraction results are reused from persistent cache rather than rescanned after reindexing or restart.
 - [ ] Existing generic, audio, and image metadata tests continue to pass.
 
 ---
@@ -159,6 +163,13 @@ Older clients ignore these additional keys. New clients display `-` when talking
    - Run the new video tests plus existing registry, type-description, caching, type-resolving extractor, audio, and image focused tests in headless mode.
    - Run the full headless test suite and document pre-existing environment failures separately from feature regressions.
 
+9. Persist negative extraction results:
+   - Treat a present empty `MessagePak` from `FileMetadataCache.get(...)` as a cache hit, distinct
+     from `Optional.empty()`.
+   - Write a cache entry after extraction even when no profile-owned fields were produced.
+   - Keep empty entries out of the file-stat payload and invalidate them using the normal cache key
+     and expiry rules.
+
 ### 10. Tests to write
 
 - `TestDefaultMetadataTypeRegistry`
@@ -179,6 +190,7 @@ Older clients ignore these additional keys. New clients display `-` when talking
 - Existing integration tests
   - Select `VideoFileItem` and `ClientVideoHandleObject` through an explicit `video` subscription.
   - Preserve existing audio/image/generic behavior and cache routing.
+  - Verify an empty video result survives a fresh disk-cache instance and does not invoke extraction again.
 
 ### 11. Docs / Javadoc to update
 

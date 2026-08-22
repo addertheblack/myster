@@ -22,7 +22,8 @@ import com.myster.mml.MessagePak;
  * Shards are stored under {@code cacheRoot/v1/<hex>.mpak}. Each shard uses a
  * read/write lock: loaded cache-hit readers can proceed together, while shard
  * load, update, prune, and file replacement are exclusive. Corrupt or unreadable
- * shard files are treated as empty so indexing can continue.
+ * shard files are treated as empty so indexing can continue. Entries without a metadata
+ * payload are retained as negative cache hits.
  */
 public class ShardedFileMetadataCache implements FileMetadataCache {
     private static final Logger log = Logger.getLogger(ShardedFileMetadataCache.class.getName());
@@ -187,10 +188,6 @@ public class ShardedFileMetadataCache implements FileMetadataCache {
 
         MessagePak metadata = MessagePak.newEmpty();
         MessagePakTreeUtils.copyDirectory(data, base + "/metadata/", metadata, "/");
-        if (MessagePakTreeUtils.isEmpty(metadata)) {
-            return Optional.empty();
-        }
-
         return Optional.of(metadata);
     }
 

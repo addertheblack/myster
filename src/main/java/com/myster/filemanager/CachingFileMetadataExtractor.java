@@ -14,6 +14,9 @@ import com.myster.mml.MessagePak;
  * The delegate receives the same {@link MessagePak} passed by the caller so it
  * can use generic fields such as {@code /size}. Only keys owned by the requested
  * {@link MetadataType} are persisted to disk.
+ * Empty extraction results are persisted as negative cache entries so unsupported
+ * files are not repeatedly scanned. They are invalidated by the same file identity,
+ * metadata schema, and expiry rules as populated entries.
  * <p>
  * If the cache key cannot be built, enrichment is skipped. The delegate is only
  * called after a successful cache lookup miss so this extractor does not silently
@@ -60,8 +63,6 @@ public class CachingFileMetadataExtractor implements FileMetadataExtractor {
         delegate.enrich(metadataType, messagePack, path);
 
         MessagePak metadataOnly = MessagePakTreeUtils.copyAllowedKeys(messagePack, metadataType);
-        if (!MessagePakTreeUtils.isEmpty(metadataOnly)) {
-            cache.put(key, metadataOnly);
-        }
+        cache.put(key, metadataOnly);
     }
 }

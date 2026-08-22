@@ -34,6 +34,10 @@ and Bit Rate columns in local file and remote search views.
   as `-`.
 - `MessagePak` numeric and string access remain type-specific in the GUI adapter because requesting
   a value through the wrong typed getter throws rather than returning an empty value.
+- Empty extraction results are persisted as negative cache hits. This prevents unsupported AVI/MKV
+  files from being rescanned after the hourly file-list refresh or an application restart. Negative
+  entries use the same path, size, modification time, `video-v1`, and expiry invalidation as normal
+  metadata entries and do not add fields to the network payload.
 
 ## Deviations from the plan
 
@@ -57,7 +61,7 @@ and Bit Rate columns in local file and remote search views.
 
 - Passed: `mvn -q -DskipTests test-compile`
 - Passed focused metadata regression suite:
-  `mvn -q -Djava.awt.headless=true -Dtest=TestVideoFileItem,TestTikaVideoMetadataExtractor,TestClientVideoHandleObject,TestDefaultMetadataTypeRegistry,TestMetadataTypeRegistryResolution,TestDefaultTypeDescriptionListMetadataTypeId,TestClientInfoFactoryUtils,TestFileTypeList,TestCachingFileMetadataExtractor,TestTypeResolvingFileMetadataExtractor,TestMPG3FileItem,TestImageFileItem,TestClientImageHandleObject,TestTikaImageMetadataExtractor test`
+  `mvn -q -Djava.awt.headless=true -Dtest=TestCachingFileMetadataExtractor,TestShardedFileMetadataCache,TestVideoFileItem,TestTikaVideoMetadataExtractor,TestClientVideoHandleObject,TestTypeResolvingFileMetadataExtractor,TestMPG3FileItem,TestImageFileItem test`
 - Passed: `mvn -q -Djava.awt.headless=true test`
 - `git diff --check` passes.
 
@@ -73,3 +77,7 @@ its filesystem, but Maven reported no test failure.
 - Add a small, legally redistributable MP4 fixture to verify parser integration end to end.
 - An optional FFprobe-backed `TypedMetadataExtractor` could later improve container, codec, stream
   bitrate, and frame-rate coverage without changing the profile or GUI protocol.
+- The current void extractor contract cannot distinguish unsupported content from a transient
+  parser/read failure that was caught by an extractor. Both can produce a negative cache entry;
+  file identity changes or normal cache expiry permit a retry. Introduce an explicit extraction
+  outcome if transient failures need a separate, shorter retry policy.
