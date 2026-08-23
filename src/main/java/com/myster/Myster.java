@@ -45,7 +45,6 @@ import com.myster.bandwidth.BandwidthManager;
 import com.myster.cid.ServerCid;
 import com.myster.filemanager.CachingFileMetadataExtractor;
 import com.myster.filemanager.DefaultMetadataTypeRegistry;
-import com.myster.filemanager.FileMetadataCache;
 import com.myster.filemanager.FileMetadataExtractor;
 import com.myster.filemanager.FileTypeListManager;
 import com.myster.filemanager.MetadataType;
@@ -628,7 +627,8 @@ public class Myster {
     private static FileMetadataExtractor createFileMetadataExtractor(
             MetadataTypeRegistry metadataTypeRegistry) {
         Path cacheRoot = MysterGlobals.getPrivateDataPath().toPath().resolve("MetadataCache");
-        FileMetadataCache cache = new ShardedFileMetadataCache(cacheRoot);
+        ShardedFileMetadataCache cache = new ShardedFileMetadataCache(cacheRoot);
+        MysterGlobals.addShutdownListener(cache::flush);
         Map<MetadataType, TypedMetadataExtractor> typedExtractors = metadataTypeRegistry
                 .supportedTypes()
                 .stream()

@@ -12,24 +12,31 @@ import java.util.Objects;
 /**
  * Identity for one cached metadata payload.
  * <p>
- * The entry key and shard are derived from metadata type plus normalized absolute
- * path. Size and last-modified millis are stored in the entry and validated on
- * read so changed files miss the cache.
+ * The entry key and shard are derived from stable metadata type id plus normalized absolute path.
+ * The type's cache version is carried separately and validated on read, so incrementing it causes
+ * a cache miss without moving the entry. Size and last-modified milliseconds are also validated so
+ * changed files miss the cache.
  */
 public final class FileMetadataCacheKey {
-    private final String metadataType;
+    private final String metadataTypeId;
+    private final int cacheVersion;
     private final String normalizedAbsolutePath;
     private final long size;
     private final long lastModifiedMillis;
     private final String entryKey;
     private final String shardId;
 
-    private FileMetadataCacheKey(String metadataType,
+    private FileMetadataCacheKey(String metadataTypeId,
+                                 int cacheVersion,
                                  String normalizedAbsolutePath,
                                  long size,
                                  long lastModifiedMillis,
                                  String entryKey) {
-        this.metadataType = Objects.requireNonNull(metadataType);
+        this.metadataTypeId = Objects.requireNonNull(metadataTypeId);
+        if (cacheVersion <= 0) {
+            throw new IllegalArgumentException("cacheVersion must be positive");
+        }
+        this.cacheVersion = cacheVersion;
         this.normalizedAbsolutePath = Objects.requireNonNull(normalizedAbsolutePath);
         this.size = size;
         this.lastModifiedMillis = lastModifiedMillis;
@@ -39,23 +46,38 @@ public final class FileMetadataCacheKey {
 
     public static FileMetadataCacheKey from(MetadataType metadataType, Path path, long fileSize)
             throws IOException {
-        return from(Objects.requireNonNull(metadataType).cacheKey(), path, fileSize);
+        MetadataType type = Objects.requireNonNull(metadataType);
+        return from(type.id(), type.cacheVersion(), path, fileSize);
     }
 
-    private static FileMetadataCacheKey from(String metadataType, Path path, long fileSize)
+    static FileMetadataCacheKey from(String metadataTypeId,
+                                     int cacheVersion,
+                                     Path path,
+                                     long fileSize)
             throws IOException {
+        Objects.requireNonNull(metadataTypeId);
+        if (metadataTypeId.isBlank()) {
+            throw new IllegalArgumentException("metadataTypeId must not be blank");
+        }
+        if (cacheVersion <= 0) {
+            throw new IllegalArgumentException("cacheVersion must be positive");
+        }
         String normalizedPath = path.toAbsolutePath().normalize().toString();
 
         // Getting the modified time is the slowest step in the process of doing a cache lookup
         // because we need to hit the file system.
         long lastModifiedMillis = Files.getLastModifiedTime(path).toMillis();
-        String entryKey = sha256Hex(metadataType + "\n" + normalizedPath);
-        return new FileMetadataCacheKey(metadataType, normalizedPath, fileSize, lastModifiedMillis,
-                entryKey);
+        String entryKey = sha256Hex(metadataTypeId + "\n" + normalizedPath);
+        return new FileMetadataCacheKey(metadataTypeId, cacheVersion, normalizedPath, fileSize,
+                lastModifiedMillis, entryKey);
     }
 
-    public String metadataType() {
-        return metadataType;
+    public String metadataTypeId() {
+        return metadataTypeId;
+    }
+
+    public int cacheVersion() {
+        return cacheVersion;
     }
 
     public String normalizedAbsolutePath() {
@@ -86,14 +108,16 @@ public final class FileMetadataCacheKey {
 
         return size == other.size
                 && lastModifiedMillis == other.lastModifiedMillis
-                && metadataType.equals(other.metadataType)
+                && cacheVersion == other.cacheVersion
+                && metadataTypeId.equals(other.metadataTypeId)
                 && normalizedAbsolutePath.equals(other.normalizedAbsolutePath)
                 && entryKey.equals(other.entryKey);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(metadataType, normalizedAbsolutePath, size, lastModifiedMillis, entryKey);
+        return Objects.hash(metadataTypeId, cacheVersion, normalizedAbsolutePath, size,
+                lastModifiedMillis, entryKey);
     }
 
     private static String sha256Hex(String input) {

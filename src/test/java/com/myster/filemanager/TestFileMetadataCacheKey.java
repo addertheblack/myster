@@ -2,6 +2,7 @@ package com.myster.filemanager;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 
 import java.io.IOException;
 import java.nio.file.Files;
@@ -25,7 +26,8 @@ class TestFileMetadataCacheKey {
                 Files.size(file));
 
         assertEquals(first, second);
-        assertEquals(MetadataType.AUDIO.cacheKey(), first.metadataType());
+        assertEquals(MetadataType.AUDIO.id(), first.metadataTypeId());
+        assertEquals(MetadataType.AUDIO.cacheVersion(), first.cacheVersion());
         assertEquals(first.entryKey(), second.entryKey());
         assertEquals(first.shardId(), second.shardId());
     }
@@ -58,5 +60,39 @@ class TestFileMetadataCacheKey {
         FileMetadataCacheKey changedMtime = FileMetadataCacheKey.from(MetadataType.AUDIO, file,
                 Files.size(file));
         assertNotEquals(original, changedMtime);
+    }
+
+    @Test
+    void cacheVersionChangesLookupButNotDiskIdentity() throws IOException {
+        Path file = Files.writeString(tempDir.resolve("song.mp3"), "content");
+
+        FileMetadataCacheKey versionOne = FileMetadataCacheKey.from(
+                "audio", 1, file, Files.size(file));
+        FileMetadataCacheKey versionTwo = FileMetadataCacheKey.from(
+                "audio", 2, file, Files.size(file));
+
+        assertNotEquals(versionOne, versionTwo);
+        assertEquals(versionOne.entryKey(), versionTwo.entryKey());
+        assertEquals(versionOne.shardId(), versionTwo.shardId());
+    }
+
+    @Test
+    void metadataTypeIdChangesDiskIdentity() throws IOException {
+        Path file = Files.writeString(tempDir.resolve("shared.bin"), "content");
+
+        FileMetadataCacheKey audio = FileMetadataCacheKey.from(
+                "audio", 1, file, Files.size(file));
+        FileMetadataCacheKey video = FileMetadataCacheKey.from(
+                "video", 1, file, Files.size(file));
+
+        assertNotEquals(audio.entryKey(), video.entryKey());
+    }
+
+    @Test
+    void cacheVersionMustBePositive() throws IOException {
+        Path file = Files.writeString(tempDir.resolve("song.mp3"), "content");
+
+        assertThrows(IllegalArgumentException.class,
+                () -> FileMetadataCacheKey.from("audio", 0, file, Files.size(file)));
     }
 }

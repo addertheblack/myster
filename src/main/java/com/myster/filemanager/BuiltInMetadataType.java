@@ -15,7 +15,7 @@ import com.myster.type.TypeDescriptionList;
  * Built-in metadata profiles shipped with Myster.
  */
 enum BuiltInMetadataType implements MetadataType {
-    GENERIC("generic", "", List.of()) {
+    GENERIC("generic", 1, List.of()) {
         @Override
         public FileTypeColumnHandler getHandler(TypeDescriptionList tdList) {
             return new ClientGenericHandleObject();
@@ -31,7 +31,7 @@ enum BuiltInMetadataType implements MetadataType {
             return Optional.empty();
         }
     },
-    AUDIO("audio", "audio-v1",
+    AUDIO("audio", 1,
             List.of("/BitRate", "/Hz", "/LengthSec", "/ID3Name", "/Artist", "/Album")) {
         @Override
         public FileTypeColumnHandler getHandler(TypeDescriptionList tdList) {
@@ -48,7 +48,7 @@ enum BuiltInMetadataType implements MetadataType {
             return Optional.of(new TikaAudioMetadataExtractor());
         }
     },
-    IMAGE("image", "image-v1",
+    IMAGE("image", 1,
             List.of("/ImageWidth",
                     "/ImageHeight",
                     "/ImageBitDepth",
@@ -72,7 +72,7 @@ enum BuiltInMetadataType implements MetadataType {
             return Optional.of(new TikaImageMetadataExtractor());
         }
     },
-    VIDEO("video", "video-v1",
+    VIDEO("video", 1,
             List.of("/VideoLengthSec",
                     "/VideoWidth",
                     "/VideoHeight",
@@ -95,12 +95,15 @@ enum BuiltInMetadataType implements MetadataType {
     };
 
     private final String id;
-    private final String cacheKey;
+    private final int cacheVersion;
     private final List<String> cacheableKeys;
 
-    BuiltInMetadataType(String id, String cacheKey, List<String> cacheableKeys) {
+    BuiltInMetadataType(String id, int cacheVersion, List<String> cacheableKeys) {
         this.id = id;
-        this.cacheKey = cacheKey;
+        if (cacheVersion <= 0) {
+            throw new IllegalArgumentException("cacheVersion must be positive");
+        }
+        this.cacheVersion = cacheVersion;
         this.cacheableKeys = List.copyOf(cacheableKeys);
     }
 
@@ -110,8 +113,8 @@ enum BuiltInMetadataType implements MetadataType {
     }
 
     @Override
-    public String cacheKey() {
-        return cacheKey;
+    public int cacheVersion() {
+        return cacheVersion;
     }
 
     @Override

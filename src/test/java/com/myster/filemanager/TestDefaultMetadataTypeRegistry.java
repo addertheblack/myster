@@ -48,4 +48,11 @@ class TestDefaultMetadataTypeRegistry {
         assertTrue(ids.contains("image"));
         assertTrue(ids.contains("video"));
     }
+
+    @Test
+    void builtInsHaveInitialCacheVersion() {
+        for (MetadataType type : registry.supportedTypes()) {
+            assertEquals(1, type.cacheVersion(), type.id());
+        }
+    }
 }

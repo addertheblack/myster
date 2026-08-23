@@ -11,9 +11,9 @@ import com.myster.type.TypeDescriptionList;
  * Runtime profile for a type of file metadata that Myster knows how to extract and display.
  * <p>
  * A concrete network {@link com.myster.type.MysterType} subscribes to one metadata type by storing
- * this profile's stable {@link #id()} in its {@link com.myster.type.TypeDescription}. The cache key
- * is a separate on-disk schema namespace. Changing the cache key intentionally invalidates old
- * cached entries for that metadata type without changing type subscriptions.
+ * this profile's stable {@link #id()} in its {@link com.myster.type.TypeDescription}. The
+ * {@link #cacheVersion()} separately identifies the metadata representation stored in the local
+ * cache, so changing cached fields does not change type subscriptions or cache entry identity.
  */
 public interface MetadataType {
     MetadataType GENERIC = BuiltInMetadataType.GENERIC;
@@ -27,9 +27,13 @@ public interface MetadataType {
     String id();
 
     /**
-     * Returns the stable string used to namespace persistent cache entries.
+     * Returns the positive version of this profile's cached metadata representation.
+     * <p>
+     * Increment this value whenever old positive or negative cache entries may be incomplete for
+     * the current extractor, including when adding a newly cacheable field. A version mismatch is
+     * treated as a cache miss and causes normal metadata extraction to replace the old entry.
      */
-    String cacheKey();
+    int cacheVersion();
 
     /**
      * Returns the MessagePak root keys that may be persisted for this metadata type.
