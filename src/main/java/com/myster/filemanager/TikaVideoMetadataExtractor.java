@@ -9,6 +9,7 @@ import java.util.Locale;
 import java.util.Optional;
 import java.util.OptionalDouble;
 import java.util.OptionalLong;
+import java.util.Set;
 import java.util.logging.Logger;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -25,16 +26,24 @@ import org.xml.sax.helpers.DefaultHandler;
 
 /**
  * Extracts best-effort video browsing metadata using the parsers available to Apache Tika.
- * Unsupported containers and unavailable fields are left absent from the Myster file metadata.
+ * Files with {@code .avi} and {@code .mkv} extensions are intentionally returned without metadata
+ * before their contents are opened because the configured Tika parsers do not support them and
+ * attempting extraction can cause substantial disk activity. Other unsupported containers and
+ * unavailable fields are left absent from the Myster file metadata.
  */
 public class TikaVideoMetadataExtractor implements TypedMetadataExtractor {
     private static final Logger log = Logger.getLogger(TikaVideoMetadataExtractor.class.getName());
+    private static final Set<String> SKIPPED_EXTENSIONS = Set.of("avi", "mkv");
     private static final Pattern DATA_RATE = Pattern.compile(
             "^([+]?(?:\\d+(?:\\.\\d*)?|\\.\\d+))\\s*(?:(kbps|kbit/s|mbps|mbit/s))?$",
             Pattern.CASE_INSENSITIVE);
 
     @Override
     public void enrich(MessagePak messagePack, Path path) {
+        if (shouldSkipExtraction(path)) {
+            return;
+        }
+
         Metadata metadata = new Metadata();
         metadata.set(TikaCoreProperties.RESOURCE_NAME_KEY, path.getFileName().toString());
 
@@ -45,6 +54,16 @@ public class TikaVideoMetadataExtractor implements TypedMetadataExtractor {
         }
 
         addMetadata(messagePack, metadata);
+    }
+
+    private static boolean shouldSkipExtraction(Path path) {
+        String fileName = path.getFileName().toString();
+        int extensionSeparator = fileName.lastIndexOf('.');
+        if (extensionSeparator < 0) {
+            return false;
+        }
+        String extension = fileName.substring(extensionSeparator + 1).toLowerCase(Locale.ROOT);
+        return SKIPPED_EXTENSIONS.contains(extension);
     }
 
     static void addMetadata(MessagePak messagePack, Metadata metadata) {

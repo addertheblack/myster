@@ -3,9 +3,10 @@
 ## What was implemented
 
 Added a reusable built-in `video` metadata profile and subscribed the bundled `MOOV` Myster type
-to it. Video indexing now creates `VideoFileItem` instances, extracts best-effort metadata through
+to it. Video indexing creates `VideoFileItem` instances, extracts best-effort metadata through
 Apache Tika, caches a versioned five-key schema, and displays sortable Duration, Resolution, Codec,
-and Bit Rate columns in local file and remote search views.
+and Bit Rate columns in local file and remote search views. AVI and MKV files are now skipped before
+Tika opens them and produce empty typed metadata results.
 
 ## Files changed
 
@@ -17,7 +18,7 @@ and Bit Rate columns in local file and remote search views.
 - `src/main/java/com/myster/filemanager/VideoFileItem.java` - new server-side video file item and
   protocol documentation.
 - `src/main/java/com/myster/filemanager/TikaVideoMetadataExtractor.java` - new best-effort Tika
-  extraction, validation, unit conversion, and bitrate estimation.
+  extraction, validation, unit conversion, bitrate estimation, and pre-I/O AVI/MKV skip.
 - `src/main/java/com/myster/search/ui/ClientVideoHandleObject.java` - new sortable video columns and
   formatting for both file records and search results.
 - Registry, type-description, indexing, caching, GUI selection, extractor, file-item, and column
@@ -34,12 +35,19 @@ and Bit Rate columns in local file and remote search views.
   as `-`.
 - `MessagePak` numeric and string access remain type-specific in the GUI adapter because requesting
   a value through the wrong typed getter throws rather than returning an empty value.
-- Empty extraction results are persisted as negative cache hits. This prevents unsupported AVI/MKV
-  files from being rescanned after the hourly file-list refresh or an application restart. Negative
-  entries use the same path, size, modification time, `video-v1`, and expiry invalidation as normal
-  metadata entries and do not add fields to the network payload.
+- Case-insensitive `.avi` and `.mkv` extensions return before opening file contents. Their empty
+  typed results are persisted as negative cache hits, so the hourly file-list refresh or an
+  application restart does not introduce a Tika scan. Negative entries use the same path, size,
+  modification time, `video-v1`, and expiry invalidation as normal metadata entries and do not add
+  fields to the network payload.
+- The video cache remains at version 1 because the five stored fields and their meanings are
+  unchanged. This avoids forcing supported video files through an unrelated one-time re-read.
 
 ## Deviations from the plan
+
+- The owner-directed AVI/MKV fast skip was added after the original implementation because real
+  extraction attempts caused substantial disk activity. The plan was updated to reflect this
+  refinement.
 
 - No real MP4 fixture was added. The repository has no existing video fixture, and no local FFmpeg
   binary was available to produce one without adding a test prerequisite. Metadata conversion is
@@ -61,14 +69,13 @@ and Bit Rate columns in local file and remote search views.
 
 - Passed: `mvn -q -DskipTests test-compile`
 - Passed focused metadata regression suite:
-  `mvn -q -Djava.awt.headless=true -Dtest=TestCachingFileMetadataExtractor,TestShardedFileMetadataCache,TestVideoFileItem,TestTikaVideoMetadataExtractor,TestClientVideoHandleObject,TestTypeResolvingFileMetadataExtractor,TestMPG3FileItem,TestImageFileItem test`
+  `mvn -q -Djava.awt.headless=true -Dtest=TestCachingFileMetadataExtractor,TestShardedFileMetadataCache,TestVideoFileItem,TestTikaVideoMetadataExtractor,TestClientVideoHandleObject,TestTypeResolvingFileMetadataExtractor,TestDefaultMetadataTypeRegistry,TestMPG3FileItem,TestImageFileItem test`
 - Passed: `mvn -q -Djava.awt.headless=true test`
 - `git diff --check` passes.
 
-An initial full-suite run encountered the repository's intermittent home-directory, Preferences
-lock, and UDP bind environment failures. A final rerun completed successfully. The successful run
-still printed an existing asynchronous Jimfs `ClosedDirectoryStreamException` after a test closed
-its filesystem, but Maven reported no test failure.
+The full suite printed an existing stack trace from a test that deliberately injects an
+`IllegalStateException("broken")` into server-stat construction, but Maven reported no test
+failure.
 
 ## Known issues and follow-up
 

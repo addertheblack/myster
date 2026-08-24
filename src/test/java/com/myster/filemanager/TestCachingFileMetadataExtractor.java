@@ -69,6 +69,20 @@ class TestCachingFileMetadataExtractor {
     }
 
     @Test
+    void skippedMkvStoresEmptyVideoMetadata() throws IOException {
+        Path file = Files.writeString(tempDir.resolve("clip.mkv"), "content");
+        RecordingCache cache = new RecordingCache();
+        CachingFileMetadataExtractor extractor = new CachingFileMetadataExtractor(cache,
+                (metadataType, messagePack, path) ->
+                        new TikaVideoMetadataExtractor().enrich(messagePack, path));
+
+        extractor.enrich(MetadataType.VIDEO, filePack(file), file);
+
+        assertEquals(1, cache.putCalls);
+        assertTrue(MessagePakTreeUtils.isEmpty(cache.putMetadata));
+    }
+
+    @Test
     void negativeCacheHitDoesNotCallDelegate() throws IOException {
         Path file = Files.writeString(tempDir.resolve("clip.avi"), "content");
         RecordingCache cache = new RecordingCache();

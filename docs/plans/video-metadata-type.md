@@ -23,7 +23,7 @@ Add a built-in `video` metadata profile and subscribe the existing `MOOV` Myster
 - The initial visible columns are `Duration`, `Resolution`, `Codec`, and `Bit Rate`, in that order after the generic file columns.
 - Resolution is stored as separate positive numeric width and height values and displayed without spaces as `1920x1080`.
 - Bitrate is stored in bits per second. Prefer a parser-provided data rate; when none is available but file size and duration are known, use average file bitrate as a documented estimate. For multiplexed files this estimate includes audio and container overhead and is not a pure video-stream bitrate.
-- Apache Tika 3.3.1 and its audio/video parser module remain the extraction backend. The current dependency includes MP4 and FLV parsers but does not provide broad coverage equivalent to FFprobe, so unsupported formats should retain empty video fields rather than failing indexing.
+- Apache Tika 3.3.1 and its audio/video parser module remain the extraction backend. The current dependency includes MP4 and FLV parsers but does not provide broad coverage equivalent to FFprobe. AVI and MKV are known unsupported, expensive cases and must be skipped before opening the file; other unsupported formats should retain empty video fields rather than failing indexing.
 
 ## 4. Proposed design
 
@@ -31,7 +31,7 @@ Add `VIDEO` to the built-in metadata profiles with stable id `video`, cache name
 
 The video metadata protocol adds five optional fields: duration in whole seconds, width and height in pixels, codec as a normalized display string, and bitrate in bits per second. Values are omitted when unavailable, invalid, zero, or negative. The GUI combines width and height into one sortable resolution column and formats duration and bitrate using the existing audio-style sortable conventions where practical.
 
-Extraction uses Tika auto-detection so every parser available in the configured audio/video module can participate. It reads standard Tika properties for duration, image width/height, video compressor, and file data rate. If no usable data rate exists, it estimates average bitrate from the base file item's `/size` and parsed duration. Parser failures are logged and leave only the generic file metadata.
+Extraction checks the filename extension before opening the file. Case-insensitive `.avi` and `.mkv` files bypass Tika and produce an empty typed metadata result, which the cache persists as a negative entry. Other extensions use Tika auto-detection so every parser available in the configured audio/video module can participate. It reads standard Tika properties for duration, image width/height, video compressor, and file data rate. If no usable data rate exists, it estimates average bitrate from the base file item's `/size` and parsed duration. Parser failures are logged and leave only the generic file metadata.
 
 ## 5. Architecture connections
 
@@ -67,8 +67,9 @@ Older clients ignore these additional keys. New clients display `-` when talking
 - **Bitrate estimation:** Only estimate when both file size and a positive finite duration are available. Do not clamp video bitrate to MP3 bitrate buckets. Guard overflow and non-finite arithmetic.
 - **Codec normalization:** Trim parser output and omit blank values. Do not maintain a hardcoded codec alias table in the first version; preserving Tika's value avoids silently mislabeling codecs.
 - **Partial metadata is valid:** Each key is independent. A file may show codec and duration while resolution or bitrate remains unknown.
+- **AVI/MKV fast skip:** Match the final filename extension case-insensitively and return before opening the file. This avoids known-unproductive Tika parsing and produces an empty typed metadata result for negative caching.
 - **Parsing must not block indexing failure recovery:** IOException, Tika, SAX, malformed numeric fields, and unsupported formats must be logged and leave unavailable fields absent.
-- **Cache evolution:** Use `video-v1`. Any future semantic change to the fields, especially bitrate meaning, requires a new cache key.
+- **Cache evolution:** Keep `video-v1` because the AVI/MKV skip does not change the five cached fields or their meanings. Avoiding a version increment also prevents supported videos from being re-read solely for this extraction-routing change. Any future semantic change to the fields, especially bitrate meaning, requires a new cache key.
 - **Negative caching:** A completed extraction with no video fields is a valid cache hit. Persist
   that empty result so unsupported files are not rescanned after hourly reindexing or restart. File
   identity changes, cache schema changes, and normal cache expiry invalidate negative entries.
@@ -84,6 +85,7 @@ Older clients ignore these additional keys. New clients display `-` when talking
 - [ ] Video columns sort by numeric duration, pixel area, codec text, and numeric bitrate rather than formatted display text.
 - [ ] Missing or malformed metadata displays as `-` and does not prevent indexing or viewing the file.
 - [ ] Formats unsupported by the installed Tika parsers retain generic file metadata without throwing.
+- [ ] AVI and MKV files are skipped before file-content access and produce empty typed metadata results regardless of extension case.
 - [ ] Empty extraction results are reused from persistent cache rather than rescanned after reindexing or restart.
 - [ ] Existing generic, audio, and image metadata tests continue to pass.
 
@@ -126,6 +128,7 @@ Older clients ignore these additional keys. New clients display `-` when talking
    - Document all five optional MessagePak keys and bitrate estimation semantics in class Javadoc.
 
 4. Implement `TikaVideoMetadataExtractor`:
+   - Return immediately for case-insensitive `.avi` and `.mkv` filename extensions before opening or reading the path.
    - Parse through `AutoDetectParser` with `DefaultHandler`, `Metadata`, and `ParseContext`, using a buffered file input stream and try-with-resources.
    - Read duration from `XMPDM.DURATION`, accepting positive finite decimal seconds and writing rounded `/VideoLengthSec`.
    - Read dimensions from Tika's `Metadata.IMAGE_WIDTH` and `Metadata.IMAGE_LENGTH`/height property as positive integers and write `/VideoWidth` and `/VideoHeight` independently.
@@ -179,6 +182,7 @@ Older clients ignore these additional keys. New clients display `-` when talking
 - `TestVideoFileItem`
   - Calls enrichment with `MetadataType.VIDEO`, preserves base fields, exposes enriched fields, and enriches once.
 - `TestTikaVideoMetadataExtractor`
+  - Skips AVI/MKV case-insensitively without accessing file contents and leaves the typed MessagePak empty.
   - Converts Tika duration, dimensions, codec, and data rate to protocol values.
   - Uses average bitrate only when parser bitrate is absent.
   - Omits invalid values and tolerates missing/unsupported files.

@@ -3,6 +3,10 @@ package com.myster.filemanager;
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyNoMoreInteractions;
+import static org.mockito.Mockito.when;
 
 import java.nio.file.Path;
 import java.util.OptionalDouble;
@@ -13,6 +17,8 @@ import org.apache.tika.metadata.Metadata;
 import org.apache.tika.metadata.XMPDM;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.ValueSource;
 
 class TestTikaVideoMetadataExtractor {
     @TempDir
@@ -107,6 +113,20 @@ class TestTikaVideoMetadataExtractor {
         assertTrue(TikaVideoMetadataExtractor.estimateAverageBitRateBps(1_000, 0).isEmpty());
         assertTrue(TikaVideoMetadataExtractor.estimateAverageBitRateBps(1_000, Double.NaN)
                 .isEmpty());
+    }
+
+    @ParameterizedTest
+    @ValueSource(strings = { "clip.avi", "clip.AVI", "clip.mkv", "clip.MkV" })
+    void aviAndMkvAreSkippedWithoutAccessingTheFile(String fileName) {
+        Path path = mock(Path.class);
+        when(path.getFileName()).thenReturn(Path.of(fileName));
+        MessagePak metadata = MessagePak.newEmpty();
+
+        assertDoesNotThrow(() -> new TikaVideoMetadataExtractor().enrich(metadata, path));
+
+        assertTrue(MessagePakTreeUtils.isEmpty(metadata));
+        verify(path).getFileName();
+        verifyNoMoreInteractions(path);
     }
 
     @Test
