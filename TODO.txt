@@ -23,7 +23,6 @@
 - Add group calls
 - Add text forums
 - Add 3DNS for resolving public keys to hosted ip addresses.
-- Add type meta data for video files (e.g. length, resolution, bit rate etc.)
 - Fix search-result metadata access: `SearchResult#getMetaData(String)` currently stringifies
   typed `MessagePak` values, forcing column handlers to parse numbers back out for sorting.
   Add a read-only `MessagePak` view/interface for search items so handlers can use typed

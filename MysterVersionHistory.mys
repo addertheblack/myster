@@ -1294,6 +1294,24 @@ keys for myster types.
 2026-03-12
   Add ability to set who can join/see/search/download from a private type via an access list.
 
+2026-08-24
+  Group public and private types separately in type selectors and warn when a shared folder belongs
+    to a public type, where everyone on the network can see its files.
+  Newly-created private types now seed themselves with the creator's server.
+  Added much richer media information to file lists and search results:
+    -> Audio files now show duration, bit rate, and sample rate more reliably.
+    -> Pictures now show resolution, date taken, camera, orientation, and bit depth.
+    -> Videos now show duration, resolution, codec, and bit rate.
+  Added a persistent, versioned metadata cache so media folders re-index much faster and files
+    without readable metadata are not repeatedly parsed.
+  Added the first working 3DNS discovery and lookup system, plus a dedicated Tracker view showing
+    its target slots, servers, status, and routing details.
+  Improved download startup and "Download To...": multi-file downloads choose one destination,
+    invalid or unwritable folders get useful error messages, and shared-folder destinations work.
+  Fixed the bug that stopped NAT traversal from working correctly.
+  Added bidirectional server-stat exchanges so servers can discover and verify each other behind NAT.
+  Launching Myster a second time now brings the existing window to the front, even during startup.
+  Added .zip files to the built-in Macintosh type.
 
 
 (See TODO.txt for the outstanding work list.)
