@@ -30,6 +30,7 @@ When adding or substantially changing an authoritative plan, update this index w
 | [Private Types Access Lists - Milestone 6: Client-Only Node Join Requests](private-types-access-lists-milestone6.md) | Defers client-only private-type join requests until a broader peer-to-peer messaging design exists. |
 | [Public/Private Data Path Separation](public-private-data-paths.md) | Splits user-visible content paths from private application-managed paths for keys, temp files, and internal data. |
 | [Replace `mp3agic` with Apache Tika for MPG3 metadata](replace-mp3agic-with-tika.md) | Swaps MP3 metadata extraction to Apache Tika while preserving existing `MessagePak` protocol keys and removing `mp3agic`. |
+| [Rolling Overall Download Rate](rolling-download-rate.md) | Replaces the download manager parent row's queue-skewed lifetime average with an approximately one-second rolling transfer rate. |
 | [Search Download To Shared Folder](search-download-to-shared-folder.md) | Changes multi-selected search downloads to choose one destination folder before scheduling all selected downloads. |
 | [Split Type Columns from Search-Only Columns](split-type-columns-from-search-columns.md) | Separates per-type file columns from search-only server/ping columns so client browsing can reuse type-specific metadata columns. |
 | [Tabbed Search Window](tabbed-search-window.md) | Evolves search into multi-tab search windows with independent search state and multiple window support. |

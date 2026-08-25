@@ -28,9 +28,9 @@ public class ProgManDownloadHandler implements MSDownloadListener {
     private final ProgressManagerWindow.DownloadMCListItem downloadItem;
     private final ProgressManagerWindow window;
     private final String filename;
+    private final RollingByteRate overallRate = new RollingByteRate();
 
     private int connectionCounter = 0;
-    private long startTime;
 
     public ProgManDownloadHandler(ProgressManagerWindow window,
                            ProgressManagerWindow.DownloadMCListItem item, 
@@ -55,10 +55,10 @@ public class ProgManDownloadHandler implements MSDownloadListener {
     
     @Override
     public void startDownload(StartMultiSourceEvent event) {
-        startTime = System.currentTimeMillis();
-        
+        overallRate.reset();
         downloadItem.getObject().setTotal(event.getLength());
         downloadItem.getObject().setProgress(event.getInitialOffset());
+        downloadItem.getObject().setSpeed(0);
         downloadItem.getObject().setStatus("Starting download...");
         downloadItem.getObject().setControl(event.getControl());
         
@@ -68,14 +68,7 @@ public class ProgManDownloadHandler implements MSDownloadListener {
     @Override
     public void progress(MultiSourceEvent event) {
         downloadItem.getObject().setProgress(event.getProgress());
-
-        // Calculate overall speed
-        long elapsed = System.currentTimeMillis() - startTime;
-        if (elapsed > 1000) {
-            long bytesDownloaded = event.getProgress() - event.getInitialOffset();
-            int speed = (int) (bytesDownloaded * 1000 / elapsed);
-            downloadItem.getObject().setSpeed(speed);
-        }
+        downloadItem.getObject().setSpeed(overallRate.update(event.getProgress()));
 
         downloadItem.getObject()
                 .setStatus("Downloading: " + Util.getStringFromBytes(event.getProgress()));
@@ -125,6 +118,7 @@ public class ProgManDownloadHandler implements MSDownloadListener {
 
     @Override
     public void pauseDownload(MultiSourceEvent event) {
+        overallRate.reset();
         downloadItem.getObject().setStatus("Download paused");
         downloadItem.getObject().setSpeed(0);
         window.getDownloadList().repaint();
@@ -132,14 +126,15 @@ public class ProgManDownloadHandler implements MSDownloadListener {
 
     @Override
     public void resumeDownload(MultiSourceEvent event) {
-        startTime = System.currentTimeMillis(); // Reset start time for speed
-                                                // calculation
+        overallRate.reset();
+        downloadItem.getObject().setSpeed(0);
         downloadItem.getObject().setStatus("Resuming download...");
         window.getDownloadList().repaint();
     }
 
     @Override
     public void queuedDownload(QueuedMultiSourceEvent event) {
+        overallRate.reset();
         if (event.getQueuePosition() == -1) {
             downloadItem.getObject().setStatus("Paused");
         } else {
@@ -151,12 +146,15 @@ public class ProgManDownloadHandler implements MSDownloadListener {
 
     @Override
     public void endDownload(MultiSourceEvent event) {
+        overallRate.reset();
+        downloadItem.getObject().setSpeed(0);
         downloadItem.getObject().setStatus("Download stopped");
         window.getDownloadList().repaint();
     }
 
     @Override
     public void doneDownload(MultiSourceEvent event) {
+        overallRate.reset();
         downloadItem.getObject().setProgress(downloadItem.getObject().getTotal());
         downloadItem.getObject().setSpeed(0);
         downloadItem.getObject().setStatus("Download complete!");
