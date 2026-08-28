@@ -47,7 +47,7 @@ public final class FileMetadataCacheKey {
     public static FileMetadataCacheKey from(MetadataType metadataType, Path path, long fileSize)
             throws IOException {
         MetadataType type = Objects.requireNonNull(metadataType);
-        return from(type.id(), type.cacheVersion(), path, fileSize);
+        return from(type.id().getIdentifier(), type.cacheVersion(), path, fileSize);
     }
 
     static FileMetadataCacheKey from(String metadataTypeId,

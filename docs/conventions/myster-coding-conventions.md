@@ -16,9 +16,11 @@ This document captures Myster-specific coding conventions, preferred libraries, 
 - **Naming** — no banner comments; `Utils` suffix for static-only classes
 - **Fields** — retain object state, not inlineable method references
 - **CID types** — use `MysterTypeCid` or `ServerCid`; never expose raw `Cid128` or CID byte arrays internally
-- **Extensible Enums** — `final class` + `static final` constants, not Java `enum`
+- **Enums** — prefer Java `enum`; use `TypeSafeEnum` only across version-skewed wire boundaries;
+  never model enum values as raw string constants
 - **Serialization** — use `MessagePak` for forward-compatible binary formats
 - **Access Lists** — single source of truth; `AccessListManager` singleton; key-file edit gate
+- **Access-list operation framing** — new operation payloads must be length-framed for older readers
 - **Prefs enabled/disabled** — store only identifier + `enabled` boolean
 - **Code commenting style** — see [`Code Comments.md`](Code%20Comments.md)
 - **Standing Refactors** — see [`standing-refactors.md`](standing-refactors.md); apply when you touch an affected file
@@ -49,11 +51,12 @@ This document captures Myster-specific coding conventions, preferred libraries, 
   - [No Banner Comments](#no-section-divider-banner-comments)
   - [Utils Classes](#utils-classes)
   - [Domain-Specific CID Types](#domain-specific-cid-types)
-- [Extensible Enums](#extensible-enums)
+- [Enums and TypeSafeEnum](#enums-and-typesafeenum)
 - [Serialization Extensibility](#serialization-extensibility)
 - [Exception Handling](#exception-handling)
 - [Invoker-Confined Asynchronous State](#invoker-confined-asynchronous-state)
 - [Access Lists as Canonical Metadata](#access-lists-as-canonical-metadata)
+  - [Forward-Compatible Access-List Operations](#forward-compatible-access-list-operations)
 
 ---
 
@@ -348,37 +351,55 @@ Access lists use both domains: the list is identified by the `MysterTypeCid` com
 
 ---
 
-## Extensible Enums
+## Enums and TypeSafeEnum
 
-**Pattern**: For enum-like values that appear in serialized formats (wire protocol, file formats), use a `final class` with `static final` constants instead of a Java `enum`. This supports forward compatibility: unknown values from future versions can be preserved without crashing.
+**Default**: Use a Java `enum` for ordinary closed sets of values. Java enums are the preferred
+representation when values do not cross a wire/protocol compatibility boundary where a newer peer
+may send a value this version does not know.
+
+**Forward-compatible wire values**: Extend `com.general.util.TypeSafeEnum` with a `final` concrete
+class and `static final` canonical instances when an enum-like value is serialized over the wire and
+must survive version skew. `TypeSafeEnum` preserves a specific unknown value from a newer peer so it
+can be relayed or stored without collapsing it to a generic `UNKNOWN` value or failing Java-enum
+parsing.
+
+**Never use raw strings as an enum substitute**: Do not model an enum domain with constants such as
+`private static final String ENUM_VALUE = "something"`. Use a Java `enum` for ordinary values or a
+`TypeSafeEnum` subtype for forward-compatible wire values. Conversion to and from strings belongs at
+the serialization boundary.
 
 **Key characteristics**:
 - String-based identifiers (not numeric) — self-describing and unlikely to conflict
 - `fromString(String)` factory method returns the known constant or creates a non-canonical instance
-- `isCanonical()` distinguishes known from unknown values
-- Known values are interned via a `Map<String, T>` for identity comparison
+- inherited `getIdentifier()` and `isCanonical()` distinguish serialized identity and known values
+- inherited equality requires the same concrete type and identifier
+- known values are indexed with `canonicalValueMap(...)` and resolved with `from(...)`
+- subtype-specific normalization and identifier validation stay in the subtype's `fromString(...)`
 
-**When to use**: Any enumeration that is serialized to disk or sent over the wire and may grow over time (e.g., `OpType`, `Role`).
+**When to use `TypeSafeEnum`**: An enum-like wire value may grow independently on newer peers and the
+current version must retain the exact unrecognized identifier (for example, `OpType`, `Role`, and
+`MetadataTypeId`). Do not use it merely because an ordinary enum has a display or persistence value.
 
-**Example** (from `com.myster.access.OpType`):
+**Example**:
 ```java
-public final class OpType {
-    public static final OpType SET_POLICY = new OpType("SET_POLICY", true);
-    public static final OpType ADD_MEMBER = new OpType("ADD_MEMBER", true);
-    // ...more canonical constants...
+public final class OpType extends TypeSafeEnum<OpType> {
+    public static final OpType SET_POLICY = new OpType("SET_POLICY");
+    public static final OpType ADD_MEMBER = new OpType("ADD_MEMBER");
 
-    private static final Map<String, OpType> KNOWN_TYPES = new ConcurrentHashMap<>();
-    static { KNOWN_TYPES.put(SET_POLICY.identifier, SET_POLICY); /* ... */ }
+    private static final Map<String, OpType> KNOWN_TYPES =
+            canonicalValueMap(SET_POLICY, ADD_MEMBER);
 
-    private final String identifier;
-    private final boolean canonical;
-
-    public static OpType fromString(String identifier) {
-        OpType known = KNOWN_TYPES.get(identifier);
-        return known != null ? known : new OpType(identifier, false);
+    private OpType(String identifier) {
+        super(identifier);
     }
 
-    public boolean isCanonical() { return canonical; }
+    private OpType(String identifier, boolean canonical) {
+        super(identifier, canonical);
+    }
+
+    public static OpType fromString(String identifier) {
+        return from(identifier, KNOWN_TYPES, id -> new OpType(id, false));
+    }
 }
 ```
 
@@ -521,6 +542,26 @@ check to use.
 **Singleton**: There is exactly one `AccessListManager` instance in the application, created in
 `Myster.java` before `DefaultTypeDescriptionList`. Never `new AccessListManager()` anywhere else.
 
+### Forward-Compatible Access-List Operations
+
+**Rule**: Every newly introduced access-list operation must length-frame its payload by writing a
+4-byte payload byte count followed by exactly that many opaque bytes. The operation-specific
+fields live inside that frame.
+
+`BlockOperation.deserialize(...)` sends an unrecognized operation to `UnknownOp`, which expects
+this framing so it can skip, retain, and later reserialize the payload without understanding it.
+Writing an unframed payload such as a bare `writeUTF(...)` value for a new operation would make the
+advertised older-reader compatibility unsafe. Existing canonical operations predate this rule and
+are not rewritten merely to adopt it.
+
+Before merging a new operation, add a compatibility test that treats it as unknown, round-trips it
+through `UnknownOp`, and proves that the serialized bytes are unchanged.
+
+Register each canonical payload reader in the immutable `OpType`-to-deserializer map beside
+`BlockOperation`. Use a method reference whose checked functional interface accepts the current
+`DataInputStream`; do not extend deserialization with a linear `if`/`else` type-dispatch chain.
+An absent map entry follows the existing `UnknownOp` path.
+
 ---
 
 ## Prefs-Based Enabled/Disabled Index
@@ -562,4 +603,4 @@ Use streams only when you need operations not covered by `Util` (e.g. `flatMap`,
 
 ---
 
-*Last updated: June 2026*
+*Last updated: August 2026*

@@ -5,6 +5,7 @@ import java.util.List;
 import java.util.Optional;
 
 import com.myster.search.ui.FileTypeColumnHandler;
+import com.myster.type.MetadataTypeId;
 import com.myster.type.TypeDescriptionList;
 
 /**
@@ -22,9 +23,9 @@ public interface MetadataType {
     MetadataType VIDEO = BuiltInMetadataType.VIDEO;
 
     /**
-     * Returns the stable lowercase id stored by {@link com.myster.type.TypeDescription}.
+     * Returns the stable serialized identity for this runtime profile.
      */
-    String id();
+    MetadataTypeId id();
 
     /**
      * Returns the positive version of this profile's cached metadata representation.

@@ -7,6 +7,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import java.util.Set;
 import java.util.stream.Collectors;
 
+import com.myster.type.MetadataTypeId;
 import org.junit.jupiter.api.Test;
 
 class TestDefaultMetadataTypeRegistry {
@@ -14,45 +15,41 @@ class TestDefaultMetadataTypeRegistry {
 
     @Test
     void get_returnsAudioProfile() {
-        assertSame(MetadataType.AUDIO, registry.get("audio"));
+        assertSame(MetadataType.AUDIO, registry.get(MetadataTypeId.AUDIO));
     }
 
     @Test
     void get_returnsImageProfile() {
-        assertSame(MetadataType.IMAGE, registry.get("image"));
+        assertSame(MetadataType.IMAGE, registry.get(MetadataTypeId.IMAGE));
     }
 
     @Test
     void get_returnsVideoProfile() {
-        assertSame(MetadataType.VIDEO, registry.get("video"));
+        assertSame(MetadataType.VIDEO, registry.get(MetadataTypeId.VIDEO));
     }
 
     @Test
-    void get_normalizesAndFallsBackToGeneric() {
-        assertSame(MetadataType.AUDIO, registry.get(" AUDIO "));
-        assertSame(MetadataType.VIDEO, registry.get(" VIDEO "));
-        assertSame(MetadataType.GENERIC, registry.get(null));
-        assertSame(MetadataType.GENERIC, registry.get(" "));
-        assertSame(MetadataType.GENERIC, registry.get("movie"));
+    void get_fallsBackToGenericForUnknownTypedId() {
+        assertSame(MetadataType.GENERIC, registry.get(MetadataTypeId.fromString("movie")));
     }
 
     @Test
     void supportedTypes_containsUniqueBuiltIns() {
-        Set<String> ids = registry.supportedTypes().stream()
+        Set<MetadataTypeId> ids = registry.supportedTypes().stream()
                 .map(MetadataType::id)
                 .collect(Collectors.toSet());
 
         assertEquals(registry.supportedTypes().size(), ids.size());
-        assertTrue(ids.contains("generic"));
-        assertTrue(ids.contains("audio"));
-        assertTrue(ids.contains("image"));
-        assertTrue(ids.contains("video"));
+        assertTrue(ids.contains(MetadataTypeId.GENERIC));
+        assertTrue(ids.contains(MetadataTypeId.AUDIO));
+        assertTrue(ids.contains(MetadataTypeId.IMAGE));
+        assertTrue(ids.contains(MetadataTypeId.VIDEO));
     }
 
     @Test
     void builtInsHaveInitialCacheVersion() {
         for (MetadataType type : registry.supportedTypes()) {
-            assertEquals(1, type.cacheVersion(), type.id());
+            assertEquals(1, type.cacheVersion(), type.id().getIdentifier());
         }
     }
 }

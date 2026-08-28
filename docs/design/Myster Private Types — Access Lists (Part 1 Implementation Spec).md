@@ -119,6 +119,11 @@ Operations use **string-based type identifiers** for forward compatibility (not 
 [UTF-8 string length (u16)] [UTF-8 operation type string] [operation-specific payload]
 ```
 
+New operation types introduced after the original Part 1 operations length-frame their
+operation-specific payload as `[payload length (i32)] [opaque payload bytes]`. Older readers use
+that frame to preserve and reserialize an unknown operation without understanding its fields.
+The original operations retain their existing unframed encodings for compatibility.
+
 ### 2.4.2 Extensible Operation Types
 
 - Each operation type is identified by a string (e.g., `"SET_POLICY"`, `"ADD_MEMBER"`)
@@ -144,6 +149,10 @@ Operations use **string-based type identifiers** for forward compatibility (not 
 - `SET_DESCRIPTION(description:string)`
 - `SET_EXTENSIONS(extensions:string[])`
 - `SET_SEARCH_IN_ARCHIVES(flag:bool)`
+- `SET_METADATA_TYPE(metadata_type_id:string)` — selects one extensible metadata profile id.
+  Missing history defaults to `generic`; an explicit `generic` value supersedes an earlier
+  specialized or unknown value. New Generic genesis blocks omit this operation. Unknown valid ids
+  remain distinct in derived state while local runtime behavior falls back to Generic.
 
 One operation per block (except genesis which may contain multiple).
 
@@ -154,7 +163,8 @@ One operation per block (except genesis which may contain multiple).
 - `height = 0`
 - `prev_hash = 32 bytes of 0x00`
 - MUST contain `SET_TYPE_PUBLIC_KEY` with the type's RSA public key
-- SHOULD contain initial metadata (`SET_NAME`, `SET_EXTENSIONS`, etc.)
+- SHOULD contain initial metadata (`SET_NAME`, `SET_EXTENSIONS`, etc.).
+- Contains `SET_METADATA_TYPE` only when the initial association is non-Generic.
 - Defines:
   - Initial writers (must include creator)
   - Initial policy
@@ -321,7 +331,7 @@ Must:
 
 Actions:
 
-- Change metadata (name, description, extensions) — via SET_* operations
+- Change metadata (name, description, extensions, metadata profile) — via SET_* operations
 - Add/remove member
 - Add/remove writer
 - Modify policy
@@ -362,4 +372,3 @@ Not implemented:
 5. Implement GUI create/edit/share flow
 
 This completes Part 1.
-

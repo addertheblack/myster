@@ -4,7 +4,10 @@ import javax.swing.BorderFactory;
 import javax.swing.ButtonGroup;
 import javax.swing.JButton;
 import javax.swing.JCheckBox;
+import javax.swing.JComboBox;
+import javax.swing.DefaultListCellRenderer;
 import javax.swing.JLabel;
+import javax.swing.JList;
 import javax.swing.JPanel;
 import javax.swing.JRadioButton;
 import javax.swing.JScrollPane;
@@ -13,6 +16,7 @@ import javax.swing.JTextArea;
 import javax.swing.JTextField;
 import javax.swing.SwingUtilities;
 import java.awt.BorderLayout;
+import java.awt.Component;
 import java.awt.FlowLayout;
 import java.awt.Font;
 import java.awt.GridBagConstraints;
@@ -25,6 +29,8 @@ import java.security.KeyPair;
 import java.security.KeyPairGenerator;
 import java.security.NoSuchAlgorithmException;
 import java.util.Collections;
+import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -51,8 +57,13 @@ import com.myster.access.SetExtensionsOp;
 import com.myster.access.SetNameOp;
 import com.myster.access.SetPolicyOp;
 import com.myster.access.SetSearchInArchivesOp;
+import com.myster.access.SetMetadataTypeOp;
 import com.myster.cid.ServerCid;
+import com.myster.filemanager.DefaultMetadataTypeRegistry;
+import com.myster.filemanager.MetadataType;
+import com.myster.filemanager.MetadataTypeRegistry;
 import com.myster.type.CustomTypeDefinition;
+import com.myster.type.MetadataTypeId;
 import com.myster.type.MysterType;
 import com.myster.type.TypeDescriptionList;
 
@@ -71,6 +82,11 @@ import com.myster.type.TypeDescriptionList;
  * that shows the current member list and provides Add, Remove, and Change Role operations, each
  * backed by a signed block appended to the access list.
  *
+ * <p>The Metadata Profile selector is populated from {@link MetadataTypeRegistry}. Known values
+ * use friendly labels. A profile introduced by a newer Myster version is retained as one
+ * contextual non-canonical choice and displayed with a safe Unknown label; local runtime behavior
+ * remains Generic until that profile is supported.
+ *
  * <p>{@code serverSource} is optional. When empty (create mode, tests), the Members tab is
  * simply omitted.
  */
@@ -80,6 +96,7 @@ public class TypeEditorPanel extends JPanel {
     private final AccessListManager accessListManager;
     private final Optional<TypeEditorServerSource> serverSource;
     private final Optional<ServerCid> localServerCid;
+    private final MetadataTypeRegistry metadataTypeRegistry;
 
     private final Runnable onSave;
     private final Runnable onCancel;
@@ -98,6 +115,7 @@ public class TypeEditorPanel extends JPanel {
     private final JCheckBox searchInArchivesCheckbox;
     private final JRadioButton publicRadio;
     private final JRadioButton privateRadio;
+    private final JComboBox<MetadataTypeId> metadataTypeSelector;
     private final JButton saveButton;
 
     // members tab — only present in edit mode with admin key and a serverSource
@@ -131,11 +149,40 @@ public class TypeEditorPanel extends JPanel {
                            Optional<ServerCid> localServerCid,
                            Runnable onSave,
                            Runnable onCancel) {
+        this(typeList, accessListManager, existingType, serverSource, localServerCid,
+                new DefaultMetadataTypeRegistry(), onSave, onCancel);
+    }
+
+    /**
+     * Creates a type editor whose metadata choices come from the supplied runtime registry.
+     *
+     * <p>An existing non-canonical association is added as one contextual choice and rendered
+     * with its safe friendly Unknown label. The exact backing value is preserved unless an
+     * authorized user deliberately chooses another profile.
+     *
+     * @param typeList mutable type-description registry
+     * @param accessListManager canonical access-list persistence
+     * @param existingType type being edited, or null in create mode
+     * @param serverSource optional source for member selection
+     * @param localServerCid optional local member identity
+     * @param metadataTypeRegistry source of locally supported metadata profiles
+     * @param onSave callback after successful persistence
+     * @param onCancel callback when editing is cancelled
+     */
+    public TypeEditorPanel(TypeDescriptionList typeList,
+                           AccessListManager accessListManager,
+                           CustomTypeDefinition existingType,
+                           Optional<TypeEditorServerSource> serverSource,
+                           Optional<ServerCid> localServerCid,
+                           MetadataTypeRegistry metadataTypeRegistry,
+                           Runnable onSave,
+                           Runnable onCancel) {
         this.typeList = typeList;
         this.accessListManager = accessListManager;
         this.existingType = existingType;
         this.serverSource = serverSource;
         this.localServerCid = localServerCid;
+        this.metadataTypeRegistry = java.util.Objects.requireNonNull(metadataTypeRegistry);
         this.onSave = onSave;
         this.onCancel = onCancel;
 
@@ -170,6 +217,7 @@ public class TypeEditorPanel extends JPanel {
         searchInArchivesCheckbox = new JCheckBox("Search inside ZIP/archive files");
         publicRadio  = new JRadioButton("Public", true);
         privateRadio = new JRadioButton("Members only");
+        metadataTypeSelector = buildMetadataTypeSelector();
         saveButton = new JButton("Save");
 
         membersTable = MCListFactory.buildMCList(3, true, this);
@@ -275,6 +323,16 @@ public class TypeEditorPanel extends JPanel {
         JLabel extHelp = new JLabel("<html><i>Comma-separated, e.g.: exe, avi, mp3</i></html>");
         extHelp.setFont(extHelp.getFont().deriveFont(10f));
         formPanel.add(extHelp, gbc.withGridLoc(1, row++).withWeight(1.0, 0));
+
+        formPanel.add(new JLabel("Metadata Profile:"),
+            gbc.withGridLoc(0, row).withWeight(0, 0));
+        formPanel.add(metadataTypeSelector,
+            gbc.withGridLoc(1, row++).withWeight(1.0, 0));
+
+        JLabel metadataHelp = new JLabel(
+                "<html><i>Controls extracted details and file-list columns, not file matching.</i></html>");
+        metadataHelp.setFont(metadataHelp.getFont().deriveFont(10f));
+        formPanel.add(metadataHelp, gbc.withGridLoc(1, row++).withWeight(1.0, 0));
 
         formPanel.add(searchInArchivesCheckbox,
             gbc.withGridLoc(0, row++).withSize(2, 1).withWeight(1.0, 0));
@@ -388,6 +446,7 @@ public class TypeEditorPanel extends JPanel {
         searchInArchivesCheckbox.setEnabled(false);
         publicRadio.setEnabled(false);
         privateRadio.setEnabled(false);
+        metadataTypeSelector.setEnabled(false);
         saveButton.setEnabled(false);
         saveButton.setToolTipText("Read-only: this type was not created on this machine.");
     }
@@ -402,6 +461,7 @@ public class TypeEditorPanel extends JPanel {
             searchInArchivesCheckbox.setSelected(state.isSearchInArchives());
             publicRadio.setSelected(state.getPolicy().isListFilesPublic());
             privateRadio.setSelected(!state.getPolicy().isListFilesPublic());
+            metadataTypeSelector.setSelectedItem(state.getMetadataTypeId());
         } else {
             // Fallback to existingType if no access list (shouldn't normally happen)
             nameField.setText(existingType.getName());
@@ -410,6 +470,7 @@ public class TypeEditorPanel extends JPanel {
             searchInArchivesCheckbox.setSelected(existingType.isSearchInArchives());
             publicRadio.setSelected(existingType.isPublic());
             privateRadio.setSelected(!existingType.isPublic());
+            metadataTypeSelector.setSelectedItem(existingType.getMetadataTypeId());
         }
     }
 
@@ -438,6 +499,7 @@ public class TypeEditorPanel extends JPanel {
         String[] extensions  = extList.toArray(new String[0]);
         String description   = descriptionArea.getText().trim();
         boolean searchInArch = searchInArchivesCheckbox.isSelected();
+        MetadataTypeId metadataTypeId = selectedMetadataTypeId();
         Policy policy        = publicRadio.isSelected()
                                ? Policy.defaultPermissive()
                                : Policy.defaultRestrictive();
@@ -446,14 +508,15 @@ public class TypeEditorPanel extends JPanel {
         saveButton.setEnabled(false);
 
         if (existingType == null) {
-            handleCreate(name, description, extensions, searchInArch, policy);
+            handleCreate(name, description, extensions, searchInArch, policy, metadataTypeId);
         } else {
-            handleEdit(name, description, extensions, searchInArch, policy);
+            handleEdit(name, description, extensions, searchInArch, policy, metadataTypeId);
         }
     }
 
     private void handleCreate(String name, String description, String[] extensions,
-                               boolean searchInArchives, Policy policy) {
+                               boolean searchInArchives, Policy policy,
+                               MetadataTypeId metadataTypeId) {
         try {
             KeyPair rsa = rsaKeyPair.get();
             KeyPair admin = adminKeyPair.get();
@@ -473,7 +536,8 @@ public class TypeEditorPanel extends JPanel {
                     name,
                     description,
                     extensions,
-                    searchInArchives);
+                    searchInArchives,
+                    metadataTypeId);
 
             accessListManager.saveAccessList(accessList);
 
@@ -482,7 +546,7 @@ public class TypeEditorPanel extends JPanel {
 
             CustomTypeDefinition def = new CustomTypeDefinition(
                     rsa.getPublic(), name, description, extensions,
-                    searchInArchives, policy.isListFilesPublic());
+                    searchInArchives, policy.isListFilesPublic(), metadataTypeId);
 
             typeList.addCustomType(def);
 
@@ -494,7 +558,8 @@ public class TypeEditorPanel extends JPanel {
     }
 
     private void handleEdit(String name, String description, String[] extensions,
-                             boolean searchInArchives, Policy policy) {
+                             boolean searchInArchives, Policy policy,
+                             MetadataTypeId metadataTypeId) {
         if (editAdminKeyPair.isEmpty() || editAccessList.isEmpty()) {
             saveButton.setEnabled(true);
             return;
@@ -527,6 +592,10 @@ public class TypeEditorPanel extends JPanel {
                 accessList.appendBlock(new SetPolicyOp(policy), kp);
                 changed = true;
             }
+            if (!metadataTypeId.equals(state.getMetadataTypeId())) {
+                accessList.appendBlock(new SetMetadataTypeOp(metadataTypeId), kp);
+                changed = true;
+            }
 
             if (changed) {
                 accessListManager.saveAccessList(accessList);
@@ -535,7 +604,7 @@ public class TypeEditorPanel extends JPanel {
             MysterType type = existingType.toMysterType();
             CustomTypeDefinition updatedDef = new CustomTypeDefinition(
                     existingType.getPublicKey(), name, description, extensions,
-                    searchInArchives, policy.isListFilesPublic());
+                    searchInArchives, policy.isListFilesPublic(), metadataTypeId);
             typeList.updateCustomType(type, updatedDef);
 
             if (onSave != null) onSave.run();
@@ -554,6 +623,52 @@ public class TypeEditorPanel extends JPanel {
         if (text == null || text.trim().isEmpty()) return;
         String normalized = ExtensionNormalizer.normalize(text);
         if (!normalized.equals(text)) extensionsField.setText(normalized);
+    }
+
+    private JComboBox<MetadataTypeId> buildMetadataTypeSelector() {
+        List<MetadataTypeId> ids = new ArrayList<>();
+        addMetadataTypeId(ids, metadataTypeRegistry.generic().id());
+        for (MetadataType metadataType : metadataTypeRegistry.supportedTypes()) {
+            addMetadataTypeId(ids, metadataType.id());
+        }
+
+        MetadataTypeId current = existingType == null
+                ? MetadataTypeId.GENERIC
+                : existingType.getMetadataTypeId();
+        addMetadataTypeId(ids, current);
+
+        ids.remove(MetadataTypeId.GENERIC);
+        ids.sort(Comparator.comparing(MetadataTypeId::getDisplayName)
+                .thenComparing(MetadataTypeId::getIdentifier));
+        ids.add(0, MetadataTypeId.GENERIC);
+
+        JComboBox<MetadataTypeId> selector =
+                new JComboBox<>(ids.toArray(MetadataTypeId[]::new));
+        selector.setRenderer(new DefaultListCellRenderer() {
+            @Override
+            public Component getListCellRendererComponent(JList<?> list, Object value, int index,
+                    boolean isSelected, boolean cellHasFocus) {
+                Component component = super.getListCellRendererComponent(
+                        list, value, index, isSelected, cellHasFocus);
+                if (component instanceof JLabel label && value instanceof MetadataTypeId id) {
+                    label.setText(id.getDisplayName());
+                }
+                return component;
+            }
+        });
+        selector.setSelectedItem(current);
+        return selector;
+    }
+
+    private static void addMetadataTypeId(List<MetadataTypeId> ids, MetadataTypeId id) {
+        if (!ids.contains(id)) {
+            ids.add(id);
+        }
+    }
+
+    private MetadataTypeId selectedMetadataTypeId() {
+        Object selected = metadataTypeSelector.getSelectedItem();
+        return selected instanceof MetadataTypeId id ? id : MetadataTypeId.GENERIC;
     }
 
 

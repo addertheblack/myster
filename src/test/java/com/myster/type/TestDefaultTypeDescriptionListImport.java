@@ -49,6 +49,10 @@ class TestDefaultTypeDescriptionListImport {
     }
 
     private AccessList makeAccessList(String name) throws Exception {
+        return makeAccessList(name, MetadataTypeId.GENERIC);
+    }
+
+    private AccessList makeAccessList(String name, MetadataTypeId metadataTypeId) throws Exception {
         return AccessList.createGenesis(
                 rsaKeyPair.getPublic(),
                 edKeyPair,
@@ -58,7 +62,8 @@ class TestDefaultTypeDescriptionListImport {
                 name,
                 "description",
                 new String[]{"ext"},
-                false);
+                false,
+                metadataTypeId);
     }
 
     @Test
@@ -139,5 +144,28 @@ class TestDefaultTypeDescriptionListImport {
                     "Disabled state must survive restart (regression: setEnabledType was not persisting custom types)");
         }
     }
-}
 
+    @Test
+    void importAndRestartPreserveFutureMetadataTypeWithoutPrefsMetadata() throws Exception {
+        MetadataTypeId future = MetadataTypeId.fromString("spatial_audio");
+        AccessList accessList = makeAccessList("Future Audio", future);
+        MysterType type = accessList.getMysterType();
+
+        try (MockedStatic<MysterGlobals> globals = mockStatic(MysterGlobals.class)) {
+            globals.when(MysterGlobals::getAccessListPath).thenReturn(tempDir);
+            globals.when(MysterGlobals::getPrivateDataPath).thenReturn(tempDir);
+
+            DefaultTypeDescriptionList first =
+                    new DefaultTypeDescriptionList(testPrefs, accessListManager);
+            first.importType(accessList);
+
+            assertEquals(future, first.get(type).orElseThrow().getMetadataTypeId());
+            assertArrayEquals(new String[] {"enabled"}, testPrefs.node("CustomTypes")
+                    .node(type.toHexString()).keys());
+
+            DefaultTypeDescriptionList restarted =
+                    new DefaultTypeDescriptionList(testPrefs, accessListManager);
+            assertEquals(future, restarted.get(type).orElseThrow().getMetadataTypeId());
+        }
+    }
+}

@@ -2,6 +2,7 @@ package com.myster.filemanager;
 
 import java.util.Collection;
 
+import com.myster.type.MetadataTypeId;
 import com.myster.type.MysterType;
 import com.myster.type.TypeDescription;
 import com.myster.type.TypeDescriptionList;
@@ -10,7 +11,13 @@ import com.myster.type.TypeDescriptionList;
  * Registry of metadata profiles keyed by stable metadata type id.
  */
 public interface MetadataTypeRegistry {
-    MetadataType get(String metadataTypeId);
+    /**
+     * Resolves a serialized profile identity to local runtime behavior.
+     *
+     * @param metadataTypeId known or preserved future profile identity
+     * @return the matching implementation, or Generic for an unsupported/non-canonical id
+     */
+    MetadataType get(MetadataTypeId metadataTypeId);
 
     /**
      * Returns the metadata profile assigned to a concrete Myster network type.
@@ -23,7 +30,7 @@ public interface MetadataTypeRegistry {
      */
     default MetadataType get(TypeDescriptionList tdList, MysterType type) {
         return tdList.get(type)
-                .flatMap(TypeDescription::getMetadataTypeId)
+                .map(TypeDescription::getMetadataTypeId)
                 .map(this::get)
                 .orElseGet(this::generic);
     }

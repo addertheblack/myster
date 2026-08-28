@@ -3,6 +3,7 @@ package com.myster.access;
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.io.IOException;
+import java.util.Map;
 
 /**
  * Represents an operation that can be recorded in an access list block.
@@ -61,24 +62,38 @@ public interface BlockOperation {
     static BlockOperation deserialize(DataInputStream in) throws IOException {
         String typeString = in.readUTF();
         OpType type = OpType.fromString(typeString);
+        return BlockOperationDeserializers.deserialize(type, in);
+    }
+}
 
-        if (!type.isCanonical()) {
-            return UnknownOp.deserializePayload(type, in);
-        }
+final class BlockOperationDeserializers {
+    private static final Map<OpType, PayloadDeserializer> DESERIALIZERS = Map.ofEntries(
+            Map.entry(OpType.SET_POLICY, SetPolicyOp::deserializePayload),
+            Map.entry(OpType.ADD_WRITER, AddWriterOp::deserializePayload),
+            Map.entry(OpType.REMOVE_WRITER, RemoveWriterOp::deserializePayload),
+            Map.entry(OpType.ADD_MEMBER, AddMemberOp::deserializePayload),
+            Map.entry(OpType.REMOVE_MEMBER, RemoveMemberOp::deserializePayload),
+            Map.entry(OpType.ADD_ONRAMP, AddOnrampOp::deserializePayload),
+            Map.entry(OpType.REMOVE_ONRAMP, RemoveOnrampOp::deserializePayload),
+            Map.entry(OpType.SET_TYPE_PUBLIC_KEY, SetTypePublicKeyOp::deserializePayload),
+            Map.entry(OpType.SET_NAME, SetNameOp::deserializePayload),
+            Map.entry(OpType.SET_DESCRIPTION, SetDescriptionOp::deserializePayload),
+            Map.entry(OpType.SET_EXTENSIONS, SetExtensionsOp::deserializePayload),
+            Map.entry(OpType.SET_SEARCH_IN_ARCHIVES,
+                    SetSearchInArchivesOp::deserializePayload),
+            Map.entry(OpType.SET_METADATA_TYPE, SetMetadataTypeOp::deserializePayload));
 
-        if (type.equals(OpType.SET_POLICY)) return SetPolicyOp.deserializePayload(in);
-        if (type.equals(OpType.ADD_WRITER)) return AddWriterOp.deserializePayload(in);
-        if (type.equals(OpType.REMOVE_WRITER)) return RemoveWriterOp.deserializePayload(in);
-        if (type.equals(OpType.ADD_MEMBER)) return AddMemberOp.deserializePayload(in);
-        if (type.equals(OpType.REMOVE_MEMBER)) return RemoveMemberOp.deserializePayload(in);
-        if (type.equals(OpType.ADD_ONRAMP)) return AddOnrampOp.deserializePayload(in);
-        if (type.equals(OpType.REMOVE_ONRAMP)) return RemoveOnrampOp.deserializePayload(in);
-        if (type.equals(OpType.SET_TYPE_PUBLIC_KEY)) return SetTypePublicKeyOp.deserializePayload(in);
-        if (type.equals(OpType.SET_NAME)) return SetNameOp.deserializePayload(in);
-        if (type.equals(OpType.SET_DESCRIPTION)) return SetDescriptionOp.deserializePayload(in);
-        if (type.equals(OpType.SET_EXTENSIONS)) return SetExtensionsOp.deserializePayload(in);
-        if (type.equals(OpType.SET_SEARCH_IN_ARCHIVES)) return SetSearchInArchivesOp.deserializePayload(in);
+    private BlockOperationDeserializers() {}
 
-        return UnknownOp.deserializePayload(type, in);
+    static BlockOperation deserialize(OpType type, DataInputStream in) throws IOException {
+        PayloadDeserializer deserializer = DESERIALIZERS.get(type);
+        return deserializer == null
+                ? UnknownOp.deserializePayload(type, in)
+                : deserializer.deserialize(in);
+    }
+
+    @FunctionalInterface
+    private interface PayloadDeserializer {
+        BlockOperation deserialize(DataInputStream in) throws IOException;
     }
 }

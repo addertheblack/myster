@@ -10,9 +10,6 @@
 
 package com.myster.type;
 
-import java.util.Locale;
-import java.util.Optional;
-
 /**
  * This class represents a MysterType and the meta data associated with that
  * MysterType (ie: it describes the type). Usually this consists of the
@@ -25,9 +22,10 @@ import java.util.Optional;
  * <p>The {@link #isPublic()} flag indicates whether non-members may list and download
  * files of this type. Built-in types are always public ({@code true}). Custom types
  * carry the value from their access-list policy ({@link com.myster.access.Policy#isListFilesPublic()}).
- * <p>The optional metadata type id is a stable lowercase key, such as {@code audio} or
- * {@code image}, that tells runtime metadata code which extraction and display profile this
- * concrete network type subscribes to.
+ * <p>The metadata type id tells runtime metadata code which extraction and display profile this
+ * concrete network type subscribes to. Missing legacy assignments use
+ * {@link MetadataTypeId#GENERIC}; non-canonical values preserve profiles introduced by newer
+ * Myster versions.
  *
  * @see TypeDescriptionList where TypeDescription is used
  * @author Andrew Trumper
@@ -42,7 +40,7 @@ public class TypeDescription {
     private final String internalName;
     private final TypeSource source;
     private final boolean isPublic;
-    private final String metadataTypeId;
+    private final MetadataTypeId metadataTypeId;
 
     public TypeDescription(MysterType type, String internalName, String description, String[] extensions,
             boolean isArchived, boolean isEnabledByDefault) {
@@ -77,18 +75,18 @@ public class TypeDescription {
              isEnabledByDefault,
              source,
              isPublic,
-             null);
+             MetadataTypeId.GENERIC);
     }
 
     /**
      * Creates a TypeDescription object with an explicit source, public/private policy flag, and
-     * optional metadata type id.
+     * metadata type id.
      *
-     * @param metadataTypeId stable metadata profile id, or null/blank for generic behavior
+     * @param metadataTypeId stable metadata profile id
      */
     public TypeDescription(MysterType type, String internalName, String description, String[] extensions,
             boolean isArchived, boolean isEnabledByDefault, TypeSource source, boolean isPublic,
-            String metadataTypeId) {
+            MetadataTypeId metadataTypeId) {
         this.type = type;
         this.internalName = internalName;
         this.description = description;
@@ -97,7 +95,7 @@ public class TypeDescription {
         this.isEnabledByDefault = isEnabledByDefault;
         this.source = source;
         this.isPublic = isPublic;
-        this.metadataTypeId = normalizeMetadataTypeId(metadataTypeId);
+        this.metadataTypeId = java.util.Objects.requireNonNull(metadataTypeId);
     }
 
     public String getTypeAsString() {
@@ -139,10 +137,12 @@ public class TypeDescription {
     }
 
     /**
-     * Returns the metadata profile id this concrete type subscribes to, if any.
+     * Returns the metadata profile id this concrete type subscribes to.
+     *
+     * @return non-null profile id; Generic represents a missing legacy assignment
      */
-    public Optional<String> getMetadataTypeId() {
-        return Optional.ofNullable(metadataTypeId);
+    public MetadataTypeId getMetadataTypeId() {
+        return metadataTypeId;
     }
 
     /**
@@ -195,13 +195,5 @@ public class TypeDescription {
 
     public String toString() {
         return description + " ("+ type + ")";
-    }
-
-    private static String normalizeMetadataTypeId(String metadataTypeId) {
-        if (metadataTypeId == null || metadataTypeId.isBlank()) {
-            return null;
-        }
-
-        return metadataTypeId.trim().toLowerCase(Locale.ROOT);
     }
 }

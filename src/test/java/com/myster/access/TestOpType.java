@@ -24,6 +24,7 @@ class TestOpType {
         assertTrue(OpType.SET_DESCRIPTION.isCanonical());
         assertTrue(OpType.SET_EXTENSIONS.isCanonical());
         assertTrue(OpType.SET_SEARCH_IN_ARCHIVES.isCanonical());
+        assertTrue(OpType.SET_METADATA_TYPE.isCanonical());
     }
 
     @Test
@@ -38,6 +39,7 @@ class TestOpType {
         assertSame(OpType.SET_POLICY, OpType.fromString("SET_POLICY"));
         assertSame(OpType.ADD_MEMBER, OpType.fromString("ADD_MEMBER"));
         assertSame(OpType.SET_NAME, OpType.fromString("SET_NAME"));
+        assertSame(OpType.SET_METADATA_TYPE, OpType.fromString("SET_METADATA_TYPE"));
     }
 
     @Test
@@ -71,6 +73,6 @@ class TestOpType {
         assertEquals("SET_DESCRIPTION", OpType.SET_DESCRIPTION.getIdentifier());
         assertEquals("SET_EXTENSIONS", OpType.SET_EXTENSIONS.getIdentifier());
         assertEquals("SET_SEARCH_IN_ARCHIVES", OpType.SET_SEARCH_IN_ARCHIVES.getIdentifier());
+        assertEquals("SET_METADATA_TYPE", OpType.SET_METADATA_TYPE.getIdentifier());
     }
 }
-

@@ -7,6 +7,7 @@ import java.util.Optional;
 
 import com.myster.access.AccessList;
 import com.myster.type.CustomTypeDefinition;
+import com.myster.type.MetadataTypeId;
 import com.myster.type.MysterType;
 import com.myster.type.TypeDescription;
 import com.myster.type.TypeDescriptionList;
@@ -53,16 +54,16 @@ class TestClientInfoFactoryUtils {
         @Override
         public Optional<TypeDescription> get(MysterType type) {
             if (AUDIO.equals(type)) {
-                return Optional.of(typeDescription(AUDIO, "Audio", "audio"));
+                return Optional.of(typeDescription(AUDIO, "Audio", MetadataTypeId.AUDIO));
             }
             if (IMAGE.equals(type)) {
-                return Optional.of(typeDescription(IMAGE, "Image", "image"));
+                return Optional.of(typeDescription(IMAGE, "Image", MetadataTypeId.IMAGE));
             }
             if (VIDEO.equals(type)) {
-                return Optional.of(typeDescription(VIDEO, "Video", "video"));
+                return Optional.of(typeDescription(VIDEO, "Video", MetadataTypeId.VIDEO));
             }
             if (OTHER.equals(type)) {
-                return Optional.of(typeDescription(OTHER, "Other", null));
+                return Optional.of(typeDescription(OTHER, "Other", MetadataTypeId.GENERIC));
             }
             return Optional.empty();
         }
@@ -115,7 +116,7 @@ class TestClientInfoFactoryUtils {
 
         private static TypeDescription typeDescription(MysterType type,
                                                        String name,
-                                                       String metadataTypeId) {
+                                                       MetadataTypeId metadataTypeId) {
             return new TypeDescription(type,
                     name,
                     name,

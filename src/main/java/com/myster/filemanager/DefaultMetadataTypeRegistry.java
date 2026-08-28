@@ -2,17 +2,18 @@ package com.myster.filemanager;
 
 import java.util.Collection;
 import java.util.LinkedHashMap;
-import java.util.Locale;
 import java.util.Map;
+
+import com.myster.type.MetadataTypeId;
 
 /**
  * Built-in metadata profile registry.
  */
 public class DefaultMetadataTypeRegistry implements MetadataTypeRegistry {
-    private final Map<String, MetadataType> types;
+    private final Map<MetadataTypeId, MetadataType> types;
 
     public DefaultMetadataTypeRegistry() {
-        Map<String, MetadataType> mutableTypes = new LinkedHashMap<>();
+        Map<MetadataTypeId, MetadataType> mutableTypes = new LinkedHashMap<>();
         mutableTypes.put(MetadataType.GENERIC.id(), MetadataType.GENERIC);
         mutableTypes.put(MetadataType.AUDIO.id(), MetadataType.AUDIO);
         mutableTypes.put(MetadataType.IMAGE.id(), MetadataType.IMAGE);
@@ -21,12 +22,8 @@ public class DefaultMetadataTypeRegistry implements MetadataTypeRegistry {
     }
 
     @Override
-    public MetadataType get(String metadataTypeId) {
-        String normalizedId = normalize(metadataTypeId);
-        if (normalizedId.isEmpty()) {
-            return generic();
-        }
-        return types.getOrDefault(normalizedId, generic());
+    public MetadataType get(MetadataTypeId metadataTypeId) {
+        return types.getOrDefault(metadataTypeId, generic());
     }
 
     @Override
@@ -37,12 +34,5 @@ public class DefaultMetadataTypeRegistry implements MetadataTypeRegistry {
     @Override
     public Collection<MetadataType> supportedTypes() {
         return types.values();
-    }
-
-    static String normalize(String metadataTypeId) {
-        if (metadataTypeId == null) {
-            return "";
-        }
-        return metadataTypeId.trim().toLowerCase(Locale.ROOT);
     }
 }

@@ -12,6 +12,7 @@ import com.myster.hash.FileHash;
 import com.myster.hash.FileHashEvent;
 import com.myster.hash.FileHashListener;
 import com.myster.type.CustomTypeDefinition;
+import com.myster.type.MetadataTypeId;
 import com.myster.type.MysterType;
 import com.myster.type.TypeDescription;
 import com.myster.type.TypeDescriptionList;
@@ -407,7 +408,7 @@ class TestFileTypeList {
         FileTypeList.FileListIndexCall indexCall = new FileTypeList.FileListIndexCall(testType,
                 testRoot,
                 hashProvider,
-                new TestTypeDescriptionList("video"),
+                new TestTypeDescriptionList(MetadataTypeId.VIDEO),
                 new NoOpFileMetadataExtractor(),
                 new DefaultMetadataTypeRegistry());
 
@@ -457,10 +458,10 @@ class TestFileTypeList {
         private final TypeDescription testTypeDescription;
 
         public TestTypeDescriptionList() {
-            this(null);
+            this(MetadataTypeId.GENERIC);
         }
 
-        public TestTypeDescriptionList(String metadataTypeId) {
+        public TestTypeDescriptionList(MetadataTypeId metadataTypeId) {
             testTypeDescription = new TypeDescription(
                 new MysterType(testTypeCid()),
                 "TestType",           // internalName

@@ -489,6 +489,7 @@ public class Myster {
                 preferencesGui.addPanel(new com.myster.type.ui.TypeManagerPreferences(
                         tdList,
                         accessListManager,
+                        metadataTypeRegistry,
                         java.util.Optional.of(typeEditorServerSource),
                         identity.getMainIdentity().map(kp -> ServerCid.fromPublicKey(kp.getPublic()))));
                 preferencesGui.addPanel(new ThemePane(preferences));

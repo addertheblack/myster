@@ -12,6 +12,7 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 
+import com.myster.type.MetadataTypeId;
 import com.myster.type.MysterType;
 
 /**
@@ -69,7 +70,8 @@ public class AccessList {
      *   <li>{@code ADD_WRITER} — the admin's Ed25519 public key</li>
      *   <li>Any initial member operations</li>
      *   <li>Any initial onramp operations</li>
-     *   <li>Any metadata operations (name, description, extensions, searchInArchives)</li>
+     *   <li>Any metadata operations (name, description, extensions, searchInArchives, and an
+     *       optional non-Generic metadata type)</li>
      *   <li>{@code SET_POLICY} — initial policy settings</li>
      * </ol>
      *
@@ -95,6 +97,43 @@ public class AccessList {
             String description,
             String[] extensions,
             boolean searchInArchives) throws IOException {
+        return createGenesis(typePublicKey, adminKeyPair, initialMembers, initialOnramps, policy,
+                name, description, extensions, searchInArchives, MetadataTypeId.GENERIC);
+    }
+
+    /**
+     * Creates a genesis access list with an explicit metadata profile association.
+     *
+     * <p>Generic is the default and is omitted from genesis. A non-Generic value is serialized
+     * after descriptive type metadata and before policy. Later explicit Generic operations clear
+     * a prior specialized or unknown association through normal last-operation-wins replay.
+     *
+     * @param metadataTypeId metadata extraction/display association
+     * @param typePublicKey the type's RSA public key
+     * @param adminKeyPair signing key for the initial writer
+     * @param initialMembers members included in genesis
+     * @param initialOnramps initial discovery endpoints
+     * @param policy initial access policy
+     * @param name initial user-facing type name, or null
+     * @param description initial type description, or null
+     * @param extensions initial extension filter, or null
+     * @param searchInArchives whether archive contents should be indexed
+     * @return a new signed access list
+     * @throws IOException if operation serialization or signing fails
+     */
+    public static AccessList createGenesis(
+            PublicKey typePublicKey,
+            KeyPair adminKeyPair,
+            List<AddMemberOp> initialMembers,
+            List<String> initialOnramps,
+            Policy policy,
+            String name,
+            String description,
+            String[] extensions,
+            boolean searchInArchives,
+            MetadataTypeId metadataTypeId) throws IOException {
+
+        java.util.Objects.requireNonNull(metadataTypeId, "Metadata type cannot be null");
 
         MysterType mysterType = new MysterType(typePublicKey);
         byte[] mysterTypeBytes = mysterType.toBytes();
@@ -109,7 +148,7 @@ public class AccessList {
         DataOutputStream dos = new DataOutputStream(baos);
 
         // Count operations
-        int opCount = 2; // SET_TYPE_PUBLIC_KEY + ADD_WRITER + SET_POLICY = minimum
+        int opCount = 2; // SET_TYPE_PUBLIC_KEY + ADD_WRITER
         opCount += initialMembers.size();
         opCount += initialOnramps.size();
         opCount += 1; // SET_POLICY
@@ -117,6 +156,10 @@ public class AccessList {
         if (description != null) opCount++;
         if (extensions != null) opCount++;
         opCount++; // SET_SEARCH_IN_ARCHIVES
+        if (!MetadataTypeId.GENERIC.equals(metadataTypeId)) {
+            opCount++;
+        }
+
         dos.writeInt(opCount);
 
         // 1. SET_TYPE_PUBLIC_KEY (required, must be first)
@@ -140,6 +183,9 @@ public class AccessList {
         if (description != null) new SetDescriptionOp(description).serialize(dos);
         if (extensions != null) new SetExtensionsOp(extensions).serialize(dos);
         new SetSearchInArchivesOp(searchInArchives).serialize(dos);
+        if (!MetadataTypeId.GENERIC.equals(metadataTypeId)) {
+            new SetMetadataTypeOp(metadataTypeId).serialize(dos);
+        }
 
         // 6. SET_POLICY
         new SetPolicyOp(policy).serialize(dos);

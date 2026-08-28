@@ -26,7 +26,7 @@ class TestFileMetadataCacheKey {
                 Files.size(file));
 
         assertEquals(first, second);
-        assertEquals(MetadataType.AUDIO.id(), first.metadataTypeId());
+        assertEquals(MetadataType.AUDIO.id().getIdentifier(), first.metadataTypeId());
         assertEquals(MetadataType.AUDIO.cacheVersion(), first.cacheVersion());
         assertEquals(first.entryKey(), second.entryKey());
         assertEquals(first.shardId(), second.shardId());

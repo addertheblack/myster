@@ -1,8 +1,5 @@
 package com.myster.type;
 
-import java.security.KeyPair;
-import java.security.KeyPairGenerator;
-import java.security.NoSuchAlgorithmException;
 import java.security.PublicKey;
 import java.util.Arrays;
 import java.util.Base64;
@@ -19,9 +16,11 @@ import java.util.prefs.Preferences;
  *   <li>File extensions to filter by</li>
  *   <li>Whether to search inside archive files (ZIP, etc.)</li>
  *   <li>Whether the type is public or private (private not yet implemented)</li>
+ *   <li>The metadata extraction and display profile</li>
  * </ul>
  *
- * <p>Instances can be serialized to/from Java Preferences for persistence.
+ * <p>The type's access list is the canonical store for these values. Java Preferences retain only
+ * enabled state; the deprecated preferences reader exists solely for legacy migration.
  */
 public class CustomTypeDefinition {
     private final PublicKey publicKey;
@@ -30,6 +29,7 @@ public class CustomTypeDefinition {
     private final String[] extensions;
     private final boolean searchInArchives;
     private final boolean isPublic;
+    private final MetadataTypeId metadataTypeId;
 
     // Preference keys
     private static final String KEY_NAME = "name";
@@ -52,6 +52,24 @@ public class CustomTypeDefinition {
      */
     public CustomTypeDefinition(PublicKey publicKey, String name, String description,
                                  String[] extensions, boolean searchInArchives, boolean isPublic) {
+        this(publicKey, name, description, extensions, searchInArchives, isPublic,
+                MetadataTypeId.GENERIC);
+    }
+
+    /**
+     * Creates a custom type definition with an explicit metadata profile association.
+     *
+     * @param publicKey the public key that defines this type
+     * @param name user-readable name
+     * @param description user-readable description
+     * @param extensions file extensions accepted by the type
+     * @param searchInArchives whether archives should be searched
+     * @param isPublic whether non-members may list and download files
+     * @param metadataTypeId metadata extraction and display profile
+     */
+    public CustomTypeDefinition(PublicKey publicKey, String name, String description,
+                                 String[] extensions, boolean searchInArchives, boolean isPublic,
+                                 MetadataTypeId metadataTypeId) {
         if (publicKey == null) {
             throw new IllegalArgumentException("Public key cannot be null");
         }
@@ -68,31 +86,7 @@ public class CustomTypeDefinition {
         this.extensions = extensions.clone();
         this.searchInArchives = searchInArchives;
         this.isPublic = isPublic;
-    }
-
-    /**
-     * Generates a new custom type definition with a freshly generated key pair.
-     *
-     * @param name user-readable name for this type
-     * @param description user-readable description
-     * @param extensions file extensions to filter by
-     * @param searchInArchives whether to search inside archive files
-     * @param isPublic whether this is a public network
-     * @return a new CustomTypeDefinition with a generated public key
-     * @throws IllegalStateException if key generation fails
-     */
-    public static CustomTypeDefinition generateNew(String name, String description,
-                                                   String[] extensions, boolean searchInArchives, boolean isPublic) {
-        try {
-            KeyPairGenerator keyGen = KeyPairGenerator.getInstance("RSA");
-            keyGen.initialize(2048);
-            KeyPair keyPair = keyGen.generateKeyPair();
-
-            return new CustomTypeDefinition(keyPair.getPublic(), name, description,
-                                             extensions, searchInArchives, isPublic);
-        } catch (NoSuchAlgorithmException e) {
-            throw new IllegalStateException("RSA algorithm not available", e);
-        }
+        this.metadataTypeId = Objects.requireNonNull(metadataTypeId, "Metadata type cannot be null");
     }
 
     /**
@@ -180,6 +174,11 @@ public class CustomTypeDefinition {
         return isPublic;
     }
 
+    /** Returns the metadata profile association, including preserved future values. */
+    public MetadataTypeId getMetadataTypeId() {
+        return metadataTypeId;
+    }
+
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;
@@ -190,12 +189,14 @@ public class CustomTypeDefinition {
                Objects.equals(publicKey, that.publicKey) &&
                Objects.equals(name, that.name) &&
                Objects.equals(description, that.description) &&
+               Objects.equals(metadataTypeId, that.metadataTypeId) &&
                Arrays.equals(extensions, that.extensions);
     }
 
     @Override
     public int hashCode() {
-        int result = Objects.hash(publicKey, name, description, searchInArchives, isPublic);
+        int result = Objects.hash(publicKey, name, description, searchInArchives, isPublic,
+                metadataTypeId);
         result = 31 * result + Arrays.hashCode(extensions);
         return result;
     }
@@ -207,7 +208,7 @@ public class CustomTypeDefinition {
                ", extensions=" + Arrays.toString(extensions) +
                ", searchInArchives=" + searchInArchives +
                ", isPublic=" + isPublic +
+               ", metadataTypeId=" + metadataTypeId +
                '}';
     }
 }
-

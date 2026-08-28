@@ -9,6 +9,7 @@ import java.security.KeyPair;
 import java.security.KeyPairGenerator;
 
 import com.myster.cid.ServerCid;
+import com.myster.type.MetadataTypeId;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 
@@ -152,6 +153,60 @@ class TestBlockOperation {
     }
 
     @Test
+    void setMetadataTypeRoundTripsKnownAndFutureIds() throws IOException {
+        SetMetadataTypeOp audio = (SetMetadataTypeOp) roundTrip(
+                new SetMetadataTypeOp(MetadataTypeId.AUDIO));
+        MetadataTypeId futureId = MetadataTypeId.fromString("spatial_audio");
+        SetMetadataTypeOp future = (SetMetadataTypeOp) roundTrip(
+                new SetMetadataTypeOp(futureId));
+
+        assertSame(MetadataTypeId.AUDIO, audio.getMetadataTypeId());
+        assertEquals(futureId, future.getMetadataTypeId());
+        assertFalse(future.getMetadataTypeId().isCanonical());
+    }
+
+    @Test
+    void setMetadataTypePayloadRoundTripsAsUnknownOpaqueFrame() throws IOException {
+        ByteArrayOutputStream serialized = new ByteArrayOutputStream();
+        new SetMetadataTypeOp(MetadataTypeId.IMAGE)
+                .serializePayload(new DataOutputStream(serialized));
+
+        UnknownOp unknown = UnknownOp.deserializePayload(
+                OpType.fromString("FUTURE_SET_METADATA_TYPE"),
+                new DataInputStream(new ByteArrayInputStream(serialized.toByteArray())));
+        ByteArrayOutputStream restored = new ByteArrayOutputStream();
+        unknown.serializePayload(new DataOutputStream(restored));
+
+        assertArrayEquals(serialized.toByteArray(), restored.toByteArray());
+    }
+
+    @Test
+    void setMetadataTypeRejectsInvalidFrames() throws IOException {
+        ByteArrayOutputStream negative = new ByteArrayOutputStream();
+        new DataOutputStream(negative).writeInt(-1);
+        assertThrows(IOException.class, () -> SetMetadataTypeOp.deserializePayload(
+                new DataInputStream(new ByteArrayInputStream(negative.toByteArray()))));
+
+        ByteArrayOutputStream truncated = new ByteArrayOutputStream();
+        DataOutputStream truncatedOut = new DataOutputStream(truncated);
+        truncatedOut.writeInt(5);
+        truncatedOut.writeByte(1);
+        assertThrows(IOException.class, () -> SetMetadataTypeOp.deserializePayload(
+                new DataInputStream(new ByteArrayInputStream(truncated.toByteArray()))));
+
+        ByteArrayOutputStream inner = new ByteArrayOutputStream();
+        DataOutputStream innerOut = new DataOutputStream(inner);
+        innerOut.writeUTF("audio");
+        innerOut.writeByte(7);
+        ByteArrayOutputStream trailing = new ByteArrayOutputStream();
+        DataOutputStream trailingOut = new DataOutputStream(trailing);
+        trailingOut.writeInt(inner.size());
+        trailingOut.write(inner.toByteArray());
+        assertThrows(IOException.class, () -> SetMetadataTypeOp.deserializePayload(
+                new DataInputStream(new ByteArrayInputStream(trailing.toByteArray()))));
+    }
+
+    @Test
     void unknownOpTypeDeserializesToUnknownOp() throws IOException {
         ByteArrayOutputStream baos = new ByteArrayOutputStream();
         DataOutputStream dos = new DataOutputStream(baos);
@@ -182,4 +237,3 @@ class TestBlockOperation {
         assertArrayEquals(payload, restored.getRawPayload());
     }
 }
-

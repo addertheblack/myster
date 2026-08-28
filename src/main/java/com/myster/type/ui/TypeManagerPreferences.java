@@ -38,6 +38,8 @@ import com.general.util.IconLoader;
 import com.general.util.MessagePanel;
 import com.myster.access.AccessListManager;
 import com.myster.cid.ServerCid;
+import com.myster.filemanager.DefaultMetadataTypeRegistry;
+import com.myster.filemanager.MetadataTypeRegistry;
 import com.myster.pref.ui.PreferencesPanel;
 import com.myster.type.CustomTypeDefinition;
 import com.myster.type.MysterType;
@@ -65,6 +67,7 @@ import com.myster.type.TypeSource;
 public class TypeManagerPreferences extends PreferencesPanel {
     private final TypeDescriptionList tdList;
     private final AccessListManager accessListManager;
+    private final MetadataTypeRegistry metadataTypeRegistry;
     private final Optional<TypeEditorServerSource> serverSource;
     private final Optional<ServerCid> localServerCid;
     private MCList<MysterType> mcList;
@@ -97,8 +100,27 @@ public class TypeManagerPreferences extends PreferencesPanel {
                                   AccessListManager accessListManager,
                                   Optional<TypeEditorServerSource> serverSource,
                                   Optional<ServerCid> localServerCid) {
+        this(tdList, accessListManager, new DefaultMetadataTypeRegistry(), serverSource,
+                localServerCid);
+    }
+
+    /**
+     * Creates a type manager using the supplied registry as the editor's profile source.
+     *
+     * @param tdList type descriptions to display and update
+     * @param accessListManager canonical custom-type storage
+     * @param metadataTypeRegistry source of selectable local metadata profiles
+     * @param serverSource optional member-selection source
+     * @param localServerCid optional local member identity for new types
+     */
+    public TypeManagerPreferences(TypeDescriptionList tdList,
+                                  AccessListManager accessListManager,
+                                  MetadataTypeRegistry metadataTypeRegistry,
+                                  Optional<TypeEditorServerSource> serverSource,
+                                  Optional<ServerCid> localServerCid) {
         this.tdList = tdList;
         this.accessListManager = accessListManager;
+        this.metadataTypeRegistry = java.util.Objects.requireNonNull(metadataTypeRegistry);
         this.serverSource = serverSource;
         this.localServerCid = localServerCid;
         setLayout(new GridBagLayout());
@@ -362,7 +384,7 @@ public class TypeManagerPreferences extends PreferencesPanel {
 
         // Create editor panel with callbacks
         editorPanel = new TypeEditorPanel(tdList, accessListManager, existingType, serverSource,
-            localServerCid,
+            localServerCid, metadataTypeRegistry,
             this::onEditorSave,
             this::onEditorCancel
         );
@@ -578,4 +600,3 @@ public class TypeManagerPreferences extends PreferencesPanel {
         });
     }
 }
-

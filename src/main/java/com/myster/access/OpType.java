@@ -1,8 +1,8 @@
 package com.myster.access;
 
 import java.util.Map;
-import java.util.Objects;
-import java.util.concurrent.ConcurrentHashMap;
+
+import com.general.util.TypeSafeEnum;
 
 /**
  * Extensible, string-based operation type identifier for access list blocks.
@@ -12,7 +12,7 @@ import java.util.concurrent.ConcurrentHashMap;
  * list containing operations it doesn't recognize. Unknown operations are preserved in the
  * chain and can be displayed in the UI as their raw string type.
  *
- * <p>Uses the extensible enum pattern:
+ * <p>Extends {@link TypeSafeEnum} using the extensible enum pattern:
  * <ul>
  *   <li><b>Canonical</b> types are ones this version of the code recognizes and can interpret.</li>
  *   <li><b>Non-canonical</b> types represent unknown operations from future versions — they are
@@ -23,7 +23,7 @@ import java.util.concurrent.ConcurrentHashMap;
  * the format (e.g. {@code "SET_POLICY"} vs {@code "SET_NAME"} are self-describing and
  * unlikely to collide).
  */
-public final class OpType {
+public final class OpType extends TypeSafeEnum<OpType> {
 
     // Known canonical types — access control operations
     public static final OpType SET_POLICY = new OpType("SET_POLICY");
@@ -40,34 +40,29 @@ public final class OpType {
     public static final OpType SET_DESCRIPTION = new OpType("SET_DESCRIPTION");
     public static final OpType SET_EXTENSIONS = new OpType("SET_EXTENSIONS");
     public static final OpType SET_SEARCH_IN_ARCHIVES = new OpType("SET_SEARCH_IN_ARCHIVES");
+    public static final OpType SET_METADATA_TYPE = new OpType("SET_METADATA_TYPE");
 
-    private static final Map<String, OpType> KNOWN_TYPES = new ConcurrentHashMap<>();
-
-    static {
-        KNOWN_TYPES.put(SET_POLICY.identifier, SET_POLICY);
-        KNOWN_TYPES.put(ADD_WRITER.identifier, ADD_WRITER);
-        KNOWN_TYPES.put(REMOVE_WRITER.identifier, REMOVE_WRITER);
-        KNOWN_TYPES.put(ADD_MEMBER.identifier, ADD_MEMBER);
-        KNOWN_TYPES.put(REMOVE_MEMBER.identifier, REMOVE_MEMBER);
-        KNOWN_TYPES.put(ADD_ONRAMP.identifier, ADD_ONRAMP);
-        KNOWN_TYPES.put(REMOVE_ONRAMP.identifier, REMOVE_ONRAMP);
-        KNOWN_TYPES.put(SET_TYPE_PUBLIC_KEY.identifier, SET_TYPE_PUBLIC_KEY);
-        KNOWN_TYPES.put(SET_NAME.identifier, SET_NAME);
-        KNOWN_TYPES.put(SET_DESCRIPTION.identifier, SET_DESCRIPTION);
-        KNOWN_TYPES.put(SET_EXTENSIONS.identifier, SET_EXTENSIONS);
-        KNOWN_TYPES.put(SET_SEARCH_IN_ARCHIVES.identifier, SET_SEARCH_IN_ARCHIVES);
-    }
-
-    private final String identifier;
-    private final boolean canonical;
+    private static final Map<String, OpType> KNOWN_TYPES = canonicalValueMap(
+            SET_POLICY,
+            ADD_WRITER,
+            REMOVE_WRITER,
+            ADD_MEMBER,
+            REMOVE_MEMBER,
+            ADD_ONRAMP,
+            REMOVE_ONRAMP,
+            SET_TYPE_PUBLIC_KEY,
+            SET_NAME,
+            SET_DESCRIPTION,
+            SET_EXTENSIONS,
+            SET_SEARCH_IN_ARCHIVES,
+            SET_METADATA_TYPE);
 
     private OpType(String identifier, boolean canonical) {
-        this.identifier = Objects.requireNonNull(identifier);
-        this.canonical = canonical;
+        super(identifier, canonical);
     }
 
     private OpType(String identifier) {
-        this(identifier, true);
+        super(identifier);
     }
 
     /**
@@ -78,49 +73,6 @@ public final class OpType {
      * @return the corresponding OpType (canonical if known, non-canonical otherwise)
      */
     public static OpType fromString(String identifier) {
-        OpType known = KNOWN_TYPES.get(identifier);
-        if (known != null) {
-            return known;
-        }
-        return new OpType(identifier, false);
-    }
-
-    /**
-     * Returns the string identifier used in the serialized format.
-     *
-     * @return the operation type identifier
-     */
-    public String getIdentifier() {
-        return identifier;
-    }
-
-    /**
-     * Whether this operation type is recognized by the current version.
-     * Non-canonical types come from future versions and their effect on
-     * derived state is skipped during chain replay.
-     *
-     * @return true if this is a known operation type
-     */
-    public boolean isCanonical() {
-        return canonical;
-    }
-
-    @Override
-    public boolean equals(Object o) {
-        if (this == o) return true;
-        if (!(o instanceof OpType other)) return false;
-        return identifier.equals(other.identifier);
-    }
-
-    @Override
-    public int hashCode() {
-        return identifier.hashCode();
-    }
-
-    @Override
-    public String toString() {
-        return identifier + (canonical ? "" : " (non-canonical)");
+        return from(identifier, KNOWN_TYPES, id -> new OpType(id, false));
     }
 }
-
-

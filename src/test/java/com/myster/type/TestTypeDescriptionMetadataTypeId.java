@@ -1,13 +1,12 @@
 package com.myster.type;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import org.junit.jupiter.api.Test;
 
 class TestTypeDescriptionMetadataTypeId {
     @Test
-    void constructorWithoutMetadataTypeIdReturnsEmpty() {
+    void constructorWithoutMetadataTypeIdReturnsGeneric() {
         TypeDescription description = new TypeDescription(type(1),
                 "TEST",
                 "Test",
@@ -15,7 +14,7 @@ class TestTypeDescriptionMetadataTypeId {
                 false,
                 true);
 
-        assertTrue(description.getMetadataTypeId().isEmpty());
+        assertEquals(MetadataTypeId.GENERIC, description.getMetadataTypeId());
     }
 
     @Test
@@ -28,9 +27,9 @@ class TestTypeDescriptionMetadataTypeId {
                 true,
                 TypeSource.DEFAULT,
                 true,
-                " Audio ");
+                MetadataTypeId.fromString(" Audio "));
 
-        assertEquals("audio", description.getMetadataTypeId().orElseThrow());
+        assertEquals(MetadataTypeId.AUDIO, description.getMetadataTypeId());
     }
 
     private static MysterType type(int value) {

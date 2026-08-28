@@ -5,6 +5,7 @@ import java.security.KeyPairGenerator;
 import java.security.PublicKey;
 
 import com.myster.cid.ServerCid;
+import com.myster.type.MetadataTypeId;
 import com.myster.type.MysterType;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
@@ -36,6 +37,7 @@ class TestAccessListState {
         assertNull(state.getDescription());
         assertArrayEquals(new String[0], state.getExtensions());
         assertFalse(state.isSearchInArchives());
+        assertEquals(MetadataTypeId.GENERIC, state.getMetadataTypeId());
         assertEquals(-1, state.getHeight());
     }
 
@@ -50,6 +52,7 @@ class TestAccessListState {
         state.applyOperation(new SetDescriptionOp("A test description"), writer);
         state.applyOperation(new SetExtensionsOp(new String[]{"mp3", "wav"}), writer);
         state.applyOperation(new SetSearchInArchivesOp(true), writer);
+        state.applyOperation(new SetMetadataTypeOp(MetadataTypeId.AUDIO), writer);
 
         assertArrayEquals(rsaKeyPair.getPublic().getEncoded(),
                           state.getTypePublicKey().getEncoded());
@@ -57,6 +60,21 @@ class TestAccessListState {
         assertEquals("A test description", state.getDescription());
         assertArrayEquals(new String[]{"mp3", "wav"}, state.getExtensions());
         assertTrue(state.isSearchInArchives());
+        assertEquals(MetadataTypeId.AUDIO, state.getMetadataTypeId());
+    }
+
+    @Test
+    void metadataTypeUsesLastOperationAndPreservesUnknown() {
+        AccessListState state = new AccessListState();
+        PublicKey writer = ed25519KeyPair.getPublic();
+        state.applyOperation(new AddWriterOp(writer), writer);
+
+        MetadataTypeId future = MetadataTypeId.fromString("spatial_audio");
+        state.applyOperation(new SetMetadataTypeOp(future), writer);
+        assertEquals(future, state.getMetadataTypeId());
+
+        state.applyOperation(new SetMetadataTypeOp(MetadataTypeId.GENERIC), writer);
+        assertEquals(MetadataTypeId.GENERIC, state.getMetadataTypeId());
     }
 
     @Test

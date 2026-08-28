@@ -29,7 +29,7 @@ import com.myster.transaction.TransactionManager;
  * <p>Built-in types are loaded from the {@code typedescriptionlist.mml} resource bundled inside
  * the application JAR. Custom types are loaded at startup from their {@link AccessList} files via
  * {@link AccessListManager}; the access list is the canonical metadata store for name,
- * description, extensions, policy, and the type's RSA public key.
+ * description, extensions, metadata profile, policy, and the type's RSA public key.
  *
  * <p>{@link CustomTypeManager} stores only the enabled/disabled flag for each custom type. A
  * prefs node whose corresponding access list file is missing is treated as stale and silently
@@ -104,7 +104,7 @@ public class DefaultTypeDescriptionList implements TypeDescriptionList {
         boolean searchInArchives = state.isSearchInArchives();
         boolean isPublic = state.getPolicy().isListFilesPublic();
         return new CustomTypeDefinition(publicKey, name, description, extensions,
-                                        searchInArchives, isPublic);
+                                        searchInArchives, isPublic, state.getMetadataTypeId());
     }
 
     private static TypeDescription buildTypeDescription(MysterType type, CustomTypeDefinition def) {
@@ -116,7 +116,8 @@ public class DefaultTypeDescriptionList implements TypeDescriptionList {
                 def.isSearchInArchives(),
                 false,                  // custom types disabled by default
                 TypeSource.CUSTOM,
-                def.isPublic());
+                def.isPublic(),
+                def.getMetadataTypeId());
     }
 
     private static final String DEFAULT_LIST_KEY = "DefaultTypeDescriptionList saved defaults";
@@ -430,7 +431,9 @@ public class DefaultTypeDescriptionList implements TypeDescriptionList {
                     isArchived, isEnabled,
                     TypeSource.DEFAULT,
                     true,
-                    metadataTypeId);
+                    metadataTypeId == null || metadataTypeId.isBlank()
+                            ? MetadataTypeId.GENERIC
+                            : MetadataTypeId.fromString(metadataTypeId));
         } catch (Exception ex) {
             throw new com.general.util.UnexpectedException(ex);
         }

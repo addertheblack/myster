@@ -9,13 +9,14 @@ import com.myster.search.ui.ClientImageHandleObject;
 import com.myster.search.ui.ClientMPG3HandleObject;
 import com.myster.search.ui.ClientVideoHandleObject;
 import com.myster.search.ui.FileTypeColumnHandler;
+import com.myster.type.MetadataTypeId;
 import com.myster.type.TypeDescriptionList;
 
 /**
  * Built-in metadata profiles shipped with Myster.
  */
 enum BuiltInMetadataType implements MetadataType {
-    GENERIC("generic", 1, List.of()) {
+    GENERIC(MetadataTypeId.GENERIC, 1, List.of()) {
         @Override
         public FileTypeColumnHandler getHandler(TypeDescriptionList tdList) {
             return new ClientGenericHandleObject();
@@ -31,7 +32,7 @@ enum BuiltInMetadataType implements MetadataType {
             return Optional.empty();
         }
     },
-    AUDIO("audio", 1,
+    AUDIO(MetadataTypeId.AUDIO, 1,
             List.of("/BitRate", "/Hz", "/LengthSec", "/ID3Name", "/Artist", "/Album")) {
         @Override
         public FileTypeColumnHandler getHandler(TypeDescriptionList tdList) {
@@ -48,7 +49,7 @@ enum BuiltInMetadataType implements MetadataType {
             return Optional.of(new TikaAudioMetadataExtractor());
         }
     },
-    IMAGE("image", 1,
+    IMAGE(MetadataTypeId.IMAGE, 1,
             List.of("/ImageWidth",
                     "/ImageHeight",
                     "/ImageBitDepth",
@@ -72,7 +73,7 @@ enum BuiltInMetadataType implements MetadataType {
             return Optional.of(new TikaImageMetadataExtractor());
         }
     },
-    VIDEO("video", 1,
+    VIDEO(MetadataTypeId.VIDEO, 1,
             List.of("/VideoLengthSec",
                     "/VideoWidth",
                     "/VideoHeight",
@@ -94,11 +95,11 @@ enum BuiltInMetadataType implements MetadataType {
         }
     };
 
-    private final String id;
+    private final MetadataTypeId id;
     private final int cacheVersion;
     private final List<String> cacheableKeys;
 
-    BuiltInMetadataType(String id, int cacheVersion, List<String> cacheableKeys) {
+    BuiltInMetadataType(MetadataTypeId id, int cacheVersion, List<String> cacheableKeys) {
         this.id = id;
         if (cacheVersion <= 0) {
             throw new IllegalArgumentException("cacheVersion must be positive");
@@ -108,7 +109,7 @@ enum BuiltInMetadataType implements MetadataType {
     }
 
     @Override
-    public String id() {
+    public MetadataTypeId id() {
         return id;
     }
 

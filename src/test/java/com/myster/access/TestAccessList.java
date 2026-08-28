@@ -1,6 +1,8 @@
 package com.myster.access;
 
 import java.io.IOException;
+import java.io.ByteArrayInputStream;
+import java.io.DataInputStream;
 import java.security.KeyPair;
 import java.security.KeyPairGenerator;
 import java.util.Collections;
@@ -8,6 +10,7 @@ import java.util.List;
 
 import com.myster.cid.ServerCid;
 import com.myster.type.MysterType;
+import com.myster.type.MetadataTypeId;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 
@@ -79,6 +82,36 @@ class TestAccessList {
         assertFalse(state.getPolicy().isListFilesPublic());
         assertEquals(1, state.getOnramps().size());
         assertEquals("onramp1.example.com:6669", state.getOnramps().get(0));
+        assertEquals(MetadataTypeId.GENERIC, state.getMetadataTypeId());
+    }
+
+    @Test
+    void nonGenericGenesisAddsAssociationWhileGenericOmitsIt() throws IOException {
+        AccessList generic = createTestChain();
+        AccessList image = AccessList.createGenesis(
+                rsaKeyPair.getPublic(), ed25519KeyPair, Collections.emptyList(),
+                List.of("onramp1.example.com:6669"), Policy.defaultRestrictive(),
+                "Test Type", "A test type for unit tests", new String[]{"jpg"}, false,
+                MetadataTypeId.IMAGE);
+
+        assertEquals(genesisOperationCount(generic) + 1, genesisOperationCount(image));
+        assertEquals(MetadataTypeId.IMAGE, image.getState().getMetadataTypeId());
+        assertDoesNotThrow(image::validate);
+    }
+
+    @Test
+    void explicitGenericClearsPriorKnownOrUnknownAssociation() throws IOException {
+        AccessList list = createTestChain();
+        MetadataTypeId future = MetadataTypeId.fromString("spatial_audio");
+
+        list.appendBlock(new SetMetadataTypeOp(future), ed25519KeyPair);
+        assertEquals(future, list.getState().getMetadataTypeId());
+        list.appendBlock(new SetMetadataTypeOp(MetadataTypeId.GENERIC), ed25519KeyPair);
+        assertEquals(MetadataTypeId.GENERIC, list.getState().getMetadataTypeId());
+
+        AccessList restored = AccessListStorageUtils.fromBytes(AccessListStorageUtils.toBytes(list));
+        assertEquals(MetadataTypeId.GENERIC, restored.getState().getMetadataTypeId());
+        assertDoesNotThrow(restored::validate);
     }
 
     @Test
@@ -230,6 +263,7 @@ class TestAccessList {
         list.appendBlock(new SetDescriptionOp("Updated Description"), ed25519KeyPair);
         list.appendBlock(new SetExtensionsOp(new String[]{"gz"}), ed25519KeyPair);
         list.appendBlock(new SetSearchInArchivesOp(false), ed25519KeyPair);
+        list.appendBlock(new SetMetadataTypeOp(MetadataTypeId.VIDEO), ed25519KeyPair);
         list.appendBlock(new SetPolicyOp(Policy.defaultPermissive()), ed25519KeyPair);
         list.appendBlock(new AddOnrampOp("onramp2.example.com"), ed25519KeyPair);
         list.appendBlock(new RemoveOnrampOp("onramp.example.com"), ed25519KeyPair);
@@ -244,9 +278,17 @@ class TestAccessList {
         assertEquals("Updated Description", restored.getState().getDescription());
         assertArrayEquals(new String[]{"gz"}, restored.getState().getExtensions());
         assertFalse(restored.getState().isSearchInArchives());
+        assertEquals(MetadataTypeId.VIDEO, restored.getState().getMetadataTypeId());
         assertTrue(restored.getState().getPolicy().isListFilesPublic());
         assertEquals(1, restored.getState().getOnramps().size());
         assertEquals("onramp2.example.com", restored.getState().getOnramps().get(0));
         assertFalse(restored.getState().isMember(cid));
+    }
+
+    private static int genesisOperationCount(AccessList accessList) throws IOException {
+        try (DataInputStream in = new DataInputStream(
+                new ByteArrayInputStream(accessList.getGenesisBlock().getPayload()))) {
+            return in.readInt();
+        }
     }
 }

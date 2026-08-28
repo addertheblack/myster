@@ -1,7 +1,6 @@
 package com.myster.type;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.util.Arrays;
 import java.util.prefs.Preferences;
@@ -16,10 +15,10 @@ class TestDefaultTypeDescriptionListMetadataTypeId {
                 Preferences.userRoot().node("MysterTest/MetadataTypeId/" + System.nanoTime()),
                 new AccessListManager());
 
-        assertEquals("audio", builtIn(tdList, "MPG3").getMetadataTypeId().orElseThrow());
-        assertEquals("image", builtIn(tdList, "PICT").getMetadataTypeId().orElseThrow());
-        assertEquals("video", builtIn(tdList, "MOOV").getMetadataTypeId().orElseThrow());
-        assertTrue(builtIn(tdList, "TEXT").getMetadataTypeId().isEmpty());
+        assertEquals(MetadataTypeId.AUDIO, builtIn(tdList, "MPG3").getMetadataTypeId());
+        assertEquals(MetadataTypeId.IMAGE, builtIn(tdList, "PICT").getMetadataTypeId());
+        assertEquals(MetadataTypeId.VIDEO, builtIn(tdList, "MOOV").getMetadataTypeId());
+        assertEquals(MetadataTypeId.GENERIC, builtIn(tdList, "TEXT").getMetadataTypeId());
     }
 
     private static TypeDescription builtIn(DefaultTypeDescriptionList tdList, String internalName) {

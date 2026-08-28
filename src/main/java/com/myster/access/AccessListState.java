@@ -10,6 +10,7 @@ import java.util.Map;
 import java.util.Set;
 
 import com.myster.cid.ServerCid;
+import com.myster.type.MetadataTypeId;
 import com.myster.type.MysterType;
 
 /**
@@ -36,6 +37,7 @@ public class AccessListState {
     private String description;
     private String[] extensions;
     private boolean searchInArchives;
+    private MetadataTypeId metadataTypeId;
 
     /**
      * Creates an empty state with no writers, members, or onramps.
@@ -49,6 +51,7 @@ public class AccessListState {
         this.tipHash = new byte[32];
         this.height = -1;
         this.extensions = new String[0];
+        this.metadataTypeId = MetadataTypeId.GENERIC;
     }
 
     /**
@@ -97,6 +100,8 @@ public class AccessListState {
             this.extensions = ((SetExtensionsOp) operation).getExtensions();
         } else if (opType.equals(OpType.SET_SEARCH_IN_ARCHIVES)) {
             this.searchInArchives = ((SetSearchInArchivesOp) operation).isSearchInArchives();
+        } else if (opType.equals(OpType.SET_METADATA_TYPE)) {
+            this.metadataTypeId = ((SetMetadataTypeOp) operation).getMetadataTypeId();
         }
     }
 
@@ -172,6 +177,15 @@ public class AccessListState {
 
     public boolean isSearchInArchives() {
         return searchInArchives;
+    }
+
+    /**
+     * Returns the latest metadata profile association derived from the chain.
+     *
+     * @return Generic when no operation exists, or the exact known/unknown last value
+     */
+    public MetadataTypeId getMetadataTypeId() {
+        return metadataTypeId;
     }
 
     /**

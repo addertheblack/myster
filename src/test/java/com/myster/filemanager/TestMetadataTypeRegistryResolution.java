@@ -1,12 +1,14 @@
 package com.myster.filemanager;
 
 import static org.junit.jupiter.api.Assertions.assertSame;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
 import java.io.IOException;
 import java.util.Optional;
 
 import com.myster.access.AccessList;
 import com.myster.type.CustomTypeDefinition;
+import com.myster.type.MetadataTypeId;
 import com.myster.type.MysterType;
 import com.myster.type.TypeDescription;
 import com.myster.type.TypeDescriptionList;
@@ -46,6 +48,8 @@ class TestMetadataTypeRegistryResolution {
     void get_returnsGenericForUnknownMetadataTypeId() {
         assertSame(MetadataType.GENERIC,
                 registry.get(tdList, UNKNOWN_ID_TYPE));
+        assertEquals(MetadataTypeId.fromString("movie"),
+                tdList.get(UNKNOWN_ID_TYPE).orElseThrow().getMetadataTypeId());
     }
 
     @Test
@@ -60,14 +64,14 @@ class TestMetadataTypeRegistryResolution {
         return new MysterType(bytes);
     }
 
-    private static TypeDescription description(MysterType type, String metadataTypeId) {
+    private static TypeDescription description(MysterType type, MetadataTypeId metadataTypeId) {
         return new TypeDescription(type,
                 "Test",
                 "Test",
                 new String[] {},
                 false,
                 true,
-                TypeSource.DEFAULT,
+                TypeSource.CUSTOM,
                 true,
                 metadataTypeId);
     }
@@ -76,16 +80,17 @@ class TestMetadataTypeRegistryResolution {
         @Override
         public Optional<TypeDescription> get(MysterType type) {
             if (AUDIO_TYPE.equals(type)) {
-                return Optional.of(description(AUDIO_TYPE, "audio"));
+                return Optional.of(description(AUDIO_TYPE, MetadataTypeId.AUDIO));
             }
             if (IMAGE_TYPE.equals(type)) {
-                return Optional.of(description(IMAGE_TYPE, "image"));
+                return Optional.of(description(IMAGE_TYPE, MetadataTypeId.IMAGE));
             }
             if (GENERIC_TYPE.equals(type)) {
-                return Optional.of(description(GENERIC_TYPE, null));
+                return Optional.of(description(GENERIC_TYPE, MetadataTypeId.GENERIC));
             }
             if (UNKNOWN_ID_TYPE.equals(type)) {
-                return Optional.of(description(UNKNOWN_ID_TYPE, "movie"));
+                return Optional.of(description(UNKNOWN_ID_TYPE,
+                        MetadataTypeId.fromString("movie")));
             }
             return Optional.empty();
         }

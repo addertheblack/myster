@@ -28,7 +28,8 @@
  * <h2>Extensible Operations</h2>
  * <p>Operations use string-based type identifiers for forward compatibility. Unknown operation
  * types from future versions are preserved in the chain as non-canonical operations — the node
- * can't interpret their effect but the chain remains valid.
+ * can't interpret their effect but the chain remains valid. Newly introduced operations
+ * length-frame their payload so {@link com.myster.access.UnknownOp} can retain the opaque bytes.
  *
  * <h2>Roles</h2>
  * <ul>
