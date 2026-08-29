@@ -632,7 +632,9 @@ class MCListSelectionModel<E> implements ListSelectionModel {
      * @see javax.swing.ListSelectionModel#isSelectedIndex(int)
      */
     public boolean isSelectedIndex(int index) {
-        return tableModel.getRow(index).isSelected();
+        return index >= 0
+                && index < tableModel.getRowCount()
+                && tableModel.getRow(index).isSelected();
     }
 
     /*

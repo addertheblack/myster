@@ -63,6 +63,9 @@ public interface PromiseFuture<T> extends Cancellable, Future<T> {
      * Assigns the ordinary-listener invoker when this future does not already
      * have one.
      *
+     * Prefer {@link #withInvoker(Invoker)} when possible, as it does not throw an exception if
+     * an invoker is already assigned.
+     *
      * @throws IllegalStateException if an invoker is already assigned
      */
     PromiseFuture<T> setInvoker(Invoker invoker);
@@ -75,6 +78,12 @@ public interface PromiseFuture<T> extends Cancellable, Future<T> {
      * assigned, assigns the invoker directly when none exists, and otherwise
      * returns a cancellation-linked wrapper without changing this future's
      * existing listener dispatch.
+     *
+     * <p>Between {@link #setInvoker(Invoker)} and this method, this method is preferred because it
+     * does not fail when an invoker is already assigned. When this future has no invoker, this
+     * method assigns the requested one directly. When it already has a different invoker, the
+     * returned wrapper uses the requested invoker without changing listener dispatch on this
+     * source future.
      *
      * @param requestedInvoker invoker for ordinary listeners
      * @return this future or an equivalent cancellation-linked view
@@ -95,9 +104,13 @@ public interface PromiseFuture<T> extends Cancellable, Future<T> {
     
     /**
      * Similar to {@link #addFinallyCallResultListener(Consumer)} but completely
-     * synchronous. Does not use the invoker and runs on whichever thread sets
+     * synchronous. Does *not* use the invoker and runs on **whichever thread** sets
      * the result. This exists primarily for low-level promise composition;
      * application state protected by an invoker should use ordinary listeners.
+     *
+     * Callback failures are isolated and logged by the promise implementation. Prefer
+     * {@link #addFinallyCallResultListener(Consumer)} or one of the outcome-specific ordinary
+     * listeners for application work that belongs on an invoker.
      */
     PromiseFuture<T> addSynchronousCallback(Consumer<CallResult<T>> c);
 
@@ -106,7 +119,13 @@ public interface PromiseFuture<T> extends Cancellable, Future<T> {
     }
     
     /**
-     * Is always called once a task finished. Similar to addFinally but with a callResult
+     * Is always called once a task finished.
+     *
+     * <P>Similar to {@link #addFinallyListener(Runnable)} but with a callResult
+     * <p>Similar to {@link #addSynchronousCallback(Consumer)} but on the invoker thread instead of the thread that completed the future.
+     * <p>Use this method because the other #addResultListener, #addExceptionListener, and #addCancelListener
+     * methods are just too damn convenient and you want to make your life harder by having to deal
+     * with all the different cases in one method.
      */
     PromiseFuture<T> addFinallyCallResultListener(Consumer<CallResult<T>> c);
 
@@ -148,7 +167,9 @@ public interface PromiseFuture<T> extends Cancellable, Future<T> {
     /**
      * Maps a successful result to a second asynchronous operation. An exception
      * or cancellation from this source future is forwarded without invoking the
-     * mapper. The invoker is not mapped.
+     * mapper. The mapper runs synchronously on the thread that completes this
+     * source future. No ordinary-listener invoker is assigned to the returned
+     * future.
      *
      * <p>Cancelling the returned future cancels this source future and, once it
      * exists, the mapped operation.
@@ -157,7 +178,30 @@ public interface PromiseFuture<T> extends Cancellable, Future<T> {
      * @param mapper operation to start after this future succeeds
      * @return future completed from the operation returned by {@code mapper}
      */
-    default <R> PromiseFuture<R> mapAsync(Function<T, PromiseFuture<R>> mapper) {
+    default <R> PromiseFuture<R> mapAsyncInline(Function<T, PromiseFuture<R>> mapper) {
+        return mapAsync(mapper, Invoker.SYNCHRONOUS);
+    }
+
+    /**
+     * Maps a successful result to a second asynchronous operation by invoking
+     * {@code mapper} through {@code mapperInvoker}. An exception or cancellation
+     * from this source future is forwarded without scheduling the mapper.
+     *
+     * <p>The supplied invoker controls only where the mapper is invoked. It does
+     * not become the ordinary-listener invoker of this future, the mapped future,
+     * or the returned future. Cancelling the returned future cancels this source
+     * future and, once it exists, the mapped operation. If cancellation occurs
+     * while mapper invocation is queued, the queued callback becomes a no-op.
+     *
+     * @param <R> mapped result type
+     * @param mapper operation to invoke after this future succeeds
+     * @param mapperInvoker invoker on which to call {@code mapper}
+     * @return future completed from the operation returned by {@code mapper}
+     */
+    default <R> PromiseFuture<R> mapAsync(Function<T, PromiseFuture<R>> mapper,
+                                          Invoker mapperInvoker) {
+        Objects.requireNonNull(mapper, "mapper");
+        Objects.requireNonNull(mapperInvoker, "mapperInvoker");
         return PromiseFuture.newPromiseFuture(context -> {
             context.trackForCancellation(this);
 
@@ -167,8 +211,15 @@ public interface PromiseFuture<T> extends Cancellable, Future<T> {
                 } else if (c.isCancelled()) {
                     context.cancel();
                 } else {
-                    context.trackForCancellation(mapper.apply(c.getResult())
-                            .addSynchronousCallback(context::setCallResult));
+                    mapperInvoker.invoke(() -> {
+                        if (context.isCancelled()) {
+                            return;
+                        }
+                        PromiseFuture<R> mapped = Objects.requireNonNull(
+                                mapper.apply(c.getResult()), "mapper result");
+                        context.trackForCancellation(mapped);
+                        mapped.addSynchronousCallback(context::setCallResult);
+                    });
                 }
             });
         });

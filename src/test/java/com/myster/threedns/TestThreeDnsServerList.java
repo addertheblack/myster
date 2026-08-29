@@ -19,6 +19,7 @@ import java.util.stream.Collectors;
 
 import org.junit.jupiter.api.Test;
 
+import com.general.thread.PromiseFuture;
 import com.general.util.MapPreferences;
 import com.myster.cid.ServerCid;
 import com.myster.net.MysterAddress;
@@ -261,6 +262,15 @@ class TestThreeDnsServerList {
         @Override
         public void forEach(Consumer<MysterServer> consumer) {
             byIdentity.values().forEach(consumer);
+        }
+
+        @Override
+        public PromiseFuture<MysterServer> resolveServer(MysterAddress address) {
+            MysterServer server = byAddress.get(address);
+            return server == null
+                    ? PromiseFuture.newPromiseFutureException(
+                            new IllegalArgumentException("Unknown test address"))
+                    : PromiseFuture.newPromiseFuture(server);
         }
 
         @Override

@@ -97,6 +97,7 @@ import com.myster.tracker.MysterServerPool;
 import com.myster.tracker.MysterServerPoolImpl;
 import com.myster.tracker.Tracker;
 import com.myster.tracker.ui.TrackerWindow;
+import com.myster.tracker.ui.KnownServerSource;
 import com.myster.transaction.TransactionManager;
 import com.myster.type.DefaultTypeDescriptionList;
 import com.myster.type.TypeDescriptionList;
@@ -391,6 +392,29 @@ public class Myster {
                                                                       serverPreferences,
                                                                       tdList);
 
+                KnownServerSource knownServerSource = new KnownServerSource() {
+                    @Override
+                    public void forEachServer(
+                            java.util.function.Consumer<com.myster.tracker.MysterServer> consumer) {
+                        pool.forEach(consumer);
+                    }
+
+                    @Override
+                    public Optional<String> resolveDisplayName(ServerCid cid) {
+                        return pool.lookupIdentityFromCid(cid)
+                                .map(com.myster.tracker.PublicKeyIdentity::new)
+                                .flatMap(pool::getCachedMysterServer)
+                                .map(com.myster.tracker.MysterServer::getServerName)
+                                .filter(name -> !name.isBlank());
+                    }
+
+                    @Override
+                    public com.general.thread.PromiseFuture<com.myster.tracker.MysterServer>
+                            resolveServer(MysterAddress address) {
+                        return pool.resolveServer(address);
+                    }
+                };
+
                 DefaultDownloadManager downloadManager = new DefaultDownloadManager();
                 
                 // Now create the final context with the downloadManager properly set
@@ -401,7 +425,8 @@ public class Myster {
                                                keeper,
                                                fileManager,
                                                downloadManager,
-                                               clientWindowProvider);
+                                               clientWindowProvider,
+                                               knownServerSource);
 
                 // Set the context on the provider to complete the circular dependency
                 clientWindowProvider.setContext(context);
@@ -469,28 +494,11 @@ public class Myster {
                 
                 preferencesGui.addPanel(new FmiChooser(fileManager, tdList));
                 preferencesGui.addPanel(new MessagePreferencesPanel(preferences));
-                com.myster.type.ui.TypeEditorServerSource typeEditorServerSource =
-                        new com.myster.type.ui.TypeEditorServerSource() {
-                            public void forEachServer(java.util.function.BiConsumer<com.myster.tracker.MysterServer, ServerCid> c) {
-                                pool.forEach(server -> {
-                                    if (server.getIdentity() instanceof com.myster.tracker.PublicKeyIdentity pki) {
-                                        c.accept(server, ServerCid.fromPublicKey(pki.getPublicKey()));
-                                    }
-                                });
-                            }
-
-                            public java.util.Optional<String> resolveDisplayName(ServerCid cid) {
-                                return pool.lookupIdentityFromCid(cid)
-                                        .map(com.myster.tracker.PublicKeyIdentity::new)
-                                        .flatMap(pool::getCachedMysterServer)
-                                        .map(com.myster.tracker.MysterServer::getServerName);
-                            }
-                        };
                 preferencesGui.addPanel(new com.myster.type.ui.TypeManagerPreferences(
                         tdList,
                         accessListManager,
                         metadataTypeRegistry,
-                        java.util.Optional.of(typeEditorServerSource),
+                        java.util.Optional.of(knownServerSource),
                         identity.getMainIdentity().map(kp -> ServerCid.fromPublicKey(kp.getPublic()))));
                 preferencesGui.addPanel(new ThemePane(preferences));
 

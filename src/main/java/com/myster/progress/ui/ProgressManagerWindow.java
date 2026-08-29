@@ -538,7 +538,25 @@ public class ProgressManagerWindow extends MysterFrame {
                 }
             };
             
-            var context = new MysterFrameContext(new MysterMenuBar(), mockWindowManager, null, mockKeeper, null, null, null);
+            var context = new MysterFrameContext(new MysterMenuBar(), mockWindowManager, null,
+                    mockKeeper, null, null, null, new com.myster.tracker.ui.KnownServerSource() {
+                        @Override
+                        public void forEachServer(
+                                java.util.function.Consumer<com.myster.tracker.MysterServer> consumer) {}
+
+                        @Override
+                        public java.util.Optional<String> resolveDisplayName(
+                                com.myster.cid.ServerCid cid) {
+                            return java.util.Optional.empty();
+                        }
+
+                        @Override
+                        public com.general.thread.PromiseFuture<com.myster.tracker.MysterServer>
+                                resolveServer(com.myster.net.MysterAddress address) {
+                            return com.general.thread.PromiseFuture.newPromiseFutureException(
+                                    new UnsupportedOperationException());
+                        }
+                    });
 
             ProgressManagerWindow window = new ProgressManagerWindow(context);
             window.populateWithFakeData();

@@ -5,12 +5,14 @@ import com.myster.filemanager.FileTypeListManager;
 import com.myster.progress.ui.DownloadManager;
 import com.myster.type.TypeDescriptionList;
 import com.myster.ui.menubar.MysterMenuBar;
+import com.myster.tracker.ui.KnownServerSource;
 
-/** Holds shared UI context for Myster application frames. */
+/** Holds shared UI services and state for Myster application frames. */
 public record MysterFrameContext(MysterMenuBar menuBar,
                                  WindowManager windowManager,
                                  TypeDescriptionList tdList,
                                  WindowPrefDataKeeper keeper,
                                  FileTypeListManager fileManager,
                                  DownloadManager downloadManager,
-                                 ClientWindowProvider clientWindowProvider) {}
+                                 ClientWindowProvider clientWindowProvider,
+                                 KnownServerSource knownServerSource) {}

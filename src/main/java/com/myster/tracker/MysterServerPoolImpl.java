@@ -1,7 +1,5 @@
 package com.myster.tracker;
 
-import static com.myster.tracker.MysterServerImplementation.computeNodeNameFromIdentity;
-
 import java.io.IOException;
 import java.lang.ref.WeakReference;
 import java.net.UnknownHostException;
@@ -30,6 +28,8 @@ import com.myster.net.client.ParamBuilder;
 import com.myster.net.server.ServerUtils;
 import com.myster.net.stream.server.ServerStats;
 
+import static com.myster.tracker.MysterServerImplementation.computeNodeNameFromIdentity;
+
 /**
  * Given a string address, it returns a com.myster object. com.myster
  * objects are like little statistics objects. You can get these objects and
@@ -56,7 +56,8 @@ public class MysterServerPoolImpl implements MysterServerPool {
 
     private final NewGenericDispatcher<MysterPoolListener> dispatcher = new NewGenericDispatcher<>(MysterPoolListener.class, TrackerUtils.INVOKER);
 
-    private final Map<MysterAddress, PromiseFuture<MessagePak>> outstandingServerFutures = new HashMap<>();
+    private final Map<MysterAddress, PromiseFuture<MysterServer>> outstandingServerFutures =
+            new HashMap<>();
     
     // This is so we can stop the GC for garbage collecting our weakly references stuff until the IP lists have
     // had a change to get references to things
@@ -212,6 +213,15 @@ public class MysterServerPoolImpl implements MysterServerPool {
 
         refreshMysterServer(address, expectedIdentity);
     }
+
+    @Override
+    public synchronized PromiseFuture<MysterServer> resolveServer(MysterAddress address) {
+        if (address.getIP().equals("0.0.0.0") || address.getIP().isEmpty()) {
+            return PromiseFuture.newPromiseFutureException(
+                    new IOException("Address cannot identify a remote server"));
+        }
+        return refreshMysterServer(address, Optional.empty());
+    }
     
     @Override
     public synchronized void receivedDownNotification(MysterAddress address) {
@@ -293,51 +303,55 @@ public class MysterServerPoolImpl implements MysterServerPool {
     /**
      * Package protected for unit tests
      */
-    void refreshMysterServer(MysterAddress address) {
-        refreshMysterServer(address, Optional.empty());
+    PromiseFuture<MysterServer> refreshMysterServer(MysterAddress address) {
+        return refreshMysterServer(address, Optional.empty());
     }
 
-    private void refreshMysterServer(MysterAddress address,
-                                     Optional<PublicKeyIdentity> expectedIdentity) {
-        PromiseFuture<MessagePak> getServerStatsFuture =
-                        PromiseFutures.execute(() -> {
-                            try (var s = protocol.getStream().makeStreamConnection(address)) {
-                                return protocol.getStream().ping(s);
-                            } catch (Exception _) {
-                                return false;
-                            }
-                        }).mapAsync(result -> {
-                            if (result) {
-                                ParamBuilder params = new ParamBuilder(address);
-                                if (expectedIdentity.isPresent()) {
-                                    params = params.withExpectedServerPublicKey(
-                                            expectedIdentity.get().getPublicKey());
-                                }
-                                return protocol.getDatagram().getBidirectionalServerStats(params);
-                            } else {
-                                return PromiseFuture.newPromiseFutureException(new IOException("TCP PING Failed"));
-                            }
-                        }).mapAsync(statsMessage -> {
-                            if (expectedIdentity.isPresent()
-                                    && !hasExpectedIdentity(statsMessage,
-                                                            expectedIdentity.get())) {
-                                return PromiseFuture.newPromiseFutureException(
-                                        new IOException("Server stats identity did not match business card"));
-                            }
-                            return PromiseFuture.newPromiseFuture(statsMessage);
-                        }).setInvoker(TrackerUtils.INVOKER)
-                        .addResultListener(statsMessage -> {
-                            serverStatsCallback(address, statsMessage);
-                        })
-                        .addExceptionListener(_ -> log.info("Address not a server: " + address))
-                        .addExceptionListener(_ -> deadCache.addDeadAddress(address))
-                        .addFinallyListener(() -> {
-                            synchronized (MysterServerPoolImpl.this) {
-                                outstandingServerFutures.remove(address);
-                            }
-                        });
+    private synchronized PromiseFuture<MysterServer> refreshMysterServer(
+            MysterAddress address,
+            Optional<PublicKeyIdentity> expectedIdentity) {
+        PromiseFuture<MysterServer> existing = outstandingServerFutures.get(address);
+        if (existing != null) {
+            return existing;
+        }
 
-        outstandingServerFutures.put(address, getServerStatsFuture);
+        PromiseFuture<MysterServer> resolved = PromiseFutures.execute(() -> {
+            try (var socket = protocol.getStream().makeStreamConnection(address)) {
+                return protocol.getStream().ping(socket);
+            } catch (Exception _) {
+                return false;
+            }
+        }).mapAsyncInline(result -> {
+            if (!result) {
+                return PromiseFuture.newPromiseFutureException(new IOException("TCP PING Failed"));
+            }
+
+            ParamBuilder params = new ParamBuilder(address);
+            if (expectedIdentity.isPresent()) {
+                params = params.withExpectedServerPublicKey(expectedIdentity.get().getPublicKey());
+            }
+            return protocol.getDatagram().getBidirectionalServerStats(params);
+        }).mapAsyncInline(statsMessage -> {
+            if (expectedIdentity.isPresent()
+                    && !hasExpectedIdentity(statsMessage, expectedIdentity.get())) {
+                return PromiseFuture.newPromiseFutureException(
+                        new IOException("Server stats identity did not match business card"));
+            }
+            return PromiseFuture.newPromiseFuture(statsMessage);
+        }).mapAsync(statsMessage -> PromiseFuture.newPromiseFuture(
+                serverStatsCallback(address, statsMessage)), TrackerUtils.INVOKER);
+
+        outstandingServerFutures.put(address, resolved);
+        resolved.withInvoker(TrackerUtils.INVOKER).addExceptionListener(ex -> {
+            log.info("Address not a server: " + address + " - " + ex.getMessage());
+            deadCache.addDeadAddress(address);
+        }).addFinallyListener(() -> {
+            synchronized (MysterServerPoolImpl.this) {
+                outstandingServerFutures.remove(address, resolved);
+            }
+        });
+
+        return resolved;
     }
 
     private static boolean hasExpectedIdentity(MessagePak serverStats,
@@ -348,8 +362,8 @@ public class MysterServerPoolImpl implements MysterServerPool {
                 .orElse(false);
     }
 
-    private synchronized void serverStatsCallback(MysterAddress addressIn,
-                                                  MessagePak statsMessage) {
+    private synchronized MysterServer serverStatsCallback(MysterAddress addressIn,
+                                                          MessagePak statsMessage) {
         MysterAddress address = MysterServerImplementation.extractCorrectedAddress(statsMessage, addressIn);
         deleteAddressBasedIdentitiesOnWrongPort(addressIn, address);
         
@@ -362,8 +376,8 @@ public class MysterServerPoolImpl implements MysterServerPool {
 
             // this is to make unit tests work - otherwise it's all async and a pain to test
             TrackerUtils.INVOKER.invoke(() -> dispatcher.fire().serverRefresh(s.getInterface()));
-            
-            return;
+
+            return s.getInterface();
         }
 
         MysterServerImplementation server =
@@ -375,6 +389,8 @@ public class MysterServerPoolImpl implements MysterServerPool {
         MysterServer serverinterface = server.getInterface();
         
         dispatcher.fire().serverRefresh(serverinterface);
+
+        return serverinterface;
     }
 
     private void deleteAddressBasedIdentitiesOnWrongPort(MysterAddress addressIn,

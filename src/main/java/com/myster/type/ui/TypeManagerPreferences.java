@@ -48,6 +48,7 @@ import com.myster.type.TypeDescriptionEvent;
 import com.myster.type.TypeDescriptionList;
 import com.myster.type.TypeListener;
 import com.myster.type.TypeSource;
+import com.myster.tracker.ui.KnownServerSource;
 
 /**
  * Preferences panel for managing both default and custom MysterTypes.
@@ -68,7 +69,7 @@ public class TypeManagerPreferences extends PreferencesPanel {
     private final TypeDescriptionList tdList;
     private final AccessListManager accessListManager;
     private final MetadataTypeRegistry metadataTypeRegistry;
-    private final Optional<TypeEditorServerSource> serverSource;
+    private final Optional<KnownServerSource> serverSource;
     private final Optional<ServerCid> localServerCid;
     private MCList<MysterType> mcList;
     private Action addAction;
@@ -98,7 +99,7 @@ public class TypeManagerPreferences extends PreferencesPanel {
      */
     public TypeManagerPreferences(TypeDescriptionList tdList,
                                   AccessListManager accessListManager,
-                                  Optional<TypeEditorServerSource> serverSource,
+                                  Optional<KnownServerSource> serverSource,
                                   Optional<ServerCid> localServerCid) {
         this(tdList, accessListManager, new DefaultMetadataTypeRegistry(), serverSource,
                 localServerCid);
@@ -116,7 +117,7 @@ public class TypeManagerPreferences extends PreferencesPanel {
     public TypeManagerPreferences(TypeDescriptionList tdList,
                                   AccessListManager accessListManager,
                                   MetadataTypeRegistry metadataTypeRegistry,
-                                  Optional<TypeEditorServerSource> serverSource,
+                                  Optional<KnownServerSource> serverSource,
                                   Optional<ServerCid> localServerCid) {
         this.tdList = tdList;
         this.accessListManager = accessListManager;
@@ -568,7 +569,8 @@ public class TypeManagerPreferences extends PreferencesPanel {
             com.myster.access.AccessListManager alm = new com.myster.access.AccessListManager();
             TypeDescriptionList typeList = new com.myster.type.DefaultTypeDescriptionList(
                 java.util.prefs.Preferences.userRoot().node("MysterTypes"), alm);
-            TypeManagerPreferences panel = new TypeManagerPreferences(typeList, alm, Optional.<TypeEditorServerSource>empty(), Optional.empty());
+            TypeManagerPreferences panel = new TypeManagerPreferences(typeList, alm,
+                    Optional.<KnownServerSource>empty(), Optional.empty());
 
             // Add to frame and set it on the panel
             testFrame.add(panel);

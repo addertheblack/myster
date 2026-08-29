@@ -11,14 +11,15 @@ package com.myster.ui.menubar.event;
 
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-import java.net.UnknownHostException;
+import java.awt.KeyboardFocusManager;
+import java.awt.Window;
 import java.util.Optional;
 
-import com.general.thread.PromiseFutures;
 import com.general.util.AnswerDialog;
-import com.general.util.AskDialog;
 import com.myster.client.ui.ClientWindow;
 import com.myster.net.MysterAddress;
+import com.myster.tracker.MysterServer;
+import com.myster.tracker.ui.ServerPickerDialog;
 import com.myster.ui.MysterFrameContext;
 
 public class NewClientWindowAction implements ActionListener {
@@ -29,24 +30,29 @@ public class NewClientWindowAction implements ActionListener {
     }
 
     public void actionPerformed(ActionEvent e) {
-        String addressString = AskDialog.simpleAsk("Enter the server address to connect to:");
-
-        if (addressString == null || addressString.trim().isEmpty()) {
-            return; // User cancelled
+        Window owner = KeyboardFocusManager.getCurrentKeyboardFocusManager().getActiveWindow();
+        ServerPickerDialog dialog = new ServerPickerDialog(
+                owner,
+                context.knownServerSource(),
+                "New Peer-to-Peer Connection",
+                "Connect",
+                server -> server.getBestAddress().isPresent(),
+                "That server did not provide a usable address.");
+        Optional<MysterServer> selected = dialog.showAndWait();
+        if (selected.isEmpty()) {
+            return;
         }
-
-        PromiseFutures.execute(() -> MysterAddress.createMysterAddress(addressString.trim()))
-                .useEdt()
-                .addExceptionListener(ex -> AnswerDialog.simpleAlert("Invalid server address: " + addressString + "\n\n" + ex.getMessage()))
-                .addResultListener(address -> {
-                    ClientWindow.ClientWindowData data =
-                            new ClientWindow.ClientWindowData(Optional.of(address.toString()),
-                                    Optional.empty(),
-                                    Optional.empty());
-                    ClientWindow w = context.clientWindowProvider().getOrCreateWindow(data);
-                    w.show();
-                    w.toFrontAndUnminimize();
-                });
+        Optional<MysterAddress> address = selected.get().getBestAddress();
+        if (address.isEmpty()) {
+            AnswerDialog.simpleAlert("That server no longer has a usable address.");
+            return;
+        }
+        ClientWindow.ClientWindowData data =
+                new ClientWindow.ClientWindowData(Optional.of(address.get().toString()),
+                        Optional.empty(), Optional.empty());
+        ClientWindow window = context.clientWindowProvider().getOrCreateWindow(data);
+        window.show();
+        window.toFrontAndUnminimize();
     }
 
 }

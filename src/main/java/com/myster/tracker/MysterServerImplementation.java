@@ -78,6 +78,7 @@ class MysterServerImplementation {
     private final Preferences preferences;
 
     private final IdentityProvider identityProvider;
+    private final MysterServer serverReference = new MysterServerReference();
 
     MysterServerImplementation(Preferences node,
                                IdentityProvider identityProvider,
@@ -249,7 +250,7 @@ class MysterServerImplementation {
     }
 
     MysterServer getInterface() {
-        return new MysterServerReference();
+        return serverReference;
     }
 
     public MysterIdentity getIdentity() {

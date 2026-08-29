@@ -3,6 +3,7 @@
 This document describes key architectural and design patterns used throughout the Myster codebase. Understanding these patterns is essential for maintaining consistency when adding new features or modifying existing code.
 
 **Quick index** — what lives here:
+
 - **Event System** — `NewGenericDispatcher`, how to fire and subscribe to events
 - **Promise/Future** — `PromiseFuture<T>`, `addResultListener`, `addCallListener`/`CallAdapter`, async I/O
 - **Listener Pattern** — use private inner classes, not `implements SomeListener`
@@ -20,7 +21,7 @@ This document describes key architectural and design patterns used throughout th
 - [`*Utils` Classes](#utils-classes)
 - [Threading & Concurrency](#threading--concurrency)
   - [Util.invokeLater vs SwingUtilities.invokeLater](#utilinvokelater-vs-swingutilitiesinvokelater)
-  - [PromiseFuture addCallListener / CallAdapter](#promisefuture--addcalllistener--calladapter)
+  - [PromiseFuture Call Listeners](#promisefuture-call-listeners)
 - [FlatLaf Theming](#flatlaf-theming)
 
 ---
@@ -32,6 +33,7 @@ Myster uses a consistent event dispatcher pattern throughout the codebase.
 ### NewGenericDispatcher
 
 **`NewGenericDispatcher<L>`** - Generic typed event dispatcher
+
 - `addListener(L)` / `removeListener(L)` - Manage listener subscriptions
 - `fire()` - Returns a proxy that forwards calls to all listeners
 - Thread-safe with `CopyOnWriteArrayList`
@@ -70,14 +72,16 @@ PromiseFuture<Result> future = PromiseFutures.execute(() -> longOperation());
 future.addResultListener(result -> handleResult(result));
 future.addExceptionListener(ex -> handleError(ex));
 ```
- prefer chaining when possible:
+
+Prefer chaining when possible:
+
 ```java
 PromiseFutures.execute(() -> longOperation())
     .addResultListener(result -> handleResult(result))
     .addExceptionListener(ex -> handleError(ex));
 ```
 
-Note that you need and add an exception handler and invoker if one has not already been added.
+You need to add an exception handler and invoker if one has not already been added.
 
 ### Key Features
 
@@ -85,6 +89,21 @@ Note that you need and add an exception handler and invoker if one has not alrea
 - **Callback-based**: Use listeners to handle results and errors
 - **Composable**: Chain operations together
 - **Thread-aware**: Result listeners can specify which thread to run on (EDT by default for UI updates)
+
+### Choosing the asynchronous mapper thread
+
+Use `mapAsyncInline(mapper)` when the mapper should run inline on whichever thread completes the
+source promise. Use `mapAsync(mapper, invoker)` when the function that creates the next
+`PromiseFuture` must instead run on a particular subsystem invoker. The supplied invoker controls
+only the mapper invocation; it does not become the listener invoker of the source, mapped, or
+returned future.
+
+```java
+source.mapAsync(value -> PromiseFuture.newPromiseFuture(updateActorState(value)), actorInvoker);
+```
+
+Do not wrap the mapper body in `PromiseFutures.execute(..., invoker::invoke)` merely to choose its
+thread. That represents an `Invoker` as an `Executor` and obscures which stage is being scheduled.
 
 ### Common Use Cases
 
@@ -281,10 +300,12 @@ Myster uses different threading strategies depending on the type of work:
 **Rule**: All Swing UI operations must run on the EDT.
 
 **Tools**:
+
 - `SwingUtilities.invokeLater()` - Standard Swing approach
 - `Invoker.EDT_NOW_OR_LATER` - Myster utility (runs immediately if already on EDT)
 
 **What runs on EDT**:
+
 - All UI updates (setText, repaint, etc.)
 - UI event handlers
 - Result listeners (by default in PromiseFuture)
@@ -296,12 +317,14 @@ Myster uses different threading strategies depending on the type of work:
 **Use for**: I/O and long-running operations
 
 **What runs on virtual threads**:
+
 - Network I/O (socket operations, HTTP requests)
 - File operations (reading, writing, hashing)
 - Long computations
 - Background indexing
 
 **How to use**:
+
 ```java
 PromiseFutures.execute(() -> {
     return performLongComputation();
@@ -316,6 +339,7 @@ PromiseFutures.execute(() -> {
 **Rule**: Use `synchronized` on methods/blocks for shared state
 
 **Guidelines**:
+
 - Example: `DefaultTypeDescriptionList` synchronizes most methods
 - Prefer explicit synchronization over implicit patterns when state is shared
 - Use `synchronized` keyword for method-level or block-level locking
@@ -364,6 +388,8 @@ Optional<AccessList> al = AccessListGetClient.fetchAccessList(addr, type);
 Rationale: returning a `PromiseFuture` from a stream method creates an abstraction inversion —
 the method takes over threading decisions that belong to the caller. Any caller that needs async
 behaviour can trivially wrap with `PromiseFutures.execute`.
+
+### PromiseFuture Call Listeners
 
 In addition to `addResultListener` / `addExceptionListener`, `PromiseFuture` supports
 `addCallListener(CallAdapter<T>)` for handling both result and error in one object. This is
@@ -438,6 +464,7 @@ Feel rather than hardcoded. Myster uses FlatLaf as its primary L&F, which provid
 of semantic UIManager keys that adapt automatically to light, dark, and custom themes.
 
 **Pattern for Java code**:
+
 ```java
 // Resolve from the active theme; fall back only for non-FlatLaf L&Fs
 Color errorColor = Optional.ofNullable(UIManager.getColor("Actions.Red"))
@@ -452,7 +479,7 @@ FlatLaf substitutes the magic hex with the same theme-appropriate colour it woul
 for the UIManager key, so icon and text always match.
 
 | Semantic state | UIManager key | SVG magic hex |
-|---|---|---|
+| --- | --- | --- |
 | Error / destructive | `"Actions.Red"` | `#DB5860` |
 | Warning | `"Actions.Yellow"` | `#EDA200` |
 | Success | `"Actions.Green"` | `#59A869` |

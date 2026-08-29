@@ -15,6 +15,7 @@ import java.security.PublicKey;
 import java.util.Optional;
 import java.util.function.Consumer;
 
+import com.general.thread.PromiseFuture;
 import com.myster.cid.ServerCid;
 import com.myster.net.MysterAddress;
 
@@ -104,6 +105,18 @@ public interface MysterServerPool {
      * Iterate through all known servers
      */
     void forEach(Consumer<MysterServer> consumer);
+
+    /**
+     * Explicitly checks a user-entered address and completes with the exact server inserted or
+     * refreshed in this pool. Concurrent requests for the same address share in-flight work.
+     * Unlike passive suggestions, an explicit request retries addresses in the dead-address
+     * cache. Identity is derived only from the returned server stats; failures complete the
+     * future exceptionally and remain eligible for a later explicit retry.
+     *
+     * @param address resolved address explicitly requested by the user
+     * @return future for the pool-owned refreshed server
+     */
+    PromiseFuture<MysterServer> resolveServer(MysterAddress address);
 
     /**
      * Call this method if we've received a ping from that server.

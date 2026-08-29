@@ -1,16 +1,44 @@
 
 package com.general.thread;
 
+import java.time.Duration;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.Objects;
 import java.util.concurrent.Callable;
 import java.util.concurrent.CancellationException;
 import java.util.concurrent.Executor;
 import java.util.concurrent.Executors;
 import java.util.concurrent.atomic.AtomicInteger;
 
+import com.general.util.Timer;
+
 public final class PromiseFutures {
+    /**
+     * Completes with {@code null} after at least {@code duration} has elapsed.
+     * Timing is deliberately loose and follows {@link Timer}'s scheduling behavior. Cancelling
+     * the returned future cancels an unelapsed timer and makes a concurrently firing completion
+     * moot. Synchronous callbacks run on the timer dispatch thread; ordinary listeners run only
+     * after the caller assigns an invoker.
+     *
+     * @param duration non-negative minimum delay
+     * @return a cancellable future whose successful value is {@code null}
+     * @throws IllegalArgumentException if {@code duration} is negative
+     */
+    public static PromiseFuture<Void> delay(Duration duration) {
+        Objects.requireNonNull(duration, "duration");
+        if (duration.isNegative()) {
+            throw new IllegalArgumentException("Delay duration cannot be negative");
+        }
+
+        long delayMillis = duration.toMillis();
+        return PromiseFuture.newPromiseFuture(context -> {
+            Timer timer = new Timer(() -> context.setResult(null), delayMillis, true);
+            context.trackForCancellation(timer::cancelTimer);
+        });
+    }
+
     public static <T> PromiseFuture<T> execute(Callable<T> callable) {
         return execute(callable, Executors.newVirtualThreadPerTaskExecutor());
      }

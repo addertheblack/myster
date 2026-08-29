@@ -14,6 +14,7 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Consumer;
 import java.util.logging.Logger;
@@ -201,6 +202,72 @@ class TestMysterServerPoolImpl {
         Assertions.assertEquals(address, params.getValue().getAddress().orElseThrow());
         Assertions.assertEquals(expectedIdentity.getPublicKey(),
                                 params.getValue().getExpectedServerPublicKey().orElseThrow());
+    }
+
+    @Test
+    void explicitResolutionReturnsThePoolServerWithStatsIdentity() throws Exception {
+        pool = new MysterServerPoolImpl(pref, protocol);
+        MysterAddress address = MysterAddress.createMysterAddress("127.0.0.1");
+
+        MysterServer resolved = pool.resolveServer(address).get(2, TimeUnit.SECONDS);
+
+        Assertions.assertSame(resolved, pool.getCachedMysterServer(address).orElseThrow());
+        PublicKeyIdentity expectedIdentity = new PublicKeyIdentity(
+                identity.getMainIdentity().orElseThrow().getPublic());
+        Assertions.assertEquals(expectedIdentity, resolved.getIdentity());
+        Assertions.assertEquals(ServerCid.fromPublicKey(expectedIdentity.getPublicKey()),
+                ServerCid.fromPublicKey(((PublicKeyIdentity) resolved.getIdentity()).getPublicKey()));
+    }
+
+    @Test
+    void explicitResolutionKeepsStatsWithoutIdentityAddressBased() throws Exception {
+        pool = new MysterServerPoolImpl(pref, protocol);
+        MysterAddress address = MysterAddress.createMysterAddress("127.0.0.1");
+        lookup.get(address).remove(com.myster.net.stream.server.ServerStats.IDENTITY);
+
+        MysterServer resolved = pool.resolveServer(address).get(2, TimeUnit.SECONDS);
+
+        Assertions.assertTrue(resolved.getIdentity() instanceof MysterAddressIdentity);
+        Assertions.assertSame(resolved, pool.getCachedMysterServer(address).orElseThrow());
+    }
+
+    @Test
+    void concurrentExplicitResolutionSharesInflightWork() throws Exception {
+        pool = new MysterServerPoolImpl(pref, protocol);
+        MysterAddress address = MysterAddress.createMysterAddress("127.0.0.1");
+
+        PromiseFuture<MysterServer> first = pool.resolveServer(address);
+        PromiseFuture<MysterServer> second = pool.resolveServer(address);
+
+        Assertions.assertSame(first, second);
+        Assertions.assertSame(first.get(2, TimeUnit.SECONDS), second.get(2, TimeUnit.SECONDS));
+        Mockito.verify(protocol.getDatagram(), Mockito.times(1))
+                .getBidirectionalServerStats(Mockito.any(ParamBuilder.class));
+    }
+
+    @Test
+    void explicitResolutionRetriesDeadCacheAndFailureCleansInflightEntry() throws Exception {
+        pool = new MysterServerPoolImpl(pref, protocol);
+        MysterAddress address = MysterAddress.createMysterAddress("127.0.0.1");
+        MessagePak stats = lookup.remove(address);
+
+        PromiseFuture<MysterServer> failed = pool.resolveServer(address);
+        Assertions.assertThrows(ExecutionException.class,
+                () -> failed.get(2, TimeUnit.SECONDS));
+        TrackerUtils.INVOKER.waitForThread();
+
+        lookup.put(address, stats);
+        Mockito.clearInvocations(protocol.getDatagram());
+        pool.suggestAddress(address);
+        Mockito.verify(protocol.getDatagram(), Mockito.after(100).never())
+                .getBidirectionalServerStats(Mockito.any(ParamBuilder.class));
+
+        PromiseFuture<MysterServer> retried = pool.resolveServer(address);
+        Assertions.assertNotSame(failed, retried);
+        Assertions.assertSame(retried.get(2, TimeUnit.SECONDS),
+                pool.getCachedMysterServer(address).orElseThrow());
+        Mockito.verify(protocol.getDatagram(), Mockito.times(1))
+                .getBidirectionalServerStats(Mockito.any(ParamBuilder.class));
     }
 
     @Test

@@ -66,6 +66,10 @@ import com.myster.type.CustomTypeDefinition;
 import com.myster.type.MetadataTypeId;
 import com.myster.type.MysterType;
 import com.myster.type.TypeDescriptionList;
+import com.myster.tracker.MysterServer;
+import com.myster.tracker.PublicKeyIdentity;
+import com.myster.tracker.ui.KnownServerSource;
+import com.myster.tracker.ui.ServerPickerDialog;
 
 /**
  * Panel for creating or editing custom MysterTypes backed by an {@link AccessList}.
@@ -94,7 +98,7 @@ public class TypeEditorPanel extends JPanel {
     private final TypeDescriptionList typeList;
     private final CustomTypeDefinition existingType;
     private final AccessListManager accessListManager;
-    private final Optional<TypeEditorServerSource> serverSource;
+    private final Optional<KnownServerSource> serverSource;
     private final Optional<ServerCid> localServerCid;
     private final MetadataTypeRegistry metadataTypeRegistry;
 
@@ -145,7 +149,7 @@ public class TypeEditorPanel extends JPanel {
     public TypeEditorPanel(TypeDescriptionList typeList,
                            AccessListManager accessListManager,
                            CustomTypeDefinition existingType,
-                           Optional<TypeEditorServerSource> serverSource,
+                           Optional<KnownServerSource> serverSource,
                            Optional<ServerCid> localServerCid,
                            Runnable onSave,
                            Runnable onCancel) {
@@ -172,7 +176,7 @@ public class TypeEditorPanel extends JPanel {
     public TypeEditorPanel(TypeDescriptionList typeList,
                            AccessListManager accessListManager,
                            CustomTypeDefinition existingType,
-                           Optional<TypeEditorServerSource> serverSource,
+                           Optional<KnownServerSource> serverSource,
                            Optional<ServerCid> localServerCid,
                            MetadataTypeRegistry metadataTypeRegistry,
                            Runnable onSave,
@@ -409,12 +413,23 @@ public class TypeEditorPanel extends JPanel {
     private void addMember() {
         if (serverSource.isEmpty() || editAdminKeyPair.isEmpty() || editAccessList.isEmpty()) return;
         ServerPickerDialog dialog = new ServerPickerDialog(
-                SwingUtilities.getWindowAncestor(this), serverSource.get());
-        ServerPickerDialog.PickedServer picked = dialog.showAndWait();
-        if (picked == null) return;
+                SwingUtilities.getWindowAncestor(this),
+                serverSource.get(),
+                "Add Member — Pick a Server",
+                "Add Selected",
+                server -> server.getIdentity() instanceof PublicKeyIdentity,
+                "That server does not provide a public-key identity and cannot be a member.");
+        Optional<MysterServer> picked = dialog.showAndWait();
+        if (picked.isEmpty()) return;
+        if (!(picked.get().getIdentity() instanceof PublicKeyIdentity identity)) {
+            AnswerDialog.simpleAlert(
+                    "That server does not provide a public-key identity and cannot be a member.");
+            return;
+        }
+        ServerCid cid = ServerCid.fromPublicKey(identity.getPublicKey());
         try {
             editAccessList.get().appendBlock(
-                    new AddMemberOp(picked.cid(), Role.MEMBER), editAdminKeyPair.get());
+                    new AddMemberOp(cid, Role.MEMBER), editAdminKeyPair.get());
             accessListManager.saveAccessList(editAccessList.get());
             populateMembers();
         } catch (IOException e) {
@@ -696,7 +711,7 @@ public class TypeEditorPanel extends JPanel {
 
     /** MCList item representing one member row in the Members tab. */
     private static class MemberItem extends GenericMCListItem<ServerCid> {
-        MemberItem(ServerCid cid, Role role, TypeEditorServerSource serverSource) {
+        MemberItem(ServerCid cid, Role role, KnownServerSource serverSource) {
             super(new Sortable[0], cid);
             this.cid = cid;
             this.role = role;

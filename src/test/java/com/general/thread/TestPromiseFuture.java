@@ -2,6 +2,7 @@ package com.general.thread;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -11,12 +12,36 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutionException;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
 
 import org.junit.jupiter.api.Test;
 
 class TestPromiseFuture {
+    @Test
+    void delayCompletesAfterMinimumDuration() throws Exception {
+        long started = System.nanoTime();
+
+        PromiseFutures.delay(Duration.ofMillis(30)).get();
+
+        long elapsedMillis = TimeUnit.NANOSECONDS.toMillis(System.nanoTime() - started);
+        assertTrue(elapsedMillis >= 25, "delay completed after " + elapsedMillis + "ms");
+    }
+
+    @Test
+    void cancellingDelayPublishesCancellationAndPreventsLaterCompletion() throws Exception {
+        AtomicReference<CallResult<Void>> observed = new AtomicReference<>();
+        PromiseFuture<Void> delayed = PromiseFutures.delay(Duration.ofMillis(100))
+                .addSynchronousCallback(observed::set);
+
+        delayed.cancel();
+        Thread.sleep(150);
+
+        assertTrue(delayed.isCancelled());
+        assertTrue(observed.get().isCancelled());
+    }
+
     @Test
     void ordinaryListenersRunInRegistrationOrderIncludingFinallyListeners() {
         AtomicReference<AsyncContext<String>> contextReference = new AtomicReference<>();
@@ -44,7 +69,7 @@ class TestPromiseFuture {
         AtomicReference<AsyncContext<String>> sourceContext = new AtomicReference<>();
         AtomicBoolean mapperCalled = new AtomicBoolean();
         PromiseFuture<String> source = PromiseFuture.newPromiseFuture(sourceContext::set);
-        PromiseFuture<Integer> mapped = source.mapAsync(value -> {
+        PromiseFuture<Integer> mapped = source.mapAsyncInline(value -> {
             mapperCalled.set(true);
             return PromiseFuture.newPromiseFuture(value.length());
         });
@@ -61,7 +86,7 @@ class TestPromiseFuture {
     void mapAsyncSourceCancellationSkipsMapperAndCancelsReturnedFuture() {
         AtomicBoolean mapperCalled = new AtomicBoolean();
         PromiseFuture<String> source = PromiseFuture.newPromiseFuture(_ -> {});
-        PromiseFuture<Integer> mapped = source.mapAsync(value -> {
+        PromiseFuture<Integer> mapped = source.mapAsyncInline(value -> {
             mapperCalled.set(true);
             return PromiseFuture.newPromiseFuture(value.length());
         });
@@ -78,7 +103,7 @@ class TestPromiseFuture {
         AtomicBoolean mapperCalled = new AtomicBoolean();
         IllegalStateException failure = new IllegalStateException("source failed");
         PromiseFuture<String> source = PromiseFuture.newPromiseFuture(sourceContext::set);
-        PromiseFuture<Integer> mapped = source.mapAsync(value -> {
+        PromiseFuture<Integer> mapped = source.mapAsyncInline(value -> {
             mapperCalled.set(true);
             return PromiseFuture.newPromiseFuture(value.length());
         });
@@ -96,7 +121,7 @@ class TestPromiseFuture {
         AtomicReference<AsyncContext<Integer>> mappedContext = new AtomicReference<>();
         AtomicReference<String> mappedValue = new AtomicReference<>();
         PromiseFuture<String> source = PromiseFuture.newPromiseFuture(sourceContext::set);
-        PromiseFuture<Integer> mapped = source.mapAsync(value -> {
+        PromiseFuture<Integer> mapped = source.mapAsyncInline(value -> {
             mappedValue.set(value);
             return PromiseFuture.newPromiseFuture(mappedContext::set);
         });
@@ -113,7 +138,7 @@ class TestPromiseFuture {
         AtomicReference<AsyncContext<String>> sourceContext = new AtomicReference<>();
         AtomicReference<PromiseFuture<Integer>> mappedStage = new AtomicReference<>();
         PromiseFuture<String> source = PromiseFuture.newPromiseFuture(sourceContext::set);
-        PromiseFuture<Integer> mapped = source.mapAsync(_ -> {
+        PromiseFuture<Integer> mapped = source.mapAsyncInline(_ -> {
             PromiseFuture<Integer> future = PromiseFuture.newPromiseFuture(_ -> {});
             mappedStage.set(future);
             return future;
@@ -128,6 +153,44 @@ class TestPromiseFuture {
     }
 
     @Test
+    void mapAsyncInvokerControlsWhereMapperIsInvoked() throws Exception {
+        AtomicReference<Runnable> queuedMapper = new AtomicReference<>();
+        AtomicBoolean mapperCalled = new AtomicBoolean();
+        Invoker mapperInvoker = recordingInvoker(queuedMapper);
+
+        PromiseFuture<Integer> mapped = PromiseFuture.newPromiseFuture("source")
+                .mapAsync(value -> {
+                    mapperCalled.set(true);
+                    return PromiseFuture.newPromiseFuture(value.length());
+                }, mapperInvoker);
+
+        assertFalse(mapperCalled.get());
+        queuedMapper.get().run();
+
+        assertTrue(mapperCalled.get());
+        assertEquals(6, mapped.get());
+        assertNull(mapped.getInvoker());
+    }
+
+    @Test
+    void mapAsyncCancellationBeforeInvokerDispatchSkipsMapper() {
+        AtomicReference<Runnable> queuedMapper = new AtomicReference<>();
+        AtomicBoolean mapperCalled = new AtomicBoolean();
+        PromiseFuture<String> source = PromiseFuture.newPromiseFuture("source");
+        PromiseFuture<Integer> mapped = source.mapAsync(value -> {
+            mapperCalled.set(true);
+            return PromiseFuture.newPromiseFuture(value.length());
+        }, recordingInvoker(queuedMapper));
+
+        mapped.cancel();
+        queuedMapper.get().run();
+
+        assertTrue(mapped.isCancelled());
+        assertTrue(source.isCancelled());
+        assertFalse(mapperCalled.get());
+    }
+
+    @Test
     void concurrentSourceAndMappedCancellationDoNotDeadlock() throws Exception {
         CountDownLatch sourceCallbackEntered = new CountDownLatch(1);
         CountDownLatch mappedCallbackEntered = new CountDownLatch(1);
@@ -136,7 +199,8 @@ class TestPromiseFuture {
             sourceCallbackEntered.countDown();
             await(mappedCallbackEntered);
         });
-        PromiseFuture<Integer> mapped = source.mapAsync(_ -> PromiseFuture.newPromiseFuture(42));
+        PromiseFuture<Integer> mapped = source.mapAsyncInline(
+                _ -> PromiseFuture.newPromiseFuture(42));
         mapped.addSynchronousCallback(_ -> {
             mappedCallbackEntered.countDown();
             await(sourceCallbackEntered);
@@ -164,5 +228,22 @@ class TestPromiseFuture {
         if (interrupted) {
             Thread.currentThread().interrupt();
         }
+    }
+
+    private static Invoker recordingInvoker(AtomicReference<Runnable> queuedTask) {
+        return new Invoker() {
+            @Override
+            public void invoke(Runnable runnable) {
+                queuedTask.set(runnable);
+            }
+
+            @Override
+            public boolean isInvokerThread() {
+                return false;
+            }
+
+            @Override
+            public void shutdown() {}
+        };
     }
 }

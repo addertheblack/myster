@@ -21,7 +21,8 @@ public class MysterAddress {
 
     private int port;
 
-    private static final int DEFAULT_PORT = 6669;
+    /** Default Myster server TCP port used when address text omits an explicit port. */
+    public static final int DEFAULT_PORT = 6669;
 
     /**
      * Builds a MysterAddress based on this String. The string should be of format : ip:port. If the

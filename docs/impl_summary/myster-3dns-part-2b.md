@@ -53,7 +53,7 @@ Implemented the candidate identity-verification boundary from
   permanent liveness, or safety of later unauthenticated traffic.
 - `ThreeDnsVerifiedQueryResult` deliberately preserves the untrusted candidate-set type rather than
   implying that a verified responder transitively verified its claims.
-- The wrapper uses `AsyncContext.trackForCancellation(...)` rather than `mapAsync(...)`, because
+- The wrapper uses `AsyncContext.trackForCancellation(...)` rather than `mapAsyncInline(...)`, because
   cancelling a mapped future would otherwise leave the UDP request running.
 - `trackForCancellation(...)` expresses one-way cancellation ownership only. Completion propagation
   remains explicit through callbacks such as `addSynchronousCallback(...)`.
@@ -76,7 +76,7 @@ Implemented the candidate identity-verification boundary from
 - Updated the live 3DNS design with the verified-responder/untrusted-hints distinction, exact-claim
   validation, and cancellation behavior.
 - Updated Javadoc on the new public types, the candidate wire model, and `MysterDatagram.findClosest`.
-- Documented `PromiseFuture.mapAsync(...)` cancellation semantics directly on the API and documented
+- Documented `PromiseFuture.mapAsyncInline(...)` cancellation semantics directly on the API and documented
   the cancellation-only contract of `TaskTracker.trackForCancellation(...)` in its Javadoc.
 
 ## Tests run
