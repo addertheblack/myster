@@ -13,6 +13,8 @@ public class InvokerContainerImpl implements InvokerContainer {
 
     @Override
     public void setInvoker(Invoker invoker) {
-        this.invoker.set(invoker);
+        if (!this.invoker.compareAndSet(null, invoker)) {
+            throw new IllegalStateException("Invoker already set");
+        }
     }
 }

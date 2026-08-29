@@ -150,8 +150,8 @@ public interface PromiseFuture<T> extends Cancellable, Future<T> {
      * or cancellation from this source future is forwarded without invoking the
      * mapper. The invoker is not mapped.
      *
-     * <p>Cancelling the returned future cancels the mapped operation once it
-     * exists, but does not cancel this source future.
+     * <p>Cancelling the returned future cancels this source future and, once it
+     * exists, the mapped operation.
      *
      * @param <R> mapped result type
      * @param mapper operation to start after this future succeeds
@@ -159,6 +159,8 @@ public interface PromiseFuture<T> extends Cancellable, Future<T> {
      */
     default <R> PromiseFuture<R> mapAsync(Function<T, PromiseFuture<R>> mapper) {
         return PromiseFuture.newPromiseFuture(context -> {
+            context.trackForCancellation(this);
+
             addSynchronousCallback(c -> {
                 if (c.isException()) {
                     context.setException(c.getException());

@@ -26,7 +26,6 @@ public class PromiseFutureImpl<T> implements PromiseFuture<T> {
     
     private static final StackWalker stackWalker = StackWalker.getInstance(StackWalker.Option.RETAIN_CLASS_REFERENCE);
 
-
     PromiseFutureImpl() {
         invoker = new InvokerContainerImpl();
         stackElements = stackWalker.walk(stream -> stream
@@ -43,13 +42,9 @@ public class PromiseFutureImpl<T> implements PromiseFuture<T> {
     }
 
     // implement PromiseFuture
-    public synchronized PromiseFuture<T> setInvoker(Invoker invoker) {
-        if (this.invoker.getInvoker() != null ) {
-            throw new IllegalStateException("Invoker already set");
-        }
-        
-        this.invoker.setInvoker(invoker);
-        
+    public PromiseFuture<T> setInvoker(Invoker invoker) {
+        this.invoker.setInvoker(invoker); // setInvoker responsible for dealing with double set
+
         checkForDispatch();
         
         return this;
@@ -74,28 +69,28 @@ public class PromiseFutureImpl<T> implements PromiseFuture<T> {
                 result = r;
                 result.enhanceExceptionWithContext(stackElements);
 
-                checkForDispatch();
-
                 latch.countDown();
-
-                return true;
             }
-		}
-		
+
+            checkForDispatch();
+
+            return true;
+        }
 
         @Override
         public void trackForCancellation(Cancellable... tasks) {
             synchronized (PromiseFutureImpl.this) {
-                if (isCancelled()) {
-                    for (Cancellable cancellable : tasks) {
-                        cancellable.cancel();
-                    }
-                } else {
+                if (!isCancelled()) {
                     cancellables.addAll(Arrays.asList(tasks));
+
+                    return;
                 }
             }
-        }
 
+            for (Cancellable cancellable : tasks) {
+                cancellable.cancel();
+            }
+        }
 
         @Override
         public boolean isCancelled() {
@@ -104,8 +99,10 @@ public class PromiseFutureImpl<T> implements PromiseFuture<T> {
 	}
 
     @Override
-    public synchronized void cancel() {
-        this.result =  CallResult.createCancelled();
+    public void cancel() {
+        synchronized(this) {
+            this.result = CallResult.createCancelled();
+        }
         
         checkForDispatch();
         
@@ -117,12 +114,14 @@ public class PromiseFutureImpl<T> implements PromiseFuture<T> {
     }
     
     private void checkForSyncDispatch() {
-        if (this.result == null) {
-            return;
-        }
-        
-        if (this.synchronousCallbacks.size() == 0) {
-            return;
+        synchronized (PromiseFutureImpl.this) {
+            if (this.result == null) {
+                return;
+            }
+
+            if (this.synchronousCallbacks.size() == 0) {
+                return;
+            }
         }
         
         List<Consumer<CallResult<T>>> toDispatch = null;
@@ -138,13 +137,15 @@ public class PromiseFutureImpl<T> implements PromiseFuture<T> {
 
     private void checkForDispatch() {
         checkForSyncDispatch();
-        
-        if (this.result == null) {
-            return;
-        }
-        
-        if (invoker.getInvoker() == null) {
-            return;
+
+        synchronized (this) {
+            if (this.result == null) {
+                return;
+            }
+
+            if (invoker.getInvoker() == null) {
+                return;
+            }
         }
         
         // Just so we don't bother the invoker for nothing
@@ -183,11 +184,11 @@ public class PromiseFutureImpl<T> implements PromiseFuture<T> {
     }
 
     @Override
-    public synchronized boolean cancel(boolean mayInterruptIfRunning) {
-        if (isDone()) {
+    public boolean cancel(boolean mayInterruptIfRunning) {
+        if (isDone()) { // best effort at not stomping on done
             return false;
         }
-        
+
         cancel();
         return true;
     }
@@ -203,9 +204,11 @@ public class PromiseFutureImpl<T> implements PromiseFuture<T> {
     }
 
     @Override
-    public synchronized PromiseFuture<T> addFinallyCallResultListener(Consumer<CallResult<T>> c) {
-        listeners.add(c);
-        
+    public PromiseFuture<T> addFinallyCallResultListener(Consumer<CallResult<T>> c) {
+        synchronized (this) {
+            listeners.add(c);
+        }
+
         checkForDispatch();
         
         return this;
