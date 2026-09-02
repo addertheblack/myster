@@ -18,10 +18,10 @@ jobs:
 
     steps:
     - uses: actions/checkout@v4
-    - name: Set up JDK 25
+    - name: Set up JDK 26
       uses: actions/setup-java@v4
       with:
-        java-version: '25'
+        java-version: '26'
         distribution: 'temurin'
         server-id: github # Value of the distributionManagement/repository/id field of the pom.xml
         settings-path: ${{ github.workspace }} # location for the settings.xml file
@@ -49,10 +49,10 @@ jobs:
 
     steps:
     - uses: actions/checkout@v4
-    - name: Set up JDK 25
+    - name: Set up JDK 26
       uses: actions/setup-java@v4
       with:
-        java-version: '25'
+        java-version: '26'
         distribution: 'temurin'
         server-id: github # Value of the distributionManagement/repository/id field of the pom.xml
         settings-path: ${{ github.workspace }} # location for the settings.xml file
@@ -74,10 +74,10 @@ jobs:
 
     steps:
     - uses: actions/checkout@v4
-    - name: Set up JDK 25
+    - name: Set up JDK 26
       uses: actions/setup-java@v4
       with:
-        java-version: '25'
+        java-version: '26'
         distribution: 'temurin'
         server-id: github # Value of the distributionManagement/repository/id field of the pom.xml
         settings-path: ${{ github.workspace }} # location for the settings.xml file
@@ -100,10 +100,10 @@ jobs:
 
     steps:
     - uses: actions/checkout@v4
-    - name: Set up JDK 25
+    - name: Set up JDK 26
       uses: actions/setup-java@v4
       with:
-        java-version: '25'
+        java-version: '26'
         distribution: 'temurin'
         server-id: github # Value of the distributionManagement/repository/id field of the pom.xml
         settings-path: ${{ github.workspace }} # location for the settings.xml file

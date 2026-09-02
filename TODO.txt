@@ -10,6 +10,14 @@
 - Implement private networks:
     - Find a format for sharing a network file (public key, primary servers, maybe other public keys).
     - Be able to share the network config file (might be similar to network file, or a superset).
+    - Explore a type-scoped bootstrap index/rendezvous service for members behind firewalls:
+        - Let the bootstrap front authenticated file listings for known servers in that private type.
+        - Coordinate a direct transfer where possible, or relay a specific authorized file over
+          member-initiated outbound sessions where direct connectivity is unavailable.
+        - Bind indexing and transfer requests to the type CID and its membership rules. Do not
+          expose arbitrary host/port forwarding or allow the service to proxy unrelated networks.
+        - Consider chat and other general-connectivity features separately; their relay and
+          presence requirements are broader than the single-type file-sharing case.
 - Add reverse connection protocol.
 - Pick a default place for downloads in progress (e.g. ~/mysterdata or platform app-data dir on Windows).
 - Split off concurrency library from Myster and publish to Maven.
