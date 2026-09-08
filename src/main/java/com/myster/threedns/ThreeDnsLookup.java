@@ -12,6 +12,8 @@ import com.general.thread.Cancellable;
 import com.general.thread.Invoker;
 import com.general.thread.PromiseFuture;
 import com.myster.cid.ServerCid;
+import com.myster.net.client.DnsLookupProtocol;
+import com.myster.net.client.MysterDatagram;
 import com.myster.tracker.Tracker;
 
 /**
@@ -23,7 +25,7 @@ import com.myster.tracker.Tracker;
  * returned future cancels the deadline and all peer queries owned by the
  * lookup.
  */
-public final class ThreeDnsLookup {
+public final class ThreeDnsLookup implements DnsLookupProtocol {
     private static final Invoker LOOKUP_INVOKER = Invoker.newVThreadInvoker();
     private static final Limits DEFAULT_LIMITS = new Limits(
             ThreeDnsAddressCandidateSet.DEFAULT_PER_SIDE_LIMIT,
@@ -45,6 +47,14 @@ public final class ThreeDnsLookup {
              DEFAULT_LIMITS,
              DefaultDeadlineScheduler.INSTANCE,
              LOOKUP_INVOKER);
+    }
+
+    /**
+     * Creates a production lookup over the datagram protocol facade. Per-peer expected-key proof
+     * remains an internal part of the 3DNS traversal rather than application bootstrap wiring.
+     */
+    public ThreeDnsLookup(Tracker tracker, MysterDatagram datagram) {
+        this(tracker, new ThreeDnsPeerClient(Objects.requireNonNull(datagram, "datagram")));
     }
 
     ThreeDnsLookup(ThreeDnsSeedProvider seedProvider,
@@ -73,6 +83,7 @@ public final class ThreeDnsLookup {
      * @param target server CID to resolve
      * @return cancellable future containing an exact or bounded terminal result
      */
+    @Override
     public PromiseFuture<ThreeDnsLookupResult> resolve(ServerCid target) {
         Objects.requireNonNull(target, "target");
         return PromiseFuture.newPromiseFuture(context -> lookupInvoker.invoke(() -> {

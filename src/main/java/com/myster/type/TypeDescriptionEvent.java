@@ -28,11 +28,11 @@ public class TypeDescriptionEvent  {
     }
 
     
-	/**
-	 * Requests the type that is associated with this event.
-	 * 
-	 * @return The type that was enabled or disabled.
-	 */
+    /**
+     * Requests the type associated with this event.
+     *
+     * @return the type that was enabled, disabled, or updated
+     */
     public MysterType getType() {
         return type;
     }

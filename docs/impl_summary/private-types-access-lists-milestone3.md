@@ -29,11 +29,11 @@ Two related features both driven by a single underlying operation — fetching a
 - `com/myster/net/client/MysterStream.java` — added `getAccessList(MysterAddress, MysterType)`
 - `com/myster/net/stream/client/MysterStreamImpl.java` — implemented `getAccessList` delegating to `AccessListGetClient`
 - `com/myster/type/TypeDescriptionList.java` — added `importType(AccessList)` to interface
-- `com/myster/type/DefaultTypeDescriptionList.java` — implemented `importType`: validate, guard duplicate, save to disk, enable, add to in-memory list, fire `typeEnabled`
+- `com/myster/type/DefaultTypeDescriptionList.java` — implemented `importOrRefreshType`: validate, guard duplicate, save to disk, enable, add to in-memory list, fire `typeEnabled`
 - `com/myster/client/ui/TypeListerThread.java` — added `refreshTypeDisplay` to `TypeListener`; second constructor accepting `TypeDescriptionList` + `TypeMetadataCache`; `run()` refactored to compute `mysterAddress` once; added `resolveUnknownTypes` helper
 - `com/myster/client/ui/ClientWindow.java` — `TypeMetadataCache` field; `typeDisplayNames` map; `addItemToTypeList` uses `MutableSortableString`; `refreshTypeDisplay`; right-click popup on type list; `importSelectedType`; `startConnect` passes cache/tdList to thread; `stopConnect` clears `typeDisplayNames`
 - `com/general/util/MessageField.java` — `say()` resets theme foreground + clears icon; new `sayError()` with FlatLaf red + warning SVG
-- `src/test/java/com/myster/filemanager/TestFileTypeList.java` — added no-op `importType` stub to satisfy updated interface
+- `src/test/java/com/myster/filemanager/TestFileTypeList.java` — added no-op `importOrRefreshType` stub to satisfy updated interface
 
 ---
 
@@ -49,11 +49,11 @@ Two related features both driven by a single underlying operation — fetching a
 
 - **`fileTypeList.clearAll()` has one call site** — only in `stopConnect()`, so `typeDisplayNames.clear()` is added there.
 
-- **`importType` calls `validate()` explicitly** — even though `AccessList`'s constructors also call it. Defence-in-depth against future API changes.
+- **`importOrRefreshType` calls `validate()` explicitly** — even though `AccessList`'s constructors also call it. Defence-in-depth against future API changes.
 
 - **`TestTypeMetadataCache` uses real `AccessList`** — so the `getName()` path is exercised through real state derivation, not mocked. The blank-name test uses a single-space name to trigger the `isBlank()` guard.
 
-- **`TestDefaultTypeDescriptionListImport` uses `mockStatic(MysterGlobals.class)`** — `AccessListManager` hardcodes `MysterGlobals.getAccessListPath()` with no injection point. `SwingUtilities.invokeAndWait(() -> {})` flushes the EDT after `importType` so the `typeEnabled` event has fired before assertions run.
+- **`TestDefaultTypeDescriptionListImport` uses `mockStatic(MysterGlobals.class)`** — `AccessListManager` hardcodes `MysterGlobals.getAccessListPath()` with no injection point. `SwingUtilities.invokeAndWait(() -> {})` flushes the EDT after `importOrRefreshType` so the `typeEnabled` event has fired before assertions run.
 
 ---
 
@@ -92,7 +92,7 @@ Two related features both driven by a single underlying operation — fetching a
 
 ## Follow-Up Work / Issues Discovered
 
-- **`TypeManagerPreferences` only reacts to `typeEnabled`/`typeDisabled`** — if a type is ever added in a disabled state (e.g. a future "import but don't enable" flow), the panel won't refresh to show it. Not an issue today since `importType` always enables. Fix if that changes: add a `typeAdded` event to `TypeListener` and subscribe to it in `TypeManagerPreferences.loadList()`. — a type with a blank name falls back to hex both in the cache and in `addItemToTypeList`. This is correct behaviour but worth noting: if a server publishes a type with no name set, users see the hex string even after "Add this type" succeeds. The fix would be a UI-layer fallback (e.g. "(unnamed)") but that's a polish item.
+- **`TypeManagerPreferences` only reacts to `typeEnabled`/`typeDisabled`** — if a type is ever added in a disabled state (e.g. a future "import but don't enable" flow), the panel won't refresh to show it. Not an issue today since `importOrRefreshType` always enables. Fix if that changes: add a `typeAdded` event to `TypeListener` and subscribe to it in `TypeManagerPreferences.loadList()`. — a type with a blank name falls back to hex both in the cache and in `addItemToTypeList`. This is correct behaviour but worth noting: if a server publishes a type with no name set, users see the hex string even after "Add this type" succeeds. The fix would be a UI-layer fallback (e.g. "(unnamed)") but that's a polish item.
 
 - **`TypeMetadataCache` is not cleared on `stopConnect`** — the cache is per-window and lives for the window's lifetime. On reconnect to a *different* server, the cache may return stale names from the previous server for types that happen to match. For M3 this is acceptable (names are stable and derived from the access list chain); if it becomes an issue a `clear()` call in `stopConnect` would fix it.
 

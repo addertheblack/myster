@@ -30,16 +30,8 @@ class TestAccessList {
     }
 
     private AccessList createTestChain() throws IOException {
-        return AccessList.createGenesis(
-                rsaKeyPair.getPublic(),
-                ed25519KeyPair,
-                Collections.emptyList(),
-                List.of("onramp1.example.com:6669"),
-                Policy.defaultRestrictive(),
-                "Test Type",
-                "A test type for unit tests",
-                new String[]{"mp3", "flac"},
-                false);
+        return AccessList.createGenesis(rsaKeyPair.getPublic(), ed25519KeyPair, Collections.emptyList(), List.of("onramp1.example.com:6669"), Policy.defaultRestrictive(),
+                "Test Type", "A test type for unit tests", new String[]{"mp3", "flac"}, false, MetadataTypeId.GENERIC);
     }
 
     @Test
@@ -201,28 +193,16 @@ class TestAccessList {
 
     @Test
     void publicTypeHasPermissivePolicy() throws IOException {
-        AccessList list = AccessList.createGenesis(
-                rsaKeyPair.getPublic(),
-                ed25519KeyPair,
-                Collections.emptyList(),
-                Collections.emptyList(),
-                Policy.defaultPermissive(),
-                "Public Type",
-                null, null, false);
+        AccessList list = AccessList.createGenesis(rsaKeyPair.getPublic(), ed25519KeyPair, Collections.emptyList(), Collections.emptyList(), Policy.defaultPermissive(),
+                "Public Type", null, null, false, MetadataTypeId.GENERIC);
 
         assertTrue(list.getState().getPolicy().isListFilesPublic());
     }
 
     @Test
     void privateTypeHasRestrictivePolicy() throws IOException {
-        AccessList list = AccessList.createGenesis(
-                rsaKeyPair.getPublic(),
-                ed25519KeyPair,
-                Collections.emptyList(),
-                Collections.emptyList(),
-                Policy.defaultRestrictive(),
-                "Private Type",
-                null, null, false);
+        AccessList list = AccessList.createGenesis(rsaKeyPair.getPublic(), ed25519KeyPair, Collections.emptyList(), Collections.emptyList(), Policy.defaultRestrictive(),
+                "Private Type", null, null, false, MetadataTypeId.GENERIC);
 
         assertFalse(list.getState().getPolicy().isListFilesPublic());
     }
@@ -231,14 +211,9 @@ class TestAccessList {
     void genesisWithMembersAndOnramps() throws IOException {
         ServerCid cid = com.myster.cid.ServerCid.fromPublicKey(rsaKeyPair.getPublic());
 
-        AccessList list = AccessList.createGenesis(
-                rsaKeyPair.getPublic(),
-                ed25519KeyPair,
-                List.of(new AddMemberOp(cid, Role.MEMBER)),
-                List.of("server1.com", "server2.com:6669"),
-                Policy.defaultRestrictive(),
-                "With Members",
-                null, null, false);
+        List<AddMemberOp> initialMembers = List.of(new AddMemberOp(cid, Role.MEMBER));
+        AccessList list = AccessList.createGenesis(rsaKeyPair.getPublic(), ed25519KeyPair, initialMembers, List.of("server1.com", "server2.com:6669"), Policy.defaultRestrictive(),
+                "With Members", null, null, false, MetadataTypeId.GENERIC);
 
         assertTrue(list.getState().isMember(cid));
         assertEquals(2, list.getState().getOnramps().size());
@@ -248,16 +223,9 @@ class TestAccessList {
     void serializeAndDeserializeChainWithAllOperationTypes() throws IOException {
         ServerCid cid = com.myster.cid.ServerCid.fromPublicKey(rsaKeyPair.getPublic());
 
-        AccessList list = AccessList.createGenesis(
-                rsaKeyPair.getPublic(),
-                ed25519KeyPair,
-                List.of(new AddMemberOp(cid, Role.ADMIN)),
-                List.of("onramp.example.com"),
-                Policy.defaultRestrictive(),
-                "Full Test",
-                "Description",
-                new String[]{"zip", "tar"},
-                true);
+        List<AddMemberOp> initialMembers = List.of(new AddMemberOp(cid, Role.ADMIN));
+        AccessList list = AccessList.createGenesis(rsaKeyPair.getPublic(), ed25519KeyPair, initialMembers, List.of("onramp.example.com"), Policy.defaultRestrictive(),
+                "Full Test", "Description", new String[]{"zip", "tar"}, true, MetadataTypeId.GENERIC);
 
         list.appendBlock(new SetNameOp("Updated Name"), ed25519KeyPair);
         list.appendBlock(new SetDescriptionOp("Updated Description"), ed25519KeyPair);

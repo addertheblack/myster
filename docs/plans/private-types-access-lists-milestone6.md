@@ -2,6 +2,12 @@
 
 > **⚠ Status: Design Deferred — see "Design Status" section below.**
 
+> **Implemented adjacent capability:** password-authorized, time-limited synchronous invitations
+> are implemented separately in [Private Type Invitations](../design/Private%20Type%20Invitations.md).
+> They let a recipient join without first appearing in an administrator's server picker. This
+> milestone remains deferred because it covers unsolicited/manual requests, an administrator
+> inbox, approval/denial, and messaging—not invitation redemption.
+
 ## Summary
 
 A node that never acts as a server (no open TCP port, never pingable, never in the tracker
@@ -21,7 +27,10 @@ transport now that gets replaced when chat arrives is wasteful. This milestone i
 
 ## Design Status
 
-**Blocked pending messaging/chat design.**
+**Blocked pending messaging/chat design.** The implemented invitation path is deliberately not a
+pending-request transport: an administrator creates authorization in advance, and the bootstrap
+synchronously consumes it over authenticated TCP/TLS section 126. Nothing in that path should be
+duplicated as an inbox or polling mechanism here.
 
 The join-request flow as described below can be implemented in two substantially different ways:
 

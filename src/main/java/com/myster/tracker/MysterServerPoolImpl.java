@@ -23,7 +23,8 @@ import com.general.util.Util;
 import com.myster.cid.ServerCid;
 import com.myster.mml.MessagePak;
 import com.myster.net.MysterAddress;
-import com.myster.net.client.MysterProtocol;
+import com.myster.net.client.MysterDatagram;
+import com.myster.net.client.MysterStream;
 import com.myster.net.client.ParamBuilder;
 import com.myster.net.server.ServerUtils;
 import com.myster.net.stream.server.ServerStats;
@@ -50,7 +51,8 @@ public class MysterServerPoolImpl implements MysterServerPool {
     // if we failed to get stats for this it ends up here so we don't keep retrying
     private final DeadIPCache deadCache = new DeadIPCache();
 
-    private final MysterProtocol protocol;
+    private final MysterStream stream;
+    private final MysterDatagram datagram;
     private final Preferences preferences;
     private final IdentityTracker identityTracker;
 
@@ -64,15 +66,16 @@ public class MysterServerPoolImpl implements MysterServerPool {
     private final List<MysterServerImplementation> hardLinks = new ArrayList<>();
     private TimerTask task;
 
-    public MysterServerPoolImpl(Preferences prefs, MysterProtocol mysterProtocol) {
+    public MysterServerPoolImpl(Preferences prefs, MysterStream stream, MysterDatagram datagram) {
         this.preferences = prefs.node(PREF_NODE_NAME);
-        this.protocol = mysterProtocol;
+        this.stream = java.util.Objects.requireNonNull(stream, "stream");
+        this.datagram = java.util.Objects.requireNonNull(datagram, "datagram");
         
         log.info("Loading IPPool.....");
 
         cache = new HashMap<>();
 
-        identityTracker = new IdentityTracker(address -> mysterProtocol.getDatagram().ping(new ParamBuilder(address)),
+        identityTracker = new IdentityTracker(address -> datagram.ping(new ParamBuilder(address)),
                                               dispatcher.fire()::serverPing,
                                               dispatcher.fire()::deadServer);
 
@@ -316,8 +319,8 @@ public class MysterServerPoolImpl implements MysterServerPool {
         }
 
         PromiseFuture<MysterServer> resolved = PromiseFutures.execute(() -> {
-            try (var socket = protocol.getStream().makeStreamConnection(address)) {
-                return protocol.getStream().ping(socket);
+            try (var socket = stream.makeStreamConnection(address)) {
+                return stream.ping(socket);
             } catch (Exception _) {
                 return false;
             }
@@ -330,7 +333,7 @@ public class MysterServerPoolImpl implements MysterServerPool {
             if (expectedIdentity.isPresent()) {
                 params = params.withExpectedServerPublicKey(expectedIdentity.get().getPublicKey());
             }
-            return protocol.getDatagram().getBidirectionalServerStats(params);
+            return datagram.getBidirectionalServerStats(params);
         }).mapAsyncInline(statsMessage -> {
             if (expectedIdentity.isPresent()
                     && !hasExpectedIdentity(statsMessage, expectedIdentity.get())) {

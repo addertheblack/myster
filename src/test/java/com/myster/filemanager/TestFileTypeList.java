@@ -539,6 +539,11 @@ class TestFileTypeList {
         public void importType(com.myster.access.AccessList accessList) {
             // No-op for testing
         }
+
+        @Override
+        public void importOrRefreshType(com.myster.access.AccessList accessList, boolean enabled) {
+            // No-op for testing
+        }
     }
 
     private static byte[] testTypeCid() {

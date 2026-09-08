@@ -2,11 +2,14 @@ package com.myster.net.stream.client;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertArrayEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.nio.ByteBuffer;
+
+import com.myster.mml.MessagePak;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -173,5 +176,47 @@ public class TestMysterDataInputStream {
         byte[] actualBytes = baos.toByteArray();
 
         assertArrayEquals(expectedBytes, actualBytes, "The bytes were not written in network byte order.");
+    }
+
+    @Test
+    void boundedMessagePakAcceptsExactLimit() throws IOException {
+        MessagePak pak = MessagePak.newEmpty();
+        pak.putString("/value", "hello");
+        mdos.writeMessagePack(pak);
+        byte[] frame = baos.toByteArray();
+
+        MysterDataInputStream input = new MysterDataInputStream(new ByteArrayInputStream(frame));
+        assertEquals("hello", input.readMessagePack(frame.length - Integer.BYTES)
+                .getString("/value").orElseThrow());
+    }
+
+    @Test
+    void boundedMessagePakRejectsOversizedEmbeddedArray() throws IOException {
+        // A complete eight-byte frame declaring an array with over a million elements.
+        byte[] payload = {(byte) 0x81, (byte) 0xa1, 'a', (byte) 0xdd, 0, 0x10, 0, 0};
+        mdos.writeInt(payload.length);
+        mdos.write(payload);
+        MysterDataInputStream input = new MysterDataInputStream(
+                new ByteArrayInputStream(baos.toByteArray()));
+
+        IOException failure = assertThrows(IOException.class,
+                () -> input.readMessagePack(4096));
+        org.junit.jupiter.api.Assertions.assertTrue(failure.getMessage().contains("budget"));
+    }
+
+    @Test
+    void boundedMessagePakRejectsLengthsBeforeAllocation() throws IOException {
+        mdos.writeInt(-1);
+        MysterDataInputStream negative = new MysterDataInputStream(
+                new ByteArrayInputStream(baos.toByteArray()));
+        assertThrows(IOException.class, () -> negative.readMessagePack(10));
+
+        ByteArrayOutputStream largeBytes = new ByteArrayOutputStream();
+        MysterDataOutputStream largeOut = new MysterDataOutputStream(largeBytes);
+        largeOut.writeInt(11);
+        MysterDataInputStream large = new MysterDataInputStream(
+                new ByteArrayInputStream(largeBytes.toByteArray()));
+        assertThrows(IOException.class, () -> large.readMessagePack(10));
+        assertThrows(IllegalArgumentException.class, () -> large.readMessagePack(-1));
     }
 }

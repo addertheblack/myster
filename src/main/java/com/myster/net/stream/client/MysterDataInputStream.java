@@ -173,6 +173,27 @@ public class MysterDataInputStream extends InputStream {
     }
 
     public MessagePak readMessagePack() throws IOException {
-        return MessagePak.fromBytes(readFully(readInt()));
+        return readMessagePack(1024*1024*52);
+    }
+
+    /**
+     * Reads one length-prefixed MessagePak frame, applying the byte limit before buffering and
+     * passing it through to the decoder. Decoded Java objects have additional heap overhead.
+     *
+     * @param maxBytes inclusive maximum encoded frame size
+     * @return decoded MessagePak frame
+     * @throws IllegalArgumentException if {@code maxBytes} is negative
+     * @throws IOException if the frame length is negative, exceeds the bound, is truncated, or is
+     *         not valid MessagePack, or exceeds the decoder's nesting limit
+     */
+    public MessagePak readMessagePack(int maxBytes) throws IOException {
+        if (maxBytes < 0) {
+            throw new IllegalArgumentException("Maximum MessagePak size cannot be negative");
+        }
+        int length = readInt();
+        if (length < 0 || length > maxBytes) {
+            throw new IOException("MessagePak frame length outside accepted bounds: " + length);
+        }
+        return MessagePak.fromBytes(readFully(length), maxBytes);
     }
 }

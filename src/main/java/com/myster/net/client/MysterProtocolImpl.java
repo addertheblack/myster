@@ -1,17 +1,20 @@
 
 package com.myster.net.client;
 
-import com.myster.net.datagram.client.MysterDatagramImpl;
-import com.myster.net.stream.client.MysterStreamImpl;
+import java.util.Objects;
 
-public class MysterProtocolImpl implements MysterProtocol {
+/** Immutable aggregate of the client-side Myster protocol capabilities. */
+public final class MysterProtocolImpl implements MysterProtocol {
     private final MysterDatagram datagram;
     private final MysterStream stream;
+    private final DnsLookupProtocol dnsLookup;
 
-    public MysterProtocolImpl(MysterStreamImpl stream,
-                              MysterDatagramImpl datagram) {
-        this.stream = stream;
-        this.datagram = datagram;
+    public MysterProtocolImpl(MysterStream stream,
+                              MysterDatagram datagram,
+                              DnsLookupProtocol dnsLookup) {
+        this.stream = Objects.requireNonNull(stream, "stream");
+        this.datagram = Objects.requireNonNull(datagram, "datagram");
+        this.dnsLookup = Objects.requireNonNull(dnsLookup, "dnsLookup");
     }
 
     @Override
@@ -23,5 +26,9 @@ public class MysterProtocolImpl implements MysterProtocol {
     public MysterStream getStream() {
         return stream;
     }
-}
 
+    @Override
+    public DnsLookupProtocol getDnsLookup() {
+        return dnsLookup;
+    }
+}

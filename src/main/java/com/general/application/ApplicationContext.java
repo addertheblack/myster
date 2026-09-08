@@ -22,6 +22,9 @@ import com.myster.net.stream.client.MysterDataOutputStream;
  * remote port, it sends the password and the program args. When that happens the servers notifies
  * the ApplicationSingletonListener and passes the listener the args.
  * <p>
+ * Startup preferences are flushed after the socket is bound, and readers synchronize with the
+ * backing store before discovery. Only the instance owning the listener removes these preferences.
+ * <p>
  * A race condition currently exists where two apps launched soon after each other might not manage
  * to contact each other and throw an Exception. Oh well...
  */
@@ -48,10 +51,11 @@ public class ApplicationContext {
      * Call this method to try to connect to self and send the args and return false or, if there is
      * no currently running app then try to make a socket and return true.
      * 
-     * @return false if there is already an instance of this Application running, false otherwise.
+     * @return false if the arguments were forwarded to an existing instance, true if this instance
+     *         started its own listener.
      * @throws IOException
      *             if the currently running program cannot be contacted and this
-     *             ApplicationSingleton cannot create its ServerSocket.
+     *             ApplicationSingleton cannot create its ServerSocket or publish its preferences.
      */
     public boolean start() throws IOException {
         try {
@@ -67,8 +71,9 @@ public class ApplicationContext {
         return true;
     }
 
-    private void connectToSelf(String[] args) throws IOException {
+    private void connectToSelf(String[] args) throws IOException, BackingStoreException {
         Preferences prefs = getPreferences();
+        prefs.sync();
         int password = prefs.getInt("password", 666);
         int port = prefs.getInt("port", this.port);
 
@@ -107,43 +112,56 @@ public class ApplicationContext {
     }
     
     private boolean prefencesExist() throws BackingStoreException {
-        return Preferences.userNodeForPackage(getClass()).nodeExists("startup");
+        Preferences parent = Preferences.userNodeForPackage(getClass());
+        parent.sync();
+        return parent.nodeExists("startup");
     }
 
     private void newSelf(ApplicationSingletonListener listener) throws IOException {
+        // Owning the port must precede any change to the running instance's credentials.
+        ServerSocket socket = new ServerSocket(port, 2, InetAddress.getLocalHost());
+        boolean started = false;
         try {
-            getPreferences().removeNode();
+            Preferences node = getPreferences();
+            int password = (int) (32000 * Math.random());
+            node.putInt("password", password);
+            node.putInt("port", port);
+            node.flush();
+
+            server = new ApplicationServer(password, socket, listener);
+            server.start();
+            started = true;
         } catch (BackingStoreException exception) {
-            // ignore - it's a best effort thing
+            throw new IOException("Could not publish application startup preferences", exception);
+        } finally {
+            if (!started) {
+                socket.close();
+            }
         }
-        
-        Preferences node = getPreferences();
-        
-        double temp = Math.random();
-        int password = (int) (32000 * temp);
-
-        node.putInt("password", password);
-        node.putInt("port", port);
-
-        server = new ApplicationServer(password,
-                                       new ServerSocket(port, 1, InetAddress.getLocalHost()),
-                                       listener);
-        server.start();
     }
 
     /**
-     * Call this when you are finished with this ApplicationSingleton.. Like if your app is quit.
+     * Stops this instance's listener and flushes removal of its startup preferences. Does nothing
+     * if this instance did not start a listener or has already been closed.
      *  
      */
     public void close() {
-        try {
-            getPreferences().removeNode();
-        } catch (BackingStoreException exception) {
-            // ignore - it's a best effort thing
+        if (server == null) {
+            return;
         }
 
-        if (server != null) {
+        // Keep the port bound until removal is published, so a new owner cannot be erased.
+        try {
+            Preferences parent = Preferences.userNodeForPackage(getClass());
+            if (parent.nodeExists("startup")) {
+                parent.node("startup").removeNode();
+                parent.flush();
+            }
+        } catch (BackingStoreException exception) {
+            // Cleanup is best effort; a later owner can replace stale credentials.
+        } finally {
             server.end();
+            server = null;
         }
     }
 

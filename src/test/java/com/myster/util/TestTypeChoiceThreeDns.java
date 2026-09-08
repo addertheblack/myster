@@ -131,5 +131,8 @@ class TestTypeChoiceThreeDns {
 
         @Override
         public void importType(AccessList accessList) throws IOException {}
+
+        @Override
+        public void importOrRefreshType(AccessList accessList, boolean enabled) throws IOException {}
     }
 }

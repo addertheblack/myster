@@ -38,6 +38,19 @@ public class AccessListManager implements AccessListReader {
             return Optional.of(cached);
         }
 
+        Optional<AccessList> loaded = loadAccessListSnapshot(mysterType);
+        loaded.ifPresent(accessList -> cache.put(mysterType, accessList));
+        return loaded;
+    }
+
+    /**
+     * Loads a fresh access-list snapshot from persistent storage, bypassing the mutable cache.
+     * This is intended for code that must compare persisted state with a candidate replacement.
+     *
+     * @param mysterType the type to load
+     * @return the independently decoded access list, or empty if it is absent or unreadable
+    */
+    public Optional<AccessList> loadAccessListSnapshot(MysterType mysterType) {
         File file = getAccessListFile(mysterType);
         if (!file.exists()) {
             return Optional.empty();
@@ -51,7 +64,6 @@ public class AccessListManager implements AccessListReader {
                 return Optional.empty();
             }
 
-            cache.put(mysterType, accessList);
             log.info("Loaded access list for type: " + mysterType.toHexString());
             return Optional.of(accessList);
 

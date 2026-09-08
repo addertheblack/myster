@@ -3,17 +3,13 @@ package com.myster.type.ui;
 import javax.swing.AbstractAction;
 import javax.swing.Action;
 import javax.swing.DefaultCellEditor;
-import javax.swing.JButton;
 import javax.swing.JCheckBox;
-import javax.swing.JFrame;
-import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.JTable;
 import javax.swing.JToolBar;
 import javax.swing.table.TableCellRenderer;
 import java.awt.CardLayout;
 import java.awt.Component;
-import java.awt.FlowLayout;
 import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
 import java.awt.Insets;
@@ -21,7 +17,7 @@ import java.awt.event.ActionEvent;
 import java.awt.event.HierarchyEvent;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Optional;
+import java.util.Objects;
 
 import com.formdev.flatlaf.extras.FlatSVGIcon;
 import com.general.mclist.GenericMCListItem;
@@ -33,14 +29,15 @@ import com.general.mclist.MCListTableModel;
 import com.general.mclist.Sortable;
 import com.general.mclist.SortableBoolean;
 import com.general.mclist.SortableString;
+import com.general.util.AnswerDialog;
 import com.general.util.GridBagBuilder;
 import com.general.util.IconLoader;
 import com.general.util.MessagePanel;
 import com.myster.access.AccessListManager;
 import com.myster.cid.ServerCid;
-import com.myster.filemanager.DefaultMetadataTypeRegistry;
 import com.myster.filemanager.MetadataTypeRegistry;
 import com.myster.pref.ui.PreferencesPanel;
+import com.myster.tracker.ui.KnownServerSource;
 import com.myster.type.CustomTypeDefinition;
 import com.myster.type.MysterType;
 import com.myster.type.TypeDescription;
@@ -48,7 +45,9 @@ import com.myster.type.TypeDescriptionEvent;
 import com.myster.type.TypeDescriptionList;
 import com.myster.type.TypeListener;
 import com.myster.type.TypeSource;
-import com.myster.tracker.ui.KnownServerSource;
+import com.myster.type.join.TypeInvitationManager;
+import com.myster.type.join.TypeJoinUriDispatcher;
+import com.myster.type.join.TypeMembershipService;
 
 /**
  * Preferences panel for managing both default and custom MysterTypes.
@@ -69,12 +68,16 @@ public class TypeManagerPreferences extends PreferencesPanel {
     private final TypeDescriptionList tdList;
     private final AccessListManager accessListManager;
     private final MetadataTypeRegistry metadataTypeRegistry;
-    private final Optional<KnownServerSource> serverSource;
-    private final Optional<ServerCid> localServerCid;
+    private final KnownServerSource serverSource;
+    private final ServerCid localServerCid;
+    private final TypeInvitationManager invitationManager;
+    private final TypeMembershipService membershipService;
+    private final TypeJoinUriDispatcher joinDispatcher;
     private MCList<MysterType> mcList;
     private Action addAction;
     private Action editAction;
     private Action deleteAction;
+    private Action joinAction;
 
     // CardLayout for switching between list view and editor view
     private final CardLayout cardLayout;
@@ -89,41 +92,26 @@ public class TypeManagerPreferences extends PreferencesPanel {
     private final List<MysterType> pendingDeletions = new ArrayList<>();
 
     /**
-     * Creates a new type manager preferences panel.
-     *
-     * @param tdList            the type description list to manage
-     * @param accessListManager used when opening the type editor to create/edit access lists
-     * @param serverSource      server source for the Members tab; empty omits the tab
-     * @param localServerCid    this server's own identity; when present, new types are seeded
-     *                          with the creator as an ADMIN member in the genesis block
-     */
-    public TypeManagerPreferences(TypeDescriptionList tdList,
-                                  AccessListManager accessListManager,
-                                  Optional<KnownServerSource> serverSource,
-                                  Optional<ServerCid> localServerCid) {
-        this(tdList, accessListManager, new DefaultMetadataTypeRegistry(), serverSource,
-                localServerCid);
-    }
-
-    /**
-     * Creates a type manager using the supplied registry as the editor's profile source.
-     *
-     * @param tdList type descriptions to display and update
-     * @param accessListManager canonical custom-type storage
-     * @param metadataTypeRegistry source of selectable local metadata profiles
-     * @param serverSource optional member-selection source
-     * @param localServerCid optional local member identity for new types
+     * Creates the application's type manager. All services are required because omitting any one
+     * would leave a visible type-management operation unavailable or bypass its canonical service.
      */
     public TypeManagerPreferences(TypeDescriptionList tdList,
                                   AccessListManager accessListManager,
                                   MetadataTypeRegistry metadataTypeRegistry,
-                                  Optional<KnownServerSource> serverSource,
-                                  Optional<ServerCid> localServerCid) {
-        this.tdList = tdList;
-        this.accessListManager = accessListManager;
-        this.metadataTypeRegistry = java.util.Objects.requireNonNull(metadataTypeRegistry);
-        this.serverSource = serverSource;
-        this.localServerCid = localServerCid;
+                                  KnownServerSource serverSource,
+                                  ServerCid localServerCid,
+                                  TypeInvitationManager invitationManager,
+                                  TypeMembershipService membershipService,
+                                  TypeJoinUriDispatcher joinDispatcher) {
+        this.tdList = Objects.requireNonNull(tdList, "tdList");
+        this.accessListManager = Objects.requireNonNull(accessListManager, "accessListManager");
+        this.metadataTypeRegistry = Objects.requireNonNull(
+                metadataTypeRegistry, "metadataTypeRegistry");
+        this.serverSource = Objects.requireNonNull(serverSource, "serverSource");
+        this.localServerCid = Objects.requireNonNull(localServerCid, "localServerCid");
+        this.invitationManager = Objects.requireNonNull(invitationManager, "invitationManager");
+        this.membershipService = Objects.requireNonNull(membershipService, "membershipService");
+        this.joinDispatcher = Objects.requireNonNull(joinDispatcher, "joinDispatcher");
         setLayout(new GridBagLayout());
 
         cardLayout = new CardLayout();
@@ -168,6 +156,21 @@ public class TypeManagerPreferences extends PreferencesPanel {
                     }
                 }
             }
+
+            public void typeUpdated(TypeDescriptionEvent e) {
+                MysterType type = e.getType();
+                TypeDescription current = tdList.get(type).orElse(null);
+                if (current == null) return;
+
+                for (int i = 0; i < mcList.length(); i++) {
+                    if (mcList.getItem(i).equals(type)) {
+                        ((TypeMCListItem) mcList.getMCListItem(i)).setTypeDescription(current);
+                        mcList.repaint();
+                        updateButtonStates();
+                        return;
+                    }
+                }
+            }
         };
         tdList.addTypeListener(typeChangeListener);
 
@@ -193,6 +196,7 @@ public class TypeManagerPreferences extends PreferencesPanel {
             "Myster uses 'types' to organize files into virtual overlay networks. " +
             "Each enabled type adds some CPU and bandwidth overhead, so only enable types you use. " +
             "You can create custom types for your own private networks. " +
+            "Use Join Private Network to import an invitation link. " +
             "Use the checkbox to enable/disable types. Double-click custom types to edit them. " +
             "Changes take effect when you save this preferences panel.");
         listPanel.add(message, gbc.withGridLoc(0, 0).withSize(1, 1).withWeight(1.0, 0.0).withFill(GridBagConstraints.HORIZONTAL));
@@ -224,6 +228,14 @@ public class TypeManagerPreferences extends PreferencesPanel {
         deleteAction.putValue(Action.SHORT_DESCRIPTION, "Delete selected custom type");
         deleteAction.setEnabled(false);
 
+        joinAction = new AbstractAction("Join Private Network…") {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                joinDispatcher.openManual();
+            }
+        };
+        joinAction.putValue(Action.SHORT_DESCRIPTION, "Join a network using a Myster invitation link");
+
         // Try to load icons (16x16 for toolbar)
         try {
             FlatSVGIcon addIcon = IconLoader.loadSvg(TypeManagerPreferences.class, "add-icon", 16);
@@ -245,6 +257,8 @@ public class TypeManagerPreferences extends PreferencesPanel {
         toolbar.add(addAction);
         toolbar.add(editAction);
         toolbar.add(deleteAction);
+        toolbar.addSeparator();
+        toolbar.add(joinAction);
 
         listPanel.add(toolbar, gbc.withGridLoc(0, 1).withWeight(1.0, 0.0).withFill(GridBagConstraints.HORIZONTAL));
 
@@ -385,7 +399,7 @@ public class TypeManagerPreferences extends PreferencesPanel {
 
         // Create editor panel with callbacks
         editorPanel = new TypeEditorPanel(tdList, accessListManager, existingType, serverSource,
-            localServerCid, metadataTypeRegistry,
+            localServerCid, metadataTypeRegistry, invitationManager, membershipService,
             this::onEditorSave,
             this::onEditorCancel
         );
@@ -427,10 +441,7 @@ public class TypeManagerPreferences extends PreferencesPanel {
         MysterType type = item.getTypeDescription().getType();
         tdList.getCustomTypeDefinition(type).ifPresentOrElse(
             customDef -> showEditor(customDef),
-            () -> JOptionPane.showMessageDialog(this,
-                "Could not find custom type definition for editing.",
-                "Error",
-                JOptionPane.ERROR_MESSAGE)
+            () -> AnswerDialog.simpleAlert("Could not find custom type definition for editing.")
         );
     }
 
@@ -452,10 +463,7 @@ public class TypeManagerPreferences extends PreferencesPanel {
             // Reload the list to hide the deleted type (but don't clear pending deletions)
             loadList();
         } catch (Exception ex) {
-            JOptionPane.showMessageDialog(this,
-                "Failed to mark type for deletion: " + ex.getMessage(),
-                "Error",
-                JOptionPane.ERROR_MESSAGE);
+            AnswerDialog.simpleAlert("Failed to mark type for deletion: " + ex.getMessage());
         }
     }
 
@@ -524,7 +532,7 @@ public class TypeManagerPreferences extends PreferencesPanel {
      * MCListItem for displaying type information.
      */
     private static class TypeMCListItem extends GenericMCListItem<MysterType> {
-        private final TypeDescription typeDesc;
+        private TypeDescription typeDesc;
         private boolean enabled;
 
         public TypeMCListItem(TypeDescription typeDesc, boolean enabled) {
@@ -548,6 +556,13 @@ public class TypeManagerPreferences extends PreferencesPanel {
             return typeDesc;
         }
 
+        public void setTypeDescription(TypeDescription typeDesc) {
+            if (!getObject().equals(typeDesc.getType())) {
+                throw new IllegalArgumentException("Cannot change the type represented by a list row");
+            }
+            this.typeDesc = typeDesc;
+        }
+
         public boolean getEnabled() {
             return enabled;
         }
@@ -555,50 +570,5 @@ public class TypeManagerPreferences extends PreferencesPanel {
         public void setEnabled(boolean enabled) {
             this.enabled = enabled;
         }
-    }
-
-    /**
-     * Standalone test main method to preview the preferences panel.
-     */
-    public static void main(String[] args) {
-        javax.swing.SwingUtilities.invokeLater(() -> {
-            JFrame testFrame = new JFrame("Type Manager V2 Test");
-            testFrame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-
-            // Create the panel with a real type list
-            com.myster.access.AccessListManager alm = new com.myster.access.AccessListManager();
-            TypeDescriptionList typeList = new com.myster.type.DefaultTypeDescriptionList(
-                java.util.prefs.Preferences.userRoot().node("MysterTypes"), alm);
-            TypeManagerPreferences panel = new TypeManagerPreferences(typeList, alm,
-                    Optional.<KnownServerSource>empty(), Optional.empty());
-
-            // Add to frame and set it on the panel
-            testFrame.add(panel);
-            panel.addFrame(testFrame);
-
-            // Add save/reset buttons for testing
-            JPanel buttonPanel = new JPanel(new FlowLayout());
-            JButton saveButton = new JButton("Save");
-            saveButton.addActionListener(e -> {
-                panel.save();
-                JOptionPane.showMessageDialog(testFrame, "Settings saved!");
-            });
-            JButton resetButton = new JButton("Reset");
-            resetButton.addActionListener(e -> {
-                panel.reset();
-                JOptionPane.showMessageDialog(testFrame, "Settings reset!");
-            });
-
-            buttonPanel.add(saveButton);
-            buttonPanel.add(resetButton);
-
-            testFrame.setLayout(new java.awt.BorderLayout());
-            testFrame.add(panel, java.awt.BorderLayout.CENTER);
-            testFrame.add(buttonPanel, java.awt.BorderLayout.SOUTH);
-
-            testFrame.setSize(600, 500);
-            testFrame.setLocationRelativeTo(null);
-            testFrame.setVisible(true);
-        });
     }
 }

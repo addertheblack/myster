@@ -4,11 +4,15 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
+import java.util.Collections;
+import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 
+import com.myster.access.Policy;
+import com.myster.type.MetadataTypeId;
 import org.junit.jupiter.api.Test;
 
 import com.myster.access.AccessList;
@@ -66,16 +70,8 @@ class TestTypeMetadataCache {
     }
 
     private AccessList makeAccessList(String name) throws Exception {
-        return AccessList.createGenesis(
-                rsaKeyPair.getPublic(),
-                edKeyPair,
-                java.util.Collections.emptyList(),
-                java.util.List.of("onramp.example.com:6669"),
-                com.myster.access.Policy.defaultRestrictive(),
-                name,
-                "description",
-                new String[]{"ext"},
-                false);
+        return AccessList.createGenesis(rsaKeyPair.getPublic(), edKeyPair, Collections.emptyList(), List.of("onramp.example.com:6669"), Policy.defaultRestrictive(),
+                name, "description", new String[]{"ext"}, false, MetadataTypeId.GENERIC);
     }
 
     // ── tests ───────────────────────────────────────────────────────────────────

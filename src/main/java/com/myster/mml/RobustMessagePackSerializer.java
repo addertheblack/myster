@@ -29,6 +29,10 @@ class RobustMessagePackSerializer implements com.myster.mml.MessagePak {
         this.delegate = new MessagePackSerializer(data);
     }
 
+    RobustMessagePackSerializer(byte[] data, int maxBytes) throws IOException {
+        this.delegate = new MessagePackSerializer(data, maxBytes);
+    }
+
     public boolean isTrace() {
         return trace;
     }

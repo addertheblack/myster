@@ -19,8 +19,28 @@ public interface MessagePak {
         return new MessagePackSerializer();
     }
     
+    /**
+     * Decodes using the actual input length as the size limit.
+     * @see #fromBytes(byte[], int)
+     */
     public static MessagePak fromBytes(byte[] b) throws IOException {
-        return new RobustMessagePackSerializer(b);
+        return fromBytes(b, b.length);
+    }
+
+    /**
+     * Decodes a message with bounded container and payload sizes and at most 128 nested
+     * containers, including the root map. Declared sizes must fit both the remaining input and
+     * a shared budget based on its actual length. Java object overhead is additional; this is
+     * not an exact heap allocation limit.
+     *
+     * @param b encoded message
+     * @param maxBytes inclusive maximum encoded size in bytes
+     * @return decoded message
+     * @throws IllegalArgumentException if maxBytes is negative
+     * @throws IOException if the input is malformed or exceeds size or nesting limits
+     */
+    public static MessagePak fromBytes(byte[] b, int maxBytes) throws IOException {
+        return new RobustMessagePackSerializer(b, maxBytes);
     }
     
     // String operations

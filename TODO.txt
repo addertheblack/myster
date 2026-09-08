@@ -22,8 +22,14 @@
 - Pick a default place for downloads in progress (e.g. ~/mysterdata or platform app-data dir on Windows).
 - Split off concurrency library from Myster and publish to Maven.
 - Make Myster modules compatible.
+- Centralize TCP stream section numbers in a shared StreamConstants class, like DatagramConstants
+  for UDP, so clients and servers use the same constants without clients depending on server handlers.
 - Fix naming — probably want to use myster.org and not the current com.myster etc....
-- Implement DoS / packet-amplification defence (don't be a target vector for attacks on others).
+- Review and implement general server abuse / DoS protection:
+    - Prevent UDP reflection and packet amplification (don't be a vector for attacks on others).
+    - Add general per-IP rate limiting across server requests, beyond invitation password checks.
+    - Bound aggregate request rates, concurrent connections, expensive work, and response bandwidth.
+    - Keep rate-limit tracking bounded and expiring so the defence cannot itself exhaust resources.
 - Fix DefaultTypeDescriptionList to interact with preferences in a sane way (not using MML).
 - Add audio chat
 - Add video chat
@@ -52,3 +58,5 @@
 
 - We also need to enable multiple admins on a type history file. This requires a voting system or other way in which a
 type file can be sent to other admins
+
+- switch from d/ling names only to getting full paths. Should list dirs much faster on slow systems

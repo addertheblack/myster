@@ -338,6 +338,7 @@
                   <winMenu>true</winMenu>
                   <winShortcut>true</winShortcut>
                   <winMenuGroup>Myster</winMenuGroup>
+                  <resourceDir>${project.basedir}/src/main/jpackage/windows</resourceDir>
                 </configuration>
               </execution>
             </executions>
@@ -360,6 +361,23 @@
         <jpackage.icon>${project.basedir}/program_icon.icns</jpackage.icon>
         <jpackage.speeduplaunchpath>$HOME/Library/Application Support/Myster</jpackage.speeduplaunchpath>
       </properties>
+      <build>
+        <plugins>
+          <plugin>
+            <groupId>org.panteleyev</groupId>
+            <artifactId>jpackage-maven-plugin</artifactId>
+            <version>1.6.6</version>
+            <executions>
+              <execution>
+                <id>jpackage</id>
+                <configuration>
+                  <resourceDir>${project.basedir}/src/main/jpackage/macos</resourceDir>
+                </configuration>
+              </execution>
+            </executions>
+          </plugin>
+        </plugins>
+      </build>
     </profile>
 
     <!-- Linux Profile -->
@@ -375,6 +393,25 @@
         <jpackage.icon>program_icon.png</jpackage.icon>
         <jpackage.speeduplaunchpath>$HOME/.myster/</jpackage.speeduplaunchpath>
       </properties>
+      <build>
+        <plugins>
+          <plugin>
+            <groupId>org.panteleyev</groupId>
+            <artifactId>jpackage-maven-plugin</artifactId>
+            <version>1.6.6</version>
+            <executions>
+              <execution>
+                <id>jpackage</id>
+                <configuration>
+                  <linuxShortcut>true</linuxShortcut>
+                  <linuxAppCategory>Network</linuxAppCategory>
+                  <resourceDir>${project.basedir}/src/main/jpackage/linux</resourceDir>
+                </configuration>
+              </execution>
+            </executions>
+          </plugin>
+        </plugins>
+      </build>
     </profile>
   </profiles>
 </project>

@@ -1,7 +1,19 @@
 package com.myster.tracker.ui;
 
-import static com.myster.tracker.ui.ServerPickerModel.filter;
-
+import javax.swing.AbstractAction;
+import javax.swing.ActionMap;
+import javax.swing.BorderFactory;
+import javax.swing.InputMap;
+import javax.swing.JButton;
+import javax.swing.JComponent;
+import javax.swing.JDialog;
+import javax.swing.JLabel;
+import javax.swing.JPanel;
+import javax.swing.JProgressBar;
+import javax.swing.JTextField;
+import javax.swing.KeyStroke;
+import javax.swing.event.DocumentEvent;
+import javax.swing.event.DocumentListener;
 import java.awt.BorderLayout;
 import java.awt.Dimension;
 import java.awt.FlowLayout;
@@ -17,21 +29,6 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.function.Predicate;
 
-import javax.swing.AbstractAction;
-import javax.swing.ActionMap;
-import javax.swing.BorderFactory;
-import javax.swing.InputMap;
-import javax.swing.JButton;
-import javax.swing.JComponent;
-import javax.swing.JDialog;
-import javax.swing.JLabel;
-import javax.swing.JPanel;
-import javax.swing.JProgressBar;
-import javax.swing.JTextField;
-import javax.swing.KeyStroke;
-import javax.swing.event.DocumentEvent;
-import javax.swing.event.DocumentListener;
-
 import com.general.mclist.GenericMCListItem;
 import com.general.mclist.JMCList;
 import com.general.mclist.MCListEvent;
@@ -46,6 +43,8 @@ import com.general.thread.PromiseFutures;
 import com.general.util.GridBagBuilder;
 import com.myster.net.MysterAddress;
 import com.myster.tracker.MysterServer;
+
+import static com.myster.tracker.ui.ServerPickerModel.filter;
 
 /**
  * Document-modal chooser that returns a caller-eligible {@link MysterServer}.
@@ -303,7 +302,7 @@ public final class ServerPickerDialog extends JDialog {
         PromiseFuture<MysterServer> lookup = addressLookup.start(candidate,
                 update -> addressStageChanged(token, candidate, update));
         owner.trackForCancellation(lookup);
-        lookup.withInvoker(Invoker.EDT)
+        lookup.useEdt()
                 .addResultListener(server -> resolvedServer(owner, token, term, server))
                 .addExceptionListener(exception -> {
                     if (!isCurrent(token)) {

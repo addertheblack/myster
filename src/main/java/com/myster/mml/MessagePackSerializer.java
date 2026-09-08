@@ -1,6 +1,7 @@
 package com.myster.mml;
 
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
@@ -37,8 +38,18 @@ public class MessagePackSerializer implements com.myster.mml.MessagePak {
      * Do not use this method. Use {@link com.myster.mml.MessagePak#fromBytes(byte[])}
      */
     MessagePackSerializer(byte[] data) throws IOException {
+        this(data, data.length);
+    }
+
+    MessagePackSerializer(byte[] data, int maxBytes) throws IOException {
+        if (maxBytes < 0) {
+            throw new IllegalArgumentException("Maximum MessagePak size cannot be negative");
+        }
+        if (data.length > maxBytes) {
+            throw new IOException("MessagePak exceeds maximum encoded size: " + maxBytes);
+        }
         try (MessageUnpacker unpacker = MessagePack.newDefaultUnpacker(data)) {
-            root = unpackMap(unpacker);
+            root = unpackMap(unpacker, new DecodeBudget(data.length), 1);
         } catch (MessagePackException ex) {
             // MessagePackException is a damn RuntimeException!
             // How is file corruption an unrecoverable error you asshat!
@@ -634,20 +645,23 @@ public class MessagePackSerializer implements com.myster.mml.MessagePak {
         }
     }
     
-    private Map<String, Object> unpackMap(MessageUnpacker unpacker) throws IOException {
+    private Map<String, Object> unpackMap(MessageUnpacker unpacker, DecodeBudget budget,
+            int depth) throws IOException {
+        budget.checkDepth(depth);
         Map<String, Object> result = new HashMap<>();
         int size = unpacker.unpackMapHeader();
+        budget.reserve(2L * size, unpacker);
         
         for (int i = 0; i < size; i++) {
-            String key = unpacker.unpackString();
+            String key = unpackString(unpacker, budget);
             ValueType valueType = unpacker.getNextFormat().getValueType();
             
             switch (valueType) {
                 case MAP:
-                    result.put(key, unpackMap(unpacker));
+                    result.put(key, unpackMap(unpacker, budget, depth + 1));
                     break;
                 case STRING:
-                    result.put(key, unpacker.unpackString());
+                    result.put(key, unpackString(unpacker, budget));
                     break;
                 case INTEGER:
                     // Always unpack integers as Long - MessagePack handles optimal packing automatically
@@ -655,10 +669,11 @@ public class MessagePackSerializer implements com.myster.mml.MessagePak {
                     break;
                 case BINARY:
                     int binarySize = unpacker.unpackBinaryHeader();
+                    budget.reserve(binarySize, unpacker);
                     result.put(key, binarySize > 0 ? unpacker.readPayload(binarySize) : new byte[0]);
                     break;
                 case ARRAY:
-                    result.put(key, unpackArray(unpacker));
+                    result.put(key, unpackArray(unpacker, budget, depth + 1));
                     break;
                 case BOOLEAN:
                     result.put(key, unpacker.unpackBoolean());
@@ -680,8 +695,11 @@ public class MessagePackSerializer implements com.myster.mml.MessagePak {
         return result;
     }
     
-    private Object unpackArray(MessageUnpacker unpacker) throws IOException {
+    private Object unpackArray(MessageUnpacker unpacker, DecodeBudget budget, int depth)
+            throws IOException {
+        budget.checkDepth(depth);
         int arraySize = unpacker.unpackArrayHeader();
+        budget.reserve(arraySize, unpacker);
         if (arraySize == 0) {
             return new Object[0];
         }
@@ -694,7 +712,7 @@ public class MessagePackSerializer implements com.myster.mml.MessagePak {
             ValueType elementType = unpacker.getNextFormat().getValueType();
             switch (elementType) {
                 case STRING:
-                    objectArray[i] = unpacker.unpackString();
+                    objectArray[i] = unpackString(unpacker, budget);
                     break;
                 case INTEGER:
                     // Always store integers as Long for consistency
@@ -702,6 +720,7 @@ public class MessagePackSerializer implements com.myster.mml.MessagePak {
                     break;
                 case BINARY:
                     int binarySize = unpacker.unpackBinaryHeader();
+                    budget.reserve(binarySize, unpacker);
                     objectArray[i] = unpacker.readPayload(binarySize);
                     break;
                 case BOOLEAN:
@@ -715,10 +734,10 @@ public class MessagePackSerializer implements com.myster.mml.MessagePak {
                     objectArray[i] = null;
                     break;
                 case MAP:
-                    objectArray[i] = unpackMap(unpacker);
+                    objectArray[i] = unpackMap(unpacker, budget, depth + 1);
                     break;
                 case ARRAY:
-                    objectArray[i] = unpackArray(unpacker);
+                    objectArray[i] = unpackArray(unpacker, budget, depth + 1);
                     break;
                 default:
                     unpacker.skipValue();
@@ -728,5 +747,42 @@ public class MessagePackSerializer implements com.myster.mml.MessagePak {
         }
         
         return objectArray;
+    }
+
+    private String unpackString(MessageUnpacker unpacker, DecodeBudget budget) throws IOException {
+        int length = unpacker.unpackRawStringHeader();
+        budget.reserve(length, unpacker);
+        return new String(unpacker.readPayload(length), StandardCharsets.UTF_8);
+    }
+
+    /**
+     * Each container slot needs at least one encoded byte; string and binary payloads need their
+     * declared byte counts as well. Reserving these against one shared budget prevents nested
+     * headers from repeatedly spending the same input bytes before truncation is detected.
+     * This bounds allocation growth relative to input size, not exact JVM heap usage.
+     */
+    private static final class DecodeBudget {
+        private static final int MAX_DEPTH = 128;
+        private final int encodedBytes;
+        private long remaining;
+
+        DecodeBudget(int encodedBytes) {
+            this.encodedBytes = encodedBytes;
+            remaining = encodedBytes;
+        }
+
+        void reserve(long count, MessageUnpacker unpacker) throws IOException {
+            if (count < 0 || count > remaining
+                    || count > encodedBytes - unpacker.getTotalReadBytes()) {
+                throw new IOException("Declared MessagePak size exceeds remaining decode budget");
+            }
+            remaining -= count;
+        }
+
+        void checkDepth(int depth) throws IOException {
+            if (depth > MAX_DEPTH) {
+                throw new IOException("MessagePak nesting exceeds " + MAX_DEPTH + " containers");
+            }
+        }
     }
 }

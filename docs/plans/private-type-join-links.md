@@ -76,14 +76,16 @@ one, and string/log representations redact it.
 ### Recipient flow
 
 `Join Private Network...` accepts a pasted link, while native URL activation opens the same dialog.
-The dialog resolves `bootstrap` with `ThreeDnsLookup.resolve(...)`. Only `EXACT_VERIFIED` is usable;
-closest, no-route, bounded, timeout, and cancellation outcomes do not contact or trust the closest
-peer as the bootstrap.
+The dialog resolves `bootstrap` through `MysterProtocol.getDnsLookup()`. The exposed
+`DnsLookupProtocol` is implemented by `ThreeDnsLookup`, but the join feature does not depend on that
+concrete traversal class. Only `EXACT_VERIFIED` is usable; closest, no-route, bounded, timeout, and
+cancellation outcomes do not contact or trust the closest peer as the bootstrap.
 
 The exact 3DNS result supplies both the bootstrap address and full RSA public key. All subsequent
-TLS connections use that full key as the expected server identity. The client first fetches section
-125 from the pinned bootstrap and validates that the returned access list derives the link's type.
-This supplies the friendly type name before the user commits to joining.
+TLS connections use that full key as the expected server identity. The coordinator supplies those
+common connection parameters through `ParamBuilder` to `MysterStream`, then invokes section 125 on
+the returned reusable `MysterSocket` and validates that the returned access list derives the link's
+type. This supplies the friendly type name before the user commits to joining.
 
 Because generated links contain no password, the dialog requests it. On confirmation, the client
 opens a pinned TLS connection and sends section 126. The server derives the requester solely from
@@ -100,11 +102,11 @@ unchanged.
 ### Invitation security and lifecycle
 
 Invitation ids are 128 random bits. Their canonical URI representation is exactly 32 lowercase
-hexadecimal digits; protocol and persisted representations use the raw 16 bytes. Passwords are
-case-sensitive, must be non-empty, are bounded before KDF work, are never logged, and are not
-stored. Persist a random 128-bit salt, PBKDF2-HMAC-SHA256 parameters, a 256-bit verifier,
-creation/expiry timestamps, type CID, invitation id, and optional consumed-by CID. Use a
-constant-time verifier comparison.
+hexadecimal digits. The protocol uses the raw 16 bytes; Preferences uses the lowercase hexadecimal
+type and invitation ids as node names. Passwords are case-sensitive, must be non-empty, are bounded
+before KDF work, are never logged, and are not stored. Persist a random 128-bit salt,
+PBKDF2-HMAC-SHA256 parameters, a 256-bit verifier, creation/expiry timestamps, and redemption state.
+Use a constant-time verifier comparison.
 Production PBKDF2 parameters are stored per record so they can evolve; tests inject deliberately
 cheap parameters.
 
@@ -126,10 +128,37 @@ addition/removal, and persistence. It serializes mutation per type, reloads the 
 that ownership, verifies the signing key is still a writer, appends once, and atomically saves.
 This prevents the new server thread from racing the existing EDT member editor.
 
-Invitation records are local operational state under the private data path, not signed shared type
-metadata. Store one versioned MessagePak file per administered type beneath `TypeInvitations`, use
-bounded decoding and temp-file plus atomic-replace persistence, and tolerate a corrupt file by
-quarantining/ignoring it rather than weakening access-list validation.
+Invitation records are small, bounded local operational state, not signed shared type metadata.
+Store them in an injected user `Preferences` subtree. Use one node per administered type and one
+child node per invitation, with naturally typed keys for the versioned record fields. Store creation
+must flush successfully before its link is exposed. Known-version malformed records fail closed and
+are removed opportunistically; unknown future versions are ignored but retained so an older build
+does not destroy newer data. Expired records are cleaned up lazily during normal store operations;
+completed records remain until expiry so a same-identity retry after response loss stays
+idempotent.
+
+### Invitation Preferences contract
+
+The application bootstrap injects the `MysterTypes/Invitations` root node into
+`TypeInvitationStore`; tests inject an isolated temporary node. The store creates
+`{typeHex}/{invitationHex}` beneath that root. Each invitation node has these keys:
+
+- `schemaVersion`: integer `1`.
+- `kdfAlgorithm`: `PBKDF2WithHmacSHA256`.
+- `kdfIterations`: positive integer accepted only within the implementation's bounded policy.
+- `salt`: 16-byte value written with `putByteArray`.
+- `verifier`: 32-byte value written with `putByteArray`.
+- `createdAt`: epoch-millisecond `long`.
+- `expiresAt`: epoch-millisecond `long`, strictly later than `createdAt`.
+- `claimedBy`: optional raw 16-byte caller CID.
+- `redemptionComplete`: boolean, meaningful only when `claimedBy` is present.
+
+Keep at most 64 unexpired invitation nodes per administered type. Before enforcing that simple
+bound, prune expired and malformed known-version nodes. All mutating operations call
+`Preferences.flush()` and surface failure; invitation creation never copies or displays a link whose
+record was not flushed. An unavailable or unreadable Preferences backend fails closed. There is no
+MessagePak blob inside Preferences and no duplicate stored type or invitation id: the node path is
+their canonical local identity.
 
 ### Native URL activation
 
@@ -151,8 +180,8 @@ association still leaves paste/command-line import available.
 
 The invitation creator uses the existing access-list writer key but creates only local ephemeral
 authorization state. A recipient link enters through native activation, command-line forwarding, or
-the Type Manager toolbar, and all three converge on one parser/dialog. `ThreeDnsLookup` transforms
-the bootstrap CID into an exact verified address/key pair. That key pins TLS while section 125
+the Type Manager toolbar, and all three converge on one parser/dialog. `DnsLookupProtocol`, backed
+by `ThreeDnsLookup`, transforms the bootstrap CID into an exact verified address/key pair. That key pins TLS while section 125
 provides signed type metadata and section 126 redeems the invitation. The server uses TLS caller
 identity and the local writer key to append normal signed membership; there is no parallel
 membership database. The recipient distrusts the success status until the new signed chain proves
@@ -161,12 +190,13 @@ membership, then calls the type registry's import path with the user's enabled c
 | New / changed thing | Owned / created by | Called / used by | Connects to (existing) |
 |---|---|---|---|
 | `TypeJoinUri` | invitation dialog or external link | URI dispatcher, join dialog | `MysterType`, `ServerCid`, `java.net.URI` |
-| `TypeInvitationStore` | application bootstrap, private data path | invitation manager | `MessagePak`, atomic local persistence, `Clock` |
+| `TypeInvitationStore` | application bootstrap, injected user Preferences root | invitation manager | `Preferences`, `Clock` |
 | `TypeInvitationManager` | application bootstrap | create dialog, redemption service | PBKDF2, expiry choices, attempt limiter |
 | `TypeMembershipService` | application bootstrap | Members tab, invitation server | `AccessListManager`, `AccessListKeyUtils`, `AddMemberOp` |
-| stream section 126 | `TypeJoinServer` | `TypeJoinClient` | TLS `ConnectionContext.callerCid()`, membership service |
+| stream section 126 | `TypeJoinServer` | `MysterStream` via its section codec | TLS `ConnectionContext.callerCid()`, membership service |
 | `TypeJoinStatus` | section 126 codec | server and client | wire-safe `TypeSafeEnum` forward compatibility |
-| `TypeJoinCoordinator` | application bootstrap | join dialog and URI dispatcher | `ThreeDnsLookup`, pinned TLS, section 125, `TypeDescriptionList` |
+| `DnsLookupProtocol` | immutable `MysterProtocol` aggregate | join coordinator and future identity-resolution callers | `ThreeDnsLookup`, tracker seeds, `MysterDatagram` |
+| `TypeJoinCoordinator` | application bootstrap | join dialog and URI dispatcher | `DnsLookupProtocol`, `MysterStream`, `TypeDescriptionList` |
 | invitation UI | Type Editor Members tab | local administrator | local server CID, invitation manager, clipboard |
 | import UI | Type Manager / native URI activation | recipient | coordinator, remembered enable preference |
 | native URI integration | platform packages | OS launcher | initial args, `ApplicationContext`, macOS Desktop URI events |
@@ -187,8 +217,10 @@ membership, then calls the type registry's import path with the user's enabled c
 
 ### Section 126 wire contract
 
-The existing connection-section acknowledgement happens before the request. Both request and
-response are length-prefixed MessagePak frames read with a new bounded input helper.
+Section 126 is a TCP stream section carried over the existing authenticated TLS connection; there
+is no UDP/datagram form. The existing connection-section acknowledgement happens before the
+request. Both request and response are length-prefixed MessagePak frames read with a new bounded
+input helper.
 
 Request schema version 1:
 
@@ -274,6 +306,8 @@ exception text or invitation-state detail.
       `AddMemberOp`.
 - [ ] A different identity cannot reuse a consumed invitation.
 - [ ] There is no pending-request persistence, approval UI, polling, or automatic retry.
+- [ ] Invitation records use the bounded user Preferences hierarchy; a link is exposed only after
+      its record flushes successfully, and malformed current-version state fails closed.
 - [ ] Expired invitation records are removed lazily and never accepted.
 - [ ] Concurrent direct member edits and invitation redemptions cannot fork or overwrite the local
       access-list file.
@@ -303,15 +337,15 @@ exception text or invitation-state detail.
   7-day, and 30-day UI choices.
 - `src/main/java/com/myster/type/join/InvitationPasswordVerifier.java` — PBKDF2 creation/checking,
   constant-time comparison, injectable test parameters.
-- `src/main/java/com/myster/type/join/TypeInvitationStore.java` — per-type bounded MessagePak files,
-  lazy expiry cleanup, atomic replacement.
+- `src/main/java/com/myster/type/join/TypeInvitationStore.java` — versioned, bounded per-invitation
+  Preferences nodes with lazy stale-record cleanup and explicit flush failures.
 - `src/main/java/com/myster/type/join/InvitationAttemptLimiter.java` — bounded KDF concurrency and
   per invitation/caller/address failure backoff.
 - `src/main/java/com/myster/type/join/TypeInvitationManager.java` — create/redeem/consume lifecycle.
 - `src/main/java/com/myster/type/join/TypeMembershipService.java` — serialized access-list member
   mutation and save path.
-- `src/main/java/com/myster/type/join/TypeJoinClient.java` — blocking pinned-TLS section 126 client
-  and post-approval section 125 fetch.
+- `src/main/java/com/myster/net/stream/client/TypeJoinClient.java` — package-private blocking section
+  126 codec used only behind the `MysterStream` protocol facade.
 - `src/main/java/com/myster/type/join/TypeJoinServer.java` — section 126 handler using
   `ConnectionContext.callerCid()`.
 - `src/main/java/com/myster/type/join/TypeJoinCoordinator.java` — cancellable 3DNS, preview, redeem,
@@ -322,9 +356,9 @@ exception text or invitation-state detail.
   expiry choice, asynchronous creation, link copy.
 - `src/main/java/com/myster/type/ui/JoinPrivateTypeDialog.java` — paste/preview/password/enable/status
   workflow shared by all activation paths.
-- `src/main/jpackage/macos/Info.plist` — JDK 25 jpackage template override declaring
+- `src/main/jpackage/macos/Info.plist` — JDK 26 jpackage template override declaring
   `CFBundleURLSchemes = [myster]` while preserving the generated launcher substitutions.
-- `src/main/jpackage/windows/main.wxs` — JDK 25 jpackage WiX override with an installer-owned,
+- `src/main/jpackage/windows/main.wxs` — JDK 26 jpackage WiX override with an installer-owned,
   package-scope-correct `myster` protocol component and uninstall cleanup.
 - `src/main/jpackage/linux/Myster.desktop` — XDG launcher and scheme declaration with `%u`, icon,
   categories, and `MimeType=x-scheme-handler/myster;`.
@@ -334,22 +368,39 @@ exception text or invitation-state detail.
 
 ### Modified production files
 
+- `src/main/java/com/myster/net/client/DnsLookupProtocol.java` — expose identity resolution as a
+  narrow protocol-stack capability implemented by 3DNS.
+- `src/main/java/com/myster/net/client/MysterProtocol.java` and `MysterProtocolImpl.java` — include
+  the DNS capability in the immutable client protocol aggregate.
+- `src/main/java/com/myster/net/client/ParamBuilder.java` — document and carry common stream as well
+  as datagram connection parameters, including an independently expected server key.
+- `src/main/java/com/myster/net/client/MysterStream.java` — create streams from `ParamBuilder` and
+  expose caller-owned-socket methods for sections 125 and 126.
+- `src/main/java/com/myster/net/stream/client/MysterStreamImpl.java` — interpret common connection
+  parameters and own the client-side section codec calls.
 - `src/main/java/com/myster/net/stream/client/MysterDataInputStream.java` — add bounded
   `readMessagePack(int maxBytes)`; retain existing method for compatibility.
 - `src/main/java/com/myster/net/stream/client/MysterSocketFactory.java` — expose a stream-connection
   overload pinned to an expected server public key.
 - `src/main/java/com/myster/access/AccessListGetClient.java` — add full-chain fetch on an existing
-  `MysterSocket` so section 125 can share the pinned connection.
+  `MysterSocket` as the implementation behind `MysterStream` so section 125 can share a connection.
+- `src/main/java/com/myster/threedns/ThreeDnsLookup.java` — implement `DnsLookupProtocol`, accept the
+  datagram protocol facade directly for production wiring, and retain injectable one-hop query
+  seams for tests.
+- `src/main/java/com/myster/tracker/MysterServerPoolImpl.java` — depend only on its stream and
+  datagram capabilities so bootstrap can construct 3DNS before assembling `MysterProtocol`.
 - `src/main/java/com/myster/type/TypeDescriptionList.java` — add import overload accepting initial
   enabled state and safe already-known handling needed by the coordinator.
 - `src/main/java/com/myster/type/DefaultTypeDescriptionList.java` — persist/import with explicit
   initial enable choice without transiently enabling first.
-- `src/main/java/com/myster/type/ui/TypeEditorPanel.java` — route direct add/remove through the
-  membership service and add `Create Invitation...` to administered Members tab.
+- `src/main/java/com/myster/type/ui/TypeEditorPanel.java` — require the application UI services,
+  route direct add/remove exclusively through the membership service, and add
+  `Create Invitation...` to the administered Members tab.
 - `src/main/java/com/myster/type/ui/TypeManagerPreferences.java` — add `Join Private Network...` and
-  pass invitation/join services into editor/dialogs.
-- `src/main/java/com/myster/Myster.java` — construct 3DNS/join services, register section 126, wire
-  UI/URI handling, and install the supported macOS open-URI handler.
+  pass required invitation/join services into editor/dialogs through one constructor.
+- `src/main/java/com/myster/Myster.java` — inject the invitation Preferences root; construct
+  3DNS/join services; register section 126; wire UI/URI handling; and install the supported macOS
+  open-URI handler.
 - `src/main/java/com/myster/ui/MysterFrameContext.java` — carry the join-dialog launcher only if
   required by menu/window integration; avoid adding lower-level invitation internals.
 - `src/main/java/com/general/application/ApplicationContext.java` and/or
@@ -373,6 +424,8 @@ exception text or invitation-state detail.
 - `src/test/java/com/myster/type/join/TestTypeJoinUriDispatcher.java`
 - `src/test/java/com/myster/type/join/TestNativeUriPackagingResources.java` — validate committed
   platform declarations, launcher argument delivery, and Maven packaging configuration.
+- `src/test/java/com/myster/net/stream/client/TestMysterStreamImpl.java` — common stream parameter,
+  expected-key, address convenience, and missing-address behavior.
 - `src/test/java/com/myster/type/ui/TestTypeInvitationDialogModel.java` — extract/test non-window
   validation and expiry/default behavior rather than constructing modal dialogs headlessly.
 - `src/test/java/com/myster/type/TestDefaultTypeDescriptionListImport.java` — explicit enabled and
@@ -408,54 +461,77 @@ exception text or invitation-state detail.
      buffers where possible.
    - Reject empty codes and codes over 256 characters before KDF work; require matching creation
      fields in the UI. Do not trim or change case silently.
-   - Store files at `{PrivateDataPath}/TypeInvitations/{typeHex}.msgpack`. Frame a format version and
-     numbered invitation records. Bound record count and file size; discard expired records while
-     loading. Persist with a sibling temp file and `Files.move(..., ATOMIC_MOVE, REPLACE_EXISTING)`,
-     with a safe same-filesystem replacement fallback where atomic move is unsupported.
-   - On corruption, move the bad file aside with a timestamped `.corrupt` suffix when possible,
-     start with no invitations for that type, and log without record secrets.
+   - Implement the Preferences hierarchy and exact version 1 keys from the Invitation Preferences
+     contract. Accept an injected root node and `Clock`; production supplies the user node while
+     tests use an isolated node.
+   - Validate every required field and its exact bounds before constructing a record.
+     Opportunistically remove expired and malformed version 1 nodes during load/list/create/redeem.
+     Retain completed records until expiry for retry idempotency. Ignore and retain unknown future
+     versions. Never log salts, verifiers, invitation ids, or CIDs as part of a malformed-record
+     diagnostic.
+   - Enforce the 64-unexpired-invitations-per-type bound after cleanup. Flush each create, claim,
+     completion, and cleanup mutation; propagate `BackingStoreException` as a safe store failure.
+     Do not expose a newly generated link unless creation has flushed successfully.
 
 4. **Centralize membership mutation.**
    - Add per-type locking in `TypeMembershipService` rather than synchronizing unrelated types on a
-     single global monitor.
+     single global monitor. Let invitation redemption enter the same per-type critical section used
+     by direct member edits.
    - Under the type lock: load the access list and local writer key, confirm the key remains in
-     `state.getWriters()`, return already-member without appending, otherwise append
-     `AddMemberOp(cid, MEMBER)` and save before success.
+     `state.getWriters()`, and inspect membership. If the caller is absent, append
+     `AddMemberOp(cid, MEMBER)` and save before success; if already present, do not append a duplicate.
    - Add equivalent remove-member entry point used by `TypeEditorPanel`; keep direct picker behavior
      unchanged except for routing append/save through this service.
-   - Make invitation consumption and member append crash-idempotent: validate record, perform member
-     mutation, then persist consumed-by. On retry, an already-member caller matching the intended
-     redemption completes consumption and returns `ALREADY_MEMBER`.
+   - Make invitation consumption and member append crash-idempotent under that per-type
+     serialization. Password KDF work may happen before acquiring the lock, but reload and
+     revalidate the invitation under the lock before claiming it. Persist `claimedBy` with
+     `redemptionComplete=false` and flush before appending membership. A different caller can no
+     longer use that invitation. Append and save membership, then set `redemptionComplete=true` and
+     flush. If interrupted between those operations, only the matching caller may retry: finish a
+     missing append, or mark an already-present member complete and return `ALREADY_MEMBER`. A
+     completed invitation never re-adds a member who is later removed manually.
 
 5. **Implement invitation lifecycle and abuse bounds.**
    - Creation accepts type, password chars, chosen lifetime, and `Clock`; it verifies the local
      writer key before spending KDF work or storing a record.
    - Redemption accepts type, id, password, authenticated caller CID, and remote address.
    - Check format/existence/expiry and attempt limits before KDF; perform constant-time verification;
-     call `TypeMembershipService`; consume only for the successful/already-member caller.
+     then enter the shared per-type mutation path. Complete redemption only after membership was
+     saved or the claimed caller was verified as already present.
    - Use a small semaphore to bound concurrent PBKDF verification. Maintain bounded expiring
      backoff entries keyed by `(invitationId, callerCid, remoteAddress)`; all rejections map to the
      same public status. Prune limiter state opportunistically.
 
-6. **Add section 126 and pinned stream support.**
-   - Reserve `TypeJoinServer.NUMBER = 126` and register it beside section 125.
+6. **Add section 126 and expected-key stream support.**
+   - Reserve `TypeJoinServer.NUMBER = 126` as a TCP stream section and register it beside section
+     125. Do not add a UDP/datagram section for invitation redemption.
    - Reject `context.callerCid().isEmpty()` before decoding a password-bearing request.
    - Decode only schema 1, exact CID/id lengths, and bounded code; never read a caller CID from the
      payload. Map internal results to the six canonical `TypeJoinStatus` values and never serialize
      exception text.
    - Add `MysterSocketFactory.makeStreamConnection(address, expectedServerPublicKey)` delegating to
      the existing `TLSSocket` expected-key path.
-   - Extract an `AccessListGetClient.fetchAccessList(MysterSocket, MysterType)` full-chain overload;
-     the address overload opens a connection and delegates. Do not use the currently incomplete
-     incremental-suffix path for this workflow.
-   - `TypeJoinClient` writes/reads section 126 on a caller-owned pinned socket and, after approved or
-     already-member, fetches a fresh full chain through section 125 on that same socket.
+   - Make `MysterStream.makeStreamConnection(ParamBuilder)` the public stream-creation path. The
+     implementation requires an address and uses `getExpectedServerPublicKey()` when present;
+     retain the address overload as a convenience wrapper.
+   - Make `AccessListGetClient.fetchAccessList(MysterSocket, MysterType)` the section codec entry and
+     expose that caller-owned-socket section 125 operation through `MysterStream`. Keep the address
+     convenience on `MysterStream` as an open/call/close operation and do not use the currently
+     incomplete incremental suffix path for this workflow.
+   - Expose section 126 through `MysterStream.redeemTypeInvitation(...)`. `TypeJoinClient` remains a
+     blocking codec behind `MysterStreamImpl`; the coordinator invokes section 125 separately on the
+     same socket after `APPROVED` or `ALREADY_MEMBER`.
 
 7. **Build the cancellable join coordinator.**
-   - Construct production `ThreeDnsPeerClient(protocol.getDatagram())` and
-     `ThreeDnsLookup(tracker, peerClient)` in `Myster`.
-   - `prepare(uri)` resolves the bootstrap CID and accepts only `result.exactPeer()`. Open pinned TLS
-     to that verified peer and fetch the full access list. Reject missing/mismatched/invalid chains.
+   - Define `DnsLookupProtocol` in `com.myster.net.client`, implement it with `ThreeDnsLookup`, and
+     expose it through `MysterProtocol`. Construct stream and datagram first, give those narrow
+     capabilities to `MysterServerPoolImpl`, then construct the tracker and DNS lookup before
+     assembling the immutable `MysterProtocolImpl`. Keep the one-hop `ThreeDnsPeerClient` adapter
+     internal to 3DNS rather than exposing it in application bootstrap wiring.
+   - `prepare(uri)` resolves the bootstrap CID and accepts only `result.exactPeer()`. Ask
+     `MysterStream` to open TLS using a `ParamBuilder` containing that peer's address and expected
+     public key, then fetch the full access list through its section 125 method. Reject missing,
+     mismatched, or invalid chains.
      Return a preview containing friendly metadata and the verified bootstrap peer without
      modifying persistent type state.
    - `redeem(preview, code, enable)` runs the blocking pinned stream work on a virtual thread,
@@ -481,8 +557,11 @@ exception text or invitation-state detail.
 
 9. **Add administrator and recipient UI.**
    - Inject `TypeInvitationManager` and `TypeMembershipService` through `TypeManagerPreferences` to
-     `TypeEditorPanel`. Keep test constructors with explicit harmless/mocked dependencies rather
-     than static service lookup.
+     `TypeEditorPanel`. The type manager and editor require their server source, local server CID,
+     invitation manager, membership service, and join dispatcher; absence is an application
+     initialization error, not a supported UI mode. Use the same constructor with explicit
+     harmless/mocked dependencies in tests rather than adding incomplete convenience constructors
+     or static service lookup.
    - Add `Create Invitation...` to the administered Members tab. The dialog shows type name,
      password/confirmation fields, expiry combo, progress/error text, and generated read-only link.
      Disable copy until persistence succeeds. Clear password fields after completion/close.
@@ -505,13 +584,13 @@ exception text or invitation-state detail.
       directly to the same dispatcher.
 
 11. **Install native desktop and URI declarations.**
-    - macOS: on a macOS build host, retain jpackage output with `--temp`, copy the JDK 25
+    - macOS: on a macOS build host, retain jpackage output with `--temp`, copy the JDK 26
       `Info.plist` template into `src/main/jpackage/macos`, add
       `CFBundleURLTypes`/`CFBundleURLSchemes = [myster]`, preserve every generated substitution, and
       configure the mac profile's `resourceDir`. Guard `Desktop.setOpenURIHandler(...)` with
       `Desktop.Action.APP_OPEN_URI`; registration itself remains bundle metadata, not Java startup
       work.
-    - Windows: on a Windows build host, capture the JDK 25 `main.wxs`, commit it under the Windows
+    - Windows: on a Windows build host, capture the JDK 26 `main.wxs`, commit it under the Windows
       resource directory, and add one stable WiX component for the `myster` URL protocol. Use the
       generated install-scope abstraction so per-machine installs write the machine classes hive and
       any future per-user install writes the user classes hive. Own the description, empty
@@ -548,14 +627,17 @@ exception text or invitation-state detail.
 - **Password tests:** correct/wrong, case sensitivity, empty/oversized rejection before KDF,
   independent salts, constant-size verifier, persisted parameter round-trip, cleared `PBEKeySpec`
   path where observable, and cheap injected test policy.
-- **Invitation-store tests:** 24-hour/7-day/30-day expiry timestamps; `now == expiresAt`; lazy
-  pruning on load/list/redeem; no plaintext password bytes; atomic replacement; corrupt/oversized/
-  future-version files; bounded record count; consumed-by persistence.
+- **Invitation-store tests:** 24-hour/7-day/30-day expiry timestamps; `now == expiresAt`; exact
+  Preferences node/key representation; no plaintext password bytes; lazy pruning on
+  load/list/create/redeem; malformed/missing/oversized version 1 values; retained-and-ignored future
+  versions; 64-record bound after pruning; create/claim/complete flush failures; claimed-by and
+  redemption-complete persistence using an isolated injected Preferences root.
 - **Limiter tests:** bounded concurrent verification, per-key backoff, no global invalidation,
   opportunistic expiry/pruning, and rejection before KDF while limited.
 - **Membership tests:** authorized append/save, already member no append, missing/non-writer key,
   remove path, different-type parallelism, same-type serialization, save failure, and concurrent UI/
-  invitation attempts producing one valid chain.
+  invitation attempts producing one valid chain. Cover retry/crash simulation after claim flush,
+  after membership save, and before completion flush; only the claimed identity may resume.
 - **Protocol server tests:** plaintext caller rejected; caller CID taken from context only; valid
   request adds that CID as `MEMBER`; no code/manual queue; unified wrong/expired/consumed response;
   type missing; not authorizer; unknown schema; malformed/oversized frame; no exception leakage.
@@ -592,11 +674,14 @@ exception text or invitation-state detail.
 
 - Javadoc `TypeJoinUri` with the exact grammar, canonical form, bounds, optional-code behavior, and
   prohibition on logging secrets.
-- Javadoc `TypeInvitationStore` and `TypeInvitationManager` with local-only ownership, expiry,
-  persistence, corruption, single-use, and thread-safety contracts.
+- Javadoc `TypeInvitationStore` and `TypeInvitationManager` with local-only ownership, Preferences
+  schema/versioning, cleanup, flush-failure, single-use, and thread-safety contracts.
 - Javadoc `TypeMembershipService` with per-type serialization and save/append atomicity limits.
 - Javadoc `TypeJoinServer`/`TypeJoinClient` with section 126 schema, TLS identity authority, status
   meanings, bounds, and idempotency.
+- Javadoc `ParamBuilder` and `MysterStream` with common transport parameters, expected-key TLS,
+  caller-owned socket lifetime, and connection-sharing behavior.
+- Javadoc `DnsLookupProtocol` and the `MysterProtocol` aggregate ownership boundary.
 - Javadoc `TypeJoinStatus` explaining why a `TypeSafeEnum` is required for this wire value.
 - Javadoc `TypeJoinCoordinator` with exact-3DNS requirement, TLS pinning, cancellation, signed-chain
   proof, and no-retry/no-mutation-on-failure behavior.

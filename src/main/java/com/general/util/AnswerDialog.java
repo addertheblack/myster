@@ -1,10 +1,17 @@
 package com.general.util;
 
 import java.awt.BorderLayout;
-import java.awt.Dimension;
 import java.awt.FlowLayout;
 import java.awt.Frame;
-import java.awt.Point;
+import java.awt.GraphicsConfiguration;
+import java.awt.GraphicsDevice;
+import java.awt.GraphicsEnvironment;
+import java.awt.Insets;
+import java.awt.KeyboardFocusManager;
+import java.awt.MouseInfo;
+import java.awt.PointerInfo;
+import java.awt.Rectangle;
+import java.awt.Window;
 import java.awt.Toolkit;
 import java.awt.event.ActionEvent;
 import java.awt.event.KeyEvent;
@@ -33,13 +40,11 @@ public class AnswerDialog extends JDialog {
     private List<JButton> buttons;
     private String it; // just like HyperCard :-) You all know HyperCard, right?
 
-    private final Frame parent;
     private final String theString;
 
-    private AnswerDialog(Frame f, String q, String... b) {
-        super(f, "Alert!", true);
+    private AnswerDialog(Window f, String q, String... b) {
+        super(resolveOwner(f), "Alert!", ModalityType.APPLICATION_MODAL);
         theString = q;
-        parent = f;
 
         String[] buttons = b.clone();
         if (b.length == 0) {
@@ -51,30 +56,65 @@ public class AnswerDialog extends JDialog {
         setResizable(true);
     }
 
+    /** Shows an alert owned by the active window, or centered on the cursor's monitor. */
     public static String simpleAlert(String s) {
-        return (new AnswerDialog(getCenteredFrame(), s)).answer();
+        return (new AnswerDialog((Window) null, s)).answer();
     }
 
-    public static String simpleAlert(Frame frame, String s) {
+    public static String simpleAlert(Window frame, String s) {
         return (new AnswerDialog(frame, s)).answer();
     }
 
-    public static String simpleAlert(Frame frame, String s, String[] b) {
+    public static String simpleAlert(Window frame, String s, String[] b) {
         return (new AnswerDialog(frame, s, b)).answer();
     }
 
+    /**
+     * Creates a temporary frame centered on the cursor's monitor. The caller owns its disposal.
+     * Prefer passing a real window to dialogs instead.
+     */
     public static Frame getCenteredFrame() {
-        Frame tempframe = new Frame();
-        tempframe.setSize(1, 1);
-        Toolkit tool = Toolkit.getDefaultToolkit();
-        tempframe.setLocation(tool.getScreenSize().width / 2,
-                              tool.getScreenSize().height / 2 - 150);
-        tempframe.setTitle("Dialog Box!");
-        // tempframe.show();
-        return tempframe;
+        Frame frame = new Frame(cursorScreen());
+        frame.setSize(1, 1);
+        centerOnCursorScreen(frame);
+        frame.setTitle("Dialog Box!");
+        return frame;
     }
 
-    public AnswerDialog(Frame f, String q) {
+    private static Window resolveOwner(Window owner) {
+        return owner != null ? owner
+                : KeyboardFocusManager.getCurrentKeyboardFocusManager().getActiveWindow();
+    }
+
+    private static GraphicsConfiguration cursorScreen() {
+        PointerInfo pointer = MouseInfo.getPointerInfo();
+        if (pointer != null) {
+            for (GraphicsDevice screen : GraphicsEnvironment.getLocalGraphicsEnvironment()
+                    .getScreenDevices()) {
+                GraphicsConfiguration configuration = screen.getDefaultConfiguration();
+                if (configuration.getBounds().contains(pointer.getLocation())) {
+                    return configuration;
+                }
+            }
+            return pointer.getDevice().getDefaultConfiguration();
+        }
+        return GraphicsEnvironment.getLocalGraphicsEnvironment()
+                .getDefaultScreenDevice().getDefaultConfiguration();
+    }
+
+    private static void centerOnCursorScreen(Window window) {
+        GraphicsConfiguration configuration = cursorScreen();
+        Rectangle bounds = configuration.getBounds();
+        Insets insets = Toolkit.getDefaultToolkit().getScreenInsets(configuration);
+        bounds.x += insets.left;
+        bounds.y += insets.top;
+        bounds.width -= insets.left + insets.right;
+        bounds.height -= insets.top + insets.bottom;
+        window.setLocation(bounds.x + Math.max(0, (bounds.width - window.getWidth()) / 2),
+                bounds.y + Math.max(0, (bounds.height - window.getHeight()) / 2));
+    }
+
+    public AnswerDialog(Window f, String q) {
         this(f, q, new String[0]);
     }
 
@@ -152,12 +192,12 @@ public class AnswerDialog extends JDialog {
         pack();
         pack();
 
-        Dimension d = parent.getSize();
-        Point l = parent.getLocation();
-
-        Dimension mysize = getSize();
-
-        setLocation(l.x + (d.width / 2) - (mysize.width / 2), l.y);
+        Window owner = getOwner();
+        if (owner != null && owner.isShowing()) {
+            setLocationRelativeTo(owner);
+        } else {
+            centerOnCursorScreen(this);
+        }
     }
 
     public String answer() {

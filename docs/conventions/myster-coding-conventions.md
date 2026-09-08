@@ -64,6 +64,11 @@ This document captures Myster-specific coding conventions, preferred libraries, 
 
 ### Dialogs — use AnswerDialog, not JOptionPane
 
+Pass the originating `Window` (including a `JDialog`) as the alert owner whenever available.
+Parentless alerts use the active window; if no visible owner exists, center on the usable area
+of the monitor containing the cursor. Do not default to the primary monitor or create a dummy
+frame just to show an alert.
+
 **Rule**: Never use `JOptionPane` in Myster UI code. It ignores the application theme and looks wrong. Use `com.general.util.AnswerDialog` instead.
 
 ```java
@@ -246,7 +251,21 @@ add(component, gbc.withGridLoc(0, 0).withWeight(1.0, 0.0).withFill(GridBagConstr
 
 ### Preferences Storage
 
-**Pattern**: Use Java `Preferences` API for all persistent configuration and state.
+**Pattern**: Use Java `Preferences` for compact, naturally keyed configuration and state whose
+aggregate size is predictably small. Use files beneath Myster's private data path for bulk data,
+large collections, caches, or anything whose growth or backing-store performance could become a
+concern.
+
+The boundary is intentionally a gut check, not a hard quota. Imagine that all of Myster's
+preferences share one ordinary preferences file: if a feature could plausibly make that file grow
+past roughly 100 KiB, it probably deserves its own file-backed store. A bounded set of small values
+such as flags, identifiers, or short operational records is appropriate for `Preferences`; an
+11 MiB metadata cache is not. Do not rely on the platform's actual Preferences implementation,
+layout, or performance to rescue an otherwise unbounded design.
+
+Requirements other than size can still call for a file, such as an established binary format or a
+file that users need to copy independently. Conversely, data does not require a file merely because
+it is operational rather than a UI setting.
 
 **Example**:
 ```java
@@ -256,6 +275,14 @@ prefs.getInt("key", defaultValue);
 ```
 
 **Location**: Preference nodes follow a hierarchical naming pattern based on feature area.
+
+### Preferences Lifecycle
+
+Preferences-backed collections must not accumulate obsolete history indefinitely. Remove expired,
+orphaned, and superseded nodes during normal load or mutation paths and flush successful cleanup.
+Lazy cleanup is normally sufficient; a dedicated timer is unnecessary unless the feature requires
+prompt expiry while the application remains idle. Treat the approximate 100 KiB boundary above as
+a design warning, not as a runtime limit that every feature must count precisely.
 
 ### Preferences for Custom Types
 
@@ -566,10 +593,11 @@ An absent map entry follows the existing `UnknownOp` path.
 
 ## Prefs-Based Enabled/Disabled Index
 
-When a subsystem has a collection of items that can be enabled/disabled, the `Preferences`
-store should contain only the item identifier (as the node name) and the `enabled` boolean.
-All other metadata lives elsewhere (e.g. access list file, MML resource). This keeps the prefs
-store minimal and avoids stale data problems.
+When a subsystem already has authoritative item metadata elsewhere and Preferences only indexes
+which items are enabled, store only the item identifier (as the node name) and the `enabled`
+boolean. For custom types, all other metadata lives in the access-list file. This rule describes
+that index; it does not prohibit other bounded, compact features from storing their complete records
+in Preferences.
 
 ```
 CustomTypes/

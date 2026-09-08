@@ -12,6 +12,7 @@ package com.myster.net.stream.client;
 
 import java.io.IOException;
 import java.net.Socket;
+import java.security.PublicKey;
 import java.util.Optional;
 
 import com.myster.identity.Identity;
@@ -40,6 +41,25 @@ public class MysterSocketFactory {
     public static MysterSocket makeStreamConnection(MysterAddress ip)
             throws IOException {
         return makeTLSConnection(ip, identity);
+    }
+
+    /**
+     * Opens an authenticated stream connection and requires the server certificate to contain the
+     * expected public key.
+     *
+     * @param ip remote TCP address
+     * @param expectedServerPublicKey public key obtained through an authenticated discovery path
+     * @return the pinned TLS socket
+     * @throws IOException if connection, TLS negotiation, or key verification fails
+     */
+    public static MysterSocket makeStreamConnection(MysterAddress ip,
+            PublicKey expectedServerPublicKey) throws IOException {
+        TLSSocket socket = TLSSocket.createClientSocket(ip, identity,
+                Optional.of(java.util.Objects.requireNonNull(expectedServerPublicKey)));
+        if (socket == null) {
+            throw new IOException("Server did not accept authenticated TLS");
+        }
+        return socket;
     }
 
     public static void makeTransactionConnection(MysterAddress ip)

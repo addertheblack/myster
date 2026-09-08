@@ -32,19 +32,6 @@ public class AccessList {
     private final List<AccessBlock> blocks;
     private AccessListState state;
 
-    private AccessList(AccessBlock genesisBlock, MysterType mysterType) {
-        if (genesisBlock.getHeight() != 0) {
-            throw new IllegalArgumentException("Genesis block must have height 0");
-        }
-
-        this.mysterType = mysterType;
-        this.blocks = new ArrayList<>();
-        this.blocks.add(genesisBlock);
-        this.state = new AccessListState();
-
-        deriveState();
-    }
-
     private AccessList(List<AccessBlock> blocks, MysterType mysterType) {
         if (blocks.isEmpty()) {
             throw new IllegalArgumentException("Block list cannot be empty");
@@ -59,46 +46,6 @@ public class AccessList {
 
         validate();
         deriveState();
-    }
-
-    /**
-     * Creates a new access list with a genesis block.
-     *
-     * <p>The genesis block will contain (in order):
-     * <ol>
-     *   <li>{@code SET_TYPE_PUBLIC_KEY} — the type's RSA public key (required)</li>
-     *   <li>{@code ADD_WRITER} — the admin's Ed25519 public key</li>
-     *   <li>Any initial member operations</li>
-     *   <li>Any initial onramp operations</li>
-     *   <li>Any metadata operations (name, description, extensions, searchInArchives, and an
-     *       optional non-Generic metadata type)</li>
-     *   <li>{@code SET_POLICY} — initial policy settings</li>
-     * </ol>
-     *
-     * @param typePublicKey the type's RSA public key (its MD5 hash becomes the MysterType)
-     * @param adminKeyPair the Ed25519 keypair for the initial admin/writer
-     * @param initialMembers initial members to add
-     * @param initialOnramps initial onramp servers
-     * @param policy initial policy settings
-     * @param name initial type name (may be null)
-     * @param description initial type description (may be null)
-     * @param extensions initial file extensions (may be null)
-     * @param searchInArchives initial search-in-archives setting
-     * @return a new AccessList with genesis block
-     * @throws IOException if block creation fails
-     */
-    public static AccessList createGenesis(
-            PublicKey typePublicKey,
-            KeyPair adminKeyPair,
-            List<AddMemberOp> initialMembers,
-            List<String> initialOnramps,
-            Policy policy,
-            String name,
-            String description,
-            String[] extensions,
-            boolean searchInArchives) throws IOException {
-        return createGenesis(typePublicKey, adminKeyPair, initialMembers, initialOnramps, policy,
-                name, description, extensions, searchInArchives, MetadataTypeId.GENERIC);
     }
 
     /**
@@ -152,9 +99,11 @@ public class AccessList {
         opCount += initialMembers.size();
         opCount += initialOnramps.size();
         opCount += 1; // SET_POLICY
+
         if (name != null) opCount++;
         if (description != null) opCount++;
         if (extensions != null) opCount++;
+
         opCount++; // SET_SEARCH_IN_ARCHIVES
         if (!MetadataTypeId.GENERIC.equals(metadataTypeId)) {
             opCount++;
@@ -201,7 +150,7 @@ public class AccessList {
         AccessBlock genesisBlock = new AccessBlock(prevHash, height, timestamp,
                                                    writerPubkey, payload, signature);
 
-        return new AccessList(genesisBlock, mysterType);
+        return new AccessList(Collections.singletonList(genesisBlock), mysterType);
     }
 
     /**
@@ -375,9 +324,9 @@ public class AccessList {
         return blocks.get(0);
     }
 
-    public AccessBlock getTipBlock() {
-        return blocks.get(blocks.size() - 1);
-    }
+//    public AccessBlock getTipBlock() {
+//        return blocks.get(blocks.size() - 1);
+//    }
 
     public long getHeight() {
         return blocks.size() - 1;

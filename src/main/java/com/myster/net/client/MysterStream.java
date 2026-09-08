@@ -10,16 +10,30 @@ import com.myster.hash.FileHash;
 import com.myster.mml.MessagePak;
 import com.myster.net.MysterAddress;
 import com.myster.net.MysterSocket;
-import com.myster.net.stream.client.MysterSocketFactory;
 import com.myster.net.stream.client.msdownload.MSDownloadParams;
 import com.myster.search.MysterFileStub;
 import com.myster.type.MysterType;
+import com.myster.type.join.TypeJoinStatus;
 
 public interface MysterStream {
     /**
-     * Create a new connection. This is what you call first
+     * Creates a stream connection using common transport parameters.
+     *
+     * <p>An expected server public key requires the TLS certificate presented by the remote server
+     * to contain that key. Stream connections are TLS regardless of the datagram encryption flags
+     * in {@link ParamBuilder}.
+     *
+     * @param params target address and optional expected server public key
+     * @return a connected, caller-owned socket
+     * @throws IOException if the connection or TLS authentication fails
+     * @throws IllegalArgumentException if no target address is present
      */
-    MysterSocket makeStreamConnection(MysterAddress ip) throws IOException;
+    MysterSocket makeStreamConnection(ParamBuilder params) throws IOException;
+
+    /** Creates a stream connection without an independently supplied expected server key. */
+    default MysterSocket makeStreamConnection(MysterAddress ip) throws IOException {
+        return makeStreamConnection(new ParamBuilder(ip));
+    }
     
     // Vector of strings
     List<String> getSearch(MysterSocket socket, MysterType searchType, String searchString)
@@ -38,23 +52,23 @@ public interface MysterStream {
     
     boolean ping(MysterSocket socket);
 
+    /** Runs stream section 125 on a caller-owned socket, leaving it open for another section. */
+    Optional<AccessList> getAccessList(MysterSocket socket, MysterType type) throws IOException;
+
+    /** Opens a connection, runs stream section 125, and closes the connection. */
+    default Optional<AccessList> getAccessList(MysterAddress server, MysterType type)
+            throws IOException {
+        try (MysterSocket socket = makeStreamConnection(server)) {
+            return getAccessList(socket, type);
+        }
+    }
+
     /**
-     * Fetches the access list for the given type from the specified server.
-     *
-     * <p>Unlike other {@code MysterStream} methods, this opens its own fresh TCP connection
-     * internally (via {@link com.myster.access.AccessListGetClient}) rather than accepting an
-     * existing {@link MysterSocket}. The access list fetch is a separate, independent protocol
-     * transaction (section 125), not piggybacked on any other connection.
-     *
-     * <p>This is a plain blocking call. Callers that need async behaviour should wrap with
-     * {@link com.general.thread.PromiseFutures#execute}.
-     *
-     * @param server     the server to fetch from
-     * @param type       the type whose access list is requested
-     * @return the AccessList, or empty if the server has none for this type
-     * @throws IOException if the connection or protocol exchange fails
+     * Runs authenticated stream section 126 on a caller-owned socket, leaving it open so the caller
+     * can obtain the resulting signed access list through section 125.
      */
-    Optional<AccessList> getAccessList(MysterAddress server, MysterType type) throws IOException;
+    TypeJoinStatus redeemTypeInvitation(MysterSocket socket, MysterType type, byte[] invitationId,
+            String code) throws IOException;
 
     /**
      * downloadFile downloads a file by starting up a MultiSourceDownload or
@@ -64,8 +78,9 @@ public interface MysterStream {
      */
     void downloadFile(MSDownloadParams p);
     
-    default <T> T doSection(MysterAddress ip, StandardStreamSection<T> section) throws IOException {
-        try (MysterSocket socket = MysterSocketFactory.makeStreamConnection(ip)){
+    default <T> T doSection(ParamBuilder params, StandardStreamSection<T> section)
+            throws IOException {
+        try (MysterSocket socket = makeStreamConnection(params)) {
             return section.doSection(socket);
         }
     }

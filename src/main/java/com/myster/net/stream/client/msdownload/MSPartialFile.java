@@ -1,15 +1,6 @@
 package com.myster.net.stream.client.msdownload;
 
-import static com.myster.net.stream.client.msdownload.MultiSourceDownload.toIoFile;
-
 import java.awt.EventQueue;
-
-/**
- * This class is here to encapsulate all the information related to a Myster
- * multi source download resumable download block file.
- *  
- */
-
 import java.io.ByteArrayOutputStream;
 import java.io.DataOutputStream;
 import java.io.File;
@@ -32,6 +23,14 @@ import com.myster.search.HashCrawlerManager;
 import com.myster.search.MysterFileStub;
 import com.myster.type.MysterType;
 import com.myster.ui.MysterFrameContext;
+
+import static com.myster.net.stream.client.msdownload.MultiSourceDownload.toIoFile;
+
+/**
+ * This class is here to encapsulate all the information related to a Myster multi source download resumable download
+ * block file.
+ *
+ */
 
 public class MSPartialFile implements AutoCloseable {
     public static final String FILE_ENDING = ".p";
@@ -372,6 +371,7 @@ public class MSPartialFile implements AutoCloseable {
         return 0x80 >> (blockNumber % 8);
     }
 
+    @Override
     protected void finalize() throws Throwable {
         try {
             dispose();

@@ -46,7 +46,8 @@ Application-specific logic for the Myster P2P network:
 
 #### Networking Layer
 - **`com.myster.net`** - Network abstractions and core classes
-  - **`net.client`** - Client-side protocol interfaces (`MysterProtocol`, `MysterStream`, `MysterDatagram`)
+  - **`net.client`** - Client-side protocol interfaces (`MysterProtocol`, `MysterStream`,
+    `MysterDatagram`, `DnsLookupProtocol`)
   - **`net.server`** - Server infrastructure (`ServerFacade`, `Operator`, `ConnectionSection`)
   - **`net.stream`** - TCP stream-based protocols
     - **`stream.client`** - Client stream implementations (`StandardSuiteStream`, `MysterSocket`)
@@ -178,6 +179,11 @@ Application-specific logic for the Myster P2P network:
 ### 1. **Network Protocol Stack**
 
 Myster uses both **TCP (stream)** and **UDP (datagram)** protocols:
+
+`MysterProtocol` is an immutable aggregate of stream, datagram, and higher-level client protocol
+capabilities. `getDnsLookup()` exposes `DnsLookupProtocol`, whose production implementation is the
+3DNS resolver. Components accept the narrowest capability they need rather than the aggregate when
+doing so avoids bootstrap cycles.
 
 #### Stream-based (TCP)
 - **Purpose**: File downloads, detailed queries, batch operations

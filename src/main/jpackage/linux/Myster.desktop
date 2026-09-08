@@ -1,0 +1,9 @@
+[Desktop Entry]
+Name=APPLICATION_NAME
+Comment=APPLICATION_DESCRIPTION
+Exec=APPLICATION_LAUNCHER %u
+Icon=APPLICATION_ICON
+Terminal=false
+Type=Application
+Categories=Network;
+MimeType=x-scheme-handler/myster;

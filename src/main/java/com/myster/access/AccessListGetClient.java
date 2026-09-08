@@ -7,11 +7,9 @@ import java.util.List;
 import java.util.Optional;
 import java.util.logging.Logger;
 
-import com.myster.net.MysterAddress;
 import com.myster.net.MysterSocket;
 import com.myster.net.stream.client.MysterDataInputStream;
 import com.myster.net.stream.client.MysterDataOutputStream;
-import com.myster.net.stream.client.MysterSocketFactory;
 import com.myster.type.MysterType;
 
 /**
@@ -38,85 +36,70 @@ public class AccessListGetClient {
     private static final long MAX_TOTAL_BYTES = 10 * 1024 * 1024;
 
     /**
-     * Fetches a complete access list from a server (full chain from genesis).
-     *
-     * @param server     the server address
-     * @param mysterType the type to fetch
-     * @return the AccessList, or empty if the server has no blocks for this type
-     * @throws IOException if the connection fails or the server returns an error
+     * Fetches a complete chain over a caller-owned socket. The socket remains open so a pinned TLS
+     * connection can be shared with invitation redemption.
      */
-    public static Optional<AccessList> fetchAccessList(MysterAddress server,
-                                                       MysterType mysterType) throws IOException {
-        return fetchAccessList(server, mysterType, new byte[32]);
+    public static Optional<AccessList> fetchAccessList(MysterSocket socket, MysterType mysterType)
+            throws IOException {
+        return fetchAccessList(socket, mysterType, new byte[32]);
     }
 
-    /**
-     * Fetches an access list, sending the known_tip_hash for incremental updates.
-     *
-     * <p>Returns {@code Optional.empty()} if the client is already up-to-date (the server
-     * responded OK but sent zero blocks because known_tip_hash matched the tip).
-     *
-     * @param server       the server address
-     * @param mysterType   the type to fetch
-     * @param knownTipHash hash of the client's latest block (all zeros for full fetch)
-     * @return the AccessList if new blocks were received, or empty if already up-to-date
-     * @throws IOException if the connection fails or the server returns an error
-     */
-    public static Optional<AccessList> fetchAccessList(MysterAddress server,
-                                                       MysterType mysterType,
-                                                       byte[] knownTipHash) throws IOException {
-        log.info("Fetching access list from " + server + " for type: " + mysterType.toHexString());
+    private static Optional<AccessList> fetchAccessList(MysterSocket socket, MysterType mysterType,
+            byte[] knownTipHash) throws IOException {
+        MysterDataOutputStream out = socket.out;
+        MysterDataInputStream in = socket.in;
 
-        try (MysterSocket socket = MysterSocketFactory.makeStreamConnection(server)) {
-            MysterDataOutputStream out = socket.out;
-            MysterDataInputStream in = socket.in;
-
-            out.writeInt(SECTION_NUMBER);
-
-            int response = in.read();
-            if (response != 1) {
-                throw new IOException("Server rejected protocol section: " + response);
-            }
-
-            // Send request: 16-byte MysterType + 32-byte known_tip_hash
-            out.write(mysterType.toBytes());
-            out.write(knownTipHash);
-            out.flush();
-
-            int status = in.readInt();
-
-            switch (status) {
-                case STATUS_OK -> {
-                    return readAccessList(mysterType, in);
-                }
-                case STATUS_NOT_FOUND -> throw new IOException("Access list not found on server");
-                case STATUS_FORK_DETECTED -> throw new IOException("Fork detected: known_tip_hash not in server's chain");
-                case STATUS_ERROR -> throw new IOException("Server error processing request");
-                default -> throw new IOException("Unknown status code: " + status);
-            }
-        } catch (IOException e) {
-            log.severe("Failed to fetch access list: " + e.getMessage());
-            throw e;
+        out.writeInt(SECTION_NUMBER);
+        out.flush();
+        int response = in.read();
+        if (response != 1) {
+            throw new IOException("Server rejected protocol section: " + response);
         }
+
+        out.write(mysterType.toBytes());
+        out.write(knownTipHash);
+        out.flush();
+
+        return switch (in.readInt()) {
+            case STATUS_OK -> readAccessList(mysterType, in);
+            case STATUS_NOT_FOUND -> throw new IOException("Access list not found on server");
+            case STATUS_FORK_DETECTED ->
+                    throw new IOException("Fork detected: known_tip_hash not in server's chain");
+            case STATUS_ERROR -> throw new IOException("Server error processing request");
+            default -> throw new IOException("Unknown access-list status code");
+        };
     }
 
     private static Optional<AccessList> readAccessList(MysterType mysterType,
                                                        MysterDataInputStream in) throws IOException {
         long totalBytesRemaining = in.readLong();
 
-        if (totalBytesRemaining > MAX_TOTAL_BYTES) {
-            throw new IOException("Access list too large: " + totalBytesRemaining + " bytes");
+        if (totalBytesRemaining < Integer.BYTES || totalBytesRemaining > MAX_TOTAL_BYTES) {
+            throw new IOException("Invalid access list payload size: "
+                    + totalBytesRemaining + " bytes");
         }
 
         List<AccessBlock> blocks = new ArrayList<>();
+        long remaining = totalBytesRemaining;
         while (true) {
+            if (remaining < Integer.BYTES) {
+                throw new IOException("Access list block stream exceeds declared size");
+            }
             int blockSize = in.readInt();
+            remaining -= Integer.BYTES;
             if (blockSize == 0) {
+                if (remaining != 0) {
+                    throw new IOException("Access list block stream is shorter than declared");
+                }
                 break;
+            }
+            if (blockSize < 0 || blockSize > remaining) {
+                throw new IOException("Invalid access list block size");
             }
 
             byte[] blockData = new byte[blockSize];
             in.readFully(blockData);
+            remaining -= blockSize;
             blocks.add(AccessListStorageUtils.readBlock(new ByteArrayInputStream(blockData)));
         }
 
@@ -134,34 +117,4 @@ public class AccessListGetClient {
         log.info("Fetched " + blocks.size() + " blocks");
         return Optional.of(accessList);
     }
-
-    /**
-     * Tries to fetch an access list from multiple onramp servers in order, returning
-     * the result from the first server that responds successfully.
-     *
-     * @param mysterType the type to fetch
-     * @param onramps    list of server addresses ("host:port" or "host")
-     * @return the AccessList from the first successful server, or empty
-     * @throws IOException if all onramps fail or none are provided
-     */
-    public static Optional<AccessList> fetchFromOnramps(MysterType mysterType,
-                                                        List<String> onramps) throws IOException {
-        IOException lastException = null;
-
-        for (String onramp : onramps) {
-            try {
-                MysterAddress address = MysterAddress.createMysterAddress(onramp);
-                return fetchAccessList(address, mysterType);
-            } catch (IOException e) {
-                lastException = new IOException("Failed to fetch from " + onramp, e);
-                log.warning("Failed to fetch from onramp " + onramp + ": " + e.getMessage());
-            }
-        }
-
-        if (lastException != null) {
-            throw lastException;
-        }
-        throw new IOException("No onramps provided");
-    }
 }
-

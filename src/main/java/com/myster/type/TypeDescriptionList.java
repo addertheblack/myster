@@ -113,4 +113,19 @@ public interface TypeDescriptionList {
      * @throws IOException              if saving the access list to disk fails
      */
     void importType(AccessList accessList) throws IOException;
+
+    /**
+     * Imports a validated access-list chain with an explicit initial enabled state.
+     *
+     * <p>An already-known custom type may be refreshed only when the incoming chain is the same
+     * chain or a strict extension of the locally stored chain. Built-in collisions and older or
+     * forked chains are rejected. Local administrator keys are never modified.
+     *
+     * @param accessList complete chain fetched from an authenticated remote server
+     * @param enabled whether the imported custom type should immediately participate in Myster
+     * @throws IllegalArgumentException for a built-in collision or older/forked chain
+     * @throws IllegalStateException if chain validation fails
+     * @throws IOException if access-list persistence fails
+     */
+    void importOrRefreshType(AccessList accessList, boolean enabled) throws IOException;
 }

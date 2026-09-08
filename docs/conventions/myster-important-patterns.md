@@ -223,6 +223,10 @@ public record MysterFrameContext(
 ### Guidelines
 
 - **Use constructor injection**: Pass dependencies through constructors
+- **Required means required**: Pass services directly and reject null at construction when their
+  absence would be an initialization bug. Use `Optional` only when the component intentionally
+  supports operating without that capability; do not keep unused overloads that manufacture empty
+  dependencies for convenience.
 - **Avoid static singletons**: Use dependency injection instead where possible
 - **Service locator pattern**: Avoid - prefer explicit dependency injection
 
@@ -328,8 +332,8 @@ Myster uses different threading strategies depending on the type of work:
 ```java
 PromiseFutures.execute(() -> {
     return performLongComputation();
-}).addResultListener(result -> {
-    // Result listener runs on EDT automatically
+}).useEdt().addResultListener(result -> {
+    // Explicitly dispatched on the EDT
     displayResult(result);
 }).addStandardExceptionHandler();
 ```
@@ -370,19 +374,36 @@ EDT by a wrapper (e.g. `TypeListerThread`'s constructor wraps all `TypeListener`
 `Util.invokeLater`), do **not** add another `invokeLater` inside the callback body. The
 wrapper is the single dispatch point.
 
-### Stream-suite methods are always blocking
+### Stream protocol facade and blocking calls
 
-Methods on `MysterStream` (and stream-suite clients like `AccessListGetClient`) must be plain
-blocking calls that throw `IOException`. They must **never** return `PromiseFuture` or start
-their own thread. Callers choose their own threading model:
+`MysterProtocol` is the immutable aggregate of client protocol capabilities. Higher-level network
+concepts belong there behind narrow interfaces in `com.myster.net.client`; for example,
+`DnsLookupProtocol` is exposed by the aggregate and implemented by `ThreeDnsLookup`. Consumers
+should accept the narrowest capability they use. In particular, infrastructure needed to construct
+a higher-level capability must receive `MysterStream`/`MysterDatagram` directly rather than the
+whole aggregate, avoiding initialization cycles and deferred setters.
+
+Application and feature code invokes reusable TCP connection sections through `MysterStream`, not
+section codec classes or `MysterSocketFactory` directly. `ParamBuilder` contains common connection
+setup such as the address and independently expected server public key. Section-specific arguments
+remain on the individual method. Sections that support connection sharing accept a caller-owned
+`MysterSocket`; the caller sequences sections and closes the socket. Address convenience methods may
+perform open/call/close for a single section.
+
+Methods on `MysterStream` must be plain blocking calls that throw `IOException`. They must **never**
+return `PromiseFuture` or start their own thread. Callers choose their own threading model:
 
 ```java
 // In a background thread / TypeMetadataCache:
 PromiseFutures.execute(() -> stream.getAccessList(addr, type))
               .addResultListener(result -> { ... });
 
-// In a MysterThread subclass (run() method):
-Optional<AccessList> al = AccessListGetClient.fetchAccessList(addr, type);
+// Several connection sections on one expected-key TLS socket:
+ParamBuilder params = new ParamBuilder(addr).withExpectedServerPublicKey(expectedKey);
+try (MysterSocket socket = stream.makeStreamConnection(params)) {
+    TypeJoinStatus status = stream.redeemTypeInvitation(socket, type, invitationId, code);
+    Optional<AccessList> al = stream.getAccessList(socket, type);
+}
 ```
 
 Rationale: returning a `PromiseFuture` from a stream method creates an abstraction inversion —
@@ -403,7 +424,7 @@ someFuture.addCallListener(new CallAdapter<MyResult>() {
     }
 
     @Override
-    public void handleError(Exception e) {
+    public void handleException(Throwable e) {
         // called on EDT — show error here
         msg.sayError("Failed: " + e.getMessage());
     }
@@ -413,8 +434,8 @@ someFuture.addCallListener(new CallAdapter<MyResult>() {
 `CallAdapter` provides no-op default implementations for both methods, so you only override
 what you need. Used extensively in `ClientWindow` for datagram and stream callbacks.
 
-**Threading**: Like `addResultListener`, the `handleResult` and `handleError` callbacks run
-on the EDT by default — no `invokeLater` needed inside them.
+**Threading**: Ordinary promise listeners do not have an implicit dispatcher. Assign one before
+registering UI callbacks—normally with `useEdt()`—and do not add another `invokeLater` inside them.
 
 ### Examples
 
@@ -431,8 +452,8 @@ Invoker.invokeOnEDT(() -> {
 ```java
 PromiseFutures.execute(() -> {
     return performLongComputation();
-}).addResultListener(result -> {
-    // Result listener runs on EDT automatically
+}).useEdt().addResultListener(result -> {
+    // Explicitly dispatched on the EDT
     displayResult(result);
 }).addStandardExceptionHandler();
 ```
@@ -452,6 +473,27 @@ public void actionPerformed(ActionEvent e) {
 - `com.general.thread.Invoker` - Thread scheduling utilities
 - `com.general.thread.PromiseFuture` - Async operations
 - `com.general.thread.PromiseFutures` - Factory for creating promises
+
+---
+
+## Packaged Custom URI Handlers
+
+**Pattern**: The operating-system package owns URI-scheme registration; Java owns delivery and
+dispatch after launch.
+
+- macOS declares the scheme in the app bundle's `Info.plist` and receives open-URI events through
+  `Desktop.setOpenURIHandler(...)` when `Desktop.Action.APP_OPEN_URI` is supported.
+- Windows declares registry values in an installer-owned WiX component. Use the jpackage
+  install-scope abstraction, keep the component GUID stable, quote both the installed launcher and
+  `"%1"`, and let uninstall remove the component.
+- Linux installs a jpackage desktop entry with `%u` and an
+  `x-scheme-handler/<scheme>` MIME declaration. Enable `linuxShortcut` so the package also provides
+  ordinary launcher integration.
+
+Keep each override in an OS-specific `--resource-dir`, copied from the exact JDK version used to
+package the application. Preserve all generated substitutions and test the committed declarations.
+Never edit registry keys, invoke `xdg-mime`, or write desktop files during a raw Java/test/server
+startup. Command-line/paste handling remains a fallback when desktop registration is unavailable.
 
 ---
 

@@ -109,7 +109,7 @@ class TestMysterServerPoolImpl {
     
     @Test
     void test() throws UnknownHostException, InterruptedException {
-        pool = new MysterServerPoolImpl(pref, protocol);
+        pool = createPool();
 
         PublicKeyIdentity identity2 =
                 new PublicKeyIdentity(identity.getMainIdentity().get().getPublic());
@@ -187,7 +187,7 @@ class TestMysterServerPoolImpl {
 
     @Test
     void businessCardSuggestionCarriesExpectedIdentityIntoStatsRefresh() throws Exception {
-        pool = new MysterServerPoolImpl(pref, protocol);
+        pool = createPool();
         MysterAddress address = MysterAddress.createMysterAddress("127.0.0.1");
         PublicKeyIdentity expectedIdentity = new PublicKeyIdentity(
                 identity.getMainIdentity().orElseThrow().getPublic());
@@ -206,7 +206,7 @@ class TestMysterServerPoolImpl {
 
     @Test
     void explicitResolutionReturnsThePoolServerWithStatsIdentity() throws Exception {
-        pool = new MysterServerPoolImpl(pref, protocol);
+        pool = createPool();
         MysterAddress address = MysterAddress.createMysterAddress("127.0.0.1");
 
         MysterServer resolved = pool.resolveServer(address).get(2, TimeUnit.SECONDS);
@@ -221,7 +221,7 @@ class TestMysterServerPoolImpl {
 
     @Test
     void explicitResolutionKeepsStatsWithoutIdentityAddressBased() throws Exception {
-        pool = new MysterServerPoolImpl(pref, protocol);
+        pool = createPool();
         MysterAddress address = MysterAddress.createMysterAddress("127.0.0.1");
         lookup.get(address).remove(com.myster.net.stream.server.ServerStats.IDENTITY);
 
@@ -233,7 +233,7 @@ class TestMysterServerPoolImpl {
 
     @Test
     void concurrentExplicitResolutionSharesInflightWork() throws Exception {
-        pool = new MysterServerPoolImpl(pref, protocol);
+        pool = createPool();
         MysterAddress address = MysterAddress.createMysterAddress("127.0.0.1");
 
         PromiseFuture<MysterServer> first = pool.resolveServer(address);
@@ -247,7 +247,7 @@ class TestMysterServerPoolImpl {
 
     @Test
     void explicitResolutionRetriesDeadCacheAndFailureCleansInflightEntry() throws Exception {
-        pool = new MysterServerPoolImpl(pref, protocol);
+        pool = createPool();
         MysterAddress address = MysterAddress.createMysterAddress("127.0.0.1");
         MessagePak stats = lookup.remove(address);
 
@@ -272,7 +272,7 @@ class TestMysterServerPoolImpl {
 
     @Test
     void businessCardSuggestionRejectsMismatchedStatsIdentity() throws Exception {
-        pool = new MysterServerPoolImpl(pref, protocol);
+        pool = createPool();
         MysterAddress address = MysterAddress.createMysterAddress("127.0.0.1");
         Identity otherIdentity = new Identity("business-card-mismatch.keystore", tempDir.toFile());
         PublicKeyIdentity advertisedIdentity = new PublicKeyIdentity(
@@ -291,7 +291,7 @@ class TestMysterServerPoolImpl {
 
     @Test
     void unsupportedBidirectionalStatsDoesNotRetryLegacyStats() throws Exception {
-        pool = new MysterServerPoolImpl(pref, protocol);
+        pool = createPool();
         MysterAddress address = MysterAddress.createMysterAddress("127.0.0.1");
         MysterDatagram datagram = protocol.getDatagram();
         Mockito.doReturn(PromiseFuture.newPromiseFutureException(
@@ -310,7 +310,7 @@ class TestMysterServerPoolImpl {
 
     @Test
     void test2() throws UnknownHostException, InterruptedException {
-        pool = new MysterServerPoolImpl(pref, protocol);
+        pool = createPool();
         
         Object[] moo = new Object[1];
         Semaphore sem = new Semaphore(0);
@@ -355,7 +355,7 @@ class TestMysterServerPoolImpl {
         
         lookup.put(oneTwoSeven, copyMml);
         
-        pool = new MysterServerPoolImpl(pref, protocol);
+        pool = createPool();
         
         var refreshedServers = new ArrayList<MysterServer>();
         var deadServers = new ArrayList<MysterIdentity>();
@@ -425,7 +425,7 @@ class TestMysterServerPoolImpl {
      */
     @Test
     void testPrefsStorageWithOnlyOne() throws UnknownHostException, InterruptedException {
-        pool = new MysterServerPoolImpl(pref, protocol);
+        pool = createPool();
         
         List<MysterServer> captured = new ArrayList<>();
         Semaphore sem = new Semaphore(0);
@@ -443,7 +443,7 @@ class TestMysterServerPoolImpl {
         
         pool = null;
         
-        pool = new MysterServerPoolImpl(pref, protocol);
+        pool = createPool();
         
         PublicKeyIdentity identityPublic = new PublicKeyIdentity(identity.getMainIdentity().get().getPublic());
         Assertions.assertTrue(pool.existsInPool(identityPublic));
@@ -458,7 +458,7 @@ class TestMysterServerPoolImpl {
     
     @Test
     void testPrefsStorage() throws UnknownHostException, InterruptedException {
-        pool = new MysterServerPoolImpl(pref, protocol);
+        pool = createPool();
         
         List<MysterServer> captured = new ArrayList<>();
         Semaphore sem = new Semaphore(0);
@@ -478,7 +478,7 @@ class TestMysterServerPoolImpl {
         
         pool = null;
         
-        pool = new MysterServerPoolImpl(pref, protocol);
+        pool = createPool();
         
         PublicKeyIdentity identityPublic = new PublicKeyIdentity(identity.getMainIdentity().get().getPublic());
         Assertions.assertTrue(pool.existsInPool(identityPublic));
@@ -501,7 +501,7 @@ class TestMysterServerPoolImpl {
     
     @Test
     void testRefresh() throws UnknownHostException, InterruptedException {
-        pool = new MysterServerPoolImpl(pref, protocol);
+        pool = createPool();
         
         List<MysterServer> captured = new ArrayList<>();
         Semaphore sem = new Semaphore(0);
@@ -542,7 +542,7 @@ class TestMysterServerPoolImpl {
     
     @Test
     void testAutoPortChangeRefresh() throws UnknownHostException, InterruptedException {
-        pool = new MysterServerPoolImpl(pref, protocol);
+        pool = createPool();
         
         List<MysterServer> captured = new ArrayList<>();
         Semaphore sem = new Semaphore(0);
@@ -578,7 +578,7 @@ class TestMysterServerPoolImpl {
     
     @Test
     void testAutoPortChangeWithOnlyOne() throws UnknownHostException, InterruptedException {
-        pool = new MysterServerPoolImpl(pref, protocol);
+        pool = createPool();
         
         List<MysterServer> captured = new ArrayList<>();
         Semaphore sem = new Semaphore(0);
@@ -604,7 +604,7 @@ class TestMysterServerPoolImpl {
     
     @Test
     void testDoubleSuggestCall() throws UnknownHostException, InterruptedException {
-        pool = new MysterServerPoolImpl(pref, protocol);
+        pool = createPool();
         
         List<MysterServer> captured = new ArrayList<>();
         Semaphore sem = new Semaphore(0);
@@ -631,7 +631,7 @@ class TestMysterServerPoolImpl {
     
     @Test
     public void testToString() throws InterruptedException, UnknownHostException {
-        pool = new MysterServerPoolImpl(pref, protocol);
+        pool = createPool();
         
         List<MysterServer> captured = new ArrayList<>();
         Semaphore sem = new Semaphore(0);
@@ -652,7 +652,7 @@ class TestMysterServerPoolImpl {
     @Test
     void testFindClosestByCidReturnsExactLeftAndRight() throws Exception {
         List<PublicKeyIdentity> identities = addThreeDnsPreferenceServers(6, 80);
-        pool = new MysterServerPoolImpl(pref, protocol);
+        pool = createPool();
         TrackerUtils.INVOKER.waitForThread();
 
         List<PublicKeyIdentity> ordered = new ArrayList<>(identities);
@@ -676,7 +676,7 @@ class TestMysterServerPoolImpl {
         MysterAddress downAddress = addressForIdentity(downIdentity);
         downPingAddresses.add(downAddress);
 
-        pool = new MysterServerPoolImpl(pref, protocol);
+        pool = createPool();
         TrackerUtils.INVOKER.waitForThread();
 
         IdentityNeighborSet neighbors = pool.findClosestByCid(cid(downIdentity), 2);
@@ -800,6 +800,11 @@ class TestMysterServerPoolImpl {
         Mockito.doReturn(datagram).when(protocol).getDatagram();
         Mockito.doReturn(stream).when(protocol).getStream();
         return protocol;
+    }
+
+    private MysterServerPoolImpl createPool() {
+        return new MysterServerPoolImpl(
+                pref, protocol.getStream(), protocol.getDatagram());
     }
 
     private Object unexpectedProtocolCall(InvocationOnMock invocation) {

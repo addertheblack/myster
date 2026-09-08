@@ -28,11 +28,11 @@ import java.io.IOException;
 import java.security.KeyPair;
 import java.security.KeyPairGenerator;
 import java.security.NoSuchAlgorithmException;
-import java.util.Collections;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Optional;
 
 import com.general.mclist.GenericMCListItem;
@@ -50,7 +50,6 @@ import com.myster.access.AccessListManager;
 import com.myster.access.AccessListState;
 import com.myster.access.AddMemberOp;
 import com.myster.access.Policy;
-import com.myster.access.RemoveMemberOp;
 import com.myster.access.Role;
 import com.myster.access.SetDescriptionOp;
 import com.myster.access.SetExtensionsOp;
@@ -59,13 +58,14 @@ import com.myster.access.SetPolicyOp;
 import com.myster.access.SetSearchInArchivesOp;
 import com.myster.access.SetMetadataTypeOp;
 import com.myster.cid.ServerCid;
-import com.myster.filemanager.DefaultMetadataTypeRegistry;
 import com.myster.filemanager.MetadataType;
 import com.myster.filemanager.MetadataTypeRegistry;
 import com.myster.type.CustomTypeDefinition;
 import com.myster.type.MetadataTypeId;
 import com.myster.type.MysterType;
 import com.myster.type.TypeDescriptionList;
+import com.myster.type.join.TypeInvitationManager;
+import com.myster.type.join.TypeMembershipService;
 import com.myster.tracker.MysterServer;
 import com.myster.tracker.PublicKeyIdentity;
 import com.myster.tracker.ui.KnownServerSource;
@@ -91,16 +91,19 @@ import com.myster.tracker.ui.ServerPickerDialog;
  * contextual non-canonical choice and displayed with a safe Unknown label; local runtime behavior
  * remains Generic until that profile is supported.
  *
- * <p>{@code serverSource} is optional. When empty (create mode, tests), the Members tab is
- * simply omitted.
+ * <p>The server source, local identity, invitation manager, and membership service are required
+ * application dependencies. An administered type always exposes its Members tab, and all direct
+ * member mutations use the shared membership service.
  */
 public class TypeEditorPanel extends JPanel {
     private final TypeDescriptionList typeList;
     private final CustomTypeDefinition existingType;
     private final AccessListManager accessListManager;
-    private final Optional<KnownServerSource> serverSource;
-    private final Optional<ServerCid> localServerCid;
+    private final KnownServerSource serverSource;
+    private final ServerCid localServerCid;
     private final MetadataTypeRegistry metadataTypeRegistry;
+    private final TypeInvitationManager invitationManager;
+    private final TypeMembershipService membershipService;
 
     private final Runnable onSave;
     private final Runnable onCancel;
@@ -111,7 +114,7 @@ public class TypeEditorPanel extends JPanel {
 
     // populated in edit mode only
     private final Optional<KeyPair> editAdminKeyPair;
-    private final Optional<AccessList> editAccessList;
+    private Optional<AccessList> editAccessList;
 
     private final JTextField nameField;
     private final JTextArea descriptionArea;
@@ -122,73 +125,37 @@ public class TypeEditorPanel extends JPanel {
     private final JComboBox<MetadataTypeId> metadataTypeSelector;
     private final JButton saveButton;
 
-    // members tab — only present in edit mode with admin key and a serverSource
+    // members tab — visible only when the edited type has a local administrator key
     private final MCList<ServerCid> membersTable;
 
     /**
-     * Creates a panel for creating a new custom type (no Members tab, no self-seeding).
-     * Intended for tests only.
-     */
-    public TypeEditorPanel(TypeDescriptionList typeList,
-                           AccessListManager accessListManager,
-                           Runnable onSave,
-                           Runnable onCancel) {
-        this(typeList, accessListManager, null, Optional.empty(), Optional.empty(), onSave, onCancel);
-    }
-
-    /**
-     * Creates a panel for creating or editing a custom type.
-     *
-     * @param existingType  the type to edit, or {@code null} to create a new type
-     * @param serverSource  server source used to populate the Members tab;
-     *                      empty Optional omits the tab
-     * @param localServerCid the ServerCid of this server; when present and creating a new type,
-     *                       it is automatically added as an {@code ADMIN} member in the genesis
-     *                       block so the creator is always in the member list
+     * Creates the application editor. An existing non-canonical metadata association is retained
+     * as a contextual read-only choice until an authorized user deliberately changes it.
      */
     public TypeEditorPanel(TypeDescriptionList typeList,
                            AccessListManager accessListManager,
                            CustomTypeDefinition existingType,
-                           Optional<KnownServerSource> serverSource,
-                           Optional<ServerCid> localServerCid,
-                           Runnable onSave,
-                           Runnable onCancel) {
-        this(typeList, accessListManager, existingType, serverSource, localServerCid,
-                new DefaultMetadataTypeRegistry(), onSave, onCancel);
-    }
-
-    /**
-     * Creates a type editor whose metadata choices come from the supplied runtime registry.
-     *
-     * <p>An existing non-canonical association is added as one contextual choice and rendered
-     * with its safe friendly Unknown label. The exact backing value is preserved unless an
-     * authorized user deliberately chooses another profile.
-     *
-     * @param typeList mutable type-description registry
-     * @param accessListManager canonical access-list persistence
-     * @param existingType type being edited, or null in create mode
-     * @param serverSource optional source for member selection
-     * @param localServerCid optional local member identity
-     * @param metadataTypeRegistry source of locally supported metadata profiles
-     * @param onSave callback after successful persistence
-     * @param onCancel callback when editing is cancelled
-     */
-    public TypeEditorPanel(TypeDescriptionList typeList,
-                           AccessListManager accessListManager,
-                           CustomTypeDefinition existingType,
-                           Optional<KnownServerSource> serverSource,
-                           Optional<ServerCid> localServerCid,
+                           KnownServerSource serverSource,
+                           ServerCid localServerCid,
                            MetadataTypeRegistry metadataTypeRegistry,
+                           TypeInvitationManager invitationManager,
+                           TypeMembershipService membershipService,
                            Runnable onSave,
                            Runnable onCancel) {
-        this.typeList = typeList;
-        this.accessListManager = accessListManager;
+        this.typeList = Objects.requireNonNull(typeList, "typeList");
+        this.accessListManager = Objects.requireNonNull(
+                accessListManager, "accessListManager");
         this.existingType = existingType;
-        this.serverSource = serverSource;
-        this.localServerCid = localServerCid;
-        this.metadataTypeRegistry = java.util.Objects.requireNonNull(metadataTypeRegistry);
-        this.onSave = onSave;
-        this.onCancel = onCancel;
+        this.serverSource = Objects.requireNonNull(serverSource, "serverSource");
+        this.localServerCid = Objects.requireNonNull(localServerCid, "localServerCid");
+        this.metadataTypeRegistry = Objects.requireNonNull(
+                metadataTypeRegistry, "metadataTypeRegistry");
+        this.invitationManager = Objects.requireNonNull(
+                invitationManager, "invitationManager");
+        this.membershipService = Objects.requireNonNull(
+                membershipService, "membershipService");
+        this.onSave = Objects.requireNonNull(onSave, "onSave");
+        this.onCancel = Objects.requireNonNull(onCancel, "onCancel");
 
         if (existingType == null) {
             rsaKeyPair = Optional.of(generateRsaKeyPair());
@@ -284,8 +251,8 @@ public class TypeEditorPanel extends JPanel {
 
         JPanel formPanel = buildMetadataForm();
 
-        // In edit mode with an admin key and a serverSource, wrap in a tabbed pane
-        if (existingType != null && editAdminKeyPair.isPresent() && serverSource.isPresent()) {
+        // Administered types expose metadata and membership editing together.
+        if (existingType != null && editAdminKeyPair.isPresent()) {
             JTabbedPane tabs = new JTabbedPane();
             tabs.addTab("Metadata", formPanel);
             tabs.addTab("Members", buildMembersTab());
@@ -350,9 +317,7 @@ public class TypeEditorPanel extends JPanel {
         return formPanel;
     }
 
-    /**
-     * Builds the Members tab panel. Only called when edit mode + admin key + serverSource are all present.
-     */
+    /** Builds the Members tab for a locally administered type. */
     private JPanel buildMembersTab() {
         JPanel panel = new JPanel(new BorderLayout(4, 4));
         panel.setBorder(BorderFactory.createEmptyBorder(8, 8, 8, 8));
@@ -369,6 +334,7 @@ public class TypeEditorPanel extends JPanel {
         // Toolbar buttons
         JButton addMemberBtn    = new JButton("Add Member…");
         JButton removeMemberBtn = new JButton("Remove Member");
+        JButton createInvitationBtn = new JButton("Create Invitation…");
         // "Change Role" is disabled until ADMIN→writer linkage and multi-node
         // consensus are implemented. The role flag has no enforcement yet.
         JButton changeRoleBtn   = new JButton("Change Role");
@@ -389,11 +355,13 @@ public class TypeEditorPanel extends JPanel {
 
         addMemberBtn.addActionListener(e -> addMember());
         removeMemberBtn.addActionListener(e -> removeMember());
+        createInvitationBtn.addActionListener(e -> createInvitation());
 
         JPanel toolbar = new JPanel(new FlowLayout(FlowLayout.LEFT, 4, 0));
         toolbar.add(addMemberBtn);
         toolbar.add(removeMemberBtn);
         toolbar.add(changeRoleBtn);
+        toolbar.add(createInvitationBtn);
         panel.add(toolbar, BorderLayout.SOUTH);
 
         populateMembers();
@@ -402,19 +370,19 @@ public class TypeEditorPanel extends JPanel {
 
     /** Reloads the members table from the current access list state. */
     private void populateMembers() {
-        if (membersTable == null || editAccessList.isEmpty()) return;
+        if (editAccessList.isEmpty()) return;
         membersTable.clearAll();
         Map<ServerCid, Role> members = editAccessList.get().getState().getMembers();
         for (Map.Entry<ServerCid, Role> entry : members.entrySet()) {
-            membersTable.addItem(new MemberItem(entry.getKey(), entry.getValue(), serverSource.get()));
+            membersTable.addItem(new MemberItem(entry.getKey(), entry.getValue(), serverSource));
         }
     }
 
     private void addMember() {
-        if (serverSource.isEmpty() || editAdminKeyPair.isEmpty() || editAccessList.isEmpty()) return;
+        if (editAdminKeyPair.isEmpty() || editAccessList.isEmpty()) return;
         ServerPickerDialog dialog = new ServerPickerDialog(
                 SwingUtilities.getWindowAncestor(this),
-                serverSource.get(),
+                serverSource,
                 "Add Member — Pick a Server",
                 "Add Selected",
                 server -> server.getIdentity() instanceof PublicKeyIdentity,
@@ -428,9 +396,8 @@ public class TypeEditorPanel extends JPanel {
         }
         ServerCid cid = ServerCid.fromPublicKey(identity.getPublicKey());
         try {
-            editAccessList.get().appendBlock(
-                    new AddMemberOp(cid, Role.MEMBER), editAdminKeyPair.get());
-            accessListManager.saveAccessList(editAccessList.get());
+            membershipService.addMember(existingType.toMysterType(), cid);
+            editAccessList = accessListManager.loadAccessList(existingType.toMysterType());
             populateMembers();
         } catch (IOException e) {
             AnswerDialog.simpleAlert("Could not add member: " + e.getMessage());
@@ -443,13 +410,24 @@ public class TypeEditorPanel extends JPanel {
         if (idx < 0) return;
         ServerCid cid = membersTable.getItem(idx);
         try {
-            editAccessList.get().appendBlock(
-                    new RemoveMemberOp(cid), editAdminKeyPair.get());
-            accessListManager.saveAccessList(editAccessList.get());
+            membershipService.removeMember(existingType.toMysterType(), cid);
+            editAccessList = accessListManager.loadAccessList(existingType.toMysterType());
             populateMembers();
         } catch (IOException e) {
             AnswerDialog.simpleAlert("Could not remove member: " + e.getMessage());
         }
+    }
+
+    private void createInvitation() {
+        if (existingType == null) {
+            return;
+        }
+
+        String typeName = nameField.getText().isBlank() ? existingType.getName() : nameField.getText();
+        CreateTypeInvitationDialog dialog = new CreateTypeInvitationDialog(
+                SwingUtilities.getWindowAncestor(this), typeName, existingType.toMysterType(),
+                localServerCid, invitationManager);
+        dialog.setVisible(true);
     }
 
 
@@ -538,15 +516,14 @@ public class TypeEditorPanel extends JPanel {
 
             // Seed the creating server as an ADMIN member so it is always present
             // in its own member list and cannot be locked out of its own type.
-            List<AddMemberOp> initialMembers = localServerCid
-                    .map(cid -> List.of(new AddMemberOp(cid, Role.ADMIN)))
-                    .orElse(Collections.emptyList());
+            List<AddMemberOp> initialMembers =
+                    List.of(new AddMemberOp(localServerCid, Role.ADMIN));
 
             AccessList accessList = AccessList.createGenesis(
                     rsa.getPublic(),
                     admin,
                     initialMembers,
-                    Collections.emptyList(),
+                    List.of(),
                     policy,
                     name,
                     description,
@@ -565,7 +542,7 @@ public class TypeEditorPanel extends JPanel {
 
             typeList.addCustomType(def);
 
-            if (onSave != null) onSave.run();
+            onSave.run();
         } catch (IOException e) {
             saveButton.setEnabled(true);
             AnswerDialog.simpleAlert("Failed to save type: " + e.getMessage());
@@ -622,7 +599,7 @@ public class TypeEditorPanel extends JPanel {
                     searchInArchives, policy.isListFilesPublic(), metadataTypeId);
             typeList.updateCustomType(type, updatedDef);
 
-            if (onSave != null) onSave.run();
+            onSave.run();
         } catch (IOException e) {
             saveButton.setEnabled(true);
             AnswerDialog.simpleAlert("Failed to save changes: " + e.getMessage());
@@ -630,7 +607,7 @@ public class TypeEditorPanel extends JPanel {
     }
 
     private void handleCancel() {
-        if (onCancel != null) onCancel.run();
+        onCancel.run();
     }
 
     private void normalizeExtensionsField() {

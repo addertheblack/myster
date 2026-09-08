@@ -8,6 +8,7 @@ import java.util.List;
 import java.util.Optional;
 
 import com.myster.cid.ServerCid;
+import com.myster.type.MetadataTypeId;
 import com.myster.type.MysterType;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
@@ -37,30 +38,14 @@ class TestAccessEnforcementUtils {
 
     /** Builds a restrictive access list (listFilesPublic = false, no members). */
     private AccessList buildPrivateList() throws IOException {
-        return AccessList.createGenesis(
-                rsaKeyPair.getPublic(),
-                ed25519KeyPair,
-                Collections.emptyList(),
-                List.of("onramp1.example.com:6669"),
-                Policy.defaultRestrictive(),
-                "Private Type",
-                null,
-                null,
-                false);
+        return AccessList.createGenesis(rsaKeyPair.getPublic(), ed25519KeyPair, Collections.emptyList(), List.of("onramp1.example.com:6669"), Policy.defaultRestrictive(),
+                "Private Type", null, null, false, MetadataTypeId.GENERIC);
     }
 
     /** Builds a public access list (listFilesPublic = true). */
     private AccessList buildPublicList() throws IOException {
-        return AccessList.createGenesis(
-                rsaKeyPair.getPublic(),
-                ed25519KeyPair,
-                Collections.emptyList(),
-                Collections.emptyList(),
-                Policy.defaultPermissive(),
-                "Public Type",
-                null,
-                null,
-                false);
+        return AccessList.createGenesis(rsaKeyPair.getPublic(), ed25519KeyPair, Collections.emptyList(), Collections.emptyList(), Policy.defaultPermissive(),
+                "Public Type", null, null, false, MetadataTypeId.GENERIC);
     }
 
     // Case 1 — no access list → allow

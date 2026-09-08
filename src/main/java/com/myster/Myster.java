@@ -26,11 +26,14 @@ import java.net.UnknownHostException;
 import java.nio.file.Path;
 import java.security.KeyPair;
 import java.security.PublicKey;
+import java.security.SecureRandom;
+import java.time.Clock;
+import java.util.ArrayDeque;
+import java.util.Deque;
 import java.util.Enumeration;
 import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.Executors;
-import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.logging.LogManager;
 import java.util.logging.Logger;
 import java.util.prefs.Preferences;
@@ -58,8 +61,11 @@ import com.myster.hash.ui.HashManagerGUI;
 import com.myster.identity.Identity;
 import com.myster.message.ui.MessagePreferencesPanel;
 import com.myster.net.MysterAddress;
+import com.myster.net.client.DnsLookupProtocol;
+import com.myster.net.client.MysterDatagram;
 import com.myster.net.client.MysterProtocol;
 import com.myster.net.client.MysterProtocolImpl;
+import com.myster.net.client.MysterStream;
 import com.myster.net.datagram.DatagramEncryptUtil.Lookup;
 import com.myster.net.datagram.DatagramProtocolManager;
 import com.myster.net.datagram.client.MysterDatagramImpl;
@@ -99,8 +105,17 @@ import com.myster.tracker.Tracker;
 import com.myster.tracker.ui.TrackerWindow;
 import com.myster.tracker.ui.KnownServerSource;
 import com.myster.transaction.TransactionManager;
+import com.myster.threedns.ThreeDnsLookup;
 import com.myster.type.DefaultTypeDescriptionList;
 import com.myster.type.TypeDescriptionList;
+import com.myster.type.join.InvitationAttemptLimiter;
+import com.myster.type.join.InvitationPasswordVerifier;
+import com.myster.type.join.TypeInvitationManager;
+import com.myster.type.join.TypeInvitationStore;
+import com.myster.type.join.TypeJoinCoordinator;
+import com.myster.type.join.TypeJoinServer;
+import com.myster.type.join.TypeJoinUriDispatcher;
+import com.myster.type.join.TypeMembershipService;
 import com.myster.ui.MysterFrameContext;
 import com.myster.ui.PreferencesGui;
 import com.myster.ui.WindowManager;
@@ -186,7 +201,7 @@ public class Myster {
         INSTRUMENTATION.info("-------->> before Appl init " + (System.currentTimeMillis() - startTime));
 
         SingleInstanceLaunchHandler applicationSingletonListener =
-                new SingleInstanceLaunchHandler();
+                new SingleInstanceLaunchHandler(args);
         
         ApplicationContext applicationContext =
                 new ApplicationContext(10457, applicationSingletonListener, args);
@@ -218,7 +233,8 @@ public class Myster {
         
         INSTRUMENTATION.info("-------->> Init Identity " + (System.currentTimeMillis() - startTime));
         Identity identity = Identity.newIdentity();
-        Executors.newVirtualThreadPerTaskExecutor().execute(() -> identity.getMainIdentity());
+        KeyPair mainIdentity = identity.getMainIdentity().orElseThrow(() ->
+                new IllegalStateException("Myster could not initialize its server identity"));
 
 
         INSTRUMENTATION.info("-------->> Init I18n " + (System.currentTimeMillis() - startTime));
@@ -251,28 +267,49 @@ public class Myster {
 
         INSTRUMENTATION.info("-------->> Init client protocol impl " + (System.currentTimeMillis() - startTime));
         PublicKeyLookupImpl serverLookup = new PublicKeyLookupImpl();
-        MSDownloadLocalQueue downloadQueue = 
+        MSDownloadLocalQueue downloadQueue =
                 new MSDownloadLocalQueue(Preferences.userRoot().node("Downloads"));
         
-        MysterProtocol protocol =
-                new MysterProtocolImpl(new MysterStreamImpl(downloadQueue),
-                                       new MysterDatagramImpl(transactionManager,
-                                                              new UDPPingClient(datagramManager),
-                                                              serverLookup,
-                                                              serverPreferences::getIdentityName,
-                                                              serverPreferences::getServerPort,
-                                                              identity,
-                                                              fileManager)); // AddressLookup - placeholder for now
+        MysterStream stream = new MysterStreamImpl(downloadQueue);
+        MysterDatagram datagram = new MysterDatagramImpl(
+                transactionManager,
+                new UDPPingClient(datagramManager),
+                serverLookup,
+                serverPreferences::getIdentityName,
+                serverPreferences::getServerPort,
+                identity,
+                fileManager); // AddressLookup - placeholder for now
 
         INSTRUMENTATION.info("-------->> Init IPListManager "
                 + (System.currentTimeMillis() - startTime));
-        MysterServerPoolImpl pool = new MysterServerPoolImpl(Preferences.userRoot(), protocol);
-        Optional<ServerCid> localCid =
-                identity.getMainIdentity().map(kp -> ServerCid.fromPublicKey(kp.getPublic()));
+        MysterServerPoolImpl pool =
+                new MysterServerPoolImpl(Preferences.userRoot(), stream, datagram);
+        ServerCid localCid = ServerCid.fromPublicKey(mainIdentity.getPublic());
         Tracker tracker = new Tracker(pool,
                                       Preferences.userRoot().node("Tracker.IpListManager"),
                                       tdList,
-                                      localCid);
+                                      Optional.of(localCid));
+
+        Clock invitationClock = Clock.systemUTC();
+        TypeMembershipService membershipService = new TypeMembershipService(accessListManager);
+        TypeInvitationStore invitationStore = new TypeInvitationStore(
+                Preferences.userRoot().node("MysterTypes").node("Invitations"),
+                invitationClock);
+        TypeInvitationManager invitationManager = new TypeInvitationManager(
+                invitationStore,
+                new InvitationPasswordVerifier(),
+                new InvitationAttemptLimiter(2, invitationClock),
+                membershipService,
+                new SecureRandom(),
+                invitationClock);
+        DnsLookupProtocol dnsLookup = new ThreeDnsLookup(tracker, datagram);
+        MysterProtocol protocol = new MysterProtocolImpl(stream, datagram, dnsLookup);
+        TypeJoinCoordinator joinCoordinator = new TypeJoinCoordinator(
+                protocol.getDnsLookup(),
+                tdList,
+                localCid,
+                Preferences.userRoot().node("MysterTypes").node("Join"),
+                protocol.getStream());
         var lastResort = Tracker.getOnRamps();
         for (String ip : lastResort) {
             Executors.newVirtualThreadPerTaskExecutor().execute(() -> {
@@ -334,7 +371,8 @@ public class Myster {
         INSTRUMENTATION.info("-------->> ServerFacade created " + (System.currentTimeMillis() - startTime));
         
         INSTRUMENTATION.info("-------->> Adding server connection settings " + (System.currentTimeMillis() - startTime));
-        addServerConnectionSettings(serverFacade, tracker, serverPreferences, identity, datagramManager, fileManager, pool, accessListManager);
+        addServerConnectionSettings(serverFacade, tracker, serverPreferences, identity,
+                datagramManager, fileManager, pool, accessListManager, invitationManager);
         INSTRUMENTATION.info("-------->> Server connection settings added " + (System.currentTimeMillis() - startTime));
         
         
@@ -344,11 +382,10 @@ public class Myster {
         });
         
         INSTRUMENTATION.info("-------->> Adding encryption support " + (System.currentTimeMillis() - startTime));
-        Optional<KeyPair> mainIdentity = identity.getMainIdentity();
         serverFacade.addEncryptionSupport(new Lookup() {
             @Override
             public Optional<KeyPair> getServerKeyPair(Object serverId) {
-                return mainIdentity;
+                return Optional.of(mainIdentity);
             }
 
             @Override
@@ -375,6 +412,8 @@ public class Myster {
                 MysterMenuBar menuBarFactory = new MysterMenuBar();
                 WindowManager windowManager = new WindowManager();
                 WindowPrefDataKeeper keeper = new WindowPrefDataKeeper(preferences);
+                TypeJoinUriDispatcher joinDispatcher = new TypeJoinUriDispatcher(
+                        joinCoordinator, () -> windowManager.getFrontMostWindow());
 
 
 
@@ -498,8 +537,11 @@ public class Myster {
                         tdList,
                         accessListManager,
                         metadataTypeRegistry,
-                        java.util.Optional.of(knownServerSource),
-                        identity.getMainIdentity().map(kp -> ServerCid.fromPublicKey(kp.getPublic()))));
+                        knownServerSource,
+                        localCid,
+                        invitationManager,
+                        membershipService,
+                        joinDispatcher));
                 preferencesGui.addPanel(new ThemePane(preferences));
 
                 INSTRUMENTATION.info("-------->>   EDT init other GUI sub systems " + (System.currentTimeMillis() - startTime));
@@ -551,10 +593,15 @@ public class Myster {
                         response.performQuit();
                     });
                 }
+
+                if (!isServer && Desktop.getDesktop().isSupported(Action.APP_OPEN_URI)) {
+                    Desktop.getDesktop().setOpenURIHandler(event ->
+                            joinDispatcher.dispatch(event.getURI().toString()));
+                }
                 
                 MysterTray.init();
 
-                applicationSingletonListener.setReady(context);
+                applicationSingletonListener.setReady(context, joinDispatcher);
                 
                 INSTRUMENTATION.info("-------->>   EDT AWT GUI init complete " + (System.currentTimeMillis() - startTime));
             });
@@ -585,24 +632,73 @@ public class Myster {
     } // Utils, globals etc.. //These variables are System wide variables //
 
     private static final class SingleInstanceLaunchHandler implements ApplicationSingletonListener {
-        private final AtomicBoolean relaunchRequestedBeforeGuiReady = new AtomicBoolean(false);
+        private static final int MAX_PENDING_LAUNCHES = 8;
+        private static final int MAX_ARGUMENTS = 32;
+        private final Deque<LaunchRequest> pendingLaunches = new ArrayDeque<>();
         private volatile MysterFrameContext context;
+        private volatile TypeJoinUriDispatcher joinDispatcher;
+
+        private SingleInstanceLaunchHandler(String[] initialArgs) {
+            enqueue(initialArgs, false);
+        }
 
         @Override
         public void requestLaunch(String[] args) {
-            MysterFrameContext readyContext = context;
-            if (readyContext == null) {
-                relaunchRequestedBeforeGuiReady.set(true);
+            enqueue(args, true);
+            drainIfReady();
+        }
+
+        public void setReady(MysterFrameContext context, TypeJoinUriDispatcher joinDispatcher) {
+            this.context = context;
+            this.joinDispatcher = joinDispatcher;
+            drainIfReady();
+        }
+
+        private synchronized void enqueue(String[] args, boolean bringToFrontWhenNoUri) {
+            if (pendingLaunches.size() >= MAX_PENDING_LAUNCHES) {
                 return;
             }
 
-            Util.invokeNowOrLater(() -> showWindowForRelaunch(readyContext));
+            String[] bounded = args == null
+                    ? new String[0]
+                    : java.util.Arrays.copyOf(args, Math.min(args.length, MAX_ARGUMENTS));
+            pendingLaunches.addLast(new LaunchRequest(bounded, bringToFrontWhenNoUri));
         }
 
-        public void setReady(MysterFrameContext context) {
-            this.context = context;
-            if (relaunchRequestedBeforeGuiReady.getAndSet(false)) {
-                requestLaunch(new String[] {});
+        private void drainIfReady() {
+            MysterFrameContext readyContext = context;
+            if (readyContext == null) {
+                return;
+            }
+            Util.invokeNowOrLater(() -> drainOnEdt(readyContext));
+        }
+
+        private void drainOnEdt(MysterFrameContext readyContext) {
+            Util.ensureEventDispatchThread();
+            while (true) {
+                LaunchRequest request;
+                synchronized (this) {
+                    request = pendingLaunches.pollFirst();
+                }
+
+                if (request == null) {
+                    return;
+                }
+
+                boolean hadUri = false;
+                for (String argument : request.args()) {
+                    if (argument != null && argument.regionMatches(
+                            true, 0, "myster:", 0, "myster:".length())) {
+                        hadUri = true;
+                        if (joinDispatcher != null) {
+                            joinDispatcher.dispatch(argument);
+                        }
+                    }
+                }
+
+                if (!hadUri && request.bringToFrontWhenNoUri()) {
+                    showWindowForRelaunch(readyContext);
+                }
             }
         }
 
@@ -631,6 +727,8 @@ public class Myster {
             frontMost.setVisible(true);
             frontMost.toFrontAndUnminimize();
         }
+
+        private record LaunchRequest(String[] args, boolean bringToFrontWhenNoUri) {}
     }
 
     private static FileMetadataExtractor createFileMetadataExtractor(
@@ -656,7 +754,8 @@ public class Myster {
                                                     DatagramProtocolManager datagramManager, 
                                                     FileTypeListManager fileManager,
                                                     MysterServerPool pool,
-                                                    com.myster.access.AccessListManager accessListManager) {
+                                                    com.myster.access.AccessListManager accessListManager,
+                                                    TypeInvitationManager invitationManager) {
 
         serverFacade.addConnectionSection(new com.myster.net.stream.server.MysterServerLister(tracker, accessListManager));
         serverFacade.addConnectionSection(new com.myster.net.stream.server.RequestDirThread(accessListManager));
@@ -673,6 +772,7 @@ public class Myster {
 
         // Private types access list server
         serverFacade.addConnectionSection(new com.myster.access.AccessListGetServer(accessListManager));
+        serverFacade.addConnectionSection(new TypeJoinServer(invitationManager));
 
         datagramManager.mutateTransportManager(preferences.getServerPort(),
                                                t -> t.addTransport(new PingTransport(tracker)));

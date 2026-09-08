@@ -186,8 +186,8 @@ references will accumulate.
 **Modified:**
 - `com/myster/net/client/MysterStream.java` — add `getAccessList`
 - `com/myster/net/stream/client/MysterStreamImpl.java` — implement `getAccessList`
-- `com/myster/type/TypeDescriptionList.java` — add `importType`
-- `com/myster/type/DefaultTypeDescriptionList.java` — implement `importType`
+- `com/myster/type/TypeDescriptionList.java` — add `importOrRefreshType`
+- `com/myster/type/DefaultTypeDescriptionList.java` — implement `importOrRefreshType`
 - `com/myster/client/ui/TypeListerThread.java` — new `TypeListener` method; new constructor params; refactor `run()`
 - `com/myster/client/ui/ClientWindow.java` — cache field; mutable name cells; right-click menu; `importSelectedType`
 - `com/general/util/MessageField.java` — add `sayError`; update `say` to reset foreground/icon
@@ -342,7 +342,7 @@ public class TypeMetadataCache {
 7. Implement `importSelectedType()`: guard on selection and type not already known; resolve
    `currentip` to `MysterAddress` (call `sayError` if invalid); call
    `protocol.getStream().getAccessList(address, type).addCallListener(new CallAdapter<>(){...})`;
-   `handleResult` calls `importType`, `refreshTypeDisplay`, `msg.say(...)`; `handleError`
+   `handleResult` calls `importOrRefreshType`, `refreshTypeDisplay`, `msg.say(...)`; `handleError`
    calls `msg.sayError(...)`. Both callbacks run on EDT by default — no `invokeLater` needed.
 
 ---

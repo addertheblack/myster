@@ -14,7 +14,6 @@ import java.security.KeyPair;
 import java.security.KeyPairGenerator;
 import java.util.Collection;
 import java.util.List;
-import java.util.Optional;
 
 import javax.swing.JComboBox;
 import javax.swing.JButton;
@@ -29,11 +28,15 @@ import com.myster.access.AccessListKeyUtils;
 import com.myster.access.AccessListManager;
 import com.myster.access.Policy;
 import com.myster.application.MysterGlobals;
+import com.myster.cid.ServerCid;
 import com.myster.filemanager.MetadataType;
 import com.myster.filemanager.MetadataTypeRegistry;
 import com.myster.type.CustomTypeDefinition;
 import com.myster.type.MetadataTypeId;
 import com.myster.type.TypeDescriptionList;
+import com.myster.type.join.TypeInvitationManager;
+import com.myster.type.join.TypeMembershipService;
+import com.myster.tracker.ui.KnownServerSource;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
@@ -54,9 +57,8 @@ class TestTypeEditorPanelMetadataType {
 
     @Test
     void createChoicesComeFromRegistryAndDefaultToGeneric() {
-        TypeEditorPanel panel = new TypeEditorPanel(mock(TypeDescriptionList.class),
-                new AccessListManager(), null, Optional.empty(), Optional.empty(), imageRegistry(),
-                () -> {}, () -> {});
+        TypeEditorPanel panel = newEditor(
+                mock(TypeDescriptionList.class), new AccessListManager(), null, imageRegistry());
 
         JComboBox<MetadataTypeId> selector = metadataSelector(panel);
         assertEquals(2, selector.getItemCount());
@@ -74,9 +76,8 @@ class TestTypeEditorPanelMetadataType {
 
         try (MockedStatic<MysterGlobals> globals = mockStatic(MysterGlobals.class)) {
             globals.when(MysterGlobals::getPrivateDataPath).thenReturn(tempDir);
-            TypeEditorPanel panel = new TypeEditorPanel(mock(TypeDescriptionList.class),
-                    new AccessListManager(), existing, Optional.empty(), Optional.empty(),
-                    imageRegistry(), () -> {}, () -> {});
+            TypeEditorPanel panel = newEditor(mock(TypeDescriptionList.class),
+                    new AccessListManager(), existing, imageRegistry());
 
             JComboBox<MetadataTypeId> selector = metadataSelector(panel);
             assertEquals(3, selector.getItemCount());
@@ -99,8 +100,7 @@ class TestTypeEditorPanelMetadataType {
             TypeDescriptionList typeList = mock(TypeDescriptionList.class);
             CustomTypeDefinition existing = definition(MetadataTypeId.IMAGE);
 
-            TypeEditorPanel panel = new TypeEditorPanel(typeList, manager, existing,
-                    Optional.empty(), Optional.empty(), imageRegistry(), () -> {}, () -> {});
+            TypeEditorPanel panel = newEditor(typeList, manager, existing, imageRegistry());
             metadataSelector(panel).setSelectedItem(MetadataTypeId.GENERIC);
             SwingUtilities.invokeAndWait(() -> saveButton(panel).doClick());
 
@@ -126,9 +126,8 @@ class TestTypeEditorPanelMetadataType {
             AccessListKeyUtils.saveKeyPair(adminKeyPair, accessList.getMysterType());
             TypeDescriptionList typeList = mock(TypeDescriptionList.class);
 
-            TypeEditorPanel panel = new TypeEditorPanel(typeList, manager,
-                    definition(MetadataTypeId.GENERIC), Optional.empty(), Optional.empty(),
-                    imageRegistry(), () -> {}, () -> {});
+            TypeEditorPanel panel = newEditor(typeList, manager,
+                    definition(MetadataTypeId.GENERIC), imageRegistry());
             SwingUtilities.invokeAndWait(() -> saveButton(panel).doClick());
 
             AccessList saved = manager.loadAccessList(accessList.getMysterType()).orElseThrow();
@@ -167,6 +166,23 @@ class TestTypeEditorPanelMetadataType {
                 return List.of(MetadataType.GENERIC, MetadataType.IMAGE);
             }
         };
+    }
+
+    private static TypeEditorPanel newEditor(TypeDescriptionList typeList,
+                                             AccessListManager accessListManager,
+                                             CustomTypeDefinition existingType,
+                                             MetadataTypeRegistry metadataTypeRegistry) {
+        return new TypeEditorPanel(
+                typeList,
+                accessListManager,
+                existingType,
+                mock(KnownServerSource.class),
+                ServerCid.fromPublicKey(rsaKeyPair.getPublic()),
+                metadataTypeRegistry,
+                mock(TypeInvitationManager.class),
+                new TypeMembershipService(accessListManager),
+                () -> {},
+                () -> {});
     }
 
     private static JButton saveButton(Container container) {

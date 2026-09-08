@@ -318,15 +318,11 @@ public class DefaultTypeDescriptionList implements TypeDescriptionList {
                 .map(al -> buildCustomTypeDefinition(al.getState()))
                 .orElse(def);
 
-        boolean wasEnabled = types.get(index).enabled;
         types.get(index).typeDescription = buildTypeDescription(type, updatedDef);
 
         saveEverythingToDisk();
         log.info("Updated custom type: " + updatedDef.getName());
-
-        if (wasEnabled) {
-            dispatcher.fire().typeEnabled(new TypeDescriptionEvent(this, type));
-        }
+        dispatcher.fire().typeUpdated(new TypeDescriptionEvent(this, type));
     }
 
     /**
@@ -356,18 +352,94 @@ public class DefaultTypeDescriptionList implements TypeDescriptionList {
      */
     @Override
     public synchronized void importType(AccessList accessList) throws IOException {
-        accessList.validate();
-        MysterType type = accessList.getMysterType();
-        if (getIndexFromType(type) != -1) {
-            throw new IllegalArgumentException("Type already known: " + type.toHexString());
+        if (getIndexFromType(accessList.getMysterType()) != -1) {
+            throw new IllegalArgumentException("Type already exists: "
+                    + accessList.getMysterType().toHexString());
         }
+
+        accessList.validate();
+
+        importNew(accessList, true, accessList.getMysterType());
+    }
+
+    /**
+     * Imports or safely refreshes a custom type without transiently enabling a disabled import.
+     * The incoming chain must be current and unforked relative to any locally known custom chain.
+     */
+    @Override
+    public synchronized void importOrRefreshType(AccessList accessList, boolean enabled) throws IOException {
+        accessList.validate();
+
+        MysterType type = accessList.getMysterType();
+        int existingIndex = getIndexFromType(type);
+        if (existingIndex == -1) {
+            importNew(accessList, enabled, type);
+
+            return;
+        }
+
+        TypeDescriptionElement existing = types.get(existingIndex);
+
+        if (existing.getTypeDescription().getSource() != TypeSource.CUSTOM) {
+            throw new IllegalArgumentException("Cannot replace built-in type: "
+                    + type.toHexString());
+        }
+
+        AccessList local = accessListManager.loadAccessListSnapshot(type)
+                .orElseThrow(() -> new IOException("Known custom type has no access list"));
+
+        requireSameOrExtendedChain(local, accessList);
+
+        boolean chainWasExtended = accessList.getBlocks().size() > local.getBlocks().size();
+        if (chainWasExtended) {
+            accessListManager.saveAccessList(accessList);
+            CustomTypeDefinition refreshed = buildCustomTypeDefinition(accessList.getState());
+            existing.typeDescription = buildTypeDescription(type, refreshed);
+        }
+
+        boolean wasEnabled = existing.enabled;
+        existing.enabled = enabled;
+        customTypeManager.saveEnabled(type, enabled);
+
+        if (wasEnabled != enabled) {
+            if (enabled) {
+                dispatcher.fire().typeEnabled(new TypeDescriptionEvent(this, type));
+            } else {
+                dispatcher.fire().typeDisabled(new TypeDescriptionEvent(this, type));
+            }
+        } else if (chainWasExtended) {
+            dispatcher.fire().typeUpdated(new TypeDescriptionEvent(this, type));
+        }
+    }
+
+    private void importNew(AccessList accessList, boolean enabled, MysterType type) throws IOException {
         accessListManager.saveAccessList(accessList);
-        customTypeManager.saveEnabled(type, true);
+        customTypeManager.saveEnabled(type, enabled);
         CustomTypeDefinition def = buildCustomTypeDefinition(accessList.getState());
         TypeDescription customDesc = buildTypeDescription(type, def);
-        types.add(new TypeDescriptionElement(customDesc, true));
-        log.info("Imported (enabled) custom type: " + def.getName());
-        dispatcher.fire().typeEnabled(new TypeDescriptionEvent(this, type));
+        types.add(new TypeDescriptionElement(customDesc, enabled));
+
+        log.info("Imported custom type: " + def.getName() + " enabled=" + enabled);
+
+        if (enabled) {
+            dispatcher.fire().typeEnabled(new TypeDescriptionEvent(this, type));
+        }
+    }
+
+    private static void requireSameOrExtendedChain(AccessList local, AccessList incoming) {
+        List<com.myster.access.AccessBlock> localBlocks = local.getBlocks();
+        List<com.myster.access.AccessBlock> incomingBlocks = incoming.getBlocks();
+
+        if (incomingBlocks.size() < localBlocks.size()) {
+            throw new IllegalArgumentException("Incoming access list is older than the local chain");
+        }
+
+        for (int index = 0; index < localBlocks.size(); index++) {
+            if (!java.util.Arrays.equals(localBlocks.get(index).computeHash(),
+                    incomingBlocks.get(index).computeHash())) {
+                throw new IllegalArgumentException("Incoming access list forks from the local chain");
+            }
+        }
     }
 
 

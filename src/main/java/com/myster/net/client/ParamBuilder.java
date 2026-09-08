@@ -7,9 +7,10 @@ import com.myster.net.MysterAddress;
 import com.myster.tracker.MysterIdentity;
 
 /**
- * Immutable parameters for a datagram call. A target address or identity may
- * be accompanied by an explicit expected server key. The expected key proves a
- * one-off address/key association without adding it to the tracker cache.
+ * Immutable common transport parameters for a protocol call. A target address or identity may be
+ * accompanied by an explicit expected server key. The expected key proves a one-off address/key
+ * association without adding it to the tracker cache and applies to both encrypted datagrams and
+ * TLS stream connection establishment.
  */
 public class ParamBuilder {
     private final Optional<MysterAddress> address;

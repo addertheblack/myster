@@ -6,12 +6,14 @@ import java.security.KeyPair;
 import java.security.KeyPairGenerator;
 import java.util.Collections;
 import java.util.List;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.prefs.Preferences;
 
 import com.myster.access.AccessList;
 import com.myster.access.AccessListManager;
 import com.myster.access.Policy;
+import com.myster.access.SetNameOp;
 import com.myster.application.MysterGlobals;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
@@ -93,6 +95,93 @@ class TestDefaultTypeDescriptionListImport {
             assertFalse(tdl.get(type).get().isPublic(), "Restrictive-policy type should report isPublic() == false");
             assertEquals(type, fired.get().getType(),
                     "typeEnabled event should fire with correct type");
+        }
+    }
+
+    @Test
+    void explicitDisabledImportRegistersWithoutEnabledEventAndPersists() throws Exception {
+        AccessList accessList = makeAccessList("Quiet network");
+        MysterType type = accessList.getMysterType();
+
+        try (MockedStatic<MysterGlobals> globals = mockStatic(MysterGlobals.class)) {
+            globals.when(MysterGlobals::getAccessListPath).thenReturn(tempDir);
+            globals.when(MysterGlobals::getPrivateDataPath).thenReturn(tempDir);
+
+            DefaultTypeDescriptionList first =
+                    new DefaultTypeDescriptionList(testPrefs, accessListManager);
+            AtomicReference<TypeDescriptionEvent> fired = new AtomicReference<>();
+            first.addTypeListener(new TypeListener() {
+                public void typeEnabled(TypeDescriptionEvent event) { fired.set(event); }
+                public void typeDisabled(TypeDescriptionEvent event) { fired.set(event); }
+            });
+
+            first.importOrRefreshType(accessList, false);
+            SwingUtilities.invokeAndWait(() -> {});
+
+            assertTrue(first.get(type).isPresent());
+            assertFalse(first.isTypeEnabled(type));
+            assertNull(fired.get());
+
+            DefaultTypeDescriptionList restarted =
+                    new DefaultTypeDescriptionList(testPrefs, accessListManager);
+            assertTrue(restarted.get(type).isPresent());
+            assertFalse(restarted.isTypeEnabled(type));
+        }
+    }
+
+    @Test
+    void explicitImportOfKnownSameChainCanApplyEnabledChoice() throws Exception {
+        AccessList accessList = makeAccessList("Known network");
+        MysterType type = accessList.getMysterType();
+
+        try (MockedStatic<MysterGlobals> globals = mockStatic(MysterGlobals.class)) {
+            globals.when(MysterGlobals::getAccessListPath).thenReturn(tempDir);
+            globals.when(MysterGlobals::getPrivateDataPath).thenReturn(tempDir);
+
+            DefaultTypeDescriptionList descriptions =
+                    new DefaultTypeDescriptionList(testPrefs, accessListManager);
+            descriptions.importOrRefreshType(accessList, false);
+            descriptions.importOrRefreshType(accessList, true);
+
+            assertTrue(descriptions.isTypeEnabled(type));
+        }
+    }
+
+    @Test
+    void extendingDisabledTypeRefreshesDescriptionWithoutEnableEvent() throws Exception {
+        AccessList accessList = makeAccessList("Original name");
+        MysterType type = accessList.getMysterType();
+
+        try (MockedStatic<MysterGlobals> globals = mockStatic(MysterGlobals.class)) {
+            globals.when(MysterGlobals::getAccessListPath).thenReturn(tempDir);
+            globals.when(MysterGlobals::getPrivateDataPath).thenReturn(tempDir);
+
+            DefaultTypeDescriptionList descriptions =
+                    new DefaultTypeDescriptionList(testPrefs, accessListManager);
+            descriptions.importOrRefreshType(accessList, false);
+
+            AtomicInteger enabledEvents = new AtomicInteger();
+            AtomicReference<TypeDescriptionEvent> updatedEvent = new AtomicReference<>();
+            descriptions.addTypeListener(new TypeListener() {
+                public void typeEnabled(TypeDescriptionEvent event) {
+                    enabledEvents.incrementAndGet();
+                }
+
+                public void typeDisabled(TypeDescriptionEvent event) {}
+
+                public void typeUpdated(TypeDescriptionEvent event) {
+                    updatedEvent.set(event);
+                }
+            });
+
+            accessList.appendBlock(new SetNameOp("Updated name"), edKeyPair);
+            descriptions.importOrRefreshType(accessList, false);
+            SwingUtilities.invokeAndWait(() -> {});
+
+            assertEquals("Updated name", descriptions.get(type).orElseThrow().getDescription());
+            assertFalse(descriptions.isTypeEnabled(type));
+            assertEquals(0, enabledEvents.get());
+            assertEquals(type, updatedEvent.get().getType());
         }
     }
 
