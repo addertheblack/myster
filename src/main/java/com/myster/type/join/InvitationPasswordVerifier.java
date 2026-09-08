@@ -46,7 +46,7 @@ public final class InvitationPasswordVerifier {
     private final SecureRandom random;
     private final Policy policy;
 
-    InvitationPasswordVerifier() {
+    public InvitationPasswordVerifier() {
         this(new SecureRandom(), new Policy(PRODUCTION_ITERATIONS));
     }
 
