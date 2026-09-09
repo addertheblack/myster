@@ -4,6 +4,8 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.StandardCopyOption;
 import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
@@ -74,7 +76,7 @@ public class AccessListManager implements AccessListReader {
     }
 
     /**
-     * Saves an access list to disk and updates the cache.
+     * Saves an access list to disk, replacing any existing file, and updates the cache.
      *
      * @param accessList the access list to save
      * @throws IOException if saving fails
@@ -90,9 +92,11 @@ public class AccessListManager implements AccessListReader {
             AccessListStorageUtils.write(accessList, fos);
         }
 
-        if (!tempFile.renameTo(file)) {
+        try {
+            Files.move(tempFile.toPath(), file.toPath(), StandardCopyOption.REPLACE_EXISTING);
+        } catch (IOException e) {
             tempFile.delete();
-            throw new IOException("Failed to rename temp file to " + file.getAbsolutePath());
+            throw e;
         }
 
         cache.put(mysterType, accessList);

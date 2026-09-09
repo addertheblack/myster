@@ -14,7 +14,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 class TestDownloadStartErrorDialog {
     @Test
     void messageFor_invalidDownloadDirectory() {
-        assertEquals("The download folder is not valid: /tmp/nope",
+        assertEquals("The download folder is not valid: " + Path.of("/tmp/nope"),
                      DownloadStartErrorDialog
                              .messageFor(new InvalidDownloadDirectoryException(Path.of("/tmp/nope"),
                                                                                "ignored")));
@@ -22,7 +22,7 @@ class TestDownloadStartErrorDialog {
 
     @Test
     void messageFor_unwritableDownloadDirectory() {
-        assertEquals("Myster cannot write to the download folder: /tmp/nope",
+        assertEquals("Myster cannot write to the download folder: " + Path.of("/tmp/nope"),
                      DownloadStartErrorDialog
                              .messageFor(new UnwritableDownloadDirectoryException(Path.of("/tmp/nope"),
                                                                                   "ignored")));
