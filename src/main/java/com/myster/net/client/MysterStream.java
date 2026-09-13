@@ -24,7 +24,7 @@ public interface MysterStream {
      * in {@link ParamBuilder}.
      *
      * @param params target address and optional expected server public key
-     * @return a connected, caller-owned socket
+     * @return a connected, caller-owned socket, never null
      * @throws IOException if the connection or TLS authentication fails
      * @throws IllegalArgumentException if no target address is present
      */

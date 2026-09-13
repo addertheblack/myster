@@ -10,17 +10,19 @@
 
 package com.myster.search;
 
+import java.util.Objects;
+
 import com.myster.net.MysterAddress;
 import com.myster.type.MysterType;
 
 /**
- * Represents a file on the Myster network. Is immutable.
+ * Represents a file on the Myster network. Is immutable; address, type and name are required.
  */
 public record MysterFileStub(MysterAddress ip, MysterType type, String name) {
     public MysterFileStub {
-        if (name == null) {
-            throw new IllegalArgumentException("name cannot be null");
-        }
+        Objects.requireNonNull(ip, "ip cannot be null");
+        Objects.requireNonNull(type, "type cannot be null");
+        Objects.requireNonNull(name, "name cannot be null");
     }
 
     public String getName() {

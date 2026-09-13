@@ -3,7 +3,11 @@ package com.myster.net.stream.client.msdownload;
 import java.io.File;
 import java.io.IOException;
 import java.io.RandomAccessFile;
+import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Map;
+import java.util.Objects;
+import java.util.Optional;
 import java.util.Set;
 import java.util.Stack;
 
@@ -12,8 +16,10 @@ import com.general.thread.Cancellable;
 import com.general.thread.Invoker;
 import com.general.thread.Task;
 import com.general.util.Util;
+import com.myster.cid.ServerCid;
 import com.myster.hash.FileHash;
-import com.myster.net.stream.client.MysterSocketFactory;
+import com.myster.net.client.DnsLookupProtocol;
+import com.myster.net.client.MysterStream;
 import com.myster.search.HashCrawlerManager;
 import com.myster.search.HashSearchListener;
 import com.myster.search.MysterFileStub;
@@ -54,9 +60,17 @@ import com.myster.type.MysterType;
  * accumulated via hash crawler searches. When paused, the crawler continues finding sources
  * in the background. On resume, downloaders are recreated from all discovered stubs.
  * 
+ * <h3>Persistent Sources</h3>
+ * Each successfully supplying peer's CID is appended to the partial download's server-list file.
+ * Queue activation tries initial addresses immediately and independently resolves saved CIDs.
+ * Recovered peers must pass hash-to-filename selection before requesting blocks. Recovery continues
+ * while paused, retaining candidates and their expected keys for resume. A later activation retries
+ * saved identities if the previous recovery has finished. Ending the download cancels recovery.
+ *
  * <h3>Thread Safety</h3>
- * All state-modifying methods are synchronized using monitor locks (synchronized methods).
- * Event callbacks may execute on the EDT via Util.invokeLater().
+ * Download state is protected by this object's monitor. Source-file I/O is serialized in the
+ * background, and independent workers resolve saved identities. Event callbacks may execute
+ * on the EDT via Util.invokeLater().
  * 
  * <h3>Termination Semantics</h3>
  * <ul>
@@ -105,10 +119,13 @@ public class MultiSourceDownload implements Task, Cancellable {
     private final long initialOffset; // how much was downloaded in a previous session
     private final MSDownloadLocalQueue queue; // never null
     
-    // Set of all discovered file stubs (sources) for this file.
-    // Continuously accumulated via hash crawler and initial servers.
-    // Used to rapidly restart downloaders when resuming after pause.
-    private final Set<MysterFileStub> discoveredStubs = new HashSet<>();
+    // All discovery paths retain candidates, including expected keys, across pause/resume.
+    private final Set<DownloadTarget> discoveredTargets = new HashSet<>();
+    private final MysterStream stream;
+    private final DnsLookupProtocol dnsLookup;
+    private DownloadSourceRecovery recovery;
+    private long activation;
+    private final Map<ServerCid, SegmentDownloader> sourceOwners = new HashMap<>();
     
     // it's a stack 'cause it
     // doesn't matter what data structure so long
@@ -156,12 +173,14 @@ public class MultiSourceDownload implements Task, Cancellable {
                                MSDownloadListener listener,
                                FileMover fileMover,
                                MSPartialFile partialFile,
-                               MSDownloadLocalQueue queue)
+                               MSDownloadLocalQueue queue, MysterStream stream, DnsLookupProtocol dnsLookup)
             throws IOException {
         this.randomAccessFile = randomAccessFile;
         this.crawlerManager = crawlerManager;
         this.fileMover = fileMover;
         this.queue = queue;
+        this.stream = Objects.requireNonNull(stream);
+        this.dnsLookup = Objects.requireNonNull(dnsLookup);
         this.type = partialFile.getType();
         this.hashes = partialFile.getFileHashes();
         this.fileLength = partialFile.getFileLength();
@@ -183,8 +202,9 @@ public class MultiSourceDownload implements Task, Cancellable {
 
     /**
      * Sets the initial list of servers to try when the download is started.
-     * Stubs are added to the discoveredStubs set and will be used on the first
-     * start() call or any subsequent resume.
+     * Candidates are retained for the first start and subsequent resumes. When hashes are
+     * available, only each stub's endpoint and type are retained; the remote filename is looked
+     * up on connection. Legacy downloads without hashes retain the supplied filename.
      * <p>
      * This should be called on the same thread that is starting the download,
      * before the download is started.
@@ -194,7 +214,8 @@ public class MultiSourceDownload implements Task, Cancellable {
      */
     public synchronized void addInitialServers(MysterFileStub[] addresses) {
         for (MysterFileStub stub : addresses) {
-            discoveredStubs.add(stub);
+            discoveredTargets.add(hashes.length == 0 ? DownloadTarget.knownFile(stub)
+                    : DownloadTarget.forHash(stub.getMysterAddress(), stub.getType(), Optional.empty()));
         }
     }
 
@@ -236,6 +257,10 @@ public class MultiSourceDownload implements Task, Cancellable {
      * This is package-private and should only be called by MSDownloadLocalQueue.
      */
     synchronized void startDirectly() {
+        if (endNowFlag || endedFlag || (!pausedFlag && !locallyQueuedFlag)) {
+            return;
+        }
+        final long generation = ++activation;
         pausedFlag = false;
         locallyQueuedFlag = false;
         
@@ -243,7 +268,7 @@ public class MultiSourceDownload implements Task, Cancellable {
             // Create downloaders from all discovered stubs
             synchronized (this) {
                 // Don't create downloaders if we've been paused again or ended
-                if (pausedFlag || endNowFlag) {
+                if (pausedFlag || endNowFlag || activation != generation) {
                     return;
                 }
                 
@@ -253,26 +278,33 @@ public class MultiSourceDownload implements Task, Cancellable {
 
                 dispatcher.fire().resumeDownload(createMultiSourceEvent());
 
-                for (MysterFileStub stub : discoveredStubs) {
-                    newDownload(stub);
+                for (DownloadTarget target : Set.copyOf(discoveredTargets)) {
+                    newDownload(target);
+                }
+                if (hashes.length > 0 && (recovery == null || recovery.isDone())) {
+                    recovery = new DownloadSourceRecovery(partialFile.sourceStore()::read,
+                            dnsLookup, peer -> newDownload(DownloadTarget.forHash(peer.address(), type,
+                                    Optional.of(peer.identity().getPublicKey()))));
+                    recovery.start();
                 }
             }
 
             // If no sources and no hashes, cancel the download
             synchronized (this) {
-                if (discoveredStubs.isEmpty() && hashes.length == 0) {
+                if (discoveredTargets.isEmpty() && hashes.length == 0) {
                     flagToEnd();
                 }
             }
         });
     }
-    
+
     public synchronized void pause() {
-             queue.removeFromQueue(this);
-     }
+        queue.removeFromQueue(this);
+    }
     
     /**
      * Pauses the download directly without going through the queue.
+     * Stops segment downloaders while source discovery continues retaining candidates for resume.
      * This is package-private and should only be called by MSDownloadLocalQueue.
      */
     synchronized void pauseDirectly() {
@@ -293,6 +325,7 @@ public class MultiSourceDownload implements Task, Cancellable {
         }
         
         downloaders.clear();
+        sourceOwners.clear();
         
         // Fire pause event
         dispatcher.fire().pauseDownload(createMultiSourceEvent());
@@ -319,49 +352,66 @@ public class MultiSourceDownload implements Task, Cancellable {
         dispatcher.fire().queuedDownload(createQueuedMultiSourceEvent(-1));
     }
 
-    /** Package Protected for unit tests */
+    /** Hash-crawler candidates have already been selected by file hash. */
     synchronized void newDownload(MysterFileStub stub) {
-        if (endNowFlag)
-            return;
-        
-        if (endedFlag) 
-            return;
+        newDownload(DownloadTarget.knownFile(stub));
+    }
 
-        if (stub.getMysterAddress() == null)
-            return; // cheap hack
-        
-        // Track this stub as discovered
-        discoveredStubs.add(stub);
-        
+    /**
+     * Retains a candidate, including its expected key, and starts its transfer when unpaused.
+     * Suggestions received after the download ends are ignored.
+     */
+    private synchronized void newDownload(DownloadTarget target) {
+        if (endNowFlag || endedFlag) {
+            return;
+        }
+        discoveredTargets.add(target);
         if (pausedFlag) {
             return;
         }
-
-        final SegmentDownloader downloader = newSegmentDownloader(stub, controller);
-
+        SegmentDownloader downloader = newSegmentDownloader(target, controller);
         if (downloaders.contains(downloader)) {
-            return; // already have a downloader doing this file.
+            downloader.flagToEnd();
+            return;
         }
-
         downloaders.add(downloader);
-
         dispatcher.fire().startSegmentDownloader(new MSSegmentEvent(downloader));
         downloader.start();
     }
 
-    /** Protected for unit tests */
-    protected SegmentDownloader newSegmentDownloader(MysterFileStub stub, Controller controller) {
-        return new InternalSegmentDownloader(controller,
-                                             MysterSocketFactory::makeStreamConnection,
-                                             stub,
-                                             chunkSize);
+    /** Factory seam for segment transport tests.  Protected for unit tests */
+    protected SegmentDownloader newSegmentDownloader(DownloadTarget target, Controller controller) {
+        return new InternalSegmentDownloader(controller, stream, target, hashes, chunkSize);
+    }
+
+    /**
+     * Checks whether the caller is still one of this download's current segment downloaders.
+     * Pause removes downloaders before their workers finish stopping, so an old worker can reach
+     * a callback after resume has created its replacement. This check rejects that old worker even
+     * though the download is no longer paused. Uses object identity because downloader equality
+     * compares addresses: an old worker and its replacement can compare equal.
+     * Must be called while holding this download's monitor.
+     */
+    private boolean ownsDownloader(SegmentDownloader candidate) {
+        for (SegmentDownloader active : downloaders) {
+            if (active == candidate) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    private void cancelRecovery() {
+        if (recovery != null) {
+            recovery.cancel();
+            recovery = null;
+        }
     }
 
     /**
      * If a segment download has received word that it is now queued it double
      * checks back with this routine to see if it should bother continuing the
      * download.
-     * @param workingSegment 
      */
     private synchronized boolean isOkToQueue(WorkSegment workSegment) {
         for (SegmentDownloader download : downloaders) {
@@ -376,9 +426,10 @@ public class MultiSourceDownload implements Task, Cancellable {
     }
 
     // removes a download but doesn't stop a download. (so this should be called
-    // by downloads that have ended completely.
+    // by downloads that have ended completely.)
     private synchronized boolean removeDownload(SegmentDownloader downloader) {
-        boolean result = downloaders.remove(downloader);
+        boolean result = downloaders.removeIf(active -> active == downloader);
+        sourceOwners.values().removeIf(owner -> owner == downloader);
 
         dispatcher.fire().endSegmentDownloader(new MSSegmentEvent(downloader) );
 
@@ -450,7 +501,11 @@ public class MultiSourceDownload implements Task, Cancellable {
 //        }
     }
 
-    private synchronized void receiveDataBlock(DataBlock dataBlock) {
+    private synchronized void receiveDataBlock(DataBlock dataBlock, SegmentDownloader sender,
+                                               Optional<ServerCid> source) throws IOException {
+        if (pausedFlag || endNowFlag || endedFlag || !ownsDownloader(sender)) {
+            throw new IOException("Block arrived from an inactive segment");
+        }
         try {
             randomAccessFile.seek(dataBlock.offset);
 
@@ -467,9 +522,11 @@ public class MultiSourceDownload implements Task, Cancellable {
             }
 
             partialFile.setBit(dataBlock.offset / chunkSize);
+            source.ifPresent(partialFile.sourceStore()::record);
         } catch (IOException ex) {
             flagToEnd();// humm.. maybe the user should be notified of this problem?
             // TODO add some sort of notification about these kinds of error here.
+            throw ex;
         }
     }
 
@@ -512,6 +569,7 @@ public class MultiSourceDownload implements Task, Cancellable {
             return; // shouldn't be called twice..
 
         endNowFlag = true;
+        cancelRecovery();
 
 
         for (SegmentDownloader SegmentDownloader : downloaders) {
@@ -548,27 +606,28 @@ public class MultiSourceDownload implements Task, Cancellable {
             return;
         }
         
+        cancelRecovery();
+
         // endFlag overrides pause state - force unpause
         pausedFlag = false;
-        
+        endedFlag = true;
+
         for (FileHash hash : hashes) {
             crawlerManager.removeHash(type, hash, hashSearchListener);
         }
 
         try {
             randomAccessFile.close();
-        } catch (Exception _) {
+        } catch (IOException _) {
             // nothing
         } // assert file is closed
-        
+
         try {
             partialFile.close();
         } catch (IOException ex) {
             // whatever
         }
 
-        endedFlag = true;
-        
         queue.removeFromQueue(this);
 
         dispatcher.fire().endDownload(createMultiSourceEvent());
@@ -640,6 +699,17 @@ public class MultiSourceDownload implements Task, Cancellable {
     }
 
     class ControllerImpl implements Controller {
+        @Override
+        public boolean claimSource(SegmentDownloader downloader, ServerCid cid) {
+            synchronized (MultiSourceDownload.this) {
+                if (pausedFlag || endNowFlag || endedFlag || !ownsDownloader(downloader)) {
+                    return false;
+                }
+                SegmentDownloader owner = sourceOwners.putIfAbsent(cid, downloader);
+                return owner == null || owner == downloader;
+            }
+        }
+
         /*
          * (non-Javadoc)
          * 
@@ -664,8 +734,8 @@ public class MultiSourceDownload implements Task, Cancellable {
          * 
          * @see com.myster.client.stream.Controller#receiveDataBlock(com.myster.client.stream.DataBlock)
          */
-        public void receiveDataBlock(DataBlock dataBlock) {
-            MultiSourceDownload.this.receiveDataBlock(dataBlock);
+        public void receiveDataBlock(DataBlock dataBlock, SegmentDownloader sender, Optional<ServerCid> source) throws IOException {
+            MultiSourceDownload.this.receiveDataBlock(dataBlock, sender, source);
         }
 
         /*

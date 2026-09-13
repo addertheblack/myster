@@ -49,12 +49,13 @@ public class MysterSearchResult implements SearchResult {
                 DownloadDirectoryValidator.validateDownloadDirectory(baseDirectory);
 
         getProtocol().getStream()
-                .downloadFile(new MSDownloadParams(context,
-                                                   hashCrawler,
-                                                   stub,
-                                                   validatedBaseDirectory,
-                                                   Path.of(""),
-                                                   startFailureHandler));
+                     .downloadFile(new MSDownloadParams(context,
+                                                        hashCrawler,
+                                                        getProtocol().getDnsLookup(),
+                                                        stub,
+                                                        validatedBaseDirectory,
+                                                        Path.of(""),
+                                                        startFailureHandler));
     }
 
     // returns the network the search result is on.

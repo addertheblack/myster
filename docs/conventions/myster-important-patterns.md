@@ -544,3 +544,17 @@ default.
 ---
 
 *Last updated: March 2026 — added `*Utils`/`*Util` class pattern*
+
+
+## Partial-download source persistence
+
+`MSPartialFile` stores a UTF header followed by a bitmap extending to EOF. Mutable source metadata
+must not grow that header or add a trailer. `DownloadSourceStore` owns a separate append-only `.s`
+server-list file and serializes its disk operations off the EDT/download monitor. Close preserves
+it; deletion is ordered after queued writes and permanently rejects subsequent source notifications.
+
+Keep stream and DNS construction acyclic: `MysterStreamImpl` exists before the resolver, so download
+callers supply `DnsLookupProtocol` in `MSDownloadParams` at invocation. Do not introduce a resolver
+setter or global lookup into the stream implementation. Transport peer-key observation uses
+`MysterSocket.getAuthenticatedPeerKey()`; its key proves possession on that connection, while
+association with an expected CID comes from the resolver/expected-key connection contract.

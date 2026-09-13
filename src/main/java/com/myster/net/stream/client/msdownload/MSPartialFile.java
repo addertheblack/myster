@@ -1,5 +1,7 @@
 package com.myster.net.stream.client.msdownload;
 
+import static com.myster.net.stream.client.msdownload.MultiSourceDownload.toIoFile;
+
 import java.awt.EventQueue;
 import java.io.ByteArrayOutputStream;
 import java.io.DataOutputStream;
@@ -18,17 +20,20 @@ import com.myster.hash.SimpleFileHash;
 import com.myster.mml.MMLException;
 import com.myster.mml.RobustMML;
 import com.myster.net.MysterAddress;
+import com.myster.net.client.DnsLookupProtocol;
+import com.myster.net.client.MysterStream;
 import com.myster.net.stream.client.msdownload.MultiSourceDownload.FileMover;
 import com.myster.search.HashCrawlerManager;
 import com.myster.search.MysterFileStub;
 import com.myster.type.MysterType;
 import com.myster.ui.MysterFrameContext;
 
-import static com.myster.net.stream.client.msdownload.MultiSourceDownload.toIoFile;
-
 /**
- * This class is here to encapsulate all the information related to a Myster multi source download resumable download
- * block file.
+ * Owns resumable download metadata and its block bitmap in a {@code .p} file. The bitmap begins
+ * immediately after the immutable UTF-encoded header and extends to EOF. Mutable supplying-server
+ * CIDs belong to a separate {@code .s} file beside it; source updates never shift bitmap offsets.
+ * Closing preserves both files for restart; {@link #done()} schedules server-list deletion and
+ * removes the partial metadata when the download completes or is abandoned.
  *
  */
 
@@ -52,7 +57,7 @@ public class MSPartialFile implements AutoCloseable {
         try {
             return new MSPartialFile(file,
                                      maskFile,
-                                     new PartialFileHeader(mml, (int) maskFile.getFilePointer()));
+                                     new PartialFileHeader(mml, (int) maskFile.getFilePointer()), false);
         } catch (IOException ex) {
             file.deleteOnExit();
             maskFile.close();
@@ -90,7 +95,7 @@ public class MSPartialFile implements AutoCloseable {
 
         maskFile.write(header.toBytes());
 
-        return new MSPartialFile(fileReference, maskFile, header);
+        return new MSPartialFile(fileReference, maskFile, header, true);
     }
 
     public static MSPartialFile[] list() throws IOException {
@@ -123,25 +128,32 @@ public class MSPartialFile implements AutoCloseable {
     public static void restartDownloads(FileTypeListManager fileManager,
                                         HashCrawlerManager crawlerManager,
                                         MysterFrameContext c,
-                                        MSDownloadLocalQueue queue)
+                                        MSDownloadLocalQueue queue,
+                                        MysterStream stream,
+                                        DnsLookupProtocol dnsLookup)
             throws IOException {
         MSPartialFile[] files = list();
 
         for (int i = 0; i < files.length; i++) {
             try {
-                startDownload(files[i], fileManager, crawlerManager, c, queue);
+                startDownload(files[i], fileManager, crawlerManager, c, queue, stream, dnsLookup);
             } catch (IOException ex) {
                 ex.printStackTrace();
             }
         }
     }
 
-    // Resumable multisource driver.
+    /**
+     * Restores the payload and starts a queue-managed download with independent address/CID recovery.
+     * The source-list read and DNS work begin asynchronously only once the queue activates it.
+     */
     public static void startDownload(MSPartialFile partialFile,
                                      FileTypeListManager fileManager,
                                      HashCrawlerManager crawlerManager,
                                      MysterFrameContext c,
-                                     MSDownloadLocalQueue queue)
+                                     MSDownloadLocalQueue queue,
+                                     MysterStream stream,
+                                     DnsLookupProtocol dnsLookup)
             throws IOException {
         
         final String finalFileName = partialFile.getFilename() + ".i";
@@ -219,7 +231,7 @@ public class MSPartialFile implements AutoCloseable {
                                         downloadListener,
                                         fileMover,
                                         partialFile,
-                                        queue);
+                                        queue, stream, dnsLookup);
         cancellable.trackForCancellation(download);
 
         if (partialFile.getServerAddress() != null) {
@@ -255,13 +267,20 @@ public class MSPartialFile implements AutoCloseable {
     private final File fileReference;
     private final RandomAccessFile maskFile;
     private final PartialFileHeader header;
+    private final DownloadSourceStore sourceStore;
 
-    private MSPartialFile(File fileReference, RandomAccessFile maskFile, PartialFileHeader header) {
+    private MSPartialFile(File fileReference, RandomAccessFile maskFile, PartialFileHeader header, boolean resetSources) {
         this.maskFile = maskFile;
         this.header = header;
         this.fileReference = fileReference;
+        sourceStore = new DownloadSourceStore(fileReference.toPath(), header.getType(),
+                header.getFileLength(), header.getFileHashes(), resetSources);
 
         this.offset = header.getOffset();
+    }
+
+    DownloadSourceStore sourceStore() {
+        return sourceStore;
     }
 
     public RobustMML getCopyOfMetaData() {
@@ -380,8 +399,10 @@ public class MSPartialFile implements AutoCloseable {
         }
     }
 
+    /** Flushes the source list and closes the bitmap, preserving both files for restart. */
     @Override
     public void close() throws IOException {
+        sourceStore.close();
         maskFile.close();
     }
 
@@ -393,8 +414,10 @@ public class MSPartialFile implements AutoCloseable {
         }
     }
 
+    /** Removes this download's metadata; source-list deletion is serialized with its writes. */
     public void done() {
         dispose();
+        sourceStore.delete();
 
         if (!fileReference.delete()) {
             MultiSourceUtils.debug("Could not delete partial file.");

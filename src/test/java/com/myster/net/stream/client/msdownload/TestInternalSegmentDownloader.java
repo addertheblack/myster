@@ -26,7 +26,9 @@ import com.myster.net.MysterAddress;
 import com.myster.net.MysterSocket;
 import com.myster.net.stream.client.MysterDataInputStream;
 import com.myster.net.stream.client.MysterDataOutputStream;
-import com.myster.net.stream.client.msdownload.InternalSegmentDownloader.SocketFactory;
+import com.myster.net.client.MysterStream;
+import java.util.Optional;
+import com.myster.hash.FileHash;
 import com.myster.search.MysterFileStub;
 import com.myster.type.MysterType;
 
@@ -93,7 +95,7 @@ public class TestInternalSegmentDownloader {
     }
 
     @Test
-    public void testBasic() throws IOException {
+    public void testBasic() throws Exception {
         Controller controller = mock(Controller.class);
         WorkSegment[] workSegments =
                 new WorkSegment[] { new WorkSegment(0, SEGMENT_SIZE), new WorkSegment(SEGMENT_SIZE, 3) };
@@ -109,32 +111,25 @@ public class TestInternalSegmentDownloader {
                             return workSegments[workSegmentCounter[0]++];
                         });
         Mockito.doNothing().when(controller).receiveExtraSegments(any(WorkSegment[].class));
-        Mockito.doNothing().when(controller).receiveDataBlock(any(DataBlock.class));
+        Mockito.doNothing().when(controller).receiveDataBlock(any(DataBlock.class), Mockito.any(), Mockito.any());
         when(controller.isOkToQueue(any(WorkSegment.class))).thenReturn(true);
         when(controller.removeDownload(any(SegmentDownloader.class))).thenReturn(true);
         // stuff missing
 
         ByteArrayOutputStream bout = new ByteArrayOutputStream();
 
-        SocketFactory socketFactory = new SocketFactory() {
-            public MysterSocket makeStreamConnection(MysterAddress ip) throws IOException {
-                return new FakeMysterSocket(new MysterDataInputStream(new ByteArrayInputStream(data)),
-                                            new MysterDataOutputStream(bout));
-            }
-        };
-
+        MysterStream stream = Mockito.mock(MysterStream.class);
+        Mockito.when(stream.makeStreamConnection(Mockito.any(com.myster.net.client.ParamBuilder.class)))
+                .thenReturn(new FakeMysterSocket(new MysterDataInputStream(new ByteArrayInputStream(data)),
+                                                new MysterDataOutputStream(bout)));
 
         final MysterType mysterType = new MysterType(identity.getMainIdentity().get().getPublic());
         final String TEST_FILENAME = "Filename";
-        InternalSegmentDownloader internalSegmentDownloader =
-                new InternalSegmentDownloader(controller,
-                                              socketFactory,
-                                              new MysterFileStub(MysterAddress.createMysterAddress("127.0.0.1"),
-                                                                 mysterType,
-                                                                 TEST_FILENAME),
-                                              2 * 2014);
-
-        internalSegmentDownloader.run();
+        MysterAddress address = MysterAddress.createMysterAddress("127.0.0.1");
+        InternalSegmentDownloader downloader = new InternalSegmentDownloader(controller, stream,
+                DownloadTarget.knownFile(new MysterFileStub(address, mysterType, TEST_FILENAME)),
+                new FileHash[0], 2 * 2014);
+        downloader.run();
 
         byte[] byteArray = bout.toByteArray();
 

@@ -134,7 +134,7 @@ public class Myster {
 
     public static void main(String[] args) throws IOException {
         setupLogging();
-        
+
         String loggingConfig = System.getProperty("java.util.logging.config.file");
         if (loggingConfig != null) {
             log.info("Logging config file: " + loggingConfig);
@@ -572,7 +572,7 @@ public class Myster {
 
                 try {
                     com.myster.net.stream.client.msdownload.MSPartialFile
-                            .restartDownloads(fileManager, crawlerManager, context, downloadQueue);
+                            .restartDownloads(fileManager, crawlerManager, context, downloadQueue, stream, dnsLookup);
                 } catch (IOException ex) {
                     log.info("Error in restarting downloads.");
                     ex.printStackTrace();

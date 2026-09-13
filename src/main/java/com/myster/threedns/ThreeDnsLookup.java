@@ -6,7 +6,6 @@ import java.util.Optional;
 import java.util.concurrent.ScheduledThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 
-import com.general.thread.AsyncContext;
 import com.general.thread.AsyncTaskTracker;
 import com.general.thread.Cancellable;
 import com.general.thread.Invoker;
@@ -87,11 +86,11 @@ public final class ThreeDnsLookup implements DnsLookupProtocol {
     public PromiseFuture<ThreeDnsLookupResult> resolve(ServerCid target) {
         Objects.requireNonNull(target, "target");
         return PromiseFuture.newPromiseFuture(context -> lookupInvoker.invoke(() -> {
-            AsyncTaskTracker taskTracker = AsyncTaskTracker.create(context, lookupInvoker);
-            if (context.isCancelled()) {
+            AsyncTaskTracker<ThreeDnsLookupResult> taskTracker = AsyncTaskTracker.create(context, lookupInvoker);
+            if (taskTracker.isCancelled()) {
                 return;
             }
-            new LookupState(target, context, taskTracker).start();
+            new LookupState(target, taskTracker).start();
         }));
     }
 
@@ -135,9 +134,8 @@ public final class ThreeDnsLookup implements DnsLookupProtocol {
 
     private final class LookupState {
         private final ServerCid target;
-        private final AsyncContext<ThreeDnsLookupResult> context;
         private final ThreeDnsLookupFrontier frontier;
-        private final AsyncTaskTracker taskTracker;
+        private final AsyncTaskTracker<ThreeDnsLookupResult> taskTracker;
 
         private Cancellable deadlineTask;
         private VerifiedThreeDnsPeer closestVerified;
@@ -146,10 +144,8 @@ public final class ThreeDnsLookup implements DnsLookupProtocol {
         private boolean finished;
 
         private LookupState(ServerCid target,
-                            AsyncContext<ThreeDnsLookupResult> context,
-                            AsyncTaskTracker taskTracker) {
+                            AsyncTaskTracker<ThreeDnsLookupResult> taskTracker) {
             this.target = target;
-            this.context = context;
             this.taskTracker = taskTracker;
             frontier = new ThreeDnsLookupFrontier(target,
                                                   limits.maxQueuedEntries(),
@@ -157,7 +153,7 @@ public final class ThreeDnsLookup implements DnsLookupProtocol {
         }
 
         private void start() {
-            taskTracker.setDoneListener(this::tasksDrained);
+            taskTracker.setDoneListener(_ -> tasksDrained());
             ThreeDnsAddressCandidateSet seeds =
                     seedProvider.candidatesFor(target, limits.perSideLimit());
             frontier.addAll(Objects.requireNonNull(seeds, "seed provider result"));
@@ -168,7 +164,7 @@ public final class ThreeDnsLookup implements DnsLookupProtocol {
             deadlineTask = deadlineScheduler.schedule(
                     () -> lookupInvoker.invoke(this::deadlineReached),
                     limits.deadline());
-            context.trackForCancellation(deadlineTask);
+            taskTracker.trackForCancellation(deadlineTask);
             pump();
         }
 
@@ -208,7 +204,7 @@ public final class ThreeDnsLookup implements DnsLookupProtocol {
         }
 
         private void deadlineReached() {
-            if (finished || taskTracker.isCancelled() || context.isCancelled()) {
+            if (finished || taskTracker.isCancelled() || taskTracker.isCancelled()) {
                 return;
             }
             finishResult(ThreeDnsLookupResult.bounded(
@@ -218,7 +214,7 @@ public final class ThreeDnsLookup implements DnsLookupProtocol {
         }
 
         private void pump() {
-            if (finished || taskTracker.isCancelled() || context.isCancelled()) {
+            if (finished || taskTracker.isCancelled() || taskTracker.isCancelled()) {
                 return;
             }
 
@@ -226,7 +222,7 @@ public final class ThreeDnsLookup implements DnsLookupProtocol {
                     .map(VerifiedThreeDnsPeer::cid);
             while (!finished
                     && !taskTracker.isCancelled()
-                    && !context.isCancelled()
+                    && !taskTracker.isCancelled()
                     && activeQueries < limits.maxInFlight()
                     && queryAttempts < limits.maxQueryAttempts()) {
                 Optional<ThreeDnsAddressCandidate> next = frontier.pollEligible(closestCid);
@@ -251,7 +247,7 @@ public final class ThreeDnsLookup implements DnsLookupProtocol {
         }
 
         private void tasksDrained() {
-            if (finished || taskTracker.isCancelled() || context.isCancelled()) {
+            if (finished || taskTracker.isCancelled() || taskTracker.isCancelled()) {
                 return;
             }
             Optional<ServerCid> closestCid = Optional.ofNullable(closestVerified)
@@ -274,16 +270,10 @@ public final class ThreeDnsLookup implements DnsLookupProtocol {
                 return;
             }
             finished = true;
-            context.setResult(result);
-            taskTracker.cancel();
-            cancelDeadline();
+            taskTracker.setResult(result);
         }
 
-        private void cancelDeadline() {
-            if (deadlineTask != null) {
-                deadlineTask.cancel();
-            }
-        }
+
     }
 
     private enum DefaultDeadlineScheduler implements DeadlineScheduler {

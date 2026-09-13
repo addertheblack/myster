@@ -2,17 +2,27 @@
 package com.myster.net.stream.client.msdownload;
 
 import java.io.IOException;
+import java.util.Optional;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
 import com.general.events.NewGenericDispatcher;
 import com.general.thread.Invoker;
+import com.myster.cid.ServerCid;
+import com.myster.hash.FileHash;
 import com.myster.mml.MessagePak;
-import com.myster.net.MysterAddress;
 import com.myster.net.MysterSocket;
+import com.myster.net.client.MysterStream;
 import com.myster.net.stream.client.UnknownProtocolException;
 import com.myster.search.MysterFileStub;
 
+/**
+ * Transfers blocks on one peer connection. When reconnecting to a saved source, the downloader
+ * asks the remote server for the file's current name by hash, then requests that file over the
+ * same socket. Read inactivity is bounded during hash lookup, header negotiation and transfer;
+ * transport creation also bounds connection setup. Timeout or cancellation closes the connection.
+ * The server's identity is reported as a supplying source only after the first accepted block.
+ */
 class InternalSegmentDownloader implements SegmentDownloader {
     // Constants
     public static final int DEFAULT_MULTI_SOURCE_BLOCK_SIZE = 128 * 1024;
@@ -27,7 +37,12 @@ class InternalSegmentDownloader implements SegmentDownloader {
     // Params
     private final Controller controller;
 
-    private final MysterFileStub stub;
+    // Null until the remote filename is known; early endConnection events have no file stub.
+    private MysterFileStub stub;
+    private final DownloadTarget target;
+    private final FileHash[] hashes;
+    private Optional<ServerCid> sourceCid = Optional.empty();
+    private boolean sourceReported;
 
     /**
      * This is the size of the tracked amount of data in an MSPartialFile.
@@ -39,7 +54,7 @@ class InternalSegmentDownloader implements SegmentDownloader {
     // working variables
     private WorkingSegment workingSegment;
 
-    private MysterSocket socket;
+    private volatile MysterSocket socket;
 
     /** 
      * This keeps the size of the next segment to download. Every time we download a segment we try and 
@@ -60,24 +75,21 @@ class InternalSegmentDownloader implements SegmentDownloader {
 
     private final ExecutorService executor;
 
-    private final SocketFactory socketFactory;
-
-    interface SocketFactory {
-        MysterSocket makeStreamConnection(MysterAddress ip)
-                throws IOException;
-    }
+    private final MysterStream stream;
 
     public InternalSegmentDownloader(Controller controller,
-                                     SocketFactory socketFactory,
-                                     MysterFileStub stub,
+                                     MysterStream stream,
+                                     DownloadTarget target,
+                                     FileHash[] hashes,
                                      int chunkSize) {
-        this.socketFactory = socketFactory;
-        this.name = "SegmentDownloader " + (instanceCounter++) + " for " + stub.getName();
-
-        this.stub = stub;
+        this.stream = stream;
+        this.target = target;
+        this.hashes = hashes.clone();
+        this.stub = target.remoteFilename()
+                .map(filename -> new MysterFileStub(target.address(), target.type(), filename)).orElse(null);
+        this.name = "SegmentDownloader " + (instanceCounter++) + " for " + target.address();
         this.controller = controller;
         this.blockSize = chunkSize;
-
         executor = Executors.newVirtualThreadPerTaskExecutor();
     }
 
@@ -103,30 +115,56 @@ class InternalSegmentDownloader implements SegmentDownloader {
     
     public void flagToEnd() {
         executor.shutdownNow();
-
-        try {
-            socket.close();
-        } catch (Exception ex) {
-        }
-    }    public int hashCode() {
-        return stub.getMysterAddress().hashCode();
+        closeSocket();
     }
 
-    public boolean equals(Object o) {
-        InternalSegmentDownloader other = null;
-        try {
-            other = (InternalSegmentDownloader) o;
-        } catch (ClassCastException ex) {
-            return false;
+    private void closeSocket() {
+        MysterSocket current = socket;
+        if (current != null) {
+            try {
+                current.close();
+            } catch (IOException e) {
+                debug("Closing segment connection: " + e.getMessage());
+            }
         }
+    }
 
-        return (stub.getMysterAddress().equals(other.stub.getMysterAddress()));
+    public int hashCode() {
+        return target.address().hashCode();
+    }
+
+    public boolean equals(Object other) {
+        return other instanceof InternalSegmentDownloader downloader
+                && target.address().equals(downloader.target.address());
     }
 
     /** Package Protected for unit tests */
     void run() {
         try {
-            socket = socketFactory.makeStreamConnection(stub.getMysterAddress());
+            if (executor.isShutdown()) {
+                return;
+            }
+            if (target.needsHashLookup() && hashes.length == 0) {
+                throw new IOException("Cannot look up a remote filename without a file hash");
+            }
+            socket = stream.makeStreamConnection(target.parameters());
+            if (executor.isShutdown()) {
+                return; // A connection that completes after cancellation is closed in finally.
+            }
+            sourceCid = socket.getAuthenticatedPeerKey().map(ServerCid::fromPublicKey);
+            if (sourceCid.isPresent() && !controller.claimSource(this, sourceCid.get())) {
+                return;
+            }
+            if (target.needsHashLookup()) {
+                String filename = stream.getFileFromHash(socket, target.type(), hashes);
+                if (filename.isEmpty()) {
+                    throw new IOException("Server no longer has the requested file hash");
+                }
+                stub = new MysterFileStub(target.address(), target.type(), filename);
+            }
+            if (executor.isShutdown()) {
+                return;
+            }
 
             dispatcher.fire().connected(new SegmentDownloaderEvent( 0,0,0,0, stub, ""));
 
@@ -163,16 +201,13 @@ class InternalSegmentDownloader implements SegmentDownloader {
         } catch (DoNotQueueException ex) {
             debug("Server want to put us in a download queue but we already have an active segment downloader");
         } catch (IOException ex) {
-            ex.printStackTrace(); // this code can handle exceptions so this
+            ex.printStackTrace(); // this code already handles everything normal so this
             // is
             // really here to see if anything unexpected
             // has occurred
         } finally {
-            try {
-                socket.close();
-            } catch (Exception ex) {
-            }
-
+            closeSocket();
+            executor.shutdown();
             finishUp();
         }
     }
@@ -353,7 +388,9 @@ class InternalSegmentDownloader implements SegmentDownloader {
 
             socket.in.readFully(buffer);
 
-            controller.receiveDataBlock(new DataBlock(workingSegment.getCurrentOffset(), buffer));
+            controller.receiveDataBlock(new DataBlock(workingSegment.getCurrentOffset(), buffer), this,
+                    sourceReported ? Optional.empty() : sourceCid);
+            sourceReported = true;
 
             bytesDownloaded += calcBlockSize;
             workingSegment.addProgress(calcBlockSize);

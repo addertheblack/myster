@@ -48,6 +48,11 @@ public class SegmentDownloaderEvent  {
         return length;
     }
 
+    /**
+     * Returns the file identified on the remote server. May be null for an endConnection event
+     * when connection or hash lookup failed before the remote filename became known. Connected
+     * and transfer-progress events always contain a resolved file stub.
+     */
     public MysterFileStub getMysterFileStub() {
         return stub;
     }

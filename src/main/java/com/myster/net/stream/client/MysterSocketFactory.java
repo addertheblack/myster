@@ -11,7 +11,6 @@
 package com.myster.net.stream.client;
 
 import java.io.IOException;
-import java.net.Socket;
 import java.security.PublicKey;
 import java.util.Optional;
 
@@ -27,17 +26,10 @@ public class MysterSocketFactory {
         MysterSocketFactory.identity = identity;
     }
     
-    /** Not used right now. We don't do unencrypted sockets */
-    private static Socket makeTCPSocket(MysterAddress ip) throws IOException {
-        Socket socket;
-
-        socket = new Socket(ip.getInetAddress(), ip.getPort());
-
-        socket.setSoTimeout(2 * 60 * 1000);// timeout 2 mins
-
-        return socket;
-    }
-
+    /**
+     * @return a connected TLS socket, never null
+     * @throws IOException if connection or TLS negotiation fails
+     */
     public static MysterSocket makeStreamConnection(MysterAddress ip)
             throws IOException {
         return makeTLSConnection(ip, identity);
@@ -49,17 +41,13 @@ public class MysterSocketFactory {
      *
      * @param ip remote TCP address
      * @param expectedServerPublicKey public key obtained through an authenticated discovery path
-     * @return the pinned TLS socket
+     * @return the pinned TLS socket, never null
      * @throws IOException if connection, TLS negotiation, or key verification fails
      */
     public static MysterSocket makeStreamConnection(MysterAddress ip,
             PublicKey expectedServerPublicKey) throws IOException {
-        TLSSocket socket = TLSSocket.createClientSocket(ip, identity,
+        return TLSSocket.createClientSocket(ip, identity,
                 Optional.of(java.util.Objects.requireNonNull(expectedServerPublicKey)));
-        if (socket == null) {
-            throw new IOException("Server did not accept authenticated TLS");
-        }
-        return socket;
     }
 
     public static void makeTransactionConnection(MysterAddress ip)

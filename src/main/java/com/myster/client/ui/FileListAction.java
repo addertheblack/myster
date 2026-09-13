@@ -65,6 +65,7 @@ public class FileListAction extends MCListEventAdapter {
             protocol.getStream()
                     .downloadFile(new MSDownloadParams(mysterFrameContext,
                                                        hashManager,
+                                                           protocol.getDnsLookup(),
                                                        stub,
                                                        baseDir.get(),
                                                        Path.of(""),

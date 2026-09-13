@@ -7,6 +7,9 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import java.awt.Frame;
 import java.io.File;
 import java.io.IOException;
+import java.util.Optional;
+import com.general.thread.PromiseFuture;
+import com.myster.net.client.MysterStream;
 import java.net.UnknownHostException;
 import java.nio.file.Path;
 import java.util.List;
@@ -298,10 +301,10 @@ public class TestMultiSourceDownload {
                                                          fileLength);
 
         // stub the newDownload() using mockito's spy method
-        download = new MultiSourceDownload(file, manager, listener, mover, partialFile, queue) {
+        download = new MultiSourceDownload(file, manager, listener, mover, partialFile, queue, Mockito.mock(MysterStream.class),
+                cid -> PromiseFuture.newPromiseFutureException(new IOException("No route"))) {
             @Override
-            protected SegmentDownloader newSegmentDownloader(MysterFileStub stub,
-                                                             Controller controller) {
+            protected SegmentDownloader newSegmentDownloader(DownloadTarget target, Controller controller) {
                 return new FakeSegmentDownloader(controller);
             }
         };
@@ -501,7 +504,11 @@ class FakeSegmentDownloader implements SegmentDownloader {
         Util.invokeLater(() -> {
             WorkSegment nextWorkSegment = controller.getNextWorkSegment(999);
 
-            controller.receiveDataBlock(new DataBlock(0, new byte[(int)nextWorkSegment.length()]));
+            try {
+                controller.receiveDataBlock(new DataBlock(0, new byte[(int)nextWorkSegment.length()]), this, Optional.empty());
+            } catch (IOException e) {
+                throw new AssertionError(e);
+            }
 
             controller.removeDownload(FakeSegmentDownloader.this);
 

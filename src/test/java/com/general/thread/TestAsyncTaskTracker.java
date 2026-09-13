@@ -25,14 +25,14 @@ class TestAsyncTaskTracker {
 
     @Test
     void cancellationFromAnyThreadIsVisibleAndDoesNotSignalNaturalCompletion() throws Exception {
-        AtomicReference<AsyncTaskTracker> trackerReference = new AtomicReference<>();
+        AtomicReference<AsyncTaskTracker<Void>> trackerReference = new AtomicReference<>();
         AtomicReference<PromiseFuture<String>> childReference = new AtomicReference<>();
         AtomicInteger doneCalls = new AtomicInteger();
 
         onInvoker(() -> {
-            AsyncTaskTracker taskTracker =
-                    AsyncTaskTracker.create(new SimpleTaskTracker(), invoker);
-            taskTracker.setDoneListener(doneCalls::incrementAndGet);
+            AsyncTaskTracker<Void> taskTracker =
+                    newTracker();
+            taskTracker.setDoneListener(_ -> doneCalls.incrementAndGet());
             childReference.set(taskTracker.doAsync(() -> PromiseFuture.newPromiseFuture(_ -> {})));
             trackerReference.set(taskTracker);
         });
@@ -49,14 +49,14 @@ class TestAsyncTaskTracker {
 
     @Test
     void naturalCompletionSignalsDoneOnceEvenIfCancelledLater() throws Exception {
-        AtomicReference<AsyncTaskTracker> trackerReference = new AtomicReference<>();
+        AtomicReference<AsyncTaskTracker<Void>> trackerReference = new AtomicReference<>();
         AtomicReference<AsyncContext<String>> childContext = new AtomicReference<>();
         AtomicInteger doneCalls = new AtomicInteger();
 
         onInvoker(() -> {
-            AsyncTaskTracker taskTracker =
-                    AsyncTaskTracker.create(new SimpleTaskTracker(), invoker);
-            taskTracker.setDoneListener(doneCalls::incrementAndGet);
+            AsyncTaskTracker<Void> taskTracker =
+                    newTracker();
+            taskTracker.setDoneListener(_ -> doneCalls.incrementAndGet());
             taskTracker.doAsync(() -> PromiseFuture.newPromiseFuture(childContext::set));
             trackerReference.set(taskTracker);
         });
@@ -86,9 +86,9 @@ class TestAsyncTaskTracker {
             AtomicInteger doneCalls = new AtomicInteger();
 
             onInvoker(() -> {
-                AsyncTaskTracker taskTracker =
-                        AsyncTaskTracker.create(new SimpleTaskTracker(), invoker);
-                taskTracker.setDoneListener(doneCalls::incrementAndGet);
+                AsyncTaskTracker<Void> taskTracker =
+                        newTracker();
+                taskTracker.setDoneListener(_ -> doneCalls.incrementAndGet());
                 trackedReference.set(taskTracker.doAsync(() -> source));
             });
 
@@ -111,9 +111,9 @@ class TestAsyncTaskTracker {
         AtomicInteger doneCalls = new AtomicInteger();
 
         onInvoker(() -> {
-            AsyncTaskTracker taskTracker =
-                    AsyncTaskTracker.create(new SimpleTaskTracker(), invoker);
-            taskTracker.setDoneListener(doneCalls::incrementAndGet);
+            AsyncTaskTracker<Void> taskTracker =
+                    newTracker();
+            taskTracker.setDoneListener(_ -> doneCalls.incrementAndGet());
             assertThrows(IllegalStateException.class,
                          () -> taskTracker.doAsync(() -> {
                              throw new IllegalStateException("start failed");
@@ -150,6 +150,13 @@ class TestAsyncTaskTracker {
         } finally {
             originalInvoker.shutdown();
         }
+    }
+
+    private AsyncTaskTracker<Void> newTracker() {
+        AtomicReference<AsyncTaskTracker<Void>> result = new AtomicReference<>();
+        PromiseFuture.<Void>newPromiseFuture(context ->
+                result.set(AsyncTaskTracker.create(context, invoker)));
+        return result.get();
     }
 
     private void onInvoker(Runnable runnable) throws Exception {

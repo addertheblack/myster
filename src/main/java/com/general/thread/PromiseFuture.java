@@ -135,6 +135,10 @@ public interface PromiseFuture<T> extends Cancellable, Future<T> {
 
     PromiseFuture<T> addExceptionListener(Consumer<Throwable> exceptionListener);
 
+//    default PromiseFuture<T> addStandardExceptionHandler(Consumer<Throwable> exceptionListener) {
+//        return addExceptionListener(Throwable::printStackTrace);
+//    }
+
     /**
      * Adds a listener that runs for every dispatched outcome.
      *

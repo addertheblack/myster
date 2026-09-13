@@ -99,8 +99,8 @@ public class StandardSuiteStream {
      * THIS ROUTINE IS ASYNCHRONOUS!
      * @param downloadQueue 
      */
-    public static void downloadFile(MSDownloadParams p, MSDownloadLocalQueue downloadQueue) {
-        Executors.newVirtualThreadPerTaskExecutor().execute(new DownloadInitiator(p, downloadQueue));
+    public static void downloadFile(MSDownloadParams p, MSDownloadLocalQueue downloadQueue, com.myster.net.client.MysterStream stream) {
+        Executors.newVirtualThreadPerTaskExecutor().execute(new DownloadInitiator(p, downloadQueue, stream));
     }
 
     public static MessagePak getFileStats(MysterAddress ip, MysterFileStub stub) throws IOException {

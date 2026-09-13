@@ -56,7 +56,7 @@ public final class JoinPrivateTypeDialog extends JDialog {
     private void buildUi() {
         JPanel form = new JPanel(new GridBagLayout());
         form.setBorder(BorderFactory.createEmptyBorder(12, 12, 8, 12));
-        GridBagBuilder constraints = new GridBagBuilder().withInsets(new Insets(4, 4, 4, 4));
+        GridBagBuilder constraints = new GridBagBuilder().withInsets(new Insets(4, 4, 4, 4)).withAnchor(GridBagConstraints.WEST);
 
         int row = 0;
 
@@ -118,7 +118,7 @@ public final class JoinPrivateTypeDialog extends JDialog {
                     previewButton.setEnabled(true);
                     preview = result;
                     typeValue.setText(result.typeName() + " (" + abbreviate(result.uri().type().toHexString()) + ")");
-                    bootstrapValue.setText(abbreviate(result.uri().bootstrap().asHex()));
+                    bootstrapValue.setText(result.uri().bootstrap().asHex());
                     result.uri().code().ifPresent(codeField::setText);
                     codeField.setEnabled(result.invitationRequired());
                     updateJoinEnabled();

@@ -76,7 +76,7 @@ public class MysterStreamImpl implements MysterStream {
 
     @Override
     public void downloadFile(MSDownloadParams p) {
-        StandardSuiteStream.downloadFile(p, downloadQueue);
+        StandardSuiteStream.downloadFile(p, downloadQueue, this);
     }
 
     @Override

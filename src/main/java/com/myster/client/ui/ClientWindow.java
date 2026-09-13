@@ -271,6 +271,7 @@ public class ClientWindow extends MysterFrame implements Sayable {
                 protocol.getStream()
                         .downloadFile(new MSDownloadParams(context,
                                                            hashManager,
+                                                           protocol.getDnsLookup(),
                                                            new MysterFileStub(MysterAddress
                                                                                .createMysterAddress(currentip),
                                                                               getCurrentType(),

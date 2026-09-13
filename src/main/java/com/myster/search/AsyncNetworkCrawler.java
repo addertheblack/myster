@@ -24,21 +24,21 @@ public class AsyncNetworkCrawler {
                                  MysterType type,
                                  IPQueue primedIpList,
                                  Consumer<MysterAddress> addIp,
-                                 AsyncTaskTracker tracker) {
+                                 AsyncTaskTracker<?> tracker) {
         startMoreWork(new Context(logger, protocol, searcher, type, primedIpList, addIp, tracker));
     }
 
-    private static record Context(Logger logger,
-                                  MysterProtocol protocol,
-                                  SearchIp searcher,
-                                  MysterType type,
-                                  IPQueue ipQueue,
-                                  Consumer<MysterAddress> addIp,
-                                  AsyncTaskTracker tracker) {}
+    private record Context(Logger logger,
+                          MysterProtocol protocol,
+                          SearchIp searcher,
+                          MysterType type,
+                          IPQueue ipQueue,
+                          Consumer<MysterAddress> addIp,
+                          AsyncTaskTracker<?> tracker) {}
     
 
     private static void startMoreWork(Context c) {
-        for (;;) {
+        while (!c.tracker.isDone()) {
             MysterAddress address = c.ipQueue.getNextIP();
             if (address == null) {
                 return;
@@ -62,9 +62,12 @@ public class AsyncNetworkCrawler {
 
     private static void addIps(Context c, String[] ips) {
         Arrays.asList(ips).forEach(ip -> {
+            if (c.tracker.isDone()) {
+                return;
+            }
             c.tracker.doAsync(() -> PromiseFutures.execute(() -> MysterAddress.createMysterAddress(ip)))
                     .addResultListener(c.ipQueue::addIP).addResultListener(c.addIp)
-                    .addStandardExceptionHandler();
+                    .addStandardExceptionHandler().addFinallyListener(() -> startMoreWork(c));
         });
     }
 }

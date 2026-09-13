@@ -6,7 +6,15 @@
 ## Red List
 # (Named for a literal list of issues written in red pen — circa 2000, shared with a friend
 #  as a low-tech issue tracker before the age of ticketing systems.)
-- Make MSDownload auto-reconnect based on the servers that were being downloaded from at the time (continues downloads instantly).
+- Add authenticated per-block subhash verification to multi-source downloads:
+    - Obtain a trustworthy block-hash manifest bound to the requested file hash, so a sender
+      cannot choose the expected hash for its own bad block.
+    - Verify each block before accepting it or marking it downloaded; associate the block with
+      the supplying server's authenticated CID.
+    - Reject and re-request bad blocks from another source, and ban the responsible server CID
+      from supplying further blocks (define ban scope and persistence when designing this).
+    - Keep this separate from download reconnect; hash-to-filename lookup alone does not verify
+      the bytes of individual blocks.
 - Implement private networks:
     - Find a format for sharing a network file (public key, primary servers, maybe other public keys).
     - Be able to share the network config file (might be similar to network file, or a superset).
@@ -60,3 +68,6 @@
 type file can be sent to other admins
 
 - switch from d/ling names only to getting full paths. Should list dirs much faster on slow systems
+
+- Add new section for file lister thread to also send path information so we can see the list of files with paths
+    without needing to get the entire meta data blob which is often very slow to arrive.

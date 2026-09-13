@@ -13,17 +13,19 @@ import com.general.thread.Cancellable;
 import com.myster.hash.FileHash;
 import com.myster.mml.MessagePak;
 import com.myster.net.MysterSocket;
-import com.myster.net.stream.client.MysterSocketFactory;
+import com.myster.net.client.MysterStream;
 import com.myster.net.stream.client.StandardSuiteStream;
 import com.myster.net.stream.client.msdownload.MultiSourceDownload.FileMover;
 import com.myster.search.HashCrawlerManager;
 import com.myster.search.MysterFileStub;
 import com.myster.ui.MysterFrameContext;
 
+/** Starts a download with explicitly supplied stream and DNS capabilities for source recovery. */
 public class DownloadInitiator implements Runnable {
     private static final Logger log = Logger.getLogger(DownloadInitiator.class.getName());
     private static final Semaphore connectionSem = new Semaphore(5);
 
+    private final MysterStream stream;
     private final MysterFileStub stub;
     private final HashCrawlerManager crawlerManager;
     private final MysterFrameContext context;
@@ -31,8 +33,9 @@ public class DownloadInitiator implements Runnable {
     private final MSDownloadLocalQueue downloadQueue;
 
 
-    public DownloadInitiator(MSDownloadParams p, MSDownloadLocalQueue downloadQueue) {
+    public DownloadInitiator(MSDownloadParams p, MSDownloadLocalQueue downloadQueue, MysterStream stream) {
         this.downloadQueue = downloadQueue;
+        this.stream = stream;
         this.context = p.context();
         this.stub = p.stub();
         this.crawlerManager = p.crawlerManager();
@@ -75,7 +78,7 @@ public class DownloadInitiator implements Runnable {
         try {
             connectionSem.acquire();
             try {
-                socket = MysterSocketFactory.makeStreamConnection(stub.getMysterAddress());
+                socket = stream.makeStreamConnection(stub.getMysterAddress());
             } finally {
                 connectionSem.release();
             }
@@ -119,7 +122,7 @@ public class DownloadInitiator implements Runnable {
 
             if (endFlag)
                 return;
-            MessagePak fileStats = StandardSuiteStream.getFileStats(socket, stub);
+            MessagePak fileStats = stream.getFileStats(socket, stub);
 
             progress.setText("Trying to use multi-source download...");
 
@@ -175,7 +178,7 @@ public class DownloadInitiator implements Runnable {
                                              downloadInitListener.getMsDownloadListener(),
                                              downloadInitListener,
                                              partialFile,
-                                             downloadQueue);
+                                             downloadQueue, stream, params.dnsLookup());
         msDownload.addInitialServers(new MysterFileStub[] { stub });
 
         synchronized (this) {

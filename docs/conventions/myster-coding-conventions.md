@@ -3,6 +3,7 @@
 This document captures Myster-specific coding conventions, preferred libraries, and architectural patterns. It serves as a reference for AI agents and developers working on the codebase.
 
 **Quick index** — what lives here:
+- **Simplicity** — investigate ways to reduce special cases, independent state and coordination
 - **AnswerDialog** — never use `JOptionPane`; use `AnswerDialog` instead
 - **JMCList** — prefer over raw `JTable` for multi-column lists
 - **Modal Dialogs** — must extend `JDialog`, not `JFrame`
@@ -11,6 +12,7 @@ This document captures Myster-specific coding conventions, preferred libraries, 
 - **Preferences** — Java `Preferences` API; `MysterType.toHexString()` as key
 - **Testing** — add `main()` to UI panels for standalone testing
 - **Test mocks** — prefer Mockito for mocks/stubs
+- **Test access** — keep minimal visibility and mark methods exposed for unit tests
 - **Unused code** — do not keep methods whose only callers are tests
 - **Preference Panel save semantics** — add = immediate; edit/delete = on save
 - **Naming** — no banner comments; `Utils` suffix for static-only classes
@@ -35,6 +37,7 @@ This document captures Myster-specific coding conventions, preferred libraries, 
 
 ## Table of Contents
 
+- [Simplicity](#simplicity)
 - [UI Components](#ui-components)
   - [Dialogs — AnswerDialog not JOptionPane](#dialogs--use-answerdialog-not-joptionpane)
   - [JMCList](#jmclist-preferences)
@@ -45,6 +48,7 @@ This document captures Myster-specific coding conventions, preferred libraries, 
 - [Testing](#testing)
   - [Use Mockito for Mocks](#use-mockito-for-mocks)
   - [Do Not Keep Test-Only Production Methods](#do-not-keep-test-only-production-methods)
+  - [Visibility Widened for Unit Tests](#visibility-widened-for-unit-tests)
 - [Preference Panels](#preference-panels)
 - [Naming Conventions](#naming-conventions)
   - [Fields Represent State](#fields-represent-state)
@@ -59,6 +63,17 @@ This document captures Myster-specific coding conventions, preferred libraries, 
   - [Forward-Compatible Access-List Operations](#forward-compatible-access-list-operations)
 
 ---
+
+## Simplicity
+
+Actively investigate opportunities to simplify code and eliminate edge cases. Complexity is a
+long-term project risk: prefer shared behavior paths and fewer independently coordinated states.
+Before adding an abstraction, flag or lifecycle mechanism, check whether an existing path already
+provides the required behavior. Judge a simplification by the concepts and cases a maintainer must
+reason about, while preserving required behavior.
+
+For example, hash discovery and saved-source recovery both suggest download candidates. Routing
+both through `newDownload()` lets them share pause and termination handling.
 
 ## UI Components
 
@@ -325,9 +340,25 @@ Avoid hand-written fake/mock classes when Mockito can express the behavior clear
 
 If a method has no production callers, remove it or make it private/package-private as appropriate. Unit tests should verify real production behavior; they should not be the only reason a public or protected method exists.
 
-**Exception**: A narrow test seam is acceptable when it is intentionally package-private, documented by its visibility and use, and supports testing behavior that is otherwise hard to exercise without UI, network, or filesystem side effects.
+**Exception**: A narrow test seam is acceptable when it supports testing behavior that is otherwise
+hard to exercise without UI, network, or filesystem side effects. Prefer package access; use
+`protected` when tests require subclass access. Mark the reason using the convention below.
 
 Before keeping an apparently unused method, check callers with `rg` and decide whether the method is real API surface or stale code left behind by a refactor.
+
+### Visibility Widened for Unit Tests
+
+Methods must have the narrowest visibility their intended use requires. When a method that would
+otherwise be `private` is made accessible for unit tests, its declaration must carry the appropriate
+comment:
+
+- `protected`: `/** Protected for unit tests */`
+- Package access (no visibility modifier): `/** Package protected for unit tests */`
+
+If the method already has Javadoc, include the exact phrase in that documentation and retain its
+behavioral contract. Apply this to newly introduced methods with the same access rationale as well
+as existing methods whose visibility is widened. The comment records that the broader access is
+for tests; production callers should not treat it as an intended API.
 
 ## Preference Panels
 
@@ -523,7 +554,15 @@ Use a more specific subtype only when callers need to branch on that distinction
 
 ## Invoker-Confined Asynchronous State
 
-For asynchronous operations that discover more work as they run, prefer an actor-style state
+Choose promises for asynchronous result composition, particularly to keep the EDT responsive;
+do not introduce them merely because code runs in the background. A `PromiseFuture` API used only
+by workers, and especially `PromiseFuture<Void>`, needs a concrete justification. Ordinary worker
+threads, synchronized state, callbacks and explicit `start()`/`cancel()` lifecycles are appropriate
+for ongoing operations and file stores. A worker may wait on an existing promise-based API at a
+subsystem boundary. Distinguish making a result moot from stopping an operation: a preparation
+result must not retain cancellation ownership of a transfer after setup hands it off.
+
+For operations using promise composition that discover more work as they run, prefer an actor-style state
 object confined to one subsystem `Invoker`. Mutable search/crawl state and ordinary promise
 completion handlers all run on that invoker, so the state object does not also need synchronized
 methods.

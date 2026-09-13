@@ -22,6 +22,12 @@ Implementation is staged across these plans:
 - [Part 4: Routing-Table Maintenance and Bootstrap](../plans/myster-3dns-part-4.md)
 - [Target-Slot Inspection UI](../plans/tracker-3dns-target-slots-ui.md)
 
+Multi-source download recovery now consumes the CID resolver as described in
+[Download Source Reconnect](Download%20Source%20Reconnect.md). It stores supplying server CIDs,
+resolves them independently of the original download address, and queries each resolved server for
+the file hash before requesting blocks. An exact 3DNS result establishes server identity and location,
+not file availability. This integration does not implement Part 4 background population.
+
 ## 2. Conceptual Model
 
 3DNS treats the live network of servers as the routing structure itself. Each server occupies a position in a circular numeric space defined by its CID. Routing is performed by moving through known servers toward a target CID, rather than by querying a central authority or retrieving a stored record.
