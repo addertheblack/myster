@@ -4,18 +4,8 @@
     <option name="autoReloadType" value="ALL" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="fe0d93f5-a1b5-4669-89e3-19e762d0ae4a" name="Changes" comment="Enhance multi-source download functionality with DNS support and improve error handling">
-      <change beforePath="$PROJECT_DIR$/Myster.iml" beforeDir="false" afterPath="$PROJECT_DIR$/Myster.iml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Myster.ipr" beforeDir="false" afterPath="$PROJECT_DIR$/Myster.ipr" afterDir="false" />
+    <list default="true" id="fe0d93f5-a1b5-4669-89e3-19e762d0ae4a" name="Changes" comment="Implement OS thumbnail integration with caching and asynchronous support">
       <change beforePath="$PROJECT_DIR$/Myster.iws" beforeDir="false" afterPath="$PROJECT_DIR$/Myster.iws" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/TODO.txt" beforeDir="false" afterPath="$PROJECT_DIR$/TODO.txt" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/docs/codebase-structure.md" beforeDir="false" afterPath="$PROJECT_DIR$/docs/codebase-structure.md" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/docs/conventions/myster-coding-conventions.md" beforeDir="false" afterPath="$PROJECT_DIR$/docs/conventions/myster-coding-conventions.md" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/docs/conventions/myster-important-patterns.md" beforeDir="false" afterPath="$PROJECT_DIR$/docs/conventions/myster-important-patterns.md" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/docs/plans/README.md" beforeDir="false" afterPath="$PROJECT_DIR$/docs/plans/README.md" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/pom.xml" beforeDir="false" afterPath="$PROJECT_DIR$/pom.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/com/general/thread/PromiseFutures.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/com/general/thread/PromiseFutures.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/test/java/com/general/thread/TestPromiseFuture.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/test/java/com/general/thread/TestPromiseFuture.java" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -210,61 +200,61 @@
   </component>
   <component name="NextEditCompletionFeaturesState">
     <decayedCancelled>
-      <entry key="MS100" value="1.0" />
-      <entry key="MS500" value="1.0" />
-      <entry key="S2" value="1.0" />
-      <entry key="S5" value="1.0" />
-      <entry key="S10" value="1.0000000074041748" />
-      <entry key="S30" value="1.035766055843945" />
-      <entry key="S60" value="2.706321934439673" />
-      <entry key="M2" value="12.819706233672541" />
-      <entry key="M5" value="40.102517122125676" />
-      <entry key="M10" value="71.02312858271375" />
-      <entry key="M15" value="99.560635176212" />
-      <entry key="M30" value="174.41560153786327" />
-      <entry key="H1" value="281.34693281768676" />
-      <entry key="H2" value="451.06573939873715" />
-      <entry key="H4" value="849.8932526230058" />
-      <entry key="D1" value="4714.766293886064" />
-      <entry key="W1" value="9470.318954995795" />
+      <entry key="MS100" value="1.7719585955568449" />
+      <entry key="MS500" value="4.591227646726621" />
+      <entry key="S2" value="7.37146947733725" />
+      <entry key="S5" value="8.287083396478156" />
+      <entry key="S10" value="8.632295138060385" />
+      <entry key="S30" value="8.874832132178664" />
+      <entry key="S60" value="8.938391240530862" />
+      <entry key="M2" value="9.250160780524151" />
+      <entry key="M5" value="17.695722501257688" />
+      <entry key="M10" value="42.09018422669743" />
+      <entry key="M15" value="68.83821519218928" />
+      <entry key="M30" value="144.21950509608965" />
+      <entry key="H1" value="256.7255082436716" />
+      <entry key="H2" value="432.25733814452076" />
+      <entry key="H4" value="832.2786254676778" />
+      <entry key="D1" value="4698.831784219214" />
+      <entry key="W1" value="9472.147730767983" />
     </decayedCancelled>
     <decayedSelected>
       <entry key="MS100" value="0.0" />
       <entry key="MS500" value="0.0" />
-      <entry key="S2" value="4.4122780905266633E-250" />
-      <entry key="S5" value="1.810777755144466E-100" />
-      <entry key="S10" value="1.3456514240859205E-50" />
-      <entry key="S30" value="2.378542185690074E-17" />
-      <entry key="S60" value="4.877030024195119E-9" />
-      <entry key="M2" value="6.983573601097867E-5" />
-      <entry key="M5" value="0.021758606886798024" />
-      <entry key="M10" value="0.14750809122996053" />
-      <entry key="M15" value="0.2791971544551052" />
-      <entry key="M30" value="0.5330427643293593" />
-      <entry key="H1" value="0.795245569775312" />
-      <entry key="H2" value="1.1150142844130984" />
-      <entry key="H4" value="1.5039858250531632" />
-      <entry key="D1" value="5.255954114186618" />
-      <entry key="W1" value="9.038628886612683" />
+      <entry key="S2" value="0.0" />
+      <entry key="S5" value="2.909020139106422E-140" />
+      <entry key="S10" value="1.705584984428047E-70" />
+      <entry key="S30" value="5.545718077492541E-24" />
+      <entry key="S60" value="2.354934835084088E-12" />
+      <entry key="M2" value="1.5345796932984872E-6" />
+      <entry key="M5" value="0.0047249343517448165" />
+      <entry key="M10" value="0.06873820543328846" />
+      <entry key="M15" value="0.16781568577753042" />
+      <entry key="M30" value="0.4132594892865798" />
+      <entry key="H1" value="0.7002153861112367" />
+      <entry key="H2" value="1.0462744661551784" />
+      <entry key="H4" value="1.4568885860705216" />
+      <entry key="D1" value="5.228157527963418" />
+      <entry key="W1" value="9.031784557709866" />
     </decayedSelected>
     <decayedShown>
-      <entry key="MS100" value="0.01640182318161042" />
-      <entry key="MS500" value="0.4395197804558935" />
-      <entry key="S2" value="0.814225325170698" />
-      <entry key="S5" value="0.9210810396957115" />
-      <entry key="S10" value="0.9597296775161246" />
-      <entry key="S30" value="1.0221561575061382" />
-      <entry key="S60" value="2.69944395493679" />
-      <entry key="M2" value="12.81617958360649" />
-      <entry key="M5" value="40.12256842077553" />
-      <entry key="M10" value="71.16938764558085" />
-      <entry key="M15" value="99.8387278480233" />
-      <entry key="M30" value="174.94780183793497" />
-      <entry key="H1" value="282.1415991397483" />
-      <entry key="H2" value="452.1803689388573" />
-      <entry key="H4" value="851.3969575919945" />
-      <entry key="D1" value="4720.022029267562" />
-      <entry key="W1" value="9479.357522660832" />
+      <entry key="MS100" value="1.7473464108519905" />
+      <entry key="MS500" value="4.57624626508804" />
+      <entry key="S2" value="7.3648807469362" />
+      <entry key="S5" value="8.284060683833907" />
+      <entry key="S10" value="8.6307102283673" />
+      <entry key="S30" value="8.874286545809381" />
+      <entry key="S60" value="8.938112906705296" />
+      <entry key="M2" value="9.24994521913029" />
+      <entry key="M5" value="17.70002132795361" />
+      <entry key="M10" value="42.158312686386516" />
+      <entry key="M15" value="69.00534853802664" />
+      <entry key="M30" value="144.63210219692252" />
+      <entry key="H1" value="257.4252089806065" />
+      <entry key="H2" value="433.30324927525464" />
+      <entry key="H4" value="833.7352408374712" />
+      <entry key="D1" value="4704.059723978735" />
+      <entry key="W1" value="9481.179454122976" />
     </decayedShown>
   </component>
   <component name="PerforceConfiguration">
@@ -339,7 +329,7 @@
     &quot;to.speed.mode.migration.done&quot;: &quot;true&quot;
   }
 }</component>
-  <component name="RunManager" selected="Application.ThumbnailPreview">
+  <component name="RunManager" selected="JUnit.TestFileStatsBatch">
     <configuration selected="false" default="true" type="Applet" factoryName="Applet">
       <module name="" />
       <option name="MAIN_CLASS_NAME" />
@@ -370,6 +360,26 @@
         <option name="Make" enabled="true" />
       </method>
     </configuration>
+    <configuration name="TestFileStatsBatch" type="JUnit" factoryName="JUnit" temporary="true" nameIsGenerated="true">
+      <module name="Myster" />
+      <extension name="coverage">
+        <pattern>
+          <option name="PATTERN" value="com.myster.net.stream.client.*" />
+          <option name="ENABLED" value="true" />
+        </pattern>
+      </extension>
+      <option name="PACKAGE_NAME" value="com.myster.net.stream.client" />
+      <option name="MAIN_CLASS_NAME" value="com.myster.net.stream.client.TestFileStatsBatch" />
+      <option name="TEST_OBJECT" value="class" />
+      <option name="VM_PARAMETERS" />
+      <option name="WORKING_DIRECTORY" value="$PROJECT_DIR$" />
+      <option name="TEST_SEARCH_SCOPE">
+        <value defaultName="wholeProject" />
+      </option>
+      <method v="2">
+        <option name="Make" enabled="true" />
+      </method>
+    </configuration>
     <configuration default="true" type="JUnit" factoryName="JUnit">
       <option name="TEST_OBJECT" value="class" />
       <option name="VM_PARAMETERS" />
@@ -383,6 +393,7 @@
     </configuration>
     <recent_temporary>
       <list>
+        <item itemvalue="JUnit.TestFileStatsBatch" />
         <item itemvalue="Application.ThumbnailPreview" />
       </list>
     </recent_temporary>
@@ -440,7 +451,15 @@
       <option name="project" value="LOCAL" />
       <updated>1789270061778</updated>
     </task>
-    <option name="localTasksCounter" value="2" />
+    <task id="LOCAL-00002" summary="Implement OS thumbnail integration with caching and asynchronous support">
+      <option name="closed" value="true" />
+      <created>1789604852730</created>
+      <option name="number" value="00002" />
+      <option name="presentableId" value="LOCAL-00002" />
+      <option name="project" value="LOCAL" />
+      <updated>1789604852730</updated>
+    </task>
+    <option name="localTasksCounter" value="3" />
     <servers />
   </component>
   <component name="TodoView" selected-index="0">
@@ -483,7 +502,8 @@
   </component>
   <component name="VcsManagerConfiguration">
     <MESSAGE value="Enhance multi-source download functionality with DNS support and improve error handling" />
-    <option name="LAST_COMMIT_MESSAGE" value="Enhance multi-source download functionality with DNS support and improve error handling" />
+    <MESSAGE value="Implement OS thumbnail integration with caching and asynchronous support" />
+    <option name="LAST_COMMIT_MESSAGE" value="Implement OS thumbnail integration with caching and asynchronous support" />
   </component>
   <component name="VssConfiguration">
     <CheckoutOptions>
