@@ -10,6 +10,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import java.time.Duration;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.CancellationException;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
@@ -19,6 +20,71 @@ import java.util.concurrent.atomic.AtomicReference;
 import org.junit.jupiter.api.Test;
 
 class TestPromiseFuture {
+    @Test
+    void executeRunsOnSuppliedExecutorAndReturnsResult() throws Exception {
+        List<Runnable> queued = new ArrayList<>();
+        AtomicBoolean called = new AtomicBoolean();
+        PromiseFuture<String> future = PromiseFutures.execute(() -> {
+            called.set(true);
+            return "done";
+        }, queued::add);
+
+        assertFalse(called.get());
+        assertFalse(future.isDone());
+        assertEquals(1, queued.size());
+        queued.removeFirst().run();
+
+        assertTrue(called.get());
+        assertEquals("done", future.get(1, TimeUnit.SECONDS));
+    }
+
+    @Test
+    void executeSkipsCallableCancelledBeforeExecution() {
+        List<Runnable> queued = new ArrayList<>();
+        AtomicBoolean called = new AtomicBoolean();
+        PromiseFuture<String> future = PromiseFutures.execute(() -> {
+            called.set(true);
+            return "should not run";
+        }, queued::add);
+
+        future.cancel();
+        queued.removeFirst().run();
+
+        assertFalse(called.get());
+        assertTrue(future.isCancelled());
+        assertThrows(CancellationException.class, () -> future.get(1, TimeUnit.SECONDS));
+    }
+
+    @Test
+    void executeForwardsCallableFailure() {
+        IllegalStateException failure = new IllegalStateException("callable failed");
+        PromiseFuture<String> future = PromiseFutures.execute(() -> {
+            throw failure;
+        }, Runnable::run);
+
+        ExecutionException thrown = assertThrows(ExecutionException.class,
+                () -> future.get(1, TimeUnit.SECONDS));
+        assertSame(failure, thrown.getCause());
+    }
+
+    @Test
+    void executePreservesInterruptStatusAndForwardsInterruption() {
+        InterruptedException failure = new InterruptedException("interrupted callable");
+        try {
+            PromiseFuture<String> future = PromiseFutures.execute(() -> {
+                throw failure;
+            }, Runnable::run);
+
+            assertTrue(Thread.currentThread().isInterrupted());
+            Thread.interrupted();
+            ExecutionException thrown = assertThrows(ExecutionException.class,
+                    () -> future.get(1, TimeUnit.SECONDS));
+            assertSame(failure, thrown.getCause());
+        } finally {
+            Thread.interrupted();
+        }
+    }
+
     @Test
     void delayCompletesAfterMinimumDuration() throws Exception {
         long started = System.nanoTime();

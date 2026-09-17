@@ -4,42 +4,18 @@
     <option name="autoReloadType" value="ALL" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="fe0d93f5-a1b5-4669-89e3-19e762d0ae4a" name="Changes" comment="">
+    <list default="true" id="fe0d93f5-a1b5-4669-89e3-19e762d0ae4a" name="Changes" comment="Enhance multi-source download functionality with DNS support and improve error handling">
       <change beforePath="$PROJECT_DIR$/Myster.iml" beforeDir="false" afterPath="$PROJECT_DIR$/Myster.iml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/MysterVersionHistory.mys" beforeDir="false" afterPath="$PROJECT_DIR$/MysterVersionHistory.mys" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Myster.ipr" beforeDir="false" afterPath="$PROJECT_DIR$/Myster.ipr" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Myster.iws" beforeDir="false" afterPath="$PROJECT_DIR$/Myster.iws" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/TODO.txt" beforeDir="false" afterPath="$PROJECT_DIR$/TODO.txt" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/docs/codebase-structure.md" beforeDir="false" afterPath="$PROJECT_DIR$/docs/codebase-structure.md" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/docs/conventions/myster-coding-conventions.md" beforeDir="false" afterPath="$PROJECT_DIR$/docs/conventions/myster-coding-conventions.md" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/docs/conventions/myster-important-patterns.md" beforeDir="false" afterPath="$PROJECT_DIR$/docs/conventions/myster-important-patterns.md" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/docs/design/Myster 3DNS.md" beforeDir="false" afterPath="$PROJECT_DIR$/docs/design/Myster 3DNS.md" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/com/general/thread/AsyncTaskTracker.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/com/general/thread/AsyncTaskTracker.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/com/general/thread/PromiseFuture.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/com/general/thread/PromiseFuture.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/com/myster/Myster.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/com/myster/Myster.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/com/myster/client/ui/ClientWindow.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/com/myster/client/ui/ClientWindow.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/com/myster/client/ui/FileListAction.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/com/myster/client/ui/FileListAction.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/com/myster/net/MysterSocket.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/com/myster/net/MysterSocket.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/com/myster/net/TLSSocket.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/com/myster/net/TLSSocket.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/com/myster/net/client/MysterStream.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/com/myster/net/client/MysterStream.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/com/myster/net/stream/client/MysterSocketFactory.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/com/myster/net/stream/client/MysterSocketFactory.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/com/myster/net/stream/client/MysterStreamImpl.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/com/myster/net/stream/client/MysterStreamImpl.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/com/myster/net/stream/client/StandardSuiteStream.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/com/myster/net/stream/client/StandardSuiteStream.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/com/myster/net/stream/client/msdownload/Controller.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/com/myster/net/stream/client/msdownload/Controller.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/com/myster/net/stream/client/msdownload/DownloadInitiator.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/com/myster/net/stream/client/msdownload/DownloadInitiator.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/com/myster/net/stream/client/msdownload/InternalSegmentDownloader.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/com/myster/net/stream/client/msdownload/InternalSegmentDownloader.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/com/myster/net/stream/client/msdownload/MSDownloadParams.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/com/myster/net/stream/client/msdownload/MSDownloadParams.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/com/myster/net/stream/client/msdownload/MSPartialFile.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/com/myster/net/stream/client/msdownload/MSPartialFile.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/com/myster/net/stream/client/msdownload/MultiSourceDownload.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/com/myster/net/stream/client/msdownload/MultiSourceDownload.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/com/myster/net/stream/client/msdownload/SegmentDownloaderEvent.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/com/myster/net/stream/client/msdownload/SegmentDownloaderEvent.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/com/myster/search/AsyncNetworkCrawler.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/com/myster/search/AsyncNetworkCrawler.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/com/myster/search/HashCrawlerManager.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/com/myster/search/HashCrawlerManager.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/com/myster/search/HashSearchListener.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/com/myster/search/HashSearchListener.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/com/myster/search/MultiSourceHashSearch.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/com/myster/search/MultiSourceHashSearch.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/com/myster/search/MysterFileStub.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/com/myster/search/MysterFileStub.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/com/myster/search/MysterSearchResult.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/com/myster/search/MysterSearchResult.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/com/myster/threedns/ThreeDnsLookup.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/com/myster/threedns/ThreeDnsLookup.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/com/myster/type/ui/JoinPrivateTypeDialog.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/com/myster/type/ui/JoinPrivateTypeDialog.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/test/java/com/general/thread/TestAsyncTaskTracker.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/test/java/com/general/thread/TestAsyncTaskTracker.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/test/java/com/myster/net/stream/client/msdownload/TestInternalSegmentDownloader.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/test/java/com/myster/net/stream/client/msdownload/TestInternalSegmentDownloader.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/test/java/com/myster/net/stream/client/msdownload/TestMultiSourceDownload.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/test/java/com/myster/net/stream/client/msdownload/TestMultiSourceDownload.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/docs/plans/README.md" beforeDir="false" afterPath="$PROJECT_DIR$/docs/plans/README.md" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/pom.xml" beforeDir="false" afterPath="$PROJECT_DIR$/pom.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/com/general/thread/PromiseFutures.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/com/general/thread/PromiseFutures.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/test/java/com/general/thread/TestPromiseFuture.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/test/java/com/general/thread/TestPromiseFuture.java" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -234,61 +210,61 @@
   </component>
   <component name="NextEditCompletionFeaturesState">
     <decayedCancelled>
-      <entry key="MS100" value="2.336112752804082" />
-      <entry key="MS500" value="4.933428851928818" />
-      <entry key="S2" value="8.55155084449141" />
-      <entry key="S5" value="10.361243927526624" />
-      <entry key="S10" value="11.637038815792943" />
-      <entry key="S30" value="20.252495865480764" />
-      <entry key="S60" value="29.793564837326564" />
-      <entry key="M2" value="50.071636207745584" />
-      <entry key="M5" value="186.4936158831888" />
-      <entry key="M10" value="499.9724223268878" />
-      <entry key="M15" value="814.3311110954111" />
-      <entry key="M30" value="1546.6544567117605" />
-      <entry key="H1" value="2306.8822610077546" />
-      <entry key="H2" value="2891.6486468041594" />
-      <entry key="H4" value="3324.0298018842323" />
-      <entry key="D1" value="5215.124167652204" />
-      <entry key="W1" value="6486.872566307149" />
+      <entry key="MS100" value="1.0" />
+      <entry key="MS500" value="1.0" />
+      <entry key="S2" value="1.0" />
+      <entry key="S5" value="1.0" />
+      <entry key="S10" value="1.0000000074041748" />
+      <entry key="S30" value="1.035766055843945" />
+      <entry key="S60" value="2.706321934439673" />
+      <entry key="M2" value="12.819706233672541" />
+      <entry key="M5" value="40.102517122125676" />
+      <entry key="M10" value="71.02312858271375" />
+      <entry key="M15" value="99.560635176212" />
+      <entry key="M30" value="174.41560153786327" />
+      <entry key="H1" value="281.34693281768676" />
+      <entry key="H2" value="451.06573939873715" />
+      <entry key="H4" value="849.8932526230058" />
+      <entry key="D1" value="4714.766293886064" />
+      <entry key="W1" value="9470.318954995795" />
     </decayedCancelled>
     <decayedSelected>
       <entry key="MS100" value="0.0" />
       <entry key="MS500" value="0.0" />
-      <entry key="S2" value="0.0" />
-      <entry key="S5" value="2.8057714755011282E-217" />
-      <entry key="S10" value="5.30121177254232E-109" />
-      <entry key="S30" value="8.991445465637123E-37" />
-      <entry key="S60" value="1.2958720411626052E-18" />
-      <entry key="M2" value="1.8217073564991352E-9" />
-      <entry key="M5" value="6.048368920039973E-4" />
-      <entry key="M10" value="0.04245255793249966" />
-      <entry key="M15" value="0.17538157123975012" />
-      <entry key="M30" value="0.7257026640561569" />
-      <entry key="H1" value="1.499577291486892" />
-      <entry key="H2" value="2.2609389318657076" />
-      <entry key="H4" value="2.908953283383295" />
-      <entry key="D1" value="3.7698199329274344" />
-      <entry key="W1" value="3.965588475765163" />
+      <entry key="S2" value="4.4122780905266633E-250" />
+      <entry key="S5" value="1.810777755144466E-100" />
+      <entry key="S10" value="1.3456514240859205E-50" />
+      <entry key="S30" value="2.378542185690074E-17" />
+      <entry key="S60" value="4.877030024195119E-9" />
+      <entry key="M2" value="6.983573601097867E-5" />
+      <entry key="M5" value="0.021758606886798024" />
+      <entry key="M10" value="0.14750809122996053" />
+      <entry key="M15" value="0.2791971544551052" />
+      <entry key="M30" value="0.5330427643293593" />
+      <entry key="H1" value="0.795245569775312" />
+      <entry key="H2" value="1.1150142844130984" />
+      <entry key="H4" value="1.5039858250531632" />
+      <entry key="D1" value="5.255954114186618" />
+      <entry key="W1" value="9.038628886612683" />
     </decayedSelected>
     <decayedShown>
-      <entry key="MS100" value="2.2936934433144267" />
-      <entry key="MS500" value="4.913468791924437" />
-      <entry key="S2" value="8.542878785285996" />
-      <entry key="S5" value="10.35704902934834" />
-      <entry key="S10" value="11.634691495511907" />
-      <entry key="S30" value="20.251166528980445" />
-      <entry key="S60" value="29.79260154544715" />
-      <entry key="M2" value="50.0708642278478" />
-      <entry key="M5" value="186.49299332961195" />
-      <entry key="M10" value="500.0128545433134" />
-      <entry key="M15" value="814.5040313872684" />
-      <entry key="M30" value="1547.377482031693" />
-      <entry key="H1" value="2308.3796960511713" />
-      <entry key="H2" value="2893.90818145152" />
-      <entry key="H4" value="3326.9379223995825" />
-      <entry key="D1" value="5218.893772971722" />
-      <entry key="W1" value="6490.838117203133" />
+      <entry key="MS100" value="0.01640182318161042" />
+      <entry key="MS500" value="0.4395197804558935" />
+      <entry key="S2" value="0.814225325170698" />
+      <entry key="S5" value="0.9210810396957115" />
+      <entry key="S10" value="0.9597296775161246" />
+      <entry key="S30" value="1.0221561575061382" />
+      <entry key="S60" value="2.69944395493679" />
+      <entry key="M2" value="12.81617958360649" />
+      <entry key="M5" value="40.12256842077553" />
+      <entry key="M10" value="71.16938764558085" />
+      <entry key="M15" value="99.8387278480233" />
+      <entry key="M30" value="174.94780183793497" />
+      <entry key="H1" value="282.1415991397483" />
+      <entry key="H2" value="452.1803689388573" />
+      <entry key="H4" value="851.3969575919945" />
+      <entry key="D1" value="4720.022029267562" />
+      <entry key="W1" value="9479.357522660832" />
     </decayedShown>
   </component>
   <component name="PerforceConfiguration">
@@ -337,32 +313,33 @@
     <option name="hideEmptyMiddlePackages" value="true" />
     <option name="showLibraryContents" value="true" />
   </component>
-  <component name="PropertiesComponent"><![CDATA[{
-  "keyToString": {
-    "Application.Myster.executor": "Run",
-    "KEY_CHAT_IN_TOOLWINDOW": "false",
-    "ModuleVcsDetector.initialDetectionPerformed": "true",
-    "RunOnceActivity.MCP Project settings loaded": "true",
-    "RunOnceActivity.ShowReadmeOnStart": "true",
-    "RunOnceActivity.git.unshallow": "true",
-    "RunOnceActivity.typescript.service.memoryLimit.init": "true",
-    "codeWithMe.voiceChat.enabledByDefault": "false",
-    "com.intellij.ml.llm.matterhorn.ej.ui.settings.DefaultModelSelectionForGA.v1": "true",
-    "git-widget-placeholder": "master",
-    "junie.onboarding.icon.badge.shown": "true",
-    "kotlin-language-version-configured": "true",
-    "last_opened_file_path": "/home/andrew/repos/myster/pom.xml",
-    "node.js.detected.package.eslint": "true",
-    "node.js.detected.package.tslint": "true",
-    "node.js.selected.package.eslint": "(autodetect)",
-    "node.js.selected.package.tslint": "(autodetect)",
-    "nodejs_package_manager_path": "npm",
-    "settings.build.tools.auto.reload": "ALL",
-    "settings.editor.selected.configurable": "preferences.sourceCode.JAVA",
-    "to.speed.mode.migration.done": "true"
+  <component name="PropertiesComponent">{
+  &quot;keyToString&quot;: {
+    &quot;Application.Myster.executor&quot;: &quot;Run&quot;,
+    &quot;Application.ThumbnailPreview.executor&quot;: &quot;Run&quot;,
+    &quot;KEY_CHAT_IN_TOOLWINDOW&quot;: &quot;false&quot;,
+    &quot;ModuleVcsDetector.initialDetectionPerformed&quot;: &quot;true&quot;,
+    &quot;RunOnceActivity.MCP Project settings loaded&quot;: &quot;true&quot;,
+    &quot;RunOnceActivity.ShowReadmeOnStart&quot;: &quot;true&quot;,
+    &quot;RunOnceActivity.git.unshallow&quot;: &quot;true&quot;,
+    &quot;RunOnceActivity.typescript.service.memoryLimit.init&quot;: &quot;true&quot;,
+    &quot;codeWithMe.voiceChat.enabledByDefault&quot;: &quot;false&quot;,
+    &quot;com.intellij.ml.llm.matterhorn.ej.ui.settings.DefaultModelSelectionForGA.v1&quot;: &quot;true&quot;,
+    &quot;git-widget-placeholder&quot;: &quot;master&quot;,
+    &quot;junie.onboarding.icon.badge.shown&quot;: &quot;true&quot;,
+    &quot;kotlin-language-version-configured&quot;: &quot;true&quot;,
+    &quot;last_opened_file_path&quot;: &quot;/home/andrew/repos/myster/pom.xml&quot;,
+    &quot;node.js.detected.package.eslint&quot;: &quot;true&quot;,
+    &quot;node.js.detected.package.tslint&quot;: &quot;true&quot;,
+    &quot;node.js.selected.package.eslint&quot;: &quot;(autodetect)&quot;,
+    &quot;node.js.selected.package.tslint&quot;: &quot;(autodetect)&quot;,
+    &quot;nodejs_package_manager_path&quot;: &quot;npm&quot;,
+    &quot;settings.build.tools.auto.reload&quot;: &quot;ALL&quot;,
+    &quot;settings.editor.selected.configurable&quot;: &quot;preferences.sourceCode.JAVA&quot;,
+    &quot;to.speed.mode.migration.done&quot;: &quot;true&quot;
   }
-}]]></component>
-  <component name="RunManager">
+}</component>
+  <component name="RunManager" selected="Application.ThumbnailPreview">
     <configuration selected="false" default="true" type="Applet" factoryName="Applet">
       <module name="" />
       <option name="MAIN_CLASS_NAME" />
@@ -372,6 +349,20 @@
       <option name="HEIGHT" value="300" />
       <option name="POLICY_FILE" value="$APPLICATION_HOME_DIR$/bin/appletviewer.policy" />
       <option name="VM_PARAMETERS" />
+    </configuration>
+    <configuration name="ThumbnailPreview" type="Application" factoryName="Application" temporary="true" nameIsGenerated="true">
+      <option name="MAIN_CLASS_NAME" value="com.myster.thumbnail.ThumbnailPreview" />
+      <module name="Myster" />
+      <option name="WORKING_DIRECTORY" value="$PROJECT_DIR$" />
+      <extension name="coverage">
+        <pattern>
+          <option name="PATTERN" value="com.myster.thumbnail.*" />
+          <option name="ENABLED" value="true" />
+        </pattern>
+      </extension>
+      <method v="2">
+        <option name="Make" enabled="true" />
+      </method>
     </configuration>
     <configuration default="true" type="Application" factoryName="Application">
       <option name="WORKING_DIRECTORY" value="$PROJECT_DIR$" />
@@ -390,6 +381,11 @@
         <option name="Make" enabled="true" />
       </method>
     </configuration>
+    <recent_temporary>
+      <list>
+        <item itemvalue="Application.ThumbnailPreview" />
+      </list>
+    </recent_temporary>
   </component>
   <component name="SharedIndexes">
     <attachedChunks>
@@ -436,6 +432,15 @@
       <option name="presentableId" value="Default" />
       <updated>1789074771922</updated>
     </task>
+    <task id="LOCAL-00001" summary="Enhance multi-source download functionality with DNS support and improve error handling">
+      <option name="closed" value="true" />
+      <created>1789270061778</created>
+      <option name="number" value="00001" />
+      <option name="presentableId" value="LOCAL-00001" />
+      <option name="project" value="LOCAL" />
+      <updated>1789270061778</updated>
+    </task>
+    <option name="localTasksCounter" value="2" />
     <servers />
   </component>
   <component name="TodoView" selected-index="0">
@@ -475,6 +480,10 @@
   </component>
   <component name="TypeScriptGeneratedFilesManager">
     <option name="version" value="3" />
+  </component>
+  <component name="VcsManagerConfiguration">
+    <MESSAGE value="Enhance multi-source download functionality with DNS support and improve error handling" />
+    <option name="LAST_COMMIT_MESSAGE" value="Enhance multi-source download functionality with DNS support and improve error handling" />
   </component>
   <component name="VssConfiguration">
     <CheckoutOptions>

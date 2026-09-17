@@ -370,6 +370,13 @@ for tests; production callers should not treat it as an intended API.
 
 ## Naming Conventions
 
+Use descriptive named constants for opaque external-format identifiers and their
+attribute names. Explain their meaning in the name, such as
+`PNG_COMPRESSED_LATIN1_TEXT_ENTRY` for ImageIO's `zTXtEntry` node.
+
+Use separate constants for distinct concepts even when their values match, such as
+a D-Bus service name and interface name.
+
 ### Fields Represent State
 
 Fields should represent retained object state. Inline a method reference at its use sites when it
@@ -650,6 +657,9 @@ on read. Missing access list → delete the stale prefs node; log a WARNING; ski
 ---
 
 ## Collection Helpers
+
+When a helper builds a collection or map, prefer returning the result to modifying
+a caller-supplied output collection.
 
 Prefer `com.general.util.Util.filter` and `Util.map` over the Java stream API for simple
 filter and map operations. They are more concise and faster for typical Myster collection sizes.

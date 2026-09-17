@@ -68,6 +68,5 @@
 type file can be sent to other admins
 
 - switch from d/ling names only to getting full paths. Should list dirs much faster on slow systems
-
-- Add new section for file lister thread to also send path information so we can see the list of files with paths
+  Add new section for file lister thread to also send path information so we can see the list of files with paths
     without needing to get the entire meta data blob which is often very slow to arrive.

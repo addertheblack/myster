@@ -63,12 +63,17 @@ See `com.general.events.NewGenericDispatcher` for the implementation.
 
 ## Promise/Future Pattern
 
-Myster uses `PromiseFuture<T>` for all asynchronous operations to avoid blocking and enable composable async workflows.
+Myster uses `PromiseFuture<T>` for asynchronous results and composable workflows.
+**`PromiseFutures.execute(Callable)` and `PromiseFutures.execute(Callable, Executor)`
+are the most commonly used entry points in this library and are Myster's replacement
+for SwingWorker.** Use them for finite background tasks and their result/error delivery.
+The first overload uses virtual threads; the second uses the supplied executor, for
+example a `BoundedExecutor` or a platform executor required by a native API.
 
 ### Basic Usage
 
 ```java
-PromiseFuture<Result> future = PromiseFutures.execute(() -> longOperation());
+PromiseFuture<Result> future = PromiseFutures.execute(() -> longOperation()).useEdt();
 future.addResultListener(result -> handleResult(result));
 future.addExceptionListener(ex -> handleError(ex));
 ```
@@ -77,11 +82,27 @@ Prefer chaining when possible:
 
 ```java
 PromiseFutures.execute(() -> longOperation())
+    .useEdt()
     .addResultListener(result -> handleResult(result))
     .addExceptionListener(ex -> handleError(ex));
 ```
 
-You need to add an exception handler and invoker if one has not already been added.
+You need to add an exception handler and invoker if one has not already been added. There's a method for adding ex.printStackTrace() handling.
+
+Use `PromiseFutures.execute(callable, executor)` to run a blocking operation on a chosen
+executor and deliver its result through a promise. The helper skips the callable when
+cancellation is observed before invocation, forwards cancellation to `Cancellable`
+callables, and preserves interrupt status when forwarding `InterruptedException`.
+Cancelling a plain callable's promise does not interrupt work already running.
+
+Reserve `PromiseFuture.newPromiseFuture(context -> ...)` for adapting callback-driven
+APIs or coordinating asynchronous child operations. A manual constructor that only
+schedules a callable and forwards its result/exception should use `execute` instead.
+Keep protocol I/O synchronous when its caller already runs through `execute`, so one
+operation does not acquire an unnecessary second worker and promise. Long-lived services
+and transfer workers retain their own lifecycles where a single completion promise does
+not represent the operation. Finite UI tasks can still publish progress while running
+through `execute`; preserve their resource cancellation and EDT dispatch when migrating.
 
 ### Key Features
 
@@ -337,6 +358,20 @@ PromiseFutures.execute(() -> {
     displayResult(result);
 }).addStandardExceptionHandler();
 ```
+
+**Exception: native thread affinity** — some native APIs require a sequence of calls to
+stay on the same OS thread. The Windows thumbnail provider uses COM this way: initialization,
+extraction and cleanup must run on one platform thread. Pinning during individual native/FFM
+calls does not guarantee the same carrier between calls. `BoundedExecutor` limits concurrency
+but does not supply that guarantee. Preserve the platform executor in `Thumbnails` unless
+Windows acquisition is moved to its own platform executor; the Linux/macOS providers do not
+have this COM requirement.
+
+**Linux thumbnail generation** — keep OS cache reads parallel, but serialize D-Bus
+generation requests in `LinuxThumbnailProvider`. Tumbler 4.18.1 can mix completion
+signals between concurrent queues, leaving files without thumbnails. The interruptible
+generation permit covers the service request through completion/cache lookup and is
+released in `finally`; recheck the shared cache after acquiring it.
 
 #### 3. Synchronization
 

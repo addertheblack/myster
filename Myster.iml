@@ -58,5 +58,7 @@
     <orderEntry type="library" name="Maven: org.bouncycastle:bcprov-jdk18on:1.82" level="project" />
     <orderEntry type="library" name="Maven: org.msgpack:msgpack-core:0.9.12" level="project" />
     <orderEntry type="library" name="Maven: org.jmdns:jmdns:3.6.3" level="project" />
+    <orderEntry type="library" name="Maven: com.github.hypfvieh:dbus-java-core:5.2.1" level="project" />
+    <orderEntry type="library" name="Maven: com.github.hypfvieh:dbus-java-transport-native-unixsocket:5.2.1" level="project" />
   </component>
 </module>

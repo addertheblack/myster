@@ -185,6 +185,30 @@
         <root url="jar://$MAVEN_REPOSITORY$/com/formdev/flatlaf/3.6.1/flatlaf-3.6.1-sources.jar!/" />
       </SOURCES>
     </library>
+    <library name="Maven: com.github.hypfvieh:dbus-java-core:5.2.1" type="java-imported" external-system-id="Maven">
+      <properties groupId="com.github.hypfvieh" artifactId="dbus-java-core" version="5.2.1" baseVersion="5.2.1" />
+      <CLASSES>
+        <root url="jar://$MAVEN_REPOSITORY$/com/github/hypfvieh/dbus-java-core/5.2.1/dbus-java-core-5.2.1.jar!/" />
+      </CLASSES>
+      <JAVADOC>
+        <root url="jar://$MAVEN_REPOSITORY$/com/github/hypfvieh/dbus-java-core/5.2.1/dbus-java-core-5.2.1-javadoc.jar!/" />
+      </JAVADOC>
+      <SOURCES>
+        <root url="jar://$MAVEN_REPOSITORY$/com/github/hypfvieh/dbus-java-core/5.2.1/dbus-java-core-5.2.1-sources.jar!/" />
+      </SOURCES>
+    </library>
+    <library name="Maven: com.github.hypfvieh:dbus-java-transport-native-unixsocket:5.2.1" type="java-imported" external-system-id="Maven">
+      <properties groupId="com.github.hypfvieh" artifactId="dbus-java-transport-native-unixsocket" version="5.2.1" baseVersion="5.2.1" />
+      <CLASSES>
+        <root url="jar://$MAVEN_REPOSITORY$/com/github/hypfvieh/dbus-java-transport-native-unixsocket/5.2.1/dbus-java-transport-native-unixsocket-5.2.1.jar!/" />
+      </CLASSES>
+      <JAVADOC>
+        <root url="jar://$MAVEN_REPOSITORY$/com/github/hypfvieh/dbus-java-transport-native-unixsocket/5.2.1/dbus-java-transport-native-unixsocket-5.2.1-javadoc.jar!/" />
+      </JAVADOC>
+      <SOURCES>
+        <root url="jar://$MAVEN_REPOSITORY$/com/github/hypfvieh/dbus-java-transport-native-unixsocket/5.2.1/dbus-java-transport-native-unixsocket-5.2.1-sources.jar!/" />
+      </SOURCES>
+    </library>
     <library name="Maven: com.github.jai-imageio:jai-imageio-core:1.4.0" type="java-imported" external-system-id="Maven">
       <properties groupId="com.github.jai-imageio" artifactId="jai-imageio-core" version="1.4.0" baseVersion="1.4.0" />
       <CLASSES>

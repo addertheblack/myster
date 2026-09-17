@@ -43,6 +43,14 @@ public final class PromiseFutures {
         return execute(callable, Executors.newVirtualThreadPerTaskExecutor());
      }
 
+     /**
+      * Runs the callable on the supplied executor and delivers its result or exception through
+      * the returned promise. Cancellation skips the callable if observed before it starts;
+      * running work is not automatically interrupted. If the callable implements
+      * {@link Cancellable}, cancellation is also forwarded to it. An
+      * {@link InterruptedException} preserves the executing thread's interrupt status.
+      * Ordinary listeners require an invoker, such as {@code useEdt()} for Swing.
+      */
      public static <T> PromiseFuture<T> execute(Callable<T> callable, Executor executor) {
          return PromiseFuture.<T> newPromiseFuture((context) -> {
              if (callable instanceof Cancellable c) {
@@ -50,8 +58,14 @@ public final class PromiseFutures {
              }
 
              executor.execute(() -> {
+                 if (context.isCancelled()) {
+                     return;
+                 }
                  try {
                      context.setResult(callable.call());
+                 } catch (InterruptedException exception) {
+                     Thread.currentThread().interrupt();
+                     context.setException(exception);
                  } catch (Exception exception) {
                      context.setException(exception);
                  }
