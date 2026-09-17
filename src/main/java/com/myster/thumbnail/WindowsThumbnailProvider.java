@@ -62,26 +62,41 @@ final class WindowsThumbnailProvider implements ThumbnailProvider {
                 dimensions.set(JAVA_INT, 0, size);
                 dimensions.set(JAVA_INT, 4, size);
                 MemorySegment bitmapOut = arena.allocate(ADDRESS);
-                int result = calls.integer(getImage, factory, dimensions, THUMBNAIL_ONLY | CACHE_ONLY, bitmapOut);
-                String source = "Windows Shell cache";
-                if (result < 0) {
+                BufferedImage best = null;
+                for (int flags : new int[]{THUMBNAIL_ONLY | CACHE_ONLY, THUMBNAIL_ONLY}) {
                     bitmapOut.set(ADDRESS, 0, MemorySegment.NULL);
-                    result = calls.integer(getImage, factory, dimensions, THUMBNAIL_ONLY, bitmapOut);
-                    source = "Windows Shell extraction";
+                    int result = calls.integer(getImage, factory, dimensions, flags, bitmapOut);
+                    String source = (flags & CACHE_ONLY) != 0
+                            ? "Windows Shell cache" : "Windows Shell extraction allowed";
+                    if (result < 0) {
+                        log.info("Thumbnail source=" + source + " requested=" + size
+                                + " HRESULT=0x" + Integer.toHexString(result) + " file=" + file);
+                        continue;
+                    }
+                    MemorySegment bitmap = bitmapOut.get(ADDRESS, 0);
+                    BufferedImage image;
+                    try {
+                        image = calls.copyBitmap(bitmap, arena);
+                    } finally {
+                        calls.integer(calls.deleteObject, bitmap);
+                    }
+                    log.info("Thumbnail source=" + source + " requested=" + size
+                            + " actual=" + image.getWidth() + "x" + image.getHeight()
+                            + " file=" + file);
+                    if (best == null || Math.max(image.getWidth(), image.getHeight())
+                            > Math.max(best.getWidth(), best.getHeight())) {
+                        best = image;
+                    }
+                    // A successful cache lookup can still return an undersized thumbnail.
+                    // Allow extraction before accepting it; compare the long edge because
+                    // rectangular thumbnails need not fill both requested dimensions.
+                    if (Math.max(best.getWidth(), best.getHeight()) >= size) {
+                        break;
+                    }
                 }
-                if (result < 0) {
-                    log.info("Windows Shell has no thumbnail: HRESULT=0x"
-                                     + Integer.toHexString(result) + " file=" + file);
-                    return Optional.empty();
-                }
-                MemorySegment bitmap = bitmapOut.get(ADDRESS, 0);
-                try {
-                    BufferedImage image = calls.copyBitmap(bitmap, arena);
-                    log.info("Thumbnail source=" + source + " file=" + file);
-                    return Optional.of(image);
-                } finally {
-                    calls.integer(calls.deleteObject, bitmap);
-                }
+                // Some source images/handlers genuinely provide only a smaller thumbnail.
+                // Keep the best available result without artificially enlarging its pixels.
+                return Optional.ofNullable(best);
             } finally {
                 calls.integer(release, factory);
             }

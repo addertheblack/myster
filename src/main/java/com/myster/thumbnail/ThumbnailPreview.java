@@ -171,7 +171,8 @@ public final class ThumbnailPreview extends JPanel {
                 }
                 long millis = (System.nanoTime() - requestStarted) / 1_000_000;
                 model.set(index, new Cell(file, image,
-                        image == null ? "Unavailable (" + millis + " ms)" : millis + " ms"));
+                        image == null ? "Unavailable (" + millis + " ms)"
+                                : image.getWidth() + "x" + image.getHeight() + " (" + millis + " ms)"));
                 if (image != null) {
                     available++;
                 }
