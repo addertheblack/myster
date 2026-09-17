@@ -4,9 +4,7 @@
     <option name="autoReloadType" value="ALL" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="fe0d93f5-a1b5-4669-89e3-19e762d0ae4a" name="Changes" comment="Implement OS thumbnail integration with caching and asynchronous support">
-      <change beforePath="$PROJECT_DIR$/Myster.iws" beforeDir="false" afterPath="$PROJECT_DIR$/Myster.iws" afterDir="false" />
-    </list>
+    <list default="true" id="fe0d93f5-a1b5-4669-89e3-19e762d0ae4a" name="Changes" comment="Implement OS thumbnail integration and enhance JUnit test configurations" />
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
     <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
@@ -200,61 +198,61 @@
   </component>
   <component name="NextEditCompletionFeaturesState">
     <decayedCancelled>
-      <entry key="MS100" value="1.7719585955568449" />
-      <entry key="MS500" value="4.591227646726621" />
-      <entry key="S2" value="7.37146947733725" />
-      <entry key="S5" value="8.287083396478156" />
-      <entry key="S10" value="8.632295138060385" />
-      <entry key="S30" value="8.874832132178664" />
-      <entry key="S60" value="8.938391240530862" />
-      <entry key="M2" value="9.250160780524151" />
-      <entry key="M5" value="17.695722501257688" />
-      <entry key="M10" value="42.09018422669743" />
-      <entry key="M15" value="68.83821519218928" />
-      <entry key="M30" value="144.21950509608965" />
-      <entry key="H1" value="256.7255082436716" />
-      <entry key="H2" value="432.25733814452076" />
-      <entry key="H4" value="832.2786254676778" />
-      <entry key="D1" value="4698.831784219214" />
-      <entry key="W1" value="9472.147730767983" />
+      <entry key="MS100" value="1.764457006186887" />
+      <entry key="MS500" value="5.279750502066563" />
+      <entry key="S2" value="13.572200968310664" />
+      <entry key="S5" value="19.601610038918558" />
+      <entry key="S10" value="22.802239478114725" />
+      <entry key="S30" value="25.543597947799984" />
+      <entry key="S60" value="27.041181635928442" />
+      <entry key="M2" value="29.414210971322362" />
+      <entry key="M5" value="37.82905378273014" />
+      <entry key="M10" value="60.088257148309815" />
+      <entry key="M15" value="85.67635003143529" />
+      <entry key="M30" value="160.1837621719859" />
+      <entry key="H1" value="273.7190705410767" />
+      <entry key="H2" value="450.7543237579102" />
+      <entry key="H4" value="851.0551745072416" />
+      <entry key="D1" value="4718.064435169337" />
+      <entry key="W1" value="9496.90939374863" />
     </decayedCancelled>
     <decayedSelected>
       <entry key="MS100" value="0.0" />
       <entry key="MS500" value="0.0" />
       <entry key="S2" value="0.0" />
-      <entry key="S5" value="2.909020139106422E-140" />
-      <entry key="S10" value="1.705584984428047E-70" />
-      <entry key="S30" value="5.545718077492541E-24" />
-      <entry key="S60" value="2.354934835084088E-12" />
-      <entry key="M2" value="1.5345796932984872E-6" />
-      <entry key="M5" value="0.0047249343517448165" />
-      <entry key="M10" value="0.06873820543328846" />
-      <entry key="M15" value="0.16781568577753042" />
-      <entry key="M30" value="0.4132594892865798" />
-      <entry key="H1" value="0.7002153861112367" />
-      <entry key="H2" value="1.0462744661551784" />
-      <entry key="H4" value="1.4568885860705216" />
-      <entry key="D1" value="5.228157527963418" />
-      <entry key="W1" value="9.031784557709866" />
+      <entry key="S5" value="1.1193571473942352E-152" />
+      <entry key="S10" value="1.0579967615235102E-76" />
+      <entry key="S30" value="4.729640298701053E-26" />
+      <entry key="S60" value="2.1747736201041784E-13" />
+      <entry key="M2" value="4.663446815504779E-7" />
+      <entry key="M5" value="0.002934153372286101" />
+      <entry key="M10" value="0.054167863444419165" />
+      <entry key="M15" value="0.14317314430265776" />
+      <entry key="M30" value="0.38171334198703266" />
+      <entry key="H1" value="0.6729594594556237" />
+      <entry key="H2" value="1.0257092050768721" />
+      <entry key="H4" value="1.4424994426649331" />
+      <entry key="D1" value="5.21951580378559" />
+      <entry key="W1" value="9.029650357673072" />
     </decayedSelected>
     <decayedShown>
-      <entry key="MS100" value="1.7473464108519905" />
-      <entry key="MS500" value="4.57624626508804" />
-      <entry key="S2" value="7.3648807469362" />
-      <entry key="S5" value="8.284060683833907" />
-      <entry key="S10" value="8.6307102283673" />
-      <entry key="S30" value="8.874286545809381" />
-      <entry key="S60" value="8.938112906705296" />
-      <entry key="M2" value="9.24994521913029" />
-      <entry key="M5" value="17.70002132795361" />
-      <entry key="M10" value="42.158312686386516" />
-      <entry key="M15" value="69.00534853802664" />
-      <entry key="M30" value="144.63210219692252" />
-      <entry key="H1" value="257.4252089806065" />
-      <entry key="H2" value="433.30324927525464" />
-      <entry key="H4" value="833.7352408374712" />
-      <entry key="D1" value="4704.059723978735" />
-      <entry key="W1" value="9481.179454122976" />
+      <entry key="MS100" value="1.740147238923412" />
+      <entry key="MS500" value="5.264392169215669" />
+      <entry key="S2" value="13.561590966052282" />
+      <entry key="S5" value="19.59531256771101" />
+      <entry key="S10" value="22.798536800960786" />
+      <entry key="S30" value="25.54220408368491" />
+      <entry key="S60" value="27.040439501275923" />
+      <entry key="M2" value="29.413781588172746" />
+      <entry key="M5" value="37.8315763899418" />
+      <entry key="M10" value="60.14187081167772" />
+      <entry key="M15" value="85.81889184637275" />
+      <entry key="M30" value="160.56483906977192" />
+      <entry key="H1" value="274.39152306801503" />
+      <entry key="H2" value="451.7796706095025" />
+      <entry key="H4" value="852.4974003518378" />
+      <entry key="D1" value="4723.283733051205" />
+      <entry key="W1" value="9505.9389828447" />
     </decayedShown>
   </component>
   <component name="PerforceConfiguration">
@@ -303,32 +301,33 @@
     <option name="hideEmptyMiddlePackages" value="true" />
     <option name="showLibraryContents" value="true" />
   </component>
-  <component name="PropertiesComponent">{
-  &quot;keyToString&quot;: {
-    &quot;Application.Myster.executor&quot;: &quot;Run&quot;,
-    &quot;Application.ThumbnailPreview.executor&quot;: &quot;Run&quot;,
-    &quot;KEY_CHAT_IN_TOOLWINDOW&quot;: &quot;false&quot;,
-    &quot;ModuleVcsDetector.initialDetectionPerformed&quot;: &quot;true&quot;,
-    &quot;RunOnceActivity.MCP Project settings loaded&quot;: &quot;true&quot;,
-    &quot;RunOnceActivity.ShowReadmeOnStart&quot;: &quot;true&quot;,
-    &quot;RunOnceActivity.git.unshallow&quot;: &quot;true&quot;,
-    &quot;RunOnceActivity.typescript.service.memoryLimit.init&quot;: &quot;true&quot;,
-    &quot;codeWithMe.voiceChat.enabledByDefault&quot;: &quot;false&quot;,
-    &quot;com.intellij.ml.llm.matterhorn.ej.ui.settings.DefaultModelSelectionForGA.v1&quot;: &quot;true&quot;,
-    &quot;git-widget-placeholder&quot;: &quot;master&quot;,
-    &quot;junie.onboarding.icon.badge.shown&quot;: &quot;true&quot;,
-    &quot;kotlin-language-version-configured&quot;: &quot;true&quot;,
-    &quot;last_opened_file_path&quot;: &quot;/home/andrew/repos/myster/pom.xml&quot;,
-    &quot;node.js.detected.package.eslint&quot;: &quot;true&quot;,
-    &quot;node.js.detected.package.tslint&quot;: &quot;true&quot;,
-    &quot;node.js.selected.package.eslint&quot;: &quot;(autodetect)&quot;,
-    &quot;node.js.selected.package.tslint&quot;: &quot;(autodetect)&quot;,
-    &quot;nodejs_package_manager_path&quot;: &quot;npm&quot;,
-    &quot;settings.build.tools.auto.reload&quot;: &quot;ALL&quot;,
-    &quot;settings.editor.selected.configurable&quot;: &quot;preferences.sourceCode.JAVA&quot;,
-    &quot;to.speed.mode.migration.done&quot;: &quot;true&quot;
+  <component name="PropertiesComponent"><![CDATA[{
+  "keyToString": {
+    "Application.Myster.executor": "Run",
+    "Application.ThumbnailPreview.executor": "Run",
+    "JUnit.TestFileStatsBatch.executor": "Run",
+    "KEY_CHAT_IN_TOOLWINDOW": "false",
+    "ModuleVcsDetector.initialDetectionPerformed": "true",
+    "RunOnceActivity.MCP Project settings loaded": "true",
+    "RunOnceActivity.ShowReadmeOnStart": "true",
+    "RunOnceActivity.git.unshallow": "true",
+    "RunOnceActivity.typescript.service.memoryLimit.init": "true",
+    "codeWithMe.voiceChat.enabledByDefault": "false",
+    "com.intellij.ml.llm.matterhorn.ej.ui.settings.DefaultModelSelectionForGA.v1": "true",
+    "git-widget-placeholder": "master",
+    "junie.onboarding.icon.badge.shown": "true",
+    "kotlin-language-version-configured": "true",
+    "last_opened_file_path": "/home/andrew/repos/myster/pom.xml",
+    "node.js.detected.package.eslint": "true",
+    "node.js.detected.package.tslint": "true",
+    "node.js.selected.package.eslint": "(autodetect)",
+    "node.js.selected.package.tslint": "(autodetect)",
+    "nodejs_package_manager_path": "npm",
+    "settings.build.tools.auto.reload": "ALL",
+    "settings.editor.selected.configurable": "preferences.sourceCode.JAVA",
+    "to.speed.mode.migration.done": "true"
   }
-}</component>
+}]]></component>
   <component name="RunManager" selected="JUnit.TestFileStatsBatch">
     <configuration selected="false" default="true" type="Applet" factoryName="Applet">
       <module name="" />
@@ -459,7 +458,15 @@
       <option name="project" value="LOCAL" />
       <updated>1789604852730</updated>
     </task>
-    <option name="localTasksCounter" value="3" />
+    <task id="LOCAL-00003" summary="Implement OS thumbnail integration and enhance JUnit test configurations">
+      <option name="closed" value="true" />
+      <created>1789605540215</created>
+      <option name="number" value="00003" />
+      <option name="presentableId" value="LOCAL-00003" />
+      <option name="project" value="LOCAL" />
+      <updated>1789605540215</updated>
+    </task>
+    <option name="localTasksCounter" value="4" />
     <servers />
   </component>
   <component name="TodoView" selected-index="0">
@@ -503,7 +510,8 @@
   <component name="VcsManagerConfiguration">
     <MESSAGE value="Enhance multi-source download functionality with DNS support and improve error handling" />
     <MESSAGE value="Implement OS thumbnail integration with caching and asynchronous support" />
-    <option name="LAST_COMMIT_MESSAGE" value="Implement OS thumbnail integration with caching and asynchronous support" />
+    <MESSAGE value="Implement OS thumbnail integration and enhance JUnit test configurations" />
+    <option name="LAST_COMMIT_MESSAGE" value="Implement OS thumbnail integration and enhance JUnit test configurations" />
   </component>
   <component name="VssConfiguration">
     <CheckoutOptions>
