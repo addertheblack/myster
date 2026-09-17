@@ -307,6 +307,10 @@ a design warning, not as a runtime limit that every feature must count precisely
 
 ## Testing
 
+Run IntelliJ builds and Maven builds/tests sequentially: `Myster.iml` uses Maven's
+`target/classes` and `target/test-classes` directories. Overlapping builds can remove
+classes while tests are running and cause misleading `NoClassDefFoundError` failures.
+
 ### Standalone UI Testing
 
 **Pattern**: Add a `main()` method to UI panels for standalone testing without launching the full application.

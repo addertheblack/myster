@@ -13,9 +13,9 @@ import java.nio.file.Path;
 import java.text.ParseException;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Locale;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import java.util.stream.Collectors;
 
 import javax.swing.BorderFactory;
 import javax.swing.DefaultListModel;
@@ -39,7 +39,7 @@ import com.general.thread.PromiseFuture;
 import com.general.thread.PromiseFutures;
 
 /**
- * Standalone JPEG/AVI/MKV/MP4 thumbnail timing grid; run main without Myster's network services.
+ * Standalone thumbnail timing grid using the platform whitelist; run without Myster's network services.
  * This code is part of a test application to show off the awesomeness that is our thumbnail icon loader.
  */
 public final class ThumbnailPreview extends JPanel {
@@ -48,7 +48,7 @@ public final class ThumbnailPreview extends JPanel {
     private final JSpinner sizeField = new JSpinner(new SpinnerNumberModel(64, 1, 1024, 1));
     private final DefaultListModel<Cell> model = new DefaultListModel<>();
     private final JList<Cell> grid = new JList<>(model);
-    private final JLabel status = new JLabel("Choose a folder to load JPEG, AVI, MKV or MP4 thumbnails.");
+    private final JLabel status = new JLabel("Choose a folder to load thumbnails (" + allowedFormats() + ").");
     private final List<PromiseFuture<?>> requests = new ArrayList<>();
     private Path folder;
     private int generation;
@@ -82,7 +82,7 @@ public final class ThumbnailPreview extends JPanel {
 
     private void chooseFolder() {
         JFileChooser chooser = new JFileChooser();
-        chooser.setDialogTitle("Choose a folder containing JPEG, AVI, MKV or MP4 files");
+        chooser.setDialogTitle("Choose a folder containing " + allowedFormats() + " files");
         chooser.setFileSelectionMode(JFileChooser.DIRECTORIES_ONLY);
         if (folder != null) {
             chooser.setCurrentDirectory(folder.toFile());
@@ -127,7 +127,7 @@ public final class ThumbnailPreview extends JPanel {
         status.setText("Scanning " + selectedFolder + "…");
         PromiseFuture<List<Path>> scan = PromiseFutures.execute(() -> {
             try (var files = Files.list(selectedFolder)) {
-                return files.filter(ThumbnailPreview::isAcceptedFile).filter(Files::isRegularFile)
+                return files.filter(Thumbnails::isAllowed).filter(Files::isRegularFile)
                         .sorted().toList();
             }
         }).useEdt();
@@ -151,10 +151,9 @@ public final class ThumbnailPreview extends JPanel {
         });
     }
 
-    private static boolean isAcceptedFile(Path file) {
-        String name = file.getFileName().toString().toLowerCase(Locale.ROOT);
-        return name.endsWith(".jpg") || name.endsWith(".jpeg")
-                || name.endsWith(".avi") || name.endsWith(".mkv") || name.endsWith(".mp4");
+    private static String allowedFormats() {
+        return Thumbnails.allowedExtensions().stream().sorted().map(extension -> "." + extension)
+                .collect(Collectors.joining(", "));
     }
 
     private void pump(int run) {
@@ -194,7 +193,9 @@ public final class ThumbnailPreview extends JPanel {
 
     private void updateStatus() {
         if (model.isEmpty()) {
-            status.setText("No .jpg, .jpeg, .avi, .mkv or .mp4 files in this folder.");
+            status.setText(Thumbnails.allowedExtensions().isEmpty()
+                    ? "Thumbnails are not supported on this platform."
+                    : "No " + allowedFormats() + " files in this folder.");
             return;
         }
         status.setText(completed + " / " + model.size() + " finished • " + available

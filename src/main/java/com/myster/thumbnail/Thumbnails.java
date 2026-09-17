@@ -2,13 +2,11 @@ package com.myster.thumbnail;
 
 import java.awt.image.BufferedImage;
 import java.nio.file.Path;
-import java.util.Locale;
 import java.util.Objects;
-import java.util.Optional;
+import java.util.Set;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
-import java.util.logging.Logger;
 
 import javax.swing.SwingUtilities;
 
@@ -20,12 +18,32 @@ import com.general.thread.PromiseFutures;
  * callers must treat them as read-only. No application disk cache is created.
  */
 public final class Thumbnails {
+    private static final ThumbnailPlatform PLATFORM =
+            ThumbnailPlatform.fromOsName(System.getProperty("os.name", ""));
+
     private Thumbnails() {}
+
+    /**
+     * Returns this platform's immutable extension whitelist, lowercase and without dots.
+     * An empty set means the platform is unsupported. Allowed files can still fail acquisition.
+     */
+    public static Set<String> allowedExtensions() {
+        return PLATFORM.allowedExtensions();
+    }
+
+    /**
+     * Checks the final filename extension against this platform's whitelist, ignoring case.
+     * Performs no filesystem or native access and does not guarantee a thumbnail is available.
+     */
+    public static boolean isAllowed(Path path) {
+        return PLATFORM.isAllowed(Objects.requireNonNull(path, "path"));
+    }
 
     /**
      * Returns a thumbnail fitting within {@code size} by {@code size} pixels, preserving
      * aspect ratio without cropping, padding or upscaling. Unsupported, missing or unreadable
-     * files produce null. Filesystem checks and OS extraction run on thumbnail workers.
+     * files produce null. Extensions outside {@link #allowedExtensions()} return null before
+     * filesystem checks or OS extraction. Acquisition runs on thumbnail workers.
      *
      * @param path local file (relative paths resolve against the working directory)
      * @param size maximum dimension, from 1 through 1024 pixels
@@ -69,23 +87,6 @@ public final class Thumbnails {
         }
     }
 
-    private static ThumbnailProvider platformProvider() {
-        String os = System.getProperty("os.name", "").toLowerCase(Locale.ROOT);
-        if (os.startsWith("windows")) {
-            return new WindowsThumbnailProvider();
-        }
-        if (os.startsWith("mac")) {
-            return new MacThumbnailProvider();
-        }
-        if (os.startsWith("linux")) {
-            return new LinuxThumbnailProvider();
-        }
-        return (file, size) -> {
-            Logger.getLogger(Thumbnails.class.getName()).fine("No thumbnail provider for " + os);
-            return Optional.empty();
-        };
-    }
-
     private static final class Shared {
         // Windows COM initialization, extraction and cleanup must stay on the same native thread.
         // Virtual threads are pinned during each native/FFM call but can change carrier threads
@@ -94,6 +95,6 @@ public final class Thumbnails {
         // platform-thread executor.
         private static final ExecutorService workers = Executors.newFixedThreadPool(4,
                 Thread.ofPlatform().daemon().name("thumbnail-", 0).factory());
-        private static final ThumbnailService service = new ThumbnailService(platformProvider());
+        private static final ThumbnailService service = new ThumbnailService(PLATFORM.createProvider(), PLATFORM);
     }
 }

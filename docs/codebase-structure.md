@@ -168,7 +168,8 @@ Application-specific logic for the Myster P2P network:
 #### Utilities
 - **`com.myster.thumbnail`** - Local OS thumbnail acquisition and memory caching
   - `Thumbnails` - Blocking worker API and asynchronous Swing API
-  - `ThumbnailPreview` - Standalone folder/size JPEG/AVI/MKV/MP4 thumbnail grid with load timings
+  - `ThumbnailPlatform` - Per-platform extension whitelists and provider selection
+  - `ThumbnailPreview` - Standalone folder/size thumbnail grid using the platform whitelist, with load timings
 - **`com.myster.util`** - Myster-specific utilities
   - `I18n` - Internationalization
   - `TypeChoice` - Type selector combo box

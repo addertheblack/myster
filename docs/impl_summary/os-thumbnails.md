@@ -176,10 +176,78 @@ timestamps and same-second changes. The logpoint was removed and debug session s
   passed after compiling their current sources and running Surefire directly; the
   previously recorded unrelated test-compilation limitation remains.
 
+## macOS MKV timeout investigation
+
+- Reproduced on macOS 13.7.8 with eight MKVs directly in the selected Movies folder.
+  All eight reached `MacThumbnailProvider`'s 15-second process timeout. Four workers
+  process them in two waves, explaining approximately 30 seconds for the folder.
+- IntelliJ logpoints confirmed the timeout branch for all eight files and `image=null`
+  in the preview result callback for the second wave, with matching generation IDs.
+  The missing thumbnails originate in acquisition, before Swing rendering.
+- Ran `/usr/bin/qlmanage -t -s 64 -o <temporary-directory> <file>` independently of
+  Java, outside the tool sandbox. A representative MKV produced no output file and
+  had to be terminated after 18.019 seconds. A repository JPEG produced its PNG in
+  166 ms. The sandbox itself prevents `qlmanage` from initializing, so sandboxed
+  command results are not valid host capability checks.
+- All three repository JPEGs passed through the same provider and preview callback
+  as non-null images (64x20, 64x20 and 64x5). Debugger-instrumented requests took
+  948–978 ms; these are not normal-run performance measurements.
+- The host's generator listing contained Apple's movie generator and no MKV-specific
+  generator. This points to missing Quick Look format support on this host. The
+  OS-only plan does not promise support for every extension accepted by the preview.
+  A compatible Quick Look video extension is the next host check; installing one and
+  verifying these MKVs remains follow-up. No provider or UI behavior was changed.
+- Increasing the timeout would extend the wait without establishing format support.
+  Possible later improvements are failure backoff and clearer unsupported/timeout
+  diagnostics; neither supplies a missing decoder.
+
+## Skip macOS MKV acquisition
+
+- At the user's request, `MacThumbnailProvider.load` now returns empty for `.mkv`
+  case-insensitively, before creating a temporary directory or launching Quick Look.
+  The guard applies to every macOS thumbnail caller, including the standalone preview.
+  Files remain listed as unavailable. Other platforms retain MKV acquisition.
+- This intentionally skips MKVs even on Macs with a suitable extension installed.
+  Updated provider Javadoc, the plan and the design to document that policy.
+- IntelliJ build and Maven's focused test lifecycle passed: 12 thumbnail/cache tests,
+  zero failures or errors. The earlier unrelated test-compilation blocker did not recur.
+- Rebuilt and ran the preview against the same eight Movies-folder MKVs: all were
+  skipped with no Quick Look launch or timeout. First-wave requests took 52–59 ms
+  including initial logging; the remaining requests took 0–1 ms.
+
+## Per-platform extension whitelists
+
+- Replaced the macOS MKV exception with `ThumbnailPlatform`, the single definition
+  of platform selection, provider creation and separate immutable extension sets.
+  Windows/Linux allow jpg, jpeg, avi, mkv and mp4; macOS initially allows jpg, jpeg
+  and mp4; unknown platforms allow none. The conservative macOS default also excludes AVI.
+- `ThumbnailService` rejects unlisted final extensions case-insensitively before
+  filesystem/cache checks or provider calls. `Thumbnails.allowedExtensions()` and
+  `isAllowed(Path)` expose the policy without filesystem/native access.
+- `ThumbnailPreview` uses the same whitelist for scanning, chooser text and empty-state
+  labels. Excluded files are now omitted from the grid; direct API calls return null.
+  Removed the redundant MKV guard from `MacThumbnailProvider`.
+- Updated the plan, design, package/API/provider Javadoc and codebase structure.
+  Existing OS-only acquisition, sizing, caching and cancellation behavior is preserved
+  for allowed files. A whitelist entry permits acquisition but cannot guarantee codec support.
+- IntelliJ build passed. All 15 focused thumbnail/cache tests passed, including three
+  new tests covering provider non-invocation for rejected files, mixed-case accepted
+  inputs across platforms, platform selection and public policy exposure.
+- An initial test run overlapped with IntelliJ compilation into the shared Maven output
+  directories and failed with missing classes. Running sequentially passed; recorded the
+  build sequencing requirement in the coding conventions.
+- Live macOS preview: the Movies folder's eight MKVs produced an empty accepted list
+  (debugger logpoint `files.size() == 0`) and no Quick Look acquisition. A separate JPEG
+  preview run successfully acquired all three repository images in 395–432 ms per request.
+  Agent logpoints and debug sessions were removed after verification.
+- No known implementation blockers or additional tests are required for this change.
+  Native successful-video checks on macOS and native Windows checks remain follow-up.
+
 ## Host checks and practical limits
 
-- Windows and macOS compile but need live host smoke tests. In particular, verify
-  Windows COM handlers/bitmap alpha and Quick Look output/cleanup on representative files.
+- Windows still needs live COM-handler/bitmap-alpha smoke tests. macOS JPEG acquisition
+  and callback delivery have been exercised; video success with a suitable Quick Look
+  extension and further native failure/resource tests remain unverified.
 - Native Windows handlers execute in-process and cannot be forcibly timed out safely;
   running extraction may continue after caller cancellation. Quick Look has a 15-second
   process limit. Linux has a 15-second generation wait plus dbus-java's 20-second default

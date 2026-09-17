@@ -38,6 +38,11 @@ unavailable thumbnails. Linux diagnostics include the requested size/flavor, ser
 error signals and completion without a usable cache entry. Use dbus-java with the
 JDK Unix socket transport; preserve its service registration in the shaded jar.
 Bound external process/service waits.
+Keep an explicit extension whitelist for each platform. Windows and Linux allow JPG/JPEG,
+AVI, MKV and MP4; macOS initially allows JPG/JPEG and MP4. Unknown platforms allow none.
+Match the final extension case-insensitively. Reject other files before filesystem/cache
+checks or provider invocation, and expose the same policy to preview filtering and labels.
+This replaces the macOS MKV exception: unsupported inputs can consume the full OS timeout.
 Serialize Linux service generation requests while retaining parallel cache reads:
 the installed Tumbler service misroutes completion notifications for concurrent queues.
 Acquisition remains OS-only, matching the supplied design. ImageIO reads OS-produced
@@ -52,8 +57,9 @@ or size cancels stale UI requests and prevents stale callbacks changing the grid
 ## 7. Acceptance criteria
 
 16/32/64 pixel requests preserve aspect ratio. Repeat requests reuse memory;
-changed files invalidate entries. All JPG/JPEG, AVI, MKV and MP4 files directly in a chosen folder
-appear in a scrollable grid whose cells update in completion order. Logs identify
+changed files invalidate entries. All files with extensions in the current platform's
+whitelist directly in a chosen folder appear in a scrollable grid whose cells update in
+completion order. Direct API requests outside that whitelist return null. Logs identify
 the actual acquisition path. UI remains interactive while loading.
 
 ---
@@ -74,6 +80,8 @@ documentation.
 3. Add folder/size controls and progressive grid accepting JPG/JPEG, AVI, MKV and MP4
    extensions case-insensitively, with matching prompts and empty-folder text.
 4. Verify behavior, document usage and platform verification limits.
+5. Centralize platform selection and extension whitelists, enforce the policy in the
+   acquisition service, and share it with the preview. Remove the provider-local MKV guard.
 
 ## 10. Verification
 
@@ -82,6 +90,8 @@ coalescing and cancellation isolation. Validate freedesktop PNG metadata and sta
 cache rejection. Build in IntelliJ and run Maven tests. Exercise the Linux provider
 and preview locally where the desktop is available; Windows/macOS require host
 smoke tests.
+Verify rejected extensions never invoke a provider, mixed-case allowed extensions do,
+and unknown platforms reject all extensions without altering the JVM's OS property.
 Verify concurrent callers against an empty Linux cache at 512 and 1024 pixels; all
 files supported by the desktop service must succeed on the first pass.
 

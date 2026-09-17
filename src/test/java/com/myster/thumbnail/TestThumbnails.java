@@ -24,6 +24,62 @@ class TestThumbnails {
     Path directory;
 
     @Test
+    void rejectsUnlistedExtensionsWithoutInvokingAnyPlatformProvider() throws Exception {
+        for (ThumbnailPlatform platform : ThumbnailPlatform.values()) {
+            ThumbnailProvider provider = mock(ThumbnailProvider.class);
+            ThumbnailService service = new ThumbnailService(provider, platform);
+            for (String name : new String[] { "file", "file.", "file.pdf", "file.jpg.txt", "file.MKV.bak" }) {
+                Path file = Files.writeString(directory.resolve(name), "unsupported");
+                assertNull(service.load(file, 32), platform + ": " + name);
+            }
+            if (platform == ThumbnailPlatform.MAC || platform == ThumbnailPlatform.UNSUPPORTED) {
+                for (String name : new String[] { "video.mkv", "video.MKV", "video.AvI" }) {
+                    assertNull(service.load(Files.writeString(directory.resolve(name), "video"), 32));
+                }
+            }
+            if (platform == ThumbnailPlatform.UNSUPPORTED) {
+                assertNull(service.load(Files.writeString(directory.resolve("photo.JPG"), "photo"), 32));
+            }
+            verifyNoInteractions(provider);
+        }
+    }
+
+    @Test
+    void acceptsMixedCaseWhitelistedFilesOnEachPlatform() throws Exception {
+        for (ThumbnailPlatform platform : new ThumbnailPlatform[] {
+                ThumbnailPlatform.WINDOWS, ThumbnailPlatform.MAC, ThumbnailPlatform.LINUX }) {
+            ThumbnailProvider provider = mock(ThumbnailProvider.class);
+            when(provider.load(any(), anyInt())).thenReturn(Optional.of(image(64, 32)));
+            ThumbnailService service = new ThumbnailService(provider, platform);
+            String[] names = platform == ThumbnailPlatform.MAC
+                    ? new String[] { "photo.JPG", "photo.JpEg", "video.Mp4" }
+                    : new String[] { "photo.JPG", "photo.JpEg", "video.Mp4", "video.MkV", "video.AVI" };
+            for (String name : names) {
+                Path file = Files.writeString(directory.resolve(name), "media");
+                assertNotNull(service.load(file, 32), platform + ": " + name);
+                verify(provider).load(file, 32);
+            }
+        }
+    }
+
+    @Test
+    void selectsPlatformAndSharesItsWhitelistWithCallers() {
+        assertEquals(ThumbnailPlatform.WINDOWS, ThumbnailPlatform.fromOsName("Windows 11"));
+        assertEquals(ThumbnailPlatform.MAC, ThumbnailPlatform.fromOsName("Mac OS X"));
+        assertEquals(ThumbnailPlatform.LINUX, ThumbnailPlatform.fromOsName("Linux"));
+        assertEquals(ThumbnailPlatform.UNSUPPORTED, ThumbnailPlatform.fromOsName("Darwin"));
+        assertEquals(ThumbnailPlatform.UNSUPPORTED, ThumbnailPlatform.fromOsName(""));
+        ThumbnailPlatform current = ThumbnailPlatform.fromOsName(System.getProperty("os.name", ""));
+        assertEquals(current.allowedExtensions(), Thumbnails.allowedExtensions());
+        for (String name : new String[] { "photo.JPG", "video.mkv", "video.avi", "file.pdf", "file" }) {
+            assertEquals(current.isAllowed(Path.of(name)), Thumbnails.isAllowed(Path.of(name)));
+        }
+        assertFalse(Thumbnails.isAllowed(directory.getRoot()));
+        assertFalse(Thumbnails.isAllowed(Path.of("folder.jpg", "file")));
+        assertThrows(UnsupportedOperationException.class, () -> Thumbnails.allowedExtensions().add("pdf"));
+    }
+
+    @Test
     void fitsLandscapePortraitAndExtremeAspectRatioWithoutUpscaling() {
         for (int size : new int[] { 16, 32, 64 }) {
             BufferedImage landscape = ThumbnailImageUtils.fit(image(400, 200), size);
@@ -69,7 +125,7 @@ class TestThumbnails {
         Path file = Files.writeString(directory.resolve("file.jpg"), "original");
         ThumbnailProvider provider = mock(ThumbnailProvider.class);
         when(provider.load(any(), anyInt())).thenAnswer(_ -> Optional.of(image(400, 200)));
-        ThumbnailService service = new ThumbnailService(provider);
+        ThumbnailService service = new ThumbnailService(provider, ThumbnailPlatform.LINUX);
         BufferedImage first = service.load(file, 32);
         assertSame(first, service.load(file, 32));
         verify(provider, times(1)).load(file, 32);
@@ -93,7 +149,7 @@ class TestThumbnails {
             assertTrue(release.await(5, TimeUnit.SECONDS));
             return Optional.of(image(100, 50));
         });
-        ThumbnailService service = new ThumbnailService(provider);
+        ThumbnailService service = new ThumbnailService(provider, ThumbnailPlatform.LINUX);
         try (var executor = Executors.newFixedThreadPool(3)) {
             var owner = executor.submit(() -> service.load(file, 32));
             assertTrue(entered.await(5, TimeUnit.SECONDS));
@@ -123,7 +179,7 @@ class TestThumbnails {
                     Files.writeString(file, "changed during extraction");
                     return Optional.of(image(64, 32));
                 }).thenReturn(Optional.of(image(64, 32)));
-        ThumbnailService service = new ThumbnailService(provider);
+        ThumbnailService service = new ThumbnailService(provider, ThumbnailPlatform.LINUX);
         assertNull(service.load(file, 32));
         assertNull(service.load(file, 32));
         assertNull(service.load(file, 32));
@@ -135,7 +191,7 @@ class TestThumbnails {
     void evictsLeastRecentlyUsedEntries() throws Exception {
         ThumbnailProvider provider = mock(ThumbnailProvider.class);
         when(provider.load(any(), eq(16))).thenAnswer(_ -> Optional.of(image(16, 8)));
-        ThumbnailService service = new ThumbnailService(provider);
+        ThumbnailService service = new ThumbnailService(provider, ThumbnailPlatform.LINUX);
         Path first = Files.writeString(directory.resolve("first.jpg"), "test");
         service.load(first, 16);
         for (int i = 0; i < 256; i++) {

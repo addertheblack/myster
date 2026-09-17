@@ -11,7 +11,10 @@ import java.util.logging.Logger;
 
 import javax.imageio.ImageIO;
 
-/** Quick Look subprocesses have isolated output directories and a finite lifetime. */
+/**
+ * Quick Look subprocesses have isolated output directories and a finite lifetime.
+ * The thumbnail service filters requests through the macOS extension whitelist first.
+ */
 final class MacThumbnailProvider implements ThumbnailProvider {
     private static final Logger log = Logger.getLogger(MacThumbnailProvider.class.getName());
 

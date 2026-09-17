@@ -15,24 +15,30 @@ import java.util.concurrent.FutureTask;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
-/** Shares in-flight acquisition and bounds retained pixels, independently of UI lifetimes. */
+/** Enforces the platform whitelist, shares acquisition and bounds pixels independently of UI lifetimes. */
 final class ThumbnailService {
     private static final Logger log = Logger.getLogger(ThumbnailService.class.getName());
     private static final long MAX_CACHE_BYTES = 16 * 1024 * 1024;
     private static final int MAX_CACHE_ENTRIES = 256;
 
     private final ThumbnailProvider provider;
+    private final ThumbnailPlatform platform;
     private final Map<Key, BufferedImage> cache = new LinkedHashMap<>(32, 0.75f, true);
     private final Map<Key, FutureTask<BufferedImage>> inFlight = new ConcurrentHashMap<>();
     private long cacheBytes;
 
-    ThumbnailService(ThumbnailProvider provider) {
+    ThumbnailService(ThumbnailProvider provider, ThumbnailPlatform platform) {
         this.provider = provider;
+        this.platform = platform;
     }
 
     BufferedImage load(Path path, int size) throws InterruptedException {
         long started = System.nanoTime();
         try {
+            if (!platform.isAllowed(path)) {
+                log.info(() -> "Thumbnail skipped (extension not allowed on " + platform + "): " + path);
+                return null;
+            }
             Path file = path.toAbsolutePath().normalize();
             BasicFileAttributes attributes = Files.readAttributes(file, BasicFileAttributes.class);
             if (!attributes.isRegularFile()) {

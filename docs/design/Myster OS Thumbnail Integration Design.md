@@ -64,12 +64,27 @@ java --enable-native-access=ALL-UNNAMED -cp bin/MysterBuild.jar \
 ```
 
 Choose a folder, choose the size, and click **Load / reload**. The preview scans the
-folder's immediate `.jpg`, `.jpeg`, `.avi`, `.mkv` and `.mp4` files case-insensitively,
-shows placeholders,
+folder's immediate files using the platform extension whitelist, shows placeholders,
 and replaces each cell as its request completes. Four requests are outstanding at
 once. Per-cell timings include queueing; the footer shows completion counts and total
 elapsed time. Reloads reuse the memory cache. Changing folder/reloading cancels stale
 UI requests; callbacks from an older run cannot update the current grid.
+
+`ThumbnailPlatform` holds separate immutable extension whitelists:
+
+| Platform | Allowed extensions |
+| --- | --- |
+| Windows | jpg, jpeg, avi, mkv, mp4 |
+| macOS | jpg, jpeg, mp4 |
+| Linux | jpg, jpeg, avi, mkv, mp4 |
+| Other | none |
+
+Matching uses the final filename extension, ignoring case. `ThumbnailService` rejects
+unlisted extensions before filesystem/cache checks or provider calls, including direct
+API requests. `Thumbnails.isAllowed(Path)` and `allowedExtensions()` expose the same
+policy without filesystem or native access; the preview uses it for filtering and
+format labels. Editing a platform's set is the single point for changing its policy.
+Whitelisting permits an attempt; it does not guarantee codec or thumbnail-handler support.
 
 `java.util.logging` INFO messages identify memory reuse, shared requests, Windows Shell
 cache/extraction, Quick Look output, Linux D-Bus requests and the exact freedesktop cache
@@ -86,7 +101,13 @@ decoding fallback and no additional Myster disk cache.
   manifest and packaged launcher. For an IntelliJ/classpath launch on Windows, set
   `--enable-native-access=ALL-UNNAMED` in VM options.
 - **macOS:** isolated Quick Look output directories, a 15-second process timeout,
-  forced termination on timeout and temporary-file cleanup.
+  forced termination on timeout and temporary-file cleanup. Accepting an extension
+  in the preview does not establish Quick Look support. On macOS 13.7.8 without an
+  MKV-specific generator, tested MKVs left `qlmanage` running without output until
+  termination, while JPEGs succeeded. The macOS whitelist excludes MKV and AVI,
+  even if a suitable extension is installed. The preview omits these files and
+  direct API requests return unavailable before reaching Quick Look. Linux and
+  Windows retain MKV and AVI in their respective whitelists.
 - **Linux:** read valid shared cache entries first, then detect a running or activatable
   `Thumbnailer1` service and request the appropriate flavor. A single interruptible
   generation permit serializes service requests; cache reads remain parallel and are
@@ -104,8 +125,10 @@ decoding fallback and no additional Myster disk cache.
 - **Packaging:** dbus-java 5.2.1 core and the JDK Unix-socket transport are included.
   The shade plugin merges service registrations, including the transport provider.
 - **Host coverage:** Linux cache/service acquisition and the preview have been exercised
-  against a real Tumbler service. Windows COM/bitmap behavior and macOS Quick Look still
-  need smoke testing on their respective operating systems.
+  against a real Tumbler service. macOS JPEG acquisition and preview result delivery
+  succeeded in a host smoke test; MKV timeout behavior was reproduced independently
+  of Java. Successful macOS video extraction with a suitable extension and Windows
+  COM/bitmap behavior still need host testing.
 
 Primary API references: [Windows GetImage](https://learn.microsoft.com/en-us/windows/win32/api/shobjidl_core/nf-shobjidl_core-ishellitemimagefactory-getimage),
 [freedesktop thumbnail creation](https://specifications.freedesktop.org/thumbnail/latest/creation.html),
