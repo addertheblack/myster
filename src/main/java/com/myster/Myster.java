@@ -90,6 +90,7 @@ import com.myster.net.server.datagram.TypeDatagramServer;
 import com.myster.net.stream.client.MysterSocketFactory;
 import com.myster.net.stream.client.MysterStreamImpl;
 import com.myster.net.stream.client.msdownload.MSDownloadLocalQueue;
+import com.myster.net.stream.server.ThumbnailStreamServer;
 import com.myster.pref.MysterPreferences;
 import com.myster.pref.ui.ThemePane;
 import com.myster.progress.ui.DefaultDownloadManager;
@@ -106,6 +107,7 @@ import com.myster.tracker.ui.TrackerWindow;
 import com.myster.tracker.ui.KnownServerSource;
 import com.myster.transaction.TransactionManager;
 import com.myster.threedns.ThreeDnsLookup;
+import com.myster.thumbnail.Thumbnails;
 import com.myster.type.DefaultTypeDescriptionList;
 import com.myster.type.TypeDescriptionList;
 import com.myster.type.join.InvitationAttemptLimiter;
@@ -766,6 +768,7 @@ public class Myster {
                                                                                preferences::getServerPort,
                                                                                identity));
         serverFacade.addConnectionSection(new com.myster.net.stream.server.FileStatsStreamServer(accessListManager));
+        serverFacade.addConnectionSection(new ThumbnailStreamServer(accessListManager, Thumbnails::summonThumbnail));
         serverFacade.addConnectionSection(new com.myster.net.stream.server.FileStatsBatchStreamServer(accessListManager));
         serverFacade.addConnectionSection(new com.myster.net.stream.server.FileByHash(accessListManager));
         serverFacade.addConnectionSection(new com.myster.net.stream.server.MultiSourceSender(preferences, accessListManager));

@@ -4,7 +4,19 @@
     <option name="autoReloadType" value="ALL" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="fe0d93f5-a1b5-4669-89e3-19e762d0ae4a" name="Changes" comment="Implement OS thumbnail integration and enhance JUnit test configurations" />
+    <list default="true" id="fe0d93f5-a1b5-4669-89e3-19e762d0ae4a" name="Changes" comment="Fix XML encoding in project configuration for better compatibility">
+      <change beforePath="$PROJECT_DIR$/Myster.iws" beforeDir="false" afterPath="$PROJECT_DIR$/Myster.iws" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/TODO.txt" beforeDir="false" afterPath="$PROJECT_DIR$/TODO.txt" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/docs/codebase-structure.md" beforeDir="false" afterPath="$PROJECT_DIR$/docs/codebase-structure.md" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/docs/conventions/myster-important-patterns.md" beforeDir="false" afterPath="$PROJECT_DIR$/docs/conventions/myster-important-patterns.md" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/docs/design/Myster OS Thumbnail Integration Design.md" beforeDir="false" afterPath="$PROJECT_DIR$/docs/design/Myster OS Thumbnail Integration Design.md" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/docs/plans/README.md" beforeDir="false" afterPath="$PROJECT_DIR$/docs/plans/README.md" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/com/myster/Myster.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/com/myster/Myster.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/com/myster/net/client/MysterStream.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/com/myster/net/client/MysterStream.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/com/myster/net/stream/client/MysterStreamImpl.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/com/myster/net/stream/client/MysterStreamImpl.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/com/myster/net/stream/client/StandardSuiteStream.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/com/myster/net/stream/client/StandardSuiteStream.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/com/myster/search/StandardMysterSearch.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/com/myster/search/StandardMysterSearch.java" afterDir="false" />
+    </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
     <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
@@ -176,7 +188,27 @@
   </component>
   <component name="Git.Settings">
     <option name="RECENT_GIT_ROOT_PATH" value="$PROJECT_DIR$" />
+    <option name="UPDATE_TYPE" value="REBASE" />
   </component>
+  <component name="GitHubPullRequestSearchHistory">{
+  &quot;lastFilter&quot;: {
+    &quot;state&quot;: &quot;OPEN&quot;,
+    &quot;assignee&quot;: &quot;addertheblack&quot;
+  }
+}</component>
+  <component name="GithubProjectSettings">
+    <option name="branchProtectionPatterns">
+      <list>
+        <option value="master" />
+      </list>
+    </option>
+  </component>
+  <component name="GithubPullRequestsUISettings">{
+  &quot;selectedUrlAndAccountId&quot;: {
+    &quot;url&quot;: &quot;git@github.com:addertheblack/myster.git&quot;,
+    &quot;accountId&quot;: &quot;f166ab81-b797-43a8-b371-d9c6f764e006&quot;
+  }
+}</component>
   <component name="InspectionManager">
     <option name="AUTOSCROLL_TO_SOURCE" value="false" />
     <option name="SPLITTER_PROPORTION" value="0.5" />
@@ -198,61 +230,61 @@
   </component>
   <component name="NextEditCompletionFeaturesState">
     <decayedCancelled>
-      <entry key="MS100" value="1.764457006186887" />
-      <entry key="MS500" value="5.279750502066563" />
-      <entry key="S2" value="13.572200968310664" />
-      <entry key="S5" value="19.601610038918558" />
-      <entry key="S10" value="22.802239478114725" />
-      <entry key="S30" value="25.543597947799984" />
-      <entry key="S60" value="27.041181635928442" />
-      <entry key="M2" value="29.414210971322362" />
-      <entry key="M5" value="37.82905378273014" />
-      <entry key="M10" value="60.088257148309815" />
-      <entry key="M15" value="85.67635003143529" />
-      <entry key="M30" value="160.1837621719859" />
-      <entry key="H1" value="273.7190705410767" />
-      <entry key="H2" value="450.7543237579102" />
-      <entry key="H4" value="851.0551745072416" />
-      <entry key="D1" value="4718.064435169337" />
-      <entry key="W1" value="9496.90939374863" />
+      <entry key="MS100" value="1.4243407479337213" />
+      <entry key="MS500" value="3.4344289137378614" />
+      <entry key="S2" value="8.915094237972053" />
+      <entry key="S5" value="19.133636791226127" />
+      <entry key="S10" value="34.033672654342745" />
+      <entry key="S30" value="64.78949178617842" />
+      <entry key="S60" value="82.4314056004645" />
+      <entry key="M2" value="102.51967567884563" />
+      <entry key="M5" value="171.55848436774107" />
+      <entry key="M10" value="265.17822758723395" />
+      <entry key="M15" value="365.3625890535896" />
+      <entry key="M30" value="710.2499055545803" />
+      <entry key="H1" value="1219.446437921511" />
+      <entry key="H2" value="1688.0050088619887" />
+      <entry key="H4" value="2011.4415396147429" />
+      <entry key="D1" value="3703.9754039747913" />
+      <entry key="W1" value="10357.016381121357" />
     </decayedCancelled>
     <decayedSelected>
       <entry key="MS100" value="0.0" />
       <entry key="MS500" value="0.0" />
       <entry key="S2" value="0.0" />
-      <entry key="S5" value="1.1193571473942352E-152" />
-      <entry key="S10" value="1.0579967615235102E-76" />
-      <entry key="S30" value="4.729640298701053E-26" />
-      <entry key="S60" value="2.1747736201041784E-13" />
-      <entry key="M2" value="4.663446815504779E-7" />
-      <entry key="M5" value="0.002934153372286101" />
-      <entry key="M10" value="0.054167863444419165" />
-      <entry key="M15" value="0.14317314430265776" />
-      <entry key="M30" value="0.38171334198703266" />
-      <entry key="H1" value="0.6729594594556237" />
-      <entry key="H2" value="1.0257092050768721" />
-      <entry key="H4" value="1.4424994426649331" />
-      <entry key="D1" value="5.21951580378559" />
-      <entry key="W1" value="9.029650357673072" />
+      <entry key="S5" value="0.0" />
+      <entry key="S10" value="0.0" />
+      <entry key="S30" value="0.0" />
+      <entry key="S60" value="0.0" />
+      <entry key="M2" value="0.0" />
+      <entry key="M5" value="1.6166854317214277E-158" />
+      <entry key="M10" value="1.271490333250525E-79" />
+      <entry key="M15" value="2.52876885524998E-53" />
+      <entry key="M30" value="5.072956352175573E-27" />
+      <entry key="H1" value="7.758018215331204E-14" />
+      <entry key="H2" value="3.482612860538382E-7" />
+      <entry key="H4" value="8.40535628990192E-4" />
+      <entry key="D1" value="1.5084709897282647" />
+      <entry key="W1" value="7.562364601373406" />
     </decayedSelected>
     <decayedShown>
-      <entry key="MS100" value="1.740147238923412" />
-      <entry key="MS500" value="5.264392169215669" />
-      <entry key="S2" value="13.561590966052282" />
-      <entry key="S5" value="19.59531256771101" />
-      <entry key="S10" value="22.798536800960786" />
-      <entry key="S30" value="25.54220408368491" />
-      <entry key="S60" value="27.040439501275923" />
-      <entry key="M2" value="29.413781588172746" />
-      <entry key="M5" value="37.8315763899418" />
-      <entry key="M10" value="60.14187081167772" />
-      <entry key="M15" value="85.81889184637275" />
-      <entry key="M30" value="160.56483906977192" />
-      <entry key="H1" value="274.39152306801503" />
-      <entry key="H2" value="451.7796706095025" />
-      <entry key="H4" value="852.4974003518378" />
-      <entry key="D1" value="4723.283733051205" />
-      <entry key="W1" value="9505.9389828447" />
+      <entry key="MS100" value="1.2232878148426969" />
+      <entry key="MS500" value="3.3385537286629843" />
+      <entry key="S2" value="8.87420746687291" />
+      <entry key="S5" value="19.107159481841112" />
+      <entry key="S10" value="34.00909728550278" />
+      <entry key="S30" value="64.76829225801468" />
+      <entry key="S60" value="82.41580172306473" />
+      <entry key="M2" value="102.50963469800199" />
+      <entry key="M5" value="171.5528572039809" />
+      <entry key="M10" value="265.1746170490449" />
+      <entry key="M15" value="365.3598145982803" />
+      <entry key="M30" value="710.2480859641457" />
+      <entry key="H1" value="1219.4452606639595" />
+      <entry key="H2" value="1688.0043041988674" />
+      <entry key="H4" value="2011.4419882031843" />
+      <entry key="D1" value="3705.4837400776405" />
+      <entry key="W1" value="10364.578683964311" />
     </decayedShown>
   </component>
   <component name="PerforceConfiguration">
@@ -324,11 +356,11 @@
     &quot;node.js.selected.package.tslint&quot;: &quot;(autodetect)&quot;,
     &quot;nodejs_package_manager_path&quot;: &quot;npm&quot;,
     &quot;settings.build.tools.auto.reload&quot;: &quot;ALL&quot;,
-    &quot;settings.editor.selected.configurable&quot;: &quot;preferences.sourceCode.JAVA&quot;,
+    &quot;settings.editor.selected.configurable&quot;: &quot;preferences.pluginManager&quot;,
     &quot;to.speed.mode.migration.done&quot;: &quot;true&quot;
   }
 }</component>
-  <component name="RunManager" selected="JUnit.TestFileStatsBatch">
+  <component name="RunManager" selected="Application.ThumbnailPreview">
     <configuration selected="false" default="true" type="Applet" factoryName="Applet">
       <module name="" />
       <option name="MAIN_CLASS_NAME" />
@@ -392,16 +424,16 @@
     </configuration>
     <recent_temporary>
       <list>
-        <item itemvalue="JUnit.TestFileStatsBatch" />
         <item itemvalue="Application.ThumbnailPreview" />
+        <item itemvalue="JUnit.TestFileStatsBatch" />
       </list>
     </recent_temporary>
   </component>
   <component name="SharedIndexes">
     <attachedChunks>
       <set>
-        <option value="bundled-jdk-30f59d01ecdd-a203e0a19954-intellij.indexing.shared.core-IU-262.10315.125" />
-        <option value="bundled-js-predefined-d6986cc7102b-4abd2a77f808-JavaScript-IU-262.10315.125" />
+        <option value="bundled-jdk-30f59d01ecdd-a203e0a19954-intellij.indexing.shared.core-IU-262.10968.63" />
+        <option value="bundled-js-predefined-d6986cc7102b-4abd2a77f808-JavaScript-IU-262.10968.63" />
       </set>
     </attachedChunks>
   </component>
@@ -466,7 +498,15 @@
       <option name="project" value="LOCAL" />
       <updated>1789605540215</updated>
     </task>
-    <option name="localTasksCounter" value="4" />
+    <task id="LOCAL-00004" summary="Fix XML encoding in project configuration for better compatibility">
+      <option name="closed" value="true" />
+      <created>1789680110578</created>
+      <option name="number" value="00004" />
+      <option name="presentableId" value="LOCAL-00004" />
+      <option name="project" value="LOCAL" />
+      <updated>1789680110578</updated>
+    </task>
+    <option name="localTasksCounter" value="5" />
     <servers />
   </component>
   <component name="TodoView" selected-index="0">
@@ -511,7 +551,8 @@
     <MESSAGE value="Enhance multi-source download functionality with DNS support and improve error handling" />
     <MESSAGE value="Implement OS thumbnail integration with caching and asynchronous support" />
     <MESSAGE value="Implement OS thumbnail integration and enhance JUnit test configurations" />
-    <option name="LAST_COMMIT_MESSAGE" value="Implement OS thumbnail integration and enhance JUnit test configurations" />
+    <MESSAGE value="Fix XML encoding in project configuration for better compatibility" />
+    <option name="LAST_COMMIT_MESSAGE" value="Fix XML encoding in project configuration for better compatibility" />
   </component>
   <component name="VssConfiguration">
     <CheckoutOptions>

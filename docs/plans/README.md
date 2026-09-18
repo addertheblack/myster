@@ -10,6 +10,7 @@ When adding or substantially changing an authoritative plan, update this index w
 |---|---|
 | [Standard Background Task Submission](promise-execute-conventions.md) | Documents the PromiseFutures.execute SwingWorker replacement and audits duplicate task scheduling. |
 | [OS Thumbnails](os-thumbnails.md) | Adds a platform thumbnail API, bounded memory cache and progressive standalone JPEG preview grid. |
+| [OS Thumbnails — Part 2: Thumbnail Transfer Protocol](os-thumbnails-part-2.md) | Adds a TCP thumbnail request capped at 256 pixels per dimension and 256 KiB per image body, with a MessagePack header followed by unpadded PNG or raw ARGB32 bytes. |
 | [Bidirectional Server Stats Exchange](bidirectional-server-stats.md) | Adds UDP transaction `102` so peers exchange server stats in both directions and learn the requester's advertised Myster port safely. |
 | [Domain-Specific CID Types](cid-domain-types.md) | Replaces shared raw `Cid128` API usage with non-interchangeable `MysterTypeCid` and `ServerCid` domain values. |
 | [Custom Type Auto-Update](custom-type-auto-update.md) | Makes enable/disable changes for custom and default types immediately update tracker lists, search windows, and tracker UI choices. |

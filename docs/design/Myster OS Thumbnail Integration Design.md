@@ -136,6 +136,51 @@ Primary API references: [Windows GetImage](https://learn.microsoft.com/en-us/win
 [Tumbler D-Bus definition](https://github.com/xfce-mirror/tumbler/blob/master/tumblerd/tumbler-service-dbus.xml.in),
 and [dbus-java](https://github.com/hypfvieh/dbus-java).
 
+## Remote thumbnail transfer
+
+`MysterStream.getThumbnail(socket, type, filename, size)` retrieves one thumbnail through
+TCP section **79**. It is a blocking operation on a caller-owned connection; callers
+choose background execution and sequence their own sections. It returns a caller-owned
+`BufferedImage`, or null when the file is denied, unshared, missing or has no thumbnail.
+The handler follows the existing simple connection-section pattern, including the
+inherited acknowledgement and return to the connection dispatcher after each response.
+
+Network requests accept **1–256 pixels**, independently of the local API's 1024-pixel
+limit. Size bounds both dimensions. The image keeps its actual width and height without
+padding, cropping, stretching or upscaling. Image bodies are limited to
+**256 × 256 × 4 = 262,144 bytes (256 KiB)**; framing and headers are separate.
+
+After the standard section acknowledgement, the client sends a length-prefixed
+MessagePack with `/type` (16-byte binary type CID), `/filename` (opaque shared-index
+reference) and `/size`. The server responds with a length-prefixed MessagePack containing
+`/mimeType`, `/length`, `/width` and `/height`, immediately followed by exactly `/length`
+image bytes outside MessagePack. An empty response map has no body. Request headers
+are capped at 64 KiB, response headers at 4 KiB.
+
+The two MIME types are `image/png` and `image/x-myster-argb32`. Raw pixels are straight-alpha
+sRGB ARGB integers in big-endian order (A, R, G, B bytes), row-major from the top left,
+with no row padding; their body length is exactly width × height × 4. PNG output is
+8-bit RGBA and must have the header's dimensions. The server encodes the final thumbnail
+as PNG and uses it when smaller than raw pixels, otherwise sends raw. The existing
+providers/cache retain decoded pixels; preserving original provider PNG bytes is a
+deferred optimization in [TODO.txt](../../TODO.txt).
+
+`ThumbnailStreamServer` checks the connection's authenticated caller identity through
+`AccessEnforcementUtils`, checks sharing and resolves the reference through the file
+index before calling its injected `Thumbnails.summonThumbnail` source. Native acquisition
+still runs on the existing thumbnail workers. The access helper's current policy,
+including fail-open access-list read errors, is unchanged; the endpoint access-control
+audit is tracked separately in TODO.
+
+`ThumbnailProtocolUtils` handles bounded serialization and image conversion. Clients
+validate dimensions/lengths before image allocation, check PNG chunk framing/checksums
+and decode only the buffered body. Success and misses leave the connection positioned
+for another section. Malformed/unsupported responses raise `IOException`; callers discard
+the connection after an I/O error. Old servers rejecting section 79 produce the existing
+`UnknownProtocolException`. ImageIO streams use memory caches without changing global
+ImageIO settings. There is no remote-thumbnail cache or client/search-window integration
+in this milestone. See the [Part 2 plan](../plans/os-thumbnails-part-2.md) for the full contract.
+
 ## Common abstraction
 
 Hide all platform behavior behind a small platform-independent interface, conceptually:

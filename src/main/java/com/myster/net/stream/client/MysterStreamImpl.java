@@ -1,5 +1,6 @@
 package com.myster.net.stream.client;
 
+import java.awt.image.BufferedImage;
 import java.io.IOException;
 import java.security.PublicKey;
 import java.util.List;
@@ -72,6 +73,12 @@ public class MysterStreamImpl implements MysterStream {
     @Override
     public MessagePak getFileStats(MysterSocket socket, MysterFileStub stub) throws IOException {
         return StandardSuiteStream.getFileStats(socket, stub);
+    }
+
+    @Override
+    public BufferedImage getThumbnail(MysterSocket socket, MysterType type, String filename, int size)
+            throws IOException {
+        return StandardSuiteStream.getThumbnail(socket, type, filename, size);
     }
 
     @Override

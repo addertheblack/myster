@@ -170,6 +170,8 @@ Application-specific logic for the Myster P2P network:
   - `Thumbnails` - Blocking worker API and asynchronous Swing API
   - `ThumbnailPlatform` - Per-platform extension whitelists and provider selection
   - `ThumbnailPreview` - Standalone folder/size thumbnail grid using the platform whitelist, with load timings
+  - Remote access uses `MysterStream.getThumbnail` / `ThumbnailStreamServer` (TCP section 79),
+    reusing the local facade and workers with a 256-pixel network limit
 - **`com.myster.util`** - Myster-specific utilities
   - `I18n` - Internationalization
   - `TypeChoice` - Type selector combo box
@@ -198,6 +200,8 @@ doing so avoids bootstrap cycles.
   - `getServerStats()` - Get server metadata
   - `getFileList()` - List files of a type
   - `getFileStats()` - Get file metadata
+  - `getThumbnail()` - Get an unpadded image bounded by 256 pixels per dimension; section 79
+    sends a MessagePack header followed by PNG or raw ARGB32, at most 256 KiB per image body
   - `downloadFile()` - Download via multi-source engine
 
 #### Datagram-based (UDP)

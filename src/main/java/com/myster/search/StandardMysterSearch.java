@@ -144,11 +144,14 @@ public class StandardMysterSearch {
                 .getFileStatsBatch(socket, fileStubs.toArray(new MysterFileStub[] {}))
                 .setInvoker(Invoker.EDT)
                 .addPartialResultListener(messagePack -> {
-                    mysterSearchResults[counter[0]].setFileStats(messagePack);
-
-                    listener.searchStats(mysterSearchResults[counter[0]]);
-
-                    counter[0]++;
+                    synchronized (StandardMysterSearch.this) {
+                        if (endFlag) {
+                            return;
+                        }
+                        mysterSearchResults[counter[0]].setFileStats(messagePack);
+                        listener.searchStats(mysterSearchResults[counter[0]]);
+                        counter[0]++;
+                    }
                 });
         
         try {

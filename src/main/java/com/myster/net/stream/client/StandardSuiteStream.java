@@ -1,5 +1,6 @@
 package com.myster.net.stream.client;
 
+import java.awt.image.BufferedImage;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
@@ -13,6 +14,7 @@ import com.myster.mml.MessagePak;
 import com.myster.net.DisconnectException;
 import com.myster.net.MysterAddress;
 import com.myster.net.MysterSocket;
+import com.myster.net.stream.ThumbnailProtocolUtils;
 import com.myster.net.stream.client.msdownload.DownloadInitiator;
 import com.myster.net.stream.client.msdownload.MSDownloadLocalQueue;
 import com.myster.net.stream.client.msdownload.MSDownloadParams;
@@ -126,6 +128,21 @@ public class StandardSuiteStream {
         return socket.in.readMessagePack();
     }
     
+    /**
+     * Blocking thumbnail section on a caller-owned socket; returns null for a thumbnail miss.
+     * @see com.myster.net.client.MysterStream#getThumbnail(MysterSocket, MysterType, String, int)
+     */
+    public static BufferedImage getThumbnail(MysterSocket socket, MysterType type, String filename,
+            int size) throws IOException {
+        MessagePak request = ThumbnailProtocolUtils.createRequest(type, filename, size);
+        socket.out.writeInt(ThumbnailProtocolUtils.SECTION_NUMBER);
+        socket.out.flush();
+        checkProtocol(socket.in);
+        socket.out.writeMessagePack(request);
+        socket.out.flush();
+        return ThumbnailProtocolUtils.readResponse(socket.in, size);
+    }
+
     public static record NamedMetaData(String name, MessagePak pak) {}
     
     public interface FileCallback {

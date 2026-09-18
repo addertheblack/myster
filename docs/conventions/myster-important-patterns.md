@@ -411,6 +411,32 @@ wrapper is the single dispatch point.
 
 ### Stream protocol facade and blocking calls
 
+**Thumbnail/file lookup boundaries:** Myster's network filenames are opaque file-reference
+keys. Resolve `(MysterType, filename)` through `FileTypeListManager.getFileItem`, then use
+`FileItem.getPath()`; do not construct a filesystem path from a peer's filename. Apply
+`AccessEnforcementUtils.isAllowed` before lookup or thumbnail acquisition, as other
+file-serving sections do. The helper currently fails open on an access-list read error;
+new handlers inherit that policy rather than assuming lookup itself checks membership.
+
+`Thumbnails.summonThumbnail(path, size)` returns a shared, read-only image with width and
+height each at most `size`; it may be rectangular, and neither dimension has to reach
+the bound. Thumbnail transfer preserves those dimensions without padding. The response
+must communicate the actual dimensions for raw-pixel decoding. The blocking facade already
+routes native acquisition to the thumbnail platform workers, so server code should call
+the facade rather than a provider directly.
+
+Thumbnail results and the shared memory cache hold decoded `BufferedImage` pixels, not
+the source PNG bytes. Linux and macOS decode their PNGs before returning from the provider;
+Windows returns bitmap pixels. The service may resize any provider's result. Encode the
+final image when PNG bytes are needed; retaining an original PNG would require a different
+result/cache representation and is only useful when resizing is unnecessary.
+
+The network thumbnail section caps requests at 256 pixels and image bodies at 256 KiB;
+the local thumbnail facade still permits 1024 pixels. Image codecs use explicit
+`MemoryCacheImageInputStream` / `MemoryCacheImageOutputStream` instances to avoid temporary
+ImageIO disk caches and global cache-setting changes. Decode only the framed image body,
+never directly from a reusable Myster socket.
+
 `MysterProtocol` is the immutable aggregate of client protocol capabilities. Higher-level network
 concepts belong there behind narrow interfaces in `com.myster.net.client`; for example,
 `DnsLookupProtocol` is exposed by the aggregate and implemented by `ThreeDnsLookup`. Consumers

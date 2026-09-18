@@ -33,6 +33,15 @@
 - Centralize TCP stream section numbers in a shared StreamConstants class, like DatagramConstants
   for UDP, so clients and servers use the same constants without clients depending on server handlers.
 - Fix naming — probably want to use myster.org and not the current com.myster etc....
+- Audit and enforce access controls on all Myster endpoints:
+    - Inventory every TCP stream section and UDP transaction; document intentionally public
+      operations and the membership/admin permissions required by each protected operation.
+    - Check authorization before exposing protected type/file listings, search results, metadata,
+      hash lookups, downloads or thumbnails, and before changing protected state.
+    - Verify caller identity comes from authenticated transport and review missing checks,
+      alternate/batch paths, plaintext requests and fail-open behavior on access-list errors.
+    - Add regression tests proving unauthorized callers cannot read or change protected data,
+      while authorized callers and intentionally public operations continue to work.
 - Review and implement general server abuse / DoS protection:
     - Prevent UDP reflection and packet amplification (don't be a vector for attacks on others).
     - Add general per-IP rate limiting across server requests, beyond invitation password checks.
@@ -53,6 +62,11 @@
   (e.g. Ollama, llama.cpp, or a Python Transformers helper) to generate a short
   `/ImageCaption` description. Keep it opt-in, cached under its own metadata schema,
   and privacy-reviewed because captions can expose sensitive image contents.
+- Revisit retaining/reusing already-encoded PNG thumbnail bytes to avoid re-encoding:
+    - Reuse them only when the image already meets the requested dimensions and protocol
+      format/body limits; preserve file-freshness checks and omit local-path cache metadata.
+    - Keep encoding the final BufferedImage as the fallback for resized images and providers
+      that return bitmap pixels. Deferred beyond the thumbnail protocol milestone.
 
 - Important things to do to get private types working
     - Implement type file that allows someone to import a type into myster.

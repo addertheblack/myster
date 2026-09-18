@@ -1,6 +1,7 @@
 
 package com.myster.net.client;
 
+import java.awt.image.BufferedImage;
 import java.io.IOException;
 import java.util.List;
 import java.util.Optional;
@@ -48,6 +49,22 @@ public interface MysterStream {
     
     String getFileFromHash(MysterSocket socket, MysterType type, FileHash[] hashes) throws IOException;
     MessagePak getFileStats(MysterSocket socket, MysterFileStub stub)
+            throws IOException;
+
+    /**
+     * Fetches one thumbnail through TCP section 79. This is a blocking call for worker threads;
+     * callers choose background execution and must sequence operations on the socket.
+     *
+     * @param socket caller-owned connection, left open after success or a thumbnail miss
+     * @param type file's Myster type
+     * @param filename exact opaque file reference returned by listing/search
+     * @param size maximum width and height, from 1 through 256 pixels; images are not padded
+     * @return caller-owned image, or null for denied, missing or unavailable thumbnails
+     * @throws IllegalArgumentException for invalid request arguments or an oversized request
+     * @throws com.myster.net.stream.client.UnknownProtocolException if the peer rejects the section
+     * @throws IOException for malformed responses or I/O failure; close/discard the connection
+     */
+    BufferedImage getThumbnail(MysterSocket socket, MysterType type, String filename, int size)
             throws IOException;
     
     boolean ping(MysterSocket socket);
