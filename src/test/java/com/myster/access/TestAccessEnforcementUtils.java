@@ -8,12 +8,18 @@ import java.util.List;
 import java.util.Optional;
 
 import com.myster.cid.ServerCid;
+import com.myster.filemanager.FileTypeListManager;
+import com.myster.identity.Identity;
+import com.myster.mml.MessagePak;
+import com.myster.net.stream.server.ServerStats;
 import com.myster.type.MetadataTypeId;
 import com.myster.type.MysterType;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 
 import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
 
 /**
  * Tests for the five allow/deny cases in {@link AccessEnforcementUtils#isAllowed}.
@@ -115,9 +121,58 @@ class TestAccessEnforcementUtils {
         assertFalse(AccessEnforcementUtils.isAllowed(type, Optional.of(unknownCid), reader),
                     "Unknown caller must be denied on a private type");
     }
+
+    @Test
+    void serverStatsHidesPrivateTypeCountsFromUnauthorizedCaller() throws Exception {
+        AccessList privateList = buildPrivateList();
+        MysterType privateType = privateList.getMysterType();
+
+        FileTypeListManager fileManager = mock(FileTypeListManager.class);
+        when(fileManager.getFileTypeListing()).thenReturn(new MysterType[] { privateType });
+        when(fileManager.hasInitialized(privateType)).thenReturn(true);
+        when(fileManager.getNumberOfFiles(privateType)).thenReturn(7);
+
+        Identity identity = mock(Identity.class);
+        when(identity.getMainIdentity()).thenReturn(Optional.of(rsaKeyPair));
+
+        MessagePak stats = ServerStats.getServerStatsMessagePack(
+                "server",
+                1234,
+                identity,
+                fileManager,
+                Optional.empty(),
+                _ -> Optional.of(privateList));
+
+        assertTrue(stats.getInt(ServerStats.NUMBER_OF_FILES + privateType).isEmpty(),
+                   "Private type counts must be hidden from unauthorized callers");
+    }
+
+    @Test
+    void serverStatsShowsPrivateTypeCountsForMemberCaller() throws Exception {
+        KeyPair memberKeyPair = KeyPairGenerator.getInstance("Ed25519").generateKeyPair();
+        ServerCid memberCid = ServerCid.fromPublicKey(memberKeyPair.getPublic());
+
+        AccessList privateList = buildPrivateList();
+        privateList.appendBlock(new AddMemberOp(memberCid, Role.MEMBER), ed25519KeyPair);
+        MysterType privateType = privateList.getMysterType();
+
+        FileTypeListManager fileManager = mock(FileTypeListManager.class);
+        when(fileManager.getFileTypeListing()).thenReturn(new MysterType[] { privateType });
+        when(fileManager.hasInitialized(privateType)).thenReturn(true);
+        when(fileManager.getNumberOfFiles(privateType)).thenReturn(11);
+
+        Identity identity = mock(Identity.class);
+        when(identity.getMainIdentity()).thenReturn(Optional.of(rsaKeyPair));
+
+        MessagePak stats = ServerStats.getServerStatsMessagePack(
+                "server",
+                1234,
+                identity,
+                fileManager,
+                Optional.of(memberCid),
+                _ -> Optional.of(privateList));
+
+        assertEquals(Optional.of(11), stats.getInt(ServerStats.NUMBER_OF_FILES + privateType),
+                     "Known members should still see private-type file counts");
+    }
 }
-
-
-
-
-

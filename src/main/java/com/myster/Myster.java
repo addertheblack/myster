@@ -369,6 +369,7 @@ public class Myster {
                                                      transactionManager,
                                                      identity,
                                                      fileManager,
+                                                     accessListManager,
                                                      serverDispatcher);
         INSTRUMENTATION.info("-------->> ServerFacade created " + (System.currentTimeMillis() - startTime));
         
@@ -766,7 +767,8 @@ public class Myster {
         serverFacade
                 .addConnectionSection(new com.myster.net.stream.server.ServerStats(preferences::getIdentityName,
                                                                                preferences::getServerPort,
-                                                                               identity));
+                                                                               identity,
+                                                                               accessListManager));
         serverFacade.addConnectionSection(new com.myster.net.stream.server.FileStatsStreamServer(accessListManager));
         serverFacade.addConnectionSection(new ThumbnailStreamServer(accessListManager, Thumbnails::summonThumbnail));
         serverFacade.addConnectionSection(new com.myster.net.stream.server.FileStatsBatchStreamServer(accessListManager));
@@ -783,19 +785,21 @@ public class Myster {
         serverFacade
                 .addDatagramTransactions(new TopTenDatagramServer(tracker),
                                          new TypeDatagramServer(fileManager, accessListManager),
-                                         new SearchDatagramServer(fileManager),
+                                         new SearchDatagramServer(fileManager, accessListManager),
                                          new ServerStatsDatagramServer(preferences::getIdentityName,
                                                                        preferences::getServerPort,
                                                                        identity,
-                                                                       fileManager),
+                                                                       fileManager,
+                                                                       accessListManager),
                                          new BidirectionalServerStatsDatagramServer(preferences::getIdentityName,
                                                                                     preferences::getServerPort,
                                                                                     identity,
                                                                                     fileManager,
-                                                                                    pool),
+                                                                                    pool,
+                                                                                    accessListManager),
                                          new FindClosestDatagramServer(pool),
-                                         new FileStatsDatagramServer(fileManager),
-                                         new SearchHashDatagramServer(fileManager));
+                                         new FileStatsDatagramServer(fileManager, accessListManager),
+                                         new SearchHashDatagramServer(fileManager, accessListManager));
     }
 
     private static void setupLogging() throws IOException {

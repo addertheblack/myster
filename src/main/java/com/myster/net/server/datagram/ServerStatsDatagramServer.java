@@ -2,16 +2,16 @@ package com.myster.net.server.datagram;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
+import java.util.Optional;
 import java.util.function.Supplier;
 import java.util.logging.Logger;
 
+import com.myster.access.AccessListReader;
 import com.myster.filemanager.FileTypeListManager;
 import com.myster.identity.Identity;
 import com.myster.net.datagram.BadPacketException;
 import com.myster.net.datagram.DatagramConstants;
 import com.myster.net.stream.client.MysterDataOutputStream;
-import com.myster.net.stream.server.NotInitializedException;
-import com.myster.net.stream.server.ServerStats;
 import com.myster.transaction.Transaction;
 import com.myster.transaction.TransactionProtocol;
 import com.myster.transaction.TransactionSender;
@@ -26,15 +26,18 @@ public class ServerStatsDatagramServer implements TransactionProtocol {
     private final Supplier<Integer> getPort;
     private final Identity identity;
     private final FileTypeListManager fileManager;
+    private final AccessListReader accessListReader;
 
     public ServerStatsDatagramServer(Supplier<String> getServerName,
                                      Supplier<Integer> getPort,
                                      Identity identity,
-                                     FileTypeListManager fileManager) {
+                                     FileTypeListManager fileManager,
+                                     AccessListReader accessListReader) {
         this.getServerName = getServerName;
         this.getPort = getPort;
         this.identity = identity;
         this.fileManager = fileManager;
+        this.accessListReader = accessListReader == null ? (type -> Optional.empty()) : accessListReader;
     }
 
     @Override
@@ -53,7 +56,9 @@ public class ServerStatsDatagramServer implements TransactionProtocol {
                     .getServerStatsMessagePack(getServerName.get(),
                                                getPort.get(),
                                                identity,
-                                               fileManager));
+                                               fileManager,
+                                               transaction.callerCid(),
+                                               accessListReader));
 
             sender.sendTransaction(new Transaction(transaction,
                                                    byteOutputStream.toByteArray(),

@@ -6,16 +6,16 @@
   <component name="ChangeListManager">
     <list default="true" id="fe0d93f5-a1b5-4669-89e3-19e762d0ae4a" name="Changes" comment="Fix XML encoding in project configuration for better compatibility">
       <change beforePath="$PROJECT_DIR$/Myster.iws" beforeDir="false" afterPath="$PROJECT_DIR$/Myster.iws" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/TODO.txt" beforeDir="false" afterPath="$PROJECT_DIR$/TODO.txt" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/docs/codebase-structure.md" beforeDir="false" afterPath="$PROJECT_DIR$/docs/codebase-structure.md" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/docs/conventions/myster-important-patterns.md" beforeDir="false" afterPath="$PROJECT_DIR$/docs/conventions/myster-important-patterns.md" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/docs/design/Myster OS Thumbnail Integration Design.md" beforeDir="false" afterPath="$PROJECT_DIR$/docs/design/Myster OS Thumbnail Integration Design.md" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/docs/plans/README.md" beforeDir="false" afterPath="$PROJECT_DIR$/docs/plans/README.md" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/src/main/java/com/myster/Myster.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/com/myster/Myster.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/com/myster/net/client/MysterStream.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/com/myster/net/client/MysterStream.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/com/myster/net/stream/client/MysterStreamImpl.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/com/myster/net/stream/client/MysterStreamImpl.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/com/myster/net/stream/client/StandardSuiteStream.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/com/myster/net/stream/client/StandardSuiteStream.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/com/myster/search/StandardMysterSearch.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/com/myster/search/StandardMysterSearch.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/com/myster/net/server/ServerFacade.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/com/myster/net/server/ServerFacade.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/com/myster/net/server/datagram/BidirectionalServerStatsDatagramServer.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/com/myster/net/server/datagram/BidirectionalServerStatsDatagramServer.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/com/myster/net/server/datagram/FileStatsDatagramServer.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/com/myster/net/server/datagram/FileStatsDatagramServer.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/com/myster/net/server/datagram/SearchDatagramServer.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/com/myster/net/server/datagram/SearchDatagramServer.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/com/myster/net/server/datagram/SearchHashDatagramServer.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/com/myster/net/server/datagram/SearchHashDatagramServer.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/com/myster/net/server/datagram/ServerStatsDatagramServer.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/com/myster/net/server/datagram/ServerStatsDatagramServer.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/com/myster/net/stream/server/ServerStats.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/com/myster/net/stream/server/ServerStats.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/test/java/com/myster/access/TestAccessEnforcementUtils.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/test/java/com/myster/access/TestAccessEnforcementUtils.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/test/java/com/myster/transaction/TestBidirectionalServerStatsDatagramProtocol.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/test/java/com/myster/transaction/TestBidirectionalServerStatsDatagramProtocol.java" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -230,23 +230,23 @@
   </component>
   <component name="NextEditCompletionFeaturesState">
     <decayedCancelled>
-      <entry key="MS100" value="1.4243407479337213" />
-      <entry key="MS500" value="3.4344289137378614" />
-      <entry key="S2" value="8.915094237972053" />
-      <entry key="S5" value="19.133636791226127" />
-      <entry key="S10" value="34.033672654342745" />
-      <entry key="S30" value="64.78949178617842" />
-      <entry key="S60" value="82.4314056004645" />
-      <entry key="M2" value="102.51967567884563" />
-      <entry key="M5" value="171.55848436774107" />
-      <entry key="M10" value="265.17822758723395" />
-      <entry key="M15" value="365.3625890535896" />
-      <entry key="M30" value="710.2499055545803" />
-      <entry key="H1" value="1219.446437921511" />
-      <entry key="H2" value="1688.0050088619887" />
-      <entry key="H4" value="2011.4415396147429" />
-      <entry key="D1" value="3703.9754039747913" />
-      <entry key="W1" value="10357.016381121357" />
+      <entry key="MS100" value="1.9196083308565082" />
+      <entry key="MS500" value="6.054760380740783" />
+      <entry key="S2" value="16.956826476322966" />
+      <entry key="S5" value="29.88473903267578" />
+      <entry key="S10" value="40.57427528724317" />
+      <entry key="S30" value="52.55692810558269" />
+      <entry key="S60" value="56.52373359070335" />
+      <entry key="M2" value="58.6935724428225" />
+      <entry key="M5" value="60.06041126958934" />
+      <entry key="M10" value="60.57112846564889" />
+      <entry key="M15" value="61.78439509936448" />
+      <entry key="M30" value="99.81610594201237" />
+      <entry key="H1" value="346.5788129071894" />
+      <entry key="H2" value="877.9481678256541" />
+      <entry key="H4" value="1460.3365610949356" />
+      <entry key="D1" value="3547.6190759273923" />
+      <entry key="W1" value="10328.926712336213" />
     </decayedCancelled>
     <decayedSelected>
       <entry key="MS100" value="0.0" />
@@ -257,34 +257,34 @@
       <entry key="S30" value="0.0" />
       <entry key="S60" value="0.0" />
       <entry key="M2" value="0.0" />
-      <entry key="M5" value="1.6166854317214277E-158" />
-      <entry key="M10" value="1.271490333250525E-79" />
-      <entry key="M15" value="2.52876885524998E-53" />
-      <entry key="M30" value="5.072956352175573E-27" />
-      <entry key="H1" value="7.758018215331204E-14" />
-      <entry key="H2" value="3.482612860538382E-7" />
-      <entry key="H4" value="8.40535628990192E-4" />
-      <entry key="D1" value="1.5084709897282647" />
-      <entry key="W1" value="7.562364601373406" />
+      <entry key="M5" value="4.4139707967331924E-166" />
+      <entry key="M10" value="2.1009466678438414E-83" />
+      <entry key="M15" value="7.614541843900369E-56" />
+      <entry key="M30" value="2.7837385738294306E-28" />
+      <entry key="H1" value="1.8173327617558498E-14" />
+      <entry key="H2" value="1.6855709192582602E-7" />
+      <entry key="H4" value="5.84759171958684E-4" />
+      <entry key="D1" value="1.4199523853846046" />
+      <entry key="W1" value="7.497314497692352" />
     </decayedSelected>
     <decayedShown>
-      <entry key="MS100" value="1.2232878148426969" />
-      <entry key="MS500" value="3.3385537286629843" />
-      <entry key="S2" value="8.87420746687291" />
-      <entry key="S5" value="19.107159481841112" />
-      <entry key="S10" value="34.00909728550278" />
-      <entry key="S30" value="64.76829225801468" />
-      <entry key="S60" value="82.41580172306473" />
-      <entry key="M2" value="102.50963469800199" />
-      <entry key="M5" value="171.5528572039809" />
-      <entry key="M10" value="265.1746170490449" />
-      <entry key="M15" value="365.3598145982803" />
-      <entry key="M30" value="710.2480859641457" />
-      <entry key="H1" value="1219.4452606639595" />
-      <entry key="H2" value="1688.0043041988674" />
-      <entry key="H4" value="2011.4419882031843" />
-      <entry key="D1" value="3705.4837400776405" />
-      <entry key="W1" value="10364.578683964311" />
+      <entry key="MS100" value="1.8800978835093352" />
+      <entry key="MS500" value="6.029271183180427" />
+      <entry key="S2" value="16.938584960971394" />
+      <entry key="S5" value="29.871601180900377" />
+      <entry key="S10" value="40.56521523385618" />
+      <entry key="S30" value="52.55295984055551" />
+      <entry key="S60" value="56.52159103125787" />
+      <entry key="M2" value="58.692457705718404" />
+      <entry key="M5" value="60.059954407377994" />
+      <entry key="M10" value="60.57089756337907" />
+      <entry key="M15" value="61.784232787769156" />
+      <entry key="M30" value="99.8159289040632" />
+      <entry key="H1" value="346.5784984843313" />
+      <entry key="H2" value="877.947807434379" />
+      <entry key="H4" value="1460.336863505269" />
+      <entry key="D1" value="3549.038899728759" />
+      <entry key="W1" value="10336.42396537636" />
     </decayedShown>
   </component>
   <component name="PerforceConfiguration">

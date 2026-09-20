@@ -4,6 +4,8 @@ import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 
+import com.myster.access.AccessEnforcementUtils;
+import com.myster.access.AccessListReader;
 import com.myster.filemanager.FileTypeListManager;
 import com.myster.net.datagram.BadPacketException;
 import com.myster.net.datagram.DatagramConstants;
@@ -19,9 +21,11 @@ import com.myster.type.MysterType;
 public class SearchDatagramServer implements TransactionProtocol {
     
     private final FileTypeListManager fileManager;
+    private final AccessListReader accessListReader;
 
-    public SearchDatagramServer(FileTypeListManager fileManager) {
+    public SearchDatagramServer(FileTypeListManager fileManager, AccessListReader accessListReader) {
         this.fileManager = fileManager;
+        this.accessListReader = accessListReader;
     }
     
     @Override
@@ -45,6 +49,14 @@ public class SearchDatagramServer implements TransactionProtocol {
 
             MysterType type = in.readType();
             searchstring = in.readUTF();
+
+            if (!AccessEnforcementUtils.isAllowed(type, transaction.callerCid(), accessListReader)) {
+                out.writeUTF("");
+                sender.sendTransaction(new Transaction(transaction,
+                                                       byteOutputStream.toByteArray(),
+                                                       DatagramConstants.NO_ERROR));
+                return;
+            }
 
             ServerSearchDispatcher dispatcher = (ServerSearchDispatcher) transactionObject;
 

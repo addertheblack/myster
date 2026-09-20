@@ -17,6 +17,7 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 
 import com.general.thread.BoundedExecutor;
+import com.myster.access.AccessListReader;
 import com.myster.application.MysterGlobals;
 import com.myster.filemanager.FileTypeListManager;
 import com.myster.identity.Identity;
@@ -50,6 +51,7 @@ public class ServerFacade {
     private final Executor connectionExecutor;
     private final Identity identity;
     private final FileTypeListManager fileManager;
+    private final AccessListReader accessListReader;
     private MysterMdnsAnnouncer mdnsAnnouncer; // mDNS service announcer (optional)
 
     // Track protocols added to main port so we can move them when port changes
@@ -62,6 +64,7 @@ public class ServerFacade {
                         TransactionManager transactionManager,
                         Identity identity,
                         FileTypeListManager fileManager,
+                        AccessListReader accessListReader,
                         ServerEventDispatcher serverDispatcher) {
         this.tracker = tracker;
         this.preferences = preferences;
@@ -69,6 +72,7 @@ public class ServerFacade {
         this.transactionManager = transactionManager;
         this.identity = identity;
         this.fileManager = fileManager;
+        this.accessListReader = accessListReader;
         this.serverDispatcher = serverDispatcher;
         this.operatorExecutor = Executors.newVirtualThreadPerTaskExecutor();
         this.connectionExecutor = new BoundedExecutor(120, operatorExecutor);
@@ -139,7 +143,8 @@ public class ServerFacade {
                                 new ServerStatsDatagramServer(preferences::getIdentityName,
                                                               preferences::getServerPort,
                                                               identity,
-                                                              fileManager));
+                                                              fileManager,
+                                                              accessListReader));
 
     }
 

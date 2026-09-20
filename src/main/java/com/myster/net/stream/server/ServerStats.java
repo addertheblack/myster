@@ -12,8 +12,12 @@ package com.myster.net.stream.server;
 
 import java.io.IOException;
 import java.util.Base64;
+import java.util.Optional;
 import java.util.function.Supplier;
 
+import com.myster.access.AccessEnforcementUtils;
+import com.myster.access.AccessListReader;
+import com.myster.cid.ServerCid;
 import com.myster.filemanager.FileTypeListManager;
 import com.myster.identity.Identity;
 import com.myster.mml.MessagePak;
@@ -36,12 +40,16 @@ public class ServerStats extends ServerStreamHandler {
     private final Supplier<String> getServerName;
     private final Identity identity;
     private final Supplier<Integer> getPort;
+    private final AccessListReader accessListReader;
 
-
-    public ServerStats(Supplier<String> getServerName, Supplier<Integer> getPort, Identity identity) {
+    public ServerStats(Supplier<String> getServerName,
+                      Supplier<Integer> getPort,
+                      Identity identity,
+                      AccessListReader accessListReader) {
         this.getServerName = getServerName;
         this.getPort = getPort;
         this.identity = identity;
+        this.accessListReader = accessListReader == null ? (type -> Optional.empty()) : accessListReader;
     }
     
     public int getSectionNumber() {
@@ -51,7 +59,12 @@ public class ServerStats extends ServerStreamHandler {
     public void section(ConnectionContext context) throws IOException {
         MessagePak messagePackToSend;
         try {
-            messagePackToSend = getServerStatsMessagePack(getServerName.get(), getPort.get(), identity, context.fileManager());
+            messagePackToSend = getServerStatsMessagePack(getServerName.get(),
+                                                        getPort.get(),
+                                                        identity,
+                                                        context.fileManager(),
+                                                        context.callerCid(),
+                                                        accessListReader);
             context.socket().out.writeMessagePack(messagePackToSend);
         } catch (NotInitializedException _) {
             throw new IOException("File list not initialized");
@@ -59,10 +72,28 @@ public class ServerStats extends ServerStreamHandler {
     }
 
     //Returns a MessagePack that would be sent as bytes via a connection.
-    public static MessagePak getServerStatsMessagePack(String serverName, int port, Identity identity, FileTypeListManager fileManager) throws NotInitializedException {
+    public static MessagePak getServerStatsMessagePack(String serverName,
+                                                      int port,
+                                                      Identity identity,
+                                                      FileTypeListManager fileManager)
+            throws NotInitializedException {
+        return getServerStatsMessagePack(serverName,
+                                        port,
+                                        identity,
+                                        fileManager,
+                                        Optional.empty(),
+                                        type -> Optional.empty());
+    }
+
+    public static MessagePak getServerStatsMessagePack(String serverName,
+                                                      int port,
+                                                      Identity identity,
+                                                      FileTypeListManager fileManager,
+                                                      Optional<ServerCid> callerCid,
+                                                      AccessListReader accessListReader)
+            throws NotInitializedException {
         try {
             MessagePak serverStats = MessagePak.newEmpty();
-            
 
             MysterPreferences prefs = MysterPreferences.getInstance();
 
@@ -73,7 +104,7 @@ public class ServerStats extends ServerStreamHandler {
 
             serverStats.putString(MYSTER_VERSION, "1.0");
 
-            getNumberOfFilesMessagePack(serverStats, fileManager); //Adds the number of files data.
+            getNumberOfFilesMessagePack(serverStats, fileManager, callerCid, accessListReader);
 
             String ident = serverName;
             if (ident != null) {
@@ -81,17 +112,14 @@ public class ServerStats extends ServerStreamHandler {
                     serverStats.putString(SERVER_NAME, ident);
                 }
             }
-            
-             identity.getMainIdentity().ifPresent(pair -> {
-                 var publicKey = pair.getPublic();
-                 
-                 serverStats.putByteArray(IDENTITY, publicKey.getEncoded());
-             });
-             
-            
 
-            serverStats.putLong(UPTIME,  (System.currentTimeMillis() - com.myster.application.MysterGlobals
-                            .getLaunchedTime()));
+            identity.getMainIdentity().ifPresent(pair -> {
+                var publicKey = pair.getPublic();
+                serverStats.putByteArray(IDENTITY, publicKey.getEncoded());
+            });
+
+            serverStats.putLong(UPTIME, (System.currentTimeMillis() - com.myster.application.MysterGlobals
+                    .getLaunchedTime()));
 
             serverStats.putInt(PORT, port);
 
@@ -102,7 +130,6 @@ public class ServerStats extends ServerStreamHandler {
             ex.printStackTrace();
             throw new IllegalStateException(ex);
         }
-
     }
 
     /**
@@ -132,16 +159,25 @@ public class ServerStats extends ServerStreamHandler {
         return serverStats;
     }
 
-    private static MessagePak getNumberOfFilesMessagePack(MessagePak numOfFileStats, FileTypeListManager fileManager) throws NotInitializedException { // in-line
+    private static MessagePak getNumberOfFilesMessagePack(MessagePak numOfFileStats,
+                                                         FileTypeListManager fileManager,
+                                                         Optional<ServerCid> callerCid,
+                                                         AccessListReader accessListReader)
+            throws NotInitializedException { // in-line
         MysterType[] filetypelist = fileManager.getFileTypeListing();
 
         for (int i = 0; i < filetypelist.length; i++) {
-            if (!fileManager.hasInitialized(filetypelist[i])) {
-                throw new NotInitializedException("File list not inited", filetypelist[i]);
+            MysterType type = filetypelist[i];
+            if (!AccessEnforcementUtils.isAllowed(type, callerCid, accessListReader)) {
+                continue;
             }
 
-            numOfFileStats.putInt(NUMBER_OF_FILES + filetypelist[i],
-                       fileManager.getNumberOfFiles(filetypelist[i]));
+            if (!fileManager.hasInitialized(type)) {
+                throw new NotInitializedException("File list not inited", type);
+            }
+
+            numOfFileStats.putInt(NUMBER_OF_FILES + type,
+                                  fileManager.getNumberOfFiles(type));
         }
 
         return numOfFileStats;

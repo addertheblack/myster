@@ -11,6 +11,7 @@ import java.util.Optional;
 import java.util.function.Supplier;
 import java.util.logging.Logger;
 
+import com.myster.access.AccessListReader;
 import com.myster.cid.ServerCid;
 import com.myster.filemanager.FileTypeListManager;
 import com.myster.identity.Identity;
@@ -55,26 +56,20 @@ public class BidirectionalServerStatsDatagramServer implements TransactionProtoc
     private final Identity identity;
     private final FileTypeListManager fileManager;
     private final MysterServerPool pool;
+    private final AccessListReader accessListReader;
 
-    /**
-     * Creates a new bidirectional server stats datagram server.
-     *
-     * @param getServerName supplier for our server's name
-     * @param getPort supplier for our server's port
-     * @param identity our server's identity
-     * @param fileManager file manager for generating file statistics
-     * @param pool server pool to register discovered clients
-     */
     public BidirectionalServerStatsDatagramServer(Supplier<String> getServerName,
                                                    Supplier<Integer> getPort,
                                                    Identity identity,
                                                    FileTypeListManager fileManager,
-                                                   MysterServerPool pool) {
+                                                   MysterServerPool pool,
+                                                   AccessListReader accessListReader) {
         this.getServerName = getServerName;
         this.getPort = getPort;
         this.identity = identity;
         this.fileManager = fileManager;
         this.pool = pool;
+        this.accessListReader = accessListReader == null ? (type -> Optional.empty()) : accessListReader;
     }
 
     @Override
@@ -115,7 +110,12 @@ public class BidirectionalServerStatsDatagramServer implements TransactionProtoc
         MessagePak responseStats;
         try {
             responseStats = ServerStats.getServerStatsMessagePack(
-                    getServerName.get(), getPort.get(), identity, fileManager);
+                    getServerName.get(),
+                    getPort.get(),
+                    identity,
+                    fileManager,
+                    transaction.callerCid(),
+                    accessListReader);
         } catch (NotInitializedException exception) {
             responseStats = ServerStats.getMinimalServerStatsMessagePack(
                     getServerName.get(), getPort.get(), identity);

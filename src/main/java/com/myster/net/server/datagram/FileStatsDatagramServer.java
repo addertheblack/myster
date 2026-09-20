@@ -4,6 +4,8 @@ import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 
+import com.myster.access.AccessEnforcementUtils;
+import com.myster.access.AccessListReader;
 import com.myster.filemanager.FileItem;
 import com.myster.filemanager.FileTypeListManager;
 import com.myster.mml.MessagePak;
@@ -17,9 +19,11 @@ import com.myster.type.MysterType;
 
 public class FileStatsDatagramServer implements TransactionProtocol {
     private final FileTypeListManager fileManager;
+    private final AccessListReader accessListReader;
 
-    public FileStatsDatagramServer(FileTypeListManager fileManager) {
+    public FileStatsDatagramServer(FileTypeListManager fileManager, AccessListReader accessListReader) {
         this.fileManager = fileManager;
+        this.accessListReader = accessListReader;
     }
     
     public int getTransactionCode() {
@@ -37,7 +41,10 @@ public class FileStatsDatagramServer implements TransactionProtocol {
             MysterType type = in.readType();
             String filename = in.readUTF();
 
-            FileItem fileItem = fileManager.getFileItem(type, filename);
+            FileItem fileItem = AccessEnforcementUtils.isAllowed(
+                    type, transaction.callerCid(), accessListReader)
+                            ? fileManager.getFileItem(type, filename)
+                            : null;
             MessagePak messagePack;
 
             if (fileItem == null) { //file not found

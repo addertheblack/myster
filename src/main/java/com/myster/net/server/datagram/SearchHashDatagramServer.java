@@ -4,6 +4,8 @@ import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 
+import com.myster.access.AccessEnforcementUtils;
+import com.myster.access.AccessListReader;
 import com.myster.filemanager.FileItem;
 import com.myster.filemanager.FileTypeListManager;
 import com.myster.hash.FileHash;
@@ -18,11 +20,12 @@ import com.myster.transaction.TransactionSender;
 import com.myster.type.MysterType;
 
 public class SearchHashDatagramServer implements TransactionProtocol {
-    
     private final FileTypeListManager fileManager;
+    private final AccessListReader accessListReader;
 
-    public SearchHashDatagramServer(FileTypeListManager fileManager) {
+    public SearchHashDatagramServer(FileTypeListManager fileManager, AccessListReader accessListReader) {
         this.fileManager = fileManager;
+        this.accessListReader = accessListReader;
     }
     
     public int getTransactionCode() {
@@ -59,7 +62,8 @@ public class SearchHashDatagramServer implements TransactionProtocol {
 
             FileItem file = null;
 
-            if (md5Hash != null) {
+            if (md5Hash != null
+                    && AccessEnforcementUtils.isAllowed(type, transaction.callerCid(), accessListReader)) {
                 file = fileManager.getFileFromHash(type, md5Hash);
             }
 

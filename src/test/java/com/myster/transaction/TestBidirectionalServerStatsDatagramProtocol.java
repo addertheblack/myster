@@ -213,8 +213,10 @@ class TestBidirectionalServerStatsDatagramProtocol {
 
     @Test
     void legacyAndBidirectionalStatsCodesRemainIndependent() {
-        ServerStatsDatagramServer legacy = new ServerStatsDatagramServer(
-                () -> "server", () -> 7002, serverIdentity(), initializedFileManager());
+        ServerStatsDatagramServer legacy = new ServerStatsDatagramServer(() -> "server",
+                                                                         () -> 7002,
+                                                                         serverIdentity(),
+                                                                         initializedFileManager(), type -> Optional.empty());
         BidirectionalServerStatsDatagramServer bidirectional = businessCardServer(
                 mock(MysterServerPool.class), serverIdentity(), initializedFileManager());
 
@@ -236,8 +238,11 @@ class TestBidirectionalServerStatsDatagramProtocol {
             MysterServerPool pool,
             Identity identity,
             FileTypeListManager fileManager) {
-        return new BidirectionalServerStatsDatagramServer(
-                () -> "server", () -> 7002, identity, fileManager, pool);
+        return new BidirectionalServerStatsDatagramServer(() -> "server",
+                                                          () -> 7002,
+                                                          identity,
+                                                          fileManager,
+                                                          pool, type -> Optional.empty());
     }
 
     private static Identity clientIdentity() {
