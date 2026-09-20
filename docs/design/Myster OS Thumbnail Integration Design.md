@@ -545,3 +545,9 @@ The controller owns the preview cache. Hiding cancels current demand; closing al
 delay and detaches the pane callback. Connection resets discard cached outcomes. Requests use the
 already resolved address from the type-list connection. Part 4 must design shared list demand
 when implemented; Part 3 does not expose unused list priorities or multi-consumer handles.
+
+The details pane fits the image within a square acquisition bound, then sizes the preview row
+to the fitted image's height. Landscape images therefore leave more room for metadata instead
+of reserving an empty square around the image. Portrait images remain horizontally centered.
+The acquisition bound depends only on pane geometry, so receiving an image does not change the
+request size or trigger another download.

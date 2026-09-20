@@ -21,8 +21,9 @@ the current selection and connection generation.
 
 - The preview is added to the existing right-hand details area without removing or changing
   the current statistics text or show/hide behavior.
-- The preview uses the largest square that fits while retaining at least three metadata lines.
-  A short window may reduce the square to zero.
+- Acquisition uses the largest square bound that fits while retaining at least three metadata
+  lines. The displayed preview row uses only the fitted image's height, with metadata directly
+  below it. A short window may reduce the acquisition bound to zero.
 - Eligibility comes from the resolved Myster metadata profile, including custom types.
 - Hidden, minimized, disconnected, or closing owners have no demand. Reopening recomputes from
   the current selection without requiring a new selection event.
@@ -88,6 +89,8 @@ PNG or raw ARGB32 response. No new wire or disk format is introduced.
 
 - [x] A selected eligible file in a visible details pane displays a centered, aspect-preserving
       thumbnail without changing the pane divider or statistics layout.
+- [x] The preview row follows the image's fitted height without empty top/bottom bars; image
+      shape does not change the acquisition size or restart the request.
 - [x] Folders, empty selections, ineligible profiles, hidden panes, minimized windows, and
       disconnected windows issue no requests.
 - [x] Reopening the pane loads the current selection without a new selection event.
@@ -140,8 +143,9 @@ PNG or raw ARGB32 response. No new wire or disk format is introduced.
    descriptions, preserve attempted/pending/failure semantics, reset per connection, and ignore
    callbacks from cancelled generations.
 6. Replace the client details split-pane right component with `ClientFilePreviewPane`, retaining
-   the existing statistics panel and show/hide/divider behavior. Compute a fixed square from
-   available inner bounds and metadata minimum height; paint centered aspect-fit images only.
+   the existing statistics panel and show/hide/divider behavior. Compute a square acquisition
+   bound from available inner bounds and metadata minimum height. Reserve only the fitted
+   image's height for display and center it horizontally above the statistics.
 7. Attach `ClientPreviewController` to selection, split/divider/layout, hierarchy showing,
    window state, graphics configuration, connection reset, `stopStats`, `stopFileListing`, and
    `refreshIP`. Withdraw immediately on hidden/zero/clipped demand; debounce only new requests.

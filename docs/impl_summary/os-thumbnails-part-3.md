@@ -74,3 +74,17 @@ concurrency limits remain required while cancelled work finishes.
 Manual client-window checks on real monitors remain outstanding (divider behavior, minimization,
 HiDPI movement and real-peer responsiveness). TTL-expiry and full reconnect/type-profile lifecycle
 integration tests remain follow-up coverage. The full repository suite was not run for this change.
+
+## Preview layout correction
+
+`ClientFilePreviewPane` now sizes its preview row to the fitted image's height. This removes
+vertical letterboxing around landscape thumbnails and moves the file metadata immediately below
+the image. The acquisition bound remains independent of image shape to prevent repeat downloads.
+The Part 3 plan, design document and pane Javadoc describe the updated layout contract.
+
+The pane regression test covers landscape, portrait and square images, metadata placement,
+insets and stable acquisition geometry. All 12 focused tests passed; `git diff --check` passed:
+
+```text
+mvn -q -Djava.awt.headless=true -Dtest=TestClientFilePreviewPane,TestClientPreviewController,TestThumbnailUiUtils test
+```

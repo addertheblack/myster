@@ -14,7 +14,10 @@ import javax.swing.JTextArea;
 
 import com.myster.thumbnail.ui.ThumbnailUiUtils;
 
-/** Details-pane composite that displays a passive thumbnail above file statistics. */
+/**
+ * Details-pane composite with a passive thumbnail above file statistics. The preview row
+ * occupies only the fitted image's height, so metadata follows it without vertical letterboxing.
+ */
 public final class ClientFilePreviewPane extends JPanel {
     private final PreviewCanvas previewCanvas = new PreviewCanvas();
     private final JScrollPane statisticsScroll;
@@ -48,6 +51,7 @@ public final class ClientFilePreviewPane extends JPanel {
         setThumbnail(null);
     }
 
+    /** Maximum logical image dimension for acquisition, independent of the displayed aspect ratio. */
     public int getThumbnailLogicalSide() {
         if (!isShowing() || getWidth() <= 0 || getHeight() <= 0) {
             return 0;
@@ -62,7 +66,8 @@ public final class ClientFilePreviewPane extends JPanel {
     @Override
     public void doLayout() {
         int side = getThumbnailLogicalSide();
-        previewCanvas.setPreferredSize(new Dimension(side, side));
+        Rectangle fit = ThumbnailUiUtils.aspectFit(previewCanvas.image, new Rectangle(0, 0, side, side));
+        previewCanvas.setPreferredSize(new Dimension(side, fit.height));
         super.doLayout();
         if (side != logicalSide) {
             logicalSide = side;
