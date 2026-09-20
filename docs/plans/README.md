@@ -8,6 +8,7 @@ When adding or substantially changing an authoritative plan, update this index w
 
 | Plan | Abstract |
 |---|---|
+| [Arbitrary Display Scaling](ui-display-scaling.md) | Removes the tree's fixed 2× icon raster buffer and establishes arbitrary Java-reported scaling for all Myster UI work. |
 | [Standard Background Task Submission](promise-execute-conventions.md) | Documents the PromiseFutures.execute SwingWorker replacement and audits duplicate task scheduling. |
 | [OS Thumbnails](os-thumbnails.md) | Adds a platform thumbnail API, bounded memory cache and progressive standalone JPEG preview grid. |
 | [OS Thumbnails — Part 2: Thumbnail Transfer Protocol](os-thumbnails-part-2.md) | Adds a TCP thumbnail request capped at 256 pixels per dimension and 256 KiB per image body, with a MessagePack header followed by unpadded PNG or raw ARGB32 bytes. |

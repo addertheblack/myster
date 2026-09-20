@@ -44,3 +44,4 @@ The Implementation Agent writes a summary **after** completing all code changes,
 
 
 - [OS thumbnails — Part 3](os-thumbnails-part-3.md): client preview and simplified promise-based concurrency.
+- [Arbitrary display scaling](ui-display-scaling.md): direct tree icon painting and project-wide scaling conventions.

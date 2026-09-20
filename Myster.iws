@@ -4,13 +4,16 @@
     <option name="autoReloadType" value="ALL" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="fe0d93f5-a1b5-4669-89e3-19e762d0ae4a" name="Changes" comment="Implement OS thumbnails — Part 3: integrate client preview pane with cancellable thumbnail loading and metadata retention">
+    <list default="true" id="fe0d93f5-a1b5-4669-89e3-19e762d0ae4a" name="Changes" comment="Refactor ClientFilePreviewPane to optimize preview layout and enhance metadata display">
       <change beforePath="$PROJECT_DIR$/Myster.iws" beforeDir="false" afterPath="$PROJECT_DIR$/Myster.iws" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/docs/conventions/myster-coding-conventions.md" beforeDir="false" afterPath="$PROJECT_DIR$/docs/conventions/myster-coding-conventions.md" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/docs/conventions/myster-important-patterns.md" beforeDir="false" afterPath="$PROJECT_DIR$/docs/conventions/myster-important-patterns.md" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/docs/design/Myster OS Thumbnail Integration Design.md" beforeDir="false" afterPath="$PROJECT_DIR$/docs/design/Myster OS Thumbnail Integration Design.md" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/docs/impl_summary/os-thumbnails-part-3.md" beforeDir="false" afterPath="$PROJECT_DIR$/docs/impl_summary/os-thumbnails-part-3.md" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/docs/plans/os-thumbnails-part-3.md" beforeDir="false" afterPath="$PROJECT_DIR$/docs/plans/os-thumbnails-part-3.md" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/com/myster/client/ui/ClientFilePreviewPane.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/com/myster/client/ui/ClientFilePreviewPane.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/test/java/com/myster/client/ui/TestClientFilePreviewPane.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/test/java/com/myster/client/ui/TestClientFilePreviewPane.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/docs/impl_summary/README.md" beforeDir="false" afterPath="$PROJECT_DIR$/docs/impl_summary/README.md" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/docs/plans/README.md" beforeDir="false" afterPath="$PROJECT_DIR$/docs/plans/README.md" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/docs/plans/os-thumbnails-part-4.md" beforeDir="false" afterPath="$PROJECT_DIR$/docs/plans/os-thumbnails-part-4.md" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/com/general/mclist/TreeMCList.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/com/general/mclist/TreeMCList.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/test/java/com/myster/thumbnail/ui/TestThumbnailUiUtils.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/test/java/com/myster/thumbnail/ui/TestThumbnailUiUtils.java" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -225,23 +228,23 @@
   </component>
   <component name="NextEditCompletionFeaturesState">
     <decayedCancelled>
-      <entry key="MS100" value="2.3037537223023374" />
-      <entry key="MS500" value="5.383133298143224" />
-      <entry key="S2" value="16.376067244608365" />
-      <entry key="S5" value="36.93743138467726" />
-      <entry key="S10" value="60.092977017033526" />
-      <entry key="S30" value="93.51854664811218" />
-      <entry key="S60" value="106.38974675916153" />
-      <entry key="M2" value="113.81553377404846" />
-      <entry key="M5" value="122.86381897427351" />
-      <entry key="M10" value="181.47734369495404" />
-      <entry key="M15" value="277.77048458413896" />
-      <entry key="M30" value="552.605151841754" />
-      <entry key="H1" value="981.4642889964307" />
-      <entry key="H2" value="1717.242248603591" />
-      <entry key="H4" value="2798.86397692221" />
-      <entry key="D1" value="6164.603169538197" />
-      <entry key="W1" value="13427.976990329742" />
+      <entry key="MS100" value="1.1312492404239889" />
+      <entry key="MS500" value="3.6344255184169545" />
+      <entry key="S2" value="14.791619974550606" />
+      <entry key="S5" value="33.12228328782248" />
+      <entry key="S10" value="56.6317008463791" />
+      <entry key="S30" value="114.95284663462097" />
+      <entry key="S60" value="199.67693130975601" />
+      <entry key="M2" value="349.1722857909465" />
+      <entry key="M5" value="667.9106324824817" />
+      <entry key="M10" value="1041.664399072911" />
+      <entry key="M15" value="1307.3513313306998" />
+      <entry key="M30" value="1829.3939298595365" />
+      <entry key="H1" value="2473.6366037112407" />
+      <entry key="H2" value="3373.5350007437783" />
+      <entry key="H4" value="4606.426391575263" />
+      <entry key="D1" value="8310.212584757299" />
+      <entry key="W1" value="15700.852634456309" />
     </decayedCancelled>
     <decayedSelected>
       <entry key="MS100" value="0.0" />
@@ -252,34 +255,34 @@
       <entry key="S30" value="0.0" />
       <entry key="S60" value="0.0" />
       <entry key="M2" value="0.0" />
-      <entry key="M5" value="1.4033933772049505E-184" />
-      <entry key="M10" value="1.18464987150484E-92" />
-      <entry key="M15" value="5.197092340493452E-62" />
-      <entry key="M30" value="2.299782554960928E-31" />
-      <entry key="H1" value="5.2235243046536E-16" />
-      <entry key="H2" value="2.857666948609556E-8" />
-      <entry key="H4" value="2.4077385898360292E-4" />
-      <entry key="D1" value="1.224745437093814" />
-      <entry key="W1" value="7.340578838506266" />
+      <entry key="M5" value="5.946559344231526E-188" />
+      <entry key="M10" value="2.438558502096564E-94" />
+      <entry key="M15" value="3.903515230314346E-63" />
+      <entry key="M30" value="6.302814097623343E-32" />
+      <entry key="H1" value="2.7345601521919155E-16" />
+      <entry key="H2" value="2.067633416351753E-8" />
+      <entry key="H4" value="2.0480487912101993E-4" />
+      <entry key="D1" value="1.192159391394325" />
+      <entry key="W1" value="7.312354457528551" />
     </decayedSelected>
     <decayedShown>
-      <entry key="MS100" value="2.2763786768430134" />
-      <entry key="MS500" value="5.369502345584832" />
-      <entry key="S2" value="16.365276869151884" />
-      <entry key="S5" value="36.92757927746342" />
-      <entry key="S10" value="60.084925550386934" />
-      <entry key="S30" value="93.51435635747356" />
-      <entry key="S60" value="106.38736122532438" />
-      <entry key="M2" value="113.81425720110103" />
-      <entry key="M5" value="122.86326582697002" />
-      <entry key="M10" value="181.47692283562736" />
-      <entry key="M15" value="277.7700451654988" />
-      <entry key="M30" value="552.6047018879372" />
-      <entry key="H1" value="981.4638665675321" />
-      <entry key="H2" value="1717.2418344273217" />
-      <entry key="H4" value="2798.86384392772" />
-      <entry key="D1" value="6165.827741128211" />
-      <entry key="W1" value="13435.317499332252" />
+      <entry key="MS100" value="1.0244695784670939" />
+      <entry key="MS500" value="3.6053441991013635" />
+      <entry key="S2" value="14.775041048660292" />
+      <entry key="S5" value="33.10881972750908" />
+      <entry key="S10" value="56.62077442544632" />
+      <entry key="S30" value="114.94598867295684" />
+      <entry key="S60" value="199.67121554610569" />
+      <entry key="M2" value="349.16730027245814" />
+      <entry key="M5" value="667.9068104992298" />
+      <entry key="M10" value="1041.6614521253534" />
+      <entry key="M15" value="1307.3488850003384" />
+      <entry key="M30" value="1829.3922438837035" />
+      <entry key="H1" value="2473.6354734788365" />
+      <entry key="H2" value="3373.5342077889336" />
+      <entry key="H4" value="4606.426021109211" />
+      <entry key="D1" value="8311.404530456317" />
+      <entry key="W1" value="15708.16491295339" />
     </decayedShown>
   </component>
   <component name="PerforceConfiguration">
@@ -517,7 +520,15 @@
       <option name="project" value="LOCAL" />
       <updated>1789929265168</updated>
     </task>
-    <option name="localTasksCounter" value="7" />
+    <task id="LOCAL-00007" summary="Refactor ClientFilePreviewPane to optimize preview layout and enhance metadata display">
+      <option name="closed" value="true" />
+      <created>1789931690572</created>
+      <option name="number" value="00007" />
+      <option name="presentableId" value="LOCAL-00007" />
+      <option name="project" value="LOCAL" />
+      <updated>1789931690572</updated>
+    </task>
+    <option name="localTasksCounter" value="8" />
     <servers />
   </component>
   <component name="TodoView" selected-index="0">
@@ -566,7 +577,8 @@
     <MESSAGE value="Enhance access control by integrating AccessListReader into server stats and file transaction protocols" />
     <MESSAGE value="Implement OS thumbnails Part 3: client preview with cancellable loading and metadata retention" />
     <MESSAGE value="Implement OS thumbnails — Part 3: integrate client preview pane with cancellable thumbnail loading and metadata retention" />
-    <option name="LAST_COMMIT_MESSAGE" value="Implement OS thumbnails — Part 3: integrate client preview pane with cancellable thumbnail loading and metadata retention" />
+    <MESSAGE value="Refactor ClientFilePreviewPane to optimize preview layout and enhance metadata display" />
+    <option name="LAST_COMMIT_MESSAGE" value="Refactor ClientFilePreviewPane to optimize preview layout and enhance metadata display" />
   </component>
   <component name="VssConfiguration">
     <CheckoutOptions>

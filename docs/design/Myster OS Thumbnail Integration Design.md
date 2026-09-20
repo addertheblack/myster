@@ -33,6 +33,14 @@ square without cropping, padding, stretching or upscaling. Returned images are s
 and must be treated as read-only. The blocking method rejects EDT calls and declares
 `InterruptedException`; ordinary missing-file, unsupported and I/O failures return null.
 
+UI consumers distinguish logical layout dimensions from device-pixel acquisition sizes. Use
+Java's actual graphics-configuration scale, including arbitrary fractional factors and factors
+greater than 2, rounding up before applying the relevant API size limit. Keep displayed geometry
+in logical units and paint using Swing's supplied graphics transform. The network preview uses
+`ThumbnailUiUtils.devicePixelSize`, which applies the network limit of 256 pixels; that limit is
+independent of display scale. Follow the project-wide
+[display scaling convention](../conventions/myster-coding-conventions.md#display-scaling).
+
 Four daemon platform threads perform acquisition. Platform threads keep Windows COM
 initialization, extraction and cleanup on one native thread. A `BoundedExecutor` wrapping
 a virtual-thread executor limits concurrency but does not guarantee that native-thread

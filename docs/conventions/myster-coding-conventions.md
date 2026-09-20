@@ -8,6 +8,7 @@ This document captures Myster-specific coding conventions, preferred libraries, 
 - **JMCList** — prefer over raw `JTable` for multi-column lists
 - **Modal Dialogs** — must extend `JDialog`, not `JFrame`
 - **SVG Icons & FlatLaf colors** — `IconLoader.loadSvg`, magic hex colors, `#6E6E6E` / `#DB5860` etc.
+- **Display scaling** — support arbitrary Java-reported factors; keep logical geometry separate from device pixels
 - **GridBagLayout** — use `GridBagBuilder`; never `setLayout(null)`
 - **Preferences** — Java `Preferences` API; `MysterType.toHexString()` as key
 - **Testing** — add `main()` to UI panels for standalone testing
@@ -43,6 +44,7 @@ This document captures Myster-specific coding conventions, preferred libraries, 
   - [JMCList](#jmclist-preferences)
   - [Modal Dialogs](#modal-dialogs)
   - [Icon Loading & SVG Colors](#icon-loading-convention)
+  - [Display Scaling](#display-scaling)
 - [Layout](#layout)
 - [Data Persistence](#data-persistence)
 - [Testing](#testing)
@@ -76,6 +78,20 @@ For example, hash discovery and saved-source recovery both suggest download cand
 both through `newDownload()` lets them share pause and termination handling.
 
 ## UI Components
+
+### Display Scaling
+
+All Myster UI code must respect the actual display scale reported by Java, including fractional
+factors such as 1.25× and 1.5× and factors greater than 2×. Do not treat HiDPI as a boolean or
+hardcode a 2× rendering buffer. Platform support determines which factors Java reports.
+
+Keep layout, row heights, icon dimensions and hit testing in logical coordinates. Paint vector
+and composite icons directly with the supplied component and graphics transform. For raster
+acquisition, derive device-pixel dimensions from the component's actual graphics configuration,
+round up after scaling and apply the relevant API's size limit. Thumbnail callers use
+`ThumbnailUiUtils.devicePixelSize`. Recompute scale-dependent requests or buffers when the
+window moves to a different graphics configuration; direct painting already uses the current
+transform. Avoid applying the display scale twice to dimensions already scaled by Swing.
 
 ### Dialogs — use AnswerDialog, not JOptionPane
 

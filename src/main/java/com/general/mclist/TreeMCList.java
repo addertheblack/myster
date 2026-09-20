@@ -7,9 +7,7 @@ import javax.swing.border.EmptyBorder;
 import javax.swing.table.DefaultTableCellRenderer;
 import java.awt.Component;
 import java.awt.Graphics;
-import java.awt.Graphics2D;
 import java.awt.Insets;
-import java.awt.RenderingHints;
 import java.awt.event.KeyAdapter;
 import java.awt.event.KeyEvent;
 import java.awt.image.BufferedImage;
@@ -81,11 +79,11 @@ public class TreeMCList {
                 // this returns myself so it's pointless to capture the
                 // result.
                 super.getTableCellRendererComponent(l,
-                        value,
-                        isSelected,
-                        hasFocus,
-                        row,
-                        column);
+                                                    value,
+                                                    isSelected,
+                                                    hasFocus,
+                                                    row,
+                                                    column);
                 Icon chevIcon = buildIcon(treeRow, iconSize);
 
                 var fOrFIcon = treeRow.isContainer() ? containerIcon : itemIcon;
@@ -154,6 +152,13 @@ public class TreeMCList {
         };
     }
 
+    /**
+     * Composes two icons horizontally, centered vertically, with spacing in logical units.
+     * Children are painted with the supplied component and current graphics transform, so
+     * the result follows the destination's display scale without a fixed-resolution buffer.
+     *
+     * @return the composition, the other icon when one is null, or null when both are null
+     */
     public static Icon mergeIcons(Icon icon1, Icon icon2, int spacing) {
         if (icon1 == null) return icon2;
         if (icon2 == null) return icon1;
@@ -161,33 +166,7 @@ public class TreeMCList {
         int width = icon1.getIconWidth() + icon2.getIconWidth() + spacing;
         int height = Math.max(icon1.getIconHeight(), icon2.getIconHeight());
         
-        // Create a 2x resolution buffer for crisp HiDPI rendering
-        int scale = 2;
-        int scaledWidth = width * scale;
-        int scaledHeight = height * scale;
-        
-        BufferedImage combined = new BufferedImage(scaledWidth, scaledHeight, BufferedImage.TYPE_INT_ARGB);
-        Graphics2D g2d = combined.createGraphics();
-        
-        // Scale the graphics context to 2x
-        g2d.scale(scale, scale);
-        
-        // Enable high-quality rendering hints
-        g2d.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
-        g2d.setRenderingHint(RenderingHints.KEY_RENDERING, RenderingHints.VALUE_RENDER_QUALITY);
-        g2d.setRenderingHint(RenderingHints.KEY_INTERPOLATION, RenderingHints.VALUE_INTERPOLATION_BICUBIC);
-        g2d.setRenderingHint(RenderingHints.KEY_ALPHA_INTERPOLATION, RenderingHints.VALUE_ALPHA_INTERPOLATION_QUALITY);
-        
-        // Draw first icon
-        icon1.paintIcon(null, g2d, 0, (height - icon1.getIconHeight()) / 2);
-        
-        // Draw second icon with spacing
-        icon2.paintIcon(null, g2d, icon1.getIconWidth() + spacing, (height - icon2.getIconHeight()) / 2);
-        
-        g2d.dispose();
-        
-        // Create an ImageIcon that will scale the 2x image appropriately
-        return new ImageIcon(combined) {
+        return new Icon() {
             @Override
             public int getIconWidth() {
                 return width;
@@ -199,12 +178,17 @@ public class TreeMCList {
             }
             
             @Override
-            public synchronized void paintIcon(Component c, Graphics g, int x, int y) {
-                Graphics2D g2 = (Graphics2D) g.create();
-                g2.setRenderingHint(RenderingHints.KEY_INTERPOLATION, RenderingHints.VALUE_INTERPOLATION_BICUBIC);
-                g2.setRenderingHint(RenderingHints.KEY_RENDERING, RenderingHints.VALUE_RENDER_QUALITY);
-                g2.drawImage(getImage(), x, y, width, height, null);
-                g2.dispose();
+            public void paintIcon(Component c, Graphics g, int x, int y) {
+                Graphics first = g.create();
+                Graphics second = g.create();
+                try {
+                    icon1.paintIcon(c, first, x, y + (height - icon1.getIconHeight()) / 2);
+                    icon2.paintIcon(c, second, x + icon1.getIconWidth() + spacing,
+                                    y + (height - icon2.getIconHeight()) / 2);
+                } finally {
+                    first.dispose();
+                    second.dispose();
+                }
             }
         };
     }

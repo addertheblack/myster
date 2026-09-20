@@ -463,9 +463,13 @@ extension whitelist says nothing about the remote server's OS support.
 
 `JMCList` is a `JTable` whose `getPane()` is the existing `JScrollPane`. Its MCList models
 perform sorting themselves and emit model events; watching only a Swing row sorter misses
-changes. `TreeMCList` owns column zero's renderer and restores it after structure changes;
-its current `mergeIcons` rasterizes at a fixed 2× scale. A thumbnail integration must preserve
-the tree renderer and derive device resolution from the actual component configuration.
+changes. `TreeMCListTableModel.addRows` also emits an insertion event before rebuilding its
+flattened tree order; visibility observers should inspect the settled model on a later EDT turn.
+`TreeMCList` owns column zero's renderer and restores it after structure changes. Its
+`mergeIcons` paints child icons directly with the supplied component and graphics transform.
+A thumbnail integration must preserve the tree renderer and derive device resolution from the
+actual component configuration, including fractional and greater-than-2× scales. See the
+[display scaling convention](myster-coding-conventions.md#display-scaling).
 For preview transfers, prefer `PromiseFutures.execute(...).useEdt()` and ordinary listeners.
 `AbstractCancellableCallable` supplies a volatile cancellation flag for cooperative workers.
 A synchronized block around connection, transfer and socket cleanup enforces one transfer at a
