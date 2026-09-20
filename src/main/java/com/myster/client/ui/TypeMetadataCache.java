@@ -8,6 +8,7 @@ import com.general.thread.PromiseFutures;
 import com.myster.access.AccessList;
 import com.myster.net.MysterAddress;
 import com.myster.net.client.MysterStream;
+import com.myster.type.MetadataTypeId;
 import com.myster.type.MysterType;
 
 /**
@@ -35,7 +36,9 @@ public class TypeMetadataCache {
     }
 
     private final Fetcher fetcher;
-    private final ConcurrentHashMap<MysterType, String> cache = new ConcurrentHashMap<>();
+    private record Resolved(String displayName, Optional<MetadataTypeId> metadataTypeId) {}
+
+    private final ConcurrentHashMap<MysterType, Resolved> cache = new ConcurrentHashMap<>();
 
     /**
      * Production constructor — fetches via the standard stream suite.
@@ -58,8 +61,19 @@ public class TypeMetadataCache {
      * @return the human-readable name, or {@code type.toHexString()} if unknown
      */
     public String getDisplayName(MysterType type) {
-        String v = cache.get(type);
-        return (v != null && !v.isEmpty()) ? v : type.toHexString();
+        Resolved v = cache.get(type);
+        return v != null && !v.displayName().isEmpty() ? v.displayName() : type.toHexString();
+    }
+
+    /**
+     * Returns the resolved metadata profile for a remotely described type.
+     *
+     * @param type type whose profile was fetched
+     * @return the profile when the access-list metadata was resolved, otherwise empty
+     */
+    public Optional<MetadataTypeId> getMetadataTypeId(MysterType type) {
+        Resolved resolved = cache.get(type);
+        return resolved == null ? Optional.empty() : resolved.metadataTypeId();
     }
 
     /**
@@ -86,14 +100,17 @@ public class TypeMetadataCache {
      * @param onResolved callback fired when the fetch completes (on background thread)
      */
     public void resolveAsync(MysterType type, MysterAddress from, Runnable onResolved) {
-        if (cache.putIfAbsent(type, "") != null) {
+        if (cache.putIfAbsent(type, new Resolved("", Optional.empty())) != null) {
             return; // sentinel already set — another fetch is in progress or completed
         }
         PromiseFutures.execute(() -> {
             try {
                 fetcher.fetch(from, type).ifPresent(al -> {
                     String name = al.getState().getName();
-                    cache.put(type, (name != null && !name.isBlank()) ? name : type.toHexString());
+                    MetadataTypeId profile = al.getState().getMetadataTypeId();
+                    cache.put(type, new Resolved(
+                            (name != null && !name.isBlank()) ? name : type.toHexString(),
+                            Optional.ofNullable(profile)));
                 });
             } catch (Exception ignored) {
                 // sentinel stays as ""; getDisplayName falls back to hex

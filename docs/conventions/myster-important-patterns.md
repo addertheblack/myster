@@ -104,6 +104,22 @@ and transfer workers retain their own lifecycles where a single completion promi
 not represent the operation. Finite UI tasks can still publish progress while running
 through `execute`; preserve their resource cancellation and EDT dispatch when migrating.
 
+### Cancellation: prioritize simplicity
+
+`PromiseFuture.cancel()` makes the result moot; it does not guarantee that the underlying
+operation has stopped. Letting an in-flight read finish and discarding its result is acceptable.
+Prefer code simplicity over making the worker return sooner. Do not complicate an otherwise
+simple design merely to interrupt a thread or close a socket immediately on cancellation.
+
+Use `AbstractCancellableCallable` when a worker needs cooperative cancellation checks, such as
+after acquiring a transfer monitor and before starting I/O. Overriding `cancel()` to close an
+owned socket is an optional optimization when useful and straightforward, not a requirement
+for every cancellable task. Stronger cancellation is appropriate when the operation requires it.
+
+Normal resource cleanup and concurrency limits still apply while cancelled work finishes.
+Enforce a transfer limit around the actual I/O and cleanup, for example with a shared monitor;
+promise cancellation alone does not mean that a transfer has released those resources.
+
 ### Key Features
 
 - **Non-blocking**: Returns immediately with a promise of future completion
@@ -436,6 +452,29 @@ the local thumbnail facade still permits 1024 pixels. Image codecs use explicit
 `MemoryCacheImageInputStream` / `MemoryCacheImageOutputStream` instances to avoid temporary
 ImageIO disk caches and global cache-setting changes. Decode only the framed image body,
 never directly from a reusable Myster socket.
+
+**UI thumbnail integration traps (parts 3–5 planning):** `ClientWindow` currently places a
+text-only `statsPanel` in its right-hand split pane; the legacy `FileInfoPane` is not that
+active component. Search results belong to `SearchTab`, not directly to `SearchWindow`.
+`SearchResult` has no type accessor, so a consumer must retain the type belonging to the
+displayed results instead of reading an edited type selector. Image/video eligibility is
+available through `TypeDescription.getMetadataTypeId()`; the client's local thumbnail
+extension whitelist says nothing about the remote server's OS support.
+
+`JMCList` is a `JTable` whose `getPane()` is the existing `JScrollPane`. Its MCList models
+perform sorting themselves and emit model events; watching only a Swing row sorter misses
+changes. `TreeMCList` owns column zero's renderer and restores it after structure changes;
+its current `mergeIcons` rasterizes at a fixed 2× scale. A thumbnail integration must preserve
+the tree renderer and derive device resolution from the actual component configuration.
+For preview transfers, prefer `PromiseFutures.execute(...).useEdt()` and ordinary listeners.
+`AbstractCancellableCallable` supplies a volatile cancellation flag for cooperative workers.
+A synchronized block around connection, transfer and socket cleanup enforces one transfer at a
+time per `RemoteThumbnailCache`; check cancellation after entering it. The cache supplies a private
+monitor shared by its tasks and retained across resets. Separate caches proceed independently;
+synchronizing on the task itself would not serialize successive requests. Cancelling the promise
+makes the result moot while an in-flight read may finish. Do not build a second scheduler or physical-completion accounting
+just to support cancellation. Use `PromiseFutures.delay` for cancellable settling delays.
+See [Part 3](../plans/os-thumbnails-part-3.md) for the implemented preview integration.
 
 `MysterProtocol` is the immutable aggregate of client protocol capabilities. Higher-level network
 concepts belong there behind narrow interfaces in `com.myster.net.client`; for example,

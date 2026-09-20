@@ -74,8 +74,11 @@ import com.myster.net.server.ServerPreferences;
 import com.myster.net.stream.client.msdownload.MSDownloadParams;
 import com.myster.search.HashCrawlerManager;
 import com.myster.search.MysterFileStub;
+import com.myster.thumbnail.RemoteThumbnailCache;
+import com.myster.thumbnail.ui.ThumbnailUiUtils;
 import com.myster.tracker.MysterServer;
 import com.myster.tracker.Tracker;
+import com.myster.type.MetadataTypeId;
 import com.myster.type.MysterType;
 import com.myster.type.TypeDescription;
 import com.myster.type.TypeDescriptionList;
@@ -114,6 +117,7 @@ public class ClientWindow extends MysterFrame implements Sayable {
     private MCList<MysterType> fileTypeList;
     private JMCList<String> fileList;
     private JTextArea statsPanel;
+    private ClientFilePreviewPane previewPane;
     private JSplitPane splitPane;
     private String currentip;
     private MessageField msg;
@@ -122,6 +126,9 @@ public class ClientWindow extends MysterFrame implements Sayable {
     private FileInfoListerThread fileInfoListerThread;
 
     private TypeMetadataCache typeMetadataCache;
+    private RemoteThumbnailCache thumbnailCache;
+    private ClientPreviewController previewController;
+    private MysterAddress thumbnailAddress;
     private final Map<MysterType, MutableSortableString> typeDisplayNames = new HashMap<>();
     private FileTypeColumnHandler currentTypeHandler = new ClientGenericHandleObject();
 
@@ -181,6 +188,12 @@ public class ClientWindow extends MysterFrame implements Sayable {
 
         init();
         typeMetadataCache = new TypeMetadataCache(protocol.getStream());
+        thumbnailCache = new RemoteThumbnailCache(protocol.getStream(), previewPane::setThumbnail);
+        previewController = new ClientPreviewController(
+                previewPane,
+                thumbnailCache,
+                this::buildThumbnailRequest,
+                () -> previewPane.isShowing() && (getExtendedState() & ICONIFIED) == 0 && !isDir());
     }
 
     /**
@@ -509,9 +522,10 @@ public class ClientWindow extends MysterFrame implements Sayable {
         fileList.getPane().setMaximumSize(new Dimension(1,1));
         
         // Create the split pane with file lists on left, stats on right
-        splitPane = new JSplitPane(JSplitPane.HORIZONTAL_SPLIT, leftPanel, statsPanel);
+        previewPane = new ClientFilePreviewPane(statsPanel);
+        splitPane = new JSplitPane(JSplitPane.HORIZONTAL_SPLIT, leftPanel, previewPane);
         splitPane.setResizeWeight(1.0); // Give all extra space to left side
-        statsPanel.setVisible(false); // hide by default will collapse the right side
+        previewPane.setVisible(false); // hide by default will collapse the right side
         
         // Set minimum size for left side to prevent it from collapsing
         leftPanel.setMinimumSize(new Dimension(400, 1));
@@ -546,8 +560,8 @@ public class ClientWindow extends MysterFrame implements Sayable {
         
         // Toggle stats panel visibility
         toggleStatsButton.addActionListener(_ -> {
-            boolean isVisible = statsPanel.isVisible();
-            statsPanel.setVisible(!isVisible);
+            boolean isVisible = previewPane.isVisible();
+            previewPane.setVisible(!isVisible);
             if (!isVisible) {
                 // Show the stats panel - set divider to 75% position
                 splitPane.setDividerLocation(0.75);
@@ -555,6 +569,7 @@ public class ClientWindow extends MysterFrame implements Sayable {
                 // Hide the stats panel - move divider all the way right
                 splitPane.setDividerLocation(1.0);
             }
+            refreshThumbnailDemand();
         });
 
         fileTypeList.addMCListEventListener(new MCListEventAdapter(){
@@ -574,14 +589,23 @@ public class ClientWindow extends MysterFrame implements Sayable {
         fileList.addMCListEventListener(new MCListEventAdapter(){
             public void selectItem(MCListEvent e) {
                 startStats();
+                refreshThumbnailDemand();
             }
 
             public void unselectItem(MCListEvent e) {
                 stopStats();
+                refreshThumbnailDemand();
             }
         });
 
         addWindowListener(new StandardWindowBehavior());
+        previewPane.addHierarchyListener(event -> {
+            if ((event.getChangeFlags() & java.awt.event.HierarchyEvent.SHOWING_CHANGED) != 0) {
+                refreshThumbnailDemand();
+            }
+        });
+        addWindowStateListener(_ -> refreshThumbnailDemand());
+        addPropertyChangeListener("graphicsConfiguration", _ -> refreshThumbnailDemand());
     }
 
     private List<TreeMCListItem<String>> extractItemsFromSelection() {
@@ -610,6 +634,9 @@ public class ClientWindow extends MysterFrame implements Sayable {
     }
         
     public void dispose() {
+        if (previewController != null) {
+            previewController.close();
+        }
         super.dispose();
         stopConnect();
     }
@@ -652,6 +679,7 @@ public class ClientWindow extends MysterFrame implements Sayable {
                 .orElseGet(() -> typeMetadataCache.getDisplayName(type));
         nameCell.setValue(resolved);
         fileTypeList.repaint();
+        refreshThumbnailDemand();
     }
 
     // this containers map is cleared when the filelist is cleared
@@ -776,6 +804,7 @@ public class ClientWindow extends MysterFrame implements Sayable {
     
 
     public void refreshIP(final MysterAddress address) {
+        thumbnailAddress = address;
         MysterServer server = tracker.getQuickServerStats(address);
 
         String fallbackWindowName = address.getInetAddress().isLoopbackAddress() ? "myself" : currentip;
@@ -783,6 +812,7 @@ public class ClientWindow extends MysterFrame implements Sayable {
                 (server == null ? fallbackWindowName : "\"" + server.getServerName() + "\" ("
                         + fallbackWindowName + ")");
         setTitle(CLIENT_WINDOW_TITLE_PREFIX + "to " + windowName);
+        refreshThumbnailDemand();
     }
 
     //To be in an interface??
@@ -806,6 +836,38 @@ public class ClientWindow extends MysterFrame implements Sayable {
             return "";
 
         return fileList.getItem(selectedIndex);
+    }
+
+    private Optional<RemoteThumbnailCache.Request> buildThumbnailRequest() {
+        if (thumbnailAddress == null || isDir()) {
+            return Optional.empty();
+        }
+        MysterType type = getCurrentType();
+        if (type == null || getCurrentFile().isEmpty()) {
+            return Optional.empty();
+        }
+
+        MetadataTypeId metadataTypeId = typeDescriptionList.get(type)
+                .map(TypeDescription::getMetadataTypeId)
+                .orElseGet(() -> typeMetadataCache.getMetadataTypeId(type).orElse(MetadataTypeId.GENERIC));
+        if (!ThumbnailUiUtils.isEligible(metadataTypeId)) {
+            return Optional.empty();
+        }
+
+        int size = ThumbnailUiUtils.devicePixelSize(
+                previewPane.getThumbnailLogicalSide(),
+                previewPane.getGraphicsConfiguration());
+        if (size == 0) {
+            return Optional.empty();
+        }
+
+        return Optional.of(new RemoteThumbnailCache.Request(thumbnailAddress, type, getCurrentFile(), size));
+    }
+
+    private void refreshThumbnailDemand() {
+        if (previewController != null) {
+            previewController.reconcile();
+        }
     }
     
     public boolean isDir() {
@@ -845,11 +907,15 @@ public class ClientWindow extends MysterFrame implements Sayable {
     }
 
     private void stopConnect() {
+        thumbnailAddress = null;
         if (connectToThread != null) {
             connectToThread.flagToEnd();
         }
         fileTypeList.clearAll();
         typeDisplayNames.clear();
+        if (thumbnailCache != null) {
+            thumbnailCache.reset();
+        }
         stopFileListing();
     }
 
@@ -867,10 +933,12 @@ public class ClientWindow extends MysterFrame implements Sayable {
             fileInfoListerThread.flagToEnd();
         }
         statsPanel.setText("");
+        refreshThumbnailDemand();
     }
 
     public void startConnect() {
         stopConnect();
+        typeMetadataCache = new TypeMetadataCache(protocol.getStream());
         currentip = ipTextField.getText();
         
         if (currentip.isBlank()) {

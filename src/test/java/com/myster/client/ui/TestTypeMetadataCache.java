@@ -70,8 +70,12 @@ class TestTypeMetadataCache {
     }
 
     private AccessList makeAccessList(String name) throws Exception {
+        return makeAccessList(name, MetadataTypeId.GENERIC);
+    }
+
+    private AccessList makeAccessList(String name, MetadataTypeId metadataTypeId) throws Exception {
         return AccessList.createGenesis(rsaKeyPair.getPublic(), edKeyPair, Collections.emptyList(), List.of("onramp.example.com:6669"), Policy.defaultRestrictive(),
-                name, "description", new String[]{"ext"}, false, MetadataTypeId.GENERIC);
+                name, "description", new String[]{"ext"}, false, metadataTypeId);
     }
 
     // ── tests ───────────────────────────────────────────────────────────────────
@@ -143,8 +147,18 @@ class TestTypeMetadataCache {
 
         assertEquals(type.toHexString(), cache.getDisplayName(type));
     }
-}
 
+    @Test
+    void resolveSuccess_retainsMetadataProfile() throws Exception {
+        AccessList al = makeAccessList("Images", MetadataTypeId.IMAGE);
+        MysterType type = al.getMysterType();
+        TypeMetadataCache cache = cacheWith(al);
+
+        awaitResolved(cache, type);
+
+        assertEquals(Optional.of(MetadataTypeId.IMAGE), cache.getMetadataTypeId(type));
+    }
+}
 
 
 

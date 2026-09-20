@@ -573,6 +573,11 @@ for ongoing operations and file stores. A worker may wait on an existing promise
 subsystem boundary. Distinguish making a result moot from stopping an operation: a preparation
 result must not retain cancellation ownership of a transfer after setup hands it off.
 
+Prefer simple cancellation that makes a result moot over extra machinery to stop the worker
+sooner. Prompt socket closure or thread interruption is optional unless the operation requires
+it; normal resource cleanup and concurrency limits must still hold. See
+[Cancellation: prioritize simplicity](myster-important-patterns.md#cancellation-prioritize-simplicity).
+
 For operations using promise composition that discover more work as they run, prefer an actor-style state
 object confined to one subsystem `Invoker`. Mutable search/crawl state and ordinary promise
 completion handlers all run on that invoker, so the state object does not also need synchronized

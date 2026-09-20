@@ -178,8 +178,11 @@ and decode only the buffered body. Success and misses leave the connection posit
 for another section. Malformed/unsupported responses raise `IOException`; callers discard
 the connection after an I/O error. Old servers rejecting section 79 produce the existing
 `UnknownProtocolException`. ImageIO streams use memory caches without changing global
-ImageIO settings. There is no remote-thumbnail cache or client/search-window integration
-in this milestone. See the [Part 2 plan](../plans/os-thumbnails-part-2.md) for the full contract.
+ImageIO settings. Part 3 adds a connection-scoped, bounded client preview cache and a
+visibility-gated details-pane consumer. File-list and search-result consumers remain deferred
+to Parts 4 and 5. See the [Part 2 plan](../plans/os-thumbnails-part-2.md) and
+[Part 3 plan](../plans/os-thumbnails-part-3.md) for the protocol and client integration
+contracts.
 
 ## Common abstraction
 
@@ -521,3 +524,24 @@ If Explorer, Finder/Quick Look, or the Linux desktop already knows how to displa
 Myster should not acquire large media/document parsing dependencies merely to draw previews in `MCList`.
 
 The deliberately platform-specific implementations should remain small and isolated behind one platform-neutral thumbnail-provider abstraction.
+
+### Client preview concurrency
+
+The client details pane uses a `RemoteThumbnailCache` with one current promise and an EDT-owned
+LRU cache (128 combined image/miss/error entries, at most 8 MiB of decoded pixels). Misses suppress
+requests for 30 seconds and transport failures for 5 seconds; retries happen on later demand
+changes, with no automatic retry loop. Unsupported endpoints are remembered until reset, bounded
+to 128 entries. Completed exact or larger requests can satisfy smaller previews.
+
+`RemoteThumbnailTask` extends `AbstractCancellableCallable` and holds a cache-owned monitor through
+connection, read and try-with-resources cleanup. Cancelling a promise makes its result moot;
+queued tasks check cancellation under the monitor and skip I/O. Running reads may finish. The
+monitor keeps transfers from one cache serial and survives connection resets. Each client window
+has its own cache and monitor, so a slow server does not block previews in other windows. This is
+a per-window limit; separate windows connected to the same server can each have a transfer.
+No custom executor, queue or completion counter is needed. Ordinary promise listeners use the EDT; resizing uses a cancellable `PromiseFutures.delay`.
+
+The controller owns the preview cache. Hiding cancels current demand; closing also cancels the
+delay and detaches the pane callback. Connection resets discard cached outcomes. Requests use the
+already resolved address from the type-list connection. Part 4 must design shared list demand
+when implemented; Part 3 does not expose unused list priorities or multi-consumer handles.

@@ -4,18 +4,16 @@
     <option name="autoReloadType" value="ALL" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="fe0d93f5-a1b5-4669-89e3-19e762d0ae4a" name="Changes" comment="Fix XML encoding in project configuration for better compatibility">
+    <list default="true" id="fe0d93f5-a1b5-4669-89e3-19e762d0ae4a" name="Changes" comment="Enhance access control by integrating AccessListReader into server stats and file transaction protocols">
       <change beforePath="$PROJECT_DIR$/Myster.iws" beforeDir="false" afterPath="$PROJECT_DIR$/Myster.iws" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/com/myster/Myster.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/com/myster/Myster.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/com/myster/net/server/ServerFacade.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/com/myster/net/server/ServerFacade.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/com/myster/net/server/datagram/BidirectionalServerStatsDatagramServer.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/com/myster/net/server/datagram/BidirectionalServerStatsDatagramServer.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/com/myster/net/server/datagram/FileStatsDatagramServer.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/com/myster/net/server/datagram/FileStatsDatagramServer.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/com/myster/net/server/datagram/SearchDatagramServer.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/com/myster/net/server/datagram/SearchDatagramServer.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/com/myster/net/server/datagram/SearchHashDatagramServer.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/com/myster/net/server/datagram/SearchHashDatagramServer.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/com/myster/net/server/datagram/ServerStatsDatagramServer.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/com/myster/net/server/datagram/ServerStatsDatagramServer.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/com/myster/net/stream/server/ServerStats.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/com/myster/net/stream/server/ServerStats.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/test/java/com/myster/access/TestAccessEnforcementUtils.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/test/java/com/myster/access/TestAccessEnforcementUtils.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/test/java/com/myster/transaction/TestBidirectionalServerStatsDatagramProtocol.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/test/java/com/myster/transaction/TestBidirectionalServerStatsDatagramProtocol.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/docs/conventions/myster-coding-conventions.md" beforeDir="false" afterPath="$PROJECT_DIR$/docs/conventions/myster-coding-conventions.md" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/docs/conventions/myster-important-patterns.md" beforeDir="false" afterPath="$PROJECT_DIR$/docs/conventions/myster-important-patterns.md" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/docs/design/Myster OS Thumbnail Integration Design.md" beforeDir="false" afterPath="$PROJECT_DIR$/docs/design/Myster OS Thumbnail Integration Design.md" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/docs/impl_summary/README.md" beforeDir="false" afterPath="$PROJECT_DIR$/docs/impl_summary/README.md" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/docs/plans/README.md" beforeDir="false" afterPath="$PROJECT_DIR$/docs/plans/README.md" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/com/myster/client/ui/ClientWindow.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/com/myster/client/ui/ClientWindow.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/com/myster/client/ui/TypeMetadataCache.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/com/myster/client/ui/TypeMetadataCache.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/test/java/com/myster/client/ui/TestTypeMetadataCache.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/test/java/com/myster/client/ui/TestTypeMetadataCache.java" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -230,23 +228,23 @@
   </component>
   <component name="NextEditCompletionFeaturesState">
     <decayedCancelled>
-      <entry key="MS100" value="1.9196083308565082" />
-      <entry key="MS500" value="6.054760380740783" />
-      <entry key="S2" value="16.956826476322966" />
-      <entry key="S5" value="29.88473903267578" />
-      <entry key="S10" value="40.57427528724317" />
-      <entry key="S30" value="52.55692810558269" />
-      <entry key="S60" value="56.52373359070335" />
-      <entry key="M2" value="58.6935724428225" />
-      <entry key="M5" value="60.06041126958934" />
-      <entry key="M10" value="60.57112846564889" />
-      <entry key="M15" value="61.78439509936448" />
-      <entry key="M30" value="99.81610594201237" />
-      <entry key="H1" value="346.5788129071894" />
-      <entry key="H2" value="877.9481678256541" />
-      <entry key="H4" value="1460.3365610949356" />
-      <entry key="D1" value="3547.6190759273923" />
-      <entry key="W1" value="10328.926712336213" />
+      <entry key="MS100" value="1.4398738161394493" />
+      <entry key="MS500" value="4.42605485648049" />
+      <entry key="S2" value="13.770240682060663" />
+      <entry key="S5" value="23.2686236435837" />
+      <entry key="S10" value="38.28499605088223" />
+      <entry key="S30" value="111.32283591833178" />
+      <entry key="S60" value="210.3591706877242" />
+      <entry key="M2" value="341.67174908000896" />
+      <entry key="M5" value="499.25195667897236" />
+      <entry key="M10" value="577.2011857104512" />
+      <entry key="M15" value="609.1865191475696" />
+      <entry key="M30" value="692.705662631276" />
+      <entry key="H1" value="969.2677333944628" />
+      <entry key="H2" value="1616.0784733966336" />
+      <entry key="H4" value="2604.4550634353036" />
+      <entry key="D1" value="5729.197245916266" />
+      <entry key="W1" value="12898.302576271975" />
     </decayedCancelled>
     <decayedSelected>
       <entry key="MS100" value="0.0" />
@@ -257,34 +255,34 @@
       <entry key="S30" value="0.0" />
       <entry key="S60" value="0.0" />
       <entry key="M2" value="0.0" />
-      <entry key="M5" value="4.4139707967331924E-166" />
-      <entry key="M10" value="2.1009466678438414E-83" />
-      <entry key="M15" value="7.614541843900369E-56" />
-      <entry key="M30" value="2.7837385738294306E-28" />
-      <entry key="H1" value="1.8173327617558498E-14" />
-      <entry key="H2" value="1.6855709192582602E-7" />
-      <entry key="H4" value="5.84759171958684E-4" />
-      <entry key="D1" value="1.4199523853846046" />
-      <entry key="W1" value="7.497314497692352" />
+      <entry key="M5" value="1.0451827176198544E-181" />
+      <entry key="M10" value="3.2329308113174563E-91" />
+      <entry key="M15" value="4.710836511315099E-61" />
+      <entry key="M30" value="6.923976334704943E-31" />
+      <entry key="H1" value="9.063543418414475E-16" />
+      <entry key="H2" value="3.764253056738387E-8" />
+      <entry key="H4" value="2.7633947831543436E-4" />
+      <entry key="D1" value="1.2531933936481756" />
+      <entry key="W1" value="7.364697563104129" />
     </decayedSelected>
     <decayedShown>
-      <entry key="MS100" value="1.8800978835093352" />
-      <entry key="MS500" value="6.029271183180427" />
-      <entry key="S2" value="16.938584960971394" />
-      <entry key="S5" value="29.871601180900377" />
-      <entry key="S10" value="40.56521523385618" />
-      <entry key="S30" value="52.55295984055551" />
-      <entry key="S60" value="56.52159103125787" />
-      <entry key="M2" value="58.692457705718404" />
-      <entry key="M5" value="60.059954407377994" />
-      <entry key="M10" value="60.57089756337907" />
-      <entry key="M15" value="61.784232787769156" />
-      <entry key="M30" value="99.8159289040632" />
-      <entry key="H1" value="346.5784984843313" />
-      <entry key="H2" value="877.947807434379" />
-      <entry key="H4" value="1460.336863505269" />
-      <entry key="D1" value="3549.038899728759" />
-      <entry key="W1" value="10336.42396537636" />
+      <entry key="MS100" value="1.4176752404472721" />
+      <entry key="MS500" value="4.412578414582109" />
+      <entry key="S2" value="13.760255694380623" />
+      <entry key="S5" value="23.26199943801898" />
+      <entry key="S10" value="38.27958581319193" />
+      <entry key="S30" value="111.31757378427234" />
+      <entry key="S60" value="210.3541518662562" />
+      <entry key="M2" value="341.6676186749908" />
+      <entry key="M5" value="499.2495083642359" />
+      <entry key="M10" value="577.1997618029267" />
+      <entry key="M15" value="609.1855143914717" />
+      <entry key="M30" value="692.7050809416605" />
+      <entry key="H1" value="969.2672951546742" />
+      <entry key="H2" value="1616.0780581037889" />
+      <entry key="H4" value="2604.454972211265" />
+      <entry key="D1" value="5730.450271183378" />
+      <entry key="W1" value="12905.667205152538" />
     </decayedShown>
   </component>
   <component name="PerforceConfiguration">
@@ -360,7 +358,7 @@
     &quot;to.speed.mode.migration.done&quot;: &quot;true&quot;
   }
 }</component>
-  <component name="RunManager" selected="Application.ThumbnailPreview">
+  <component name="RunManager" selected="Application.Myster">
     <configuration selected="false" default="true" type="Applet" factoryName="Applet">
       <module name="" />
       <option name="MAIN_CLASS_NAME" />
@@ -506,7 +504,15 @@
       <option name="project" value="LOCAL" />
       <updated>1789680110578</updated>
     </task>
-    <option name="localTasksCounter" value="5" />
+    <task id="LOCAL-00005" summary="Enhance access control by integrating AccessListReader into server stats and file transaction protocols">
+      <option name="closed" value="true" />
+      <created>1789911343930</created>
+      <option name="number" value="00005" />
+      <option name="presentableId" value="LOCAL-00005" />
+      <option name="project" value="LOCAL" />
+      <updated>1789911343930</updated>
+    </task>
+    <option name="localTasksCounter" value="6" />
     <servers />
   </component>
   <component name="TodoView" selected-index="0">
@@ -552,7 +558,8 @@
     <MESSAGE value="Implement OS thumbnail integration with caching and asynchronous support" />
     <MESSAGE value="Implement OS thumbnail integration and enhance JUnit test configurations" />
     <MESSAGE value="Fix XML encoding in project configuration for better compatibility" />
-    <option name="LAST_COMMIT_MESSAGE" value="Fix XML encoding in project configuration for better compatibility" />
+    <MESSAGE value="Enhance access control by integrating AccessListReader into server stats and file transaction protocols" />
+    <option name="LAST_COMMIT_MESSAGE" value="Enhance access control by integrating AccessListReader into server stats and file transaction protocols" />
   </component>
   <component name="VssConfiguration">
     <CheckoutOptions>

@@ -42,3 +42,5 @@ The Implementation Agent writes a summary **after** completing all code changes,
 - Plans: `docs/plans/README.md`
 - Implementation agent spec: `docs/agents/implementation-agent.md`
 
+
+- [OS thumbnails — Part 3](os-thumbnails-part-3.md): client preview and simplified promise-based concurrency.
