@@ -533,9 +533,10 @@ Myster should not acquire large media/document parsing dependencies merely to dr
 
 The deliberately platform-specific implementations should remain small and isolated behind one platform-neutral thumbnail-provider abstraction.
 
-### Client preview concurrency
+### Client thumbnail concurrency
 
-The client details pane uses a `RemoteThumbnailCache` with one current promise and an EDT-owned
+The client details pane and visible file-list use one shared `RemoteThumbnailCache` with independent
+consumer-owned promises and an EDT-owned
 LRU cache (128 combined image/miss/error entries, at most 8 MiB of decoded pixels). Misses suppress
 requests for 30 seconds and transport failures for 5 seconds; retries happen on later demand
 changes, with no automatic retry loop. Unsupported endpoints are remembered until reset, bounded
@@ -549,10 +550,14 @@ has its own cache and monitor, so a slow server does not block previews in other
 a per-window limit; separate windows connected to the same server can each have a transfer.
 No custom executor, queue or completion counter is needed. Ordinary promise listeners use the EDT; resizing uses a cancellable `PromiseFutures.delay`.
 
-The controller owns the preview cache. Hiding cancels current demand; closing also cancels the
-delay and detaches the pane callback. Connection resets discard cached outcomes. Requests use the
-already resolved address from the type-list connection. Part 4 must design shared list demand
-when implemented; Part 3 does not expose unused list priorities or multi-consumer handles.
+The preview and file-list controllers own only their current promises; the client window owns the
+shared cache lifetime. Hiding one consumer cancels only that consumer. The file-list controller
+observes the visible tree rows, waits briefly for viewport settling, loads one missing eligible
+request at a time, and repaints the current item after completion. Tree rendering performs passive
+cache lookup only, so pending or failed thumbnails retain the standard file icon. Requests use the
+address and type captured when the listing starts, plus the item's opaque file reference. Remote
+metadata profile resolution uses `PromiseFuture`/`PromiseFutures` off the EDT and stale callbacks
+are ignored after listing replacement or reconnect.
 
 The details pane fits the image within a square acquisition bound, then sizes the preview row
 to the fitted image's height. Landscape images therefore leave more room for metadata instead

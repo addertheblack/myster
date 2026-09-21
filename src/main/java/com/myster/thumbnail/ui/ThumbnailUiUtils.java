@@ -7,6 +7,8 @@ import java.awt.geom.AffineTransform;
 import java.awt.geom.Point2D;
 import java.awt.image.BufferedImage;
 
+import javax.swing.Icon;
+
 import com.myster.net.stream.ThumbnailProtocolUtils;
 import com.myster.type.MetadataTypeId;
 
@@ -54,6 +56,22 @@ public final class ThumbnailUiUtils {
                                 (double) square.height / image.getHeight());
         int width = Math.max(1, (int) Math.round(image.getWidth() * scale));
         int height = Math.max(1, (int) Math.round(image.getHeight() * scale));
+        return new Rectangle(square.x + (square.width - width) / 2,
+                             square.y + (square.height - height) / 2,
+                             width,
+                             height);
+    }
+
+    /** Returns the centered aspect-MISS_TTLpreserving destination rectangle for a Swing icon. */
+    public static Rectangle aspectFit(Icon icon, Rectangle square) {
+        if (icon == null || square.width <= 0 || square.height <= 0
+                || icon.getIconWidth() <= 0 || icon.getIconHeight() <= 0) {
+            return new Rectangle();
+        }
+        double scale = Math.min((double) square.width / icon.getIconWidth(),
+                                (double) square.height / icon.getIconHeight());
+        int width = Math.max(1, (int) Math.round(icon.getIconWidth() * scale));
+        int height = Math.max(1, (int) Math.round(icon.getIconHeight() * scale));
         return new Rectangle(square.x + (square.width - width) / 2,
                              square.y + (square.height - height) / 2,
                              width,

@@ -4,6 +4,7 @@ import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
 import java.time.Duration;
+import java.awt.image.BufferedImage;
 import java.util.Optional;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
@@ -16,6 +17,7 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.Timeout;
 
 import com.general.thread.PromiseFutures;
+import com.general.thread.PromiseFuture;
 import com.myster.net.MysterAddress;
 import com.myster.thumbnail.RemoteThumbnailCache;
 import com.myster.thumbnail.RemoteThumbnailCache.Request;
@@ -42,6 +44,8 @@ class TestClientPreviewController {
     void setup() throws Exception {
         doAnswer(call -> { geometryChanged = call.getArgument(0); return null; })
                 .when(pane).setGeometryListener(any());
+        when(thumbnailCache.load(any())).thenAnswer(_ ->
+                PromiseFuture.newPromiseFuture((BufferedImage) null));
         SwingUtilities.invokeAndWait(() -> controller = new ClientPreviewController(
                 pane, thumbnailCache, () -> selection, () -> active));
     }
@@ -53,32 +57,34 @@ class TestClientPreviewController {
 
     @Test
     void hiddenStartupAndReopeningUseCurrentSelection() throws Exception {
-        SwingUtilities.invokeAndWait(controller::reconcile);
-        verify(thumbnailCache).replace(Optional.empty());
-        verify(thumbnailCache, never()).replace(selection);
-        SwingUtilities.invokeAndWait(() -> { active = true; controller.reconcile(); });
-        verify(thumbnailCache).replace(selection);
+        SwingUtilities.invokeAndWait(controller::conditionalReload);
+        verify(thumbnailCache, never()).load(any());
+        SwingUtilities.invokeAndWait(() -> { active = true; controller.conditionalReload(); });
+        verify(thumbnailCache).load(selection.get());
     }
 
     @Test
     void resizingKeepsSameFilePixelsAndOnlyStartsLatestSize() throws Exception {
         CountDownLatch latestRequested = new CountDownLatch(1);
         Optional<Request> latest = Optional.of(request("image", 256));
-        doAnswer(_ -> { latestRequested.countDown(); return null; }).when(thumbnailCache).replace(latest);
+        doAnswer(_ -> {
+            latestRequested.countDown();
+            return PromiseFuture.newPromiseFuture((BufferedImage) null);
+        }).when(thumbnailCache).load(latest.get());
         SwingUtilities.invokeAndWait(() -> {
             active = true;
-            controller.reconcile();
+            controller.conditionalReload();
             clearInvocations(pane, thumbnailCache);
             selection = Optional.of(request("image", 200));
             geometryChanged.run();
             selection = latest;
             geometryChanged.run();
-            verify(thumbnailCache, never()).replace(latest);
+            verify(thumbnailCache, never()).load(latest.get());
         });
         assertTrue(latestRequested.await(5, TimeUnit.SECONDS));
         SwingUtilities.invokeAndWait(() -> {});
-        verify(thumbnailCache, never()).replace(Optional.of(request("image", 200)));
-        verify(thumbnailCache, times(1)).replace(latest);
+        verify(thumbnailCache, never()).load(request("image", 200));
+        verify(thumbnailCache, times(1)).load(latest.get());
         verify(pane, never()).clearThumbnail();
     }
 
@@ -86,7 +92,7 @@ class TestClientPreviewController {
     void unchangedDeviceSizeDoesNotCancelTransfer() throws Exception {
         SwingUtilities.invokeAndWait(() -> {
             active = true;
-            controller.reconcile();
+            controller.conditionalReload();
             clearInvocations(thumbnailCache);
             geometryChanged.run();
         });
@@ -97,36 +103,36 @@ class TestClientPreviewController {
     void hidingCancelsDelayAndWithdrawsImmediately() throws Exception {
         SwingUtilities.invokeAndWait(() -> {
             active = true;
-            controller.reconcile();
+            controller.conditionalReload();
             selection = Optional.of(request("image", 256));
             geometryChanged.run();
             clearInvocations(thumbnailCache, pane);
             active = false;
-            controller.reconcile();
-            verify(thumbnailCache).replace(Optional.empty());
+            controller.conditionalReload();
+            verify(thumbnailCache, never()).load(any());
             verify(pane).clearThumbnail();
         });
         PromiseFutures.delay(Duration.ofMillis(350)).get(5, TimeUnit.SECONDS);
         SwingUtilities.invokeAndWait(() -> {});
-        verify(thumbnailCache, never()).replace(selection);
+        verify(thumbnailCache, never()).load(selection.get());
     }
 
     @Test
     void newSelectionClearsPixelsImmediatelyAndCancelsOldResize() throws Exception {
         SwingUtilities.invokeAndWait(() -> {
             active = true;
-            controller.reconcile();
+            controller.conditionalReload();
             selection = Optional.of(request("image", 256));
             geometryChanged.run();
             clearInvocations(thumbnailCache, pane);
             selection = Optional.of(request("other", 128));
-            controller.reconcile();
+            controller.conditionalReload();
             verify(pane).clearThumbnail();
-            verify(thumbnailCache).replace(selection);
+            verify(thumbnailCache).load(selection.get());
         });
         PromiseFutures.delay(Duration.ofMillis(350)).get(5, TimeUnit.SECONDS);
         SwingUtilities.invokeAndWait(() -> {});
-        verify(thumbnailCache, times(1)).replace(selection);
+        verify(thumbnailCache, times(1)).load(selection.get());
     }
 
     @Test
@@ -137,7 +143,7 @@ class TestClientPreviewController {
             controller.close();
             clearInvocations(thumbnailCache);
             geometryChanged.run();
-            controller.reconcile();
+            controller.conditionalReload();
         });
         PromiseFutures.delay(Duration.ofMillis(350)).get(5, TimeUnit.SECONDS);
         SwingUtilities.invokeAndWait(() -> {});

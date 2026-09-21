@@ -23,6 +23,8 @@ import com.myster.net.MysterAddress;
 import com.myster.net.MysterSocket;
 import com.myster.net.client.MysterStream;
 import com.myster.net.stream.client.UnknownProtocolException;
+import com.general.thread.PromiseFuture;
+import com.general.thread.Invoker;
 import com.myster.thumbnail.RemoteThumbnailCache.Request;
 import com.myster.type.MysterType;
 
@@ -35,6 +37,7 @@ class TestRemoteThumbnailCache {
     private final List<BufferedImage> delivered = new ArrayList<>();
     private final AtomicReference<Thread> worker = new AtomicReference<>();
     private RemoteThumbnailCache thumbnailCache;
+    private PromiseFuture<BufferedImage> current;
 
     TestRemoteThumbnailCache() throws Exception {}
 
@@ -44,10 +47,7 @@ class TestRemoteThumbnailCache {
             worker.set(Thread.currentThread());
             return socket;
         });
-        SwingUtilities.invokeAndWait(() -> thumbnailCache = new RemoteThumbnailCache(stream, image -> {
-            assertTrue(SwingUtilities.isEventDispatchThread());
-            delivered.add(image);
-        }));
+        SwingUtilities.invokeAndWait(() -> thumbnailCache = new RemoteThumbnailCache(stream));
     }
 
     @AfterEach
@@ -63,11 +63,18 @@ class TestRemoteThumbnailCache {
         worker.set(null);
         CountDownLatch closed = new CountDownLatch(1);
         doAnswer(_ -> { closed.countDown(); return null; }).when(socket).close();
-        SwingUtilities.invokeAndWait(() -> thumbnailCache.replace(Optional.of(request)));
+        SwingUtilities.invokeAndWait(() -> start(request));
         assertTrue(closed.await(5, TimeUnit.SECONDS));
         worker.get().join(5000);
         assertFalse(worker.get().isAlive());
         SwingUtilities.invokeAndWait(() -> {});
+    }
+
+    private void start(Request request) {
+        current = thumbnailCache.load(request);
+        current.withInvoker(Invoker.EDT).addResultListener(image -> {
+            if (image != null) delivered.add(image);
+        });
     }
 
     @Test
@@ -79,8 +86,8 @@ class TestRemoteThumbnailCache {
         load(request("image", 128));
         load(request("image", 256));
         SwingUtilities.invokeAndWait(() -> {
-            thumbnailCache.replace(Optional.of(request("image", 64)));
-            thumbnailCache.replace(Optional.of(request("image", 200)));
+            start(request("image", 64));
+            start(request("image", 200));
         });
         assertEquals(List.of(small, large, small, large), delivered);
         verify(stream, times(2)).makeStreamConnection(address);
@@ -103,14 +110,16 @@ class TestRemoteThumbnailCache {
             return newImage;
         });
         SwingUtilities.invokeAndWait(() -> {
-            thumbnailCache.replace(Optional.of(request("old", 128)));
-            thumbnailCache.replace(Optional.of(request("old", 128)));
+            start(request("old", 128));
         });
         assertTrue(reading.await(5, TimeUnit.SECONDS));
+        current.cancel();
         try {
             SwingUtilities.invokeAndWait(() -> {
-                thumbnailCache.replace(Optional.of(request("queued", 128)));
-                thumbnailCache.replace(Optional.of(request("new", 128)));
+                current = thumbnailCache.load(request("new", 128));
+                current.withInvoker(Invoker.EDT).addResultListener(image -> {
+                    if (image != null) delivered.add(image);
+                });
             });
             release.countDown();
             assertTrue(newRead.await(5, TimeUnit.SECONDS));
@@ -137,7 +146,7 @@ class TestRemoteThumbnailCache {
             return socket;
         });
         SwingUtilities.invokeAndWait(() -> {
-            thumbnailCache.replace(Optional.of(request("image", 128)));
+            start(request("image", 128));
             try {
                 assertTrue(connected.await(5, TimeUnit.SECONDS));
                 worker.get().join(5000);
@@ -160,12 +169,12 @@ class TestRemoteThumbnailCache {
         load(request("missing", 128));
         load(request("error", 128));
         SwingUtilities.invokeAndWait(() -> {
-            thumbnailCache.replace(Optional.of(request("missing", 128)));
-            thumbnailCache.replace(Optional.of(request("error", 128)));
+            start(request("missing", 128));
+            start(request("error", 128));
         });
         verify(stream, times(2)).makeStreamConnection(address);
         load(request("unsupported", 128));
-        SwingUtilities.invokeAndWait(() -> thumbnailCache.replace(Optional.of(request("another file", 256))));
+        SwingUtilities.invokeAndWait(() -> start(request("another file", 256)));
         verify(stream, times(3)).makeStreamConnection(address);
         assertTrue(delivered.isEmpty());
         SwingUtilities.invokeAndWait(thumbnailCache::reset);
@@ -207,11 +216,13 @@ class TestRemoteThumbnailCache {
         when(stream.makeStreamConnection(otherAddress)).thenReturn(otherSocket);
         when(stream.getThumbnail(otherSocket, type, "fast", 128)).thenReturn(image);
         try {
-            SwingUtilities.invokeAndWait(() -> thumbnailCache.replace(Optional.of(request("slow", 128))));
+            SwingUtilities.invokeAndWait(() -> start(request("slow", 128)));
             assertTrue(reading.await(5, TimeUnit.SECONDS));
             SwingUtilities.invokeAndWait(() -> {
-                otherCache.set(new RemoteThumbnailCache(stream, _ -> otherLoaded.countDown()));
-                otherCache.get().replace(Optional.of(new Request(otherAddress, type, "fast", 128)));
+                otherCache.set(new RemoteThumbnailCache(stream));
+                otherCache.get().load(new Request(otherAddress, type, "fast", 128))
+                        .withInvoker(Invoker.EDT)
+                        .addResultListener(_ -> otherLoaded.countDown());
             });
             assertTrue(otherLoaded.await(2, TimeUnit.SECONDS), "another cache must not wait for the slow read");
             verify(otherSocket).close();
@@ -245,11 +256,11 @@ class TestRemoteThumbnailCache {
         });
         when(stream.getThumbnail(socket, type, "new", 128)).thenReturn(image);
         try {
-            SwingUtilities.invokeAndWait(() -> thumbnailCache.replace(Optional.of(request("old", 128))));
+            SwingUtilities.invokeAndWait(() -> start(request("old", 128)));
             assertTrue(reading.await(5, TimeUnit.SECONDS));
             SwingUtilities.invokeAndWait(() -> {
                 thumbnailCache.reset();
-                thumbnailCache.replace(Optional.of(request("new", 128)));
+                start(request("new", 128));
             });
             assertFalse(replacementConnected.await(100, TimeUnit.MILLISECONDS));
             release.countDown();
@@ -266,7 +277,7 @@ class TestRemoteThumbnailCache {
     void closeIsTerminal() throws Exception {
         SwingUtilities.invokeAndWait(() -> {
             thumbnailCache.close();
-            thumbnailCache.replace(Optional.of(request("image", 128)));
+            start(request("image", 128));
         });
         verifyNoInteractions(stream);
     }

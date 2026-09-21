@@ -128,6 +128,8 @@ public class ClientWindow extends MysterFrame implements Sayable {
     private TypeMetadataCache typeMetadataCache;
     private RemoteThumbnailCache thumbnailCache;
     private ClientPreviewController previewController;
+    private ClientFileThumbnailController<String> fileThumbnailController;
+    private MysterType listedType;
     private MysterAddress thumbnailAddress;
     private final Map<MysterType, MutableSortableString> typeDisplayNames = new HashMap<>();
     private FileTypeColumnHandler currentTypeHandler = new ClientGenericHandleObject();
@@ -135,7 +137,7 @@ public class ClientWindow extends MysterFrame implements Sayable {
     private final MysterFrameContext context;
     private Runnable savePrefs;
     
-    private Optional<ClientWindowData> initiaData = Optional.empty();
+    private Optional<ClientWindowData> initialData = Optional.empty();
 
     public record ClientWindowData(Optional<String> ip, Optional<MysterType> type, Optional<String> fileName) {}
     
@@ -188,12 +190,16 @@ public class ClientWindow extends MysterFrame implements Sayable {
 
         init();
         typeMetadataCache = new TypeMetadataCache(protocol.getStream());
-        thumbnailCache = new RemoteThumbnailCache(protocol.getStream(), previewPane::setThumbnail);
+        thumbnailCache = new RemoteThumbnailCache(protocol.getStream());
         previewController = new ClientPreviewController(
                 previewPane,
                 thumbnailCache,
                 this::buildThumbnailRequest,
                 () -> previewPane.isShowing() && (getExtendedState() & ICONIFIED) == 0 && !isDir());
+        fileThumbnailController = new ClientFileThumbnailController<>(
+                fileList, thumbnailCache, this::buildFileThumbnailRequest,
+                () -> thumbnailAddress != null && fileList.isShowing()
+                        && (getExtendedState() & ICONIFIED) == 0);
     }
 
     /**
@@ -211,7 +217,7 @@ public class ClientWindow extends MysterFrame implements Sayable {
      */
     public void setInitialData(ClientWindowData data) {
         // Step 1: Set the initial data
-        this.initiaData = Optional.of(data);
+        this.initialData = Optional.of(data);
 
         // Set IP in text field if provided
         data.ip().ifPresent(ip -> {
@@ -246,7 +252,7 @@ public class ClientWindow extends MysterFrame implements Sayable {
                     if (data.fileName().isPresent()) {
                         selectElement();
                     } else {
-                        initiaData = Optional.empty();
+                        initialData = Optional.empty();
                     }
                     return;
                 }
@@ -267,7 +273,7 @@ public class ClientWindow extends MysterFrame implements Sayable {
         }
 
         // No type specified, just clear initial data
-        initiaData = Optional.empty();
+        initialData = Optional.empty();
     }
     
     private void recursivelyStartDownloads(TreeMCListTableModel<String> model,
@@ -455,7 +461,10 @@ public class ClientWindow extends MysterFrame implements Sayable {
             }
         });
 
-        fileList = TreeMCList.create(new String[]{"Name", "Size"}, new TreePathString(new String[] {}));
+        fileList = TreeMCList.create(new String[]{"Name", "Size"}, new TreePathString(new String[] {}),
+                (item, logicalSize) -> fileThumbnailController == null
+                        ? Optional.empty()
+                        : fileThumbnailController.lookup(item, logicalSize));
         fileList.setSelectionMode(ListSelectionModel.MULTIPLE_INTERVAL_SELECTION);
 
         JMenuItem downloadMenuItem = ContextMenu.createDownloadItem(fileList, _ -> {
@@ -634,6 +643,9 @@ public class ClientWindow extends MysterFrame implements Sayable {
     }
         
     public void dispose() {
+        if (fileThumbnailController != null) {
+            fileThumbnailController.close();
+        }
         if (previewController != null) {
             previewController.close();
         }
@@ -650,12 +662,12 @@ public class ClientWindow extends MysterFrame implements Sayable {
         fileTypeList.addItem(new GenericMCListItem<MysterType>(
                 new Sortable[] { nameCell, new SortableString(t.toString()) }, t));
 
-        initiaData.ifPresent(data -> {
+        initialData.ifPresent(data -> {
             if (t.equals(data.type().orElse(null))) {
                 fileTypeList.select(fileTypeList.length()-1);
                 
                 if (data.fileName().isEmpty()) {
-                    initiaData = Optional.empty();
+                    initialData = Optional.empty();
                 }
             }
         });
@@ -866,8 +878,38 @@ public class ClientWindow extends MysterFrame implements Sayable {
 
     private void refreshThumbnailDemand() {
         if (previewController != null) {
-            previewController.reconcile();
+            previewController.conditionalReload();
         }
+        if (fileThumbnailController != null) {
+            fileThumbnailController.reconcile();
+        }
+    }
+
+    private Optional<RemoteThumbnailCache.Request> buildFileThumbnailRequest(
+            TreeMCListItem<String> item, int logicalSize,
+            java.awt.GraphicsConfiguration configuration, boolean allowResolution) {
+        if (item.isContainer() || thumbnailAddress == null || listedType == null) {
+            return Optional.empty();
+        }
+        Optional<MetadataTypeId> profile = typeDescriptionList.get(listedType)
+                .map(TypeDescription::getMetadataTypeId);
+        if (profile.isEmpty()) {
+            profile = typeMetadataCache.getMetadataTypeId(listedType);
+        }
+        if (profile.isEmpty()) {
+            if (allowResolution && !typeMetadataCache.hasAttempted(listedType)) {
+                typeMetadataCache.resolveAsync(listedType, thumbnailAddress,
+                        () -> javax.swing.SwingUtilities.invokeLater(this::refreshThumbnailDemand));
+            }
+            return Optional.empty();
+        }
+        if (!ThumbnailUiUtils.isEligible(profile.get())) {
+            return Optional.empty();
+        }
+        int size = ThumbnailUiUtils.devicePixelSize(logicalSize, configuration);
+        if (size == 0) return Optional.empty();
+        return Optional.of(new RemoteThumbnailCache.Request(
+                thumbnailAddress, listedType, item.getObject(), size));
     }
     
     public boolean isDir() {
@@ -923,6 +965,7 @@ public class ClientWindow extends MysterFrame implements Sayable {
         if (fileListThread != null) {
             fileListThread.flagToEnd();
         }
+        listedType = null;
         fileList.clearAll();
         stopStats();
         containers.clear();
@@ -970,6 +1013,7 @@ public class ClientWindow extends MysterFrame implements Sayable {
 
     public void startFileList() {
         stopFileListing();
+        listedType = getCurrentType();
         recolumnizeFileList();
         fileListThread = new FileListerThread(new FileListerThread.ItemListListener() {
                                                     public void addItemsToFileList(FileRecord[] files) {
@@ -990,11 +1034,11 @@ public class ClientWindow extends MysterFrame implements Sayable {
     }
 
     private void selectElement() {
-        if (initiaData.isEmpty()) {
+        if (initialData.isEmpty()) {
             return;
         }
 
-        ClientWindowData data = initiaData.get();
+        ClientWindowData data = initialData.get();
         
         if (data.fileName().isEmpty()) {
             return;
@@ -1014,8 +1058,7 @@ public class ClientWindow extends MysterFrame implements Sayable {
             fileList.repaint();
         });
         
-        initiaData = Optional.empty();
-        
+        initialData = Optional.empty();
     }
 
     public void startStats() {

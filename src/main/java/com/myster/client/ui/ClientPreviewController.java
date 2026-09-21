@@ -5,15 +5,17 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.function.BooleanSupplier;
 import java.util.function.Supplier;
+import java.awt.image.BufferedImage;
 
 import com.general.thread.PromiseFuture;
 import com.general.thread.PromiseFutures;
+import com.general.thread.Invoker;
 import com.myster.thumbnail.RemoteThumbnailCache;
 
 /**
  * EDT-owned preview selection and visibility. Geometry changes debounce new requests for
  * 150 ms; hiding or losing the selection cancels immediately. Same-file pixels remain visible
- * during a size upgrade. Closing also closes the owned cache.
+ * during a size upgrade. The shared cache is owned by the client window.
  */
 public final class ClientPreviewController implements AutoCloseable {
     private final ClientFilePreviewPane pane;
@@ -21,6 +23,7 @@ public final class ClientPreviewController implements AutoCloseable {
     private final Supplier<Optional<RemoteThumbnailCache.Request>> requestSupplier;
     private final BooleanSupplier active;
     private PromiseFuture<Void> resizeDelay;
+    private PromiseFuture<BufferedImage> thumbnailFuture;
     private Optional<RemoteThumbnailCache.Request> currentRequest = Optional.empty();
     private boolean closed;
 
@@ -35,7 +38,7 @@ public final class ClientPreviewController implements AutoCloseable {
         pane.setGeometryListener(this::scheduleResize);
     }
 
-    public void reconcile() {
+    public void conditionalReload() {
         if (closed) return;
         cancelResize();
         Optional<RemoteThumbnailCache.Request> next = visibleRequest();
@@ -43,23 +46,28 @@ public final class ClientPreviewController implements AutoCloseable {
                 || !next.get().sameFile(currentRequest.get())) {
             pane.clearThumbnail();
         }
+        boolean sameRequest = next.equals(currentRequest);
         currentRequest = next;
-        thumbnailCache.replace(next);
+        if (sameRequest && thumbnailFuture != null) {
+            return;
+        }
+        cancelThumbnail();
+        next.ifPresent(this::load);
     }
 
     private void scheduleResize() {
         if (closed) return;
         Optional<RemoteThumbnailCache.Request> next = visibleRequest();
         if (next.isEmpty()) {
-            reconcile();
+            conditionalReload();
             return;
         }
         if (next.equals(currentRequest) && resizeDelay == null) return;
         cancelResize();
-        thumbnailCache.replace(Optional.empty());
+        cancelThumbnail();
         resizeDelay = PromiseFutures.delay(Duration.ofMillis(150))
                 .useEdt()
-                .addResultListener(_ -> reconcile());
+                .addResultListener(_ -> conditionalReload());
     }
 
     private Optional<RemoteThumbnailCache.Request> visibleRequest() {
@@ -73,13 +81,39 @@ public final class ClientPreviewController implements AutoCloseable {
         }
     }
 
+    private void load(RemoteThumbnailCache.Request request) {
+        if (thumbnailFuture!=null) {
+            thumbnailFuture.cancel();
+            thumbnailFuture = null;
+        }
+
+        PromiseFuture<BufferedImage> future = thumbnailCache.load(request).withInvoker(Invoker.EDT);
+        thumbnailFuture = future;
+        future.addResultListener(image -> {
+            if (thumbnailFuture != null && currentRequest.filter(request::equals).isPresent()) {
+                pane.setThumbnail(image);
+            }
+        }).addExceptionListener(_ -> {}).addFinallyListener(() -> {
+            if (thumbnailFuture == future) {
+                thumbnailFuture = null;
+            }
+        });
+    }
+
+    private void cancelThumbnail() {
+        if (thumbnailFuture != null) {
+            thumbnailFuture.cancel();
+            thumbnailFuture = null;
+        }
+    }
+
     @Override
     public void close() {
         if (closed) return;
         closed = true;
         cancelResize();
         pane.setGeometryListener(() -> {});
-        thumbnailCache.close();
+        cancelThumbnail();
         pane.clearThumbnail();
     }
 }

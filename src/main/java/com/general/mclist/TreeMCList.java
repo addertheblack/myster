@@ -1,23 +1,30 @@
 package com.general.mclist;
 
 import javax.swing.Icon;
-import javax.swing.ImageIcon;
 import javax.swing.JTable;
 import javax.swing.border.EmptyBorder;
 import javax.swing.table.DefaultTableCellRenderer;
 import java.awt.Component;
 import java.awt.Graphics;
+import java.awt.Graphics2D;
 import java.awt.Insets;
 import java.awt.event.KeyAdapter;
 import java.awt.event.KeyEvent;
-import java.awt.image.BufferedImage;
+import java.util.Objects;
+import java.util.Optional;
 
 import com.formdev.flatlaf.extras.FlatSVGIcon;
 import com.general.mclist.TreeMCListTableModel.TreeMCListItem;
 import com.general.mclist.TreeMCListTableModel.TreePath;
 import com.general.util.IconLoader;
+import com.myster.thumbnail.ui.ThumbnailUiUtils;
 
 public class TreeMCList {
+    /** Passive per-item icon lookup used by the tree renderer on the EDT. */
+    @FunctionalInterface
+    public interface IconProvider<E> {
+        Optional<Icon> getIcon(TreeMCListItem<E> item, int logicalSize);
+    }
     private static final FlatSVGIcon downChevron = IconLoader.loadSvg(IconLoader.class, "chevron-down-svgrepo-com");
     private static final FlatSVGIcon rightChevron = IconLoader.loadSvg(IconLoader.class, "chevron-right-svgrepo-com");
     
@@ -25,10 +32,21 @@ public class TreeMCList {
     private static final FlatSVGIcon fileIcon = IconLoader.loadSvg(IconLoader.class,"file-svgrepo-com");
     
     public static <E> JMCList<E> create(String[] columns, TreePath root) {
-        return create(columns, root, folderIcon, fileIcon);
+        return create(columns, root, folderIcon, fileIcon, (_, _) -> Optional.empty());
+    }
+
+    public static <E> JMCList<E> create(String[] columns, TreePath root, IconProvider<E> provider) {
+        return create(columns, root, folderIcon, fileIcon, provider);
     }
     
     public static <E> JMCList<E> create(String[] columns, TreePath root, FlatSVGIcon customFolderIcon, FlatSVGIcon customFileIcon) {
+        return create(columns, root, customFolderIcon, customFileIcon, (_, _) -> Optional.empty());
+    }
+
+    public static <E> JMCList<E> create(String[] columns, TreePath root,
+                                        FlatSVGIcon customFolderIcon, FlatSVGIcon customFileIcon,
+                                        IconProvider<E> provider) {
+        Objects.requireNonNull(provider, "provider");
         // Use custom icons if provided, otherwise fall back to defaults
         final FlatSVGIcon containerIcon = customFolderIcon != null ? customFolderIcon : folderIcon;
         final FlatSVGIcon itemIcon = customFileIcon != null ? customFileIcon : fileIcon;
@@ -44,7 +62,8 @@ public class TreeMCList {
         }
         
         // list.setRowHeight(24);
-        list.getTableHeader().getColumnModel().getColumn(0).setCellRenderer(createTreeFirstColumnRenderer(containerIcon, itemIcon));
+        list.getTableHeader().getColumnModel().getColumn(0)
+                .setCellRenderer(createTreeFirstColumnRenderer(containerIcon, itemIcon, provider));
         
         // Enable type-to-select functionality on the first column by default
         // todo, move to better spot
@@ -60,7 +79,8 @@ public class TreeMCList {
      * Creates the cell renderer for column 0 of a tree list: draws the indent,
      * chevron (open/closed), and folder/file icon merged into a single cell.
      */
-    private static DefaultTableCellRenderer createTreeFirstColumnRenderer(FlatSVGIcon containerIcon, FlatSVGIcon itemIcon) {
+    private static <E> DefaultTableCellRenderer createTreeFirstColumnRenderer(
+            FlatSVGIcon containerIcon, FlatSVGIcon itemIcon, IconProvider<E> provider) {
         return new DefaultTableCellRenderer() {
             @Override
             public Component getTableCellRendererComponent(JTable l,
@@ -69,10 +89,9 @@ public class TreeMCList {
                                                            boolean hasFocus,
                                                            int row,
                                                            int column) {
-                final var v = (SortableString) value;
-                final JMCList<String> mcList = (JMCList<String>) l;
-                final TreeMCListTableModel<String> treeModel = (TreeMCListTableModel<String>) mcList.getModel();
-                final var treeRow = (TreeMCListItem<String>) treeModel.getRow(row);
+                final JMCList<E> mcList = (JMCList<E>) l;
+                final TreeMCListTableModel<E> treeModel = (TreeMCListTableModel<E>) mcList.getModel();
+                final var treeRow = (TreeMCListItem<E>) treeModel.getRow(l.convertRowIndexToModel(row));
                 final var indentLevel = treeRow.getParent().getIndentLevel();
                 final var iconSize = l.getRowHeight();
 
@@ -86,19 +105,24 @@ public class TreeMCList {
                                                     column);
                 Icon chevIcon = buildIcon(treeRow, iconSize);
 
-                var fOrFIcon = treeRow.isContainer() ? containerIcon : itemIcon;
-                fOrFIcon = fOrFIcon.derive(iconSize, iconSize);
-                fOrFIcon.setColorFilter(new FlatSVGIcon.ColorFilter(color -> this
-                        .getForeground()));
+                Icon fOrFIcon = provider.getIcon(treeRow, iconSize)
+                        .map(icon -> fitIcon(icon, iconSize))
+                        .orElseGet(() -> {
+                            FlatSVGIcon fallback = (treeRow.isContainer() ? containerIcon : itemIcon)
+                                    .derive(iconSize, iconSize);
+                            fallback.setColorFilter(new FlatSVGIcon.ColorFilter(color -> this.getForeground()));
+
+                            return fallback;
+                        });
 
                 setIcon(mergeIcons(chevIcon, fOrFIcon, 4));
                 setBorder(new EmptyBorder(new Insets(0, 10 * indentLevel, 0, 0)));
-                setText("" + v);
+                setText(String.valueOf(value));
 
                 return this;
             }
 
-            private Icon buildIcon(TreeMCListItem<String> treeRow, int iconSize) {
+            private Icon buildIcon(TreeMCListItem<E> treeRow, int iconSize) {
                 Icon chevIcon;
                 if (treeRow.isContainer()) {
                     FlatSVGIcon icon = treeRow.isOpen() ? downChevron : rightChevron;
@@ -107,13 +131,55 @@ public class TreeMCList {
                             .getForeground()));
                     chevIcon = icon.derive(iconSize, iconSize);
                 } else {
-                    BufferedImage emptyImage =
-                            new BufferedImage(iconSize, iconSize, BufferedImage.TYPE_INT_ARGB);
-                    chevIcon = new ImageIcon(emptyImage);
+                    chevIcon = emptyIcon(iconSize, iconSize);
                 }
                 return chevIcon;
             }
         };
+    }
+
+    private static Icon fitIcon(Icon source, int side) {
+        java.awt.Rectangle target = ThumbnailUiUtils.aspectFit(source,
+                new java.awt.Rectangle(0, 0, side, side));
+        if (target.isEmpty()) {
+            return emptyIcon(side, side);
+        }
+        return new Icon() {
+            public int getIconWidth() { return side; }
+            public int getIconHeight() { return side; }
+            public void paintIcon(Component c, Graphics g, int x, int y) {
+                Graphics copy = g.create();
+                try {
+                    Graphics2D scaled = (Graphics2D) copy;
+                    scaled.translate(x + target.x, y + target.y);
+                    scaled.scale((double) target.width / source.getIconWidth(),
+                                 (double) target.height / source.getIconHeight());
+                    source.paintIcon(c, scaled, 0, 0);
+                } finally {
+                    copy.dispose();
+                }
+            }
+        };
+    }
+
+    private static Icon emptyIcon(int width, int height) {
+        return new Icon() {
+            public int getIconWidth() { return width; }
+            public int getIconHeight() { return height; }
+            public void paintIcon(Component c, Graphics g, int x, int y) {}
+        };
+    }
+
+    /** Returns the logical bounds occupied by a row's complete tree icon. */
+    public static java.awt.Rectangle getItemIconBounds(JMCList<?> list, int viewRow) {
+        if (list.getColumnCount() == 0 || viewRow < 0 || viewRow >= list.getRowCount()) {
+            return new java.awt.Rectangle();
+        }
+        TreeMCListItem<?> item = (TreeMCListItem<?>) list.getMCListItem(viewRow);
+        int indent = 10 * item.getParent().getIndentLevel();
+        int size = list.getRowHeight();
+        return new java.awt.Rectangle(list.getCellRect(viewRow, 0, false).x + indent,
+                list.getCellRect(viewRow, 0, false).y, size * 2 + 4, size);
     }
 
     /** Key handler that opens/closes container rows with the left and right arrow keys. */

@@ -145,6 +145,31 @@ public class JMCList<E> extends JTable implements MCList<E> {
         }
         return -1;
     }
+
+    /**
+     * Repaints the row currently containing {@code item}. Identity is resolved at call time so
+     * sorting, filtering, and tree expansion cannot redirect the repaint to another row.
+     * This method must be called on the EDT.
+     */
+    public void repaintItem(MCListItemInterface<?> item) {
+        if (!SwingUtilities.isEventDispatchThread() || item == null || getColumnCount() == 0) {
+            return;
+        }
+        int row = findRowIndexOfItem(item); // oh no this is a whole table scan
+        if (row < 0) {
+            return;
+        }
+        int viewRow;
+        try {
+            viewRow = convertRowIndexToView(row);
+        } catch (IndexOutOfBoundsException e) {
+            return;
+        }
+        if (viewRow < 0) {
+            return;
+        }
+        repaint(0, getCellRect(viewRow, 0, false).y, getWidth(), getRowHeight());
+    }
     
     /*
      * (non-Javadoc)

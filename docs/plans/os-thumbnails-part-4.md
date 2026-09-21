@@ -31,6 +31,13 @@ client files, sharing the preview's completed-image cache and single transfer mo
   which is the same identity represented by a stub. There is no need to change the row model.
 - Check `isContainer()` before reading a row as a file. Only resolved Image and Video metadata
   profiles are eligible, including custom types; Audio, Generic and unknown profiles use defaults.
+  An eligible row with no cached thumbnail still uses the standard file icon while acquisition is
+  pending. Metadata resolution is required before acquisition because it supplies the eligibility
+  decision and the request's type identity; absence of a resolved eligible profile is not a
+  thumbnail-load failure. If the profile is not yet resolved, continue the existing metadata
+  lookup asynchronously using the project's `PromiseFuture`/`PromiseFutures` conventions; never
+  block the EDT. Keep the standard file icon until the current listing identity still matches
+  and the lookup resolves to an eligible profile.
 - Preserve the renderer's existing rule: logical icon size comes from the current row height.
   Multiply by the actual scale reported by Java, including arbitrary fractional factors and
   factors greater than 2, and round up to device pixels within the protocol size limit. For
@@ -112,6 +119,12 @@ remain unchanged. No file format is introduced.
   It rejects containers and non-Image/Video profiles before accessing cached thumbnails or starting
   work. Resolve local type definitions first, then transient remote metadata. Do not decide from
   filename extensions or the local OS thumbnail whitelist. Reconcile when an unknown profile resolves.
+  An unresolved profile is a pending metadata state, not an ineligible result. Its asynchronous
+  completion publishes on the EDT and triggers reconciliation only when the captured
+  address/type/listing generation is still current.
+  For a resolved eligible file, the adapter checks the completed cache and remembered failure state;
+  if neither is present, the controller requests the thumbnail. Until completion, the renderer
+  returns empty so the tree keeps its standard file icon.
 - **Identity survives sorting.** Resolve actual items after model events; asynchronous results
   are keyed by request identity, never by a saved row index. The model sorts/rebuilds itself.
   Completion updates the available image before repainting the current matching items. Repaint
@@ -125,7 +138,8 @@ remain unchanged. No file format is introduced.
 - **Stable fallback.** Remember a completed miss/error for the current visible demand so repaint
   cannot create a retry loop. A new visible demand may retry subject to the cache's existing TTL.
   Keep visible successful images referenced until departure so cache eviction cannot cause a
-  repaint/reload cycle when the viewport holds more entries than the completed cache.
+  repaint/reload cycle when the viewport holds more entries than the completed cache. While an
+  eligible request is pending, or after a miss/error, the normal file icon remains visible.
 - **Shared lifetime.** Hiding one consumer only withdraws that consumer. Reconnect/close cancels
   both consumers, clears cache outcomes and invalidates callbacks. Keep the same monitor across
   reset so an old transfer cannot overlap its replacement.
@@ -134,6 +148,10 @@ remain unchanged. No file format is introduced.
 
 - [ ] A provider can customize a specific leaf or container without subclassing or replacing it.
 - [ ] Existing tree callers retain their default icons, layout, selection and navigation.
+- [ ] Eligible files retain the standard file icon until a cached or newly loaded thumbnail is
+      available; ineligible/unresolved types never start thumbnail acquisition.
+- [ ] Unresolved custom/remote metadata is fetched asynchronously without blocking the EDT, and
+      a current Image/Video resolution causes eligible visible rows to enter thumbnail loading.
 - [ ] A changed provider result becomes visible after repaint without a model rebuild.
 - [ ] Successful asynchronous loads trigger an EDT repaint of the affected current rows without
       user interaction; sorting or removing items during loading cannot repaint a saved, stale row.
@@ -287,7 +305,17 @@ remain unchanged. No file format is introduced.
     disable list thumbnails. Preserve the existing default icon overload used by
     `ProgressManagerWindow`.
 
-12. Write `docs/impl_summary/os-thumbnails-part-4.md` after focused tests and manual list checks.
+12. Ensure the request adapter treats a resolved eligible row with no cached image as a
+    pending acquisition (not as an immediate fallback result): the provider returns empty
+    during the transfer, while the controller owns loading and repainting. Treat cached
+    misses/errors according to the existing TTL and keep the default file icon visible.
+13. When the captured type has no local metadata profile, use the existing asynchronous
+    metadata-cache lookup rather than resolving it from the renderer or blocking the controller's
+    EDT reconciliation path. Track the listing generation/address/type with the lookup; on
+    completion, publish the resolved profile and reconcile only if that identity is still current.
+    Keep unresolved rows on their default icons and do not classify them as cache misses or
+    thumbnail failures.
+14. Write `docs/impl_summary/os-thumbnails-part-4.md` after focused tests and manual list checks.
 
 ### 10. Tests to write
 
@@ -305,6 +333,9 @@ remain unchanged. No file format is introduced.
   item slots, folders/collapsed descendants, late profile resolution and request work bounded
   to one list promise. Repeated renderer/provider/paint calls must create zero loads. A settling
   viewport must begin loading even if no renderer has run yet.
+- **Async metadata:** unresolved custom/remote profiles remain responsive on the EDT, retain
+  default icons, start eligible thumbnail loading after asynchronous Image/Video resolution,
+  and ignore resolution callbacks after listing replacement, reconnect or close.
 - **Identity/eligibility:** a folder whose label resembles an image filename still uses the
   folder default and never enters thumbnail lookup/loading. Audio/Generic/unknown profiles also
   bypass thumbnails; custom Image/Video profiles are eligible. Preserve the exact opaque file
