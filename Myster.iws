@@ -7,17 +7,9 @@
     <option name="selectedModelId" value="auto" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="fe0d93f5-a1b5-4669-89e3-19e762d0ae4a" name="Changes" comment="Add support for arbitrary display scaling">
+    <list default="true" id="fe0d93f5-a1b5-4669-89e3-19e762d0ae4a" name="Changes" comment="Implement passive thumbnail loading and icon fitting for file list and preview">
       <change beforePath="$PROJECT_DIR$/Myster.iws" beforeDir="false" afterPath="$PROJECT_DIR$/Myster.iws" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/docs/design/Myster OS Thumbnail Integration Design.md" beforeDir="false" afterPath="$PROJECT_DIR$/docs/design/Myster OS Thumbnail Integration Design.md" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/docs/plans/os-thumbnails-part-4.md" beforeDir="false" afterPath="$PROJECT_DIR$/docs/plans/os-thumbnails-part-4.md" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/com/general/mclist/JMCList.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/com/general/mclist/JMCList.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/com/general/mclist/TreeMCList.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/com/general/mclist/TreeMCList.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/com/myster/client/ui/ClientPreviewController.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/com/myster/client/ui/ClientPreviewController.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/com/myster/client/ui/ClientWindow.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/com/myster/client/ui/ClientWindow.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/com/myster/thumbnail/RemoteThumbnailCache.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/com/myster/thumbnail/RemoteThumbnailCache.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/com/myster/thumbnail/ui/ThumbnailUiUtils.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/com/myster/thumbnail/ui/ThumbnailUiUtils.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/test/java/com/myster/client/ui/TestClientPreviewController.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/test/java/com/myster/client/ui/TestClientPreviewController.java" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/src/test/java/com/myster/thumbnail/TestRemoteThumbnailCache.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/test/java/com/myster/thumbnail/TestRemoteThumbnailCache.java" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
@@ -238,61 +230,61 @@
   </component>
   <component name="NextEditCompletionFeaturesState">
     <decayedCancelled>
-      <entry key="MS100" value="1.0087896014003128" />
-      <entry key="MS500" value="1.4262259393999344" />
-      <entry key="S2" value="2.2314905340443696" />
-      <entry key="S5" value="2.631224794823318" />
-      <entry key="S10" value="2.803210649948976" />
-      <entry key="S30" value="2.9314068868682837" />
-      <entry key="S60" value="2.9653128963820743" />
-      <entry key="M2" value="2.9832066993024133" />
-      <entry key="M5" value="3.091235076578268" />
-      <entry key="M10" value="3.9062514968824575" />
-      <entry key="M15" value="6.899512109306714" />
-      <entry key="M30" value="76.1343427804404" />
-      <entry key="H1" value="496.1062670721961" />
-      <entry key="H2" value="1533.7500224614614" />
-      <entry key="H4" value="3152.6370385950527" />
-      <entry key="D1" value="7961.881067672776" />
-      <entry key="W1" value="15785.421688542112" />
+      <entry key="MS100" value="1.5994146509400207" />
+      <entry key="MS500" value="5.922655933694613" />
+      <entry key="S2" value="17.098799724558816" />
+      <entry key="S5" value="33.17590286636665" />
+      <entry key="S10" value="47.78022005376987" />
+      <entry key="S30" value="64.35769498058406" />
+      <entry key="S60" value="69.83506643152037" />
+      <entry key="M2" value="72.82578153354252" />
+      <entry key="M5" value="74.70750040072032" />
+      <entry key="M10" value="75.34988003896228" />
+      <entry key="M15" value="75.5657215318568" />
+      <entry key="M30" value="75.78242689664668" />
+      <entry key="H1" value="75.89110473861416" />
+      <entry key="H2" value="75.94552517066468" />
+      <entry key="H4" value="75.98045478456416" />
+      <entry key="D1" value="999.9327580128911" />
+      <entry key="W1" value="11680.633336791007" />
     </decayedCancelled>
     <decayedSelected>
       <entry key="MS100" value="0.0" />
       <entry key="MS500" value="0.0" />
       <entry key="S2" value="0.0" />
-      <entry key="S5" value="4.6174264981899395E-174" />
-      <entry key="S10" value="2.150961661055179E-87" />
-      <entry key="S30" value="1.558080477569709E-29" />
-      <entry key="S60" value="6.425275828753591E-15" />
-      <entry key="M2" value="1.5232621921424003E-7" />
-      <entry key="M5" value="0.004455946945549587" />
-      <entry key="M10" value="0.1501380880224516" />
-      <entry key="M15" value="0.5001374600360234" />
-      <entry key="M30" value="1.706565817821036" />
-      <entry key="H1" value="3.186820462844954" />
-      <entry key="H2" value="4.368088555994369" />
-      <entry key="H4" value="5.1181697545552645" />
-      <entry key="D1" value="6.951373350967279" />
-      <entry key="W1" value="13.21403177863946" />
+      <entry key="S5" value="0.0" />
+      <entry key="S10" value="0.0" />
+      <entry key="S30" value="0.0" />
+      <entry key="S60" value="0.0" />
+      <entry key="M2" value="0.0" />
+      <entry key="M5" value="1.82583903047449E-272" />
+      <entry key="M10" value="3.039149880893028E-136" />
+      <entry key="M15" value="8.00319765215478E-91" />
+      <entry key="M30" value="2.158788628685123E-45" />
+      <entry key="H1" value="1.1334467897387004E-22" />
+      <entry key="H2" value="2.6050328500214096E-11" />
+      <entry key="H4" value="1.2499008717381379E-5" />
+      <entry key="D1" value="0.8066728287259779" />
+      <entry key="W1" value="9.714279750713539" />
     </decayedSelected>
     <decayedShown>
-      <entry key="MS100" value="0.7183269865424682" />
-      <entry key="MS500" value="1.298883676949686" />
-      <entry key="S2" value="1.9583141561306663" />
-      <entry key="S5" value="2.4210615283498615" />
-      <entry key="S10" value="2.671221818617234" />
-      <entry key="S30" value="2.880066275993163" />
-      <entry key="S60" value="2.9386249424946467" />
-      <entry key="M2" value="2.9695963790366595" />
-      <entry key="M5" value="3.089927528651164" />
-      <entry key="M10" value="4.052364232286284" />
-      <entry key="M15" value="7.3956382180310944" />
-      <entry key="M30" value="77.83686115685104" />
-      <entry key="H1" value="499.28974173721065" />
-      <entry key="H2" value="1538.115753679355" />
-      <entry key="H4" value="3157.7536803505536" />
-      <entry key="D1" value="7968.832026523951" />
-      <entry key="W1" value="15798.635613703627" />
+      <entry key="MS100" value="1.5665001861887113" />
+      <entry key="MS500" value="5.898512276344364" />
+      <entry key="S2" value="17.081447408787152" />
+      <entry key="S5" value="33.16206356467866" />
+      <entry key="S10" value="47.770048528899316" />
+      <entry key="S30" value="64.35304627025248" />
+      <entry key="S60" value="69.83253176831288" />
+      <entry key="M2" value="72.82445656787607" />
+      <entry key="M5" value="74.7069558795366" />
+      <entry key="M10" value="75.34960529484644" />
+      <entry key="M15" value="75.56553781260607" />
+      <entry key="M30" value="75.78233475760565" />
+      <entry key="H1" value="75.89105859902098" />
+      <entry key="H2" value="75.94550208334859" />
+      <entry key="H4" value="75.98045573178041" />
+      <entry key="D1" value="1000.7393808156592" />
+      <entry key="W1" value="11690.347537887199" />
     </decayedShown>
   </component>
   <component name="PerforceConfiguration">
@@ -361,6 +353,8 @@
     "Application.Myster.executor": "Run",
     "Application.ThumbnailPreview.executor": "Run",
     "JUnit.TestFileStatsBatch.executor": "Run",
+    "JUnit.TestFileTypeList.executor": "Debug",
+    "JUnit.TestFileTypeList.testChangingPathTriggersReindexing.executor": "Debug",
     "KEY_CHAT_IN_TOOLWINDOW": "false",
     "ModuleVcsDetector.initialDetectionPerformed": "true",
     "RunOnceActivity.MCP Project settings loaded": "true",
@@ -384,7 +378,7 @@
     "to.speed.mode.migration.done": "true"
   }
 }]]></component>
-  <component name="RunManager" selected="Application.Myster">
+  <component name="RunManager" selected="JUnit.TestFileTypeList.testChangingPathTriggersReindexing">
     <configuration selected="false" default="true" type="Applet" factoryName="Applet">
       <module name="" />
       <option name="MAIN_CLASS_NAME" />
@@ -435,6 +429,47 @@
         <option name="Make" enabled="true" />
       </method>
     </configuration>
+    <configuration name="TestFileTypeList" type="JUnit" factoryName="JUnit" temporary="true" nameIsGenerated="true">
+      <module name="Myster" />
+      <extension name="coverage">
+        <pattern>
+          <option name="PATTERN" value="com.myster.filemanager.*" />
+          <option name="ENABLED" value="true" />
+        </pattern>
+      </extension>
+      <option name="PACKAGE_NAME" value="com.myster.filemanager" />
+      <option name="MAIN_CLASS_NAME" value="com.myster.filemanager.TestFileTypeList" />
+      <option name="TEST_OBJECT" value="class" />
+      <option name="VM_PARAMETERS" />
+      <option name="WORKING_DIRECTORY" value="$PROJECT_DIR$" />
+      <option name="TEST_SEARCH_SCOPE">
+        <value defaultName="wholeProject" />
+      </option>
+      <method v="2">
+        <option name="Make" enabled="true" />
+      </method>
+    </configuration>
+    <configuration name="TestFileTypeList.testChangingPathTriggersReindexing" type="JUnit" factoryName="JUnit" temporary="true" nameIsGenerated="true">
+      <module name="Myster" />
+      <extension name="coverage">
+        <pattern>
+          <option name="PATTERN" value="com.myster.filemanager.*" />
+          <option name="ENABLED" value="true" />
+        </pattern>
+      </extension>
+      <option name="PACKAGE_NAME" value="com.myster.filemanager" />
+      <option name="MAIN_CLASS_NAME" value="com.myster.filemanager.TestFileTypeList" />
+      <option name="METHOD_NAME" value="testChangingPathTriggersReindexing" />
+      <option name="TEST_OBJECT" value="method" />
+      <option name="VM_PARAMETERS" />
+      <option name="WORKING_DIRECTORY" value="$PROJECT_DIR$" />
+      <option name="TEST_SEARCH_SCOPE">
+        <value defaultName="wholeProject" />
+      </option>
+      <method v="2">
+        <option name="Make" enabled="true" />
+      </method>
+    </configuration>
     <configuration default="true" type="JUnit" factoryName="JUnit">
       <option name="TEST_OBJECT" value="class" />
       <option name="VM_PARAMETERS" />
@@ -448,8 +483,10 @@
     </configuration>
     <recent_temporary>
       <list>
-        <item itemvalue="Application.ThumbnailPreview" />
+        <item itemvalue="JUnit.TestFileTypeList.testChangingPathTriggersReindexing" />
+        <item itemvalue="JUnit.TestFileTypeList" />
         <item itemvalue="JUnit.TestFileStatsBatch" />
+        <item itemvalue="Application.ThumbnailPreview" />
       </list>
     </recent_temporary>
   </component>
@@ -562,7 +599,15 @@
       <option name="project" value="LOCAL" />
       <updated>1789935867428</updated>
     </task>
-    <option name="localTasksCounter" value="9" />
+    <task id="LOCAL-00009" summary="Implement passive thumbnail loading and icon fitting for file list and preview">
+      <option name="closed" value="true" />
+      <created>1789954627574</created>
+      <option name="number" value="00009" />
+      <option name="presentableId" value="LOCAL-00009" />
+      <option name="project" value="LOCAL" />
+      <updated>1789954627574</updated>
+    </task>
+    <option name="localTasksCounter" value="10" />
     <servers />
   </component>
   <component name="TodoView" selected-index="0">
@@ -613,7 +658,8 @@
     <MESSAGE value="Implement OS thumbnails — Part 3: integrate client preview pane with cancellable thumbnail loading and metadata retention" />
     <MESSAGE value="Refactor ClientFilePreviewPane to optimize preview layout and enhance metadata display" />
     <MESSAGE value="Add support for arbitrary display scaling" />
-    <option name="LAST_COMMIT_MESSAGE" value="Add support for arbitrary display scaling" />
+    <MESSAGE value="Implement passive thumbnail loading and icon fitting for file list and preview" />
+    <option name="LAST_COMMIT_MESSAGE" value="Implement passive thumbnail loading and icon fitting for file list and preview" />
   </component>
   <component name="VssConfiguration">
     <CheckoutOptions>

@@ -537,10 +537,10 @@ The deliberately platform-specific implementations should remain small and isola
 
 The client details pane and visible file-list use one shared `RemoteThumbnailCache` with independent
 consumer-owned promises and an EDT-owned
-LRU cache (128 combined image/miss/error entries, at most 8 MiB of decoded pixels). Misses suppress
+LRU cache (512 combined image/miss/error entries, at most 8 MiB of decoded pixels). Misses suppress
 requests for 30 seconds and transport failures for 5 seconds; retries happen on later demand
 changes, with no automatic retry loop. Unsupported endpoints are remembered until reset, bounded
-to 128 entries. Completed exact or larger requests can satisfy smaller previews.
+to 512 entries. Completed exact or larger requests can satisfy smaller previews.
 
 `RemoteThumbnailTask` extends `AbstractCancellableCallable` and holds a cache-owned monitor through
 connection, read and try-with-resources cleanup. Cancelling a promise makes its result moot;

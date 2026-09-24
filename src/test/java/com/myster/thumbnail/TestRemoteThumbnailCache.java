@@ -7,7 +7,6 @@ import java.awt.image.BufferedImage;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Optional;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
@@ -64,7 +63,8 @@ class TestRemoteThumbnailCache {
         CountDownLatch closed = new CountDownLatch(1);
         doAnswer(_ -> { closed.countDown(); return null; }).when(socket).close();
         SwingUtilities.invokeAndWait(() -> start(request));
-        assertTrue(closed.await(5, TimeUnit.SECONDS));
+        assertTrue(closed.await(5, TimeUnit.SECONDS),
+                () -> "Expected a thumbnail transfer for " + request);
         worker.get().join(5000);
         assertFalse(worker.get().isAlive());
         SwingUtilities.invokeAndWait(() -> {});
@@ -183,20 +183,37 @@ class TestRemoteThumbnailCache {
     }
 
     @Test
-    void evictsLeastRecentlyUsedImagesAtByteAndEntryBounds() throws Exception {
+    void evictsLeastRecentlyUsedImagesAtByteBound() throws Exception {
         BufferedImage large = new BufferedImage(256, 256, BufferedImage.TYPE_INT_ARGB);
         when(stream.getThumbnail(eq(socket), eq(type), anyString(), eq(256))).thenReturn(large);
-        for (int i = 0; i < 33; i++) {
+        // 32 decoded 256 x 256 ARGB images occupy exactly 8 MiB.
+        for (int i = 0; i < 32; i++) {
             load(request("image" + i, 256));
         }
-        load(request("image0", 256));
-        verify(stream, times(2)).getThumbnail(socket, type, "image0", 256);
-        SwingUtilities.invokeAndWait(thumbnailCache::reset);
-        for (int i = 0; i < 129; i++) {
+        SwingUtilities.invokeAndWait(() -> {
+            assertSame(large, thumbnailCache.lookup(request("image0", 256)).orElseThrow());
+        });
+        load(request("image32", 256));
+        SwingUtilities.invokeAndWait(() -> {
+            assertSame(large, thumbnailCache.lookup(request("image0", 256)).orElseThrow());
+            assertTrue(thumbnailCache.lookup(request("image1", 256)).isEmpty());
+        });
+        load(request("image1", 256));
+        verify(stream, times(2)).getThumbnail(socket, type, "image1", 256);
+        verify(stream).getThumbnail(socket, type, "image0", 256);
+    }
+
+    @Test
+    void evictsLeastRecentlyUsedMissesAtEntryBound() throws Exception {
+        for (int i = 0; i < 512; i++) {
             load(request("miss" + i, 128));
         }
-        load(request("miss0", 128));
-        verify(stream, times(2)).getThumbnail(socket, type, "miss0", 128);
+        SwingUtilities.invokeAndWait(() -> start(request("miss0", 128)));
+        load(request("miss512", 128));
+        SwingUtilities.invokeAndWait(() -> start(request("miss0", 128)));
+        load(request("miss1", 128));
+        verify(stream).getThumbnail(socket, type, "miss0", 128);
+        verify(stream, times(2)).getThumbnail(socket, type, "miss1", 128);
     }
 
     @Test
