@@ -16,6 +16,9 @@ import java.util.Set;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Consumer;
 import java.util.logging.Logger;
 import java.util.prefs.Preferences;
@@ -229,6 +232,37 @@ class TestMysterServerPoolImpl {
 
         Assertions.assertTrue(resolved.getIdentity() instanceof MysterAddressIdentity);
         Assertions.assertSame(resolved, pool.getCachedMysterServer(address).orElseThrow());
+    }
+
+    @Test
+    void completedRefreshCanBeRequestedAgainFromListener() throws Exception {
+        pool = createPool();
+        MysterAddress address = MysterAddress.createMysterAddress("127.0.0.1");
+        var second = new AtomicReference<PromiseFuture<MysterServer>>();
+        var secondAlreadyDone = new AtomicBoolean();
+        var callbacks = new AtomicInteger();
+        var refreshed = new CountDownLatch(2);
+        pool.addPoolListener(convert(_ -> {
+            if (callbacks.incrementAndGet() == 1) {
+                // The first request's cleanup is still queued behind this listener.
+                var next = pool.refreshMysterServer(address);
+                secondAlreadyDone.set(next.isDone());
+                second.set(next);
+            }
+            refreshed.countDown();
+        }));
+
+        try {
+            PromiseFuture<MysterServer> first = pool.refreshMysterServer(address);
+            Assertions.assertTrue(refreshed.await(2, TimeUnit.SECONDS),
+                    "A refresh requested from the listener must produce another notification");
+            Assertions.assertNotSame(first, second.get());
+            Assertions.assertFalse(secondAlreadyDone.get());
+            Mockito.verify(protocol.getDatagram(), Mockito.times(2))
+                    .getBidirectionalServerStats(Mockito.any(ParamBuilder.class));
+        } finally {
+            pool.close();
+        }
     }
 
     @Test

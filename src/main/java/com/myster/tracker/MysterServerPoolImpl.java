@@ -314,7 +314,7 @@ public class MysterServerPoolImpl implements MysterServerPool {
             MysterAddress address,
             Optional<PublicKeyIdentity> expectedIdentity) {
         PromiseFuture<MysterServer> existing = outstandingServerFutures.get(address);
-        if (existing != null) {
+        if (existing != null && !existing.isDone()) {
             return existing;
         }
 

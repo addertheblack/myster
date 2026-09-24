@@ -89,7 +89,9 @@ class TestRemoteThumbnailCache {
             start(request("image", 64));
             start(request("image", 200));
         });
-        assertEquals(List.of(small, large, small, large), delivered);
+        // Cache hits still queue their result listeners on the EDT.
+        SwingUtilities.invokeAndWait(() ->
+                assertEquals(List.of(small, large, small, large), delivered));
         verify(stream, times(2)).makeStreamConnection(address);
     }
 
