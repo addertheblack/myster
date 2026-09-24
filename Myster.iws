@@ -7,13 +7,10 @@
     <option name="selectedModelId" value="auto" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="fe0d93f5-a1b5-4669-89e3-19e762d0ae4a" name="Changes" comment="Refactor thumbnail cache tests to improve clarity and coverage for eviction logic">
-      <change beforePath="$PROJECT_DIR$/Myster.iml" beforeDir="false" afterPath="$PROJECT_DIR$/Myster.iml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Myster.ipr" beforeDir="false" afterPath="$PROJECT_DIR$/Myster.ipr" afterDir="false" />
+    <list default="true" id="fe0d93f5-a1b5-4669-89e3-19e762d0ae4a" name="Changes" comment="Add JUnit Platform Launcher dependency and enhance server pool refresh logic">
       <change beforePath="$PROJECT_DIR$/Myster.iws" beforeDir="false" afterPath="$PROJECT_DIR$/Myster.iws" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/pom.xml" beforeDir="false" afterPath="$PROJECT_DIR$/pom.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/com/myster/tracker/MysterServerPoolImpl.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/com/myster/tracker/MysterServerPoolImpl.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/test/java/com/myster/tracker/TestMysterServerPoolImpl.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/test/java/com/myster/tracker/TestMysterServerPoolImpl.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/com/myster/filemanager/FileTypeList.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/com/myster/filemanager/FileTypeList.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/test/java/com/myster/filemanager/TestFileTypeList.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/test/java/com/myster/filemanager/TestFileTypeList.java" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -233,23 +230,23 @@
   </component>
   <component name="NextEditCompletionFeaturesState">
     <decayedCancelled>
-      <entry key="MS100" value="1.6754993573304264" />
-      <entry key="MS500" value="5.440701876102689" />
-      <entry key="S2" value="16.33946149759356" />
-      <entry key="S5" value="29.25879920317849" />
-      <entry key="S10" value="38.34492211769162" />
-      <entry key="S30" value="47.27177524160603" />
-      <entry key="S60" value="50.01178719506084" />
-      <entry key="M2" value="51.47324039398993" />
-      <entry key="M5" value="52.452268878589315" />
-      <entry key="M10" value="55.96399876888681" />
-      <entry key="M15" value="64.53529433452879" />
-      <entry key="M30" value="95.00465494404972" />
-      <entry key="H1" value="132.68907179394495" />
-      <entry key="H2" value="163.0629379233054" />
-      <entry key="H4" value="186.93326678533487" />
-      <entry key="D1" value="840.0626875445353" />
-      <entry key="W1" value="11162.77749995689" />
+      <entry key="MS100" value="1.6767187366883145" />
+      <entry key="MS500" value="5.133812268778949" />
+      <entry key="S2" value="10.397016415915514" />
+      <entry key="S5" value="16.87931623235847" />
+      <entry key="S10" value="25.563922256376745" />
+      <entry key="S30" value="51.195508756840944" />
+      <entry key="S60" value="77.32751814454991" />
+      <entry key="M2" value="120.92083489986393" />
+      <entry key="M5" value="202.72138413372483" />
+      <entry key="M10" value="257.9638377315017" />
+      <entry key="M15" value="282.0644657944338" />
+      <entry key="M30" value="309.9998629071048" />
+      <entry key="H1" value="330.4844535807119" />
+      <entry key="H2" value="365.62694159854425" />
+      <entry key="H4" value="420.67257188313465" />
+      <entry key="D1" value="1074.9553241534682" />
+      <entry key="W1" value="11290.811962260694" />
     </decayedCancelled>
     <decayedSelected>
       <entry key="MS100" value="0.0" />
@@ -261,33 +258,33 @@
       <entry key="S60" value="0.0" />
       <entry key="M2" value="0.0" />
       <entry key="M5" value="0.0" />
-      <entry key="M10" value="3.7995304745456595E-164" />
-      <entry key="M15" value="2.0010076625256211E-109" />
-      <entry key="M30" value="1.0794504862561348E-54" />
-      <entry key="H1" value="2.5345300169058937E-27" />
-      <entry key="H2" value="1.2318600055867156E-13" />
-      <entry key="H4" value="8.595074522263789E-7" />
-      <entry key="D1" value="0.5163289086679237" />
-      <entry key="W1" value="9.11441998099609" />
+      <entry key="M10" value="1.2921983830404603E-172" />
+      <entry key="M15" value="4.5253092060156365E-115" />
+      <entry key="M30" value="1.62331379752449E-57" />
+      <entry key="H1" value="9.828727983939716E-29" />
+      <entry key="H2" value="2.425835201084446E-14" />
+      <entry key="H4" value="3.8141662218809427E-7" />
+      <entry key="D1" value="0.4509393172160845" />
+      <entry key="W1" value="8.939800871021609" />
     </decayedSelected>
     <decayedShown>
-      <entry key="MS100" value="1.6410180868894513" />
-      <entry key="MS500" value="5.418235475703874" />
-      <entry key="S2" value="16.323130825682327" />
-      <entry key="S5" value="29.247106788654758" />
-      <entry key="S10" value="38.33720275482282" />
-      <entry key="S30" value="47.26857688644755" />
-      <entry key="S60" value="50.010091121263024" />
-      <entry key="M2" value="51.472366436880364" />
-      <entry key="M5" value="52.451912316083224" />
-      <entry key="M10" value="55.9638074766286" />
-      <entry key="M15" value="64.53514554797023" />
-      <entry key="M30" value="95.00454272893624" />
-      <entry key="H1" value="132.68899228591903" />
-      <entry key="H2" value="163.0628887389447" />
-      <entry key="H4" value="186.93323936156747" />
-      <entry key="D1" value="840.5789793771593" />
-      <entry key="W1" value="11171.891845405495" />
+      <entry key="MS100" value="1.6380803994101647" />
+      <entry key="MS500" value="5.1071530285511955" />
+      <entry key="S2" value="10.384937941489277" />
+      <entry key="S5" value="16.871663532032596" />
+      <entry key="S10" value="25.55815654199077" />
+      <entry key="S30" value="51.1919028626893" />
+      <entry key="S60" value="77.32492642029682" />
+      <entry key="M2" value="120.91887282458185" />
+      <entry key="M5" value="202.7200772744721" />
+      <entry key="M10" value="257.9630031010797" />
+      <entry key="M15" value="282.0638561226053" />
+      <entry key="M30" value="309.9995270310013" />
+      <entry key="H1" value="330.4842740108726" />
+      <entry key="H2" value="365.62684138529426" />
+      <entry key="H4" value="420.6725138620396" />
+      <entry key="D1" value="1075.4062233650973" />
+      <entry key="W1" value="11299.751688921659" />
     </decayedShown>
   </component>
   <component name="PerforceConfiguration">
@@ -359,6 +356,7 @@
     "JUnit.TestFileStatsBatch.executor": "Run",
     "JUnit.TestFileTypeList.executor": "Debug",
     "JUnit.TestFileTypeList.testChangingPathTriggersReindexing.executor": "Debug",
+    "JUnit.TestFileTypeList.testMaximumDepthIndexing.executor": "Debug",
     "KEY_CHAT_IN_TOOLWINDOW": "false",
     "ModuleVcsDetector.initialDetectionPerformed": "true",
     "RunOnceActivity.MCP Project settings loaded": "true",
@@ -382,7 +380,7 @@
     "to.speed.mode.migration.done": "true"
   }
 }]]></component>
-  <component name="RunManager" selected="Application.MysterServerPoolStressMain">
+  <component name="RunManager" selected="JUnit.TestFileTypeList.testMaximumDepthIndexing">
     <configuration selected="false" default="true" type="Applet" factoryName="Applet">
       <module name="" />
       <option name="MAIN_CLASS_NAME" />
@@ -400,20 +398,6 @@
       <extension name="coverage">
         <pattern>
           <option name="PATTERN" value="com.myster.tracker.*" />
-          <option name="ENABLED" value="true" />
-        </pattern>
-      </extension>
-      <method v="2">
-        <option name="Make" enabled="true" />
-      </method>
-    </configuration>
-    <configuration name="ThumbnailPreview" type="Application" factoryName="Application" temporary="true" nameIsGenerated="true">
-      <option name="MAIN_CLASS_NAME" value="com.myster.thumbnail.ThumbnailPreview" />
-      <module name="Myster" />
-      <option name="WORKING_DIRECTORY" value="$PROJECT_DIR$" />
-      <extension name="coverage">
-        <pattern>
-          <option name="PATTERN" value="com.myster.thumbnail.*" />
           <option name="ENABLED" value="true" />
         </pattern>
       </extension>
@@ -488,6 +472,27 @@
         <option name="Make" enabled="true" />
       </method>
     </configuration>
+    <configuration name="TestFileTypeList.testMaximumDepthIndexing" type="JUnit" factoryName="JUnit" temporary="true" nameIsGenerated="true">
+      <module name="Myster" />
+      <extension name="coverage">
+        <pattern>
+          <option name="PATTERN" value="com.myster.filemanager.*" />
+          <option name="ENABLED" value="true" />
+        </pattern>
+      </extension>
+      <option name="PACKAGE_NAME" value="com.myster.filemanager" />
+      <option name="MAIN_CLASS_NAME" value="com.myster.filemanager.TestFileTypeList" />
+      <option name="METHOD_NAME" value="testMaximumDepthIndexing" />
+      <option name="TEST_OBJECT" value="method" />
+      <option name="VM_PARAMETERS" />
+      <option name="WORKING_DIRECTORY" value="$PROJECT_DIR$" />
+      <option name="TEST_SEARCH_SCOPE">
+        <value defaultName="wholeProject" />
+      </option>
+      <method v="2">
+        <option name="Make" enabled="true" />
+      </method>
+    </configuration>
     <configuration default="true" type="JUnit" factoryName="JUnit">
       <option name="TEST_OBJECT" value="class" />
       <option name="VM_PARAMETERS" />
@@ -501,11 +506,11 @@
     </configuration>
     <recent_temporary>
       <list>
+        <item itemvalue="JUnit.TestFileTypeList.testMaximumDepthIndexing" />
         <item itemvalue="Application.MysterServerPoolStressMain" />
         <item itemvalue="JUnit.TestFileTypeList.testChangingPathTriggersReindexing" />
         <item itemvalue="JUnit.TestFileTypeList" />
         <item itemvalue="JUnit.TestFileStatsBatch" />
-        <item itemvalue="Application.ThumbnailPreview" />
       </list>
     </recent_temporary>
   </component>
@@ -634,7 +639,15 @@
       <option name="project" value="LOCAL" />
       <updated>1790213120369</updated>
     </task>
-    <option name="localTasksCounter" value="11" />
+    <task id="LOCAL-00011" summary="Add JUnit Platform Launcher dependency and enhance server pool refresh logic">
+      <option name="closed" value="true" />
+      <created>1790284676990</created>
+      <option name="number" value="00011" />
+      <option name="presentableId" value="LOCAL-00011" />
+      <option name="project" value="LOCAL" />
+      <updated>1790284676990</updated>
+    </task>
+    <option name="localTasksCounter" value="12" />
     <servers />
   </component>
   <component name="TodoView" selected-index="0">
@@ -687,7 +700,8 @@
     <MESSAGE value="Add support for arbitrary display scaling" />
     <MESSAGE value="Implement passive thumbnail loading and icon fitting for file list and preview" />
     <MESSAGE value="Refactor thumbnail cache tests to improve clarity and coverage for eviction logic" />
-    <option name="LAST_COMMIT_MESSAGE" value="Refactor thumbnail cache tests to improve clarity and coverage for eviction logic" />
+    <MESSAGE value="Add JUnit Platform Launcher dependency and enhance server pool refresh logic" />
+    <option name="LAST_COMMIT_MESSAGE" value="Add JUnit Platform Launcher dependency and enhance server pool refresh logic" />
   </component>
   <component name="VssConfiguration">
     <CheckoutOptions>
@@ -740,6 +754,22 @@
   </component>
   <component name="WebViewSettings">
     <webview flattenPackages="false" showMembers="false" autoscrollToSource="false" />
+  </component>
+  <component name="XDebuggerManager">
+    <breakpoint-manager>
+      <breakpoints>
+        <line-breakpoint enabled="true" suspend="THREAD" type="java-line">
+          <url>file://$PROJECT_DIR$/src/main/java/com/general/thread/PromiseFutureImpl.java</url>
+          <line>74</line>
+          <option name="timeStamp" value="17" />
+        </line-breakpoint>
+        <line-breakpoint enabled="true" type="java-line">
+          <url>file://$PROJECT_DIR$/src/test/java/com/myster/filemanager/TestFileTypeList.java</url>
+          <line>299</line>
+          <option name="timeStamp" value="18" />
+        </line-breakpoint>
+      </breakpoints>
+    </breakpoint-manager>
   </component>
   <component name="XSLT-Support.FileAssociations.UIState">
     <expand />

@@ -30,10 +30,11 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.Queue;
 import java.util.Set;
-import java.util.concurrent.ExecutionException;
+import java.util.concurrent.CountDownLatch;
 import java.util.logging.Logger;
 import java.util.stream.Stream;
 
+import com.general.thread.CallResult;
 import com.general.thread.CancellableCallable;
 import com.general.thread.Invoker;
 import com.general.thread.PromiseFuture;
@@ -144,30 +145,24 @@ public class FileTypeList {
         rootdir = getPath();
     }
 
-    /** Package protected for unit tests */
+    /**
+     * Waits for the current index's result publication and any replacement scan it schedules.
+     * Package protected for unit tests.
+     *
+     * @throws InterruptedException if interrupted while waiting for the completion listeners
+     */
     @ProtectedForUnitTests
-    void waitForIndexer() {
-        synchronized (this) {
-            if (indexingFuture == null) {
-                return;
+    void waitForIndexer() throws InterruptedException {
+        while (true) {
+            var published = new CountDownLatch(1);
+            synchronized (this) {
+                if (indexingFuture == null) {
+                    return;
+                }
+                // Future completion can precede dispatch of the result publication callback.
+                indexingFuture.addFinallyListener(published::countDown);
             }
-
-            try {
-                indexingFuture.get();
-            } catch (InterruptedException _) {
-                Thread.currentThread().interrupt();
-            } catch (ExecutionException e) {
-                // ignore - doesn't matter
-                e.printStackTrace();
-            }
-
-        }
-
-        try {
-            INVOKER.waitForThread();
-            com.general.util.Util.invokeAndWait(() -> {});
-        } catch (InterruptedException e) {
-            e.printStackTrace();
+            published.await();
         }
     }
     
@@ -460,21 +455,25 @@ public class FileTypeList {
         // info
     }
 
-    private synchronized void setFileList(List<FileItem> filelist) {
-        resetIndexingVariables();
-        fileMap = new LinkedHashMap<>();
-        if (filelist != null) {
-            for (FileItem item : filelist) {
-                String filename = mergePunctuation(item.getPath().getFileName().toString());
-                fileMap.put(filename, item);
+    private synchronized void indexingFinished(PromiseFuture<List<FileItem>> completed,
+                                               CallResult<List<FileItem>> result) {
+        // Cancellation may have already replaced this scan with another one.
+        if (indexingFuture != completed) {
+            return;
+        }
+        if (result.isResult()) {
+            fileMap = new LinkedHashMap<>();
+            if (result.getResult() != null) {
+                for (FileItem item : result.getResult()) {
+                    String filename = mergePunctuation(item.getPath().getFileName().toString());
+                    fileMap.put(filename, item);
+                }
             }
         }
-        assertFileList();
-    }
-
-    private synchronized void resetIndexingVariables() {
         timeoflastupdate = System.currentTimeMillis();
         indexingFuture = null;
+        initialized = true;
+        assertFileList();
     }
 
     /**
@@ -522,12 +521,11 @@ public class FileTypeList {
             rootdir = workingdir; // in case the dir for this type has changed.
             Path rootPath = fileSystem.getPath(rootdir);
             
-            indexingFuture = PromiseFutures
+            PromiseFuture<List<FileItem>> next = PromiseFutures
                     .execute(new FileListIndexCall(type, rootPath, hashProvider, tdList,
-                            metadataExtractor, metadataTypeRegistry))
-                    .addResultListener(this::setFileList)
-                    .addFinallyListener(this::resetIndexingVariables)
-                    .addFinallyListener(() -> initialized = true)
+                            metadataExtractor, metadataTypeRegistry));
+            indexingFuture = next;
+            next.addFinallyCallResultListener(result -> indexingFinished(next, result))
                     .addStandardExceptionHandler()
                     .setInvoker(INVOKER);
         }

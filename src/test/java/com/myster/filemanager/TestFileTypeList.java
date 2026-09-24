@@ -5,7 +5,12 @@ import java.nio.file.FileSystem;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Optional;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
+import java.util.concurrent.atomic.AtomicReference;
 
+import com.general.thread.PromiseFutures;
 import com.google.common.jimfs.Configuration;
 import com.google.common.jimfs.Jimfs;
 import com.myster.hash.FileHash;
@@ -22,6 +27,7 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.Mockito.*;
 
 class TestFileTypeList {
     private FileSystem fileSystem;
@@ -52,7 +58,7 @@ class TestFileTypeList {
     }
 
     @AfterEach
-    void tearDown() throws IOException {
+    void tearDown() throws IOException, InterruptedException {
         // Wait for any pending indexing to complete before closing filesystem
         fileTypeList.waitForIndexer();
 
@@ -317,6 +323,75 @@ class TestFileTypeList {
 
         String[] files = fileTypeList.getFileListAsStrings();
         assertNotNull(files);
+    }
+
+    @Test
+    void waitForIndexerIncludesPathChangedDuringScan() throws Exception {
+        assertWaitsForReplacement(false);
+    }
+
+    @Test
+    void cancelledScanCannotClearReplacementIndexer() throws Exception {
+        assertWaitsForReplacement(true);
+    }
+
+    private void assertWaitsForReplacement(boolean cancelFirstScan) throws Exception {
+        Path firstRoot = Files.createDirectories(fileSystem.getPath("/test/first"));
+        Path secondRoot = Files.createDirectories(fileSystem.getPath("/test/second"));
+        Path firstFile = Files.writeString(firstRoot.resolve("first.txt"), "first");
+        Files.writeString(secondRoot.resolve("second.txt"), "second");
+        var firstStarted = new CountDownLatch(1);
+        var secondStarted = new CountDownLatch(1);
+        var releaseFirst = new CountDownLatch(1);
+        var releaseSecond = new CountDownLatch(1);
+        var firstWorker = new AtomicReference<Thread>();
+        HashProvider blockedHashes = mock(HashProvider.class);
+        doAnswer(invocation -> {
+            if (firstFile.equals(invocation.getArgument(0))) {
+                firstWorker.set(Thread.currentThread());
+                firstStarted.countDown();
+                if (!releaseFirst.await(5, TimeUnit.SECONDS)) {
+                    throw new IllegalStateException("First scan was not released");
+                }
+            } else {
+                secondStarted.countDown();
+                if (!releaseSecond.await(5, TimeUnit.SECONDS)) {
+                    throw new IllegalStateException("Second scan was not released");
+                }
+            }
+            return null;
+        }).when(blockedHashes).findHashNonBlocking(any(Path.class), any(FileHashListener.class));
+        fileTypeList.waitForIndexer();
+        fileTypeList = new FileTypeList(testType, testPrefPath, blockedHashes,
+                typeDescriptionList, fileSystem, new NoOpFileMetadataExtractor());
+        fileTypeList.setShared(false);
+        fileTypeList.setPath(firstRoot.toString());
+        try {
+            fileTypeList.setShared(true);
+            assertTrue(firstStarted.await(5, TimeUnit.SECONDS));
+            synchronized (fileTypeList) {
+                if (cancelFirstScan) fileTypeList.setShared(false);
+                fileTypeList.setPath(secondRoot.toString());
+                if (cancelFirstScan) fileTypeList.setShared(true);
+            }
+            var waiting = PromiseFutures.execute(() -> {
+                fileTypeList.waitForIndexer();
+                return fileTypeList.getFileListAsStrings();
+            });
+            releaseFirst.countDown();
+            assertTrue(secondStarted.await(5, TimeUnit.SECONDS));
+            assertThrows(TimeoutException.class, () -> waiting.get(100, TimeUnit.MILLISECONDS),
+                    "Waiting must include the replacement scan and result publication");
+            releaseSecond.countDown();
+            assertArrayEquals(new String[] { "second.txt" }, waiting.get(5, TimeUnit.SECONDS));
+            assertFalse(fileTypeList.isIndexing());
+            assertTrue(fileTypeList.isInitialized());
+        } finally {
+            releaseFirst.countDown();
+            releaseSecond.countDown();
+            if (firstWorker.get() != null) firstWorker.get().join(5000);
+            fileTypeList.waitForIndexer();
+        }
     }
 
     @Test
