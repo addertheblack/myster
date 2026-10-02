@@ -7,9 +7,10 @@
     <option name="selectedModelId" value="auto" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="fe0d93f5-a1b5-4669-89e3-19e762d0ae4a" name="Changes" comment="Detect and close connections for TLS ClientHello messages and unsecured server scans in ConnectionRunnable">
+    <list default="true" id="fe0d93f5-a1b5-4669-89e3-19e762d0ae4a" name="Changes" comment="Update last commit message and adjust task summary for TLS ClientHello detection in ConnectionRunnable">
       <change beforePath="$PROJECT_DIR$/Myster.iws" beforeDir="false" afterPath="$PROJECT_DIR$/Myster.iws" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/com/myster/server/ui/StatsInfoPanel.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/com/myster/server/ui/StatsInfoPanel.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/com/myster/net/server/ConnectionRunnable.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/com/myster/net/server/ConnectionRunnable.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/resources/logging.properties" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/resources/logging.properties" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -240,23 +241,23 @@
   </component>
   <component name="NextEditCompletionFeaturesState">
     <decayedCancelled>
-      <entry key="MS100" value="1.424801903457129" />
-      <entry key="MS500" value="4.001150766686498" />
-      <entry key="S2" value="13.472418708828584" />
-      <entry key="S5" value="30.497935959923662" />
-      <entry key="S10" value="49.535764248409485" />
-      <entry key="S30" value="77.55516672958255" />
-      <entry key="S60" value="88.55284379327222" />
-      <entry key="M2" value="96.56005709720651" />
-      <entry key="M5" value="143.28636558095644" />
-      <entry key="M10" value="249.2683223413073" />
-      <entry key="M15" value="327.39441154894206" />
-      <entry key="M30" value="448.8291369297571" />
-      <entry key="H1" value="533.503507770012" />
-      <entry key="H2" value="584.0735319621946" />
-      <entry key="H4" value="611.9686437139782" />
-      <entry key="D1" value="701.1795225029921" />
-      <entry key="W1" value="8186.781561920632" />
+      <entry key="MS100" value="1.0000003059925788" />
+      <entry key="MS500" value="1.0497900060178489" />
+      <entry key="S2" value="1.4723735222723446" />
+      <entry key="S5" value="1.7419665298410187" />
+      <entry key="S10" value="1.9651048739080075" />
+      <entry key="S30" value="5.546466779570973" />
+      <entry key="S60" value="17.40212802905712" />
+      <entry key="M2" value="49.49922858676736" />
+      <entry key="M5" value="198.10757992860718" />
+      <entry key="M10" value="441.4086805835836" />
+      <entry key="M15" value="601.5892679254084" />
+      <entry key="M30" value="835.6767855060684" />
+      <entry key="H1" value="991.4322841176437" />
+      <entry key="H2" value="1081.836961668402" />
+      <entry key="H4" value="1143.82107585112" />
+      <entry key="D1" value="1544.94023285539" />
+      <entry key="W1" value="8659.526825674564" />
     </decayedCancelled>
     <decayedSelected>
       <entry key="MS100" value="0.0" />
@@ -266,35 +267,35 @@
       <entry key="S10" value="0.0" />
       <entry key="S30" value="0.0" />
       <entry key="S60" value="0.0" />
-      <entry key="M2" value="1.1301689204249151E-247" />
-      <entry key="M5" value="2.522744730224938E-99" />
-      <entry key="M10" value="7.1031553442729125E-50" />
-      <entry key="M15" value="2.1609470811302542E-33" />
-      <entry key="M30" value="6.574110900079638E-17" />
-      <entry key="H1" value="1.1466569334390996E-8" />
-      <entry key="H2" value="1.5143691234749296E-4" />
-      <entry key="H4" value="0.017403358039813258" />
-      <entry key="D1" value="1.052326170590379" />
-      <entry key="W1" value="9.087270298405363" />
+      <entry key="M2" value="0.0" />
+      <entry key="M5" value="2.1102107066845194E-178" />
+      <entry key="M10" value="2.0543648228419137E-89" />
+      <entry key="M15" value="9.450649063275939E-60" />
+      <entry key="M30" value="4.3475619430018085E-30" />
+      <entry key="H1" value="2.948749482233855E-15" />
+      <entry key="H2" value="7.679517498408694E-8" />
+      <entry key="H4" value="3.919080183045118E-4" />
+      <entry key="D1" value="0.5592108040510588" />
+      <entry key="W1" value="8.302492123624278" />
     </decayedSelected>
     <decayedShown>
-      <entry key="MS100" value="1.3983695880493041" />
-      <entry key="MS500" value="3.98838726093474" />
-      <entry key="S2" value="13.462389930158198" />
-      <entry key="S5" value="30.48897253641464" />
-      <entry key="S10" value="49.52849123333893" />
-      <entry key="S30" value="77.55136285330502" />
-      <entry key="S60" value="88.55066997922711" />
-      <entry key="M2" value="96.55886971322515" />
-      <entry key="M5" value="143.28563124764972" />
-      <entry key="M10" value="249.26764880705755" />
-      <entry key="M15" value="327.39380962320547" />
-      <entry key="M30" value="448.8287121551885" />
-      <entry key="H1" value="533.5032364030138" />
-      <entry key="H2" value="584.0735156796683" />
-      <entry key="H4" value="611.9859476988439" />
-      <entry key="D1" value="702.2318076440861" />
-      <entry key="W1" value="8195.86876365141" />
+      <entry key="MS100" value="0.9526379981112655" />
+      <entry key="MS500" value="0.999582176622432" />
+      <entry key="S2" value="1.3076112831137052" />
+      <entry key="S5" value="1.6261433614558218" />
+      <entry key="S10" value="1.8938977980176326" />
+      <entry key="S30" value="5.5080926447710254" />
+      <entry key="S60" value="17.37395245500503" />
+      <entry key="M2" value="49.480495655542086" />
+      <entry key="M5" value="198.09767981600297" />
+      <entry key="M10" value="441.4026209893218" />
+      <entry key="M15" value="601.5847947800987" />
+      <entry key="M30" value="835.6742450823116" />
+      <entry key="H1" value="991.4309151098573" />
+      <entry key="H2" value="1081.836248847819" />
+      <entry key="H4" value="1143.821101529507" />
+      <entry key="D1" value="1545.4993600911905" />
+      <entry key="W1" value="8667.82924630096" />
     </decayedShown>
   </component>
   <component name="PerforceConfiguration">
@@ -681,7 +682,15 @@
       <option name="project" value="LOCAL" />
       <updated>1790902230324</updated>
     </task>
-    <option name="localTasksCounter" value="15" />
+    <task id="LOCAL-00015" summary="Update last commit message and adjust task summary for TLS ClientHello detection in ConnectionRunnable">
+      <option name="closed" value="true" />
+      <created>1790902593284</created>
+      <option name="number" value="00015" />
+      <option name="presentableId" value="LOCAL-00015" />
+      <option name="project" value="LOCAL" />
+      <updated>1790902593284</updated>
+    </task>
+    <option name="localTasksCounter" value="16" />
     <servers />
   </component>
   <component name="TodoView" selected-index="0">
@@ -738,7 +747,8 @@
     <MESSAGE value="Refactor waitForIndexer method to improve synchronization and add tests for indexing behavior" />
     <MESSAGE value="Handle HTTP GET/POST requests and unsecured server scans in ConnectionRunnable" />
     <MESSAGE value="Detect and close connections for TLS ClientHello messages and unsecured server scans in ConnectionRunnable" />
-    <option name="LAST_COMMIT_MESSAGE" value="Detect and close connections for TLS ClientHello messages and unsecured server scans in ConnectionRunnable" />
+    <MESSAGE value="Update last commit message and adjust task summary for TLS ClientHello detection in ConnectionRunnable" />
+    <option name="LAST_COMMIT_MESSAGE" value="Update last commit message and adjust task summary for TLS ClientHello detection in ConnectionRunnable" />
   </component>
   <component name="VssConfiguration">
     <CheckoutOptions>

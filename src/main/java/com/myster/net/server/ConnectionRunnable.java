@@ -116,12 +116,17 @@ public class ConnectionRunnable implements Runnable {
      * Processes the client connection by reading protocol codes and dispatching
      * to appropriate handlers. This method implements the main Myster protocol
      * processing loop.
+     * Logs only the first unknown protocol code on this connection.
+     * Closes the connection after three consecutive unknown protocol codes;
+     * recognized codes reset the consecutive count.
      */
     public void run() {
         eventSender.getOperationDispatcher().fire()
                 .connectEvent(new OperatorEvent(new MysterAddress(socket.getInetAddress())));
 
         int sectionCounter = 0;
+        boolean unknownProtocolLogged = false;
+        int consecutiveUnknownProtocols = 0;
         try (var tempTcpSocket = new com.myster.net.stream.client.TCPSocket(socket)) {
             ConnectionContext context = new ConnectionContext(tempTcpSocket, new MysterAddress(socket.getInetAddress()), null, transferQueue, fileManager, Optional.empty());
 
@@ -157,17 +162,21 @@ public class ConnectionRunnable implements Runnable {
                 switch (protocolCode) {
                 case 0x47455420: // "GET " in ASCII
                 case 0x504F5354: // "POST" in ASCII
+                case 0x4F505449: // "OPTI" in ASCII (part of HTTP OPTIONS)
                     context.socket().close();
-                    log.fine("Detected HTTP GET/POST request - closing connection");
+                    log.fine("Detected HTTP request - closing connection");
                     break;
                 case 0x2A310D0A: // Redis RESP: "*1\r\n"
                 case 0x34000000: // MongoDB wire message length 52, little-endian seen as BE int
                 case 0x3A000000: // MongoDB wire message length 58, little-endian seen as BE int
                 case 0x666F7820:  // Fox-style Java probe: "fox "
+                case 0x4D474C4E: // "MGLN" — MGLNDD scanner marker
+                case 0x80000028: // ONC/Sun RPC frame marker
                     context.socket().close();
                     log.fine("Detected scan for unsecured server - closing connection");
                     break;
                 case TLSSocket.STLS_CONNECTION_SECTION:
+                    consecutiveUnknownProtocols = 0;
                     log.fine("Client requested STLS (Start TLS) connection section");
                     try {
                         // Send acceptance response (1 = success in Myster protocol)
@@ -199,11 +208,13 @@ public class ConnectionRunnable implements Runnable {
                         return;
                     }
                 case 1:
+                    consecutiveUnknownProtocols = 0;
                     // Basic acknowledgment protocol
                     context.socket().out.write(1);
                     context.socket().out.flush();
                     break;
                 case 2:
+                    consecutiveUnknownProtocols = 0;
                     // Acknowledgment and disconnect protocol
                     context.socket().out.write(1);
                     context.socket().out.flush();
@@ -211,12 +222,20 @@ public class ConnectionRunnable implements Runnable {
                 default:
                     ConnectionSection section = connectionSections.get(protocolCode);
                     if (section == null) {
-                        String asciiRepresentation = intToAsciiString(protocolCode);
-                        log.warning("System detects unknown protocol number: " + protocolCode + 
-                                     " (0x" + Integer.toHexString(protocolCode).toUpperCase() + 
-                                     ") ASCII: \"" + asciiRepresentation + "\" " + System.currentTimeMillis());
+                        if (!unknownProtocolLogged) {
+                            unknownProtocolLogged = true;
+                            String asciiRepresentation = intToAsciiString(protocolCode);
+                            log.warning("System detects unknown protocol number: " + protocolCode +
+                                        " (0x" + Integer.toHexString(protocolCode).toUpperCase() +
+                                        ") ASCII: \"" + asciiRepresentation + "\" " + System.currentTimeMillis());
+                        }
+                        if (++consecutiveUnknownProtocols >= 3) {
+                            context.socket().close();
+                            return;
+                        }
                         context.socket().out.write(0); // Send rejection for unknown protocol
                     } else {
+                        consecutiveUnknownProtocols = 0;
                         doSection(section, remoteAddress, context);
                     }
                 }
