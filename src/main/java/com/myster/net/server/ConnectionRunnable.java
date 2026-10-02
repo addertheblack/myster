@@ -148,6 +148,15 @@ public class ConnectionRunnable implements Runnable {
                 MysterAddress remoteAddress = new MysterAddress(socket.getInetAddress());
 
                 switch (protocolCode) {
+                case 0x47455420: // "GET " in ASCII
+                case 0x504F5354: // "POST" in ASCII
+                    context.socket().close();
+                    log.fine("Detected HTTP GET/POST request - closing connection");
+                    break;
+                case 0x16030105:
+                    context.socket().close();
+                    log.fine("Detected scan for unsecured server - closing connection");
+                    break;
                 case TLSSocket.STLS_CONNECTION_SECTION:
                     log.fine("Client requested STLS (Start TLS) connection section");
                     try {
@@ -195,7 +204,7 @@ public class ConnectionRunnable implements Runnable {
                         String asciiRepresentation = intToAsciiString(protocolCode);
                         log.warning("System detects unknown protocol number: " + protocolCode + 
                                      " (0x" + Integer.toHexString(protocolCode).toUpperCase() + 
-                                     ") ASCII: \"" + asciiRepresentation + "\"");
+                                     ") ASCII: \"" + asciiRepresentation + "\" " + System.currentTimeMillis());
                         context.socket().out.write(0); // Send rejection for unknown protocol
                     } else {
                         doSection(section, remoteAddress, context);

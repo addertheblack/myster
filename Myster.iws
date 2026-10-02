@@ -7,10 +7,9 @@
     <option name="selectedModelId" value="auto" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="fe0d93f5-a1b5-4669-89e3-19e762d0ae4a" name="Changes" comment="Add JUnit Platform Launcher dependency and enhance server pool refresh logic">
+    <list default="true" id="fe0d93f5-a1b5-4669-89e3-19e762d0ae4a" name="Changes" comment="Refactor waitForIndexer method to improve synchronization and add tests for indexing behavior">
       <change beforePath="$PROJECT_DIR$/Myster.iws" beforeDir="false" afterPath="$PROJECT_DIR$/Myster.iws" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/com/myster/filemanager/FileTypeList.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/com/myster/filemanager/FileTypeList.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/test/java/com/myster/filemanager/TestFileTypeList.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/test/java/com/myster/filemanager/TestFileTypeList.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/com/myster/net/server/ConnectionRunnable.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/com/myster/net/server/ConnectionRunnable.java" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -209,6 +208,17 @@
     &quot;accountId&quot;: &quot;f166ab81-b797-43a8-b371-d9c6f764e006&quot;
   }
 }</component>
+  <component name="HighlightingSettingsPerFile">
+    <setting file="jar://$USER_HOME$/Java/jdk-26.0.2.1/lib/src.zip!/java.base/java/lang/Class.java" root0="SKIP_INSPECTION" />
+    <setting file="jar://$USER_HOME$/Java/jdk-26.0.2.1/lib/src.zip!/java.base/java/lang/Module.java" root0="SKIP_INSPECTION" />
+    <setting file="jar://$USER_HOME$/Java/jdk-26.0.2.1/lib/src.zip!/java.base/java/lang/foreign/ValueLayout.java" root0="SKIP_INSPECTION" />
+    <setting file="jar://$USER_HOME$/Java/jdk-26.0.2.1/lib/src.zip!/java.base/java/util/IdentityHashMap.java" root0="SKIP_INSPECTION" />
+    <setting file="jar://$USER_HOME$/Java/jdk-26.0.2.1/lib/src.zip!/java.base/java/util/concurrent/FutureTask.java" root0="SKIP_INSPECTION" />
+    <setting file="jar://$USER_HOME$/Java/jdk-26.0.2.1/lib/src.zip!/java.base/java/util/function/Consumer.java" root0="SKIP_INSPECTION" />
+    <setting file="jar://$USER_HOME$/Java/jdk-26.0.2.1/lib/src.zip!/java.desktop/javax/imageio/ImageReader.java" root0="SKIP_INSPECTION" />
+    <setting file="jar://$USER_HOME$/Java/jdk-26.0.2.1/lib/src.zip!/java.desktop/javax/swing/JTable.java" root0="SKIP_INSPECTION" />
+    <setting file="jar://$USER_HOME$/Java/jdk-26.0.2.1/lib/src.zip!/java.desktop/javax/swing/RowSorter.java" root0="SKIP_INSPECTION" />
+  </component>
   <component name="InspectionManager">
     <option name="AUTOSCROLL_TO_SOURCE" value="false" />
     <option name="SPLITTER_PROPORTION" value="0.5" />
@@ -230,23 +240,23 @@
   </component>
   <component name="NextEditCompletionFeaturesState">
     <decayedCancelled>
-      <entry key="MS100" value="1.6767187366883145" />
-      <entry key="MS500" value="5.133812268778949" />
-      <entry key="S2" value="10.397016415915514" />
-      <entry key="S5" value="16.87931623235847" />
-      <entry key="S10" value="25.563922256376745" />
-      <entry key="S30" value="51.195508756840944" />
-      <entry key="S60" value="77.32751814454991" />
-      <entry key="M2" value="120.92083489986393" />
-      <entry key="M5" value="202.72138413372483" />
-      <entry key="M10" value="257.9638377315017" />
-      <entry key="M15" value="282.0644657944338" />
-      <entry key="M30" value="309.9998629071048" />
-      <entry key="H1" value="330.4844535807119" />
-      <entry key="H2" value="365.62694159854425" />
-      <entry key="H4" value="420.67257188313465" />
-      <entry key="D1" value="1074.9553241534682" />
-      <entry key="W1" value="11290.811962260694" />
+      <entry key="MS100" value="1.0" />
+      <entry key="MS500" value="1.0000464951901331" />
+      <entry key="S2" value="1.1007695944086862" />
+      <entry key="S5" value="1.5702460960694127" />
+      <entry key="S10" value="2.0561544250694785" />
+      <entry key="S30" value="2.612510361839692" />
+      <entry key="S60" value="2.7952665787516153" />
+      <entry key="M2" value="2.8947203717537153" />
+      <entry key="M5" value="2.9571666327366195" />
+      <entry key="M10" value="2.9784611433970025" />
+      <entry key="M15" value="2.9856134685593654" />
+      <entry key="M30" value="2.992793051202078" />
+      <entry key="H1" value="2.9963930980219478" />
+      <entry key="H2" value="2.9981956912654804" />
+      <entry key="H4" value="2.999129503573132" />
+      <entry key="D1" value="73.58805686346142" />
+      <entry key="W1" value="7648.899055050827" />
     </decayedCancelled>
     <decayedSelected>
       <entry key="MS100" value="0.0" />
@@ -256,35 +266,35 @@
       <entry key="S10" value="0.0" />
       <entry key="S30" value="0.0" />
       <entry key="S60" value="0.0" />
-      <entry key="M2" value="0.0" />
-      <entry key="M5" value="0.0" />
-      <entry key="M10" value="1.2921983830404603E-172" />
-      <entry key="M15" value="4.5253092060156365E-115" />
-      <entry key="M30" value="1.62331379752449E-57" />
-      <entry key="H1" value="9.828727983939716E-29" />
-      <entry key="H2" value="2.425835201084446E-14" />
-      <entry key="H4" value="3.8141662218809427E-7" />
-      <entry key="D1" value="0.4509393172160845" />
-      <entry key="W1" value="8.939800871021609" />
+      <entry key="M2" value="9.511800330240677E-219" />
+      <entry key="M5" value="9.373915917675162E-88" />
+      <entry key="M10" value="4.329873274145286E-44" />
+      <entry key="M15" value="1.553555288480723E-29" />
+      <entry key="M30" value="5.5741457085837936E-15" />
+      <entry key="H1" value="1.0558546743641815E-7" />
+      <entry key="H2" value="4.59533385723366E-4" />
+      <entry key="H4" value="0.030316266518298312" />
+      <entry key="D1" value="1.154314491774831" />
+      <entry key="W1" value="9.208153644752743" />
     </decayedSelected>
     <decayedShown>
-      <entry key="MS100" value="1.6380803994101647" />
-      <entry key="MS500" value="5.1071530285511955" />
-      <entry key="S2" value="10.384937941489277" />
-      <entry key="S5" value="16.871663532032596" />
-      <entry key="S10" value="25.55815654199077" />
-      <entry key="S30" value="51.1919028626893" />
-      <entry key="S60" value="77.32492642029682" />
-      <entry key="M2" value="120.91887282458185" />
-      <entry key="M5" value="202.7200772744721" />
-      <entry key="M10" value="257.9630031010797" />
-      <entry key="M15" value="282.0638561226053" />
-      <entry key="M30" value="309.9995270310013" />
-      <entry key="H1" value="330.4842740108726" />
-      <entry key="H2" value="365.62684138529426" />
-      <entry key="H4" value="420.6725138620396" />
-      <entry key="D1" value="1075.4062233650973" />
-      <entry key="W1" value="11299.751688921659" />
+      <entry key="MS100" value="0.9395227492140118" />
+      <entry key="MS500" value="0.9876229293948807" />
+      <entry key="S2" value="1.0813937332153658" />
+      <entry key="S5" value="1.532291774306601" />
+      <entry key="S10" value="2.021785377979563" />
+      <entry key="S30" value="2.5952358366146737" />
+      <entry key="S60" value="2.7856783491920316" />
+      <entry key="M2" value="2.889667900413442" />
+      <entry key="M5" value="2.9550808093578804" />
+      <entry key="M10" value="2.977407181718271" />
+      <entry key="M15" value="2.984908353490871" />
+      <entry key="M30" value="2.9924392520640333" />
+      <entry key="H1" value="2.996215992735315" />
+      <entry key="H2" value="2.998566473134352" />
+      <entry key="H4" value="3.0293991601756582" />
+      <entry key="D1" value="74.74234016798657" />
+      <entry key="W1" value="7658.107141052094" />
     </decayedShown>
   </component>
   <component name="PerforceConfiguration">
@@ -348,39 +358,39 @@
     <option name="hideEmptyMiddlePackages" value="true" />
     <option name="showLibraryContents" value="true" />
   </component>
-  <component name="PropertiesComponent"><![CDATA[{
-  "keyToString": {
-    "Application.Myster.executor": "Run",
-    "Application.MysterServerPoolStressMain.executor": "Debug",
-    "Application.ThumbnailPreview.executor": "Run",
-    "JUnit.TestFileStatsBatch.executor": "Run",
-    "JUnit.TestFileTypeList.executor": "Debug",
-    "JUnit.TestFileTypeList.testChangingPathTriggersReindexing.executor": "Debug",
-    "JUnit.TestFileTypeList.testMaximumDepthIndexing.executor": "Debug",
-    "KEY_CHAT_IN_TOOLWINDOW": "false",
-    "ModuleVcsDetector.initialDetectionPerformed": "true",
-    "RunOnceActivity.MCP Project settings loaded": "true",
-    "RunOnceActivity.ShowReadmeOnStart": "true",
-    "RunOnceActivity.git.unshallow": "true",
-    "RunOnceActivity.typescript.service.memoryLimit.init": "true",
-    "codeWithMe.voiceChat.enabledByDefault": "false",
-    "com.intellij.ml.llm.matterhorn.ej.ui.settings.DefaultModelSelectionForGA.v1": "true",
-    "copilot.chat.legacySessionMetadata.migrated": "true",
-    "git-widget-placeholder": "master",
-    "junie.onboarding.icon.badge.shown": "true",
-    "kotlin-language-version-configured": "true",
-    "last_opened_file_path": "/home/andrew/repos/myster/pom.xml",
-    "node.js.detected.package.eslint": "true",
-    "node.js.detected.package.tslint": "true",
-    "node.js.selected.package.eslint": "(autodetect)",
-    "node.js.selected.package.tslint": "(autodetect)",
-    "nodejs_package_manager_path": "npm",
-    "settings.build.tools.auto.reload": "ALL",
-    "settings.editor.selected.configurable": "preferences.pluginManager",
-    "to.speed.mode.migration.done": "true"
+  <component name="PropertiesComponent">{
+  &quot;keyToString&quot;: {
+    &quot;Application.Myster.executor&quot;: &quot;Run&quot;,
+    &quot;Application.MysterServerPoolStressMain.executor&quot;: &quot;Debug&quot;,
+    &quot;Application.ThumbnailPreview.executor&quot;: &quot;Run&quot;,
+    &quot;JUnit.TestFileStatsBatch.executor&quot;: &quot;Run&quot;,
+    &quot;JUnit.TestFileTypeList.executor&quot;: &quot;Debug&quot;,
+    &quot;JUnit.TestFileTypeList.testChangingPathTriggersReindexing.executor&quot;: &quot;Debug&quot;,
+    &quot;JUnit.TestFileTypeList.testMaximumDepthIndexing.executor&quot;: &quot;Debug&quot;,
+    &quot;KEY_CHAT_IN_TOOLWINDOW&quot;: &quot;false&quot;,
+    &quot;ModuleVcsDetector.initialDetectionPerformed&quot;: &quot;true&quot;,
+    &quot;RunOnceActivity.MCP Project settings loaded&quot;: &quot;true&quot;,
+    &quot;RunOnceActivity.ShowReadmeOnStart&quot;: &quot;true&quot;,
+    &quot;RunOnceActivity.git.unshallow&quot;: &quot;true&quot;,
+    &quot;RunOnceActivity.typescript.service.memoryLimit.init&quot;: &quot;true&quot;,
+    &quot;codeWithMe.voiceChat.enabledByDefault&quot;: &quot;false&quot;,
+    &quot;com.intellij.ml.llm.matterhorn.ej.ui.settings.DefaultModelSelectionForGA.v1&quot;: &quot;true&quot;,
+    &quot;copilot.chat.legacySessionMetadata.migrated&quot;: &quot;true&quot;,
+    &quot;git-widget-placeholder&quot;: &quot;master&quot;,
+    &quot;junie.onboarding.icon.badge.shown&quot;: &quot;true&quot;,
+    &quot;kotlin-language-version-configured&quot;: &quot;true&quot;,
+    &quot;last_opened_file_path&quot;: &quot;/home/andrew/repos/myster&quot;,
+    &quot;node.js.detected.package.eslint&quot;: &quot;true&quot;,
+    &quot;node.js.detected.package.tslint&quot;: &quot;true&quot;,
+    &quot;node.js.selected.package.eslint&quot;: &quot;(autodetect)&quot;,
+    &quot;node.js.selected.package.tslint&quot;: &quot;(autodetect)&quot;,
+    &quot;nodejs_package_manager_path&quot;: &quot;npm&quot;,
+    &quot;settings.build.tools.auto.reload&quot;: &quot;ALL&quot;,
+    &quot;settings.editor.selected.configurable&quot;: &quot;preferences.pluginManager&quot;,
+    &quot;to.speed.mode.migration.done&quot;: &quot;true&quot;
   }
-}]]></component>
-  <component name="RunManager" selected="JUnit.TestFileTypeList.testMaximumDepthIndexing">
+}</component>
+  <component name="RunManager" selected="Application.Myster">
     <configuration selected="false" default="true" type="Applet" factoryName="Applet">
       <module name="" />
       <option name="MAIN_CLASS_NAME" />
@@ -647,7 +657,15 @@
       <option name="project" value="LOCAL" />
       <updated>1790284676990</updated>
     </task>
-    <option name="localTasksCounter" value="12" />
+    <task id="LOCAL-00012" summary="Refactor waitForIndexer method to improve synchronization and add tests for indexing behavior">
+      <option name="closed" value="true" />
+      <created>1790285884347</created>
+      <option name="number" value="00012" />
+      <option name="presentableId" value="LOCAL-00012" />
+      <option name="project" value="LOCAL" />
+      <updated>1790285884347</updated>
+    </task>
+    <option name="localTasksCounter" value="13" />
     <servers />
   </component>
   <component name="TodoView" selected-index="0">
@@ -701,7 +719,8 @@
     <MESSAGE value="Implement passive thumbnail loading and icon fitting for file list and preview" />
     <MESSAGE value="Refactor thumbnail cache tests to improve clarity and coverage for eviction logic" />
     <MESSAGE value="Add JUnit Platform Launcher dependency and enhance server pool refresh logic" />
-    <option name="LAST_COMMIT_MESSAGE" value="Add JUnit Platform Launcher dependency and enhance server pool refresh logic" />
+    <MESSAGE value="Refactor waitForIndexer method to improve synchronization and add tests for indexing behavior" />
+    <option name="LAST_COMMIT_MESSAGE" value="Refactor waitForIndexer method to improve synchronization and add tests for indexing behavior" />
   </component>
   <component name="VssConfiguration">
     <CheckoutOptions>
@@ -754,22 +773,6 @@
   </component>
   <component name="WebViewSettings">
     <webview flattenPackages="false" showMembers="false" autoscrollToSource="false" />
-  </component>
-  <component name="XDebuggerManager">
-    <breakpoint-manager>
-      <breakpoints>
-        <line-breakpoint enabled="true" suspend="THREAD" type="java-line">
-          <url>file://$PROJECT_DIR$/src/main/java/com/general/thread/PromiseFutureImpl.java</url>
-          <line>74</line>
-          <option name="timeStamp" value="17" />
-        </line-breakpoint>
-        <line-breakpoint enabled="true" type="java-line">
-          <url>file://$PROJECT_DIR$/src/test/java/com/myster/filemanager/TestFileTypeList.java</url>
-          <line>299</line>
-          <option name="timeStamp" value="18" />
-        </line-breakpoint>
-      </breakpoints>
-    </breakpoint-manager>
   </component>
   <component name="XSLT-Support.FileAssociations.UIState">
     <expand />
