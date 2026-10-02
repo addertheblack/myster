@@ -18,6 +18,7 @@ import javax.swing.JScrollPane;
 import com.general.util.LinkedList;
 import com.general.util.Timer;
 import com.general.util.Util;
+import com.myster.net.datagram.DatagramConstants;
 import com.myster.net.stream.server.FileByHash;
 import com.myster.net.stream.server.FileStatsStreamServer;
 import com.myster.net.stream.server.MultiSourceSender;
@@ -281,6 +282,7 @@ public class StatsInfoPanel extends JPanel {
                     numofTT.increment(isUdp);
                     break;
                 case ServerStats.NUMBER:
+                case DatagramConstants.BIDIRECTIONAL_SERVER_STATS_TRANSACTION_CODE:
                     numofSSR.increment(isUdp);
                     break;
                 case FileStatsStreamServer.NUMBER:
