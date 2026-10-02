@@ -147,13 +147,23 @@ public class ConnectionRunnable implements Runnable {
 
                 MysterAddress remoteAddress = new MysterAddress(socket.getInetAddress());
 
+                // Detect TLS ClientHello messages by checking the first 4 bytes
+                if ((protocolCode & 0xFFFF0000) == 0x16030000) {
+                    context.socket().close();
+                    log.fine("Detected TLS ClientHello/handshake - closing connection");
+                    return;
+                }
+
                 switch (protocolCode) {
                 case 0x47455420: // "GET " in ASCII
                 case 0x504F5354: // "POST" in ASCII
                     context.socket().close();
                     log.fine("Detected HTTP GET/POST request - closing connection");
                     break;
-                case 0x16030105:
+                case 0x2A310D0A: // Redis RESP: "*1\r\n"
+                case 0x34000000: // MongoDB wire message length 52, little-endian seen as BE int
+                case 0x3A000000: // MongoDB wire message length 58, little-endian seen as BE int
+                case 0x666F7820:  // Fox-style Java probe: "fox "
                     context.socket().close();
                     log.fine("Detected scan for unsecured server - closing connection");
                     break;
