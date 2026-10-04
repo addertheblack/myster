@@ -40,12 +40,21 @@
       hash lookups, downloads or thumbnails, and before changing protected state.
     - Verify caller identity comes from authenticated transport and review missing checks,
       alternate/batch paths, plaintext requests and fail-open behavior on access-list errors.
+    - Verify authorization on every download request, including resumed and partial transfers.
     - Add regression tests proving unauthorized callers cannot read or change protected data,
       while authorized callers and intentionally public operations continue to work.
 - Review and implement general server abuse / DoS protection:
+    - Harden public-facing TCP handling against automated probes, malformed requests, stalled
+      clients, and bots issuing valid Myster requests or repeatedly downloading files.
+    - Enforce read deadlines for protocol headers, request bodies, and TLS negotiation so
+      incomplete or slow requests cannot occupy connection workers indefinitely.
+    - Validate client-supplied string, array, and frame lengths before allocation or processing;
+      reject negative, oversized, and truncated payloads.
     - Prevent UDP reflection and packet amplification (don't be a vector for attacks on others).
     - Add general per-IP rate limiting across server requests, beyond invitation password checks.
     - Bound aggregate request rates, concurrent connections, expensive work, and response bandwidth.
+    - Limit concurrent connections and downloads both globally and per IP, including repeated
+      valid requests that never trigger the unknown-protocol limit.
     - Keep rate-limit tracking bounded and expiring so the defence cannot itself exhaust resources.
 - Fix DefaultTypeDescriptionList to interact with preferences in a sane way (not using MML).
 - Add audio chat
