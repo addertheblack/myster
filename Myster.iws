@@ -7,9 +7,7 @@
     <option name="selectedModelId" value="auto" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="fe0d93f5-a1b5-4669-89e3-19e762d0ae4a" name="Changes" comment="Enhance unknown protocol logging in ConnectionRunnable to log only the first occurrence and close connections after three consecutive unknown codes">
-      <change beforePath="$PROJECT_DIR$/Myster.iws" beforeDir="false" afterPath="$PROJECT_DIR$/Myster.iws" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/TODO.txt" beforeDir="false" afterPath="$PROJECT_DIR$/TODO.txt" afterDir="false" />
+    <list default="true" id="fe0d93f5-a1b5-4669-89e3-19e762d0ae4a" name="Changes" comment="Update logging configuration to enable AsyncDatagramSocket logging and disable ConnectionRunnable logging">
       <change beforePath="$PROJECT_DIR$/src/main/resources/logging.properties" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/resources/logging.properties" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
@@ -698,7 +696,15 @@
       <option name="project" value="LOCAL" />
       <updated>1790981287453</updated>
     </task>
-    <option name="localTasksCounter" value="17" />
+    <task id="LOCAL-00017" summary="Update logging configuration to enable AsyncDatagramSocket logging and disable ConnectionRunnable logging">
+      <option name="closed" value="true" />
+      <created>1791135152185</created>
+      <option name="number" value="00017" />
+      <option name="presentableId" value="LOCAL-00017" />
+      <option name="project" value="LOCAL" />
+      <updated>1791135152185</updated>
+    </task>
+    <option name="localTasksCounter" value="18" />
     <servers />
   </component>
   <component name="TodoView" selected-index="0">
@@ -757,7 +763,8 @@
     <MESSAGE value="Detect and close connections for TLS ClientHello messages and unsecured server scans in ConnectionRunnable" />
     <MESSAGE value="Update last commit message and adjust task summary for TLS ClientHello detection in ConnectionRunnable" />
     <MESSAGE value="Enhance unknown protocol logging in ConnectionRunnable to log only the first occurrence and close connections after three consecutive unknown codes" />
-    <option name="LAST_COMMIT_MESSAGE" value="Enhance unknown protocol logging in ConnectionRunnable to log only the first occurrence and close connections after three consecutive unknown codes" />
+    <MESSAGE value="Update logging configuration to enable AsyncDatagramSocket logging and disable ConnectionRunnable logging" />
+    <option name="LAST_COMMIT_MESSAGE" value="Update logging configuration to enable AsyncDatagramSocket logging and disable ConnectionRunnable logging" />
   </component>
   <component name="VssConfiguration">
     <CheckoutOptions>
