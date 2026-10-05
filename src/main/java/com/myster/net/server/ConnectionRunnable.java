@@ -155,7 +155,7 @@ public class ConnectionRunnable implements Runnable {
                 // Detect TLS ClientHello messages by checking the first 4 bytes
                 if ((protocolCode & 0xFFFF0000) == 0x16030000) {
                     context.socket().close();
-                    log.fine("Detected TLS ClientHello/handshake - closing connection");
+                    log.warning("Detected TLS ClientHello/handshake - closing connection");
                     return;
                 }
 
@@ -164,7 +164,7 @@ public class ConnectionRunnable implements Runnable {
                 case 0x504F5354: // "POST" in ASCII
                 case 0x4F505449: // "OPTI" in ASCII (part of HTTP OPTIONS)
                     context.socket().close();
-                    log.fine("Detected HTTP request - closing connection");
+                    log.warning("Detected HTTP request - closing connection");
                     break;
                 case 0x2A310D0A: // Redis RESP: "*1\r\n"
                 case 0x34000000: // MongoDB wire message length 52, little-endian seen as BE int
@@ -173,7 +173,7 @@ public class ConnectionRunnable implements Runnable {
                 case 0x4D474C4E: // "MGLN" — MGLNDD scanner marker
                 case 0x80000028: // ONC/Sun RPC frame marker
                     context.socket().close();
-                    log.fine("Detected scan for unsecured server - closing connection");
+                    log.warning("Detected scan for unsecured server - closing connection");
                     break;
                 case TLSSocket.STLS_CONNECTION_SECTION:
                     consecutiveUnknownProtocols = 0;
@@ -227,7 +227,7 @@ public class ConnectionRunnable implements Runnable {
                             String asciiRepresentation = intToAsciiString(protocolCode);
                             log.warning("System detects unknown protocol number: " + protocolCode +
                                         " (0x" + Integer.toHexString(protocolCode).toUpperCase() +
-                                        ") ASCII: \"" + asciiRepresentation + "\" " + System.currentTimeMillis());
+                                        ") ASCII: \"" + asciiRepresentation + "\" " + System.currentTimeMillis() + " from " + remoteAddress);
                         }
                         if (++consecutiveUnknownProtocols >= 3) {
                             context.socket().close();

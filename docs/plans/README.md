@@ -8,6 +8,12 @@ When adding or substantially changing an authoritative plan, update this index w
 
 | Plan | Abstract |
 |---|---|
+| [WebRTC Calling Phase Index](webrtc-video-call.md) | Navigation for five separately planned phases; implement one at a time. |
+| [WebRTC Phase 1: Native feasibility](webrtc-phase-1-native-feasibility.md) | Current plan: diagnostic native shared-port feasibility without production socket refactoring. |
+| [WebRTC Phase 2: Datagram socket refactor](webrtc-phase-2-datagram-refactor.md) | Preliminary; refresh after prior phase results before execution. |
+| [WebRTC Phase 3: Shared media transport](webrtc-phase-3-shared-transport.md) | Preliminary; refresh after prior phase results before execution. |
+| [WebRTC Phase 4: Basic calling capability](webrtc-phase-4-basic-calling.md) | Preliminary; refresh after prior phase results before execution. |
+| [WebRTC Phase 5: Target and release validation](webrtc-phase-5-release-validation.md) | Preliminary; refresh after prior phase results before execution. |
 | [Arbitrary Display Scaling](ui-display-scaling.md) | Removes the tree's fixed 2× icon raster buffer and establishes arbitrary Java-reported scaling for all Myster UI work. |
 | [Standard Background Task Submission](promise-execute-conventions.md) | Documents the PromiseFutures.execute SwingWorker replacement and audits duplicate task scheduling. |
 | [OS Thumbnails](os-thumbnails.md) | Adds a platform thumbnail API, bounded memory cache and progressive standalone JPEG preview grid. |

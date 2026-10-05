@@ -7,8 +7,11 @@
     <option name="selectedModelId" value="auto" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="fe0d93f5-a1b5-4669-89e3-19e762d0ae4a" name="Changes" comment="Update logging configuration to enable AsyncDatagramSocket logging and disable ConnectionRunnable logging">
-      <change beforePath="$PROJECT_DIR$/src/main/resources/logging.properties" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/resources/logging.properties" afterDir="false" />
+    <list default="true" id="fe0d93f5-a1b5-4669-89e3-19e762d0ae4a" name="Changes" comment="Update logging configuration to disable AsyncDatagramSocket logging">
+      <change beforePath="$PROJECT_DIR$/Myster.iws" beforeDir="false" afterPath="$PROJECT_DIR$/Myster.iws" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/docs/conventions/myster-important-patterns.md" beforeDir="false" afterPath="$PROJECT_DIR$/docs/conventions/myster-important-patterns.md" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/docs/plans/README.md" beforeDir="false" afterPath="$PROJECT_DIR$/docs/plans/README.md" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/com/myster/net/server/ConnectionRunnable.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/com/myster/net/server/ConnectionRunnable.java" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -239,23 +242,23 @@
   </component>
   <component name="NextEditCompletionFeaturesState">
     <decayedCancelled>
-      <entry key="MS100" value="2.212297431393598" />
-      <entry key="MS500" value="5.320916614588657" />
-      <entry key="S2" value="14.131826307285214" />
-      <entry key="S5" value="25.571903076949322" />
-      <entry key="S10" value="46.93312239554746" />
-      <entry key="S30" value="109.62553108985355" />
-      <entry key="S60" value="152.70873864729714" />
-      <entry key="M2" value="197.55982793292804" />
-      <entry key="M5" value="326.73202008888615" />
-      <entry key="M10" value="558.5748567037177" />
-      <entry key="M15" value="727.939608687934" />
-      <entry key="M30" value="993.5163811283894" />
-      <entry key="H1" value="1180.033552257797" />
-      <entry key="H2" value="1291.3349934577382" />
-      <entry key="H4" value="1365.2940543995896" />
-      <entry key="D1" value="1776.911197221983" />
-      <entry key="W1" value="8892.156225196259" />
+      <entry key="MS100" value="1.808361092059467" />
+      <entry key="MS500" value="5.261262613397546" />
+      <entry key="S2" value="11.684270305072872" />
+      <entry key="S5" value="15.725486460919617" />
+      <entry key="S10" value="17.65396563773589" />
+      <entry key="S30" value="19.1654386729688" />
+      <entry key="S60" value="19.575720628554414" />
+      <entry key="M2" value="19.786076516184618" />
+      <entry key="M5" value="19.913998044944705" />
+      <entry key="M10" value="19.956926554557718" />
+      <entry key="M15" value="19.971268237870596" />
+      <entry key="M30" value="19.985626046133245" />
+      <entry key="H1" value="19.993184117172483" />
+      <entry key="H2" value="20.922361713625182" />
+      <entry key="H4" value="74.89631567182174" />
+      <entry key="D1" value="2122.5632452880045" />
+      <entry key="W1" value="10304.934385862241" />
     </decayedCancelled>
     <decayedSelected>
       <entry key="MS100" value="0.0" />
@@ -266,34 +269,34 @@
       <entry key="S30" value="0.0" />
       <entry key="S60" value="0.0" />
       <entry key="M2" value="0.0" />
-      <entry key="M5" value="1.2185851467724058E-178" />
-      <entry key="M10" value="1.5611426869907067E-89" />
-      <entry key="M15" value="7.869944250404878E-60" />
-      <entry key="M30" value="3.967352488854819E-30" />
-      <entry key="H1" value="2.8168607764057044E-15" />
-      <entry key="H2" value="7.505812076002421E-8" />
-      <entry key="H4" value="3.87450321228349E-4" />
-      <entry key="D1" value="0.5581456352046955" />
-      <entry key="W1" value="8.300231084193285" />
+      <entry key="M5" value="2.9266947088375478E-282" />
+      <entry key="M10" value="2.419376010583772E-141" />
+      <entry key="M15" value="2.2706254604501164E-94" />
+      <entry key="M30" value="2.1310209133764471E-47" />
+      <entry key="H1" value="6.52843139042326E-24" />
+      <entry key="H2" value="3.6134281008441887E-12" />
+      <entry key="H4" value="2.688294792408139E-6" />
+      <entry key="D1" value="0.24375732600792588" />
+      <entry key="W1" value="7.373804732776318" />
     </decayedSelected>
     <decayedShown>
-      <entry key="MS100" value="2.148245501189735" />
-      <entry key="MS500" value="5.298986191671758" />
-      <entry key="S2" value="14.117623165368576" />
-      <entry key="S5" value="25.562026977016938" />
-      <entry key="S10" value="46.92498902171507" />
-      <entry key="S30" value="109.61974818072387" />
-      <entry key="S60" value="152.7031570898306" />
-      <entry key="M2" value="197.55281379158552" />
-      <entry key="M5" value="326.7252718463956" />
-      <entry key="M10" value="558.5697117021414" />
-      <entry key="M15" value="727.9355177525387" />
-      <entry key="M30" value="993.5138768931962" />
-      <entry key="H1" value="1180.032150723874" />
-      <entry key="H2" value="1291.3342496876157" />
-      <entry key="H4" value="1365.2940562005417" />
-      <entry key="D1" value="1777.469255510413" />
-      <entry key="W1" value="8900.456384239997" />
+      <entry key="MS100" value="1.7746329845261146" />
+      <entry key="MS500" value="5.236745002961916" />
+      <entry key="S2" value="11.669433649203429" />
+      <entry key="S5" value="15.71726865080235" />
+      <entry key="S10" value="17.649304737860014" />
+      <entry key="S30" value="19.163739976632385" />
+      <entry key="S60" value="19.574851534105733" />
+      <entry key="M2" value="19.785636902360487" />
+      <entry key="M5" value="19.91382096638546" />
+      <entry key="M10" value="19.956837808335603" />
+      <entry key="M15" value="19.971209027628205" />
+      <entry key="M30" value="19.985596417938055" />
+      <entry key="H1" value="19.99316929713596" />
+      <entry key="H2" value="20.92235406951667" />
+      <entry key="H4" value="74.8963065899243" />
+      <entry key="D1" value="2122.806936299012" />
+      <entry key="W1" value="10312.308119358438" />
     </decayedShown>
   </component>
   <component name="PerforceConfiguration">
@@ -704,7 +707,15 @@
       <option name="project" value="LOCAL" />
       <updated>1791135152185</updated>
     </task>
-    <option name="localTasksCounter" value="18" />
+    <task id="LOCAL-00018" summary="Update logging configuration to disable AsyncDatagramSocket logging">
+      <option name="closed" value="true" />
+      <created>1791135170591</created>
+      <option name="number" value="00018" />
+      <option name="presentableId" value="LOCAL-00018" />
+      <option name="project" value="LOCAL" />
+      <updated>1791135170591</updated>
+    </task>
+    <option name="localTasksCounter" value="19" />
     <servers />
   </component>
   <component name="TodoView" selected-index="0">
@@ -764,7 +775,8 @@
     <MESSAGE value="Update last commit message and adjust task summary for TLS ClientHello detection in ConnectionRunnable" />
     <MESSAGE value="Enhance unknown protocol logging in ConnectionRunnable to log only the first occurrence and close connections after three consecutive unknown codes" />
     <MESSAGE value="Update logging configuration to enable AsyncDatagramSocket logging and disable ConnectionRunnable logging" />
-    <option name="LAST_COMMIT_MESSAGE" value="Update logging configuration to enable AsyncDatagramSocket logging and disable ConnectionRunnable logging" />
+    <MESSAGE value="Update logging configuration to disable AsyncDatagramSocket logging" />
+    <option name="LAST_COMMIT_MESSAGE" value="Update logging configuration to disable AsyncDatagramSocket logging" />
   </component>
   <component name="VssConfiguration">
     <CheckoutOptions>

@@ -662,3 +662,29 @@ callers supply `DnsLookupProtocol` in `MSDownloadParams` at invocation. Do not i
 setter or global lookup into the stream implementation. Transport peer-key observation uses
 `MysterSocket.getAuthenticatedPeerKey()`; its key proves possession on that connection, while
 association with an expected CID comes from the resolver/expected-key connection contract.
+
+
+## Shared WebRTC transport planning constraints
+
+For the planned call feature, `DatagramProtocolManager` identifies the two-byte transport code
+but passes the whole prefixed datagram to `DatagramTransport.packetReceived`; the media bridge
+must strip its own prefix. `TransportManager` must not escape `mutateTransportManager`, and native
+callbacks must not run under that manager's monitor. `DatagramSender` is fire-and-forget; the current
+`AsyncDatagramSocket` queue is unbounded and send exceptions are swallowed, so the spike must verify
+how to bridge the pinned native API's sent-packet notifications. Each queued datagram can carry
+its native packet ID/metadata; reproduce the pinned native send-attempt event semantics.
+An inspected upstream adapter emits its event even on a failed send attempt; success-only
+notification must not be assumed.
+There is no later Java UDP delivery callback or byte-range mapping. The planned separate datagram-refactoring phase uses a small fixed UDP media queue with non-blocking rejection
+on overflow. Peek at its head; remove only after a complete send, retain on zero/would-block,
+and wait for write readiness rather than spin. Definitive errors must not jam the head forever.
+That phase adds separate reader and sole-writer workers per socket on the same channel; preserve legacy submission
+behavior and coordinate socket recreation/close. Tune queue size from burst/latency measurements.
+Keep this production refactor separate from the initial native WebRTC feasibility spike.
+
+An accepted TCP section remains owned by `ConnectionRunnable`. A media section must retain
+stream ownership until its bridge closes; returning while native code continues reading creates
+a competing reader. `ServerFacade.changePort` migrates tracked transaction protocols, not arbitrary
+media transports; the planned bridge needs an explicit registration/termination lifecycle. Native
+packet-factory injection is a feasibility gate, not an existing Java wrapper capability. See
+[the shared-transport phase plan](../plans/webrtc-phase-3-shared-transport.md).
