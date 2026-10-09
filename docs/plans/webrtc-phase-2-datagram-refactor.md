@@ -20,6 +20,8 @@ Independently refactor `AsyncDatagramSocket` to one reader and one writer per da
 
 ### 3. Assumptions & open questions
 
+**Connectivity ownership:** Myster’s protocols provide peer reachability and NAT traversal. This project consumes that transport capability; it does not implement, evaluate or validate NAT traversal, external STUN/TURN services, router mappings or relay infrastructure. Native ICE/STUN checks may still be needed to establish the WebRTC session over the Myster-provided path; those checks are adapter/session mechanics, not a separate NAT-traversal project.
+
 PRELIMINARY: refresh after phase 1 identifies required metadata/error semantics. A four-packet media queue is an initial experiment, not a proven optimal capacity. Legacy protocols retain their submission contract; specify how legacy and bounded media queues share the sole writer before execution. Thread count becomes two I/O workers per socket; existing callback workers are separate.
 
 ### 4. Proposed design

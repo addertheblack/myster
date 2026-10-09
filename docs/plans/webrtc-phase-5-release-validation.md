@@ -20,6 +20,8 @@ Finish reproducible patched native packaging and real-device validation for Wind
 
 ### 3. Assumptions & open questions
 
+**Connectivity ownership:** Myster’s protocols provide peer reachability and NAT traversal. This project consumes that transport capability; it does not implement, evaluate or validate NAT traversal, external STUN/TURN services, router mappings or relay infrastructure. Native ICE/STUN checks may still be needed to establish the WebRTC session over the Myster-provided path; those checks are adapter/session mechanics, not a separate NAT-traversal project.
+
 PRELIMINARY: exact native sources/artifact coordinates/toolchains come from phases 1/3; launcher/media requirements come from phase 4. Begin target toolchain discovery in phase 1 to reveal blockers early, but final execution requires phase 4. Preserve matching Java/JNI revisions and existing native-access settings.
 
 ### 4. Proposed design
@@ -38,7 +40,7 @@ No new wire protocol. Classifiers: `windows-x86_64`, `linux-x86_64`, `macos-x86_
 
 ### 6. Key decisions & edge cases
 
-macOS permission behavior must be tested in signed/distributed bundles, not just the IDE. Linux libraries and audio/camera access remain environmental requirements. Target unavailable means validation incomplete. Successful LAN calls do not prove arbitrary NAT or standard TURN; WR service incompatibility remains as described in phase 3. No extra inbound media ports may appear through packaging/configuration changes.
+macOS permission behavior must be tested in signed/distributed bundles, not just the IDE. Linux libraries and audio/camera access remain environmental requirements. Target unavailable means validation incomplete. Test media on Myster-provided reachable paths; NAT traversal and standard STUN/TURN interoperability are outside this validation phase. No extra inbound media ports may appear through packaging/configuration changes.
 
 ### 7. Acceptance criteria
 
@@ -48,7 +50,7 @@ macOS permission behavior must be tested in signed/distributed bundles, not just
 - [ ] Twenty successive calls and ten-minute sustained calls pass without leaked hardware/native growth.
 - [ ] Permissions, device absence, kill/disconnect, busy/old peer and port changes have clear outcomes.
 - [ ] Packet/socket evidence shows no extra inbound media listeners.
-- [ ] Final report records target versions, test results and unresolved NAT/SFU/screen-sharing limitations.
+- [ ] Final report records target versions, test results and unresolved one-to-one media limitations.
 
 ---
 ## ✦ IMPLEMENTATION DETAILS (for the implementation agent)
@@ -85,7 +87,7 @@ Manual smoke matrix:
 | macOS x86-64 | Required | Required | Required | Required | Required |
 | macOS ARM64 | Required | Required | Required | Required | Required |
 
-Each target must make and answer a call against another target; include Windows↔Linux and Intel Mac↔ARM Mac paths. Test a 10-minute sustained call, speaker echo behavior and Hang Up/window close during ringing and negotiation. Confirm camera indicator clears and another app can immediately acquire hardware. Test camera absent/denied, audio denied, minimized/unfocused receiver, caller kill, signaling network loss, busy receiver and an older Myster peer. Capture WR packets and VMED handshakes and inspect OS binds on both endpoints. Block UDP and verify native ICE-TCP media still uses the existing Myster listener. Run concurrent downloads and ping/stats while calling; artificially slow sends to prove bounded memory and fair progress. Change the server port during ringing and active calls. Separately test a NATed caller against a reachable server at its existing port; report failure conditions accurately. Do not enable standard TURN URLs or claim arbitrary-NAT support before an unprefixed-service demultiplexing design is implemented and tested.
+Each target must make and answer a call against another target; include Windows↔Linux and Intel Mac↔ARM Mac paths. Test a 10-minute sustained call, speaker echo behavior and Hang Up/window close during ringing and negotiation. Confirm camera indicator clears and another app can immediately acquire hardware. Test camera absent/denied, audio denied, minimized/unfocused receiver, caller kill, signaling network loss, busy receiver and an older Myster peer. Capture WR packets and VMED handshakes and inspect OS binds on both endpoints. Block UDP and verify native ICE-TCP media still uses the existing Myster listener. Run concurrent downloads and ping/stats while calling; artificially slow sends to prove bounded memory and fair progress. Change the server port during ringing and active calls. Use the connectivity supplied by Myster for these media tests. Do not add NAT-traversal tests, router configuration or standard STUN/TURN interoperability work to this project.
 
 Use opt-in native diagnostics with hard timeouts and archive redacted output. Add build/resource inspection checks where meaningful; no fake tests that only mirror Maven declarations.
 

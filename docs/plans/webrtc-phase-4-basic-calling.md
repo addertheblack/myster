@@ -21,11 +21,13 @@ Add one-to-one calls to another selected Myster server using the media engine an
 - Automatic reconnection, ICE restart, renegotiation or multiple simultaneous calls.
 - Operating a public TURN service or introducing a commercial conferencing dependency.
 - Additional externally reachable media ports or silently substituting ordinary WebRTC sockets.
-- Full TURN interoperability, a generic relay service or guaranteed reachability between two arbitrary NATs in this first milestone.
+- NAT traversal, external STUN/TURN and relay infrastructure; Myster supplies connectivity.
 
 ### 3. Assumptions & open questions
 
-PRELIMINARY: requires phase-3 shared UDP/TCP media proof and stable lifecycle APIs. Recheck proposed files and symbols before execution.
+**Connectivity ownership:** Myster’s protocols provide peer reachability and NAT traversal. This project consumes that transport capability; it does not implement, evaluate or validate NAT traversal, external STUN/TURN services, router mappings or relay infrastructure. Native ICE/STUN checks may still be needed to establish the WebRTC session over the Myster-provided path; those checks are adapter/session mechanics, not a separate NAT-traversal project.
+
+PRELIMINARY: requires phase-3 shared UDP/TCP media proof and stable lifecycle APIs. Phase 1 is audio-only; camera selection/capture, video-track compatibility and remote rendering are first validated here and must not be assumed proven by earlier audio tests. Recheck proposed files and symbols before execution.
 
 A selected server is the person's Myster installation, not a conference relay. One pending/active call per installation. Use OS-default audio devices and first available camera because the inspected API lacks a default-camera accessor. Missing camera permits audio-only; missing audio prevents setup. No capture before acceptance. Require public-key-backed selected identity and pinned TLS signaling; an unknown caller's key proves possession, not human trust.
 
@@ -86,11 +88,11 @@ Send a PING every 10 seconds; terminate after 30 seconds without any received fr
 - Camera failure is audio-only, including camera removal midcall. Audio capture/playback failure or removal ends the call with a device error. No automatic device switching this milestone.
 - Maintain the native ownership contract of the pinned release, not blindly copied guide snippets. Do not retain native frame references on the EDT. Convert on a bounded platform worker; replace pending frames so slow rendering cannot accumulate native buffers. Apply rotation and pixel-channel conversion explicitly. Release every owned retained reference on replacement, exception and shutdown.
 - Keep native library initialization lazy and outside general startup classes. Missing binaries/dependencies produce an unavailable call feature while file sharing and other Myster functions keep working. A native crash cannot be caught as a Java exception; diagnostic tests run in a subprocess.
-- Disable external STUN/TURN in the first shared-socket adapter. Host/peer-reflexive ICE and native ICE-TCP are validated explicitly. Test an Internet caller against a known reachable Myster server on its existing configured port; symmetric-NAT and standard-relay reachability remain outside the demonstrated guarantee.
+- Use Myster-provided connectivity. Validate native session establishment and UDP/TCP media handoff over that path, without adding Internet/NAT traversal acceptance tests or external STUN/TURN services.
 - Myster TCP media fallback must be demonstrated through VMED and native ICE-TCP framing. Port ranges and WebRTC shared-socket flags do not imply access to Myster's existing socket. Keep UDP and TCP media enabled only when their respective bridge gates pass; do not fall back to ordinary native sockets.
 - When `ServerFacade.changePort` runs, end pending/active calls before rebinding, unregister the old media transport and register the new main-port transport. Do not continue advertising candidates for the old port or migrate live ICE silently. Register through an explicit lifecycle hook, never leak the `TransportManager` outside `mutateTransportManager`.
-- Native packaged artifacts must match architecture. Linux requires documented runtime libraries and real audio/camera access; Wayland desktop capture is a later gate. macOS bundles need camera/microphone usage descriptions and applicable signing permissions; test actual distributed bundles, not just IDE execution. The existing native-access manifest and jpackage option already exist and should be preserved.
-- Do not log raw SDP, ICE candidates or TURN secrets. Diagnostics record release/target, phase, counters, coarse connection state and redacted failures.
+- Native packaged artifacts must match architecture. Linux requires documented runtime libraries and real audio/camera access; macOS bundles need camera/microphone usage descriptions and applicable signing permissions; test actual distributed bundles, not just IDE execution. The existing native-access manifest and jpackage option already exist and should be preserved.
+- Do not log raw SDP, ICE candidates or transport secrets. Diagnostics record release/target, phase, counters, coarse connection state and redacted failures.
 
 ### 7. Acceptance criteria
 
@@ -161,5 +163,5 @@ Manual: make/answer/decline/cancel calls, disconnect during ringing/negotiation,
 
 ### 11. Docs / Javadoc to update
 
-Document call-service states/ownership/cancellation, VCAL wire fields/limits/deadlines, TLS identity binding, default device policy, renderer frame lifetimes and UI close semantics. Write phase-4 summary; update current design documentation without claiming group relay, screen sharing or arbitrary-NAT support.
+Document call-service states/ownership/cancellation, VCAL wire fields/limits/deadlines, TLS identity binding, default device policy, renderer frame lifetimes and UI close semantics. Write phase-4 summary; update current design documentation for one-to-one microphone/camera calls; NAT traversal remains owned by Myster.
 

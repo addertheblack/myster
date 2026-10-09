@@ -10,21 +10,23 @@ Execute one phase at a time. This document owns this phase only; [the phase inde
 
 ### 1. Summary
 
-Integrate the proven native adapter with phase-2 datagram APIs and Myster’s existing TCP listener. Prove real production shared-port UDP and forced TCP media, including registration/port-change lifecycle, before calling UI.
+Extend the TCP adapter proven in phase 1 with UDP socket support, then integrate it with phase-2 datagram APIs and Myster’s existing TCP listener. Prove real production shared-port UDP and forced TCP media, including registration/port-change lifecycle, before calling UI.
 
 ### 2. Non-goals
 
 - Call signaling/ringing/UI, group relay and screen sharing.
 - Extra inbound media listener/port.
-- Standard external STUN/TURN integration before explicit unprefixed service demultiplexing design.
+- NAT traversal, external STUN/TURN integration and relay infrastructure; connectivity belongs to Myster.
 
 ### 3. Assumptions & open questions
 
-PRELIMINARY: refresh after phases 1/2. Replace proposed native handles and endpoint methods with proven API signatures. Shared IPv4 is mandatory; advertise IPv6 only after proof. One future application call may create multiple logical ICE sockets. Patched native artifacts must match their Java API.
+**Connectivity ownership:** Myster’s protocols provide peer reachability and NAT traversal. This project consumes that transport capability; it does not implement, evaluate or validate NAT traversal, external STUN/TURN services, router mappings or relay infrastructure. Native ICE/STUN checks may still be needed to establish the WebRTC session over the Myster-provided path; those checks are adapter/session mechanics, not a separate NAT-traversal project.
+
+PRELIMINARY: refresh after phases 1/2. Replace proposed native handles and endpoint methods with proven API signatures. UDP injection, candidate/address reporting and ufrag/tuple demultiplexing remain unproven after phase 1 and are explicit feasibility gates in this phase. Shared IPv4 is mandatory; advertise IPv6 only after proof. One future application call may create multiple logical ICE sockets. Patched native artifacts must match their Java API.
 
 ### 4. Proposed design
 
-Use the phase-1 packet factory and phase-2 scoped sender for unchanged ICE/DTLS/SRTP over WR datagrams. Register transport at the configured main port and close logical endpoints without closing the physical socket. Implement active/passive native ICE-TCP through VMED on the existing listener. Gates A/B now require production-stack evidence, not the diagnostic harness.
+Prove UDP packet-factory injection and logical ICE-port routing here; phase 1 proves TCP only. Use the resulting UDP factory and phase-2 scoped sender for unchanged ICE/DTLS/SRTP over WR datagrams. Register transport at the configured main port and close logical endpoints without closing the physical socket. Implement active/passive native ICE-TCP through VMED on the existing listener. Gates A/B now require production-stack evidence, not the diagnostic harness.
 
 ### 5. Architecture connections
 
@@ -52,7 +54,7 @@ The bridge must retain native send metadata (packet IDs, options, errors and com
 
 If receive admission limits prove necessary, enforce them before the asynchronous callback queue as well as at the JNI bridge; otherwise the existing invoker can accumulate packets before bridge limits apply. Preserve legacy protocol delivery. Queue admission drops rather than blocks; native callback affinity does not require all Myster I/O and media processing to share a thread. The separate reader/writer design above belongs exclusively to phase 2; verify its behavior rather than assuming native callbacks or all processing must use those I/O threads. Measure fairness under concurrent transaction traffic; draining continuous media indefinitely can starve receive processing.
 
-Standard external STUN/TURN servers cannot receive the WR prefix. The first milestone disables their use. A future interop adapter must distinguish standard-service traffic from prefixed Myster-peer traffic on this same physical port and safely route unprefixed responses without interfering with legacy protocol dispatch. Do not claim TURN works by simply supplying URLs to this adapter. No new public relay service is part of the spike.
+The adapter consumes reachable peer endpoints/streams supplied by Myster and does not add external STUN/TURN services or relay infrastructure. Native ICE/STUN packets exchanged between these endpoints remain part of WebRTC session establishment and must pass unchanged through the shared bridge. No NAT-traversal design, validation or future standard-service demultiplexing work is assigned to this project.
 
 ### 6. Key decisions & edge cases
 
@@ -115,5 +117,22 @@ Use phase-2 tests for local queue semantics; phase-3 tests verify native mapping
 
 ### 11. Docs / Javadoc to update
 
-Document WR/VMED framing, native/socket ownership, registration/port-generation lifecycle and verified API contracts. Write phase-3 summary with packet/socket proof and remaining NAT/SFU limits. Preserve the prior exploration as historical context.
+Document WR/VMED framing, native/socket ownership, registration/port-generation lifecycle and verified API contracts. Write phase-3 summary with packet/socket proof and remaining shared-transport limitations. Preserve the prior exploration as historical context.
 
+
+### Phase-1 evidence dependency
+
+The [phase-1 implementation summary](../impl_summary/webrtc-phase-1-native-feasibility.md)
+records shared TCP synthetic audio through VMED on Linux x86-64 / JDK 26, including
+20-call teardown, DTLS/SRTP stats, TCP candidate selection and syscall evidence with
+no native listener or Internet UDP socket. A patched JNI artifact remains necessary:
+`PeerConnectionFactoryDependencies.packet_socket_factory` is used through modular
+factory construction and bypassed if a peer supplies a custom port allocator.
+
+Use native ICE-TCP framing after the Myster acknowledgement; retain accepted stream
+ownership until closure. Keep blocking I/O off native callbacks, marshal notifications
+on the network thread, and prevent OS-socket fallback (including native route probes).
+Queue ICE signaling notifications instead of synchronous JNI calls across peers.
+The prototype polls bounded Java stream buffers; its five-millisecond polling and
+reflection-based transport object are diagnostic choices, not a production API.
+UDP, IPv6 and the other desktop targets remain unproven. Phase 2 stays separate.

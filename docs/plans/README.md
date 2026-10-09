@@ -9,7 +9,7 @@ When adding or substantially changing an authoritative plan, update this index w
 | Plan | Abstract |
 |---|---|
 | [WebRTC Calling Phase Index](webrtc-video-call.md) | Navigation for five separately planned phases; implement one at a time. |
-| [WebRTC Phase 1: Native feasibility](webrtc-phase-1-native-feasibility.md) | Current plan: diagnostic native shared-port feasibility without production socket refactoring. |
+| [WebRTC Phase 1: TCP audio feasibility](webrtc-phase-1-native-feasibility.md) | Current plan: TCP audio-only feasibility through the existing Myster listener; camera/video is deferred to phase 4 and UDP is deferred to phase 3. |
 | [WebRTC Phase 2: Datagram socket refactor](webrtc-phase-2-datagram-refactor.md) | Preliminary; refresh after prior phase results before execution. |
 | [WebRTC Phase 3: Shared media transport](webrtc-phase-3-shared-transport.md) | Preliminary; refresh after prior phase results before execution. |
 | [WebRTC Phase 4: Basic calling capability](webrtc-phase-4-basic-calling.md) | Preliminary; refresh after prior phase results before execution. |
