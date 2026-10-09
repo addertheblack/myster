@@ -13,6 +13,7 @@ import com.myster.hash.FileHash;
 import com.myster.mml.MessagePak;
 import com.myster.net.MysterSocket;
 import com.myster.net.client.MysterStream;
+import com.myster.net.stream.StreamConstants;
 import com.myster.net.stream.client.UnknownProtocolException;
 import com.myster.search.MysterFileStub;
 
@@ -169,7 +170,7 @@ class InternalSegmentDownloader implements SegmentDownloader {
             dispatcher.fire().connected(new SegmentDownloaderEvent( 0,0,0,0, stub, ""));
 
             debug("Work Thread " + name + " -> Sending Section Type");
-            socket.out.writeInt(com.myster.net.stream.server.MultiSourceSender.SECTION_NUMBER);
+            socket.out.writeInt(StreamConstants.MULTI_SOURCE_DOWNLOAD_SECTION_NUMBER);
 
             // throws Exception if bad
             debug("Work Thread " + name + " -> Checking Protocol");
@@ -316,9 +317,9 @@ class InternalSegmentDownloader implements SegmentDownloader {
 
             try {
                 int queuePosition =
-                        pak.getInt(com.myster.net.stream.server.MultiSourceSender.QUEUED_PATH).orElseThrow();
+                        pak.getInt(StreamConstants.MULTI_SOURCE_QUEUED_PATH).orElseThrow();
 
-                String message = pak.getString(com.myster.net.stream.server.MultiSourceSender.MESSAGE_PATH).orElse("");
+                String message = pak.getString(StreamConstants.MULTI_SOURCE_MESSAGE_PATH).orElse("");
 
                 // if (message!=null) progress.setText(message); ///! Stuff for
                 // event here

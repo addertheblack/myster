@@ -14,6 +14,7 @@ import com.myster.mml.MessagePak;
 import com.myster.net.DisconnectException;
 import com.myster.net.MysterAddress;
 import com.myster.net.MysterSocket;
+import com.myster.net.stream.StreamConstants;
 import com.myster.net.stream.ThumbnailProtocolUtils;
 import com.myster.net.stream.client.msdownload.DownloadInitiator;
 import com.myster.net.stream.client.msdownload.MSDownloadLocalQueue;
@@ -30,7 +31,7 @@ public class StandardSuiteStream {
             throws IOException {
         List<String> searchResults = new ArrayList<>();
 
-        socket.out.writeInt(35);
+        socket.out.writeInt(StreamConstants.SEARCH_SECTION_NUMBER);
         socket.out.flush();
 
         checkProtocol(socket.in);
@@ -48,8 +49,7 @@ public class StandardSuiteStream {
             throws IOException {
         List<String> ipList = new ArrayList<String>();
 
-        socket.out.writeInt(10); // Get top ten the 10 is the command code...
-        // not the length of the list!
+        socket.out.writeInt(StreamConstants.TOP_TEN_SECTION_NUMBER);
         
         socket.out.flush();
         
@@ -65,7 +65,7 @@ public class StandardSuiteStream {
     }
 
     public static MysterType[] getTypes(MysterSocket socket) throws IOException {
-        socket.out.writeInt(74);
+        socket.out.writeInt(StreamConstants.TYPE_LIST_SECTION_NUMBER);
 
         socket.out.flush();
         
@@ -86,7 +86,7 @@ public class StandardSuiteStream {
         socket.setSoTimeout(90000); // ? Probably important in some way or
         // other.
 
-        socket.out.writeInt(101);
+        socket.out.writeInt(StreamConstants.SERVER_STATS_SECTION_NUMBER);
         socket.out.flush();
 
         checkProtocol(socket.in);
@@ -117,7 +117,7 @@ public class StandardSuiteStream {
      */
     public static MessagePak getFileStats(MysterSocket socket, MysterFileStub stub)
             throws IOException {
-        socket.out.writeInt(77);
+        socket.out.writeInt(StreamConstants.FILE_STATS_SECTION_NUMBER);
 
         checkProtocol(socket.in);
 
@@ -135,7 +135,7 @@ public class StandardSuiteStream {
     public static BufferedImage getThumbnail(MysterSocket socket, MysterType type, String filename,
             int size) throws IOException {
         MessagePak request = ThumbnailProtocolUtils.createRequest(type, filename, size);
-        socket.out.writeInt(ThumbnailProtocolUtils.SECTION_NUMBER);
+        socket.out.writeInt(StreamConstants.THUMBNAIL_SECTION_NUMBER);
         socket.out.flush();
         checkProtocol(socket.in);
         socket.out.writeMessagePack(request);
@@ -154,8 +154,7 @@ public class StandardSuiteStream {
                                               MysterType type,
                                               FileCallback callback)
             throws IOException {
-        // Send batch command (177)
-        socket.out.writeInt(177);
+        socket.out.writeInt(StreamConstants.BATCH_FILE_STATS_SECTION_NUMBER);
 
         // Send type
         socket.out.writeType(type);
@@ -194,7 +193,7 @@ public class StandardSuiteStream {
 
                         if (pointer < stubs.length) {
                             MysterFileStub stub = stubs[pointer];
-                            socket.out.writeInt(77);
+                            socket.out.writeInt(StreamConstants.FILE_STATS_SECTION_NUMBER);
 
                             socket.out.writeType(stub.getType());
                             socket.out.writeUTF(stub.getName());
@@ -267,7 +266,7 @@ public class StandardSuiteStream {
     // Returns "" if file is not found or name of file if file is found.
     public static String getFileFromHash(MysterSocket socket, MysterType type, FileHash[] hashes)
             throws IOException {
-        socket.out.writeInt(150);
+        socket.out.writeInt(StreamConstants.FILE_BY_HASH_SECTION_NUMBER);
 
         checkProtocol(socket.in);
 
@@ -302,7 +301,7 @@ public class StandardSuiteStream {
     }
 
     public static void disconnect(MysterSocket socket) throws IOException {
-        socket.out.writeInt(2);
+        socket.out.writeInt(StreamConstants.DISCONNECT_SECTION_NUMBER);
         socket.in.read();
 
         try {
@@ -313,7 +312,7 @@ public class StandardSuiteStream {
     }
 
     public static String[] getFileList(MysterSocket socket, MysterType type) throws IOException {
-        socket.out.writeInt(78);
+        socket.out.writeInt(StreamConstants.DIRECTORY_LIST_SECTION_NUMBER);
         checkProtocol(socket.in);
 
         socket.out.writeType(type);
@@ -327,7 +326,7 @@ public class StandardSuiteStream {
 
     public static void disconnectWithoutException(MysterSocket socket) {
         try {
-            socket.out.writeInt(2);
+            socket.out.writeInt(StreamConstants.DISCONNECT_SECTION_NUMBER);
             socket.in.read();
         } catch (Exception _) {
             // nothing
@@ -342,7 +341,7 @@ public class StandardSuiteStream {
 
     public static boolean ping(MysterSocket socket) {
         try {
-            socket.out.writeInt(1);
+            socket.out.writeInt(StreamConstants.PING_SECTION_NUMBER);
             return socket.in.read() == 1;
         } catch (Exception _) {
             return false;

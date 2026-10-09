@@ -20,6 +20,7 @@ import com.general.util.UnexpectedException;
 import com.myster.mml.MessagePak;
 import com.myster.net.MysterAddress;
 import com.myster.net.MysterSocket;
+import com.myster.net.stream.StreamConstants;
 import com.myster.net.stream.client.MysterDataInputStream;
 import com.myster.net.stream.client.MysterDataOutputStream;
 import com.myster.net.stream.client.MysterSocketFactory;
@@ -155,7 +156,7 @@ public class FileListerThread extends MysterThread {
             msg.say("Requesting File List: " + lookup.lookup(type) + " Complete.");
             msg.say("Idle...");
             
-            out.writeInt(2); // 2 is disconnect
+            out.writeInt(StreamConstants.DISCONNECT_SECTION_NUMBER);
             in.read();
         } catch (IOException ex) {
             msg.say("An unexpected error occurred during the transfer of the file list.");

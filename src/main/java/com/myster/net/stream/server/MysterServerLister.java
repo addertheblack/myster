@@ -6,6 +6,7 @@ import com.myster.access.AccessEnforcementUtils;
 import com.myster.access.AccessListReader;
 import com.myster.net.MysterAddress;
 import com.myster.net.server.ConnectionContext;
+import com.myster.net.stream.StreamConstants;
 import com.myster.net.stream.client.MysterDataInputStream;
 import com.myster.net.stream.client.MysterDataOutputStream;
 import com.myster.tracker.MysterServer;
@@ -18,7 +19,7 @@ import com.myster.type.MysterType;
  * <p>Non-members of a private type receive only the empty-string terminator (no server addresses).
  */
 public class MysterServerLister extends ServerStreamHandler {
-    public static final int NUMBER = 10;
+    public static final int NUMBER = StreamConstants.TOP_TEN_SECTION_NUMBER;
     
     private final Tracker tracker;
     private final AccessListReader accessListReader;
@@ -67,5 +68,4 @@ public class MysterServerLister extends ServerStreamHandler {
         out.writeUTF(""); //"" Signals the end of the list!
     }
 }
-
 

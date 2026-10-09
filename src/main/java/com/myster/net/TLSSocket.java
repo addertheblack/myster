@@ -25,6 +25,7 @@ import javax.net.ssl.X509TrustManager;
 import com.myster.bandwidth.ThrottledInputStream;
 import com.myster.bandwidth.ThrottledOutputStream;
 import com.myster.identity.Identity;
+import com.myster.net.stream.StreamConstants;
 import com.myster.net.stream.client.MysterDataInputStream;
 import com.myster.net.stream.client.MysterDataOutputStream;
 
@@ -42,7 +43,7 @@ public class TLSSocket extends MysterSocket {
     private final SSLSocket sslSocket;
     
     // Custom protocol for explicit TLS negotiation using Myster connection sections
-    public static final int STLS_CONNECTION_SECTION = 0x53544C53; // "STLS" - Start TLS connection section
+    public static final int STLS_CONNECTION_SECTION = StreamConstants.START_TLS_SECTION_NUMBER;
     
     private TLSSocket(SSLSocket socket) throws IOException {
         super(buildInput(socket), buildOutput(socket));

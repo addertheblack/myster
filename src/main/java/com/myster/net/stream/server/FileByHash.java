@@ -7,6 +7,7 @@ import com.myster.access.AccessListReader;
 import com.myster.hash.FileHash;
 import com.myster.hash.SimpleFileHash;
 import com.myster.net.server.ConnectionContext;
+import com.myster.net.stream.StreamConstants;
 import com.myster.type.MysterType;
 
 /**
@@ -15,7 +16,7 @@ import com.myster.type.MysterType;
  * <p>Non-members of a private type receive the "not found" response ({@code writeUTF("")}).
  */
 public class FileByHash extends ServerStreamHandler {
-    public static final int NUMBER = 150;
+    public static final int NUMBER = StreamConstants.FILE_BY_HASH_SECTION_NUMBER;
 
     public static final String HASH_TYPE = "/Hash Type";
 
@@ -74,4 +75,3 @@ public class FileByHash extends ServerStreamHandler {
         }
     }
 }
-

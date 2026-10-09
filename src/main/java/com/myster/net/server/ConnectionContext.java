@@ -12,8 +12,8 @@ import com.myster.net.stream.server.transferqueue.TransferQueue;
  * Carries all per-connection state through the section-handler dispatch chain.
  *
  * <p>{@code callerCid} is present only when the connection was upgraded to TLS via
- * {@link com.myster.net.TLSSocket#STLS_CONNECTION_SECTION} and the peer certificate was
- * successfully read. Plaintext connections always carry {@link Optional#empty()}.
+ * {@link com.myster.net.stream.StreamConstants#START_TLS_SECTION_NUMBER} and the peer
+ * certificate was successfully read. Plaintext connections always carry {@link Optional#empty()}.
  */
 public record ConnectionContext(MysterSocket socket,
                                 MysterAddress serverAddress,

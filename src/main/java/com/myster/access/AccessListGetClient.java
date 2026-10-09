@@ -8,6 +8,7 @@ import java.util.Optional;
 import java.util.logging.Logger;
 
 import com.myster.net.MysterSocket;
+import com.myster.net.stream.StreamConstants;
 import com.myster.net.stream.client.MysterDataInputStream;
 import com.myster.net.stream.client.MysterDataOutputStream;
 import com.myster.type.MysterType;
@@ -16,7 +17,7 @@ import com.myster.type.MysterType;
  * Client for fetching access lists from remote servers via the ACCESS_LIST_GET
  * protocol (section 125).
  *
- * <p>Protocol matches {@link AccessListGetServer}: sends 16-byte MysterType and 32-byte
+ * <p>The protocol sends a 16-byte MysterType and 32-byte
  * known_tip_hash, receives status + total_bytes_remaining + size-prefixed block stream.
  *
  * <p>All methods are plain blocking calls on the calling thread. Callers that need async
@@ -24,8 +25,6 @@ import com.myster.type.MysterType;
  */
 public class AccessListGetClient {
     private static final Logger log = Logger.getLogger(AccessListGetClient.class.getName());
-
-    private static final int SECTION_NUMBER = 125;
 
     private static final int STATUS_OK = 0;
     private static final int STATUS_NOT_FOUND = 1;
@@ -49,7 +48,7 @@ public class AccessListGetClient {
         MysterDataOutputStream out = socket.out;
         MysterDataInputStream in = socket.in;
 
-        out.writeInt(SECTION_NUMBER);
+        out.writeInt(StreamConstants.ACCESS_LIST_GET_SECTION_NUMBER);
         out.flush();
         int response = in.read();
         if (response != 1) {

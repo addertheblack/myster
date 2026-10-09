@@ -22,11 +22,12 @@ import com.myster.filemanager.FileTypeListManager;
 import com.myster.identity.Identity;
 import com.myster.mml.MessagePak;
 import com.myster.net.server.ConnectionContext;
+import com.myster.net.stream.StreamConstants;
 import com.myster.pref.MysterPreferences;
 import com.myster.type.MysterType;
 
 public class ServerStats extends ServerStreamHandler {
-    public static final int NUMBER = 101;
+    public static final int NUMBER = StreamConstants.SERVER_STATS_SECTION_NUMBER;
     
     public static final String NUMBER_OF_FILES = "/NumberOfFiles/";
     

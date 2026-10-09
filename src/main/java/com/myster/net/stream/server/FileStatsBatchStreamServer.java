@@ -7,6 +7,7 @@ import com.myster.access.AccessListReader;
 import com.myster.filemanager.FileItem;
 import com.myster.mml.MessagePak;
 import com.myster.net.server.ConnectionContext;
+import com.myster.net.stream.StreamConstants;
 import com.myster.net.stream.client.MysterDataInputStream;
 import com.myster.net.stream.client.MysterDataOutputStream;
 import com.myster.type.MysterType;
@@ -17,7 +18,7 @@ import com.myster.type.MysterType;
  * <p>Non-members of a private type receive a zero-entry response.
  */
 public class FileStatsBatchStreamServer extends ServerStreamHandler {
-    public static final int NUMBER = 177;
+    public static final int NUMBER = StreamConstants.BATCH_FILE_STATS_SECTION_NUMBER;
 
     private final AccessListReader accessListReader;
 
@@ -75,5 +76,4 @@ public class FileStatsBatchStreamServer extends ServerStreamHandler {
         }
     }
 }
-
 

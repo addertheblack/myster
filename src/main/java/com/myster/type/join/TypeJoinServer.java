@@ -7,6 +7,7 @@ import java.util.Optional;
 import com.myster.cid.ServerCid;
 import com.myster.mml.MessagePak;
 import com.myster.net.server.ConnectionContext;
+import com.myster.net.stream.StreamConstants;
 import com.myster.net.stream.server.ServerStreamHandler;
 import com.myster.type.MysterType;
 
@@ -18,8 +19,8 @@ import com.myster.type.MysterType;
  * state details.
  */
 public final class TypeJoinServer extends ServerStreamHandler {
-    public static final int NUMBER = 126;
-    public static final int MAX_FRAME_BYTES = 4 * 1024;
+    public static final int NUMBER = StreamConstants.TYPE_JOIN_SECTION_NUMBER;
+    public static final int MAX_FRAME_BYTES = StreamConstants.TYPE_JOIN_MAX_FRAME_BYTES;
     private static final int SCHEMA_VERSION = 1;
 
     private final TypeInvitationManager invitationManager;

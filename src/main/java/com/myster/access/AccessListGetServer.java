@@ -8,6 +8,7 @@ import java.util.Optional;
 import java.util.logging.Logger;
 
 import com.myster.net.server.ConnectionContext;
+import com.myster.net.stream.StreamConstants;
 import com.myster.net.stream.server.ServerStreamHandler;
 import com.myster.type.MysterType;
 
@@ -37,7 +38,7 @@ import com.myster.type.MysterType;
  * </pre>
  */
 public class AccessListGetServer extends ServerStreamHandler {
-    public static final int NUMBER = 125;
+    public static final int NUMBER = StreamConstants.ACCESS_LIST_GET_SECTION_NUMBER;
 
     private static final Logger log = Logger.getLogger(AccessListGetServer.class.getName());
 

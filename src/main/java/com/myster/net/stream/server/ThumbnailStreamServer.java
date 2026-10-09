@@ -10,6 +10,7 @@ import com.myster.access.AccessEnforcementUtils;
 import com.myster.access.AccessListReader;
 import com.myster.filemanager.FileItem;
 import com.myster.net.server.ConnectionContext;
+import com.myster.net.stream.StreamConstants;
 import com.myster.net.stream.ThumbnailProtocolUtils;
 
 /**
@@ -19,7 +20,7 @@ import com.myster.net.stream.ThumbnailProtocolUtils;
  * Access is checked using the transport's caller identity before file lookup or acquisition.
  */
 public final class ThumbnailStreamServer extends ServerStreamHandler {
-    public static final int NUMBER = ThumbnailProtocolUtils.SECTION_NUMBER;
+    public static final int NUMBER = StreamConstants.THUMBNAIL_SECTION_NUMBER;
 
     private final AccessListReader accessListReader;
     private final ThumbnailSource thumbnails;

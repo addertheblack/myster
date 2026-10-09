@@ -17,6 +17,7 @@ import com.myster.net.server.BannersManager;
 import com.myster.net.server.ConnectionContext;
 import com.myster.net.server.DownloadInfo;
 import com.myster.net.server.ServerPreferences;
+import com.myster.net.stream.StreamConstants;
 import com.myster.net.stream.client.MysterDataInputStream;
 import com.myster.net.stream.client.MysterDataOutputStream;
 import com.myster.net.stream.server.transferqueue.Downloader;
@@ -43,10 +44,10 @@ import com.myster.type.MysterType;
 public class MultiSourceSender extends ServerStreamHandler {
     private static final Logger log = Logger.getLogger(MultiSourceSender.class.getName());
     
-    public static final String QUEUED_PATH = "/queued";
-    public static final String MESSAGE_PATH = "/message";
+    public static final String QUEUED_PATH = StreamConstants.MULTI_SOURCE_QUEUED_PATH;
+    public static final String MESSAGE_PATH = StreamConstants.MULTI_SOURCE_MESSAGE_PATH;
 
-    public static final int SECTION_NUMBER = 90;
+    public static final int SECTION_NUMBER = StreamConstants.MULTI_SOURCE_DOWNLOAD_SECTION_NUMBER;
 
     private final ServerPreferences preferences;
     private final AccessListReader accessListReader;

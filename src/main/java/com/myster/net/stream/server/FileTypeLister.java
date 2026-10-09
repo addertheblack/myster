@@ -17,6 +17,7 @@ import com.general.util.Util;
 import com.myster.access.AccessEnforcementUtils;
 import com.myster.access.AccessListReader;
 import com.myster.net.server.ConnectionContext;
+import com.myster.net.stream.StreamConstants;
 import com.myster.type.MysterType;
 
 /**
@@ -26,7 +27,7 @@ import com.myster.type.MysterType;
  * callers that are not members. Membership is verified via {@link AccessEnforcementUtils}.
  */
 public class FileTypeLister extends ServerStreamHandler {
-    public static final int NUMBER = 74;
+    public static final int NUMBER = StreamConstants.TYPE_LIST_SECTION_NUMBER;
 
     private final AccessListReader accessListReader;
 
@@ -51,4 +52,3 @@ public class FileTypeLister extends ServerStreamHandler {
         }
     }
 }
-

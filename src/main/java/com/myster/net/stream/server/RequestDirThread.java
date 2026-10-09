@@ -6,6 +6,7 @@ import java.util.logging.Logger;
 import com.myster.access.AccessEnforcementUtils;
 import com.myster.access.AccessListReader;
 import com.myster.net.server.ConnectionContext;
+import com.myster.net.stream.StreamConstants;
 import com.myster.net.stream.client.MysterDataInputStream;
 import com.myster.net.stream.client.MysterDataOutputStream;
 import com.myster.type.MysterType;
@@ -16,7 +17,7 @@ import com.myster.type.MysterType;
  * <p>Non-members of a private type receive an empty response ({@code writeInt(0)}).
  */
 public class RequestDirThread extends ServerStreamHandler {
-    public static final int NUMBER = 78;
+    public static final int NUMBER = StreamConstants.DIRECTORY_LIST_SECTION_NUMBER;
 
     private static final Logger log = Logger.getLogger(RequestDirThread.class.getName());
 
@@ -58,4 +59,3 @@ public class RequestDirThread extends ServerStreamHandler {
         }
     }
 }
-

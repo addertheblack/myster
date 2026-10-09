@@ -33,6 +33,7 @@ import com.myster.client.ui.ClientWindow;
 import com.myster.net.MysterAddress;
 import com.myster.net.client.MysterProtocol;
 import com.myster.net.datagram.message.MessageWindow;
+import com.myster.net.stream.StreamConstants;
 import com.myster.server.event.ConnectionManagerEvent;
 import com.myster.server.event.ConnectionManagerListener;
 import com.myster.server.event.ServerContext;
@@ -194,7 +195,7 @@ public class DownloadInfoPanel extends JPanel {
     private class ConnectionHandler implements ConnectionManagerListener {
 
         public void sectionEventConnect(ConnectionManagerEvent e) {
-            if (e.getSection() == com.myster.net.stream.server.MultiSourceSender.SECTION_NUMBER) {
+            if (e.getSection() == StreamConstants.MULTI_SOURCE_DOWNLOAD_SECTION_NUMBER) {
                 ServerDownloadDispatcher d = (ServerDownloadDispatcher) e.getSectionObject();
                 DownloadMCListItem i = new DownloadMCListItem(d);
                 list.addItem(i);
@@ -203,7 +204,7 @@ public class DownloadInfoPanel extends JPanel {
         }
 
         public void sectionEventDisconnect(ConnectionManagerEvent e) {
-            if (e.getSection() == com.myster.net.stream.server.MultiSourceSender.SECTION_NUMBER) {
+            if (e.getSection() == StreamConstants.MULTI_SOURCE_DOWNLOAD_SECTION_NUMBER) {
                 ServerDownloadDispatcher d = (ServerDownloadDispatcher) e.getSectionObject();
                 int index = getIndexOfDispatcher(d);
                 if (index == -1) {

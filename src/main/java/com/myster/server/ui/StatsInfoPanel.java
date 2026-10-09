@@ -19,12 +19,7 @@ import com.general.util.LinkedList;
 import com.general.util.Timer;
 import com.general.util.Util;
 import com.myster.net.datagram.DatagramConstants;
-import com.myster.net.stream.server.FileByHash;
-import com.myster.net.stream.server.FileStatsStreamServer;
-import com.myster.net.stream.server.MultiSourceSender;
-import com.myster.net.stream.server.MysterServerLister;
-import com.myster.net.stream.server.RequestSearchThread;
-import com.myster.net.stream.server.ServerStats;
+import com.myster.net.stream.StreamConstants;
 import com.myster.server.event.ConnectionManagerEvent;
 import com.myster.server.event.ConnectionManagerListener;
 import com.myster.server.event.OperatorEvent;
@@ -267,28 +262,28 @@ public class StatsInfoPanel extends JPanel {
         public void sectionEventConnect(ConnectionManagerEvent e) {
             boolean isUdp = e.isDatagram();
             switch (e.getSection()) {
-                case RequestSearchThread.NUMBER:
+                case StreamConstants.SEARCH_SECTION_NUMBER:
                     numsearch.increment(isUdp);
                     searches.addSearch(e.getTimeStamp());
                     ((ServerSearchDispatcher) (e.getSectionObject()))
                             .addServerSearchListener(new SearchHandler());
                     break;
-                case MultiSourceSender.SECTION_NUMBER:
+                case StreamConstants.MULTI_SOURCE_DOWNLOAD_SECTION_NUMBER:
                     numofld.increment(isUdp);
                     ((ServerDownloadDispatcher) (e.getSectionObject()))
                             .addServerDownloadListener(new DownloadHandler());
                     break;
-                case MysterServerLister.NUMBER:
+                case StreamConstants.TOP_TEN_SECTION_NUMBER:
                     numofTT.increment(isUdp);
                     break;
-                case ServerStats.NUMBER:
+                case StreamConstants.SERVER_STATS_SECTION_NUMBER:
                 case DatagramConstants.BIDIRECTIONAL_SERVER_STATS_TRANSACTION_CODE:
                     numofSSR.increment(isUdp);
                     break;
-                case FileStatsStreamServer.NUMBER:
+                case StreamConstants.FILE_STATS_SECTION_NUMBER:
                     numofFI.increment(isUdp);
                     break;
-                case FileByHash.NUMBER:
+                case StreamConstants.FILE_BY_HASH_SECTION_NUMBER:
                     numberOfHashSearches.increment(isUdp);
                     break;
             }

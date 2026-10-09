@@ -4,8 +4,8 @@ import java.io.IOException;
 
 import com.myster.mml.MessagePak;
 import com.myster.net.MysterSocket;
+import com.myster.net.stream.StreamConstants;
 import com.myster.type.MysterType;
-import com.myster.type.join.TypeJoinServer;
 import com.myster.type.join.TypeJoinStatus;
 import com.myster.type.join.TypeJoinUri;
 
@@ -26,7 +26,7 @@ final class TypeJoinClient {
             throw new IllegalArgumentException("Invitation code must contain 1 to 256 characters");
         }
 
-        socket.out.writeInt(TypeJoinServer.NUMBER);
+        socket.out.writeInt(StreamConstants.TYPE_JOIN_SECTION_NUMBER);
         socket.out.flush();
         if (socket.in.read() != 1) {
             throw new IOException("Server rejected invitation section");
@@ -40,7 +40,7 @@ final class TypeJoinClient {
         socket.out.writeMessagePack(request);
         socket.out.flush();
 
-        MessagePak response = socket.in.readMessagePack(TypeJoinServer.MAX_FRAME_BYTES);
+        MessagePak response = socket.in.readMessagePack(StreamConstants.TYPE_JOIN_MAX_FRAME_BYTES);
         if (response.getInt("/schemaVersion").orElse(-1) != 1) {
             throw new IOException("Unsupported type-join response schema");
         }

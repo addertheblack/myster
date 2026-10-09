@@ -36,7 +36,7 @@ import com.myster.type.MysterType;
  * with {@link IOException}; callers must discard the connection after such a failure.
  */
 public final class ThumbnailProtocolUtils {
-    public static final int SECTION_NUMBER = 79;
+    public static final int SECTION_NUMBER = StreamConstants.THUMBNAIL_SECTION_NUMBER;
     public static final int MAX_SIZE = 256;
     public static final int MAX_IMAGE_BYTES = MAX_SIZE * MAX_SIZE * Integer.BYTES;
     public static final int MAX_REQUEST_BYTES = 64 * 1024;

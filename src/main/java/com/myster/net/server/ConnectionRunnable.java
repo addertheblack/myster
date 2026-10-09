@@ -23,6 +23,7 @@ import com.myster.cid.ServerCid;
 import com.myster.identity.Identity;
 import com.myster.net.MysterAddress;
 import com.myster.net.TLSSocket;
+import com.myster.net.stream.StreamConstants;
 import com.myster.net.stream.client.MysterDataInputStream;
 import com.myster.net.stream.server.transferqueue.TransferQueue;
 import com.myster.server.event.ConnectionManagerEvent;
@@ -175,7 +176,7 @@ public class ConnectionRunnable implements Runnable {
                     context.socket().close();
                     log.warning("Detected scan for unsecured server - closing connection");
                     break;
-                case TLSSocket.STLS_CONNECTION_SECTION:
+                case StreamConstants.START_TLS_SECTION_NUMBER:
                     consecutiveUnknownProtocols = 0;
                     log.fine("Client requested STLS (Start TLS) connection section");
                     try {
@@ -207,13 +208,13 @@ public class ConnectionRunnable implements Runnable {
                         context.socket().out.flush();
                         return;
                     }
-                case 1:
+                case StreamConstants.PING_SECTION_NUMBER:
                     consecutiveUnknownProtocols = 0;
                     // Basic acknowledgment protocol
                     context.socket().out.write(1);
                     context.socket().out.flush();
                     break;
-                case 2:
+                case StreamConstants.DISCONNECT_SECTION_NUMBER:
                     consecutiveUnknownProtocols = 0;
                     // Acknowledgment and disconnect protocol
                     context.socket().out.write(1);

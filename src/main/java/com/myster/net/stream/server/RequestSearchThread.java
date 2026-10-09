@@ -6,6 +6,7 @@ import com.myster.access.AccessEnforcementUtils;
 import com.myster.access.AccessListReader;
 import com.myster.net.MysterAddress;
 import com.myster.net.server.ConnectionContext;
+import com.myster.net.stream.StreamConstants;
 import com.myster.net.stream.client.MysterDataInputStream;
 import com.myster.net.stream.client.MysterDataOutputStream;
 import com.myster.server.event.ServerSearchDispatcher;
@@ -19,7 +20,7 @@ import com.myster.type.MysterType;
  */
 public class RequestSearchThread extends ServerStreamHandler {
 
-    public static final int NUMBER = 35;
+    public static final int NUMBER = StreamConstants.SEARCH_SECTION_NUMBER;
 
     private final AccessListReader accessListReader;
 
@@ -77,4 +78,3 @@ public class RequestSearchThread extends ServerStreamHandler {
         out.writeUTF("");
     }
 }
-
