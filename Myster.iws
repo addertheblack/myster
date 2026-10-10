@@ -7,32 +7,11 @@
     <option name="selectedModelId" value="auto" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="fe0d93f5-a1b5-4669-89e3-19e762d0ae4a" name="Changes" comment="Update logging configuration to disable AsyncDatagramSocket logging">
+    <list default="true" id="fe0d93f5-a1b5-4669-89e3-19e762d0ae4a" name="Changes" comment="Add Maven plugin for runtime module detection and update README with packaging details">
       <change beforePath="$PROJECT_DIR$/Myster.iws" beforeDir="false" afterPath="$PROJECT_DIR$/Myster.iws" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/README.md" beforeDir="false" afterPath="$PROJECT_DIR$/README.md" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/TODO.txt" beforeDir="false" afterPath="$PROJECT_DIR$/TODO.txt" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/com/myster/access/AccessListGetClient.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/com/myster/access/AccessListGetClient.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/com/myster/access/AccessListGetServer.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/com/myster/access/AccessListGetServer.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/com/myster/client/ui/FileListerThread.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/com/myster/client/ui/FileListerThread.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/com/myster/net/TLSSocket.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/com/myster/net/TLSSocket.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/com/myster/net/server/ConnectionContext.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/com/myster/net/server/ConnectionContext.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/com/myster/net/server/ConnectionRunnable.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/com/myster/net/server/ConnectionRunnable.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/com/myster/net/stream/ThumbnailProtocolUtils.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/com/myster/net/stream/ThumbnailProtocolUtils.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/com/myster/net/stream/client/StandardSuiteStream.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/com/myster/net/stream/client/StandardSuiteStream.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/com/myster/net/stream/client/TypeJoinClient.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/com/myster/net/stream/client/TypeJoinClient.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/com/myster/net/stream/client/msdownload/InternalSegmentDownloader.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/com/myster/net/stream/client/msdownload/InternalSegmentDownloader.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/com/myster/net/stream/server/FileByHash.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/com/myster/net/stream/server/FileByHash.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/com/myster/net/stream/server/FileStatsBatchStreamServer.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/com/myster/net/stream/server/FileStatsBatchStreamServer.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/com/myster/net/stream/server/FileStatsStreamServer.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/com/myster/net/stream/server/FileStatsStreamServer.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/com/myster/net/stream/server/FileTypeLister.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/com/myster/net/stream/server/FileTypeLister.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/com/myster/net/stream/server/MultiSourceSender.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/com/myster/net/stream/server/MultiSourceSender.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/com/myster/net/stream/server/MysterServerLister.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/com/myster/net/stream/server/MysterServerLister.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/com/myster/net/stream/server/RequestDirThread.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/com/myster/net/stream/server/RequestDirThread.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/com/myster/net/stream/server/RequestSearchThread.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/com/myster/net/stream/server/RequestSearchThread.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/com/myster/net/stream/server/ServerStats.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/com/myster/net/stream/server/ServerStats.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/com/myster/net/stream/server/ThumbnailStreamServer.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/com/myster/net/stream/server/ThumbnailStreamServer.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/com/myster/server/ui/DownloadInfoPanel.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/com/myster/server/ui/DownloadInfoPanel.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/com/myster/server/ui/StatsInfoPanel.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/com/myster/server/ui/StatsInfoPanel.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/com/myster/type/join/TypeJoinServer.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/com/myster/type/join/TypeJoinServer.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/pom.xml" beforeDir="false" afterPath="$PROJECT_DIR$/pom.xml" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -263,23 +242,23 @@
   </component>
   <component name="NextEditCompletionFeaturesState">
     <decayedCancelled>
-      <entry key="MS100" value="1.808361092059467" />
-      <entry key="MS500" value="5.261262613397546" />
-      <entry key="S2" value="11.684270305072872" />
-      <entry key="S5" value="15.725486460919617" />
-      <entry key="S10" value="17.65396563773589" />
-      <entry key="S30" value="19.1654386729688" />
-      <entry key="S60" value="19.575720628554414" />
-      <entry key="M2" value="19.786076516184618" />
-      <entry key="M5" value="19.913998044944705" />
-      <entry key="M10" value="19.956926554557718" />
-      <entry key="M15" value="19.971268237870596" />
-      <entry key="M30" value="19.985626046133245" />
-      <entry key="H1" value="19.993184117172483" />
-      <entry key="H2" value="20.922361713625182" />
-      <entry key="H4" value="74.89631567182174" />
-      <entry key="D1" value="2122.5632452880045" />
-      <entry key="W1" value="10304.934385862241" />
+      <entry key="MS100" value="1.9576413126790069" />
+      <entry key="MS500" value="5.49814316777259" />
+      <entry key="S2" value="14.040726733381899" />
+      <entry key="S5" value="21.717686293132257" />
+      <entry key="S10" value="26.076262095336595" />
+      <entry key="S30" value="33.857335548955696" />
+      <entry key="S60" value="48.65185332560127" />
+      <entry key="M2" value="76.5673637629257" />
+      <entry key="M5" value="125.74617842623931" />
+      <entry key="M10" value="156.7773590878262" />
+      <entry key="M15" value="170.76664908155402" />
+      <entry key="M30" value="203.46596668537944" />
+      <entry key="H1" value="295.7485575634179" />
+      <entry key="H2" value="447.7414396812519" />
+      <entry key="H4" value="624.8755447133202" />
+      <entry key="D1" value="2700.798204038122" />
+      <entry key="W1" value="10971.131031094701" />
     </decayedCancelled>
     <decayedSelected>
       <entry key="MS100" value="0.0" />
@@ -290,34 +269,34 @@
       <entry key="S30" value="0.0" />
       <entry key="S60" value="0.0" />
       <entry key="M2" value="0.0" />
-      <entry key="M5" value="2.9266947088375478E-282" />
-      <entry key="M10" value="2.419376010583772E-141" />
-      <entry key="M15" value="2.2706254604501164E-94" />
-      <entry key="M30" value="2.1310209133764471E-47" />
-      <entry key="H1" value="6.52843139042326E-24" />
-      <entry key="H2" value="3.6134281008441887E-12" />
-      <entry key="H4" value="2.688294792408139E-6" />
-      <entry key="D1" value="0.24375732600792588" />
-      <entry key="W1" value="7.373804732776318" />
+      <entry key="M5" value="2.591010100207777E-293" />
+      <entry key="M10" value="7.19861938938966E-147" />
+      <entry key="M15" value="4.697239790189731E-98" />
+      <entry key="M30" value="3.065041264153502E-49" />
+      <entry key="H1" value="7.829484186394624E-25" />
+      <entry key="H2" value="1.2513579904982275E-12" />
+      <entry key="H4" value="1.5820054215541033E-6" />
+      <entry key="D1" value="0.22314107613217743" />
+      <entry key="W1" value="7.2813019179304925" />
     </decayedSelected>
     <decayedShown>
-      <entry key="MS100" value="1.7746329845261146" />
-      <entry key="MS500" value="5.236745002961916" />
-      <entry key="S2" value="11.669433649203429" />
-      <entry key="S5" value="15.71726865080235" />
-      <entry key="S10" value="17.649304737860014" />
-      <entry key="S30" value="19.163739976632385" />
-      <entry key="S60" value="19.574851534105733" />
-      <entry key="M2" value="19.785636902360487" />
-      <entry key="M5" value="19.91382096638546" />
-      <entry key="M10" value="19.956837808335603" />
-      <entry key="M15" value="19.971209027628205" />
-      <entry key="M30" value="19.985596417938055" />
-      <entry key="H1" value="19.99316929713596" />
-      <entry key="H2" value="20.92235406951667" />
-      <entry key="H4" value="74.8963065899243" />
-      <entry key="D1" value="2122.806936299012" />
-      <entry key="W1" value="10312.308119358438" />
+      <entry key="MS100" value="1.9301696014097847" />
+      <entry key="MS500" value="5.48127434953564" />
+      <entry key="S2" value="14.029387184970256" />
+      <entry key="S5" value="21.710599716039855" />
+      <entry key="S10" value="26.071989973275514" />
+      <entry key="S30" value="33.85547364734014" />
+      <entry key="S60" value="48.650490687783396" />
+      <entry key="M2" value="76.56623732881016" />
+      <entry key="M5" value="125.74539052454837" />
+      <entry key="M10" value="156.77685539715543" />
+      <entry key="M15" value="170.76627968247044" />
+      <entry key="M30" value="203.46574019542473" />
+      <entry key="H1" value="295.7483815910727" />
+      <entry key="H2" value="447.74129882143825" />
+      <entry key="H4" value="624.8754456183598" />
+      <entry key="D1" value="2701.0212635666458" />
+      <entry key="W1" value="10978.412259533006" />
     </decayedShown>
   </component>
   <component name="PerforceConfiguration">
@@ -381,39 +360,40 @@
     <option name="hideEmptyMiddlePackages" value="true" />
     <option name="showLibraryContents" value="true" />
   </component>
-  <component name="PropertiesComponent">{
-  &quot;keyToString&quot;: {
-    &quot;Application.Myster.executor&quot;: &quot;Run&quot;,
-    &quot;Application.MysterServerPoolStressMain.executor&quot;: &quot;Debug&quot;,
-    &quot;Application.ThumbnailPreview.executor&quot;: &quot;Run&quot;,
-    &quot;JUnit.TestFileStatsBatch.executor&quot;: &quot;Run&quot;,
-    &quot;JUnit.TestFileTypeList.executor&quot;: &quot;Debug&quot;,
-    &quot;JUnit.TestFileTypeList.testChangingPathTriggersReindexing.executor&quot;: &quot;Debug&quot;,
-    &quot;JUnit.TestFileTypeList.testMaximumDepthIndexing.executor&quot;: &quot;Debug&quot;,
-    &quot;KEY_CHAT_IN_TOOLWINDOW&quot;: &quot;false&quot;,
-    &quot;ModuleVcsDetector.initialDetectionPerformed&quot;: &quot;true&quot;,
-    &quot;RunOnceActivity.MCP Project settings loaded&quot;: &quot;true&quot;,
-    &quot;RunOnceActivity.ShowReadmeOnStart&quot;: &quot;true&quot;,
-    &quot;RunOnceActivity.git.unshallow&quot;: &quot;true&quot;,
-    &quot;RunOnceActivity.typescript.service.memoryLimit.init&quot;: &quot;true&quot;,
-    &quot;codeWithMe.voiceChat.enabledByDefault&quot;: &quot;false&quot;,
-    &quot;com.intellij.ml.llm.matterhorn.ej.ui.settings.DefaultModelSelectionForGA.v1&quot;: &quot;true&quot;,
-    &quot;copilot.chat.legacySessionMetadata.migrated&quot;: &quot;true&quot;,
-    &quot;git-widget-placeholder&quot;: &quot;master&quot;,
-    &quot;junie.onboarding.icon.badge.shown&quot;: &quot;true&quot;,
-    &quot;kotlin-language-version-configured&quot;: &quot;true&quot;,
-    &quot;last_opened_file_path&quot;: &quot;/home/andrew/repos/myster&quot;,
-    &quot;node.js.detected.package.eslint&quot;: &quot;true&quot;,
-    &quot;node.js.detected.package.tslint&quot;: &quot;true&quot;,
-    &quot;node.js.selected.package.eslint&quot;: &quot;(autodetect)&quot;,
-    &quot;node.js.selected.package.tslint&quot;: &quot;(autodetect)&quot;,
-    &quot;nodejs_package_manager_path&quot;: &quot;npm&quot;,
-    &quot;settings.build.tools.auto.reload&quot;: &quot;ALL&quot;,
-    &quot;settings.editor.selected.configurable&quot;: &quot;preferences.pluginManager&quot;,
-    &quot;to.speed.mode.migration.done&quot;: &quot;true&quot;
+  <component name="PropertiesComponent"><![CDATA[{
+  "keyToString": {
+    "Application.Myster.executor": "Run",
+    "Application.MysterServerPoolStressMain.executor": "Debug",
+    "Application.ThumbnailPreview.executor": "Run",
+    "JUnit.TestFileStatsBatch.executor": "Run",
+    "JUnit.TestFileTypeList.executor": "Debug",
+    "JUnit.TestFileTypeList.testChangingPathTriggersReindexing.executor": "Debug",
+    "JUnit.TestFileTypeList.testMaximumDepthIndexing.executor": "Debug",
+    "KEY_CHAT_IN_TOOLWINDOW": "false",
+    "Maven.Myster [package].executor": "Run",
+    "ModuleVcsDetector.initialDetectionPerformed": "true",
+    "RunOnceActivity.MCP Project settings loaded": "true",
+    "RunOnceActivity.ShowReadmeOnStart": "true",
+    "RunOnceActivity.git.unshallow": "true",
+    "RunOnceActivity.typescript.service.memoryLimit.init": "true",
+    "codeWithMe.voiceChat.enabledByDefault": "false",
+    "com.intellij.ml.llm.matterhorn.ej.ui.settings.DefaultModelSelectionForGA.v1": "true",
+    "copilot.chat.legacySessionMetadata.migrated": "true",
+    "git-widget-placeholder": "master",
+    "junie.onboarding.icon.badge.shown": "true",
+    "kotlin-language-version-configured": "true",
+    "last_opened_file_path": "/home/andrew/repos/myster",
+    "node.js.detected.package.eslint": "true",
+    "node.js.detected.package.tslint": "true",
+    "node.js.selected.package.eslint": "(autodetect)",
+    "node.js.selected.package.tslint": "(autodetect)",
+    "nodejs_package_manager_path": "npm",
+    "settings.build.tools.auto.reload": "ALL",
+    "settings.editor.selected.configurable": "preferences.pluginManager",
+    "to.speed.mode.migration.done": "true"
   }
-}</component>
-  <component name="RunManager" selected="Application.Myster">
+}]]></component>
+  <component name="RunManager" selected="Maven.Myster [package]">
     <configuration selected="false" default="true" type="Applet" factoryName="Applet">
       <module name="" />
       <option name="MAIN_CLASS_NAME" />
@@ -537,6 +517,47 @@
         <option name="Make" enabled="true" />
       </method>
     </configuration>
+    <configuration name="Myster [package]" type="MavenRunConfiguration" factoryName="Maven" nameIsGenerated="true">
+      <MavenSettings>
+        <option name="myGeneralSettings" />
+        <option name="myRunnerSettings" />
+        <option name="myRunnerParameters">
+          <MavenRunnerParameters>
+            <option name="cmdOptions" />
+            <option name="profiles">
+              <set />
+            </option>
+            <option name="goals">
+              <list>
+                <option value="package" />
+              </list>
+            </option>
+            <option name="multimoduleDir" />
+            <option name="pomFileName" />
+            <option name="profilesMap">
+              <map>
+                <entry key="linux-build" value="true" />
+              </map>
+            </option>
+            <option name="projectsCmdOptionValues">
+              <list />
+            </option>
+            <option name="resolveToWorkspace" value="false" />
+            <option name="workingDirPath" value="$PROJECT_DIR$" />
+          </MavenRunnerParameters>
+        </option>
+      </MavenSettings>
+      <method v="2" />
+    </configuration>
+    <list>
+      <item itemvalue="Application.Myster" />
+      <item itemvalue="Application.MysterServerPoolStressMain" />
+      <item itemvalue="JUnit.TestFileStatsBatch" />
+      <item itemvalue="JUnit.TestFileTypeList" />
+      <item itemvalue="JUnit.TestFileTypeList.testChangingPathTriggersReindexing" />
+      <item itemvalue="JUnit.TestFileTypeList.testMaximumDepthIndexing" />
+      <item itemvalue="Maven.Myster [package]" />
+    </list>
     <recent_temporary>
       <list>
         <item itemvalue="JUnit.TestFileTypeList.testMaximumDepthIndexing" />
@@ -797,7 +818,8 @@
     <MESSAGE value="Enhance unknown protocol logging in ConnectionRunnable to log only the first occurrence and close connections after three consecutive unknown codes" />
     <MESSAGE value="Update logging configuration to enable AsyncDatagramSocket logging and disable ConnectionRunnable logging" />
     <MESSAGE value="Update logging configuration to disable AsyncDatagramSocket logging" />
-    <option name="LAST_COMMIT_MESSAGE" value="Update logging configuration to disable AsyncDatagramSocket logging" />
+    <MESSAGE value="Add Maven plugin for runtime module detection and update README with packaging details" />
+    <option name="LAST_COMMIT_MESSAGE" value="Add Maven plugin for runtime module detection and update README with packaging details" />
   </component>
   <component name="VssConfiguration">
     <CheckoutOptions>

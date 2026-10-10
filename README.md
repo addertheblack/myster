@@ -22,6 +22,18 @@ mvn package
 
 The authoritative build configuration and targets are in `pom.xml`.
 
+Packaging runs the JDK's [`jdeps`](https://docs.oracle.com/en/java/javase/26/docs/specs/man/jdeps.html)
+on `bin/MysterBuild.jar` after shading, so application code and bundled libraries
+both contribute JDK modules to the runtime shipped on Windows, macOS, and Linux.
+The detected module list is written to `target/jdeps-modules.txt` and passed to
+`jpackage` along with the explicit modules in `pom.xml`, including `java.sql` for
+Tika metadata. Keep explicit modules for dependencies loaded through reflection or
+services, which static analysis can miss. The scan ignores missing optional
+third-party classes referenced by bundled libraries; it still detects their JDK
+dependencies and fails the build if analysis fails or produces an invalid list.
+Use `mvn package` to run detection before packaging; invoking `jpackage:jpackage`
+alone does not run the scan.
+
 ## Run
 
 Typical ways to run Myster:

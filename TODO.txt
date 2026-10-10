@@ -74,6 +74,13 @@
       format/body limits; preserve file-freshness checks and omit local-path cache metadata.
     - Keep encoding the final BufferedImage as the fallback for resized images and providers
       that return bitmap pixels. Deferred beyond the thumbnail protocol milestone.
+- IN the file Manager GUI. Make sure that you can pop to the open folder. via a explore button.of some other better name to show in finder.. maybe "show in finder" or "open containing folder" or something like that.
+    make sure the path is copiable.
+    make sure the path can be seen in its entiraty in a tool tip
+    add refresh button to rescan the folder for new files.
+- BUG In the file manager. When you choose a folder.. Go into the Documents folder. Nothing is visible in there. Is this a permissions issue? New Folder button adds  a new folder but it's not visible in the folder chooser dialog.
+- BUG?? In the File manager the default fodler are under the library folder. This is not a good default. It should be the users home folder or the users documents folder. The library folder is a user system folder and should not be used for this purpose.
+
 
 - Important things to do to get private types working
     - Implement type file that allows someone to import a type into myster.

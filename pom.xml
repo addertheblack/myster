@@ -272,6 +272,48 @@
         </executions>
       </plugin>
 
+      <!-- Analyze the complete shaded JAR before jpackage links its runtime. -->
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-antrun-plugin</artifactId>
+        <version>3.1.0</version>
+        <executions>
+          <execution>
+            <id>detect-runtime-modules</id>
+            <phase>package</phase>
+            <goals>
+              <goal>run</goal>
+            </goals>
+            <configuration>
+              <exportAntProperties>true</exportAntProperties>
+              <target>
+                <exec executable="${java.home}/bin/jdeps" failonerror="true"
+                  outputproperty="myster.detected.modules" logError="true">
+                  <arg value="--multi-release" />
+                  <arg value="${maven.compiler.release}" />
+                  <!-- Bundled libraries reference optional third-party classes that
+                       Myster does not ship; still collect all their JDK dependencies. -->
+                  <arg value="--ignore-missing-deps" />
+                  <arg value="--print-module-deps" />
+                  <arg value="${project.basedir}/bin/${outputName}.jar" />
+                </exec>
+                <fail message="jdeps did not produce a valid runtime module list: ${myster.detected.modules}">
+                  <condition>
+                    <not>
+                      <matches string="${myster.detected.modules}"
+                        pattern="^[a-zA-Z0-9_.]+(,[a-zA-Z0-9_.]+)*$" />
+                    </not>
+                  </condition>
+                </fail>
+                <echo file="${project.build.directory}/jdeps-modules.txt"
+                  message="${myster.detected.modules}" />
+                <echo level="info" message="Detected JDK runtime modules: ${myster.detected.modules}" />
+              </target>
+            </configuration>
+          </execution>
+        </executions>
+      </plugin>
+
       <!-- jpackage Maven Plugin -->
       <plugin>
         <groupId>org.panteleyev</groupId>
@@ -310,10 +352,15 @@
                 <option>--no-header-files</option>
               </jLinkOptions>
               <addModules>
+                <module>${myster.detected.modules}</module>
+                <!-- Keep explicit roots for dependencies loaded through reflection
+                     or services, which jdeps cannot reliably discover. -->
                 <module>java.base</module>
                 <module>java.desktop</module>
                 <module>java.naming</module>
                 <module>java.prefs</module>
+                <!-- Tika metadata uses java.sql types even without a database. -->
+                <module>java.sql</module>
               </addModules>
               <!-- Pass additional jpackage arguments -->
             </configuration>
