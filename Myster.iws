@@ -9,9 +9,10 @@
   <component name="ChangeListManager">
     <list default="true" id="fe0d93f5-a1b5-4669-89e3-19e762d0ae4a" name="Changes" comment="Add Maven plugin for runtime module detection and update README with packaging details">
       <change beforePath="$PROJECT_DIR$/Myster.iws" beforeDir="false" afterPath="$PROJECT_DIR$/Myster.iws" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/README.md" beforeDir="false" afterPath="$PROJECT_DIR$/README.md" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/TODO.txt" beforeDir="false" afterPath="$PROJECT_DIR$/TODO.txt" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/pom.xml" beforeDir="false" afterPath="$PROJECT_DIR$/pom.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/com/myster/filemanager/FileTypeList.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/com/myster/filemanager/FileTypeList.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/com/myster/filemanager/ui/FmiChooser.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/com/myster/filemanager/ui/FmiChooser.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/test/java/com/myster/filemanager/TestFileTypeList.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/test/java/com/myster/filemanager/TestFileTypeList.java" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -242,23 +243,23 @@
   </component>
   <component name="NextEditCompletionFeaturesState">
     <decayedCancelled>
-      <entry key="MS100" value="1.9576413126790069" />
-      <entry key="MS500" value="5.49814316777259" />
-      <entry key="S2" value="14.040726733381899" />
-      <entry key="S5" value="21.717686293132257" />
-      <entry key="S10" value="26.076262095336595" />
-      <entry key="S30" value="33.857335548955696" />
-      <entry key="S60" value="48.65185332560127" />
-      <entry key="M2" value="76.5673637629257" />
-      <entry key="M5" value="125.74617842623931" />
-      <entry key="M10" value="156.7773590878262" />
-      <entry key="M15" value="170.76664908155402" />
-      <entry key="M30" value="203.46596668537944" />
-      <entry key="H1" value="295.7485575634179" />
-      <entry key="H2" value="447.7414396812519" />
-      <entry key="H4" value="624.8755447133202" />
-      <entry key="D1" value="2700.798204038122" />
-      <entry key="W1" value="10971.131031094701" />
+      <entry key="MS100" value="1.1519792478639577" />
+      <entry key="MS500" value="4.711860466946817" />
+      <entry key="S2" value="17.09969177455685" />
+      <entry key="S5" value="32.33851132620833" />
+      <entry key="S10" value="43.799800723893306" />
+      <entry key="S30" value="55.8323511036505" />
+      <entry key="S60" value="63.37877302166443" />
+      <entry key="M2" value="89.38701244745339" />
+      <entry key="M5" value="202.71772237332996" />
+      <entry key="M10" value="352.8790499173393" />
+      <entry key="M15" value="454.5800673890246" />
+      <entry key="M30" value="624.8710094587732" />
+      <entry key="H1" value="784.7307015937201" />
+      <entry key="H2" value="982.9184416002059" />
+      <entry key="H4" value="1243.1262604322076" />
+      <entry key="D1" value="3391.8336767088063" />
+      <entry key="W1" value="11769.855986911638" />
     </decayedCancelled>
     <decayedSelected>
       <entry key="MS100" value="0.0" />
@@ -269,34 +270,34 @@
       <entry key="S30" value="0.0" />
       <entry key="S60" value="0.0" />
       <entry key="M2" value="0.0" />
-      <entry key="M5" value="2.591010100207777E-293" />
-      <entry key="M10" value="7.19861938938966E-147" />
-      <entry key="M15" value="4.697239790189731E-98" />
-      <entry key="M30" value="3.065041264153502E-49" />
-      <entry key="H1" value="7.829484186394624E-25" />
-      <entry key="H2" value="1.2513579904982275E-12" />
-      <entry key="H4" value="1.5820054215541033E-6" />
-      <entry key="D1" value="0.22314107613217743" />
-      <entry key="W1" value="7.2813019179304925" />
+      <entry key="M5" value="1.625051130129769E-305" />
+      <entry key="M10" value="5.700962363390736E-153" />
+      <entry key="M15" value="4.020765138945127E-102" />
+      <entry key="M30" value="2.835758960690268E-51" />
+      <entry key="H1" value="7.530947932005432E-26" />
+      <entry key="H2" value="3.880965820707745E-13" />
+      <entry key="H4" value="8.810226848676756E-7" />
+      <entry key="D1" value="0.20239947287550847" />
+      <entry key="W1" value="7.180524384281283" />
     </decayedSelected>
     <decayedShown>
-      <entry key="MS100" value="1.9301696014097847" />
-      <entry key="MS500" value="5.48127434953564" />
-      <entry key="S2" value="14.029387184970256" />
-      <entry key="S5" value="21.710599716039855" />
-      <entry key="S10" value="26.071989973275514" />
-      <entry key="S30" value="33.85547364734014" />
-      <entry key="S60" value="48.650490687783396" />
-      <entry key="M2" value="76.56623732881016" />
-      <entry key="M5" value="125.74539052454837" />
-      <entry key="M10" value="156.77685539715543" />
-      <entry key="M15" value="170.76627968247044" />
-      <entry key="M30" value="203.46574019542473" />
-      <entry key="H1" value="295.7483815910727" />
-      <entry key="H2" value="447.74129882143825" />
-      <entry key="H4" value="624.8754456183598" />
-      <entry key="D1" value="2701.0212635666458" />
-      <entry key="W1" value="10978.412259533006" />
+      <entry key="MS100" value="1.1361625166307279" />
+      <entry key="MS500" value="4.698508431215777" />
+      <entry key="S2" value="17.08689925840936" />
+      <entry key="S5" value="32.32880001121694" />
+      <entry key="S10" value="43.79323271965791" />
+      <entry key="S30" value="55.829564659762276" />
+      <entry key="S60" value="63.377193632253245" />
+      <entry key="M2" value="89.38589477569612" />
+      <entry key="M5" value="202.71668038596852" />
+      <entry key="M10" value="352.87810932072705" />
+      <entry key="M15" value="454.57924014374856" />
+      <entry key="M30" value="624.8704180027981" />
+      <entry key="H1" value="784.7303162188429" />
+      <entry key="H2" value="982.9181885207894" />
+      <entry key="H4" value="1243.1260930861138" />
+      <entry key="D1" value="3392.035982363695" />
+      <entry key="W1" value="11777.03643596748" />
     </decayedShown>
   </component>
   <component name="PerforceConfiguration">
@@ -393,7 +394,7 @@
     "to.speed.mode.migration.done": "true"
   }
 }]]></component>
-  <component name="RunManager" selected="Maven.Myster [package]">
+  <component name="RunManager" selected="Application.Myster">
     <configuration selected="false" default="true" type="Applet" factoryName="Applet">
       <module name="" />
       <option name="MAIN_CLASS_NAME" />
@@ -757,7 +758,15 @@
       <option name="project" value="LOCAL" />
       <updated>1791135170591</updated>
     </task>
-    <option name="localTasksCounter" value="19" />
+    <task id="LOCAL-00019" summary="Add Maven plugin for runtime module detection and update README with packaging details">
+      <option name="closed" value="true" />
+      <created>1791666643606</created>
+      <option name="number" value="00019" />
+      <option name="presentableId" value="LOCAL-00019" />
+      <option name="project" value="LOCAL" />
+      <updated>1791666643606</updated>
+    </task>
+    <option name="localTasksCounter" value="20" />
     <servers />
   </component>
   <component name="TodoView" selected-index="0">

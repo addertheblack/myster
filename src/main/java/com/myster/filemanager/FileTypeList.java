@@ -199,6 +199,19 @@ public class FileTypeList {
     }
 
     /**
+     * Rescans the configured folder asynchronously without waiting for the hourly refresh.
+     * Reuses an ongoing scan, retains the previous file list until completion, and does not
+     * enable sharing or scan a type whose sharing is disabled.
+     */
+    public synchronized void refresh() {
+        if (indexingFuture != null) {
+            return;
+        }
+        timeoflastupdate = 0;
+        assertFileList();
+    }
+
+    /**
      * Sets the isShared flag. If isShared is set to true, the list will share files if any are
      * available. If isShared is set to false, the list will not show any files shared even if there
      * are file available. Think of it as a sort of sharing over-ride. The effects of this function
@@ -692,8 +705,6 @@ public class FileTypeList {
 
     // too old.
 
-    // NOTE: The user could also change the DIR to force and update... He could
-    // also re-start Myster.
     private synchronized boolean isOld() {
         if (System.currentTimeMillis() - timeoflastupdate > (1000 * 60 * 60))
             return true; // If list is older than 1 hour...

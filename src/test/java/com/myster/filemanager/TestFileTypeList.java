@@ -159,6 +159,43 @@ class TestFileTypeList {
     }
 
     @Test
+    @DisplayName("Refresh discovers added and removed files without waiting an hour")
+    void testRefreshUpdatesFilesImmediately() throws IOException, InterruptedException {
+        fileTypeList.setPath(testRoot.toString());
+        fileTypeList.setShared(true);
+        waitForIndexing();
+        assertNotNull(fileTypeList.getFileItemFromString("root_file1.txt"));
+
+        Files.delete(testRoot.resolve("root_file1.txt"));
+        Files.writeString(testRoot.resolve("new_file.txt"), "new content");
+        assertNull(fileTypeList.getFileItemFromString("new_file.txt"));
+
+        fileTypeList.refresh();
+        waitForIndexing();
+
+        assertNotNull(fileTypeList.getFileItemFromString("new_file.txt"));
+        assertNull(fileTypeList.getFileItemFromString("root_file1.txt"));
+        assertEquals(7, fileTypeList.getNumOfFiles());
+        assertEquals(testRoot.toString(), fileTypeList.getPath());
+        assertTrue(fileTypeList.isShared());
+    }
+
+    @Test
+    @DisplayName("Refresh does not enable sharing or index a disabled type")
+    void testRefreshPreservesDisabledSharing() throws InterruptedException {
+        fileTypeList.setPath(testRoot.toString());
+        fileTypeList.setShared(false);
+        waitForIndexing();
+
+        fileTypeList.refresh();
+
+        assertFalse(fileTypeList.isShared());
+        assertFalse(fileTypeList.isIndexing());
+        assertEquals(0, fileTypeList.getNumOfFiles());
+        assertEquals(testRoot.toString(), fileTypeList.getPath());
+    }
+
+    @Test
     @DisplayName("Test breadth-first indexing order - root files come first")
     void testBreadthFirstIndexingOrder() throws InterruptedException {
         fileTypeList.setPath(testRoot.toString());

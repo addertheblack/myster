@@ -18,25 +18,31 @@ import javax.swing.JCheckBox;
 import javax.swing.JFileChooser;
 import javax.swing.JLabel;
 import javax.swing.JList;
+import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
+import javax.swing.JTextField;
 import javax.swing.SwingUtilities;
 import javax.swing.UIManager;
 import javax.swing.border.TitledBorder;
 import java.awt.Color;
+import java.awt.Desktop;
 import java.awt.Dimension;
+import java.awt.FlowLayout;
 import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
 import java.awt.Insets;
 import java.awt.event.ActionEvent;
 import java.awt.event.ItemEvent;
 import java.io.File;
+import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
 import java.util.logging.Logger;
 
 import com.formdev.flatlaf.extras.FlatSVGIcon;
+import com.general.thread.PromiseFutures;
 import com.general.util.GridBagBuilder;
 import com.general.util.IconLoader;
 import com.general.util.MessageField;
@@ -55,19 +61,20 @@ import com.myster.util.TypeChoice;
  * <p>
  * When the selected type is public (non-members can see shared files), a yellow
  * warning banner is shown below the type selector to make the sharing scope visible.
+ * The complete folder path can be copied or opened in the desktop file manager. Refresh
+ * rescans the selected type's saved folder without applying pending preferences.
  */
 
 public class FmiChooser extends PreferencesPanel {
     private static final Logger log = Logger.getLogger(PreferencesPanel.class.getName());
-	private static final int XPAD = 10;
-	private static final int MAX_PATH_LABEL_SIZE = STD_XSIZE - 100 - 3 * XPAD - 5;
-	
     private final FileTypeListManager manager;
     private final TypeChoice choice;
     private final JLabel publicWarningLabel;
     private final JCheckBox checkbox;
     private final JButton button;
-    private final JLabel pathLabel;
+    private final JTextField pathField;
+    private final JButton openFolderButton;
+    private final JButton refreshButton;
     private final JLabel folderl, filelistl;
     private final JList<String> fList;
     private final JButton setAllButton;
@@ -147,8 +154,6 @@ public class FmiChooser extends PreferencesPanel {
         });
         panel.add(checkbox,
                   innerGbc.withGridLoc(0, 0)
-                          .withSize(2, 1)
-                          .withWeight(1, 0)
                           .withAnchor(GridBagConstraints.WEST));
 
         button = new JButton("Choose Folder");
@@ -163,38 +168,63 @@ public class FmiChooser extends PreferencesPanel {
                 File selectedDirectory = fileChooser.getSelectedFile();
                 path = selectedDirectory.getAbsolutePath();
 
-                // Your existing logic after selecting the directory
-                setPathLabel(path);
-                // Assuming 'hash' and 'choice' are accessible here
+                setPathField(path);
+                updateRefreshButton(manager.getFileTypeList(choice.getType().get()).isIndexing());
                 hash.put(choice.getType().get(),
                          new SettingsStruct(choice.getType().get(), path, checkbox.isSelected()));
             } else {
                 log.info("User cancelled the action.");
             }
         });
-        panel.add(button, innerGbc.withGridLoc(2, 0).withInsets(new Insets(5, 0, 0, 5)));
+        openFolderButton = new JButton("Open Folder");
+        openFolderButton.setToolTipText("Open this folder in your desktop file manager");
+        openFolderButton.addActionListener((ActionEvent _) -> openFolder());
+        JPanel folderActions = new JPanel(new FlowLayout(FlowLayout.RIGHT, 5, 0));
+        folderActions.add(openFolderButton);
+        folderActions.add(button);
+        panel.add(folderActions,
+                  innerGbc.withGridLoc(1, 0)
+                          .withSize(2, 1)
+                          .withFill(GridBagConstraints.HORIZONTAL)
+                          .withAnchor(GridBagConstraints.EAST)
+                          .withInsets(new Insets(5, 0, 0, 0)));
 
         folderl = new JLabel("Shared Folder:");
-        panel.add(folderl, innerGbc.withGridLoc(0, 1).withInsets(new Insets(5, 5, 0, 5)));
+        pathField = new JTextField(1);
+        pathField.setEditable(false);
+        pathField.setHorizontalAlignment(JTextField.RIGHT);
+        pathField.setBorder(BorderFactory.createEmptyBorder());
+        pathField.setOpaque(false);
+        folderl.setLabelFor(pathField);
+        panel.add(folderl,
+                  innerGbc.withGridLoc(0, 1)
+                          .withAnchor(GridBagConstraints.WEST)
+                          .withInsets(new Insets(5, 5, 0, 5)));
 
-        // choice must be created first
-        pathLabel = new JLabel();
-        // textfeild.setEditable(false);
-        setPathLabel(manager.getPathFromType(choice.getType().get()));
-        panel.add(pathLabel,
+        panel.add(pathField,
                   innerGbc.withGridLoc(1, 1)
                           .withSize(2, 1)
                           .withWeight(1, 0)
-                          .withAnchor(GridBagConstraints.EAST)
+                          .withFill(GridBagConstraints.HORIZONTAL)
                           .withInsets(new Insets(5, 5, 0, 5)));
 
-        filelistl = new JLabel("Shared Files (click \"Apply\" to see changes) :");
+        filelistl = new JLabel("Shared Files (Apply to see folder changes):");
         panel.add(filelistl,
                   innerGbc.withGridLoc(0, 2)
-                          .withSize(3, 1)
+                          .withSize(2, 1)
                           .withWeight(1, 0)
                           .withAnchor(GridBagConstraints.WEST)
                           .withInsets(new Insets(5, 5, 0, 5)));
+
+        refreshButton = new JButton("Refresh");
+        refreshButton.addActionListener((ActionEvent _) -> {
+            manager.getFileTypeList(choice.getType().get()).refresh();
+            restoreState();
+        });
+        panel.add(refreshButton,
+                  innerGbc.withGridLoc(2, 2)
+                          .withAnchor(GridBagConstraints.EAST)
+                          .withInsets(new Insets(5, 0, 0, 5)));
 
         fList = new JList<>();
         fListModel = new DefaultListModel<>();
@@ -222,12 +252,43 @@ public class FmiChooser extends PreferencesPanel {
         updateWarningBanner();
     }
 
-    private void setPathLabel(String newPath) {
-        pathLabel.setText(newPath);
-        for (int i = newPath.length(); MAX_PATH_LABEL_SIZE < pathLabel.getPreferredSize().width
-                && i >= 0; i--) {
-            pathLabel.setText(trimInMiddle(newPath, i));
+    private void setPathField(String newPath) {
+        if (!newPath.equals(pathField.getText())) {
+            pathField.setText(newPath);
+            pathField.setCaretPosition(0);
         }
+        pathField.setToolTipText(newPath);
+    }
+
+    private void openFolder() {
+        File folder = new File(path);
+        openFolderButton.setEnabled(false);
+        PromiseFutures.execute(() -> {
+            if (!Desktop.isDesktopSupported()
+                    || !Desktop.getDesktop().isSupported(Desktop.Action.OPEN)) {
+                throw new IOException("Opening folders is not supported on this desktop.");
+            }
+            if (!folder.isDirectory()) {
+                throw new IOException("The folder does not exist: " + folder.getAbsolutePath());
+            }
+            Desktop.getDesktop().open(folder);
+            return null;
+        }).useEdt()
+          .addExceptionListener(error -> JOptionPane.showMessageDialog(this,
+                  "Could not open folder:\n" + error.getMessage(),
+                  "Open Folder", JOptionPane.ERROR_MESSAGE))
+          .addFinallyListener(() -> openFolderButton.setEnabled(true));
+    }
+
+    private void updateRefreshButton(boolean indexing) {
+        MysterType type = choice.getType().get();
+        boolean pendingFolder = !path.equals(manager.getPathFromType(type));
+        boolean shared = manager.isShared(type);
+        refreshButton.setEnabled(!pendingFolder && !indexing && shared);
+        refreshButton.setToolTipText(pendingFolder ? "Apply folder changes before refreshing"
+                : indexing ? "Scanning files..."
+                : !shared ? "Enable sharing and Apply before refreshing"
+                : "Rescan this folder for new or removed files");
     }
 
     public void save() {
@@ -269,12 +330,14 @@ public class FmiChooser extends PreferencesPanel {
             // form prefs.
         }
 
-        setPathLabel(path);
+        setPathField(path);
         String[] s = manager.getDirList(choice.getType().get());
         boolean isShared = manager.isShared(choice.getType().get());
+        boolean indexing = manager.getFileTypeList(choice.getType().get()).isIndexing();
+        updateRefreshButton(indexing);
 
         fListModel.removeAllElements();
-        if (manager.getFileTypeList(choice.getType().get()).isIndexing()) {
+        if (indexing) {
             fListModel.addElement("<Indexing files...>");
             pokeTimer();
             return;
@@ -349,24 +412,6 @@ public class FmiChooser extends PreferencesPanel {
             publicWarningLabel.setOpaque(false);
             publicWarningLabel.setVisible(false);
         }
-    }
-
-    /**
-     * This is a utility function that keeps strings
-     * under numberOfChars characters and removes characters from the middle and
-     * adding "..."
-     */
-    private static String trimInMiddle(String input, int numberOfChars) {
-        if (input.length() <= numberOfChars)
-            return input;
-        if (input.length() < 2)
-            return "...";
-
-        int amountToDelete = numberOfChars / 2;
-        return input.substring(0, amountToDelete)
-                + "..."
-                + input.substring(input.length() - (numberOfChars - amountToDelete) - 1, input
-                        .length());
     }
 
 }
