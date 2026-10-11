@@ -110,6 +110,19 @@ and macOS `APP_OPEN_URI` events all feed one bounded EDT dispatcher. It always o
 dialog and never redeems automatically. One modal is active at a time, with at most eight distinct
 links queued behind it.
 
+Preview failures distinguish an empty usable tracker snapshot, failure to obtain any verified
+3DNS response, exhausted routing through other verified peers, the query limit, and the overall
+deadline. TLS connection establishment and access-list retrieval failures occur after resolution
+and are reported separately from a missing bootstrap. `BootstrapLookupException` retains the
+lookup result and the original candidate failures. Other unexpected exceptions retain their
+type and cause rather than being labelled offline.
+
+The dialog's `Details…` button opens selectable text with a `Copy details` action. It includes the
+operation, bootstrap CID, lookup observations when available, and exception/cause stack traces;
+the same details go to the application log. The formatter receives no invitation URI, password,
+or invitation ID. This diagnostic path does not change the verified-peer requirement or retry
+policy.
+
 The application requires a local server identity before constructing the tracker and invitation
 UI. `TypeManagerPreferences` and `TypeEditorPanel` receive their local CID, known-server source,
 invitation manager, membership service, and join dispatcher as mandatory constructor dependencies.

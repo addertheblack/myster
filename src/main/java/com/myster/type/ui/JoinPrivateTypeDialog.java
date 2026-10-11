@@ -7,6 +7,8 @@ import javax.swing.JDialog;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.JPasswordField;
+import javax.swing.JScrollPane;
+import javax.swing.JTextArea;
 import javax.swing.JTextField;
 import javax.swing.event.DocumentEvent;
 import javax.swing.event.DocumentListener;
@@ -15,19 +17,27 @@ import java.awt.FlowLayout;
 import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
 import java.awt.Insets;
+import java.awt.Toolkit;
 import java.awt.Window;
+import java.awt.datatransfer.StringSelection;
 import java.util.Arrays;
+import java.util.logging.Logger;
 
 import com.general.thread.PromiseFuture;
 import com.general.util.AnswerDialog;
 import com.general.util.GridBagBuilder;
 import com.general.util.MessageField;
 import com.myster.access.AccessList;
+import com.myster.cid.ServerCid;
 import com.myster.type.join.TypeJoinCoordinator;
 import com.myster.type.join.TypeJoinUri;
 
-/** Confirmation dialog shared by pasted links, launch arguments, and native URI activation. */
+/**
+ * Confirmation dialog shared by pasted links, launch arguments, and native URI activation.
+ * Failures have copyable routing/exception details, also recorded in the application log.
+ */
 public final class JoinPrivateTypeDialog extends JDialog {
+    private static final Logger LOG = Logger.getLogger(JoinPrivateTypeDialog.class.getName());
     private final TypeJoinCoordinator coordinator;
     private final JTextField uriField = new JTextField(48);
     private final JButton previewButton = new JButton("Preview");
@@ -36,9 +46,11 @@ public final class JoinPrivateTypeDialog extends JDialog {
     private final JPasswordField codeField = new JPasswordField(28);
     private final JCheckBox enable = new JCheckBox("Enable this type");
     private final JButton joinButton = new JButton("Join");
+    private final JButton detailsButton = new JButton("Details…");
     private final MessageField status = new MessageField("Paste an invitation link to preview it.");
     private TypeJoinCoordinator.Preview preview;
     private PromiseFuture<?> activeOperation;
+    private String failureDetails;
 
     public JoinPrivateTypeDialog(Window owner, TypeJoinCoordinator coordinator, String initialUri) {
         super(owner, "Join Private Network", ModalityType.APPLICATION_MODAL);
@@ -47,6 +59,7 @@ public final class JoinPrivateTypeDialog extends JDialog {
         uriField.setText(initialUri == null ? "" : initialUri);
         enable.setSelected(coordinator.defaultEnabled());
         joinButton.setEnabled(false);
+        detailsButton.setEnabled(false);
         buildUi();
         if (!uriField.getText().isBlank()) {
             preview();
@@ -79,11 +92,13 @@ public final class JoinPrivateTypeDialog extends JDialog {
         previewButton.addActionListener(event -> preview());
         joinButton.addActionListener(event -> join());
         cancel.addActionListener(event -> dispose());
+        detailsButton.addActionListener(event -> showDetails());
         codeField.getDocument().addDocumentListener(new DocumentListener() {
             public void insertUpdate(DocumentEvent event) { updateJoinEnabled(); }
             public void removeUpdate(DocumentEvent event) { updateJoinEnabled(); }
             public void changedUpdate(DocumentEvent event) { updateJoinEnabled(); }
         });
+        buttons.add(detailsButton);
         buttons.add(joinButton);
         buttons.add(cancel);
 
@@ -106,6 +121,7 @@ public final class JoinPrivateTypeDialog extends JDialog {
             return;
         }
         preview = null;
+        clearFailureDetails();
         joinButton.setEnabled(false);
         previewButton.setEnabled(false);
 
@@ -128,7 +144,7 @@ public final class JoinPrivateTypeDialog extends JDialog {
                     getRootPane().setDefaultButton(joinButton);
                  }).addExceptionListener( (Throwable exception) -> {
                     previewButton.setEnabled(true);
-                    status.sayError(friendlyMessage(exception));
+                    showFailure("preview", uri.bootstrap(), exception);
                  });
     }
 
@@ -145,6 +161,7 @@ public final class JoinPrivateTypeDialog extends JDialog {
         Arrays.fill(password, '\0');
         joinButton.setEnabled(false);
         previewButton.setEnabled(false);
+        clearFailureDetails();
         status.say("Redeeming invitation and verifying membership…");
         PromiseFuture<AccessList> operation = coordinator.redeem(preview, code, enable.isSelected());
         activeOperation = operation;
@@ -157,15 +174,41 @@ public final class JoinPrivateTypeDialog extends JDialog {
                  }).addExceptionListener((Throwable exception) -> {
                     joinButton.setEnabled(true);
                     previewButton.setEnabled(true);
-                    status.sayError(friendlyMessage(exception));
+                    showFailure("join", preview.uri().bootstrap(), exception);
                  });
     }
 
-    private static String friendlyMessage(Throwable exception) {
-        if (exception instanceof TypeJoinCoordinator.JoinException joinException) {
-            return joinException.getMessage();
-        }
-        return "The operation could not be completed.";
+    private void showFailure(String operation, ServerCid bootstrap, Throwable failure) {
+        failureDetails = TypeJoinDiagnosticsUtils.details(operation, bootstrap, failure);
+        LOG.warning(failureDetails);
+        detailsButton.setEnabled(true);
+        status.sayError(TypeJoinDiagnosticsUtils.message(failure));
+    }
+
+    private void clearFailureDetails() {
+        failureDetails = null;
+        detailsButton.setEnabled(false);
+    }
+
+    private void showDetails() {
+        JDialog dialog = new JDialog(this, "Invitation Failure Details", ModalityType.APPLICATION_MODAL);
+        dialog.setDefaultCloseOperation(DISPOSE_ON_CLOSE);
+        JTextArea text = new JTextArea(failureDetails, 18, 80);
+        text.setEditable(false);
+        text.setCaretPosition(0);
+        dialog.add(new JScrollPane(text), BorderLayout.CENTER);
+        JPanel buttons = new JPanel(new FlowLayout(FlowLayout.RIGHT));
+        JButton copy = new JButton("Copy details");
+        copy.addActionListener(event -> Toolkit.getDefaultToolkit().getSystemClipboard()
+                .setContents(new StringSelection(text.getText()), null));
+        JButton close = new JButton("Close");
+        close.addActionListener(event -> dialog.dispose());
+        buttons.add(copy);
+        buttons.add(close);
+        dialog.add(buttons, BorderLayout.SOUTH);
+        dialog.pack();
+        dialog.setLocationRelativeTo(this);
+        dialog.setVisible(true);
     }
 
     private void updateJoinEnabled() {

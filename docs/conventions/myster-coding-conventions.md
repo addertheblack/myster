@@ -577,6 +577,18 @@ try {
 
 Use a more specific subtype only when callers need to branch on that distinction.
 
+### Exception subclasses preserve failure distinctions
+
+Create a specific checked exception subclass when callers or diagnostics need to distinguish
+failure reasons. For example: subclass `BadPacketException` for distinct malformed-packets rather than flattening them into a generic packet error or inspecting
+message strings. Preserve an existing subtype when forwarding it through an asynchronous API.
+When translating an exception, retain the original exception as the cause, including its stack
+trace; do not construct a replacement from only `getMessage()`.
+
+Expected I/O failures may allow another routing candidate to be tried. Unexpected exceptions
+already delivered by a child future must propagate to the enclosing future, keeping their
+original type and cause, rather than becoming an ordinary no-route/offline result.
+
 ---
 
 ## Invoker-Confined Asynchronous State

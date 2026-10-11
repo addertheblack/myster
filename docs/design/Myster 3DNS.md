@@ -133,6 +133,17 @@ Per-lookup state is actor-confined to the 3DNS lookup invoker. `AsyncTaskTracker
 
 `ThreeDnsLookupResult` distinguishes verified exact success, verified closest exhaustion, no route, query-limit exhaustion, and deadline exhaustion. Limit and deadline results may preserve the closest verified peer. Cancellation remains cancellation of the returned `PromiseFuture`. Unexpected runtime failures inside the lookup implementation are programmer errors and propagate through the executing framework thread rather than being converted into failed lookup promises.
 
+Each terminal lookup result also retains a bounded `ThreeDnsLookupDiagnostics` snapshot: the
+initial usable tracker candidates, every launched candidate's CID/address and observed outcome,
+the original expected I/O failure for each failed query, and elapsed time. In-flight observations
+mean no response had completed when the result was chosen. An absent exact seed means the tracker
+snapshot had no usable exact candidate; it does not establish that the identity was unknown.
+Timeouts mean no authenticated response was received, not proof of an offline server or wrong key.
+An unexpected exception already delivered by a peer future is forwarded unchanged to the parent
+future and cancels outstanding work, rather than being absorbed as an ordinary routing failure.
+Datagram response decoding preserves `BadPacketException` subtypes, including
+`DatagramEncryptUtil.DecryptionException`, and retains the cause when translating other I/O errors.
+
 ## 9. Routing Table Maintenance
 
 Routing table maintenance is driven by usage and periodic refresh.

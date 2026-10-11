@@ -1,6 +1,10 @@
 package com.myster.threedns;
 
+import java.io.IOException;
 import java.time.Duration;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.concurrent.ScheduledThreadPoolExecutor;
@@ -14,6 +18,8 @@ import com.myster.cid.ServerCid;
 import com.myster.net.client.DnsLookupProtocol;
 import com.myster.net.client.MysterDatagram;
 import com.myster.tracker.Tracker;
+import com.myster.threedns.ThreeDnsLookupDiagnostics.Outcome;
+import com.myster.threedns.ThreeDnsLookupDiagnostics.QueryAttempt;
 
 /**
  * Resolves a server CID through bounded, identity-verifying 3DNS traversal.
@@ -77,7 +83,8 @@ public final class ThreeDnsLookup implements DnsLookupProtocol {
 
     /**
      * Starts one lookup using a single target-specific Tracker snapshot.
-     * Candidate failures are absorbed while another eligible route remains.
+     * Expected I/O failures are recorded while another eligible route remains. Unexpected
+     * failures delivered by peer futures propagate unchanged through the returned future.
      *
      * @param target server CID to resolve
      * @return cancellable future containing an exact or bounded terminal result
@@ -136,11 +143,13 @@ public final class ThreeDnsLookup implements DnsLookupProtocol {
         private final ServerCid target;
         private final ThreeDnsLookupFrontier frontier;
         private final AsyncTaskTracker<ThreeDnsLookupResult> taskTracker;
+        private final long startedAt = System.nanoTime();
+        private final Map<ThreeDnsAddressCandidate, QueryAttempt> attempts = new LinkedHashMap<>();
+        private ThreeDnsAddressCandidateSet seeds; // pseudo constant
 
         private Cancellable deadlineTask;
         private VerifiedThreeDnsPeer closestVerified;
         private int activeQueries;
-        private int queryAttempts;
         private boolean finished;
 
         private LookupState(ServerCid target,
@@ -154,8 +163,7 @@ public final class ThreeDnsLookup implements DnsLookupProtocol {
 
         private void start() {
             taskTracker.setDoneListener(_ -> tasksDrained());
-            ThreeDnsAddressCandidateSet seeds =
-                    seedProvider.candidatesFor(target, limits.perSideLimit());
+            seeds = seedProvider.candidatesFor(target, limits.perSideLimit());
             frontier.addAll(Objects.requireNonNull(seeds, "seed provider result"));
             if (frontier.queuedCount() == 0) {
                 finishResult(ThreeDnsLookupResult.exhausted(target, Optional.empty()));
@@ -172,6 +180,7 @@ public final class ThreeDnsLookup implements DnsLookupProtocol {
                                     ThreeDnsVerifiedQueryResult result) {
             requireMatchingResponder(candidate, result.responder());
             frontier.markVerified(candidate);
+            attempts.put(candidate, new QueryAttempt(candidate, Outcome.VERIFIED, Optional.empty()));
             VerifiedThreeDnsPeer responder = result.responder();
             if (responder.cid().equals(target)) {
                 finishResult(ThreeDnsLookupResult.exact(target, responder));
@@ -185,8 +194,14 @@ public final class ThreeDnsLookup implements DnsLookupProtocol {
             frontier.addAll(result.candidates());
         }
 
-        private void queryFailed(ThreeDnsAddressCandidate candidate) {
+        private void queryFailed(ThreeDnsAddressCandidate candidate, Throwable failure) {
+            if (!(failure instanceof IOException ioFailure)) {
+                finished = true;
+                taskTracker.setException(failure);
+                return;
+            }
             frontier.markFailed(candidate);
+            attempts.put(candidate, new QueryAttempt(candidate, Outcome.FAILED, Optional.of(ioFailure)));
         }
 
         private void queryFinished() {
@@ -224,7 +239,7 @@ public final class ThreeDnsLookup implements DnsLookupProtocol {
                     && !taskTracker.isCancelled()
                     && !taskTracker.isCancelled()
                     && activeQueries < limits.maxInFlight()
-                    && queryAttempts < limits.maxQueryAttempts()) {
+                    && attempts.size() < limits.maxQueryAttempts()) {
                 Optional<ThreeDnsAddressCandidate> next = frontier.pollEligible(closestCid);
                 if (next.isEmpty()) {
                     break;
@@ -237,12 +252,12 @@ public final class ThreeDnsLookup implements DnsLookupProtocol {
         private void launch(ThreeDnsAddressCandidate candidate) {
             frontier.markLaunched(candidate);
             activeQueries++;
-            queryAttempts++;
+            attempts.put(candidate, new QueryAttempt(candidate, Outcome.IN_FLIGHT, Optional.empty()));
             taskTracker.doAsync(() -> Objects.requireNonNull(
                     peerQuery.findClosest(candidate, target, limits.perSideLimit()),
                     "peer query result"))
                     .addResultListener(result -> querySucceeded(candidate, result))
-                    .addExceptionListener(_ -> queryFailed(candidate))
+                    .addExceptionListener(failure -> queryFailed(candidate, failure))
                     .addFinallyListener(this::queryFinished);
         }
 
@@ -252,7 +267,7 @@ public final class ThreeDnsLookup implements DnsLookupProtocol {
             }
             Optional<ServerCid> closestCid = Optional.ofNullable(closestVerified)
                     .map(VerifiedThreeDnsPeer::cid);
-            if (queryAttempts >= limits.maxQueryAttempts()
+            if (attempts.size() >= limits.maxQueryAttempts()
                     && frontier.hasEligible(closestCid)) {
                 finishResult(ThreeDnsLookupResult.bounded(
                         ThreeDnsLookupResult.Status.QUERY_LIMIT_REACHED,
@@ -270,7 +285,8 @@ public final class ThreeDnsLookup implements DnsLookupProtocol {
                 return;
             }
             finished = true;
-            taskTracker.setResult(result);
+            taskTracker.setResult(result.withDiagnostics(new ThreeDnsLookupDiagnostics(
+                    seeds, List.copyOf(attempts.values()), Duration.ofNanos(System.nanoTime() - startedAt))));
         }
 
 

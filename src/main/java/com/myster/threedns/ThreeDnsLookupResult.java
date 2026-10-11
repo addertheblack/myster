@@ -11,7 +11,9 @@ import com.myster.net.MysterAddress;
  *
  * <p>Only {@link Status#EXACT_VERIFIED} exposes an exact peer or exact address.
  * Limit and deadline results may retain the closest verified peer reached
- * before the bound ended the lookup.
+ * before the bound ended the lookup. Diagnostics retain the initial tracker snapshot, per-query
+ * outcomes and expected I/O causes; unexpected peer-future failures are exceptional completion,
+ * not ordinary lookup statuses.
  */
 public final class ThreeDnsLookupResult {
     public enum Status {
@@ -26,15 +28,25 @@ public final class ThreeDnsLookupResult {
     private final ServerCid target;
     private final Optional<VerifiedThreeDnsPeer> exactPeer;
     private final Optional<VerifiedThreeDnsPeer> closestPeer;
+    private final ThreeDnsLookupDiagnostics diagnostics;
 
     private ThreeDnsLookupResult(Status status,
                                  ServerCid target,
                                  Optional<VerifiedThreeDnsPeer> exactPeer,
                                  Optional<VerifiedThreeDnsPeer> closestPeer) {
+        this(status, target, exactPeer, closestPeer, ThreeDnsLookupDiagnostics.empty());
+    }
+
+    private ThreeDnsLookupResult(Status status,
+                                 ServerCid target,
+                                 Optional<VerifiedThreeDnsPeer> exactPeer,
+                                 Optional<VerifiedThreeDnsPeer> closestPeer,
+                                 ThreeDnsLookupDiagnostics diagnostics) {
         this.status = Objects.requireNonNull(status, "status");
         this.target = Objects.requireNonNull(target, "target");
         this.exactPeer = Objects.requireNonNull(exactPeer, "exactPeer");
         this.closestPeer = Objects.requireNonNull(closestPeer, "closestPeer");
+        this.diagnostics = Objects.requireNonNull(diagnostics, "diagnostics");
         validate();
     }
 
@@ -83,6 +95,15 @@ public final class ThreeDnsLookupResult {
 
     public ServerCid target() {
         return target;
+    }
+
+    /** @return the tracker snapshot, query observations and elapsed time for this lookup */
+    public ThreeDnsLookupDiagnostics diagnostics() {
+        return diagnostics;
+    }
+
+    ThreeDnsLookupResult withDiagnostics(ThreeDnsLookupDiagnostics diagnostics) {
+        return new ThreeDnsLookupResult(status, target, exactPeer, closestPeer, diagnostics);
     }
 
     /** @return the target peer only after an authenticated exact response */

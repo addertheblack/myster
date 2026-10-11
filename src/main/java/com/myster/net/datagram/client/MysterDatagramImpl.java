@@ -211,8 +211,10 @@ public class MysterDatagramImpl implements MysterDatagram {
 
                         try {
                             context.setResult(impl.getObjectFromTransaction(e.getTransaction()));
+                        } catch (BadPacketException ex) {
+                            context.setException(ex);
                         } catch (IOException ex) {
-                            context.setException(new BadPacketException(ex.getMessage()));
+                            context.setException(new BadPacketException(ex.getMessage(), ex));
                         }
                     }
 

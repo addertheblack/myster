@@ -12,6 +12,7 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import java.net.InetAddress;
+import java.io.IOException;
 import java.security.KeyPair;
 import java.security.KeyPairGenerator;
 import java.util.List;
@@ -22,6 +23,9 @@ import java.util.concurrent.TimeUnit;
 
 import com.myster.type.MetadataTypeId;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.EnumSource;
+import org.junit.jupiter.params.provider.ValueSource;
 import org.mockito.ArgumentCaptor;
 
 import com.general.thread.PromiseFuture;
@@ -37,11 +41,100 @@ import com.myster.net.client.DnsLookupProtocol;
 import com.myster.net.client.MysterStream;
 import com.myster.net.client.ParamBuilder;
 import com.myster.threedns.ThreeDnsLookupResult;
+import com.myster.threedns.ThreeDnsLookupDiagnostics;
+import com.myster.threedns.ThreeDnsAddressCandidateSet;
 import com.myster.threedns.VerifiedThreeDnsPeer;
 import com.myster.tracker.PublicKeyIdentity;
 import com.myster.type.TypeDescriptionList;
 
 class TestTypeJoinCoordinator {
+    @ParameterizedTest
+    @EnumSource(value = ThreeDnsLookupResult.Status.class, names = "EXACT_VERIFIED", mode = EnumSource.Mode.EXCLUDE)
+    void nonExactPreviewRetainsSpecificLookupOutcome(ThreeDnsLookupResult.Status status) throws Exception {
+        var accessList = accessList(Optional.empty(), Policy.defaultRestrictive());
+        var uri = TypeJoinUri.create(accessList.getMysterType(), newServerCid(), new byte[16]);
+        var result = mock(ThreeDnsLookupResult.class);
+        when(result.status()).thenReturn(status);
+        when(result.diagnostics()).thenReturn(new ThreeDnsLookupDiagnostics(
+                ThreeDnsAddressCandidateSet.empty(), List.of(), java.time.Duration.ZERO));
+        var lookup = mock(DnsLookupProtocol.class);
+        when(lookup.resolve(uri.bootstrap())).thenReturn(PromiseFuture.newPromiseFuture(result));
+        var stream = mock(MysterStream.class);
+        var coordinator = new TypeJoinCoordinator(lookup, mock(TypeDescriptionList.class),
+                newServerCid(), new MapPreferences(), stream);
+
+        var failure = assertThrows(ExecutionException.class, () -> coordinator.prepare(uri).get(3, TimeUnit.SECONDS));
+
+        var lookupFailure = org.junit.jupiter.api.Assertions.assertInstanceOf(
+                TypeJoinCoordinator.BootstrapLookupException.class, failure.getCause());
+        assertSame(result, lookupFailure.result());
+        String expected = switch (status) {
+            case NO_ROUTE -> "no usable tracker candidates";
+            case CLOSEST_VERIFIED -> "exhausted routing";
+            case QUERY_LIMIT_REACHED -> "query limit";
+            case DEADLINE_REACHED -> "overall deadline";
+            case EXACT_VERIFIED -> throw new AssertionError();
+        };
+        assertTrue(lookupFailure.getMessage().contains(expected));
+        verify(stream, never()).makeStreamConnection(any(ParamBuilder.class));
+    }
+
+    @ParameterizedTest
+    @ValueSource(booleans = {false, true})
+    void resolvedBootstrapIoFailureIdentifiesTlsOrAccessListPhase(boolean connectionOpened) throws Exception {
+        var accessList = accessList(Optional.empty(), Policy.defaultRestrictive());
+        var uri = TypeJoinUri.create(accessList.getMysterType(), newServerCid(), new byte[16]);
+        var stream = mock(MysterStream.class);
+        var socket = mock(MysterSocket.class);
+        IOException cause = new IOException("transport failure");
+        if (connectionOpened) {
+            when(stream.makeStreamConnection(any(ParamBuilder.class))).thenReturn(socket);
+            when(stream.getAccessList(socket, uri.type())).thenThrow(cause);
+        } else {
+            when(stream.makeStreamConnection(any(ParamBuilder.class))).thenThrow(cause);
+        }
+        var coordinator = coordinatorWithExactLookup(uri, stream);
+
+        var failure = assertThrows(ExecutionException.class, () -> coordinator.prepare(uri).get(3, TimeUnit.SECONDS));
+
+        var joinFailure = org.junit.jupiter.api.Assertions.assertInstanceOf(
+                TypeJoinCoordinator.JoinException.class, failure.getCause());
+        assertEquals(TypeJoinCoordinator.Failure.CONNECTION_FAILED, joinFailure.failure());
+        assertSame(cause, joinFailure.getCause());
+        assertTrue(joinFailure.getMessage().contains(connectionOpened ? "access list" : "TLS connection"));
+        if (connectionOpened) {
+            verify(socket).close();
+        }
+    }
+
+    @Test
+    void runtimeFailureInTlsWorkerIsNotWrappedAsBootstrapMissing() throws Exception {
+        var accessList = accessList(Optional.empty(), Policy.defaultRestrictive());
+        var uri = TypeJoinUri.create(accessList.getMysterType(), newServerCid(), new byte[16]);
+        var stream = mock(MysterStream.class);
+        var bug = new IllegalStateException("TLS worker bug");
+        when(stream.makeStreamConnection(any(ParamBuilder.class))).thenThrow(bug);
+
+        var failure = assertThrows(ExecutionException.class,
+                () -> coordinatorWithExactLookup(uri, stream).prepare(uri).get(3, TimeUnit.SECONDS));
+
+        assertSame(bug, failure.getCause());
+    }
+
+    private static TypeJoinCoordinator coordinatorWithExactLookup(TypeJoinUri uri, MysterStream stream)
+            throws Exception {
+        var peer = mock(VerifiedThreeDnsPeer.class);
+        when(peer.address()).thenReturn(new MysterAddress(InetAddress.getLoopbackAddress()));
+        when(peer.identity()).thenReturn(new PublicKeyIdentity(KeyPairGenerator.getInstance("RSA").generateKeyPair().getPublic()));
+        var result = mock(ThreeDnsLookupResult.class);
+        when(result.status()).thenReturn(ThreeDnsLookupResult.Status.EXACT_VERIFIED);
+        when(result.exactPeer()).thenReturn(Optional.of(peer));
+        var lookup = mock(DnsLookupProtocol.class);
+        when(lookup.resolve(uri.bootstrap())).thenReturn(PromiseFuture.newPromiseFuture(result));
+        return new TypeJoinCoordinator(lookup, mock(TypeDescriptionList.class), newServerCid(),
+                new MapPreferences(), stream);
+    }
+
     @Test
     void previewRequiresExactPeerPinsItsKeyAndDoesNotImport() throws Exception {
         AccessList accessList = accessList(Optional.empty(), Policy.defaultRestrictive());

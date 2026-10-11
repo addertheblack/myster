@@ -7,12 +7,20 @@
     <option name="selectedModelId" value="auto" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="fe0d93f5-a1b5-4669-89e3-19e762d0ae4a" name="Changes" comment="Add Maven plugin for runtime module detection and update README with packaging details">
+    <list default="true" id="fe0d93f5-a1b5-4669-89e3-19e762d0ae4a" name="Changes" comment="Implement folder actions in File Manager: add refresh functionality, open folder option, and enhance path display">
       <change beforePath="$PROJECT_DIR$/Myster.iws" beforeDir="false" afterPath="$PROJECT_DIR$/Myster.iws" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/TODO.txt" beforeDir="false" afterPath="$PROJECT_DIR$/TODO.txt" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/com/myster/filemanager/FileTypeList.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/com/myster/filemanager/FileTypeList.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/com/myster/filemanager/ui/FmiChooser.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/com/myster/filemanager/ui/FmiChooser.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/test/java/com/myster/filemanager/TestFileTypeList.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/test/java/com/myster/filemanager/TestFileTypeList.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/docs/conventions/myster-coding-conventions.md" beforeDir="false" afterPath="$PROJECT_DIR$/docs/conventions/myster-coding-conventions.md" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/docs/design/Myster 3DNS.md" beforeDir="false" afterPath="$PROJECT_DIR$/docs/design/Myster 3DNS.md" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/docs/design/Private Type Invitations.md" beforeDir="false" afterPath="$PROJECT_DIR$/docs/design/Private Type Invitations.md" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/com/myster/net/datagram/BadPacketException.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/com/myster/net/datagram/BadPacketException.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/com/myster/net/datagram/DatagramEncryptUtil.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/com/myster/net/datagram/DatagramEncryptUtil.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/com/myster/net/datagram/client/MysterDatagramImpl.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/com/myster/net/datagram/client/MysterDatagramImpl.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/com/myster/threedns/ThreeDnsLookup.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/com/myster/threedns/ThreeDnsLookup.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/com/myster/threedns/ThreeDnsLookupResult.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/com/myster/threedns/ThreeDnsLookupResult.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/com/myster/type/join/TypeJoinCoordinator.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/com/myster/type/join/TypeJoinCoordinator.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/com/myster/type/ui/JoinPrivateTypeDialog.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/com/myster/type/ui/JoinPrivateTypeDialog.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/test/java/com/myster/threedns/TestThreeDnsLookup.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/test/java/com/myster/threedns/TestThreeDnsLookup.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/test/java/com/myster/type/join/TestTypeJoinCoordinator.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/test/java/com/myster/type/join/TestTypeJoinCoordinator.java" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -243,23 +251,23 @@
   </component>
   <component name="NextEditCompletionFeaturesState">
     <decayedCancelled>
-      <entry key="MS100" value="1.1519792478639577" />
-      <entry key="MS500" value="4.711860466946817" />
-      <entry key="S2" value="17.09969177455685" />
-      <entry key="S5" value="32.33851132620833" />
-      <entry key="S10" value="43.799800723893306" />
-      <entry key="S30" value="55.8323511036505" />
-      <entry key="S60" value="63.37877302166443" />
-      <entry key="M2" value="89.38701244745339" />
-      <entry key="M5" value="202.71772237332996" />
-      <entry key="M10" value="352.8790499173393" />
-      <entry key="M15" value="454.5800673890246" />
-      <entry key="M30" value="624.8710094587732" />
-      <entry key="H1" value="784.7307015937201" />
-      <entry key="H2" value="982.9184416002059" />
-      <entry key="H4" value="1243.1262604322076" />
-      <entry key="D1" value="3391.8336767088063" />
-      <entry key="W1" value="11769.855986911638" />
+      <entry key="MS100" value="1.0" />
+      <entry key="MS500" value="1.000000000501986" />
+      <entry key="S2" value="1.0084446338472846" />
+      <entry key="S5" value="1.279424291026943" />
+      <entry key="S10" value="1.9119583287766684" />
+      <entry key="S30" value="3.015423272125318" />
+      <entry key="S60" value="3.4586560496282375" />
+      <entry key="M2" value="3.71580178951053" />
+      <entry key="M5" value="3.882897758030529" />
+      <entry key="M10" value="3.9416530099381193" />
+      <entry key="M15" value="4.041784394680928" />
+      <entry key="M30" value="12.468642554930966" />
+      <entry key="H1" value="91.1504547138885" />
+      <entry key="H2" value="284.82815519979306" />
+      <entry key="H4" value="548.2472755121863" />
+      <entry key="D1" value="2756.2303632217327" />
+      <entry key="W1" value="11754.560321991145" />
     </decayedCancelled>
     <decayedSelected>
       <entry key="MS100" value="0.0" />
@@ -270,34 +278,34 @@
       <entry key="S30" value="0.0" />
       <entry key="S60" value="0.0" />
       <entry key="M2" value="0.0" />
-      <entry key="M5" value="1.625051130129769E-305" />
-      <entry key="M10" value="5.700962363390736E-153" />
-      <entry key="M15" value="4.020765138945127E-102" />
-      <entry key="M30" value="2.835758960690268E-51" />
-      <entry key="H1" value="7.530947932005432E-26" />
-      <entry key="H2" value="3.880965820707745E-13" />
-      <entry key="H4" value="8.810226848676756E-7" />
-      <entry key="D1" value="0.20239947287550847" />
-      <entry key="W1" value="7.180524384281283" />
+      <entry key="M5" value="0.0" />
+      <entry key="M10" value="5.427572648314174E-188" />
+      <entry key="M15" value="1.8061217393771953E-125" />
+      <entry key="M30" value="6.010193717537177E-63" />
+      <entry key="H1" value="1.0963752511735135E-31" />
+      <entry key="H2" value="4.682681367217527E-16" />
+      <entry key="H4" value="3.0603034054114404E-8" />
+      <entry key="D1" value="0.11561271751534072" />
+      <entry key="W1" value="6.6284619254076205" />
     </decayedSelected>
     <decayedShown>
-      <entry key="MS100" value="1.1361625166307279" />
-      <entry key="MS500" value="4.698508431215777" />
-      <entry key="S2" value="17.08689925840936" />
-      <entry key="S5" value="32.32880001121694" />
-      <entry key="S10" value="43.79323271965791" />
-      <entry key="S30" value="55.829564659762276" />
-      <entry key="S60" value="63.377193632253245" />
-      <entry key="M2" value="89.38589477569612" />
-      <entry key="M5" value="202.71668038596852" />
-      <entry key="M10" value="352.87810932072705" />
-      <entry key="M15" value="454.57924014374856" />
-      <entry key="M30" value="624.8704180027981" />
-      <entry key="H1" value="784.7303162188429" />
-      <entry key="H2" value="982.9181885207894" />
-      <entry key="H4" value="1243.1260930861138" />
-      <entry key="D1" value="3392.035982363695" />
-      <entry key="W1" value="11777.03643596748" />
+      <entry key="MS100" value="0.9201876506248751" />
+      <entry key="MS500" value="0.9835020745218779" />
+      <entry key="S2" value="1.0042620285114168" />
+      <entry key="S5" value="1.2773043772639814" />
+      <entry key="S10" value="1.9103635188491757" />
+      <entry key="S30" value="3.0145756994716235" />
+      <entry key="S60" value="3.4581683266439622" />
+      <entry key="M2" value="3.7155393360755156" />
+      <entry key="M5" value="3.8827879378439665" />
+      <entry key="M10" value="3.941597253767771" />
+      <entry key="M15" value="4.041746614354677" />
+      <entry key="M30" value="12.468601783786958" />
+      <entry key="H1" value="91.15033261998902" />
+      <entry key="H2" value="284.82796955284607" />
+      <entry key="H4" value="548.2471055632311" />
+      <entry key="D1" value="2756.345878120406" />
+      <entry key="W1" value="11761.18870751698" />
     </decayedShown>
   </component>
   <component name="PerforceConfiguration">
@@ -370,6 +378,7 @@
     "JUnit.TestFileTypeList.executor": "Debug",
     "JUnit.TestFileTypeList.testChangingPathTriggersReindexing.executor": "Debug",
     "JUnit.TestFileTypeList.testMaximumDepthIndexing.executor": "Debug",
+    "JUnit.TestThreeDnsLookup.failedCandidateFallsBackAndClosestExhaustionIsExplicit.executor": "Debug",
     "KEY_CHAT_IN_TOOLWINDOW": "false",
     "Maven.Myster [package].executor": "Run",
     "ModuleVcsDetector.initialDetectionPerformed": "true",
@@ -421,26 +430,6 @@
     </configuration>
     <configuration default="true" type="Application" factoryName="Application">
       <option name="WORKING_DIRECTORY" value="$PROJECT_DIR$" />
-      <method v="2">
-        <option name="Make" enabled="true" />
-      </method>
-    </configuration>
-    <configuration name="TestFileStatsBatch" type="JUnit" factoryName="JUnit" temporary="true" nameIsGenerated="true">
-      <module name="Myster" />
-      <extension name="coverage">
-        <pattern>
-          <option name="PATTERN" value="com.myster.net.stream.client.*" />
-          <option name="ENABLED" value="true" />
-        </pattern>
-      </extension>
-      <option name="PACKAGE_NAME" value="com.myster.net.stream.client" />
-      <option name="MAIN_CLASS_NAME" value="com.myster.net.stream.client.TestFileStatsBatch" />
-      <option name="TEST_OBJECT" value="class" />
-      <option name="VM_PARAMETERS" />
-      <option name="WORKING_DIRECTORY" value="$PROJECT_DIR$" />
-      <option name="TEST_SEARCH_SCOPE">
-        <value defaultName="wholeProject" />
-      </option>
       <method v="2">
         <option name="Make" enabled="true" />
       </method>
@@ -507,6 +496,27 @@
         <option name="Make" enabled="true" />
       </method>
     </configuration>
+    <configuration name="TestThreeDnsLookup.failedCandidateFallsBackAndClosestExhaustionIsExplicit" type="JUnit" factoryName="JUnit" temporary="true" nameIsGenerated="true">
+      <module name="Myster" />
+      <extension name="coverage">
+        <pattern>
+          <option name="PATTERN" value="com.myster.threedns.*" />
+          <option name="ENABLED" value="true" />
+        </pattern>
+      </extension>
+      <option name="PACKAGE_NAME" value="com.myster.threedns" />
+      <option name="MAIN_CLASS_NAME" value="com.myster.threedns.TestThreeDnsLookup" />
+      <option name="METHOD_NAME" value="failedCandidateFallsBackAndClosestExhaustionIsExplicit" />
+      <option name="TEST_OBJECT" value="method" />
+      <option name="VM_PARAMETERS" />
+      <option name="WORKING_DIRECTORY" value="$PROJECT_DIR$" />
+      <option name="TEST_SEARCH_SCOPE">
+        <value defaultName="wholeProject" />
+      </option>
+      <method v="2">
+        <option name="Make" enabled="true" />
+      </method>
+    </configuration>
     <configuration default="true" type="JUnit" factoryName="JUnit">
       <option name="TEST_OBJECT" value="class" />
       <option name="VM_PARAMETERS" />
@@ -553,7 +563,7 @@
     <list>
       <item itemvalue="Application.Myster" />
       <item itemvalue="Application.MysterServerPoolStressMain" />
-      <item itemvalue="JUnit.TestFileStatsBatch" />
+      <item itemvalue="JUnit.TestThreeDnsLookup.failedCandidateFallsBackAndClosestExhaustionIsExplicit" />
       <item itemvalue="JUnit.TestFileTypeList" />
       <item itemvalue="JUnit.TestFileTypeList.testChangingPathTriggersReindexing" />
       <item itemvalue="JUnit.TestFileTypeList.testMaximumDepthIndexing" />
@@ -561,11 +571,11 @@
     </list>
     <recent_temporary>
       <list>
+        <item itemvalue="JUnit.TestThreeDnsLookup.failedCandidateFallsBackAndClosestExhaustionIsExplicit" />
         <item itemvalue="JUnit.TestFileTypeList.testMaximumDepthIndexing" />
         <item itemvalue="Application.MysterServerPoolStressMain" />
         <item itemvalue="JUnit.TestFileTypeList.testChangingPathTriggersReindexing" />
         <item itemvalue="JUnit.TestFileTypeList" />
-        <item itemvalue="JUnit.TestFileStatsBatch" />
       </list>
     </recent_temporary>
   </component>
@@ -766,7 +776,15 @@
       <option name="project" value="LOCAL" />
       <updated>1791666643606</updated>
     </task>
-    <option name="localTasksCounter" value="20" />
+    <task id="LOCAL-00020" summary="Implement folder actions in File Manager: add refresh functionality, open folder option, and enhance path display">
+      <option name="closed" value="true" />
+      <created>1791679157606</created>
+      <option name="number" value="00020" />
+      <option name="presentableId" value="LOCAL-00020" />
+      <option name="project" value="LOCAL" />
+      <updated>1791679157606</updated>
+    </task>
+    <option name="localTasksCounter" value="21" />
     <servers />
   </component>
   <component name="TodoView" selected-index="0">
@@ -828,7 +846,8 @@
     <MESSAGE value="Update logging configuration to enable AsyncDatagramSocket logging and disable ConnectionRunnable logging" />
     <MESSAGE value="Update logging configuration to disable AsyncDatagramSocket logging" />
     <MESSAGE value="Add Maven plugin for runtime module detection and update README with packaging details" />
-    <option name="LAST_COMMIT_MESSAGE" value="Add Maven plugin for runtime module detection and update README with packaging details" />
+    <MESSAGE value="Implement folder actions in File Manager: add refresh functionality, open folder option, and enhance path display" />
+    <option name="LAST_COMMIT_MESSAGE" value="Implement folder actions in File Manager: add refresh functionality, open folder option, and enhance path display" />
   </component>
   <component name="VssConfiguration">
     <CheckoutOptions>

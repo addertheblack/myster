@@ -47,7 +47,7 @@ public final class TypeJoinCoordinator {
     }
 
     /** Checked failure category translated to friendly text by the Swing boundary. */
-    public static final class JoinException extends IOException {
+    public static class JoinException extends IOException {
         private final Failure failure;
 
         JoinException(Failure failure, String message) {
@@ -55,7 +55,7 @@ public final class TypeJoinCoordinator {
             this.failure = failure;
         }
 
-        JoinException(Failure failure, String message, IOException cause) {
+        JoinException(Failure failure, String message, Throwable cause) {
             super(message, cause);
             this.failure = failure;
         }
@@ -63,6 +63,37 @@ public final class TypeJoinCoordinator {
         public Failure failure() {
             return failure;
         }
+    }
+
+    /** A non-exact lookup, retaining routing observations and every expected query failure. */
+    public static final class BootstrapLookupException extends JoinException {
+        private final ThreeDnsLookupResult result;
+
+        private BootstrapLookupException(ThreeDnsLookupResult result) {
+            super(Failure.BOOTSTRAP_NOT_FOUND, lookupFailureMessage(result));
+            this.result = result;
+            for (var attempt : result.diagnostics().attempts()) {
+                attempt.failure().ifPresent(failure -> addSuppressed(new IOException(
+                        "3DNS query to " + attempt.candidate().cid() + " at "
+                                + attempt.candidate().address() + " failed", failure)));
+            }
+        }
+
+        public ThreeDnsLookupResult result() {
+            return result;
+        }
+    }
+
+    private static String lookupFailureMessage(ThreeDnsLookupResult result) {
+        return switch (result.status()) {
+            case NO_ROUTE -> result.diagnostics().seedCount() == 0
+                    ? "3DNS has no usable tracker candidates for this bootstrap."
+                    : "No queried server returned a verified 3DNS response. See Details for the failures.";
+            case CLOSEST_VERIFIED -> "3DNS reached other servers, but exhausted routing without verifying the bootstrap.";
+            case QUERY_LIMIT_REACHED -> "3DNS reached its query limit before verifying the bootstrap.";
+            case DEADLINE_REACHED -> "3DNS reached its overall deadline before verifying the bootstrap.";
+            case EXACT_VERIFIED -> throw new IllegalArgumentException("Exact lookup is not a bootstrap lookup failure");
+        };
     }
 
     /** Validated metadata preview tied to one exact, authenticated bootstrap peer. */
@@ -84,21 +115,22 @@ public final class TypeJoinCoordinator {
         this.stream = Objects.requireNonNull(stream, "stream");
     }
 
-    /** Resolves only an exact verified peer and fetches a validated, non-persistent preview. */
+    /**
+     * Resolves only an exact verified peer and fetches a validated, non-persistent preview.
+     * Non-exact results retain lookup diagnostics in {@link BootstrapLookupException}; unexpected
+     * failures from the lookup future propagate without being labelled missing/offline.
+     */
     public PromiseFuture<Preview> prepare(TypeJoinUri uri) {
         Objects.requireNonNull(uri, "uri");
         return lookup.resolve(uri.bootstrap()).mapAsyncInline(result -> {
-            if (result.status() != ThreeDnsLookupResult.Status.EXACT_VERIFIED
-                    || result.exactPeer().isEmpty()) {
-                return PromiseFuture.newPromiseFutureException(new JoinException(
-                        Failure.BOOTSTRAP_NOT_FOUND,
-                        "The invitation bootstrap could not be found and may be offline."));
+            if (result.status() != ThreeDnsLookupResult.Status.EXACT_VERIFIED) {
+                return PromiseFuture.newPromiseFutureException(new BootstrapLookupException(result));
             }
             VerifiedThreeDnsPeer peer = result.exactPeer().orElseThrow();
             return executeExpectedKey(peer,
                     socket -> prepareOnSocket(uri, peer, socket),
-                    Failure.BOOTSTRAP_NOT_FOUND,
-                    "The invitation bootstrap could not be contacted.");
+                    Failure.CONNECTION_FAILED,
+                    "fetching the resolved bootstrap's access list");
         });
     }
 
@@ -136,7 +168,7 @@ public final class TypeJoinCoordinator {
         PromiseFuture<AccessList> networkResult = executeExpectedKey(peer,
                 socket -> redeemOnSocket(preview, code, socket),
                 Failure.CONNECTION_FAILED,
-                "The bootstrap connection failed.");
+                "redeeming the invitation and fetching membership proof");
 
         return networkResult.mapAsyncInline(proven ->
                 PromiseFutures.execute(() -> finishImport(preview, proven, enabled)));
@@ -219,17 +251,22 @@ public final class TypeJoinCoordinator {
         public T call() throws IOException {
             ParamBuilder params = new ParamBuilder(peer.address())
                     .withExpectedServerPublicKey(peer.identity().getPublicKey());
+            String phase = "opening the resolved bootstrap's expected-key TLS connection";
             try (MysterSocket socket = stream.makeStreamConnection(params)) {
                 activeSocket.set(socket);
                 if (cancelled) {
                     closeQuietly(activeSocket.getAndSet(null));
                     throw new IOException("Invitation operation cancelled");
                 }
-                return operation.run(socket);
+                phase = connectionMessage;
+                T result = operation.run(socket);
+                phase = "closing the resolved bootstrap's TLS connection";
+                return result;
             } catch (JoinException exception) {
                 throw exception;
             } catch (IOException exception) {
-                throw new JoinException(connectionFailure, connectionMessage, exception);
+                throw new JoinException(connectionFailure,
+                        "Failed while " + phase + ". See Details for the cause.", exception);
             } finally {
                 activeSocket.set(null);
             }
@@ -258,7 +295,7 @@ public final class TypeJoinCoordinator {
             accessList.validate();
         } catch (IllegalStateException exception) {
             throw new JoinException(Failure.INVALID_NETWORK,
-                    "The bootstrap returned an invalid signed access list.");
+                    "The bootstrap returned an invalid signed access list.", exception);
         }
         if (!accessList.getMysterType().equals(uri.type())) {
             throw new JoinException(Failure.INVALID_NETWORK,
@@ -276,7 +313,7 @@ public final class TypeJoinCoordinator {
             preferences.flush();
         } catch (BackingStoreException exception) {
             throw new JoinException(Failure.CONNECTION_FAILED,
-                    "The joined type preference could not be saved.");
+                    "The joined type preference could not be saved.", exception);
         }
     }
 }

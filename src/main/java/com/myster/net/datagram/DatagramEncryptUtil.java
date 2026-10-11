@@ -58,9 +58,10 @@ public class DatagramEncryptUtil {
     }
     
     /**
-     * Exception for malformed or undecryptable packets
+     * A malformed encrypted packet or a failed decryption/authentication operation. Retains the
+     * packet-failure subtype and original cause when forwarded through the datagram API.
      */
-    public static class DecryptionException extends IOException {
+    public static class DecryptionException extends BadPacketException {
         public DecryptionException(String message) {
             super(message);
         }

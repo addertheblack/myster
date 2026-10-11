@@ -2,6 +2,7 @@ package com.myster.threedns;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
@@ -15,6 +16,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.CancellationException;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
 
@@ -119,6 +122,8 @@ class TestThreeDnsLookup {
         assertEquals(ThreeDnsLookupResult.Status.NO_ROUTE, result.status());
         assertTrue(result.closestPeer().isEmpty());
         assertEquals(0, queries.get());
+        assertEquals(0, result.diagnostics().seedCount());
+        assertTrue(result.diagnostics().attempts().isEmpty());
     }
 
     @Test
@@ -140,6 +145,54 @@ class TestThreeDnsLookup {
         assertEquals(ThreeDnsLookupResult.Status.CLOSEST_VERIFIED, result.status());
         assertEquals(successful.identity(), result.closestPeer().orElseThrow().identity());
         assertTrue(result.exactPeer().isEmpty());
+        var diagnostic = result.diagnostics();
+        assertEquals(2, diagnostic.seedCount());
+        var failure = diagnostic.attempts().stream()
+                .filter(attempt -> attempt.outcome() == ThreeDnsLookupDiagnostics.Outcome.FAILED)
+                .findFirst().orElseThrow();
+        assertEquals(failed, failure.candidate());
+        assertEquals("down", failure.failure().orElseThrow().getMessage());
+        assertTrue(diagnostic.describe().contains("127.0.0.20:7020"));
+        assertTrue(diagnostic.describe().contains("VERIFIED"));
+        assertThrows(UnsupportedOperationException.class, diagnostic.attempts()::clear);
+    }
+
+    @Test
+    void failedExactCandidateRetainsTimeoutRatherThanClaimingOffline() throws Exception {
+        ThreeDnsAddressCandidate exact = candidate(22, 22, 7022);
+        var timeout = new com.myster.net.datagram.TimeoutException("Transaction timed out");
+        ThreeDnsLookup lookup = lookup(new ThreeDnsAddressCandidateSet(Optional.of(exact), List.of(), List.of()),
+                (_, _, _) -> PromiseFuture.newPromiseFutureException(timeout), limits(32, 2), new ManualDeadline());
+
+        var result = lookup.resolve(exact.cid()).get(3, TimeUnit.SECONDS);
+
+        assertEquals(ThreeDnsLookupResult.Status.NO_ROUTE, result.status());
+        assertEquals(exact, result.diagnostics().seeds().exact().orElseThrow());
+        assertSame(timeout, result.diagnostics().attempts().getFirst().failure().orElseThrow());
+        assertTrue(result.diagnostics().describe().contains("No authenticated response received"));
+        assertFalse(result.diagnostics().describe().contains("offline"));
+    }
+
+    @Test
+    void unexpectedPeerFutureFailurePropagatesUnchangedAndCancelsOtherWork() throws Exception {
+        ThreeDnsAddressCandidate exact = candidate(23, 23, 7023);
+        ThreeDnsAddressCandidate other = candidate(24, 24, 7024);
+        AtomicReference<AsyncContext<ThreeDnsVerifiedQueryResult>> failedContext = new AtomicReference<>();
+        PromiseFuture<ThreeDnsVerifiedQueryResult> failing = PromiseFuture.newPromiseFuture(failedContext::set);
+        PromiseFuture<ThreeDnsVerifiedQueryResult> pending = PromiseFuture.newPromiseFuture(_ -> {});
+        ManualDeadline deadline = new ManualDeadline();
+        ThreeDnsLookup lookup = lookup(new ThreeDnsAddressCandidateSet(Optional.of(exact), List.of(other), List.of()),
+                (candidate, _, _) -> candidate.equals(exact) ? failing : pending, limits(32, 2), deadline);
+        var future = lookup.resolve(exact.cid());
+        TEST_INVOKER.waitForThread();
+        IllegalStateException bug = new IllegalStateException("peer query bug");
+        failedContext.get().setException(bug);
+
+        ExecutionException failure = assertThrows(ExecutionException.class, () -> future.get(3, TimeUnit.SECONDS));
+        TEST_INVOKER.waitForThread();
+        assertSame(bug, failure.getCause());
+        assertTrue(pending.isCancelled());
+        assertTrue(deadline.cancelled);
     }
 
     @Test
@@ -178,6 +231,8 @@ class TestThreeDnsLookup {
         assertEquals(ThreeDnsLookupResult.Status.DEADLINE_REACHED, result.status());
         assertTrue(result.closestPeer().isEmpty());
         assertTrue(pending.isCancelled());
+        assertEquals(ThreeDnsLookupDiagnostics.Outcome.IN_FLIGHT,
+                result.diagnostics().attempts().getFirst().outcome());
     }
 
     @Test
