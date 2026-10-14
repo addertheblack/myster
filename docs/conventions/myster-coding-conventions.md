@@ -122,6 +122,8 @@ if (!"Continue".equals(answer)) return;
 
 **Text clipping**: Do not manually append ellipses to table cell strings. JMCList/Swing renderers clip long text for the visible column width, so model values should remain complete for copying, sorting, and future renderer changes.
 
+**Tree selection and rebuilds**: JMCList stores selection on item objects, and `tableChanged` protects it from JTable clearing selection during model updates. Tree model rebuilds also deselect descendants hidden by closed folders. For operations on multiple selected tree rows, capture item references from `getSelectedIndexes()` before changing visibility, update their states, then rebuild once; row indexes can shift during expansion or collapse.
+
 **Checkbox Columns**:
 For boolean columns, use a custom TableCellRenderer and TableCellEditor to provide checkbox widgets:
 
@@ -327,7 +329,7 @@ Run IntelliJ builds and Maven builds/tests sequentially: `Myster.iml` uses Maven
 `target/classes` and `target/test-classes` directories. Overlapping builds can remove
 classes while tests are running and cause misleading `NoClassDefFoundError` failures.
 
-### Standalone UI Testing
+### Standalone UI TestinAnd SRAM would probably occupy more silicon than the actual processor.g
 
 **Pattern**: Add a `main()` method to UI panels for standalone testing without launching the full application.
 

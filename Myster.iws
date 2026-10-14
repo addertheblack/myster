@@ -7,20 +7,11 @@
     <option name="selectedModelId" value="auto" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="fe0d93f5-a1b5-4669-89e3-19e762d0ae4a" name="Changes" comment="Implement folder actions in File Manager: add refresh functionality, open folder option, and enhance path display">
+    <list default="true" id="fe0d93f5-a1b5-4669-89e3-19e762d0ae4a" name="Changes" comment="Enhance exception handling: add cause-preserving constructors for BadPacketException and DecryptionException, and update diagnostics to retain query failure details in ThreeDnsLookupResult">
       <change beforePath="$PROJECT_DIR$/Myster.iws" beforeDir="false" afterPath="$PROJECT_DIR$/Myster.iws" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/docs/conventions/myster-coding-conventions.md" beforeDir="false" afterPath="$PROJECT_DIR$/docs/conventions/myster-coding-conventions.md" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/docs/design/Myster 3DNS.md" beforeDir="false" afterPath="$PROJECT_DIR$/docs/design/Myster 3DNS.md" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/docs/design/Private Type Invitations.md" beforeDir="false" afterPath="$PROJECT_DIR$/docs/design/Private Type Invitations.md" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/com/myster/net/datagram/BadPacketException.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/com/myster/net/datagram/BadPacketException.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/com/myster/net/datagram/DatagramEncryptUtil.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/com/myster/net/datagram/DatagramEncryptUtil.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/com/myster/net/datagram/client/MysterDatagramImpl.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/com/myster/net/datagram/client/MysterDatagramImpl.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/com/myster/threedns/ThreeDnsLookup.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/com/myster/threedns/ThreeDnsLookup.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/com/myster/threedns/ThreeDnsLookupResult.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/com/myster/threedns/ThreeDnsLookupResult.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/com/myster/type/join/TypeJoinCoordinator.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/com/myster/type/join/TypeJoinCoordinator.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/com/myster/type/ui/JoinPrivateTypeDialog.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/com/myster/type/ui/JoinPrivateTypeDialog.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/test/java/com/myster/threedns/TestThreeDnsLookup.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/test/java/com/myster/threedns/TestThreeDnsLookup.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/test/java/com/myster/type/join/TestTypeJoinCoordinator.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/test/java/com/myster/type/join/TestTypeJoinCoordinator.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/docs/plans/README.md" beforeDir="false" afterPath="$PROJECT_DIR$/docs/plans/README.md" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/com/general/mclist/TreeMCList.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/com/general/mclist/TreeMCList.java" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -251,23 +242,23 @@
   </component>
   <component name="NextEditCompletionFeaturesState">
     <decayedCancelled>
-      <entry key="MS100" value="1.0" />
-      <entry key="MS500" value="1.000000000501986" />
-      <entry key="S2" value="1.0084446338472846" />
-      <entry key="S5" value="1.279424291026943" />
-      <entry key="S10" value="1.9119583287766684" />
-      <entry key="S30" value="3.015423272125318" />
-      <entry key="S60" value="3.4586560496282375" />
-      <entry key="M2" value="3.71580178951053" />
-      <entry key="M5" value="3.882897758030529" />
-      <entry key="M10" value="3.9416530099381193" />
-      <entry key="M15" value="4.041784394680928" />
-      <entry key="M30" value="12.468642554930966" />
-      <entry key="H1" value="91.1504547138885" />
-      <entry key="H2" value="284.82815519979306" />
-      <entry key="H4" value="548.2472755121863" />
-      <entry key="D1" value="2756.2303632217327" />
-      <entry key="W1" value="11754.560321991145" />
+      <entry key="MS100" value="1.321188228232832" />
+      <entry key="MS500" value="3.031978183906116" />
+      <entry key="S2" value="9.929850016041707" />
+      <entry key="S5" value="18.984383385855686" />
+      <entry key="S10" value="25.951775598400044" />
+      <entry key="S30" value="34.74982467683589" />
+      <entry key="S60" value="53.52496845494415" />
+      <entry key="M2" value="101.2428714228513" />
+      <entry key="M5" value="179.43884836882174" />
+      <entry key="M10" value="223.2350083449128" />
+      <entry key="M15" value="240.7344542432943" />
+      <entry key="M30" value="259.93202008864256" />
+      <entry key="H1" value="270.22075207653637" />
+      <entry key="H2" value="275.5475658467756" />
+      <entry key="H4" value="278.2589856367921" />
+      <entry key="D1" value="589.9108648147007" />
+      <entry key="W1" value="8881.26928505351" />
     </decayedCancelled>
     <decayedSelected>
       <entry key="MS100" value="0.0" />
@@ -279,33 +270,33 @@
       <entry key="S60" value="0.0" />
       <entry key="M2" value="0.0" />
       <entry key="M5" value="0.0" />
-      <entry key="M10" value="5.427572648314174E-188" />
-      <entry key="M15" value="1.8061217393771953E-125" />
-      <entry key="M30" value="6.010193717537177E-63" />
-      <entry key="H1" value="1.0963752511735135E-31" />
-      <entry key="H2" value="4.682681367217527E-16" />
-      <entry key="H4" value="3.0603034054114404E-8" />
-      <entry key="D1" value="0.11561271751534072" />
-      <entry key="W1" value="6.6284619254076205" />
+      <entry key="M10" value="0.0" />
+      <entry key="M15" value="1.1813516241807981E-216" />
+      <entry key="M30" value="1.5371085968677757E-108" />
+      <entry key="H1" value="1.7533445355760197E-54" />
+      <entry key="H2" value="1.8726155594026945E-27" />
+      <entry key="H4" value="6.119860120221364E-14" />
+      <entry key="D1" value="0.01297682489868245" />
+      <entry key="W1" value="4.849776697064701" />
     </decayedSelected>
     <decayedShown>
-      <entry key="MS100" value="0.9201876506248751" />
-      <entry key="MS500" value="0.9835020745218779" />
-      <entry key="S2" value="1.0042620285114168" />
-      <entry key="S5" value="1.2773043772639814" />
-      <entry key="S10" value="1.9103635188491757" />
-      <entry key="S30" value="3.0145756994716235" />
-      <entry key="S60" value="3.4581683266439622" />
-      <entry key="M2" value="3.7155393360755156" />
-      <entry key="M5" value="3.8827879378439665" />
-      <entry key="M10" value="3.941597253767771" />
-      <entry key="M15" value="4.041746614354677" />
-      <entry key="M30" value="12.468601783786958" />
-      <entry key="H1" value="91.15033261998902" />
-      <entry key="H2" value="284.82796955284607" />
-      <entry key="H4" value="548.2471055632311" />
-      <entry key="D1" value="2756.345878120406" />
-      <entry key="W1" value="11761.18870751698" />
+      <entry key="MS100" value="1.2955876198739174" />
+      <entry key="MS500" value="3.02060761633899" />
+      <entry key="S2" value="9.918980813289178" />
+      <entry key="S5" value="18.967979063124478" />
+      <entry key="S10" value="25.935470208900078" />
+      <entry key="S30" value="34.74070294863621" />
+      <entry key="S60" value="53.51930375192583" />
+      <entry key="M2" value="101.2391864480078" />
+      <entry key="M5" value="179.4368707083407" />
+      <entry key="M10" value="223.23388151847823" />
+      <entry key="M15" value="240.7336664266369" />
+      <entry key="M30" value="259.9316061391223" />
+      <entry key="H1" value="270.2205397371288" />
+      <entry key="H2" value="275.5474582890093" />
+      <entry key="H4" value="278.25893150452043" />
+      <entry key="D1" value="589.9238215884853" />
+      <entry key="W1" value="8886.119004554954" />
     </decayedShown>
   </component>
   <component name="PerforceConfiguration">
@@ -784,7 +775,15 @@
       <option name="project" value="LOCAL" />
       <updated>1791679157606</updated>
     </task>
-    <option name="localTasksCounter" value="21" />
+    <task id="LOCAL-00021" summary="Enhance exception handling: add cause-preserving constructors for BadPacketException and DecryptionException, and update diagnostics to retain query failure details in ThreeDnsLookupResult">
+      <option name="closed" value="true" />
+      <created>1791741015389</created>
+      <option name="number" value="00021" />
+      <option name="presentableId" value="LOCAL-00021" />
+      <option name="project" value="LOCAL" />
+      <updated>1791741015389</updated>
+    </task>
+    <option name="localTasksCounter" value="22" />
     <servers />
   </component>
   <component name="TodoView" selected-index="0">
@@ -847,7 +846,8 @@
     <MESSAGE value="Update logging configuration to disable AsyncDatagramSocket logging" />
     <MESSAGE value="Add Maven plugin for runtime module detection and update README with packaging details" />
     <MESSAGE value="Implement folder actions in File Manager: add refresh functionality, open folder option, and enhance path display" />
-    <option name="LAST_COMMIT_MESSAGE" value="Implement folder actions in File Manager: add refresh functionality, open folder option, and enhance path display" />
+    <MESSAGE value="Enhance exception handling: add cause-preserving constructors for BadPacketException and DecryptionException, and update diagnostics to retain query failure details in ThreeDnsLookupResult" />
+    <option name="LAST_COMMIT_MESSAGE" value="Enhance exception handling: add cause-preserving constructors for BadPacketException and DecryptionException, and update diagnostics to retain query failure details in ThreeDnsLookupResult" />
   </component>
   <component name="VssConfiguration">
     <CheckoutOptions>

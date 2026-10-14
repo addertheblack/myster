@@ -10,6 +10,7 @@ import java.awt.Graphics2D;
 import java.awt.Insets;
 import java.awt.event.KeyAdapter;
 import java.awt.event.KeyEvent;
+import java.util.ArrayList;
 import java.util.Objects;
 import java.util.Optional;
 
@@ -182,38 +183,44 @@ public class TreeMCList {
                 list.getCellRect(viewRow, 0, false).y, size * 2 + 4, size);
     }
 
-    /** Key handler that opens/closes container rows with the left and right arrow keys. */
+    /**
+     * Opens all initially selected containers with Right and closes them with Left.
+     * Rebuilds once if any state changed; consumes either arrow when a container is
+     * selected, even when its state already matches. Selected leaves are ignored.
+     */
     private static <E> KeyAdapter createTreeKeyboardNavigationHandler(JMCList<E> list) {
         return new KeyAdapter() {
             @Override
             public void keyPressed(KeyEvent e) {
-                int selectedRow = list.getSelectedRow();
-                if (selectedRow < 0) {
+                if (e.getKeyCode() != KeyEvent.VK_RIGHT && e.getKeyCode() != KeyEvent.VK_LEFT) {
                     return;
                 }
 
                 TreeMCListTableModel<E> treeModel = (TreeMCListTableModel<E>) list.getModel();
-                TreeMCListItem<E> treeRow = (TreeMCListItem<E>) treeModel.getRow(selectedRow);
-
-                if (!treeRow.isContainer()) {
-                    return; // Only handle containers
+                var selectedFolders = new ArrayList<TreeMCListItem<E>>();
+                for (int index : list.getSelectedIndexes()) {
+                    TreeMCListItem<E> treeRow = (TreeMCListItem<E>) treeModel.getRow(index);
+                    if (treeRow.isContainer()) {
+                        selectedFolders.add(treeRow);
+                    }
                 }
 
-                if (e.getKeyCode() == KeyEvent.VK_RIGHT) {
-                    // Right arrow: open the item if it's closed
-                    if (!treeRow.isOpen()) {
-                        treeRow.setOpen(true);
-                        treeModel.resortAndRebuild();
-                    }
-                    e.consume(); // Always consume to prevent JTable's default horizontal navigation
-                } else if (e.getKeyCode() == KeyEvent.VK_LEFT) {
-                    // Left arrow: close the item if it's open
-                    if (treeRow.isOpen()) {
-                        treeRow.setOpen(false);
-                        treeModel.resortAndRebuild();
-                    }
-                    e.consume(); // Always consume to prevent JTable's default horizontal navigation
+                if (selectedFolders.isEmpty()) {
+                    return;
                 }
+
+                boolean open = e.getKeyCode() == KeyEvent.VK_RIGHT;
+                boolean changed = false;
+                for (TreeMCListItem<E> folder : selectedFolders) {
+                    if (folder.isOpen() != open) {
+                        folder.setOpen(open);
+                        changed = true;
+                    }
+                }
+                if (changed) {
+                    treeModel.resortAndRebuild();
+                }
+                e.consume(); // Prevent JTable's horizontal navigation, including for a no-op.
             }
         };
     }
