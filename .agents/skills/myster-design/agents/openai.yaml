@@ -1,0 +1,4 @@
+interface:
+  display_name: "Myster Design"
+  short_description: "Converge epic designs from MoSCoW specifications."
+  default_prompt: "Use $myster-design to develop an Epic Technical Design Document and companion decision log from the supplied MoSCoW specification, then run formal design convergence."
