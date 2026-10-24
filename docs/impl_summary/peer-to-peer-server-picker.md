@@ -11,7 +11,9 @@ waiting/resolving/contacting/responding/failure state.
 The server pool now exposes explicit future-returning address resolution. It reuses the existing
 TCP-ping and bidirectional-stats pipeline, returns the exact pool-owned `MysterServer`, shares
 in-flight work by address, records failures in the dead cache, and permits an explicit user lookup
-to retry a passively dead-cached address.
+to retry a passively dead-cached address. Each resolution call returns a separate cancellable
+request future; the pool owns the shared refresh and prevents one caller's cancellation from
+affecting other callers or the eventual pool update. UI callers propagate cancellation normally.
 
 `PromiseFuture.mapAsyncInline(...)` names the inline/source-completion-thread behavior explicitly,
 while `mapAsync(mapper, Invoker)` chooses where the mapper that creates the next promise runs. The
@@ -20,7 +22,8 @@ pool uses the scheduled form for its actor-confined stats update instead of adap
 
 Pool resolution failure handling and in-flight cleanup use ordinary listeners on
 `TrackerUtils.INVOKER`. Cleanup is intentionally eventual relative to future completion, so a
-caller during that brief window may receive the same already-completed in-flight future.
+new request during that brief window starts a fresh refresh once the old work is complete;
+each public resolution call still receives its own request future.
 
 The picker selects its first real row whenever initial or filtered results are rendered. A direct
 address result is placed first as well, so it retains the same default-selection rule. The shared

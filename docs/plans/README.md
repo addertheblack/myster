@@ -8,6 +8,7 @@ When adding or substantially changing an authoritative plan, update this index w
 
 | Plan | Abstract |
 |---|---|
+| [Myster Resource Links](myster-resource-links.md) | Adds hierarchical link/v1 URLs that navigate to a server/type or highlight a file by name, reusing one ClientWindow per server without starting downloads. |
 | [Tree MCList Multi-Folder Arrow Keys](tree-mclist-multi-folder-arrows.md) | Makes Right/Left open or close every selected tree folder in one operation while preserving visible selections. |
 | [WebRTC Calling Phase Index](webrtc-video-call.md) | Navigation for five separately planned phases; implement one at a time. |
 | [WebRTC Phase 1: TCP audio feasibility](webrtc-phase-1-native-feasibility.md) | Current plan: TCP audio-only feasibility through the existing Myster listener; camera/video is deferred to phase 4 and UDP is deferred to phase 3. |

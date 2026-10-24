@@ -1,6 +1,6 @@
 ---
 name: myster-impl
-description: Myster implementation workflow. Use when invoked as $myster-impl or when the user asks to execute an existing docs/plans/<feature-slug>.md plan, change code/Javadoc/design docs, run tests, and write docs/impl_summary/<feature-slug>.md.
+description: Execute an existing Myster project plan, update code/Javadoc and design docs, verify results, and write its implementation summary. Use when invoked as $myster-impl or asked to implement a plan from docs/plans/.
 ---
 
 # Myster Implementation
@@ -41,8 +41,8 @@ Use these sources when relevant:
 
 1. Package/class Javadoc for module contracts and public APIs.
 2. Existing code for established patterns and conventions.
-3. `docs/design/*.md` for high-level system design. These are living documents and should be
-   updated if changes make them stale.
+3. `docs/design/*.md` for high-level system design. These are living documents; epic designs
+   distinguish target architecture from implemented state and should preserve future scope.
 4. `docs/codebase-structure.md` for codebase structure.
 5. `docs/conventions/Code Comments.md` for Javadoc rules.
 6. `docs/conventions/myster-coding-conventions.md` for Myster coding conventions.
@@ -62,6 +62,11 @@ Plans follow a two-section structure:
 
 Confirm the plan file exists and is complete. Understand affected modules from the Architecture
 Connections section. Note files to change and docs to update.
+
+If the plan belongs to an epic, read its linked MoSCoW specification, parent design, companion
+decision log, and convergence report for the selected project's requirements, shared contracts,
+and dependencies. Report conflicts that invalidate the epic design before making broad changes;
+do not silently redefine upstream requirements or priorities.
 
 ### 2. Make code changes
 
@@ -86,7 +91,13 @@ As code changes, update Javadoc to reflect new behaviour. Follow
 
 - Review `docs/design/*.md` for modules being changed.
 - If a design doc describes the changed subsystem and becomes outdated, update it.
-- Design docs are living documents. They reflect current state, not history.
+- Keep current-state descriptions accurate. For an epic design, preserve the target architecture
+  and unimplemented projects, and distinguish them from verified progress. Reconcile deviations
+  with the design, recording unresolved epic-level conflicts for further design work.
+- Update the parent epic's project entry with plan/summary links and actual validation status;
+  document remaining acceptance gaps rather than marking a project complete prematurely.
+- If findings change an architectural decision, update the companion log and affected design
+  sections together, preserving the rationale and identifying any decision that must reopen.
 
 ### 5. Run tests and verify
 
@@ -106,6 +117,10 @@ Create `docs/impl_summary/<feature-slug>.md` with:
 - Known issues or follow-up work.
 - Tests that should be added later.
 - Anything the plan author or maintainer should know.
+- For an epic project, link the parent design and project identifier, and describe results or
+  unresolved decisions that affect subsequent projects.
+- After verification and summary creation, revisit the parent project's entry so validation
+  status, acceptance gaps, and the summary link reflect the final results.
 
 ## Additional outputs
 
@@ -127,6 +142,7 @@ Before writing the summary, verify:
 
 ## Related
 
+- Epic design skill: `.agents/skills/myster-design/SKILL.md`
 - Planning skill: `.agents/skills/myster-plan/SKILL.md`
 - Plans: `docs/plans/README.md`
 - Implementation summaries: `docs/impl_summary/README.md`

@@ -1,5 +1,7 @@
 # AsyncTaskTracker completion context
 
+> **Related plan:** [Myster resource links](./myster-resource-links.md) — context: uses cancellation guards for pending window requests while preserving shared pool discovery.
+
 ## Design Section
 
 ### 1. Summary

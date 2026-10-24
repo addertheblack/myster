@@ -1,5 +1,7 @@
 # Private Types — Milestone 3: Type Metadata Resolution & Import
 
+> **Related plan:** [Myster resource links](./myster-resource-links.md) — follow-up: pins type metadata and import requests to the browser window public key.
+
 **Milestone**: 3 of N  
 **Depends on**: M2 complete (`private-types-access-lists-milestone2.md`)  
 **Status**: Implemented  

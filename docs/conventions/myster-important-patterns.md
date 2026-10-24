@@ -142,6 +142,18 @@ source.mapAsync(value -> PromiseFuture.newPromiseFuture(updateActorState(value))
 Do not wrap the mapper body in `PromiseFutures.execute(..., invoker::invoke)` merely to choose its
 thread. That represents an `Invoker` as an `Executor` and obscures which stage is being scheduled.
 
+`mapAsync` forwards source failure and cancellation automatically, and cancelling its returned
+future cancels the source. Forward cancellation through client chains by default. An API that
+shares underlying work among unrelated callers owns the cancellation boundary: return a separate
+cancellable request future for each caller and keep cancellation from affecting other callers.
+Clients compose the API normally; they must not need to know about its internal sharing.
+
+At that API boundary, a synchronous callback that only forwards `CallResult` into each request
+future is appropriate. Keep application work in the mapper on its chosen invoker. Return
+completed or failed promises from the mapper instead of manually forwarding each outcome in
+a UI listener. `MysterServerPool.resolveServer()` follows this policy: cancelling a request
+leaves the shared pool refresh and other requests running.
+
 ### Common Use Cases
 
 - Network I/O operations
@@ -663,6 +675,78 @@ setter or global lookup into the stream implementation. Transport peer-key obser
 `MysterSocket.getAuthenticatedPeerKey()`; its key proves possession on that connection, while
 association with an expected CID comes from the resolver/expected-key connection contract.
 
+
+## Server identity refactoring direction
+
+The server CID/public key is the canonical server identity. Addresses are connection endpoints;
+one server can have several addresses, and its addresses can change without changing its
+identity. Refactor lookup, window reuse, and lifecycle ownership toward CID/public-key identity.
+Treat `MysterAddressIdentity` and address-based matching as transitional compatibility fallbacks,
+and avoid expanding their role when a CID/public key is available.
+
+Another future direction is transparent public-key discovery: callers should be able to request
+an operation using an IP/port or server CID without supplying the public key. Reuse the key
+from the tracker when available; otherwise resolve or fetch it before executing the requested
+operation so that the operation uses the appropriate encrypted transport. 3DNS resolution
+already supplies the server's public key as part of its lookup. Move callers and operation APIs
+toward CIDs/public keys as this flow develops, while retaining IP/port as a supported entry point.
+This describes future work, not a guarantee that all current address-based calls discover keys.
+
+Authentication is also a result-correctness requirement: as operations depend on authenticated
+identity, an unencrypted request can succeed yet return incomplete or different results. For
+those operations, plaintext execution is not an equivalent fallback. Future discovery flows
+must obtain the key and establish the required authentication before issuing the requested
+operation, and report discovery/authentication failures instead of silently degrading. Bootstrap
+key discovery is separate from the application operation whose results depend on authentication.
+
+Every ClientWindow requires a public-key identity at construction, held in a final field for
+its entire lifetime. Its endpoint may change while it continues to represent and authenticate
+the same key. Requests for another identity use another window. Its address display is read-only,
+and Refresh retains the same identity. No window starts unidentified or changes identity later.
+
+Callers that lack a public key use ClientWindowProvider.openWindow: check the identity cache,
+then perform the existing asynchronous server-stats lookup with temporary “Contacting server…”
+progress. Require a public-key result before creating/registering a ClientWindow. Failure shows
+a dialog; cancellation makes late results moot without cancelling a pool lookup shared with
+other callers. Preferences persist the full public key and last endpoint. Legacy records use
+this discovery flow; corrupt saved identities must never fall back to address-only discovery.
+
+## Myster resource link integration constraints
+
+Implemented contracts are described in [Myster Resource Links](../design/Myster%20Resource%20Links.md).
+
+- Resource links accept server, server/type, or server/type/name. Hash selectors are outside
+  the current scope. Native/single-instance delivery uses `MysterUriRouter`; invitation parsing
+  remains owned by `TypeJoinUriDispatcher`.
+- Reuse `ClientWindowData` and `initialData` for navigation: type-list completion selects the type,
+  the ordinary selection event starts file listing, and listing completion selects/scrolls
+  to the filename. Do not introduce a parallel navigation lifecycle. Incompatible user actions
+  cancel initialData; compatible intermediate callbacks preserve it.
+- Server identity reuse belongs to `ClientWindowProvider.getOrCreateWindow()`. Supply the
+  required PublicKeyIdentity through ClientWindowData rather than adding identity/authentication
+  callbacks to the window. Address-only callers use openWindow before constructing navigation
+  data. Authentication and key enforcement belong to the protocol layer.
+- ClientWindowData requires a non-null MysterAddress and PublicKeyIdentity; only type and filename
+  are optional. Pass existing address objects directly; parse boundary text off the EDT.
+  Snapshot saved preferences before resolving addresses so DNS does not hold the window keeper's
+  monitor. Restore windows on the EDT after resolution; startup's default-window decision uses
+  the asynchronous restoration count.
+  Skip saved window records with missing or malformed addresses instead of connecting to
+  an implicit local-server default.
+- ClientWindow holds its public-key identity in a final field. setInitialData rejects another
+  identity before changing state. A new endpoint for the same identity cancels old workers and
+  clears address-bound rows/caches before refreshing. The provider registry uses only
+  PublicKeyIdentity keys; cleanup removes the exact identity/window pair so late close
+  notifications cannot remove a replacement window.
+- Snapshot the required key into listing/metadata workers, thumbnail requests, and type import;
+  never downgrade a pinned request to an address-only fallback. Window preferences persist
+  the public key independently of the endpoint.
+- Listing callbacks report terminal success/failure, including zero rows; canceled workers
+  suppress queued callbacks. Test the real ClientWindow initialData/event path, not only helpers.
+- Names are opaque references (`FileItem.getName()` locally), not filesystem destinations.
+  Opening a resource link never starts a transfer or invokes the global hash crawler.
+- Copy File Link is one name-based command. `FmiChooser` guards saved indexed state, pending
+  sharing/folder edits, placeholder/count rows, multiple selection, and its 350-file display cap.
 
 ## Shared WebRTC transport planning constraints
 

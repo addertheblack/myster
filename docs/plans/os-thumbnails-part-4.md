@@ -1,5 +1,7 @@
 # OS thumbnails — Part 4: per-item tree icons and client file-list thumbnails
 
+> **Related plan:** [Myster resource links](./myster-resource-links.md) — parallel work: keeps file-row thumbnail requests pinned while navigation changes files or endpoints.
+
 ## Design Section (for the owner/reviewer)
 
 ### 1. Summary

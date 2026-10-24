@@ -1,5 +1,7 @@
 # Peer-to-Peer Connection Server Picker
 
+> **Related plan:** [Myster resource links](./myster-resource-links.md) — follow-up: requires a public-key identity after picker selection and resolves missing keys in the window provider.
+
 ## 1. Summary
 
 Replace the free-form `AskDialog` opened by **New Peer-to-Peer Connection...** with a searchable

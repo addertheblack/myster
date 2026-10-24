@@ -105,10 +105,12 @@ the sequencing and socket lifetime, while section encoding remains behind the pr
 
 ## Desktop activation and UI
 
-Pasted links, complete command-line arguments, arguments forwarded by the single-instance service,
-and macOS `APP_OPEN_URI` events all feed one bounded EDT dispatcher. It always opens the confirmation
-dialog and never redeems automatically. One modal is active at a time, with at most eight distinct
-links queued behind it.
+Complete command-line arguments, single-instance forwarding, and macOS `APP_OPEN_URI` events
+enter `MysterUriRouter`, which routes `join-type/v1` to the invitation dispatcher. The manual
+paste dialog remains on that same invitation path. It always opens confirmation and never redeems
+automatically; one invitation modal is active at a time with at most eight distinct invitations
+waiting. The separate `link/v1` action performs resource navigation, as described in
+[Myster Resource Links](Myster%20Resource%20Links.md), without changing invitation parsing.
 
 Preview failures distinguish an empty usable tracker snapshot, failure to obtain any verified
 3DNS response, exhausted routing through other verified peers, the query limit, and the overall

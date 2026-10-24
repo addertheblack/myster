@@ -1,5 +1,7 @@
 # Domain-Specific CID Types
 
+> **Related plan:** [Myster resource links](./myster-resource-links.md) — required by: uses ServerCid for resource links and PublicKeyIdentity for immutable window ownership.
+
 ## 1. Summary
 
 Replace the publicly shared `Cid128` value with two non-interchangeable domain types: `MysterTypeCid` for the 16-byte MD5-derived compact identifier of a `MysterType`, and `ServerCid` for the 16-byte truncated-SHA-256 identifier of a public-key-backed Myster server identity. Both types compose one package-private 128-bit value implementation, while production APIs expose only the domain type appropriate to their module.

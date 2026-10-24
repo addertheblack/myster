@@ -3,7 +3,8 @@ package com.myster.tracker;
 
 import com.myster.net.MysterAddress;
 
-class MysterAddressIdentity implements MysterIdentity {
+/** Identifies a server by its network address when no public-key identity is available. */
+public class MysterAddressIdentity implements MysterIdentity {
     private final MysterAddress address;
     
     public MysterAddressIdentity(MysterAddress address) {

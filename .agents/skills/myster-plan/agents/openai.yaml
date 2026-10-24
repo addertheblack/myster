@@ -1,7 +1,7 @@
 interface:
   display_name: "Myster Plan"
   short_description: "Write repo-backed implementation plans."
-  default_prompt: "Use $myster-plan to design the requested Myster change and write the authoritative plan under docs/plans."
+  default_prompt: "Use $myster-plan to write one Myster project's implementation plan under docs/plans, using its parent epic design when applicable."
 
 policy:
   allow_implicit_invocation: true

@@ -54,12 +54,12 @@
     - Limit concurrent connections and downloads both globally and per IP, including repeated
       valid requests that never trigger the unknown-protocol limit.
     - Keep rate-limit tracking bounded and expiring so the defence cannot itself exhaust resources.
+- Ensure that the UDP socket can have some sort of Myster global amount of concurrency but if packets arrive too quickly
+    then those packets are dropped. This is to prevent a UDP flood from taking down the server. Note
+    that the "size" of the concurrent UDP connection should be measured in some k/s of packets per second
+    proportional to the k/s that the server can effectively handle.
 - Fix DefaultTypeDescriptionList to interact with preferences in a sane way (not using MML).
-- Add audio chat
-- Add video chat
-- Add text chat
-- Add group calls
-- Add text forums
+
 - Add 3DNS for resolving public keys to hosted ip addresses.
 - Fix search-result metadata access: `SearchResult#getMetaData(String)` currently stringifies
   typed `MessagePak` values, forcing column handlers to parse numbers back out for sorting.
@@ -75,6 +75,16 @@
     - Keep encoding the final BufferedImage as the fallback for resized images and providers
       that return bitmap pixels. Deferred beyond the thumbnail protocol milestone.
 - BUG In the file manager. When you choose a folder.. Go into the Documents folder. Nothing is visible in there. Is this a permissions issue? New Folder button adds  a new folder but it's not visible in the folder chooser dialog.
+- Add server icon (needs to be something downloaded with its own tcp connection section.. similar design to thumbnail)
+    - needs a place in the server prefs when an icon can be imported or copied and pasted.
+- Add server description - limite 255 chars. Can be placed into server stats protocol block.
+- Need server search - searches names and server descriptions for servers matching. Searches the servers in the tracker then crawls network
+- Allow copy of the type create link for type on this server. Inviatation link
+- Fix invitation link for public custom types
+- Add plus for new search tabs - currently menu is not super obvious
+- Check to make sure the array of last resort is used if there's no good public ips available.
+- Connect by ip button to tracker
+- Add check for "external ip" if it's a LAN addr or a carrier grade NAT then disable upnp binding.
 
 - Important things to do to get private types working
     - Implement type file that allows someone to import a type into myster.
@@ -92,3 +102,26 @@ type file can be sent to other admins
 - switch from d/ling names only to getting full paths. Should list dirs much faster on slow systems
   Add new section for file lister thread to also send path information so we can see the list of files with paths
     without needing to get the entire meta data blob which is often very slow to arrive.
+
+- Chat
+ - Chat rooms must allow for folders withing folder with chat rooms inside them.
+ - Chat rooms must allow for private chat rooms that are not visible to the public.
+ - There's no difference between a chat room and a voice chat. They both look the same.
+    - However some chat rooms might not allow voice chat.
+    - We should include a voice to text option that essentially adds whatever you say to the chat room similar to the handy engine. It must be not cloud only!
+        - This option can be play though so it sends the voice signal through and the chat text OR just the chat text.
+             This should allow for voice and none voice participation. Not clear if this is a server feature of just a client function. Might be both in the sense
+             tha clients can do this trick because they have voice to text but the server might also do it to create a transcript.
+    - Do not use # symbols for chat rooms
+    - Version 1 of this only implements text chat not discord style forums.
+    - Myster only feature. We need a "new scan" functionality where unread threads are presented in sequence and the user can just skip to the next thread over
+          and over again without worrying about where they are. Newscan should prefer thread where the user is mentioned.
+    - The hangup button should always be very visible and easy to find. It should be a red button with a phone icon on it. It should be in the same place for all chat rooms.
+            It can be in multiple places but it should always be in the same place for all chat rooms. There's nothing worse then being unable to find the hangup button when you need it.
+  - People who are "on" the server should be visible somehwere in the UI. Messages sent to them directly should be possible.
+  - Chats are always persistent and saved on the server.
+  - Add audio chat
+  - Add video chat
+  - Add text chat
+  - Add group calls
+  - Add text forums

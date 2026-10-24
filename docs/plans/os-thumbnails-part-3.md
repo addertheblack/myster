@@ -1,5 +1,7 @@
 # OS thumbnails — Part 3: client preview pane
 
+> **Related plan:** [Myster resource links](./myster-resource-links.md) — parallel work: pins preview requests to immutable window identity and resets the cache on endpoint changes.
+
 ## Design Section (for the owner/reviewer)
 
 ### 1. Summary

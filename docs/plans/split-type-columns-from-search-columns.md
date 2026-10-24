@@ -1,5 +1,7 @@
 # Split Type Columns from Search-Only Columns
 
+> **Related plan:** [Myster resource links](./myster-resource-links.md) — parallel work: navigates and refreshes files through the same type-selection and column-rebuilding events.
+
 **Feature slug:** `split-type-columns-from-search-columns`  
 **Date:** 2026-06-14
 

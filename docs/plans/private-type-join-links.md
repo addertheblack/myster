@@ -1,5 +1,7 @@
 # Private Type Join Links and Invitation Redemption
 
+> **Related plan:** [Myster resource links](./myster-resource-links.md) — parallel work: adds server/type/name resource routing alongside existing invitation links.
+
 ## 1. Summary
 
 Add a complete invitation-based private-type join flow: an administrator creates a time-limited

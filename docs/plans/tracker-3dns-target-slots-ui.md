@@ -1,5 +1,7 @@
 # Tracker 3DNS Target Slots UI
 
+> **Related plan:** [Myster resource links](./myster-resource-links.md) — parallel work: requires 3DNS row activation to preserve its known server identity when opening a browser.
+
 ## 1. Summary
 
 Enhance TrackerWindow's 3DNS category from a deduplicated server list into a dedicated 3DNS inspection view that shows retained target-slot entries with target CID, offset ordinate, side, server CID, server name, address, status, ping, and uptime.

@@ -19,6 +19,7 @@ This document captures Myster-specific coding conventions, preferred libraries, 
 - **Naming** — no banner comments; `Utils` suffix for static-only classes
 - **Fields** — retain object state, not inlineable method references
 - **CID types** — use `MysterTypeCid` or `ServerCid`; never expose raw `Cid128` or CID byte arrays internally
+- **Network addresses** — pass `MysterAddress`; create/resolve addresses off the EDT
 - **Enums** — prefer Java `enum`; use `TypeSafeEnum` only across version-skewed wire boundaries;
   never model enum values as raw string constants
 - **Serialization** — use `MessagePak` for forward-compatible binary formats
@@ -56,6 +57,7 @@ This document captures Myster-specific coding conventions, preferred libraries, 
   - [Fields Represent State](#fields-represent-state)
   - [No Banner Comments](#no-section-divider-banner-comments)
   - [Utils Classes](#utils-classes)
+  - [Network Addresses](#network-addresses)
   - [Domain-Specific CID Types](#domain-specific-cid-types)
 - [Enums and TypeSafeEnum](#enums-and-typesafeenum)
 - [Serialization Extensibility](#serialization-extensibility)
@@ -329,6 +331,18 @@ Run IntelliJ builds and Maven builds/tests sequentially: `Myster.iml` uses Maven
 `target/classes` and `target/test-classes` directories. Overlapping builds can remove
 classes while tests are running and cause misleading `NoClassDefFoundError` failures.
 
+### Unit Test Names and Organization
+
+Name unit test files and classes `Test<ClassName>` and place them in the same package as
+that production class under `src/test/java`. For example, `TypeListerThread` is tested by
+`com.myster.client.ui.TestTypeListerThread`. Add coverage to that class rather than creating
+separate files named after features or scenarios. Tests spanning several production classes
+should be split by the class whose behavior each test verifies; broader integration tests
+may use names describing the integration.
+
+Larger test files may group related cases in static inner classes while retaining the outer
+`Test<ClassName>` name. Ensure the test runner discovers and executes every group.
+
 ### Standalone UI TestinAnd SRAM would probably occupy more silicon than the actual processor.g
 
 **Pattern**: Add a `main()` method to UI panels for standalone testing without launching the full application.
@@ -426,6 +440,19 @@ Methods and fields speak for themselves. If a class needs section headers to be 
 **Examples**: `AccessListStorageUtils`, `FooUtils`, `MultiSourceUtils`
 
 **Note**: The codebase has some historical inconsistency between `Util`, `Utils`, and `Utilities` suffixes, but the convention going forward is `Utils`. The intent is the same in all cases: the class is a collection of static methods, not something you instantiate.
+
+### Network Addresses
+
+Pass host/IP/port endpoints between application components as `MysterAddress`, rather than
+strings. Keep text representations at UI, preference, and wire boundaries, and reuse existing
+address objects directly.
+
+Create or resolve `MysterAddress` off the EDT. In particular, `createMysterAddress()` calls
+`InetAddress.getByName()`: that DNS lookup can take an extremely long time. DNS resolution is
+the blocking concern. Do not call this factory from UI handlers or startup restoration on the
+EDT, even when the current input looks numeric. Snapshot boundary text on the EDT, resolve it with
+`PromiseFutures.execute(...)`, and dispatch UI work with `useEdt()` or an explicit EDT mapper.
+Never wait for address resolution on the EDT.
 
 ### Domain-Specific CID Types
 
