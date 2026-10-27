@@ -35,7 +35,7 @@ public class NewClientWindowAction implements ActionListener {
         ServerPickerDialog dialog = new ServerPickerDialog(
                 owner,
                 context.knownServerSource(),
-                "New Peer-to-Peer Connection",
+                "Connect to Server",
                 "Connect",
                 server -> server.getBestAddress().isPresent(),
                 "That server did not provide a usable address.");

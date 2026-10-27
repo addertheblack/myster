@@ -94,7 +94,7 @@ public class MysterMenuBar {
                                                   new NewSearchWindowAction(context, true),
                                                   java.awt.event.KeyEvent.VK_N,
                                                   true));
-        file.add(new MysterMenuItemFactory("New Peer-to-Peer Connection...",
+        file.add(new MysterMenuItemFactory("Connect to Server...",
                                                   new NewClientWindowAction(context)));
         file.add(new MysterMenuItemFactory("New Instant Message",
                                                   (java.awt.event.ActionEvent e) -> {
