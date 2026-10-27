@@ -108,13 +108,15 @@ public interface MysterServerPool {
 
     /**
      * Explicitly checks a user-entered address and completes with the exact server inserted or
-     * refreshed in this pool. Concurrent requests for the same address share in-flight work.
+     * refreshed in this pool. Concurrent requests for the same address share in-flight work,
+     * but each call returns an independently cancellable future. Cancelling one request does
+     * not cancel other requests or the pool-owned refresh, which may still update pool state.
      * Unlike passive suggestions, an explicit request retries addresses in the dead-address
      * cache. Identity is derived only from the returned server stats; failures complete the
      * future exceptionally and remain eligible for a later explicit retry.
      *
      * @param address resolved address explicitly requested by the user
-     * @return future for the pool-owned refreshed server
+     * @return caller-owned future for the pool-owned refreshed server
      */
     PromiseFuture<MysterServer> resolveServer(MysterAddress address);
 

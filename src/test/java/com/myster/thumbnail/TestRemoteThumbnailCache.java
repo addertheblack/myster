@@ -5,6 +5,8 @@ import static org.mockito.Mockito.*;
 
 import java.awt.image.BufferedImage;
 import java.io.IOException;
+import java.security.KeyPairGenerator;
+import java.security.PublicKey;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.CountDownLatch;
@@ -17,13 +19,15 @@ import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.Timeout;
+import org.mockito.ArgumentCaptor;
 
+import com.general.thread.Invoker;
+import com.general.thread.PromiseFuture;
 import com.myster.net.MysterAddress;
 import com.myster.net.MysterSocket;
 import com.myster.net.client.MysterStream;
+import com.myster.net.client.ParamBuilder;
 import com.myster.net.stream.client.UnknownProtocolException;
-import com.general.thread.PromiseFuture;
-import com.general.thread.Invoker;
 import com.myster.thumbnail.RemoteThumbnailCache.Request;
 import com.myster.type.MysterType;
 
@@ -33,6 +37,7 @@ class TestRemoteThumbnailCache {
     private final MysterSocket socket = mock(MysterSocket.class);
     private final MysterAddress address = MysterAddress.createMysterAddress("127.0.0.1:6669");
     private final MysterType type = new MysterType(new byte[16]);
+    private final PublicKey key = KeyPairGenerator.getInstance("Ed25519").generateKeyPair().getPublic();
     private final List<BufferedImage> delivered = new ArrayList<>();
     private final AtomicReference<Thread> worker = new AtomicReference<>();
     private RemoteThumbnailCache thumbnailCache;
@@ -42,7 +47,7 @@ class TestRemoteThumbnailCache {
 
     @BeforeEach
     void setup() throws Exception {
-        when(stream.makeStreamConnection(address)).thenAnswer(_ -> {
+        when(stream.makeStreamConnection(any(ParamBuilder.class))).thenAnswer(_ -> {
             worker.set(Thread.currentThread());
             return socket;
         });
@@ -55,13 +60,17 @@ class TestRemoteThumbnailCache {
     }
 
     private Request request(String filename, int size) {
-        return new Request(address, type, filename, size);
+        return new Request(address, type, filename, size, key);
     }
 
     private void load(Request request) throws Exception {
         worker.set(null);
         CountDownLatch closed = new CountDownLatch(1);
-        doAnswer(_ -> { closed.countDown(); return null; }).when(socket).close();
+        doAnswer(_ -> {
+            closed.countDown();
+            return null;
+        }).when(socket).close();
+
         SwingUtilities.invokeAndWait(() -> start(request));
         assertTrue(closed.await(5, TimeUnit.SECONDS),
                 () -> "Expected a thumbnail transfer for " + request);
@@ -73,7 +82,9 @@ class TestRemoteThumbnailCache {
     private void start(Request request) {
         current = thumbnailCache.load(request);
         current.withInvoker(Invoker.EDT).addResultListener(image -> {
-            if (image != null) delivered.add(image);
+            if (image != null) {
+                delivered.add(image);
+            }
         });
     }
 
@@ -92,7 +103,7 @@ class TestRemoteThumbnailCache {
         // Cache hits still queue their result listeners on the EDT.
         SwingUtilities.invokeAndWait(() ->
                 assertEquals(List.of(small, large, small, large), delivered));
-        verify(stream, times(2)).makeStreamConnection(address);
+        verify(stream, times(2)).makeStreamConnection(any(ParamBuilder.class));
     }
 
     @Test
@@ -120,7 +131,9 @@ class TestRemoteThumbnailCache {
             SwingUtilities.invokeAndWait(() -> {
                 current = thumbnailCache.load(request("new", 128));
                 current.withInvoker(Invoker.EDT).addResultListener(image -> {
-                    if (image != null) delivered.add(image);
+                    if (image != null) {
+                        delivered.add(image);
+                    }
                 });
             });
             release.countDown();
@@ -142,7 +155,7 @@ class TestRemoteThumbnailCache {
         BufferedImage image = new BufferedImage(2, 1, BufferedImage.TYPE_INT_ARGB);
         when(stream.getThumbnail(socket, type, "image", 128)).thenReturn(image);
         CountDownLatch connected = new CountDownLatch(1);
-        when(stream.makeStreamConnection(address)).thenAnswer(_ -> {
+        when(stream.makeStreamConnection(any(ParamBuilder.class))).thenAnswer(_ -> {
             worker.set(Thread.currentThread());
             connected.countDown();
             return socket;
@@ -161,7 +174,7 @@ class TestRemoteThumbnailCache {
         assertTrue(delivered.isEmpty());
         load(request("image", 128));
         assertEquals(List.of(image), delivered);
-        verify(stream, times(2)).makeStreamConnection(address);
+        verify(stream, times(2)).makeStreamConnection(any(ParamBuilder.class));
     }
 
     @Test
@@ -174,14 +187,14 @@ class TestRemoteThumbnailCache {
             start(request("missing", 128));
             start(request("error", 128));
         });
-        verify(stream, times(2)).makeStreamConnection(address);
+        verify(stream, times(2)).makeStreamConnection(any(ParamBuilder.class));
         load(request("unsupported", 128));
         SwingUtilities.invokeAndWait(() -> start(request("another file", 256)));
-        verify(stream, times(3)).makeStreamConnection(address);
+        verify(stream, times(3)).makeStreamConnection(any(ParamBuilder.class));
         assertTrue(delivered.isEmpty());
         SwingUtilities.invokeAndWait(thumbnailCache::reset);
         load(request("missing", 128));
-        verify(stream, times(4)).makeStreamConnection(address);
+        verify(stream, times(4)).makeStreamConnection(any(ParamBuilder.class));
     }
 
     @Test
@@ -232,14 +245,15 @@ class TestRemoteThumbnailCache {
             assertTrue(release.await(5, TimeUnit.SECONDS));
             return null;
         });
-        when(stream.makeStreamConnection(otherAddress)).thenReturn(otherSocket);
+        doReturn(otherSocket).when(stream).makeStreamConnection(argThat((ParamBuilder params) ->
+                params.getAddress().filter(otherAddress::equals).isPresent()));
         when(stream.getThumbnail(otherSocket, type, "fast", 128)).thenReturn(image);
         try {
             SwingUtilities.invokeAndWait(() -> start(request("slow", 128)));
             assertTrue(reading.await(5, TimeUnit.SECONDS));
             SwingUtilities.invokeAndWait(() -> {
                 otherCache.set(new RemoteThumbnailCache(stream));
-                otherCache.get().load(new Request(otherAddress, type, "fast", 128))
+                otherCache.get().load(new Request(otherAddress, type, "fast", 128, key))
                         .withInvoker(Invoker.EDT)
                         .addResultListener(_ -> otherLoaded.countDown());
             });
@@ -247,9 +261,14 @@ class TestRemoteThumbnailCache {
             verify(otherSocket).close();
         } finally {
             release.countDown();
-            if (worker.get() != null) worker.get().join(5000);
+            if (worker.get() != null) {
+                worker.get().join(5000);
+            }
+
             SwingUtilities.invokeAndWait(() -> {
-                if (otherCache.get() != null) otherCache.get().close();
+                if (otherCache.get() != null) {
+                    otherCache.get().close();
+                }
             });
         }
     }
@@ -260,7 +279,7 @@ class TestRemoteThumbnailCache {
         CountDownLatch reading = new CountDownLatch(1);
         CountDownLatch release = new CountDownLatch(1);
         CountDownLatch replacementConnected = new CountDownLatch(1);
-        when(stream.makeStreamConnection(address)).thenAnswer(_ -> {
+        when(stream.makeStreamConnection(any(ParamBuilder.class))).thenAnswer(_ -> {
             worker.set(Thread.currentThread());
             return socket;
         }).thenAnswer(_ -> {
@@ -299,5 +318,30 @@ class TestRemoteThumbnailCache {
             start(request("image", 128));
         });
         verifyNoInteractions(stream);
+    }
+
+    @Test
+    void requestsDoNotShareResultsAcrossKeys() throws Exception {
+        PublicKey otherKey = KeyPairGenerator.getInstance("Ed25519").generateKeyPair().getPublic();
+        Request first = request("file", 128);
+        Request other = new Request(address, type, "file", 128, otherKey);
+        BufferedImage firstImage = new BufferedImage(1, 1, BufferedImage.TYPE_INT_ARGB);
+        BufferedImage otherImage = new BufferedImage(2, 1, BufferedImage.TYPE_INT_ARGB);
+        when(stream.getThumbnail(socket, type, "file", 128)).thenReturn(firstImage, otherImage);
+
+        assertFalse(first.sameFile(other));
+        load(first);
+        SwingUtilities.invokeAndWait(() -> assertTrue(thumbnailCache.lookup(other).isEmpty()));
+        load(other);
+
+        SwingUtilities.invokeAndWait(() -> {
+            assertSame(firstImage, thumbnailCache.lookup(first).orElseThrow());
+            assertSame(otherImage, thumbnailCache.lookup(other).orElseThrow());
+        });
+        var params = ArgumentCaptor.forClass(ParamBuilder.class);
+        verify(stream, times(2)).makeStreamConnection(params.capture());
+        assertEquals(List.of(key, otherKey), params.getAllValues().stream()
+                .map(value -> value.getExpectedServerPublicKey().orElseThrow()).toList());
+        verify(stream, never()).makeStreamConnection(any(MysterAddress.class));
     }
 }

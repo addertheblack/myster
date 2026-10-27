@@ -7,11 +7,37 @@
     <option name="selectedModelId" value="auto" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="fe0d93f5-a1b5-4669-89e3-19e762d0ae4a" name="Changes" comment="Enhance exception handling: add cause-preserving constructors for BadPacketException and DecryptionException, and update diagnostics to retain query failure details in ThreeDnsLookupResult">
+    <list default="true" id="fe0d93f5-a1b5-4669-89e3-19e762d0ae4a" name="Changes" comment="Add Myster Design skill">
       <change beforePath="$PROJECT_DIR$/Myster.iws" beforeDir="false" afterPath="$PROJECT_DIR$/Myster.iws" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/docs/conventions/myster-coding-conventions.md" beforeDir="false" afterPath="$PROJECT_DIR$/docs/conventions/myster-coding-conventions.md" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/docs/plans/README.md" beforeDir="false" afterPath="$PROJECT_DIR$/docs/plans/README.md" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/com/general/mclist/TreeMCList.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/com/general/mclist/TreeMCList.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/com/myster/Myster.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/com/myster/Myster.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/com/myster/client/ui/ClientWindow.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/com/myster/client/ui/ClientWindow.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/com/myster/client/ui/ClientWindowProvider.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/com/myster/client/ui/ClientWindowProvider.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/com/myster/client/ui/FileInfoListerThread.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/com/myster/client/ui/FileInfoListerThread.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/com/myster/client/ui/FileListAction.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/com/myster/client/ui/FileListAction.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/com/myster/client/ui/FileListerThread.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/com/myster/client/ui/FileListerThread.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/com/myster/client/ui/IdentityResolver.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/com/myster/client/ui/IdentityResolver.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/com/myster/client/ui/TypeListerThread.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/com/myster/client/ui/TypeListerThread.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/com/myster/client/ui/TypeMetadataCache.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/com/myster/client/ui/TypeMetadataCache.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/com/myster/filemanager/ui/FmiChooser.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/com/myster/filemanager/ui/FmiChooser.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/com/myster/progress/ui/ProgressManagerWindow.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/com/myster/progress/ui/ProgressManagerWindow.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/com/myster/search/ui/SearchTab.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/com/myster/search/ui/SearchTab.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/com/myster/server/ui/DownloadInfoPanel.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/com/myster/server/ui/DownloadInfoPanel.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/com/myster/thumbnail/RemoteThumbnailCache.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/com/myster/thumbnail/RemoteThumbnailCache.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/com/myster/thumbnail/RemoteThumbnailTask.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/com/myster/thumbnail/RemoteThumbnailTask.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/com/myster/tracker/MysterServerPool.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/com/myster/tracker/MysterServerPool.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/com/myster/tracker/MysterServerPoolImpl.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/com/myster/tracker/MysterServerPoolImpl.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/com/myster/tracker/PublicKeyIdentity.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/com/myster/tracker/PublicKeyIdentity.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/com/myster/tracker/ui/KnownServerSource.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/com/myster/tracker/ui/KnownServerSource.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/com/myster/tracker/ui/OpenConnectionHandler.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/com/myster/tracker/ui/OpenConnectionHandler.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/com/myster/tracker/ui/TrackerThreeDnsPanel.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/com/myster/tracker/ui/TrackerThreeDnsPanel.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/com/myster/ui/MysterFrameContext.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/com/myster/ui/MysterFrameContext.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/com/myster/ui/menubar/event/NewClientWindowAction.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/com/myster/ui/menubar/event/NewClientWindowAction.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/test/java/com/myster/client/ui/TestClientPreviewController.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/test/java/com/myster/client/ui/TestClientPreviewController.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/test/java/com/myster/client/ui/TestTypeMetadataCache.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/test/java/com/myster/client/ui/TestTypeMetadataCache.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/test/java/com/myster/thumbnail/TestRemoteThumbnailCache.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/test/java/com/myster/thumbnail/TestRemoteThumbnailCache.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/test/java/com/myster/thumbnail/TestRemoteThumbnailTask.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/test/java/com/myster/thumbnail/TestRemoteThumbnailTask.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/test/java/com/myster/tracker/TestMysterServerPoolImpl.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/test/java/com/myster/tracker/TestMysterServerPoolImpl.java" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -210,6 +236,9 @@
     &quot;accountId&quot;: &quot;f166ab81-b797-43a8-b371-d9c6f764e006&quot;
   }
 }</component>
+  <component name="HierarchyBrowserManager">
+    <option name="SCOPE" value="Production" />
+  </component>
   <component name="HighlightingSettingsPerFile">
     <setting file="jar://$USER_HOME$/Java/jdk-26.0.2.1/lib/src.zip!/java.base/java/lang/Class.java" root0="SKIP_INSPECTION" />
     <setting file="jar://$USER_HOME$/Java/jdk-26.0.2.1/lib/src.zip!/java.base/java/lang/Module.java" root0="SKIP_INSPECTION" />
@@ -242,23 +271,23 @@
   </component>
   <component name="NextEditCompletionFeaturesState">
     <decayedCancelled>
-      <entry key="MS100" value="1.321188228232832" />
-      <entry key="MS500" value="3.031978183906116" />
-      <entry key="S2" value="9.929850016041707" />
-      <entry key="S5" value="18.984383385855686" />
-      <entry key="S10" value="25.951775598400044" />
-      <entry key="S30" value="34.74982467683589" />
-      <entry key="S60" value="53.52496845494415" />
-      <entry key="M2" value="101.2428714228513" />
-      <entry key="M5" value="179.43884836882174" />
-      <entry key="M10" value="223.2350083449128" />
-      <entry key="M15" value="240.7344542432943" />
-      <entry key="M30" value="259.93202008864256" />
-      <entry key="H1" value="270.22075207653637" />
-      <entry key="H2" value="275.5475658467756" />
-      <entry key="H4" value="278.2589856367921" />
-      <entry key="D1" value="589.9108648147007" />
-      <entry key="W1" value="8881.26928505351" />
+      <entry key="MS100" value="1.9526379980439375" />
+      <entry key="MS500" value="1.9903428881751037" />
+      <entry key="S2" value="2.013277681793252" />
+      <entry key="S5" value="2.2799546345723236" />
+      <entry key="S10" value="2.753453531765814" />
+      <entry key="S30" value="5.901249899248601" />
+      <entry key="S60" value="14.274377741376162" />
+      <entry key="M2" value="27.38261063096851" />
+      <entry key="M5" value="51.541566543773854" />
+      <entry key="M10" value="70.58673598041203" />
+      <entry key="M15" value="79.64364224438299" />
+      <entry key="M30" value="90.62341275171931" />
+      <entry key="H1" value="97.01080391186889" />
+      <entry key="H2" value="102.55971321531594" />
+      <entry key="H4" value="127.92771343172595" />
+      <entry key="D1" value="1633.4148942308539" />
+      <entry key="W1" value="11571.857892018841" />
     </decayedCancelled>
     <decayedSelected>
       <entry key="MS100" value="0.0" />
@@ -268,35 +297,35 @@
       <entry key="S10" value="0.0" />
       <entry key="S30" value="0.0" />
       <entry key="S60" value="0.0" />
-      <entry key="M2" value="0.0" />
-      <entry key="M5" value="0.0" />
-      <entry key="M10" value="0.0" />
-      <entry key="M15" value="1.1813516241807981E-216" />
-      <entry key="M30" value="1.5371085968677757E-108" />
-      <entry key="H1" value="1.7533445355760197E-54" />
-      <entry key="H2" value="1.8726155594026945E-27" />
-      <entry key="H4" value="6.119860120221364E-14" />
-      <entry key="D1" value="0.01297682489868245" />
-      <entry key="W1" value="4.849776697064701" />
+      <entry key="M2" value="8.490641113134585E-223" />
+      <entry key="M5" value="1.4844862992181684E-89" />
+      <entry key="M10" value="3.8529031900868815E-45" />
+      <entry key="M15" value="2.4576803542137392E-30" />
+      <entry key="M30" value="1.5676990636642348E-15" />
+      <entry key="H1" value="3.959418127490533E-8" />
+      <entry key="H2" value="1.9903953488103218E-4" />
+      <entry key="H4" value="0.014442795005985621" />
+      <entry key="D1" value="0.9817101611292145" />
+      <entry key="W1" value="5.328511814673996" />
     </decayedSelected>
     <decayedShown>
-      <entry key="MS100" value="1.2955876198739174" />
-      <entry key="MS500" value="3.02060761633899" />
-      <entry key="S2" value="9.918980813289178" />
-      <entry key="S5" value="18.967979063124478" />
-      <entry key="S10" value="25.935470208900078" />
-      <entry key="S30" value="34.74070294863621" />
-      <entry key="S60" value="53.51930375192583" />
-      <entry key="M2" value="101.2391864480078" />
-      <entry key="M5" value="179.4368707083407" />
-      <entry key="M10" value="223.23388151847823" />
-      <entry key="M15" value="240.7336664266369" />
-      <entry key="M30" value="259.9316061391223" />
-      <entry key="H1" value="270.2205397371288" />
-      <entry key="H2" value="275.5474582890093" />
-      <entry key="H4" value="278.25893150452043" />
-      <entry key="D1" value="589.9238215884853" />
-      <entry key="W1" value="8886.119004554954" />
+      <entry key="MS100" value="0.9592641193722171" />
+      <entry key="MS500" value="1.0003134547064318" />
+      <entry key="S2" value="1.3180747064808924" />
+      <entry key="S5" value="1.9012297429929306" />
+      <entry key="S10" value="2.541387488797395" />
+      <entry key="S30" value="5.824600430999762" />
+      <entry key="S60" value="14.235001818964527" />
+      <entry key="M2" value="27.362233262160533" />
+      <entry key="M5" value="51.532491181778724" />
+      <entry key="M10" value="70.58174453290393" />
+      <entry key="M15" value="79.64016380181343" />
+      <entry key="M30" value="90.62158043964136" />
+      <entry key="H1" value="97.00986054103359" />
+      <entry key="H2" value="102.55943254989677" />
+      <entry key="H4" value="127.94190862375078" />
+      <entry key="D1" value="1634.3964811366382" />
+      <entry key="W1" value="11577.186323937676" />
     </decayedShown>
   </component>
   <component name="PerforceConfiguration">
@@ -360,40 +389,45 @@
     <option name="hideEmptyMiddlePackages" value="true" />
     <option name="showLibraryContents" value="true" />
   </component>
-  <component name="PropertiesComponent"><![CDATA[{
-  "keyToString": {
-    "Application.Myster.executor": "Run",
-    "Application.MysterServerPoolStressMain.executor": "Debug",
-    "Application.ThumbnailPreview.executor": "Run",
-    "JUnit.TestFileStatsBatch.executor": "Run",
-    "JUnit.TestFileTypeList.executor": "Debug",
-    "JUnit.TestFileTypeList.testChangingPathTriggersReindexing.executor": "Debug",
-    "JUnit.TestFileTypeList.testMaximumDepthIndexing.executor": "Debug",
-    "JUnit.TestThreeDnsLookup.failedCandidateFallsBackAndClosestExhaustionIsExplicit.executor": "Debug",
-    "KEY_CHAT_IN_TOOLWINDOW": "false",
-    "Maven.Myster [package].executor": "Run",
-    "ModuleVcsDetector.initialDetectionPerformed": "true",
-    "RunOnceActivity.MCP Project settings loaded": "true",
-    "RunOnceActivity.ShowReadmeOnStart": "true",
-    "RunOnceActivity.git.unshallow": "true",
-    "RunOnceActivity.typescript.service.memoryLimit.init": "true",
-    "codeWithMe.voiceChat.enabledByDefault": "false",
-    "com.intellij.ml.llm.matterhorn.ej.ui.settings.DefaultModelSelectionForGA.v1": "true",
-    "copilot.chat.legacySessionMetadata.migrated": "true",
-    "git-widget-placeholder": "master",
-    "junie.onboarding.icon.badge.shown": "true",
-    "kotlin-language-version-configured": "true",
-    "last_opened_file_path": "/home/andrew/repos/myster",
-    "node.js.detected.package.eslint": "true",
-    "node.js.detected.package.tslint": "true",
-    "node.js.selected.package.eslint": "(autodetect)",
-    "node.js.selected.package.tslint": "(autodetect)",
-    "nodejs_package_manager_path": "npm",
-    "settings.build.tools.auto.reload": "ALL",
-    "settings.editor.selected.configurable": "preferences.pluginManager",
-    "to.speed.mode.migration.done": "true"
+  <component name="PropertiesComponent">{
+  &quot;keyToString&quot;: {
+    &quot;Application.Myster.executor&quot;: &quot;Run&quot;,
+    &quot;Application.MysterServerPoolStressMain.executor&quot;: &quot;Debug&quot;,
+    &quot;Application.ThumbnailPreview.executor&quot;: &quot;Run&quot;,
+    &quot;JUnit.TestFileStatsBatch.executor&quot;: &quot;Run&quot;,
+    &quot;JUnit.TestFileTypeList.executor&quot;: &quot;Debug&quot;,
+    &quot;JUnit.TestFileTypeList.testChangingPathTriggersReindexing.executor&quot;: &quot;Debug&quot;,
+    &quot;JUnit.TestFileTypeList.testMaximumDepthIndexing.executor&quot;: &quot;Debug&quot;,
+    &quot;JUnit.TestThreeDnsLookup.failedCandidateFallsBackAndClosestExhaustionIsExplicit.executor&quot;: &quot;Debug&quot;,
+    &quot;KEY_CHAT_IN_TOOLWINDOW&quot;: &quot;false&quot;,
+    &quot;Maven.Myster [package].executor&quot;: &quot;Run&quot;,
+    &quot;ModuleVcsDetector.initialDetectionPerformed&quot;: &quot;true&quot;,
+    &quot;RunOnceActivity.MCP Project settings loaded&quot;: &quot;true&quot;,
+    &quot;RunOnceActivity.ShowReadmeOnStart&quot;: &quot;true&quot;,
+    &quot;RunOnceActivity.git.unshallow&quot;: &quot;true&quot;,
+    &quot;RunOnceActivity.typescript.service.memoryLimit.init&quot;: &quot;true&quot;,
+    &quot;codeWithMe.voiceChat.enabledByDefault&quot;: &quot;false&quot;,
+    &quot;com.intellij.ml.llm.matterhorn.ej.ui.settings.DefaultModelSelectionForGA.v1&quot;: &quot;true&quot;,
+    &quot;copilot.chat.legacySessionMetadata.migrated&quot;: &quot;true&quot;,
+    &quot;git-widget-placeholder&quot;: &quot;master&quot;,
+    &quot;junie.onboarding.icon.badge.shown&quot;: &quot;true&quot;,
+    &quot;kotlin-language-version-configured&quot;: &quot;true&quot;,
+    &quot;last_opened_file_path&quot;: &quot;/home/andrew/repos/myster&quot;,
+    &quot;node.js.detected.package.eslint&quot;: &quot;true&quot;,
+    &quot;node.js.detected.package.tslint&quot;: &quot;true&quot;,
+    &quot;node.js.selected.package.eslint&quot;: &quot;(autodetect)&quot;,
+    &quot;node.js.selected.package.tslint&quot;: &quot;(autodetect)&quot;,
+    &quot;nodejs_package_manager_path&quot;: &quot;npm&quot;,
+    &quot;settings.build.tools.auto.reload&quot;: &quot;ALL&quot;,
+    &quot;settings.editor.selected.configurable&quot;: &quot;preferences.sourceCode.JAVA&quot;,
+    &quot;to.speed.mode.migration.done&quot;: &quot;true&quot;
   }
-}]]></component>
+}</component>
+  <component name="RecentsManager">
+    <key name="CopyFile.RECENT_KEYS">
+      <recent name="$PROJECT_DIR$" />
+    </key>
+  </component>
   <component name="RunManager" selected="Application.Myster">
     <configuration selected="false" default="true" type="Applet" factoryName="Applet">
       <module name="" />
@@ -783,7 +817,31 @@
       <option name="project" value="LOCAL" />
       <updated>1791741015389</updated>
     </task>
-    <option name="localTasksCounter" value="22" />
+    <task id="LOCAL-00022" summary="Implement multi-folder keyboard navigation: enable Right/Left arrow keys to open/close all selected tree containers, preserving selection and improving user experience.">
+      <option name="closed" value="true" />
+      <created>1792013489678</created>
+      <option name="number" value="00022" />
+      <option name="presentableId" value="LOCAL-00022" />
+      <option name="project" value="LOCAL" />
+      <updated>1792013489678</updated>
+    </task>
+    <task id="LOCAL-00023" summary="Add Myster resource links documentation">
+      <option name="closed" value="true" />
+      <created>1792864848154</created>
+      <option name="number" value="00023" />
+      <option name="presentableId" value="LOCAL-00023" />
+      <option name="project" value="LOCAL" />
+      <updated>1792864848154</updated>
+    </task>
+    <task id="LOCAL-00024" summary="Add Myster Design skill">
+      <option name="closed" value="true" />
+      <created>1792864878637</created>
+      <option name="number" value="00024" />
+      <option name="presentableId" value="LOCAL-00024" />
+      <option name="project" value="LOCAL" />
+      <updated>1792864878637</updated>
+    </task>
+    <option name="localTasksCounter" value="25" />
     <servers />
   </component>
   <component name="TodoView" selected-index="0">
@@ -847,7 +905,10 @@
     <MESSAGE value="Add Maven plugin for runtime module detection and update README with packaging details" />
     <MESSAGE value="Implement folder actions in File Manager: add refresh functionality, open folder option, and enhance path display" />
     <MESSAGE value="Enhance exception handling: add cause-preserving constructors for BadPacketException and DecryptionException, and update diagnostics to retain query failure details in ThreeDnsLookupResult" />
-    <option name="LAST_COMMIT_MESSAGE" value="Enhance exception handling: add cause-preserving constructors for BadPacketException and DecryptionException, and update diagnostics to retain query failure details in ThreeDnsLookupResult" />
+    <MESSAGE value="Implement multi-folder keyboard navigation: enable Right/Left arrow keys to open/close all selected tree containers, preserving selection and improving user experience." />
+    <MESSAGE value="Add Myster resource links documentation" />
+    <MESSAGE value="Add Myster Design skill" />
+    <option name="LAST_COMMIT_MESSAGE" value="Add Myster Design skill" />
   </component>
   <component name="VssConfiguration">
     <CheckoutOptions>

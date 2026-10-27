@@ -4,6 +4,8 @@ This document captures Myster-specific coding conventions, preferred libraries, 
 
 **Quick index** — what lives here:
 - **Simplicity** — investigate ways to reduce special cases, independent state and coordination
+- **Conditionals** — always use braces and multiline bodies, including guard clauses
+- **Code paragraphs** — separate conceptual steps with blank lines; keep related statements together
 - **AnswerDialog** — never use `JOptionPane`; use `AnswerDialog` instead
 - **JMCList** — prefer over raw `JTable` for multi-column lists
 - **Modal Dialogs** — must extend `JDialog`, not `JFrame`
@@ -40,6 +42,8 @@ This document captures Myster-specific coding conventions, preferred libraries, 
 ## Table of Contents
 
 - [Simplicity](#simplicity)
+- [Conditional Formatting](#conditional-formatting)
+- [Code Paragraphs](#code-paragraphs)
 - [UI Components](#ui-components)
   - [Dialogs — AnswerDialog not JOptionPane](#dialogs--use-answerdialog-not-joptionpane)
   - [JMCList](#jmclist-preferences)
@@ -79,6 +83,51 @@ reason about, while preserving required behavior.
 For example, hash discovery and saved-source recovery both suggest download candidates. Routing
 both through `newDownload()` lets them share pause and termination handling.
 
+## Conditional Formatting
+
+Always use braces and multiline bodies for `if`, `else if`, and `else`, even when a branch
+contains only one statement. This includes guard clauses, early returns, and throws.
+Use a space between `if` and `(`. Never omit the braces or compress a braced body onto one line.
+
+**Use:**
+
+```java
+if (condition) {
+    return foo;
+}
+```
+
+**Do not use:**
+
+```java
+if (condition) return foo;
+if (condition) { return foo; }
+```
+
+## Code Paragraphs
+
+Use blank lines as paragraph breaks between groups of statements that perform different
+conceptual steps. Keep closely related statements together, and insert one blank line when
+the purpose changes. Group by meaning throughout methods and constructors, including tests.
+
+In GUI-building methods, keep a component's construction, configuration, listener wiring,
+and addition together. Separate the next component's setup with a blank line:
+
+```java
+JPanel detailsPanel = new JPanel(new BorderLayout());
+detailsPanel.setBorder(BorderFactory.createEmptyBorder(5, 5, 5, 5));
+add(detailsPanel);
+
+JButton refreshButton = new JButton("Refresh");
+refreshButton.setToolTipText("Reload the server's files");
+refreshButton.addActionListener(_ -> refresh());
+add(refreshButton);
+```
+
+Apply the same principle to other code: validation, preparation, execution, and result handling
+are distinct paragraphs when they represent separate steps. Make these boundaries visible
+through whitespace so the reader can scan the method's structure.
+
 ## UI Components
 
 ### Display Scaling
@@ -113,7 +162,9 @@ String answer = AnswerDialog.simpleAlert(
         AnswerDialog.getCenteredFrame(),
         "No extensions specified. Continue?",
         new String[] { "Continue", "Cancel" });
-if (!"Continue".equals(answer)) return;
+if (!"Continue".equals(answer)) {
+    return;
+}
 ```
 
 ### JMCList Preferences

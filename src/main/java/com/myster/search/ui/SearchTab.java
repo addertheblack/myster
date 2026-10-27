@@ -39,7 +39,10 @@ import com.general.util.GridBagBuilder;
 import com.general.util.IconLoader;
 import com.general.util.MessageField;
 import com.general.util.Util;
-import com.myster.client.ui.ClientWindow;
+import com.myster.link.ui.FileLinkCopyActionUtils;
+import com.myster.search.MysterFileStub;
+import com.myster.tracker.MysterIdentity;
+import com.myster.tracker.PublicKeyIdentity;
 import com.myster.net.client.MysterProtocol;
 import com.myster.net.stream.client.msdownload.DownloadStartException;
 import com.myster.search.HashCrawlerManager;
@@ -175,12 +178,15 @@ public class SearchTab extends JPanel implements SearchResultListener, Sayable {
             var item = fileList.getMCListItem(moop);
             var downloadItem = item.getObject();
 
-            ClientWindow w = context.clientWindowProvider()
-                    .getOrCreateWindow(new ClientWindow.ClientWindowData(Optional
-                                             .of(downloadItem.getHostAddress().toString()),
-                                                                       Optional.of(getMysterType()),
-                                                                       Optional.of(item.getObject().getName())));
-            w.show();
+            MysterServer server = downloadItem.getServer();
+            context.clientWindowProvider()
+                   .openWindow(downloadItem.getHostAddress(),
+                               Optional.ofNullable(server)
+                                       .map(MysterServer::getIdentity)
+                                       .flatMap(MysterIdentity::extractPublicKey)
+                                       .map(PublicKeyIdentity::new),
+                               Optional.of(getMysterType()),
+                               Optional.of(downloadItem.getName()));
         });
 
         JMenuItem downloadMenuItem = ContextMenu.createDownloadItem(fileList, _ -> {
@@ -201,7 +207,16 @@ public class SearchTab extends JPanel implements SearchResultListener, Sayable {
             }
         });
 
-        ContextMenu.addPopUpMenu(fileList, ()->{}, openContainingFolder, null, downloadMenuItem, downloadToMenuItem, null, bookmarkMenuItem);
+        var popup = ContextMenu.addPopUpMenu(fileList, ()->{}, openContainingFolder, null, downloadMenuItem, downloadToMenuItem, null, bookmarkMenuItem);
+        popup.add(FileLinkCopyActionUtils.remoteItem(
+                () -> SwingUtilities.getWindowAncestor(this), context.linkService(), () -> {
+                    if (fileList.getSelectedIndexes().length != 1) return Optional.empty();
+                    SearchResult result = fileList.getMCListItem(fileList.getSelectedIndex()).getObject();
+                    return Optional.of(new FileLinkCopyActionUtils.RemoteFile(new MysterFileStub(
+                            result.getHostAddress(), getMysterType(), result.getName()),
+                                                                              Optional.ofNullable(result.getServer()).map(MysterServer::getIdentity)
+                                    .flatMap(MysterIdentity::extractPublicKey)));
+                }));
     }
 
     private void downloadRows(int[] indexes, boolean alwaysAskForDirectory) {

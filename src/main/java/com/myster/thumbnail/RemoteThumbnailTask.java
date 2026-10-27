@@ -1,6 +1,7 @@
 package com.myster.thumbnail;
 
 import java.awt.image.BufferedImage;
+import java.security.PublicKey;
 import java.util.Objects;
 import java.util.concurrent.CancellationException;
 
@@ -8,6 +9,7 @@ import com.general.thread.AbstractCancellableCallable;
 import com.myster.net.MysterAddress;
 import com.myster.net.MysterSocket;
 import com.myster.net.client.MysterStream;
+import com.myster.net.client.ParamBuilder;
 import com.myster.type.MysterType;
 
 /**
@@ -22,17 +24,17 @@ public final class RemoteThumbnailTask extends AbstractCancellableCallable<Buffe
     private final MysterType type;
     private final String filename;
     private final int size;
+    private final PublicKey expectedKey;
 
-    /**
-     * @param transferLock shared by all tasks from one cache, including cancelled transfers
-     *                     still finishing after a reset; only worker threads acquire it
-     */
+    /** Every thumbnail connection must verify this key, even after earlier verification. */
     public RemoteThumbnailTask(MysterStream stream,
                                Object transferLock,
                                MysterAddress address,
                                MysterType type,
                                String filename,
-                               int size) {
+                               int size,
+                               PublicKey expectedKey) {
+        this.expectedKey = Objects.requireNonNull(expectedKey);
         this.stream = Objects.requireNonNull(stream);
         this.transferLock = Objects.requireNonNull(transferLock);
         this.address = Objects.requireNonNull(address);
@@ -45,7 +47,9 @@ public final class RemoteThumbnailTask extends AbstractCancellableCallable<Buffe
     public BufferedImage call() throws Exception {
         synchronized (transferLock) {
             checkCancelled();
-            try (MysterSocket opened = stream.makeStreamConnection(address)) {
+
+            ParamBuilder params = new ParamBuilder(address).withExpectedServerPublicKey(expectedKey);
+            try (MysterSocket opened = stream.makeStreamConnection(params)) {
                 checkCancelled();
                 return stream.getThumbnail(opened, type, filename, size);
             }

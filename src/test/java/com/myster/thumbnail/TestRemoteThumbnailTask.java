@@ -5,6 +5,8 @@ import static org.mockito.Mockito.*;
 
 import java.awt.image.BufferedImage;
 import java.io.IOException;
+import java.security.KeyPairGenerator;
+import java.security.PublicKey;
 import java.util.concurrent.CancellationException;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.FutureTask;
@@ -14,11 +16,13 @@ import javax.swing.SwingUtilities;
 
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.Timeout;
+import org.mockito.ArgumentCaptor;
 
 import com.general.thread.PromiseFutures;
 import com.myster.net.MysterAddress;
 import com.myster.net.MysterSocket;
 import com.myster.net.client.MysterStream;
+import com.myster.net.client.ParamBuilder;
 import com.myster.type.MysterType;
 
 @Timeout(10)
@@ -27,18 +31,19 @@ class TestRemoteThumbnailTask {
     private final Object transferLock = new Object();
     private final MysterAddress address = MysterAddress.createMysterAddress("127.0.0.1:6669");
     private final MysterType type = new MysterType(new byte[16]);
+    private final PublicKey key = KeyPairGenerator.getInstance("Ed25519").generateKeyPair().getPublic();
 
     TestRemoteThumbnailTask() throws Exception {}
 
     private RemoteThumbnailTask task(String filename) {
-        return new RemoteThumbnailTask(stream, transferLock, address, type, filename, 128);
+        return new RemoteThumbnailTask(stream, transferLock, address, type, filename, 128, key);
     }
 
     @Test
     void forwardsRequestAndClosesSocketOnSuccessMissAndFailure() throws Exception {
         MysterSocket socket = mock(MysterSocket.class);
         BufferedImage image = new BufferedImage(2, 1, BufferedImage.TYPE_INT_ARGB);
-        when(stream.makeStreamConnection(address)).thenAnswer(_ -> {
+        when(stream.makeStreamConnection(any(ParamBuilder.class))).thenAnswer(_ -> {
             assertFalse(SwingUtilities.isEventDispatchThread());
             return socket;
         });
@@ -78,7 +83,7 @@ class TestRemoteThumbnailTask {
         CountDownLatch connecting = new CountDownLatch(1);
         CountDownLatch releaseConnect = new CountDownLatch(1);
         CountDownLatch closed = new CountDownLatch(1);
-        when(stream.makeStreamConnection(address)).thenAnswer(_ -> {
+        when(stream.makeStreamConnection(any(ParamBuilder.class))).thenAnswer(_ -> {
             connecting.countDown();
             assertTrue(releaseConnect.await(5, TimeUnit.SECONDS));
             return socket;
@@ -109,7 +114,7 @@ class TestRemoteThumbnailTask {
         CountDownLatch closing = new CountDownLatch(1);
         CountDownLatch finishClose = new CountDownLatch(1);
         CountDownLatch replacementConnected = new CountDownLatch(1);
-        when(stream.makeStreamConnection(address)).thenReturn(firstSocket).thenAnswer(_ -> {
+        when(stream.makeStreamConnection(any(ParamBuilder.class))).thenReturn(firstSocket).thenAnswer(_ -> {
             replacementConnected.countDown();
             return secondSocket;
         });
@@ -140,5 +145,20 @@ class TestRemoteThumbnailTask {
             finishRead.countDown();
             finishClose.countDown();
         }
+    }
+
+    @Test
+    void pinsTheSession() throws Exception {
+        MysterSocket socket = mock(MysterSocket.class);
+        when(stream.makeStreamConnection(any(ParamBuilder.class))).thenReturn(socket);
+
+        task("file").call();
+
+        var params = ArgumentCaptor.forClass(ParamBuilder.class);
+        verify(stream).makeStreamConnection(params.capture());
+        assertEquals(address, params.getValue().getAddress().orElseThrow());
+        assertEquals(key, params.getValue().getExpectedServerPublicKey().orElseThrow());
+        verify(stream, never()).makeStreamConnection(any(MysterAddress.class));
+        verify(socket).close();
     }
 }

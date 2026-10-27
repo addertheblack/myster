@@ -23,6 +23,7 @@ import java.util.function.Consumer;
 import java.util.logging.Logger;
 import java.util.prefs.Preferences;
 
+import com.general.thread.AsyncContext;
 import com.general.thread.PromiseFuture;
 import com.general.util.MapPreferences;
 import com.general.util.Semaphore;
@@ -269,12 +270,70 @@ class TestMysterServerPoolImpl {
     void concurrentExplicitResolutionSharesInflightWork() throws Exception {
         pool = createPool();
         MysterAddress address = MysterAddress.createMysterAddress("127.0.0.1");
+        var pending = new AtomicReference<AsyncContext<MessagePak>>();
+        MysterDatagram datagram = protocol.getDatagram();
+        Mockito.doReturn(PromiseFuture.<MessagePak>newPromiseFuture(pending::set))
+                .when(datagram).getBidirectionalServerStats(Mockito.any(ParamBuilder.class));
 
         PromiseFuture<MysterServer> first = pool.resolveServer(address);
         PromiseFuture<MysterServer> second = pool.resolveServer(address);
 
-        Assertions.assertSame(first, second);
+        Assertions.assertNotSame(first, second);
+        pending.get().setResult(lookup.get(address));
         Assertions.assertSame(first.get(2, TimeUnit.SECONDS), second.get(2, TimeUnit.SECONDS));
+        Mockito.verify(protocol.getDatagram(), Mockito.times(1))
+                .getBidirectionalServerStats(Mockito.any(ParamBuilder.class));
+    }
+
+    @Test
+    void cancellingOneResolutionDoesNotCancelOtherCallersOrRestartSharedWork() throws Exception {
+        pool = createPool();
+        MysterAddress address = MysterAddress.createMysterAddress("127.0.0.1");
+        var pending = new AtomicReference<AsyncContext<MessagePak>>();
+        PromiseFuture<MessagePak> stats = PromiseFuture.newPromiseFuture(pending::set);
+        MysterDatagram datagram = protocol.getDatagram();
+        Mockito.doReturn(stats).when(datagram)
+                .getBidirectionalServerStats(Mockito.any(ParamBuilder.class));
+
+        PromiseFuture<MysterServer> first = pool.resolveServer(address);
+        PromiseFuture<MysterServer> second = pool.resolveServer(address);
+        first.cancel();
+        PromiseFuture<MysterServer> third = pool.resolveServer(address);
+
+        Assertions.assertFalse(second.isCancelled());
+        Assertions.assertFalse(stats.isCancelled());
+        pending.get().setResult(lookup.get(address));
+        MysterServer resolved = second.get(2, TimeUnit.SECONDS);
+        Assertions.assertSame(resolved, third.get(2, TimeUnit.SECONDS));
+        Assertions.assertSame(resolved, pool.getCachedMysterServer(address).orElseThrow());
+        Assertions.assertTrue(first.isCancelled());
+        Mockito.verify(protocol.getDatagram(), Mockito.times(1))
+                .getBidirectionalServerStats(Mockito.any(ParamBuilder.class));
+    }
+
+    @Test
+    void cancellingEveryResolutionStillAllowsThePoolToLearnTheServer() throws Exception {
+        pool = createPool();
+        MysterAddress address = MysterAddress.createMysterAddress("127.0.0.1");
+        var pending = new AtomicReference<AsyncContext<MessagePak>>();
+        PromiseFuture<MessagePak> stats = PromiseFuture.newPromiseFuture(pending::set);
+        MysterDatagram datagram = protocol.getDatagram();
+        Mockito.doReturn(stats).when(datagram)
+                .getBidirectionalServerStats(Mockito.any(ParamBuilder.class));
+        var refreshed = new CountDownLatch(1);
+        pool.addPoolListener(convert(_ -> refreshed.countDown()));
+
+        PromiseFuture<MysterServer> first = pool.resolveServer(address);
+        PromiseFuture<MysterServer> second = pool.resolveServer(address);
+        first.cancel();
+        second.cancel();
+        pending.get().setResult(lookup.get(address));
+
+        Assertions.assertTrue(refreshed.await(2, TimeUnit.SECONDS));
+        Assertions.assertTrue(pool.getCachedMysterServer(address).isPresent());
+        Assertions.assertFalse(stats.isCancelled());
+        Assertions.assertTrue(first.isCancelled());
+        Assertions.assertTrue(second.isCancelled());
         Mockito.verify(protocol.getDatagram(), Mockito.times(1))
                 .getBidirectionalServerStats(Mockito.any(ParamBuilder.class));
     }

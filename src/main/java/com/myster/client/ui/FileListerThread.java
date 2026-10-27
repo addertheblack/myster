@@ -1,29 +1,17 @@
-/*
- * 
- * Title: Myster Open Source Author: Andrew Trumper Description: Generic Myster
- * Code
- * 
- * This code is under GPL
- * 
- * Copyright Andrew Trumper 2000-2001
- */
 package com.myster.client.ui;
 
 import java.io.IOException;
-import java.net.UnknownHostException;
+import java.security.PublicKey;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.concurrent.CancellationException;
+import java.util.Optional;
 
 import com.general.thread.Invoker;
-import com.general.util.UnexpectedException;
 import com.myster.mml.MessagePak;
 import com.myster.net.MysterAddress;
 import com.myster.net.MysterSocket;
-import com.myster.net.stream.StreamConstants;
-import com.myster.net.stream.client.MysterDataInputStream;
-import com.myster.net.stream.client.MysterDataOutputStream;
-import com.myster.net.stream.client.MysterSocketFactory;
+import com.myster.net.client.MysterStream;
+import com.myster.net.client.ParamBuilder;
 import com.myster.net.stream.client.StandardSuiteStream;
 import com.myster.net.stream.client.StandardSuiteStream.FileCallback;
 import com.myster.net.stream.client.StandardSuiteStream.NamedMetaData;
@@ -31,147 +19,128 @@ import com.myster.type.MysterType;
 import com.myster.util.MysterThread;
 import com.myster.util.Sayable;
 
+/** Fetches file rows off the EDT, publishing batches and percentage progress with terminal callbacks. */
 public class FileListerThread extends MysterThread {
-//    private static final Logger log = Logger.getLogger(FileListerThread.class.getName());
-    
     public record FileRecord(String file, MessagePak metaData) {}
-    
+
     public interface ItemListListener {
-        public void addItemsToFileList(FileRecord[] files);
-        public void finish();
+        void addItemsToFileList(FileRecord[] files);
+        void finish();
+        default void failed(IOException error) {}
     }
 
-    // must be called on EDT!
+    interface LookupTypeDescription { String lookup(MysterType type); }
+
+    private final MysterStream stream;
+    private final Optional<PublicKey> expectedKey;
     private final ItemListListener listener;
-
-    // must be called on EDT!
     private final Sayable msg;
-
     private final String ip;
     private final MysterType type;
-
-    private MysterSocket socket;
-    
     private final LookupTypeDescription lookup;
-    
-    interface LookupTypeDescription {
-        String lookup(MysterType type);
-    }
 
-    public FileListerThread(ItemListListener listener,
+    public FileListerThread(MysterStream stream,
+                            Optional<PublicKey> expectedKey,
+                            ItemListListener listener,
                             Sayable msg,
                             String ip,
                             MysterType type,
                             LookupTypeDescription lookup) {
-        this.lookup = lookup;
+        this.stream = stream;
+        this.expectedKey = expectedKey;
         this.listener = listener;
         this.msg = msg;
-
         this.ip = ip;
         this.type = type;
+        this.lookup = lookup;
     }
 
+    @Override
     public void run() {
-        setPriority(Thread.MAX_PRIORITY);
-
-        if (endFlag)
+        if (endFlag || type == null) {
             return;
-        if (type == null)
-            return;
-
-        MysterAddress mysterAddress;
-        try {
-            mysterAddress = MysterAddress.createMysterAddress(ip);
-        } catch (UnknownHostException ex) {
-            throw new UnexpectedException(ex);
         }
-        
-        try (MysterSocket socket = MysterSocketFactory.makeStreamConnection(mysterAddress)) {
 
-            MysterDataOutputStream out = socket.getOutputStream();
-            MysterDataInputStream in = socket.getInputStream();
+        try {
+            ParamBuilder params = new ParamBuilder(MysterAddress.createMysterAddress(ip));
 
-            msg.say("Requesting File List...");
+            if (expectedKey.isPresent()) {
+                params = params.withExpectedServerPublicKey(expectedKey.get());
+            }
 
-            final int[] counter = new int[] { 0 };
-            final int[] max = new int[] { 0 };
-            final long[] startTime = new long[] { System.currentTimeMillis() };
-            final List<FileRecord> records = new ArrayList<>();
-            StandardSuiteStream.getAllFilesAndMetadata(socket, type, new FileCallback() {
-                @Override
-                public void numberOfFiles(int numberOfFiles) {
-                    max[0] = numberOfFiles;
+            try (MysterSocket opened = stream.makeStreamConnection(params)) {
+                if (endFlag) {
+                    return;
                 }
 
-                @Override
-                public void file(NamedMetaData f) {
-                    records.add(new FileRecord(f.name(), f.pak()));
+                List<FileRecord> records = new ArrayList<>();
 
-                    // if it has been more than a second .... then..
-                    long currentTime = System.currentTimeMillis();
-                    boolean ended = max[0] == (counter[0] + 1);
-                    if ((currentTime - startTime[0]) > 1000 || ended) {
-                        var rr = records.toArray(new FileRecord[] {});
-                        Invoker.EDT.invoke(() -> {
-                            if (endFlag) {
-                                return;
-                            }
-                            
-                            listener.addItemsToFileList(rr);
-                            if (ended) {
-                                listener.finish();
-                            }
-                        });
-                        records.clear();
-                        startTime[0] = currentTime;
+                StandardSuiteStream.getAllFilesAndMetadata(opened, type, new FileCallback() {
+                    private int totalFiles;
+                    private int receivedFiles;
+                    private long lastPublicationTime = System.currentTimeMillis();
+
+                    public void numberOfFiles(int count) {
+                        totalFiles = count;
                     }
 
-                    var c = counter[0]++;
-                    if (c % 10 != 0) {
-                        return;
-                    }
-
-                    var m = max[0];
-                    
-                    if (endFlag) {
-                        throw new CancellationException();
-                    }
-                    
-                    Invoker.EDT.invoke(() -> {
-                        if (m == 0) {
-                            return;
-                        }
-                        
+                    public void file(NamedMetaData file) {
                         if (endFlag) {
                             return;
                         }
-                        
-                        msg.say("Downloading file metadata: " + lookup.lookup(type) + " "
-                                + (c * (100)) / m + "%");
-                    });
 
-                }
+                        records.add(new FileRecord(file.name(), file.pak()));
+                        receivedFiles++;
+
+                        if (System.currentTimeMillis() - lastPublicationTime >= 1000) {
+                            publish(records);
+                            lastPublicationTime = System.currentTimeMillis();
+                        }
+
+                        // Keep progress visible while rows are buffered for the next GUI batch.
+                        if (totalFiles > 0 && (receivedFiles == 1 || receivedFiles % 10 == 0
+                                || receivedFiles == totalFiles)) {
+                            int percent = (int) (receivedFiles * 100L / totalFiles);
+                            onEdt(() -> msg.say("Downloading file metadata: " + lookup.lookup(type)
+                                    + " " + percent + "%"));
+                        }
+                    }
+                });
+
+                publish(records);
+            }
+
+            onEdt(() -> {
+                msg.say("File List: " + lookup.lookup(type) + " Complete.");
+                listener.finish();
             });
-
-            msg.say("Requesting File List: " + lookup.lookup(type) + " Complete.");
-            msg.say("Idle...");
-            
-            out.writeInt(StreamConstants.DISCONNECT_SECTION_NUMBER);
-            in.read();
-        } catch (IOException ex) {
-            msg.say("An unexpected error occurred during the transfer of the file list.");
-            ex.printStackTrace();
+        } catch (IOException exception) {
+            onEdt(() -> {
+                msg.say("Could not load the file list: " + exception.getMessage());
+                listener.failed(exception);
+            });
         }
     }
-    
+
+    private void publish(List<FileRecord> records) {
+        if (records.isEmpty()) {
+            return;
+        }
+
+        FileRecord[] batch = records.toArray(FileRecord[]::new);
+        records.clear();
+
+        onEdt(() -> listener.addItemsToFileList(batch));
+    }
+
+    private void onEdt(Runnable callback) {
+        Invoker.EDT.invoke(() -> { if (!endFlag) callback.run(); });
+    }
+
     public void flagToEnd() {
         endFlag = true;
-        try { socket.close(); } catch (Exception ex) {}
         interrupt();
     }
-    
-    public void end() {
-        flagToEnd();
-        try { join();} catch (InterruptedException ex) {}
-    }
+
+    public void end() { flagToEnd(); }
 }

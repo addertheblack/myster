@@ -223,9 +223,13 @@ public class MysterServerPoolImpl implements MysterServerPool {
             return PromiseFuture.newPromiseFutureException(
                     new IOException("Address cannot identify a remote server"));
         }
-        return refreshMysterServer(address, Optional.empty());
+
+        // The pool owns the shared refresh. Each API caller owns only its request future;
+        // cancelling that request must not cancel other callers or prevent the pool update.
+        return PromiseFuture.newPromiseFuture(result ->
+                refreshMysterServer(address, Optional.empty()).addSynchronousCallback(result::setCallResult));
     }
-    
+
     @Override
     public synchronized void receivedDownNotification(MysterAddress address) {
         if (!ServerUtils.isLanAddress(address.getInetAddress())) {

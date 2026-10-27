@@ -4,61 +4,70 @@ import java.awt.event.ComponentAdapter;
 import java.awt.event.ComponentEvent;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
-import java.net.UnknownHostException;
+import java.awt.BorderLayout;
+import java.awt.Dialog;
+import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
-import java.util.logging.Logger;
+import java.util.function.Function;
+
+import javax.swing.JButton;
+import javax.swing.JDialog;
+import javax.swing.JLabel;
+import javax.swing.JPanel;
+import javax.swing.JProgressBar;
+import javax.swing.WindowConstants;
+
+import com.general.thread.Invoker;
+import com.general.thread.PromiseFuture;
+import com.general.util.AnswerDialog;
 
 import com.myster.net.MysterAddress;
 import com.myster.net.client.MysterProtocol;
-import com.myster.net.server.ServerPreferences;
 import com.myster.search.HashCrawlerManager;
-import com.myster.tracker.MysterIdentity;
+import com.myster.tracker.PublicKeyIdentity;
 import com.myster.tracker.Tracker;
 import com.myster.type.TypeDescriptionList;
+import com.myster.type.MysterType;
 import com.myster.ui.MysterFrameContext;
 
 import static com.general.util.Util.ensureEventDispatchThread;
 
-/**
- * Manages ClientWindow instances, ensuring that only one window exists per MysterIdentity.
- * When a window for a given identity is requested, either brings the existing window to front
- * or creates a new one.
- */
+/** Creates and reuses windows only after their immutable public-key identity is known. */
 public class ClientWindowProvider {
-    private static final Logger log = Logger.getLogger(ClientWindowProvider.class.getName());
-
+    /* pseudo final */
     private MysterFrameContext context;
+
     private final IdentityResolver identityResolver;
-    private final MysterProtocol protocol;
-    private final HashCrawlerManager hashManager;
-    private final Tracker tracker;
-    private final ServerPreferences serverPreferences;
-    private final TypeDescriptionList typeDescriptionList;
 
-    // Map from MysterIdentity to active ClientWindow
-    private final Map<MysterIdentity, ClientWindow> activeWindows = new HashMap<>();
+    /** abstraction for unit tests */
+    private final Function<ClientWindow.ClientWindowData, ClientWindow> factory;
 
-    public ClientWindowProvider(IdentityResolver identityResolver,
-                                MysterProtocol protocol,
-                                HashCrawlerManager hashManager,
-                                Tracker tracker,
-                                ServerPreferences serverPreferences,
+    /** registry of active windows */
+    private final Map<PublicKeyIdentity, ClientWindow> activeWindows = new HashMap<>();
+
+    public ClientWindowProvider(IdentityResolver identityResolver, MysterProtocol protocol,
+                                HashCrawlerManager hashManager, Tracker tracker,
                                 TypeDescriptionList typeDescriptionList) {
         ensureEventDispatchThread();
 
         this.identityResolver = identityResolver;
-        this.protocol = protocol;
-        this.hashManager = hashManager;
-        this.tracker = tracker;
-        this.serverPreferences = serverPreferences;
-        this.typeDescriptionList = typeDescriptionList;
+        this.factory = data -> new ClientWindow(context,
+                                                                 protocol,
+                                                                 hashManager,
+                                                                 tracker,
+                                                                 typeDescriptionList,
+                                                                 data.ip(),
+                                                                 data.identity());
     }
 
-    /**
-     * Sets the context after construction. This is needed to break circular dependency.
-     */
+    /** Package protected for unit tests */
+    ClientWindowProvider(IdentityResolver resolver, Function<ClientWindow.ClientWindowData, ClientWindow> factory) {
+        this.identityResolver = resolver;
+        this.factory = factory;
+    }
+
     public void setContext(MysterFrameContext context) {
         ensureEventDispatchThread();
 
@@ -66,83 +75,105 @@ public class ClientWindowProvider {
     }
 
     /**
-     * Gets or creates a ClientWindow for the given data.
-     * If the data contains an IP address that resolves to a known identity,
-     * and a window already exists for that identity, brings that window to front.
-     * Otherwise, creates a new window.
-     *
-     * @param data the initial data for the window
-     * @return the ClientWindow (either existing or newly created)
+     * Opens a known identity immediately, or discovers it before constructing any window.
+     * The address-only fallback shows temporary progress and reports failure without registering
+     * a provisional ClientWindow. A caller that already knows the key must pass it through.
      */
+    public PromiseFuture<ClientWindow> openWindow(MysterAddress address,
+                                                  Optional<PublicKeyIdentity> requestedIdentity,
+                                                  Optional<MysterType> type,
+                                                  Optional<String> fileName) {
+        ensureEventDispatchThread();
+
+        Optional<PublicKeyIdentity> identity = requestedIdentity.or(() -> identityResolver.getCached(address));
+        if (identity.isPresent()) {
+            return PromiseFuture.newPromiseFuture(getOrCreateWindow(
+                    new ClientWindow.ClientWindowData(address, identity.get(), type, fileName)));
+        }
+
+        PromiseFuture<ClientWindow> opening = context.knownServerSource().resolveServer(address).mapAsync(server -> {
+            if (!(server.getIdentity() instanceof PublicKeyIdentity keyIdentity)) {
+                return PromiseFuture.newPromiseFutureException(
+                        new IOException("The server did not provide a public-key identity."));
+            }
+            try {
+                var serverAddress = server.getBestAddress().orElse(address);
+                return PromiseFuture.newPromiseFuture(getOrCreateWindow(new ClientWindow.ClientWindowData(
+                        serverAddress, keyIdentity, type, fileName)));
+            } catch (Exception exception) {
+                return PromiseFuture.newPromiseFutureException(exception);
+            }
+        }, Invoker.EDT);
+
+        Runnable closeProgress = showLookupProgress(address, opening::cancel);
+        opening.withInvoker(Invoker.EDT)
+                .addFinallyListener(closeProgress)
+                .addExceptionListener(failure -> showLookupFailure(address, failure));
+
+        return opening;
+    }
+
+    /** Applies navigation to a new or reused window of exactly the supplied identity. */
     public ClientWindow getOrCreateWindow(ClientWindow.ClientWindowData data) {
         ensureEventDispatchThread();
 
-        // Try to resolve the IP to an identity
-        Optional<MysterIdentity> identity = data.ip().flatMap(ip -> {
-            try {
-                MysterAddress address = MysterAddress.createMysterAddress(ip);
-                return identityResolver.resolve(address);
-            } catch (UnknownHostException e) {
-                log.warning("Could not resolve address: " + ip);
-                return Optional.empty();
-            }
-        });
+        PublicKeyIdentity identity = data.identity();
+        Optional<ClientWindow> existing = Optional.ofNullable(activeWindows.get(identity));
 
-        // If we have an identity and an existing window for it, bring it to front
-        if (identity.isPresent()) {
-            ClientWindow existingWindow = activeWindows.get(identity.get());
-            if (existingWindow != null) {
-                log.info("Bringing existing ClientWindow to front for identity: " + identity.get());
-                existingWindow.setInitialData(data);
-                existingWindow.toFront();
-                existingWindow.requestFocus();
-                return existingWindow;
-            }
-        }
-
-        // Create a new window
-        ClientWindow window = new ClientWindow(context, protocol, hashManager, tracker,
-                                                serverPreferences, typeDescriptionList);
-
-        // Set initial data - works for both new and recycled windows
+        boolean createdWindow = existing.isEmpty();
+        final ClientWindow window = createdWindow ? factory.apply(data) : existing.orElseThrow();
         window.setInitialData(data);
 
-        // If we have an identity, track this window
-        identity.ifPresent(id -> {
-            activeWindows.put(id, window);
-            log.info("Created new ClientWindow for identity: " + id);
-        });
+        activeWindows.put(identity, window);
 
-        window.addComponentListener(new ComponentAdapter() {
-            @Override
-            public void componentHidden(ComponentEvent e) {
-                identity.ifPresent(id -> {
-                    activeWindows.remove(id);
-                    log.info("Removed ClientWindow for identity: " + id);
-                });
-            }
-        });
+        if (createdWindow) {
+            window.addComponentListener(new ComponentAdapter() {
+                @Override public void componentHidden(ComponentEvent event) { removeWindow(identity, window); }
+            });
+            window.addWindowListener(new WindowAdapter() {
+                @Override public void windowClosed(WindowEvent event) { removeWindow(identity, window); }
+                @Override public void windowClosing(WindowEvent event) { removeWindow(identity, window); }
+            });
+        }
 
-        // Add listener to remove from map when window closes
-        window.addWindowListener(new WindowAdapter() {
-            @Override
-            public void windowClosing(WindowEvent e) {
-                identity.ifPresent(id -> {
-                    activeWindows.remove(id);
-                    log.info("Removed ClientWindow for identity: " + id);
-                });
-            }
-
-            @Override
-            public void windowClosed(WindowEvent e) {
-                identity.ifPresent(id -> {
-                    activeWindows.remove(id);
-                    log.info("Removed ClientWindow for identity: " + id);
-                });
-            }
-        });
+        window.setVisible(true);
+        window.toFrontAndUnminimize();
 
         return window;
     }
-}
 
+    private void removeWindow(PublicKeyIdentity identity, ClientWindow window) {
+        // A late closed notification from an old window must not remove its replacement.
+        activeWindows.remove(identity, window);
+    }
+
+    /** Package protected so tests can replace the native progress UI. */
+    Runnable showLookupProgress(MysterAddress address, Runnable cancel) {
+        JDialog dialog = new JDialog(context.windowManager().getFrontMostWindow(),
+                "Contacting server", Dialog.ModalityType.MODELESS);
+        JPanel content = new JPanel(new BorderLayout(10, 10));
+        content.setBorder(javax.swing.BorderFactory.createEmptyBorder(15, 15, 15, 15));
+        content.add(new JLabel("Contacting " + address + "…"), BorderLayout.NORTH);
+        JProgressBar progress = new JProgressBar();
+        progress.setIndeterminate(true);
+        content.add(progress, BorderLayout.CENTER);
+        JButton cancelButton = new JButton("Cancel");
+        cancelButton.addActionListener(_ -> cancel.run());
+        content.add(cancelButton, BorderLayout.SOUTH);
+        dialog.setContentPane(content);
+        dialog.setDefaultCloseOperation(WindowConstants.DO_NOTHING_ON_CLOSE);
+        dialog.addWindowListener(new WindowAdapter() {
+            @Override public void windowClosing(WindowEvent event) { cancel.run(); }
+        });
+        dialog.pack();
+        dialog.setLocationRelativeTo(dialog.getOwner());
+        dialog.setVisible(true);
+        return dialog::dispose;
+    }
+
+    /** Package protected so tests can observe failures without displaying a dialog. */
+    void showLookupFailure(MysterAddress address, Throwable failure) {
+        AnswerDialog.simpleAlert(context.windowManager().getFrontMostWindow(),
+                "Could not contact " + address + ": " + failure.getMessage());
+    }
+}

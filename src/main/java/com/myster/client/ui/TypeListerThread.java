@@ -11,7 +11,8 @@
 package com.myster.client.ui;
 
 import java.io.IOException;
-import java.net.UnknownHostException;
+import java.security.PublicKey;
+import java.util.Objects;
 import java.util.concurrent.ExecutionException;
 
 import com.general.util.Util;
@@ -19,7 +20,7 @@ import com.myster.net.MysterAddress;
 import com.myster.net.MysterSocket;
 import com.myster.net.client.MysterProtocol;
 import com.myster.net.client.ParamBuilder;
-import com.myster.net.stream.client.MysterSocketFactory;
+
 import com.myster.type.MysterType;
 import com.myster.type.TypeDescriptionList;
 import com.myster.util.MysterThread;
@@ -52,35 +53,23 @@ public class TypeListerThread extends MysterThread {
          * @param type the type whose display name is now available
          */
         void refreshTypeDisplay(MysterType type);
+        default void finished() {}
+        default void failed(IOException error) {}
     }
     
 
     private final MysterProtocol protocol;
     private final TypeListener listener;
     private final Sayable msg;
-    private final String ip;
+    private final MysterAddress address;
     private final TypeDescriptionList tdList;
     private final TypeMetadataCache cache;
-
-    private MysterSocket socket;
-
-    /**
-     * Creates a type lister thread without metadata resolution (for callers that do not need it).
-     *
-     * @param protocol the protocol suite
-     * @param listener receives type-listing callbacks on the EDT
-     * @param msg      receives status messages on the EDT
-     * @param ip       the server address string
-     */
-    public TypeListerThread(MysterProtocol protocol,
-                            TypeListener listener,
-                            Sayable msg,
-                            String ip) {
-        this(protocol, listener, msg, ip, null, null);
-    }
+    private final PublicKey expectedKey;
 
     /**
      * Creates a type lister thread with optional metadata resolution.
+     *
+     * <p>The required key applies to both UDP listing and TCP fallback; failures never unpin it.
      *
      * <p>When {@code tdList} and {@code cache} are non-null, types not found in {@code tdList}
      * will have their names resolved asynchronously and {@link TypeListener#refreshTypeDisplay}
@@ -89,67 +78,94 @@ public class TypeListerThread extends MysterThread {
      * @param protocol the protocol suite
      * @param listener receives type-listing callbacks on the EDT
      * @param msg      receives status messages on the EDT
-     * @param ip       the server address string
+     * @param address  the resolved server endpoint
      * @param tdList   the local type registry (used to skip already-known types); may be null
      * @param cache    the per-window transient name cache; may be null
+     * @param expectedKey the server public key that UDP and TCP connections must verify
      */
     public TypeListerThread(MysterProtocol protocol,
                             TypeListener listener,
                             Sayable msg,
-                            String ip,
+                            MysterAddress address,
                             TypeDescriptionList tdList,
-                            TypeMetadataCache cache) {
+                            TypeMetadataCache cache,
+                            PublicKey expectedKey) {
+        this.expectedKey = Objects.requireNonNull(expectedKey, "expectedKey");
+        this.address = Objects.requireNonNull(address, "address");
         this.protocol = protocol;
         this.tdList = tdList;
         this.cache = cache;
+
         this.listener = new TypeListener() {
+            public void finished() {
+                Util.invokeLater(() -> {
+                    if (!endFlag) {
+                        listener.finished();
+                    }
+                });
+            }
+
+            public void failed(IOException error) {
+                Util.invokeLater(() -> {
+                    if (!endFlag) {
+                        listener.failed(error);
+                    }
+                });
+            }
+
             public void addItemToTypeList(MysterType s) {
                 Util.invokeLater(() -> {
-                    if (endFlag) return;
+                    if (endFlag) {
+                        return;
+                    }
+
                     listener.addItemToTypeList(s);
                 });
             }
 
             public void refreshIP(MysterAddress address) {
                 Util.invokeLater(() -> {
-                    if (endFlag) return;
+                    if (endFlag) {
+                        return;
+                    }
+
                     listener.refreshIP(address);
                 });
             }
 
             public void refreshTypeDisplay(MysterType type) {
                 Util.invokeLater(() -> {
-                    if (endFlag) return;
+                    if (endFlag) {
+                        return;
+                    }
+
                     listener.refreshTypeDisplay(type);
                 });
             }
         };
         this.msg = (String s) -> Util.invokeLater(() -> msg.say(s));
-        this.ip = ip;
     }
 
     public void run() {
-        MysterAddress mysterAddress;
-        try {
-            mysterAddress = MysterAddress.createMysterAddress(ip);
-        } catch (UnknownHostException e) {
-            msg.say("Unknown host: " + ip);
-            return;
-        }
-
         try {
             msg.say("Requested Type List (UDP)...");
 
-            if (endFlag) return;
+            if (endFlag) {
+                return;
+            }
 
-            listener.refreshIP(mysterAddress);
-            MysterType[] types = protocol.getDatagram().getTypes(new ParamBuilder(mysterAddress)).get();
-            if (endFlag) return;
+            listener.refreshIP(address);
+            ParamBuilder params = new ParamBuilder(address).withExpectedServerPublicKey(expectedKey);
+            MysterType[] types = protocol.getDatagram().getTypes(params).get();
+            if (endFlag) {
+                return;
+            }
 
             for (MysterType t : types) {
                 listener.addItemToTypeList(t);
             }
-            resolveUnknownTypes(types, mysterAddress);
+            resolveUnknownTypes(types, address);
+            listener.finished();
             msg.say("Idle...");
         } catch (ExecutionException exp) {
             if (!(exp.getCause() instanceof IOException)) {
@@ -157,9 +173,11 @@ public class TypeListerThread extends MysterThread {
             }
             
             msg.say("Connecting to server...");
-            try (MysterSocket socket =
-                    MysterSocketFactory.makeStreamConnection(mysterAddress)) {
-                if (endFlag) return;
+            ParamBuilder params = new ParamBuilder(address).withExpectedServerPublicKey(expectedKey);
+            try (MysterSocket socket = protocol.getStream().makeStreamConnection(params)) {
+                if (endFlag) {
+                    return;
+                }
 
                 msg.say("Requesting File Type List...");
 
@@ -169,10 +187,12 @@ public class TypeListerThread extends MysterThread {
                 for (MysterType t : typeList) {
                     listener.addItemToTypeList(t);
                 }
-                resolveUnknownTypes(typeList, mysterAddress);
+                resolveUnknownTypes(typeList, address);
+                listener.finished();
                 msg.say("Idle...");
             } catch (IOException ex) {
                 msg.say("Could not get File Type List from specified server.");
+                listener.failed(ex);
             }
         } catch (InterruptedException exception) {
             return;
@@ -185,17 +205,19 @@ public class TypeListerThread extends MysterThread {
      * dispatches it to the EDT.
      */
     private void resolveUnknownTypes(MysterType[] types, MysterAddress address) {
-        if (tdList == null || cache == null) return;
+        if (tdList == null || cache == null) {
+            return;
+        }
+
         for (MysterType type : types) {
             if (tdList.get(type).isEmpty() && !cache.hasAttempted(type)) {
-                cache.resolveAsync(type, address, () -> listener.refreshTypeDisplay(type));
+                cache.resolveAsync(type, address, expectedKey, () -> listener.refreshTypeDisplay(type));
             }
         }
     }
 
     public void flagToEnd() {
         endFlag = true;
-        try { socket.close(); } catch (Exception _) {}
         interrupt();
     }
     

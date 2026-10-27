@@ -9,13 +9,11 @@ import com.general.util.IconLoader;
 import com.general.util.Util;
 import com.myster.application.MysterGlobals;
 import com.myster.net.stream.client.msdownload.MSDownloadControl;
-import com.myster.pref.MysterPreferences;
 import com.myster.progress.ui.ProgressBannerManager.Banner;
 import com.myster.progress.ui.ProgressWindow.AdPanel;
 import com.myster.ui.MysterFrame;
 import com.myster.ui.MysterFrameContext;
 import com.myster.ui.WindowPrefDataKeeper;
-import com.myster.ui.menubar.MysterMenuBar;
 import com.myster.util.ContextMenu;
 
 import javax.swing.*;
@@ -446,125 +444,7 @@ public class ProgressManagerWindow extends MysterFrame {
     public void addNewBannerToQueue(Banner b) {
         adManager.addNewBannerToQueue(b);
     }
-    
-    /**
-     * Populate the window with fake download data for testing/demonstration.
-     */
-    public void populateWithFakeData() {
-        var rootPath = new com.general.mclist.TreeMCListTableModel.TreePathString(new String[] {});
-        
-        // Download 1: A movie file with 3 connections
-        var download1Item = new DownloadMCListItem("BigMovie.mp4", rootPath, () -> {}, true);
-        download1Item.getObject().setTotal(1024 * 1024 * 1024); // 1GB
-        download1Item.getObject().setProgress(512 * 1024 * 1024); // 512MB
-        download1Item.getObject().setSpeed(2 * 1024 * 1024); // 2MB/s
-        download1Item.getObject().setStatus("Downloading");
-        
-        var download1Path = new com.general.mclist.TreeMCListTableModel.TreePathString(new String[] {"BigMovie.mp4"});
-        var conn1_1Item = new DownloadMCListItem("192.168.1.100", download1Path, null, false);
-        conn1_1Item.getObject().setTotal(400 * 1024 * 1024);
-        conn1_1Item.getObject().setProgress(250 * 1024 * 1024);
-        conn1_1Item.getObject().setSpeed(800 * 1024);
-        conn1_1Item.getObject().setStatus("Active");
-        
-        var conn1_2Item = new DownloadMCListItem("10.0.0.5", download1Path, null, false);
-        conn1_2Item.getObject().setTotal(400 * 1024 * 1024);
-        conn1_2Item.getObject().setProgress(200 * 1024 * 1024);
-        conn1_2Item.getObject().setSpeed(700 * 1024);
-        conn1_2Item.getObject().setStatus("Active");
-        
-        var conn1_3Item = new DownloadMCListItem("172.16.0.20", download1Path, null, false);
-        conn1_3Item.getObject().setTotal(224 * 1024 * 1024);
-        conn1_3Item.getObject().setProgress(62 * 1024 * 1024);
-        conn1_3Item.getObject().setSpeed(500 * 1024);
-        conn1_3Item.getObject().setStatus("Active");
-        
-        // Download 2: A music album with 2 connections
-        var download2Item = new DownloadMCListItem("Album.zip", rootPath, null, true);
-        download2Item.getObject().setTotal(150 * 1024 * 1024); // 150MB
-        download2Item.getObject().setProgress(100 * 1024 * 1024); // 100MB
-        download2Item.getObject().setSpeed(1 * 1024 * 1024); // 1MB/s
-        download2Item.getObject().setStatus("Downloading");
-        
-        var download2Path = new com.general.mclist.TreeMCListTableModel.TreePathString(new String[] {"Album.zip"});
-        var conn2_1Item = new DownloadMCListItem("Connection 1: 192.168.1.50", download2Path, null, false);
-        conn2_1Item.getObject().setTotal(75 * 1024 * 1024);
-        conn2_1Item.getObject().setProgress(55 * 1024 * 1024);
-        conn2_1Item.getObject().setSpeed(600 * 1024);
-        conn2_1Item.getObject().setStatus("Active");
-        
-        var conn2_2Item = new DownloadMCListItem("Connection 2: 10.0.0.8", download2Path, null, false);
-        conn2_2Item.getObject().setTotal(75 * 1024 * 1024);
-        conn2_2Item.getObject().setProgress(45 * 1024 * 1024);
-        conn2_2Item.getObject().setSpeed(400 * 1024);
-        conn2_2Item.getObject().setStatus("Active");
-        
-        // Download 3: A document (waiting for connection)
-        var download3Item = new DownloadMCListItem("Document.pdf", rootPath, null, true);
-        download3Item.getObject().setTotal(5 * 1024 * 1024); // 5MB
-        download3Item.getObject().setProgress(0);
-        download3Item.getObject().setSpeed(0);
-        download3Item.getObject().setStatus("Waiting for sources...");
-        
-        // Add all items to the list
-        downloadList.addItem(download1Item);
-        downloadList.addItem(conn1_1Item);
-        downloadList.addItem(conn1_2Item);
-        downloadList.addItem(conn1_3Item);
-        downloadList.addItem(download2Item);
-        downloadList.addItem(conn2_1Item);
-        downloadList.addItem(conn2_2Item);
-        downloadList.addItem(download3Item);
-    }
-    
-    /**
-     * Test main method to display the window with fake data.
-     */
-    public static void main(String[] args) {
-        javax.swing.SwingUtilities.invokeLater(() -> {
-            // Create mock objects for testing
-            var mockWindowManager = new com.myster.ui.WindowManager() {
-                @Override
-                public void updateMenu() {
-                    // Do nothing for test
-                }
-            };
-            
-            var mockKeeper = new com.myster.ui.WindowPrefDataKeeper(MysterPreferences.getInstance()) {
-                @Override
-                public <T> java.util.List<PrefData<T>> getLastLocs(String key, 
-                        java.util.function.Function<java.util.prefs.Preferences, T> extractor) {
-                    return java.util.Collections.emptyList();
-                }
-            };
-            
-            var context = new MysterFrameContext(new MysterMenuBar(), mockWindowManager, null,
-                    mockKeeper, null, null, null, new com.myster.tracker.ui.KnownServerSource() {
-                        @Override
-                        public void forEachServer(
-                                java.util.function.Consumer<com.myster.tracker.MysterServer> consumer) {}
 
-                        @Override
-                        public java.util.Optional<String> resolveDisplayName(
-                                com.myster.cid.ServerCid cid) {
-                            return java.util.Optional.empty();
-                        }
-
-                        @Override
-                        public com.general.thread.PromiseFuture<com.myster.tracker.MysterServer>
-                                resolveServer(com.myster.net.MysterAddress address) {
-                            return com.general.thread.PromiseFuture.newPromiseFutureException(
-                                    new UnsupportedOperationException());
-                        }
-                    });
-
-            ProgressManagerWindow window = new ProgressManagerWindow(context);
-            window.populateWithFakeData();
-            window.setDefaultCloseOperation(javax.swing.JFrame.EXIT_ON_CLOSE);
-            window.setVisible(true);
-        });
-    }
-    
     /**
      * TreeMCListItem wrapper for DownloadItem that provides column data.
      */
@@ -635,9 +515,11 @@ public class ProgressManagerWindow extends MysterFrame {
             if (item.getTotal() == 0) {
                 return "0%";
             }
+
             long percent = (item.getProgress() * 100) / item.getTotal();
             String progressStr = Util.getStringFromBytes(item.getProgress());
             String totalStr = Util.getStringFromBytes(item.getTotal());
+
             return percent + "% (" + progressStr + " / " + totalStr + ")";
         }
         

@@ -1,6 +1,7 @@
 package com.myster.thumbnail;
 
 import java.awt.image.BufferedImage;
+import java.security.PublicKey;
 import java.util.Comparator;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
@@ -26,12 +27,22 @@ import com.myster.type.MysterType;
  * Each client window owns one cache; transfers in other windows proceed independently.
  */
 public final class RemoteThumbnailCache implements AutoCloseable {
-    /** The filename is an opaque remote file reference; size is in device pixels. */
-    public record Request(MysterAddress address, MysterType type, String filename, int size) {
+    /**
+     * One identity-scoped thumbnail request.
+     * @param address server endpoint
+     * @param type network type containing the file
+     * @param filename opaque remote file reference
+     * @param size requested maximum side in device pixels, from 1 through 256
+     * @param expectedKey server public key that every thumbnail connection must verify
+     */
+    public record Request(MysterAddress address, MysterType type, String filename, int size,
+                          PublicKey expectedKey) {
         public Request {
             Objects.requireNonNull(address);
             Objects.requireNonNull(type);
             Objects.requireNonNull(filename);
+            Objects.requireNonNull(expectedKey);
+
             if (size < 1 || size > ThumbnailProtocolUtils.MAX_SIZE) {
                 throw new IllegalArgumentException("Thumbnail size must be between 1 and 256");
             }
@@ -39,12 +50,13 @@ public final class RemoteThumbnailCache implements AutoCloseable {
 
         public boolean sameFile(Request other) {
             return address.equals(other.address) && type.equals(other.type)
-                    && filename.equals(other.filename);
+                    && filename.equals(other.filename) && expectedKey.equals(other.expectedKey);
         }
     }
 
     /** A null image suppresses retries until expiresAt, in epoch milliseconds. */
     private record Cached(BufferedImage image, long expiresAt) {}
+    private record Endpoint(MysterAddress address, PublicKey expectedKey) {}
 
     private static final int MAX_CACHE_ENTRIES = 512;
     private static final long MAX_CACHE_BYTES = 8L * 1024 * 1024;
@@ -54,8 +66,9 @@ public final class RemoteThumbnailCache implements AutoCloseable {
     private final MysterStream stream;
     private final Object transferLock = new Object();
     private final Map<Request, Cached> cache = new LinkedHashMap<>(16, .75f, true);
-    private final Set<MysterAddress> unsupported = new LinkedHashSet<>();
+    private final Set<Endpoint> unsupported = new LinkedHashSet<>();
     private final Set<PromiseFuture<BufferedImage>> outstanding = new LinkedHashSet<>();
+
     private boolean closed;
 
     public RemoteThumbnailCache(MysterStream stream) {
@@ -80,17 +93,17 @@ public final class RemoteThumbnailCache implements AutoCloseable {
             return PromiseFuture.newPromiseFuture(image.get());
         }
         Cached previous = cache.get(request);
-        if (unsupported.contains(request.address())
+        if (unsupported.contains(new Endpoint(request.address(), request.expectedKey()))
                 || (previous != null && previous.expiresAt > System.currentTimeMillis())) {
             return PromiseFuture.newPromiseFuture((BufferedImage) null);
         }
-        PromiseFuture<BufferedImage> next =
-                PromiseFutures.execute(new RemoteThumbnailTask(stream,
-                                                               transferLock,
-                                                               request.address(),
-                                                               request.type(),
-                                                               request.filename(),
-                                                               request.size()));
+        PromiseFuture<BufferedImage> next = PromiseFutures.execute(new RemoteThumbnailTask(stream,
+                                                                                           transferLock,
+                                                                                           request.address(),
+                                                                                           request.type(),
+                                                                                           request.filename(),
+                                                                                           request.size(),
+                                                                                           request.expectedKey()));
         outstanding.add(next);
         next.withInvoker(Invoker.EDT).addResultListener(result -> {
                 putCache(request, new Cached(result, result == null
@@ -98,7 +111,7 @@ public final class RemoteThumbnailCache implements AutoCloseable {
             })
             .addExceptionListener(error -> {
                 if (error instanceof UnknownProtocolException) {
-                    unsupported.add(request.address());
+                    unsupported.add(new Endpoint(request.address(), request.expectedKey()));
                     if (unsupported.size() > MAX_CACHE_ENTRIES) {
                         unsupported.remove(unsupported.iterator().next());
                     }

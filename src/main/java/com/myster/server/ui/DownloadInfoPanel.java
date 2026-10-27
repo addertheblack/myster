@@ -28,8 +28,8 @@ import com.general.mclist.MCListEvent;
 import com.general.mclist.MCListEventListener;
 import com.general.mclist.MCListFactory;
 import com.general.mclist.MCListItemInterface;
+import com.general.thread.PromiseFutures;
 import com.general.util.Timer;
-import com.myster.client.ui.ClientWindow;
 import com.myster.net.MysterAddress;
 import com.myster.net.client.MysterProtocol;
 import com.myster.net.datagram.message.MessageWindow;
@@ -111,18 +111,15 @@ public class DownloadInfoPanel extends JPanel {
             public void actionPerformed(ActionEvent e) {
                 int[] array = list.getSelectedIndexes();
                 for (int i = 0; i < array.length; i++) {
-                    try {
-                        MessageWindow window =
-                                new MessageWindow(frameContext,
-                                                  protocol,
-                                                  MysterAddress
-                                                          .createMysterAddress((((DownloadMCListItem) (list
-                                                                  .getMCListItem(array[i]))))
-                                                                          .getAddress()));
-                        window.setVisible(true);
-                    } catch (java.net.UnknownHostException _) {
-                        // skip
-                    }
+                    String address = ((DownloadMCListItem) list.getMCListItem(array[i])).getAddress();
+                    PromiseFutures.execute(() -> MysterAddress.createMysterAddress(address))
+                            .useEdt()
+                            .addResultListener(serverAddress -> {
+                                MessageWindow window = new MessageWindow(frameContext, protocol, serverAddress);
+                                window.setVisible(true);
+                            })
+                            .addExceptionListener(exception -> com.general.util.AnswerDialog
+                                    .simpleAlert("Could not resolve server address: " + address));
                 }
 
             }
@@ -238,8 +235,14 @@ public class DownloadInfoPanel extends JPanel {
             int[] array = list.getSelectedIndexes();
             for (int i = 0; i < array.length; i++) {
                 String address = (((DownloadMCListItem) (list.getMCListItem(array[i])))).getAddress();
-                var data = new ClientWindow.ClientWindowData(Optional.of(address), Optional.empty(), Optional.empty());
-                frameContext.clientWindowProvider().getOrCreateWindow(data).show();
+                PromiseFutures.execute(() -> MysterAddress.createMysterAddress(address))
+                        .useEdt()
+                        .addResultListener(serverAddress -> {
+                            frameContext.clientWindowProvider().openWindow(serverAddress,
+                                    Optional.empty(), Optional.empty(), Optional.empty());
+                        })
+                        .addExceptionListener(exception -> com.general.util.AnswerDialog
+                                .simpleAlert("Could not resolve server address: " + address));
             }
         }
 

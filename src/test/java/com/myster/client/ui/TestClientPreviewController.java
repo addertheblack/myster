@@ -3,8 +3,10 @@ package com.myster.client.ui;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
-import java.time.Duration;
 import java.awt.image.BufferedImage;
+import java.security.KeyPairGenerator;
+import java.security.PublicKey;
+import java.time.Duration;
 import java.util.Optional;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
@@ -29,6 +31,7 @@ class TestClientPreviewController {
     private final RemoteThumbnailCache thumbnailCache = mock(RemoteThumbnailCache.class);
     private final MysterAddress address = MysterAddress.createMysterAddress("127.0.0.1:6669");
     private final MysterType type = new MysterType(new byte[16]);
+    private final PublicKey key = KeyPairGenerator.getInstance("Ed25519").generateKeyPair().getPublic();
     private Optional<Request> selection = Optional.of(request("image", 128));
     private boolean active;
     private Runnable geometryChanged;
@@ -37,7 +40,7 @@ class TestClientPreviewController {
     TestClientPreviewController() throws Exception {}
 
     private Request request(String file, int size) {
-        return new Request(address, type, file, size);
+        return new Request(address, type, file, size, key);
     }
 
     @BeforeEach

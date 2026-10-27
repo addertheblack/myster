@@ -18,7 +18,10 @@ import javax.swing.JCheckBox;
 import javax.swing.JFileChooser;
 import javax.swing.JLabel;
 import javax.swing.JList;
-import javax.swing.JOptionPane;
+import javax.swing.JPopupMenu;
+import com.general.util.AnswerDialog;
+import com.myster.link.MysterLinkService;
+import com.myster.link.ui.FileLinkCopyActionUtils;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import javax.swing.JTextField;
@@ -85,7 +88,7 @@ public class FmiChooser extends PreferencesPanel {
     private String path;
     private final TitledBorder titledBorder;
 
-    public FmiChooser(FileTypeListManager manager, TypeDescriptionList tdList) {
+    public FmiChooser(FileTypeListManager manager, TypeDescriptionList tdList, MysterLinkService linkService) {
         this.manager = manager;
         setLayout(new GridBagLayout());
 
@@ -229,6 +232,12 @@ public class FmiChooser extends PreferencesPanel {
         fList = new JList<>();
         fListModel = new DefaultListModel<>();
         fList.setModel(fListModel);
+
+        JPopupMenu filePopup = new JPopupMenu();
+        filePopup.add(FileLinkCopyActionUtils.localItem(() -> SwingUtilities.getWindowAncestor(this),
+                                                        linkService, this::selectedLinkFile));
+        fList.setComponentPopupMenu(filePopup);
+
         JScrollPane fListScrollPane = new JScrollPane(fList);
         fListScrollPane.setHorizontalScrollBarPolicy(JScrollPane.HORIZONTAL_SCROLLBAR_NEVER);
         fListScrollPane.setPreferredSize(new Dimension(1, 1));
@@ -250,6 +259,33 @@ public class FmiChooser extends PreferencesPanel {
         reset();
         restoreState();
         updateWarningBanner();
+    }
+
+    /** Package protected for unit tests of real-row and saved-preference guards. */
+    Optional<FileLinkCopyActionUtils.LocalFile> selectedLinkFile() {
+        if (fList.getSelectedIndices().length != 1 || choice.getType().isEmpty()) {
+            return Optional.empty();
+        }
+
+        MysterType type = choice.getType().get();
+        SettingsStruct pending = hash.get(type);
+
+        if (!manager.isShared(type) || manager.getFileTypeList(type).isIndexing()
+                || pending != null && (!pending.path().equals(manager.getPathFromType(type))
+                        || pending.shared() != manager.isShared(type))) {
+            return Optional.empty();
+        }
+
+        String name = fList.getSelectedValue();
+        String[] indexed = manager.getDirList(type);
+
+        if (name == null || indexed == null || indexed.length > 350
+                || !java.util.Arrays.asList(indexed).contains(name)
+                || manager.getFileItem(type, name) == null) {
+            return Optional.empty();
+        }
+
+        return Optional.of(new FileLinkCopyActionUtils.LocalFile(type, name));
     }
 
     private void setPathField(String newPath) {
@@ -274,9 +310,8 @@ public class FmiChooser extends PreferencesPanel {
             Desktop.getDesktop().open(folder);
             return null;
         }).useEdt()
-          .addExceptionListener(error -> JOptionPane.showMessageDialog(this,
-                  "Could not open folder:\n" + error.getMessage(),
-                  "Open Folder", JOptionPane.ERROR_MESSAGE))
+          .addExceptionListener(error -> AnswerDialog.simpleAlert(SwingUtilities.getWindowAncestor(this),
+                  "Could not open folder:\n" + error.getMessage()))
           .addFinallyListener(() -> openFolderButton.setEnabled(true));
     }
 

@@ -11,46 +11,47 @@
 package com.myster.client.ui;
 
 import java.io.IOException;
-import java.net.UnknownHostException;
+import java.security.PublicKey;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.concurrent.ExecutionException;
-import java.util.logging.Logger;
+import java.util.Objects;
 
 import com.general.util.Util;
 import com.myster.mml.MessagePak;
 import com.myster.net.MysterAddress;
 import com.myster.net.MysterSocket;
 import com.myster.net.client.MysterProtocol;
-import com.myster.net.stream.client.MysterSocketFactory;
+import com.myster.net.client.ParamBuilder;
 import com.myster.search.MysterFileStub;
 import com.myster.type.MysterType;
 import com.myster.util.MysterThread;
 import com.myster.util.Sayable;
 
+/** Fetches display statistics from the supplied endpoint, always pinned to the required server key. */
 public class FileInfoListerThread extends MysterThread {
-    private static final Logger log = Logger.getLogger(FileInfoListerThread.class.getName());
-    
     public interface FileStatsListener {
         void showFileStats(final Map<String, String> keyValue);   
     }
 
     private final FileStatsListener listener;
-    private final String addressAsString;
+    private final MysterAddress address;
     private final MysterType type;
     private final String file;
     private final Sayable msg;
     private final MysterProtocol protocol;
+    private final PublicKey expectedKey;
 
     public FileInfoListerThread(MysterProtocol protocol,
                                 FileStatsListener listener,
                                 Sayable msg,
-                                String address,
+                                MysterAddress address,
                                 MysterType type,
-                                String file) {
+                                String file,
+                                PublicKey expectedKey) {
+        this.expectedKey = Objects.requireNonNull(expectedKey, "expectedKey");
         this.protocol = protocol;
-        this.addressAsString = address;
+        this.address = Objects.requireNonNull(address, "address");
         this.type = type;
         this.file = file;
         this.msg = (String s) -> Util.invokeLater(() -> {
@@ -80,36 +81,13 @@ public class FileInfoListerThread extends MysterThread {
         if (endFlag)
             return;
 
-        msg.say("Looking up address...");
-        if (endFlag)
-            return;
-
-        MysterAddress address;
-        try {
-            address = MysterAddress.createMysterAddress(addressAsString);
-        } catch (UnknownHostException _) {
-            msg.say("Could not find address...");
-            return;
-        }
-
         msg.say("Connecting to server...");
         if (endFlag)
             return;
         
         MysterFileStub stub = new MysterFileStub(address, type, file);
-        try {
-            log.info("Doing get files stats UDP");
-            parseResult(protocol.getDatagram().getFileStats(stub).get());
-            
-            return;
-        } catch (InterruptedException _) {
-            return;
-        } catch (ExecutionException ex) {
-            log.warning("Unexpected exception from calling protocol.getDatagram().getFileStats(stub): "
-                    + ex.getCause());
-        }
-
-        try (MysterSocket socket = MysterSocketFactory.makeStreamConnection(address)) {
+        ParamBuilder params = new ParamBuilder(address).withExpectedServerPublicKey(expectedKey);
+        try (MysterSocket socket = protocol.getStream().makeStreamConnection(params)) {
             msg.say("Getting file information...");
 
             if (endFlag)
@@ -128,12 +106,12 @@ public class FileInfoListerThread extends MysterThread {
     private void parseResult(MessagePak fileStats) {
         msg.say("Parsing file information...");
 
-        Map<String, String> keyvalue = new LinkedHashMap<String, String>();
-        keyvalue.put("File Name", file);
+        Map<String, String> keyValues = new LinkedHashMap<>();
+        keyValues.put("File Name", file);
 
-        listDir(fileStats, keyvalue, "/", "");
+        listDir(fileStats, keyValues, "/", "");
 
-        listener.showFileStats(keyvalue);
+        listener.showFileStats(keyValues);
 
         msg.say("Idle...");
     }

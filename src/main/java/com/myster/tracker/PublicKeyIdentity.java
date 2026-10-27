@@ -2,6 +2,7 @@
 package com.myster.tracker;
 
 import java.security.PublicKey;
+import java.util.Objects;
 
 import com.myster.identity.Util;
 
@@ -9,7 +10,7 @@ public class PublicKeyIdentity implements MysterIdentity {
     private final PublicKey key;
     
     public PublicKeyIdentity(PublicKey key) {
-        this.key = key;
+        this.key = Objects.requireNonNull(key, "key");
     }
     
     @Override

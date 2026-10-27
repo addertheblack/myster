@@ -27,6 +27,7 @@ import com.myster.threedns.ThreeDnsFingerEntry;
 import com.myster.threedns.ThreeDnsTargetSlotSnapshot;
 import com.myster.tracker.BookmarkMysterServerList;
 import com.myster.tracker.MysterServer;
+import com.myster.tracker.PublicKeyIdentity;
 import com.myster.tracker.Tracker;
 import com.myster.ui.MysterFrameContext;
 import com.myster.util.ContextMenu;
@@ -172,10 +173,10 @@ public class TrackerThreeDnsPanel extends JPanel {
             @Override
             public void doubleClick(MCListEvent event) {
                 selectedRow().ifPresent(row -> {
-                    var data = new ClientWindow.ClientWindowData(
-                            Optional.of(row.retainedAddress().toString()),
-                            Optional.empty(),
-                            Optional.empty());
+                    var data = new ClientWindow.ClientWindowData(row.retainedAddress(),
+                                                                 (PublicKeyIdentity) row.server().getIdentity(),
+                                                                 Optional.empty(),
+                                                                 Optional.empty());
                     context.clientWindowProvider().getOrCreateWindow(data).show();
                 });
             }

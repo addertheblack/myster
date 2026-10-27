@@ -117,6 +117,10 @@ import com.myster.type.join.TypeInvitationStore;
 import com.myster.type.join.TypeJoinCoordinator;
 import com.myster.type.join.TypeJoinServer;
 import com.myster.type.join.TypeJoinUriDispatcher;
+import com.myster.link.MysterLinkService;
+import com.myster.link.MysterUriRouter;
+import com.myster.link.ui.MysterLinkDispatcher;
+import com.myster.tracker.PublicKeyIdentity;
 import com.myster.type.join.TypeMembershipService;
 import com.myster.ui.MysterFrameContext;
 import com.myster.ui.PreferencesGui;
@@ -425,13 +429,14 @@ public class Myster {
                         + (System.currentTimeMillis() - startTime));
                 com.myster.client.ui.IdentityResolver identityResolver =
                         address -> pool.getCachedMysterServer(address)
-                                      .flatMap(server -> Optional.of(server.getIdentity()));
+                                      .map(server -> server.getIdentity())
+                                      .filter(PublicKeyIdentity.class::isInstance)
+                                      .map(PublicKeyIdentity.class::cast);
                 com.myster.client.ui.ClientWindowProvider clientWindowProvider =
                         new com.myster.client.ui.ClientWindowProvider(identityResolver,
                                                                       protocol,
                                                                       crawlerManager,
                                                                       tracker,
-                                                                      serverPreferences,
                                                                       tdList);
 
                 KnownServerSource knownServerSource = new KnownServerSource() {
@@ -457,6 +462,10 @@ public class Myster {
                     }
                 };
 
+                MysterLinkService linkService = new MysterLinkService(protocol,
+                                                                      fileManager,
+                                                                      new PublicKeyIdentity(mainIdentity.getPublic()),
+                                                                      serverPreferences::getServerPort);
                 DefaultDownloadManager downloadManager = new DefaultDownloadManager();
                 
                 // Now create the final context with the downloadManager properly set
@@ -468,11 +477,17 @@ public class Myster {
                                                fileManager,
                                                downloadManager,
                                                clientWindowProvider,
-                                               knownServerSource);
+                                               knownServerSource,
+                                               linkService);
 
                 // Set the context on the provider to complete the circular dependency
                 clientWindowProvider.setContext(context);
                 downloadManager.setContext(context);
+                MysterLinkDispatcher linkDispatcher = new MysterLinkDispatcher(linkService,
+                        windowManager::getFrontMostWindow, clientWindowProvider);
+                MysterUriRouter uriRouter = new MysterUriRouter(joinDispatcher::dispatch,
+                        linkDispatcher::dispatch, error -> AnswerDialog.simpleAlert(
+                                windowManager.getFrontMostWindow(), error.getMessage()));
 
                 PreferencesGui preferencesGui = new PreferencesGui(context);
 
@@ -534,7 +549,7 @@ public class Myster {
                 });
                 preferencesGui.addPanel(serverPrefsPane);
                 
-                preferencesGui.addPanel(new FmiChooser(fileManager, tdList));
+                preferencesGui.addPanel(new FmiChooser(fileManager, tdList, linkService));
                 preferencesGui.addPanel(new MessagePreferencesPanel(preferences));
                 preferencesGui.addPanel(new com.myster.type.ui.TypeManagerPreferences(
                         tdList,
@@ -553,7 +568,7 @@ public class Myster {
                     // nothing
                 } else {
                     var count = 0;
-                    count += com.myster.client.ui.ClientWindow.initWindowLocations(context);
+                    var clientWindows = com.myster.client.ui.ClientWindow.initWindowLocations(context);
                     count += ServerStatsWindow.initWindowLocations(context);
                     count += com.myster.tracker.ui.TrackerWindow.initWindowLocations(context);
                     
@@ -567,10 +582,18 @@ public class Myster {
                     // Initialize ProgressManagerWindow location BEFORE restarting downloads
                     count += downloadManager.initWindowLocations();
                     
-                    if (count == 0) {
-                        SearchWindow window = new SearchWindow(context);
-                        window.setVisible(true);
-                    }
+                    int otherWindowCount = count;
+                    clientWindows.useEdt().addFinallyCallResultListener(result -> {
+                        if (result.isException()) {
+                            log.log(java.util.logging.Level.WARNING,
+                                    "Could not restore client windows", result.getException());
+                        }
+                        int clientWindowCount = result.isResult() ? result.getResult() : 0;
+                        if (otherWindowCount + clientWindowCount == 0) {
+                            SearchWindow window = new SearchWindow(context);
+                            window.setVisible(true);
+                        }
+                    });
                 }
 
                 try {
@@ -599,12 +622,12 @@ public class Myster {
 
                 if (!isServer && Desktop.getDesktop().isSupported(Action.APP_OPEN_URI)) {
                     Desktop.getDesktop().setOpenURIHandler(event ->
-                            joinDispatcher.dispatch(event.getURI().toString()));
+                            uriRouter.dispatch(event.getURI().toString()));
                 }
                 
                 MysterTray.init();
 
-                applicationSingletonListener.setReady(context, joinDispatcher);
+                applicationSingletonListener.setReady(context, uriRouter);
                 
                 INSTRUMENTATION.info("-------->>   EDT AWT GUI init complete " + (System.currentTimeMillis() - startTime));
             });
@@ -634,14 +657,15 @@ public class Myster {
         ServerUtils.massPing(protocol, tracker);
     } // Utils, globals etc.. //These variables are System wide variables //
 
-    private static final class SingleInstanceLaunchHandler implements ApplicationSingletonListener {
+    /** Package protected for unit tests of buffered native/CLI resource delivery. */
+    static final class SingleInstanceLaunchHandler implements ApplicationSingletonListener {
         private static final int MAX_PENDING_LAUNCHES = 8;
         private static final int MAX_ARGUMENTS = 32;
         private final Deque<LaunchRequest> pendingLaunches = new ArrayDeque<>();
         private volatile MysterFrameContext context;
-        private volatile TypeJoinUriDispatcher joinDispatcher;
+        private volatile MysterUriRouter uriRouter;
 
-        private SingleInstanceLaunchHandler(String[] initialArgs) {
+        SingleInstanceLaunchHandler(String[] initialArgs) {
             enqueue(initialArgs, false);
         }
 
@@ -651,9 +675,9 @@ public class Myster {
             drainIfReady();
         }
 
-        public void setReady(MysterFrameContext context, TypeJoinUriDispatcher joinDispatcher) {
+        public void setReady(MysterFrameContext context, MysterUriRouter uriRouter) {
+            this.uriRouter = uriRouter;
             this.context = context;
-            this.joinDispatcher = joinDispatcher;
             drainIfReady();
         }
 
@@ -693,8 +717,8 @@ public class Myster {
                     if (argument != null && argument.regionMatches(
                             true, 0, "myster:", 0, "myster:".length())) {
                         hadUri = true;
-                        if (joinDispatcher != null) {
-                            joinDispatcher.dispatch(argument);
+                        if (uriRouter != null) {
+                            uriRouter.dispatch(argument);
                         }
                     }
                 }

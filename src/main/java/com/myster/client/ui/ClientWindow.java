@@ -24,17 +24,18 @@ import java.awt.GridBagLayout;
 import java.awt.Insets;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-import java.awt.event.FocusEvent;
-import java.awt.event.FocusListener;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.net.UnknownHostException;
+import java.security.PublicKey;
 import java.nio.file.Path;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.function.BiConsumer;
 import java.util.prefs.Preferences;
@@ -56,6 +57,8 @@ import com.general.mclist.TreeMCListTableModel;
 import com.general.mclist.TreeMCListTableModel.TreeMCListItem;
 import com.general.mclist.TreeMCListTableModel.TreePath;
 import com.general.mclist.TreeMCListTableModel.TreePathString;
+import com.general.thread.Invoker;
+import com.general.thread.PromiseFuture;
 import com.general.thread.PromiseFutures;
 import com.general.util.IconLoader;
 import com.general.util.MessageField;
@@ -63,20 +66,21 @@ import com.general.util.MessagePanel;
 import com.general.util.StandardWindowBehavior;
 import com.general.util.Util;
 import com.myster.access.AccessList;
+import com.myster.link.ui.FileLinkCopyActionUtils;
 import com.myster.client.ui.FileListerThread.FileRecord;
 import com.myster.search.ui.ClientGenericHandleObject;
 import com.myster.search.ui.ClientInfoFactoryUtils;
 import com.myster.search.ui.FileTypeColumnHandler;
 import com.myster.net.MysterAddress;
 import com.myster.net.client.MysterProtocol;
-import com.myster.net.stream.client.msdownload.DownloadServerConnectionException;
-import com.myster.net.server.ServerPreferences;
+import com.myster.net.client.ParamBuilder;
 import com.myster.net.stream.client.msdownload.MSDownloadParams;
 import com.myster.search.HashCrawlerManager;
 import com.myster.search.MysterFileStub;
 import com.myster.thumbnail.RemoteThumbnailCache;
 import com.myster.thumbnail.ui.ThumbnailUiUtils;
 import com.myster.tracker.MysterServer;
+import com.myster.tracker.PublicKeyIdentity;
 import com.myster.tracker.Tracker;
 import com.myster.type.MetadataTypeId;
 import com.myster.type.MysterType;
@@ -91,8 +95,8 @@ import com.myster.ui.WindowPrefDataKeeper.PrefData;
 import com.myster.util.ContextMenu;
 import com.myster.util.Sayable;
 
+/** A browser window permanently bound to one public-key identity; its endpoint may change. */
 public class ClientWindow extends MysterFrame implements Sayable {
-    private static final String ENTER_AN_IP_HERE = "Enter a server address";
     private static final String WINDOW_KEEPER_KEY = "Myster's Client Windows";
     private static final String CLIENT_WINDOW_TITLE_PREFIX = "Direct Connection ";
     
@@ -108,18 +112,18 @@ public class ClientWindow extends MysterFrame implements Sayable {
     private final MysterProtocol protocol;
     private final HashCrawlerManager hashManager;
     private final Tracker tracker;
-    private final ServerPreferences serverPreferences;
     private final TypeDescriptionList typeDescriptionList;
 
-    private JButton connect;
+    private JButton refreshButton;
     private JButton toggleStatsButton;
-    private JTextField ipTextField;
+    private JTextField serverAddressField;
     private MCList<MysterType> fileTypeList;
     private JMCList<String> fileList;
     private JTextArea statsPanel;
     private ClientFilePreviewPane previewPane;
     private JSplitPane splitPane;
-    private String currentip;
+    private final PublicKeyIdentity serverIdentity;
+    private MysterAddress serverAddress; //mutable
     private MessageField msg;
     private TypeListerThread connectToThread;
     private FileListerThread fileListThread;
@@ -137,11 +141,47 @@ public class ClientWindow extends MysterFrame implements Sayable {
     private final MysterFrameContext context;
     private Runnable savePrefs;
     
+    /**
+     * Pending destination supplied by {@link #setInitialData(ClientWindowData)}, for both new
+     * and reused windows. This drives automatic server/type/file selection through the normal
+     * UI events: type-list completion selects the requested type, that selection starts file listing,
+     * and listing completion selects and reveals the requested file.
+     *
+     * <p>Keep this request across compatible intermediate events, including a file that has
+     * not arrived yet in an unfinished listing. Clear it when the destination is reached,
+     * a listing establishes that it cannot be reached, or an incompatible user action cancels
+     * it (for example, selecting another type/file or refreshing). A new request
+     * replaces the previous one. Empty means no automatic selection remains pending.
+     *
+     * <p>This is the navigation request, not a snapshot of the current selection. Extend
+     * {@link ClientWindowData} when navigation needs additional input rather than maintaining
+     * a parallel set of navigation fields or callbacks.
+     */
     private Optional<ClientWindowData> initialData = Optional.empty();
 
-    public record ClientWindowData(Optional<String> ip, Optional<MysterType> type, Optional<String> fileName) {}
+    /**
+     * Destination within a server's public-key identity. The address is a connection hint;
+     * only the type and filename are optional. Address-only opening requests must discover
+     * the identity through the provider before constructing this data or a window.
+     */
+    public record ClientWindowData(MysterAddress ip,
+                                   PublicKeyIdentity identity,
+                                   Optional<MysterType> type,
+                                   Optional<String> fileName) {
+        public ClientWindowData {
+            Objects.requireNonNull(ip, "ip");
+            Objects.requireNonNull(identity, "identity");
+            Objects.requireNonNull(type, "type");
+            Objects.requireNonNull(fileName, "fileName");
+        }
+    }
+
+    /** The server identity is independent of navigation and the lifetime of any worker. */
+    public PublicKeyIdentity getServerIdentity() {
+        return serverIdentity;
+    }
     
-    private static Optional<MysterType> getFromPrefs(Preferences p) {
+    private static Optional<MysterType> getSelectedTypeFromPrefs(Preferences p) {
         String s = p.get(TYPE_KEY, null);
         
         if (s == null) {
@@ -158,44 +198,103 @@ public class ClientWindow extends MysterFrame implements Sayable {
 
     }
 
-    public static int initWindowLocations(MysterFrameContext c) {
-        List<PrefData<ClientWindowData>> lastLocs = c.keeper().getLastLocs(WINDOW_KEEPER_KEY, (p) -> {
-            return new ClientWindowData(Optional.ofNullable(p.get(IP_KEY, null)), getFromPrefs(p), Optional.empty());
+    /** Restores saved identities; old address-only records use the provider's discovery flow. */
+    public static PromiseFuture<Integer> initWindowLocations(MysterFrameContext c) {
+        Util.ensureEventDispatchThread();
+        record SavedDestination(String addressText, String publicKey, Optional<MysterType> type) {}
+        record ResolvedDestination(MysterAddress address, Optional<PublicKeyIdentity> identity,
+                                   Optional<MysterType> type) {}
+        List<PrefData<SavedDestination>> savedLocations = c.keeper().getLastLocs(WINDOW_KEEPER_KEY, (p) -> {
+            return new SavedDestination(p.get(IP_KEY, null), p.get(SERVER_KEY, null),
+                    getSelectedTypeFromPrefs(p));
         });
 
-        for (PrefData<ClientWindowData> prefData : lastLocs) {
-            ClientWindow window = c.clientWindowProvider().getOrCreateWindow(prefData.data());
-            window.setBounds(prefData.location().bounds());
-            window.show();
-        }
-        
-        return lastLocs.size();
+        // Snapshot preferences first: getLastLocs removes their nodes and holds the keeper's
+        // monitor while reading. DNS resolution must happen after that monitor is released.
+        return PromiseFutures.execute(() -> {
+            List<PrefData<ResolvedDestination>> resolvedLocations = new ArrayList<>();
+
+            for (PrefData<SavedDestination> prefData : savedLocations) {
+                String address = prefData.data().addressText();
+
+                if (address == null || address.isBlank()) continue;
+
+                try {
+                    String savedKey = prefData.data().publicKey();
+
+                    if (savedKey != null && savedKey.isEmpty()) continue;
+
+                    Optional<PublicKeyIdentity> identity = savedKey == null ? Optional.empty()
+                            : com.myster.identity.Util.publicKeyFromString(savedKey).map(PublicKeyIdentity::new);
+                    // A corrupt saved identity must never turn into permission to bind this
+                    // window to whichever server now happens to answer at the old address.
+                    if (savedKey != null && identity.isEmpty()) continue;
+
+                    var data = new ResolvedDestination(MysterAddress.createMysterAddress(address),
+                                                       identity, prefData.data().type());
+
+                    resolvedLocations.add(new PrefData<>(prefData.location(), data));
+                } catch (UnknownHostException | IllegalArgumentException _) {
+                    // Older or invalid window records cannot identify a server to restore.
+                }
+            }
+
+            return resolvedLocations;
+        }).mapAsync(resolvedLocations -> {
+            List<PromiseFuture<Integer>> restored = new ArrayList<>();
+
+            for (PrefData<ResolvedDestination> prefData : resolvedLocations) {
+                // Count failures and cancellations as zero so one failed legacy lookup does
+                // not discard the successful count used by startup's default-window decision.
+                restored.add(PromiseFuture.newPromiseFuture(result -> {
+                    var opening = c.clientWindowProvider().openWindow(prefData.data().address(),
+                                                                      prefData.data().identity(),
+                                                                      prefData.data().type(),
+                                                                      Optional.empty());
+
+                    result.trackForCancellation(opening);
+
+                    opening.withInvoker(Invoker.EDT).addFinallyCallResultListener(opened -> {
+                        if (opened.isResult()) {
+                            opened.getResult().setBounds(prefData.location().bounds());
+                        }
+                        result.setResult(opened.isResult() ? 1 : 0);
+                    });
+                }));
+            }
+
+            return PromiseFutures.all(restored).mapAsyncInline(counts ->
+                    PromiseFuture.newPromiseFuture(counts.stream().mapToInt(Integer::intValue).sum()));
+        }, Invoker.EDT);
     }
 
-    // Constructor for creating a new window
+    /** Creates a window permanently bound to {@code serverIdentity}, using the supplied endpoint. */
     public ClientWindow(MysterFrameContext c,
                         MysterProtocol protocol,
                         HashCrawlerManager hashManager,
                         Tracker tracker,
-                        ServerPreferences serverPreferences,
-                        TypeDescriptionList typeDescriptionList) {
+                        TypeDescriptionList typeDescriptionList,
+                        MysterAddress serverAddress,
+                        PublicKeyIdentity serverIdentity) {
         super(c, "Direct Connection " + (++counter));
         
         this.context = c;
         this.protocol = protocol;
         this.hashManager = hashManager;
         this.tracker = tracker;
-        this.serverPreferences = serverPreferences;
         this.typeDescriptionList = typeDescriptionList;
+        this.serverAddress = Objects.requireNonNull(serverAddress, "serverAddress");
+        this.serverIdentity = Objects.requireNonNull(serverIdentity, "serverIdentity");
 
         init();
+
         typeMetadataCache = new TypeMetadataCache(protocol.getStream());
         thumbnailCache = new RemoteThumbnailCache(protocol.getStream());
         previewController = new ClientPreviewController(
                 previewPane,
                 thumbnailCache,
                 this::buildThumbnailRequest,
-                () -> previewPane.isShowing() && (getExtendedState() & ICONIFIED) == 0 && !isDir());
+                () -> previewPane.isShowing() && (getExtendedState() & ICONIFIED) == 0 && !isSelectedFileListItemADir());
         fileThumbnailController = new ClientFileThumbnailController<>(
                 fileList, thumbnailCache, this::buildFileThumbnailRequest,
                 () -> thumbnailAddress != null && fileList.isShowing()
@@ -203,8 +302,11 @@ public class ClientWindow extends MysterFrame implements Sayable {
     }
 
     /**
-     * Sets initial data for navigating to a specific IP, type, and/or file.
-     * This works for both new windows and recycled windows.
+     * Sets initial data for navigating within this window's server.
+     * The constructor binds the public-key identity. Subsequent requests may change the endpoint,
+     * type, or file, but cannot change that identity. An endpoint change discards old listings and
+     * cancels their workers before fetching rows authenticated against the same immutable key.
+     * Use {@link ClientWindowProvider#getOrCreateWindow(ClientWindowData)} for another server.
      *
      * The process is sequential:
      * 1. Connect (if needed) - triggers type listing
@@ -213,28 +315,30 @@ public class ClientWindow extends MysterFrame implements Sayable {
      *
      * Each step is only triggered if not already completed.
      *
-     * @param data the navigation data (IP, optional type, optional filename)
+     * @param data the destination within this window's server identity
+     * @throws IllegalArgumentException if the request changes the server identity
      */
     public void setInitialData(ClientWindowData data) {
+        Util.ensureEventDispatchThread();
+
+        if (!serverIdentity.equals(data.identity())) {
+            throw new IllegalArgumentException("A client window cannot change its server identity.");
+        }
+
+        boolean addressChanged = !serverAddress.equals(data.ip());
+        serverAddress = data.ip();
+        serverAddressField.setText(serverAddress.toString());
+
         // Step 1: Set the initial data
         this.initialData = Optional.of(data);
 
-        // Set IP in text field if provided
-        data.ip().ifPresent(ip -> {
-            ipTextField.setText(ip);
-            ipTextField.setForeground(javax.swing.UIManager.getColor("TextField.foreground"));
-        });
-
-        // Step 2: Check if we need to connect
-        String targetIp = data.ip().orElse(null);
-        String currentIp = getCurrentIP();
-        boolean sameServer = targetIp != null && targetIp.equals(currentIp);
+        // Step 2: Check if we need to connect to this window's server
         boolean typesLoaded = fileTypeList.length() > 0;
 
-        if (!sameServer || !typesLoaded) {
+        if (addressChanged || !typesLoaded) {
             // Need to connect - this will trigger type listing
-            // When types arrive, addItemToTypeList() will handle selecting the type
-            connect.doClick();
+            // When type listing finishes, its completion callback will select the type
+            refresh();
             return;
         }
 
@@ -275,7 +379,7 @@ public class ClientWindow extends MysterFrame implements Sayable {
         // No type specified, just clear initial data
         initialData = Optional.empty();
     }
-    
+
     private void recursivelyStartDownloads(TreeMCListTableModel<String> model,
                                            TreeMCListItem<String> item,
                                            Path baseDirectory,
@@ -286,23 +390,16 @@ public class ClientWindow extends MysterFrame implements Sayable {
                 recursivelyStartDownloads(model, i, baseDirectory, relativePath.resolve(Path.of(item.getObject())));
             }
         } else {
-            try {
-                protocol.getStream()
-                        .downloadFile(new MSDownloadParams(context,
-                                                           hashManager,
-                                                           protocol.getDnsLookup(),
-                                                           new MysterFileStub(MysterAddress
-                                                                               .createMysterAddress(currentip),
-                                                                              getCurrentType(),
-                                                                              item.getObject()),
-                                                           baseDirectory,
-                                                           relativePath,
-                                                           DownloadStartErrorDialog.handler(this)));
-            } catch (UnknownHostException e1) {
-                DownloadStartErrorDialog
-                        .showOnEdt(this,
-                                   new DownloadServerConnectionException(currentip, e1));
-            }
+            protocol.getStream()
+                    .downloadFile(new MSDownloadParams(context,
+                                                       hashManager,
+                                                       protocol.getDnsLookup(),
+                                                       new MysterFileStub(serverAddress,
+                                                                          getCurrentType(),
+                                                                          item.getObject()),
+                                                       baseDirectory,
+                                                       relativePath,
+                                                       DownloadStartErrorDialog.handler(this)));
         }
     }
 
@@ -336,6 +433,7 @@ public class ClientWindow extends MysterFrame implements Sayable {
         sorted.sort((a, b) -> {
             TreePath pathA = a.isContainer() ? a.getMyPathOrFail() : a.getParent();
             TreePath pathB = b.isContainer() ? b.getMyPathOrFail() : b.getParent();
+
             return Integer.compare(pathA.getIndentLevel(), pathB.getIndentLevel());
         });
 
@@ -364,22 +462,22 @@ public class ClientWindow extends MysterFrame implements Sayable {
 
     private static final String IP_KEY = "Ip Key";
     private static final String TYPE_KEY = "Type Key";
+    private static final String SERVER_KEY = "Server Public Key";
+
+    /** Saves the identity as authoritative; the address is only its last known endpoint. */
+    void savePreferences(Preferences p) {
+        p.putByteArray(SERVER_KEY, serverIdentity.getPublicKey().getEncoded());
+        p.put(IP_KEY, serverAddress.toString());
+        if (getCurrentType() != null) {
+            p.put(TYPE_KEY, getCurrentType().toHexString());
+        } else {
+            p.remove(TYPE_KEY);
+        }
+    }
     
     private void init() {
-        savePrefs = context.keeper().addFrame(this, (p) -> {
-            if (getCurrentIP()!= null) {
-                p.put(IP_KEY, getCurrentIP());
-            } else {
-                p.remove(IP_KEY);
-            }
-            
-            
-            if (getCurrentType()!= null) {
-                p.put(TYPE_KEY, getCurrentType().toHexString());
-            } else {
-                p.remove(TYPE_KEY);
-            }
-        }, WINDOW_KEEPER_KEY, WindowPrefDataKeeper.MULTIPLE_WINDOWS);
+        savePrefs = context.keeper().addFrame(this, this::savePreferences,
+                WINDOW_KEEPER_KEY, WindowPrefDataKeeper.MULTIPLE_WINDOWS);
         
         setLayout(new GridBagLayout());
         var builder = new com.general.util.GridBagBuilder()
@@ -391,51 +489,20 @@ public class ClientWindow extends MysterFrame implements Sayable {
         statsPanel.setPreferredSize(new Dimension(200, 1));
         statsPanel.setBorder(javax.swing.BorderFactory.createEmptyBorder(5, 5, 5, 5));
 
-        connect = new JButton("Connect");
-        connect.setIcon(IconLoader.loadSvg(ClientWindow.class, "connect-button"));
-        connect.setSize(SBXDEFAULT, GYDEFAULT);
-        getRootPane().setDefaultButton(connect);
+        refreshButton = new JButton("Refresh");
+        refreshButton.setIcon(IconLoader.loadSvg(ClientWindow.class, "connect-button"));
+        refreshButton.setSize(SBXDEFAULT, GYDEFAULT);
+        getRootPane().setDefaultButton(refreshButton);
 
         // Create toggle button for stats panel
         toggleStatsButton = new JButton("≡");
         toggleStatsButton.setToolTipText("Show/Hide Stats Panel");
-        toggleStatsButton.setPreferredSize(new Dimension(30, connect.getPreferredSize().height));
+        toggleStatsButton.setPreferredSize(new Dimension(30, refreshButton.getPreferredSize().height));
         toggleStatsButton.setFocusable(false);
 
-        ipTextField = new JTextField(ENTER_AN_IP_HERE) {
-            @Override
-            public String getText() {
-                String text = super.getText();
-                if (text.equals(ENTER_AN_IP_HERE)) {
-                    return "";
-                }
-                return text;
-            }
-        };
-        ipTextField.setEditable(true);
-        ipTextField.setToolTipText(ENTER_AN_IP_HERE);
-        
-        ipTextField.setForeground(javax.swing.UIManager.getColor("TextField.inactiveForeground"));
-        
-        
-        ipTextField.addFocusListener(new FocusListener() {
-            @Override
-            public void focusLost(FocusEvent e) {
-                if (ipTextField.getText().equals("")) {
-                    ipTextField.setText(ENTER_AN_IP_HERE);
-                    ipTextField.setForeground(javax.swing.UIManager.getColor("TextField.inactiveForeground"));
-                }
-            }
-            
-            @Override
-            public void focusGained(FocusEvent e) {
-                // basically if getText().equals("") it means we're displaying the ENTER_AN_IP_HERE.. so don't get confused
-                if (ipTextField.getText().equals("")) {
-                    ipTextField.setForeground(javax.swing.UIManager.getColor("TextField.foreground"));
-                    ipTextField.setText("");
-                }
-            }
-        });
+        serverAddressField = new JTextField(serverAddress.toString());
+        serverAddressField.setEditable(false);
+        serverAddressField.setToolTipText("Server address. Open another connection to use a different server.");
 
         fileTypeList = MCListFactory.buildMCList(1, true, this);
         fileTypeList.sortBy(-1);
@@ -509,10 +576,19 @@ public class ClientWindow extends MysterFrame implements Sayable {
                 return;
             }
         });
-        
+        JMenuItem jMenuItem = FileLinkCopyActionUtils.remoteItem(() -> this, context.linkService(), () -> {
+            if (fileList.getSelectedIndexes().length != 1 || isSelectedFileListItemADir() || getCurrentType() == null
+                    || getCurrentFile().isEmpty() || thumbnailAddress == null)
+                return Optional.empty();
+            return Optional.of(new FileLinkCopyActionUtils.RemoteFile(
+                    new MysterFileStub(thumbnailAddress, getCurrentType(), getCurrentFile()),
+                    Optional.of(serverIdentity.getPublicKey())));
+        });
+
         // OPEN FILE ON DISK!
-        ContextMenu.addPopUpMenu(fileList, ()->{}, downloadMenuItem, downloadToMenuItem, null, bookmarkMenuItem);
-        
+        ContextMenu.addPopUpMenu(fileList, () -> {
+        }, downloadMenuItem, downloadToMenuItem, null, bookmarkMenuItem, jMenuItem);
+
         fileList.sortBy(0);
         
         msg = new MessageField("Idle...");
@@ -542,31 +618,22 @@ public class ClientWindow extends MysterFrame implements Sayable {
         // Start with stats panel collapsed (divider all the way to the right)
         splitPane.setDividerLocation(1.0);
         
-        // Add components to the frame: top row (connect/IP/toggle), middle (split pane), bottom (message)
-        add(ipTextField, builder.withGridLoc(0, 0).withSize(1, 1).withWeight(1, 0));
-        add(connect, builder.withGridLoc(1, 0).withSize(1, 1).withWeight(0, 0));
+        // Add components to the frame: top row (address/refresh/toggle), middle (split pane), bottom (message)
+        add(serverAddressField, builder.withGridLoc(0, 0).withSize(1, 1).withWeight(1, 0));
+        add(refreshButton, builder.withGridLoc(1, 0).withSize(1, 1).withWeight(0, 0));
         add(toggleStatsButton, builder.withGridLoc(2, 0).withSize(1, 1).withWeight(0, 0));
         add(splitPane, builder.withGridLoc(0, 1).withSize(3, 1).withWeight(1, 1));
         add(msg, builder.withGridLoc(0, 2).withSize(3, 1).withWeight(1, 0));
         
         pack();
 
-        Dimension preferredSize = connect.getPreferredSize();
+        Dimension preferredSize = refreshButton.getPreferredSize();
         preferredSize.width *= 2;
         fileTypeList.getPane().setPreferredSize(preferredSize);
 
         setResizable(true);
         setSize(XDEFAULT, YDEFAULT);
 
-        //filelisting.addActionListener(???);
-        final ActionListener connectButtonEvent = new ActionListener(){
-            public void actionPerformed(ActionEvent e) {
-                startConnect();
-            }
-        };
-        connect.addActionListener(connectButtonEvent);
-        ipTextField.addActionListener(connectButtonEvent);
-        
         // Toggle stats panel visibility
         toggleStatsButton.addActionListener(_ -> {
             boolean isVisible = previewPane.isVisible();
@@ -581,31 +648,7 @@ public class ClientWindow extends MysterFrame implements Sayable {
             refreshThumbnailDemand();
         });
 
-        fileTypeList.addMCListEventListener(new MCListEventAdapter(){
-            public void selectItem(MCListEvent e) {
-                startFileList();
-                
-                savePrefs.run();
-            }
-
-            public void unselectItem(MCListEvent e) {
-                stopFileListing();
-                
-                savePrefs.run();
-            }
-        });
-        fileList.addMCListEventListener(new FileListAction(protocol, hashManager, getMysterFrameContext(), this));
-        fileList.addMCListEventListener(new MCListEventAdapter(){
-            public void selectItem(MCListEvent e) {
-                startStats();
-                refreshThumbnailDemand();
-            }
-
-            public void unselectItem(MCListEvent e) {
-                stopStats();
-                refreshThumbnailDemand();
-            }
-        });
+        installSelectionListeners();
 
         addWindowListener(new StandardWindowBehavior());
         previewPane.addHierarchyListener(event -> {
@@ -615,6 +658,49 @@ public class ClientWindow extends MysterFrame implements Sayable {
         });
         addWindowStateListener(_ -> refreshThumbnailDemand());
         addPropertyChangeListener("graphicsConfiguration", _ -> refreshThumbnailDemand());
+    }
+
+
+    /** Package protected for unit tests: wires real list events without creating a native frame. */
+    void installSelectionListeners() {
+        final ActionListener refreshButtonEvent = new ActionListener(){
+            public void actionPerformed(ActionEvent e) {
+                initialData = Optional.empty();
+                refresh();
+            }
+        };
+        refreshButton.addActionListener(refreshButtonEvent);
+
+        fileTypeList.addMCListEventListener(new MCListEventAdapter(){
+            public void selectItem(MCListEvent e) {
+                initialData.filter(data -> !data.type().equals(Optional.ofNullable(getCurrentType()))
+                                   || data.fileName().isEmpty())
+                           .ifPresent(_ -> initialData = Optional.empty());
+                startFileList();
+
+                savePrefs.run();
+            }
+
+            public void unselectItem(MCListEvent e) {
+                stopFileListing();
+
+                savePrefs.run();
+            }
+        });
+        fileList.addMCListEventListener(new FileListAction(protocol, hashManager, getMysterFrameContext(), this));
+        fileList.addMCListEventListener(new MCListEventAdapter(){
+            public void selectItem(MCListEvent e) {
+                initialData.filter(data -> !data.fileName().equals(Optional.of(getCurrentFile())))
+                           .ifPresent(_ -> initialData = Optional.empty());
+                startStats();
+                refreshThumbnailDemand();
+            }
+
+            public void unselectItem(MCListEvent e) {
+                stopStats();
+                refreshThumbnailDemand();
+            }
+        });
     }
 
     private List<TreeMCListItem<String>> extractItemsFromSelection() {
@@ -649,6 +735,7 @@ public class ClientWindow extends MysterFrame implements Sayable {
         if (previewController != null) {
             previewController.close();
         }
+        initialData = Optional.empty();
         super.dispose();
         stopConnect();
     }
@@ -661,16 +748,6 @@ public class ClientWindow extends MysterFrame implements Sayable {
         typeDisplayNames.put(t, nameCell);
         fileTypeList.addItem(new GenericMCListItem<MysterType>(
                 new Sortable[] { nameCell, new SortableString(t.toString()) }, t));
-
-        initialData.ifPresent(data -> {
-            if (t.equals(data.type().orElse(null))) {
-                fileTypeList.select(fileTypeList.length()-1);
-                
-                if (data.fileName().isEmpty()) {
-                    initialData = Optional.empty();
-                }
-            }
-        });
     }
 
     /**
@@ -819,7 +896,7 @@ public class ClientWindow extends MysterFrame implements Sayable {
         thumbnailAddress = address;
         MysterServer server = tracker.getQuickServerStats(address);
 
-        String fallbackWindowName = address.getInetAddress().isLoopbackAddress() ? "myself" : currentip;
+        String fallbackWindowName = address.getInetAddress().isLoopbackAddress() ? "myself" : serverAddress.toString();
         String windowName =
                 (server == null ? fallbackWindowName : "\"" + server.getServerName() + "\" ("
                         + fallbackWindowName + ")");
@@ -827,9 +904,9 @@ public class ClientWindow extends MysterFrame implements Sayable {
         refreshThumbnailDemand();
     }
 
-    //To be in an interface??
-    public String getCurrentIP() {
-        return currentip;
+    /** Returns the current endpoint of this window's immutable server identity. */
+    public MysterAddress getCurrentIP() {
+        return serverAddress;
     }
 
     public MysterType getCurrentType() {
@@ -851,7 +928,7 @@ public class ClientWindow extends MysterFrame implements Sayable {
     }
 
     private Optional<RemoteThumbnailCache.Request> buildThumbnailRequest() {
-        if (thumbnailAddress == null || isDir()) {
+        if (thumbnailAddress == null || isSelectedFileListItemADir()) {
             return Optional.empty();
         }
         MysterType type = getCurrentType();
@@ -873,7 +950,8 @@ public class ClientWindow extends MysterFrame implements Sayable {
             return Optional.empty();
         }
 
-        return Optional.of(new RemoteThumbnailCache.Request(thumbnailAddress, type, getCurrentFile(), size));
+        return Optional.of(new RemoteThumbnailCache.Request(thumbnailAddress, type, getCurrentFile(),
+                                                            size, serverIdentity.getPublicKey()));
     }
 
     private void refreshThumbnailDemand() {
@@ -891,28 +969,39 @@ public class ClientWindow extends MysterFrame implements Sayable {
         if (item.isContainer() || thumbnailAddress == null || listedType == null) {
             return Optional.empty();
         }
+
         Optional<MetadataTypeId> profile = typeDescriptionList.get(listedType)
                 .map(TypeDescription::getMetadataTypeId);
+
         if (profile.isEmpty()) {
             profile = typeMetadataCache.getMetadataTypeId(listedType);
         }
+
         if (profile.isEmpty()) {
             if (allowResolution && !typeMetadataCache.hasAttempted(listedType)) {
-                typeMetadataCache.resolveAsync(listedType, thumbnailAddress,
+                typeMetadataCache.resolveAsync(listedType, thumbnailAddress, serverIdentity.getPublicKey(),
                         () -> javax.swing.SwingUtilities.invokeLater(this::refreshThumbnailDemand));
             }
             return Optional.empty();
         }
+
         if (!ThumbnailUiUtils.isEligible(profile.get())) {
             return Optional.empty();
         }
+
         int size = ThumbnailUiUtils.devicePixelSize(logicalSize, configuration);
-        if (size == 0) return Optional.empty();
-        return Optional.of(new RemoteThumbnailCache.Request(
-                thumbnailAddress, listedType, item.getObject(), size));
+        if (size == 0) {
+            return Optional.empty();
+        }
+
+        return Optional.of(new RemoteThumbnailCache.Request(thumbnailAddress,
+                                                            listedType,
+                                                            item.getObject(),
+                                                            size,
+                                                            serverIdentity.getPublicKey()));
     }
     
-    public boolean isDir() {
+    public boolean isSelectedFileListItemADir() {
         int rowIndex = fileList.getSelectedIndex();
         if (rowIndex == -1) {
             return false;
@@ -964,6 +1053,7 @@ public class ClientWindow extends MysterFrame implements Sayable {
     private void stopFileListing() {
         if (fileListThread != null) {
             fileListThread.flagToEnd();
+            fileListThread = null;
         }
         listedType = null;
         fileList.clearAll();
@@ -979,14 +1069,12 @@ public class ClientWindow extends MysterFrame implements Sayable {
         refreshThumbnailDemand();
     }
 
-    public void startConnect() {
+    public void refresh() {
+        Util.ensureEventDispatchThread();
+        // Every refresh uses the constructor-bound identity, even with no pending navigation.
+        PublicKey expectedKey = serverIdentity.getPublicKey();
         stopConnect();
         typeMetadataCache = new TypeMetadataCache(protocol.getStream());
-        currentip = ipTextField.getText();
-        
-        if (currentip.isBlank()) {
-            currentip = "127.0.0.1:" + serverPreferences.getServerPort();
-        }
         
         connectToThread = new TypeListerThread(
                 protocol,
@@ -994,9 +1082,19 @@ public class ClientWindow extends MysterFrame implements Sayable {
                     public void addItemToTypeList(MysterType s) {
                         ClientWindow.this.addItemToTypeList(s);
                     }
+
+                    public void finished() {
+                        selectTypeIfRequired();
+                    }
+
+                    public void failed(java.io.IOException error) {
+                        initialData = Optional.empty();
+                    }
+
                     public void refreshIP(MysterAddress address) {
                         ClientWindow.this.refreshIP(address);
                     }
+
                     public void refreshTypeDisplay(MysterType type) {
                         ClientWindow.this.refreshTypeDisplay(type);
                     }
@@ -1004,28 +1102,55 @@ public class ClientWindow extends MysterFrame implements Sayable {
                 this::say,
                 getCurrentIP(),
                 typeDescriptionList,
-                typeMetadataCache);
+                typeMetadataCache,
+                expectedKey);
         connectToThread.start();
         
 
         savePrefs.run();
     }
 
+    private void selectTypeIfRequired() {
+        initialData.ifPresent(data -> {
+            if (data.type().isEmpty()) {
+                initialData = Optional.empty();
+                return;
+            }
+
+            MysterType requestedType = data.type().get();
+            for (int i = 0; i < fileTypeList.length(); i++) {
+                if (fileTypeList.getMCListItem(i).getObject().equals(requestedType)) {
+                    fileTypeList.select(i);
+                    return;
+                }
+            }
+
+            initialData = Optional.empty();
+            say("The requested type is not available on this server.");
+        });
+    }
+
     public void startFileList() {
         stopFileListing();
         listedType = getCurrentType();
         recolumnizeFileList();
-        fileListThread = new FileListerThread(new FileListerThread.ItemListListener() {
+        fileListThread = new FileListerThread(protocol.getStream(), Optional.of(serverIdentity.getPublicKey()), new FileListerThread.ItemListListener() {
                                                     public void addItemsToFileList(FileRecord[] files) {
                                                         ClientWindow.this.addItemsToFileList(files);
                                                     }
     
                                                     public void finish() {
+                                                        // Mark the list complete before retrying, so a missing file is definitive.
+                                                        fileListThread = null;
                                                         selectElement();
+                                                    }
+                                                    public void failed(java.io.IOException error) {
+                                                        fileListThread = null;
+                                                        initialData = Optional.empty();
                                                     }
                                               },
                                               this::say,
-                                              getCurrentIP(),
+                                              getCurrentIP().toString(),
                                               getCurrentType(),
                                               t -> typeDescriptionList.get(t)
                                                       .map(TypeDescription::getDescription)
@@ -1033,6 +1158,15 @@ public class ClientWindow extends MysterFrame implements Sayable {
         fileListThread.start();
     }
 
+    /**
+     * Attempts to select the pending filename from the rows currently available.
+     *
+     * <p>Called on the EDT both by {@link #setInitialData(ClientWindowData)} for an already
+     * selected type and by the file-list finish callback. These events run serially, but a
+     * new destination can arrive between file batches, while the model is still incomplete.
+     * The finish callback retries after all batches have been applied; canceled or replaced
+     * destinations are ignored through the current {@code initialData} value.
+     */
     private void selectElement() {
         if (initialData.isEmpty()) {
             return;
@@ -1051,6 +1185,7 @@ public class ClientWindow extends MysterFrame implements Sayable {
 
         foundElement.ifPresent(item -> {
             model.ensureParentFoldersOpen(item);
+            fileList.clearSelection();
             item.setSelected(true);
             
             fileList.selectAndScrollToItem(item);
@@ -1058,7 +1193,14 @@ public class ClientWindow extends MysterFrame implements Sayable {
             fileList.repaint();
         });
         
-        initialData = Optional.empty();
+        // Finding the file completes the request immediately. If it is still missing while
+        // listing is running, preserve initialData: clearing it would lose a destination that
+        // a later batch may contain. finish() clears fileListThread before retrying, making
+        // absence definitive; then clear the request and report the missing file only once.
+        if (foundElement.isPresent() || fileListThread == null) {
+            initialData = Optional.empty();
+            if (foundElement.isEmpty()) say("The requested file is not available in this type.");
+        }
     }
 
     public void startStats() {
@@ -1069,7 +1211,8 @@ public class ClientWindow extends MysterFrame implements Sayable {
                                          this::say,
                                          getCurrentIP(),
                                          getCurrentType(),
-                                         getCurrentFile());
+                                         getCurrentFile(),
+                                         serverIdentity.getPublicKey());
         fileInfoListerThread.start();
     }
     
@@ -1088,18 +1231,15 @@ public class ClientWindow extends MysterFrame implements Sayable {
         MysterType type = fileTypeList.getItem(idx);
         if (typeDescriptionList.get(type).isPresent()) return;
 
-        MysterAddress address;
-        try {
-            address = MysterAddress.createMysterAddress(currentip);
-        } catch (UnknownHostException e) {
-            msg.sayError("Cannot import: invalid server address.");
-            return;
-        }
-
         msg.say("Fetching type info...");
-        PromiseFutures.execute(() -> protocol.getStream().getAccessList(address, type))
-                .useEdt()
-                .addResultListener((Optional<AccessList> result) -> {
+        MysterAddress address = serverAddress;
+        PromiseFutures.execute(() -> {
+            try (var socket = protocol.getStream()
+                                      .makeStreamConnection(new ParamBuilder(address).withExpectedServerPublicKey(
+                                              serverIdentity.getPublicKey()))) {
+                return protocol.getStream().getAccessList(socket, type);
+            }
+        }).useEdt().addResultListener((Optional<AccessList> result) -> {
             if (result.isEmpty()) {
                 msg.sayError("Server has no access list for this type.");
                 return;
@@ -1108,8 +1248,8 @@ public class ClientWindow extends MysterFrame implements Sayable {
                 typeDescriptionList.importType(result.get());
                 refreshTypeDisplay(type);
                 String name = typeDescriptionList.get(type)
-                        .map(TypeDescription::getDescription)
-                        .orElse(type.toHexString());
+                                                 .map(TypeDescription::getDescription)
+                                                 .orElse(type.toHexString());
                 msg.say("Type '" + name + "' added.");
             } catch (IllegalArgumentException e) {
                 msg.sayError("This type is already in your list.");

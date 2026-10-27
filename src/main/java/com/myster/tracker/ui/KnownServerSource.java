@@ -33,9 +33,11 @@ public interface KnownServerSource {
 
     /**
      * Explicitly refreshes a user-entered address through server stats.
+     * Each call returns a caller-owned future; cancellation does not affect other callers
+     * even when the implementation shares an underlying pool refresh.
      *
      * @param address already DNS-resolved Myster address
-     * @return future completed with the server inserted or refreshed in pool state
+     * @return independently cancellable future completed with the pool's refreshed server
      */
     PromiseFuture<MysterServer> resolveServer(MysterAddress address);
 }

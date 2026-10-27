@@ -16,9 +16,10 @@ import java.awt.Window;
 import java.util.Optional;
 
 import com.general.util.AnswerDialog;
-import com.myster.client.ui.ClientWindow;
 import com.myster.net.MysterAddress;
 import com.myster.tracker.MysterServer;
+import com.myster.tracker.MysterIdentity;
+import com.myster.tracker.PublicKeyIdentity;
 import com.myster.tracker.ui.ServerPickerDialog;
 import com.myster.ui.MysterFrameContext;
 
@@ -47,12 +48,11 @@ public class NewClientWindowAction implements ActionListener {
             AnswerDialog.simpleAlert("That server no longer has a usable address.");
             return;
         }
-        ClientWindow.ClientWindowData data =
-                new ClientWindow.ClientWindowData(Optional.of(address.get().toString()),
-                        Optional.empty(), Optional.empty());
-        ClientWindow window = context.clientWindowProvider().getOrCreateWindow(data);
-        window.show();
-        window.toFrontAndUnminimize();
+        context.clientWindowProvider()
+               .openWindow(address.get(),
+                           MysterIdentity.extractPublicKey(selected.get().getIdentity()).map(PublicKeyIdentity::new),
+                           Optional.empty(),
+                           Optional.empty());
     }
 
 }
