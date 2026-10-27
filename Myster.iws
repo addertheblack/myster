@@ -7,37 +7,9 @@
     <option name="selectedModelId" value="auto" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="fe0d93f5-a1b5-4669-89e3-19e762d0ae4a" name="Changes" comment="Add Myster Design skill">
+    <list default="true" id="fe0d93f5-a1b5-4669-89e3-19e762d0ae4a" name="Changes" comment="Enhance public key handling: add null checks for PublicKey in PublicKeyIdentity, update IdentityResolver to return cached PublicKeyIdentity, and improve server resolution futures to allow independent cancellation.">
       <change beforePath="$PROJECT_DIR$/Myster.iws" beforeDir="false" afterPath="$PROJECT_DIR$/Myster.iws" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/docs/conventions/myster-coding-conventions.md" beforeDir="false" afterPath="$PROJECT_DIR$/docs/conventions/myster-coding-conventions.md" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/com/myster/Myster.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/com/myster/Myster.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/com/myster/client/ui/ClientWindow.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/com/myster/client/ui/ClientWindow.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/com/myster/client/ui/ClientWindowProvider.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/com/myster/client/ui/ClientWindowProvider.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/com/myster/client/ui/FileInfoListerThread.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/com/myster/client/ui/FileInfoListerThread.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/com/myster/client/ui/FileListAction.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/com/myster/client/ui/FileListAction.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/com/myster/client/ui/FileListerThread.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/com/myster/client/ui/FileListerThread.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/com/myster/client/ui/IdentityResolver.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/com/myster/client/ui/IdentityResolver.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/com/myster/client/ui/TypeListerThread.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/com/myster/client/ui/TypeListerThread.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/com/myster/client/ui/TypeMetadataCache.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/com/myster/client/ui/TypeMetadataCache.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/com/myster/filemanager/ui/FmiChooser.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/com/myster/filemanager/ui/FmiChooser.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/com/myster/progress/ui/ProgressManagerWindow.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/com/myster/progress/ui/ProgressManagerWindow.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/com/myster/search/ui/SearchTab.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/com/myster/search/ui/SearchTab.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/com/myster/server/ui/DownloadInfoPanel.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/com/myster/server/ui/DownloadInfoPanel.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/com/myster/thumbnail/RemoteThumbnailCache.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/com/myster/thumbnail/RemoteThumbnailCache.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/com/myster/thumbnail/RemoteThumbnailTask.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/com/myster/thumbnail/RemoteThumbnailTask.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/com/myster/tracker/MysterServerPool.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/com/myster/tracker/MysterServerPool.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/com/myster/tracker/MysterServerPoolImpl.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/com/myster/tracker/MysterServerPoolImpl.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/com/myster/tracker/PublicKeyIdentity.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/com/myster/tracker/PublicKeyIdentity.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/com/myster/tracker/ui/KnownServerSource.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/com/myster/tracker/ui/KnownServerSource.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/com/myster/tracker/ui/OpenConnectionHandler.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/com/myster/tracker/ui/OpenConnectionHandler.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/com/myster/tracker/ui/TrackerThreeDnsPanel.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/com/myster/tracker/ui/TrackerThreeDnsPanel.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/com/myster/ui/MysterFrameContext.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/com/myster/ui/MysterFrameContext.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/com/myster/ui/menubar/event/NewClientWindowAction.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/com/myster/ui/menubar/event/NewClientWindowAction.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/test/java/com/myster/client/ui/TestClientPreviewController.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/test/java/com/myster/client/ui/TestClientPreviewController.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/test/java/com/myster/client/ui/TestTypeMetadataCache.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/test/java/com/myster/client/ui/TestTypeMetadataCache.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/test/java/com/myster/thumbnail/TestRemoteThumbnailCache.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/test/java/com/myster/thumbnail/TestRemoteThumbnailCache.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/test/java/com/myster/thumbnail/TestRemoteThumbnailTask.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/test/java/com/myster/thumbnail/TestRemoteThumbnailTask.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/test/java/com/myster/tracker/TestMysterServerPoolImpl.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/test/java/com/myster/tracker/TestMysterServerPoolImpl.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/com/myster/link/MysterLinkUri.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/com/myster/link/MysterLinkUri.java" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -841,7 +813,15 @@
       <option name="project" value="LOCAL" />
       <updated>1792864878637</updated>
     </task>
-    <option name="localTasksCounter" value="25" />
+    <task id="LOCAL-00025" summary="Enhance public key handling: add null checks for PublicKey in PublicKeyIdentity, update IdentityResolver to return cached PublicKeyIdentity, and improve server resolution futures to allow independent cancellation.">
+      <option name="closed" value="true" />
+      <created>1793062599445</created>
+      <option name="number" value="00025" />
+      <option name="presentableId" value="LOCAL-00025" />
+      <option name="project" value="LOCAL" />
+      <updated>1793062599446</updated>
+    </task>
+    <option name="localTasksCounter" value="26" />
     <servers />
   </component>
   <component name="TodoView" selected-index="0">
@@ -883,7 +863,6 @@
     <option name="version" value="3" />
   </component>
   <component name="VcsManagerConfiguration">
-    <MESSAGE value="Enhance multi-source download functionality with DNS support and improve error handling" />
     <MESSAGE value="Implement OS thumbnail integration with caching and asynchronous support" />
     <MESSAGE value="Implement OS thumbnail integration and enhance JUnit test configurations" />
     <MESSAGE value="Fix XML encoding in project configuration for better compatibility" />
@@ -908,7 +887,8 @@
     <MESSAGE value="Implement multi-folder keyboard navigation: enable Right/Left arrow keys to open/close all selected tree containers, preserving selection and improving user experience." />
     <MESSAGE value="Add Myster resource links documentation" />
     <MESSAGE value="Add Myster Design skill" />
-    <option name="LAST_COMMIT_MESSAGE" value="Add Myster Design skill" />
+    <MESSAGE value="Enhance public key handling: add null checks for PublicKey in PublicKeyIdentity, update IdentityResolver to return cached PublicKeyIdentity, and improve server resolution futures to allow independent cancellation." />
+    <option name="LAST_COMMIT_MESSAGE" value="Enhance public key handling: add null checks for PublicKey in PublicKeyIdentity, update IdentityResolver to return cached PublicKeyIdentity, and improve server resolution futures to allow independent cancellation." />
   </component>
   <component name="VssConfiguration">
     <CheckoutOptions>

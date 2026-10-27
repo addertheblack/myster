@@ -79,6 +79,7 @@ public final class MysterLinkUri {
         Map<String, String> values = extractValues(uri);
 
         ServerCid server = new ServerCid(hex(values.get("server"), "server"));
+
         Optional<MysterType> type = values.containsKey("type")
                 ? Optional.of(new MysterType(hex(values.get("type"), "type"))) : Optional.empty();
         Optional<String> name = values.containsKey("name")
@@ -101,6 +102,7 @@ public final class MysterLinkUri {
 
             String key = field.substring(0, equals);
             String value = field.substring(equals + 1);
+
             if (!FIELDS.contains(key) || value.isEmpty() || values.putIfAbsent(key, value) != null) {
                 throw new IOException("Unknown, empty, or duplicate resource link field: " + key);
             }
