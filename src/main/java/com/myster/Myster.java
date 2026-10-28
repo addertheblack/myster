@@ -19,6 +19,7 @@ import java.io.BufferedInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.lang.reflect.InvocationTargetException;
+import java.net.Inet4Address;
 import java.net.InetAddress;
 import java.net.NetworkInterface;
 import java.net.SocketException;
@@ -541,11 +542,7 @@ public class Myster {
                     // Change server port
                     serverFacade.changePort(oldPort, newPort);
 
-                    // Close old UPnP mappings and open new ones
-                    UPnP.closePortTCP(oldPort);
-                    UPnP.closePortUDP(oldPort);
-                    UPnP.openPortTCP(newPort);
-                    UPnP.openPortUDP(newPort);
+                    updateUpnpPortMappings(oldPort, newPort);
                 });
                 preferencesGui.addPanel(serverPrefsPane);
                 
@@ -645,17 +642,72 @@ public class Myster {
         // ugh
         printoutAllNetworkInterfaces();
         printoutAllIpAddresses();
-        log.info("UPnP available: " + UPnP.isUPnPAvailable());
-        log.info("External UPnP gateway: " + UPnP.getDefaultGatewayIP());
-        log.info("External IP: " + UPnP.getExternalIP());
-        log.info("Local IP: " + UPnP.getLocalIP());
-        log.info("serverPreferences.getServerPort(): " + serverPreferences.getServerPort());
-        log.info("isMappedTCP(): " + UPnP.isMappedTCP(serverPreferences.getServerPort()));
-        log.info("External TCP/IP port enabled: " + UPnP.openPortTCP(serverPreferences.getServerPort()));
-        log.info("External UDP/IP port enabled: " + UPnP.openPortUDP(serverPreferences.getServerPort()));
+        updateUpnpPortMappings(0, serverPreferences.getServerPort());
 
         ServerUtils.massPing(protocol, tracker);
     } // Utils, globals etc.. //These variables are System wide variables //
+
+    /**
+     * Logs gateway diagnostics, removes old mappings on port changes, and skips opening new mappings
+     * behind upstream NAT or without a usable external IP.
+     *
+     * @param oldPort previous server port, or zero during startup
+     * @param newPort server port to map
+     */
+    static void updateUpnpPortMappings(int oldPort, int newPort) {
+        boolean available = UPnP.isUPnPAvailable();
+        String externalIp = UPnP.getExternalIP();
+        log.info("UPnP available: " + available);
+        log.info("External UPnP gateway: " + UPnP.getDefaultGatewayIP());
+        log.info("External IP: " + externalIp);
+        log.info("Local IP: " + UPnP.getLocalIP());
+        log.info("serverPreferences.getServerPort(): " + newPort);
+        log.info("isMappedTCP(): " + UPnP.isMappedTCP(newPort));
+        log.info("isMappedUDP(): " + UPnP.isMappedUDP(newPort));
+
+        if (!available) {
+            log.info("UPnP TCP/UDP port mapping disabled: no UPnP gateway available.");
+            return;
+        }
+
+        // Retire the previous port even when the new mapping will be skipped below.
+        if (oldPort != 0) {
+            log.info("Old TCP/IP port mapping closed: " + UPnP.closePortTCP(oldPort));
+            log.info("Old UDP/IP port mapping closed: " + UPnP.closePortUDP(oldPort));
+        }
+
+        if (externalIp == null || externalIp.isBlank()) {
+            log.info("UPnP TCP/UDP port mapping disabled: external IP unavailable.");
+            return;
+        }
+
+        Inet4Address address;
+        try {
+            // Parse a literal address without performing a DNS lookup.
+            address = Inet4Address.ofLiteral(externalIp);
+        } catch (IllegalArgumentException ex) {
+            log.info("UPnP TCP/UDP port mapping disabled: external IP is not a valid IPv4 address.");
+            return;
+        }
+
+        byte[] octets = address.getAddress();
+        // RFC 6598 shared address space: 100.64.0.0/10.
+        if ((octets[0] & 0xff) == 100 && (octets[1] & 0xc0) == 0x40) {
+            log.info("UPnP TCP/UDP port mapping disabled: Carrier grade NAT - not public address.");
+            return;
+        }
+        if (address.isSiteLocalAddress() || address.isLinkLocalAddress()) {
+            log.info("UPnP TCP/UDP port mapping disabled: NAT of a NAT - not public address.");
+            return;
+        }
+        if (address.isAnyLocalAddress() || address.isLoopbackAddress() || address.isMulticastAddress()) {
+            log.info("UPnP TCP/UDP port mapping disabled: external IP is not public address.");
+            return;
+        }
+
+        log.info("External TCP/IP port enabled: " + UPnP.openPortTCP(newPort));
+        log.info("External UDP/IP port enabled: " + UPnP.openPortUDP(newPort));
+    }
 
     /** Package protected for unit tests of buffered native/CLI resource delivery. */
     static final class SingleInstanceLaunchHandler implements ApplicationSingletonListener {

@@ -7,9 +7,9 @@
     <option name="selectedModelId" value="auto" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="fe0d93f5-a1b5-4669-89e3-19e762d0ae4a" name="Changes" comment="Enhance public key handling: add null checks for PublicKey in PublicKeyIdentity, update IdentityResolver to return cached PublicKeyIdentity, and improve server resolution futures to allow independent cancellation.">
+    <list default="true" id="fe0d93f5-a1b5-4669-89e3-19e762d0ae4a" name="Changes" comment="Rename menu items for clarity: change &quot;New Peer-to-Peer Connection&quot; to &quot;Connect to Server&quot; in MysterMenuBar and NewClientWindowAction.">
       <change beforePath="$PROJECT_DIR$/Myster.iws" beforeDir="false" afterPath="$PROJECT_DIR$/Myster.iws" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/com/myster/link/MysterLinkUri.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/com/myster/link/MysterLinkUri.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/com/myster/Myster.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/com/myster/Myster.java" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -243,23 +243,23 @@
   </component>
   <component name="NextEditCompletionFeaturesState">
     <decayedCancelled>
-      <entry key="MS100" value="1.9526379980439375" />
-      <entry key="MS500" value="1.9903428881751037" />
-      <entry key="S2" value="2.013277681793252" />
-      <entry key="S5" value="2.2799546345723236" />
-      <entry key="S10" value="2.753453531765814" />
-      <entry key="S30" value="5.901249899248601" />
-      <entry key="S60" value="14.274377741376162" />
-      <entry key="M2" value="27.38261063096851" />
-      <entry key="M5" value="51.541566543773854" />
-      <entry key="M10" value="70.58673598041203" />
-      <entry key="M15" value="79.64364224438299" />
-      <entry key="M30" value="90.62341275171931" />
-      <entry key="H1" value="97.01080391186889" />
-      <entry key="H2" value="102.55971321531594" />
-      <entry key="H4" value="127.92771343172595" />
-      <entry key="D1" value="1633.4148942308539" />
-      <entry key="W1" value="11571.857892018841" />
+      <entry key="MS100" value="2.3221479686321755" />
+      <entry key="MS500" value="4.1014792913547105" />
+      <entry key="S2" value="12.018353628302805" />
+      <entry key="S5" value="21.684900077295218" />
+      <entry key="S10" value="27.635345698979446" />
+      <entry key="S30" value="41.22157460980907" />
+      <entry key="S60" value="93.40793133004641" />
+      <entry key="M2" value="205.3963738058772" />
+      <entry key="M5" value="367.1231405354679" />
+      <entry key="M10" value="452.0038553326284" />
+      <entry key="M15" value="485.139857039652" />
+      <entry key="M30" value="521.0566590134002" />
+      <entry key="H1" value="540.1337920954406" />
+      <entry key="H2" value="549.9663944628393" />
+      <entry key="H4" value="555.1850947510535" />
+      <entry key="D1" value="1111.8849195293092" />
+      <entry key="W1" value="10472.325995198806" />
     </decayedCancelled>
     <decayedSelected>
       <entry key="MS100" value="0.0" />
@@ -269,35 +269,35 @@
       <entry key="S10" value="0.0" />
       <entry key="S30" value="0.0" />
       <entry key="S60" value="0.0" />
-      <entry key="M2" value="8.490641113134585E-223" />
-      <entry key="M5" value="1.4844862992181684E-89" />
-      <entry key="M10" value="3.8529031900868815E-45" />
-      <entry key="M15" value="2.4576803542137392E-30" />
-      <entry key="M30" value="1.5676990636642348E-15" />
-      <entry key="H1" value="3.959418127490533E-8" />
-      <entry key="H2" value="1.9903953488103218E-4" />
-      <entry key="H4" value="0.014442795005985621" />
-      <entry key="D1" value="0.9817101611292145" />
-      <entry key="W1" value="5.328511814673996" />
+      <entry key="M2" value="0.0" />
+      <entry key="M5" value="1.5770813308594008E-229" />
+      <entry key="M10" value="3.9712483312674127E-115" />
+      <entry key="M15" value="5.402789289278191E-77" />
+      <entry key="M30" value="7.350366854299214E-39" />
+      <entry key="H1" value="8.573428398565627E-20" />
+      <entry key="H2" value="2.928875607949419E-10" />
+      <entry key="H4" value="1.7519916687962408E-5" />
+      <entry key="D1" value="0.32059992597547904" />
+      <entry key="W1" value="4.541240718849298" />
     </decayedSelected>
     <decayedShown>
-      <entry key="MS100" value="0.9592641193722171" />
-      <entry key="MS500" value="1.0003134547064318" />
-      <entry key="S2" value="1.3180747064808924" />
-      <entry key="S5" value="1.9012297429929306" />
-      <entry key="S10" value="2.541387488797395" />
-      <entry key="S30" value="5.824600430999762" />
-      <entry key="S60" value="14.235001818964527" />
-      <entry key="M2" value="27.362233262160533" />
-      <entry key="M5" value="51.532491181778724" />
-      <entry key="M10" value="70.58174453290393" />
-      <entry key="M15" value="79.64016380181343" />
-      <entry key="M30" value="90.62158043964136" />
-      <entry key="H1" value="97.00986054103359" />
-      <entry key="H2" value="102.55943254989677" />
-      <entry key="H4" value="127.94190862375078" />
-      <entry key="D1" value="1634.3964811366382" />
-      <entry key="W1" value="11577.186323937676" />
+      <entry key="MS100" value="2.2970380624191726" />
+      <entry key="MS500" value="4.091577874603646" />
+      <entry key="S2" value="12.010797472223745" />
+      <entry key="S5" value="21.679370311720245" />
+      <entry key="S10" value="27.631801997601045" />
+      <entry key="S30" value="41.21973421737912" />
+      <entry key="S60" value="93.40564290622815" />
+      <entry key="M2" value="205.39372173308428" />
+      <entry key="M5" value="367.1211919652636" />
+      <entry key="M10" value="452.0026456229791" />
+      <entry key="M15" value="485.1389890575061" />
+      <entry key="M30" value="521.0561916190114" />
+      <entry key="H1" value="540.1335495136314" />
+      <entry key="H2" value="549.966270880165" />
+      <entry key="H4" value="555.1850495886405" />
+      <entry key="D1" value="1112.2054683248373" />
+      <entry key="W1" value="10476.867166178003" />
     </decayedShown>
   </component>
   <component name="PerforceConfiguration">
@@ -400,7 +400,7 @@
       <recent name="$PROJECT_DIR$" />
     </key>
   </component>
-  <component name="RunManager" selected="Application.Myster">
+  <component name="RunManager" selected="Maven.Myster [package]">
     <configuration selected="false" default="true" type="Applet" factoryName="Applet">
       <module name="" />
       <option name="MAIN_CLASS_NAME" />
@@ -821,7 +821,23 @@
       <option name="project" value="LOCAL" />
       <updated>1793062599446</updated>
     </task>
-    <option name="localTasksCounter" value="26" />
+    <task id="LOCAL-00026" summary="Enhance public key handling: add null checks for PublicKey in PublicKeyIdentity, update IdentityResolver to return cached PublicKeyIdentity, and improve server resolution futures to allow independent cancellation.">
+      <option name="closed" value="true" />
+      <created>1793062682978</created>
+      <option name="number" value="00026" />
+      <option name="presentableId" value="LOCAL-00026" />
+      <option name="project" value="LOCAL" />
+      <updated>1793062682978</updated>
+    </task>
+    <task id="LOCAL-00027" summary="Rename menu items for clarity: change &quot;New Peer-to-Peer Connection&quot; to &quot;Connect to Server&quot; in MysterMenuBar and NewClientWindowAction.">
+      <option name="closed" value="true" />
+      <created>1793063308225</created>
+      <option name="number" value="00027" />
+      <option name="presentableId" value="LOCAL-00027" />
+      <option name="project" value="LOCAL" />
+      <updated>1793063308225</updated>
+    </task>
+    <option name="localTasksCounter" value="28" />
     <servers />
   </component>
   <component name="TodoView" selected-index="0">
@@ -863,7 +879,6 @@
     <option name="version" value="3" />
   </component>
   <component name="VcsManagerConfiguration">
-    <MESSAGE value="Implement OS thumbnail integration with caching and asynchronous support" />
     <MESSAGE value="Implement OS thumbnail integration and enhance JUnit test configurations" />
     <MESSAGE value="Fix XML encoding in project configuration for better compatibility" />
     <MESSAGE value="Enhance access control by integrating AccessListReader into server stats and file transaction protocols" />
@@ -888,7 +903,8 @@
     <MESSAGE value="Add Myster resource links documentation" />
     <MESSAGE value="Add Myster Design skill" />
     <MESSAGE value="Enhance public key handling: add null checks for PublicKey in PublicKeyIdentity, update IdentityResolver to return cached PublicKeyIdentity, and improve server resolution futures to allow independent cancellation." />
-    <option name="LAST_COMMIT_MESSAGE" value="Enhance public key handling: add null checks for PublicKey in PublicKeyIdentity, update IdentityResolver to return cached PublicKeyIdentity, and improve server resolution futures to allow independent cancellation." />
+    <MESSAGE value="Rename menu items for clarity: change &quot;New Peer-to-Peer Connection&quot; to &quot;Connect to Server&quot; in MysterMenuBar and NewClientWindowAction." />
+    <option name="LAST_COMMIT_MESSAGE" value="Rename menu items for clarity: change &quot;New Peer-to-Peer Connection&quot; to &quot;Connect to Server&quot; in MysterMenuBar and NewClientWindowAction." />
   </component>
   <component name="VssConfiguration">
     <CheckoutOptions>
