@@ -31,9 +31,9 @@ import com.myster.cid.ServerCid;
 import com.myster.net.MysterAddress;
 import com.myster.tracker.MysterServer;
 
-class TestServerAddressLookup {
-    private static final ServerAddressCandidate CANDIDATE =
-            ServerAddressCandidate.parse("example.com").orElseThrow();
+class TestServerLookup {
+    private static final ServerLookupCandidate CANDIDATE =
+            ServerLookupCandidate.parse("example.com").orElseThrow();
 
     @Test
     void reportsStagesInOrderAndCompletesWithResolvedServer() throws Exception {
@@ -43,11 +43,11 @@ class TestServerAddressLookup {
         CountDownLatch statsRequested = new CountDownLatch(1);
         MysterAddress address = loopback();
         MysterServer server = Mockito.mock(MysterServer.class);
-        List<ServerAddressLookup.Stage> stages =
+        List<ServerLookup.Stage> stages =
                 Collections.synchronizedList(new ArrayList<>());
         KnownServerSource source = source(requestedAddress, statsRequested,
                 PromiseFuture.newPromiseFuture(statsContext::set));
-        ServerAddressLookup lookup = lookup(source,
+        ServerLookup lookup = lookup(source,
                 duration -> PromiseFuture.newPromiseFuture(delayContext::set),
                 _ -> address);
 
@@ -59,9 +59,9 @@ class TestServerAddressLookup {
 
         assertSame(server, result.get());
         assertEquals(address, requestedAddress.get());
-        assertEquals(List.of(ServerAddressLookup.Stage.WAITING,
-                             ServerAddressLookup.Stage.RESOLVING,
-                             ServerAddressLookup.Stage.CONTACTING), stages);
+        assertEquals(List.of(ServerLookup.Stage.WAITING,
+                             ServerLookup.Stage.RESOLVING,
+                             ServerLookup.Stage.CONTACTING), stages);
     }
 
     @Test
@@ -71,7 +71,7 @@ class TestServerAddressLookup {
         AtomicBoolean statsCalled = new AtomicBoolean();
         KnownServerSource source = source(_ -> statsCalled.set(true),
                 PromiseFuture.newPromiseFuture(_ -> {}));
-        ServerAddressLookup lookup = lookup(source, _ -> {
+        ServerLookup lookup = lookup(source, _ -> {
             PromiseFuture<Void> future = PromiseFuture.newPromiseFuture(_ -> {});
             delay.set(future);
             return future;
@@ -97,7 +97,7 @@ class TestServerAddressLookup {
         AtomicReference<AsyncContext<Void>> delayContext = new AtomicReference<>();
         KnownServerSource source = source(_ -> statsRequested.countDown(),
                 PromiseFuture.newPromiseFuture(_ -> {}));
-        ServerAddressLookup lookup = lookup(source,
+        ServerLookup lookup = lookup(source,
                 _ -> PromiseFuture.newPromiseFuture(delayContext::set),
                 _ -> {
                     dnsEntered.countDown();
@@ -121,7 +121,7 @@ class TestServerAddressLookup {
         PromiseFuture<MysterServer> stats = PromiseFuture.newPromiseFuture(_ -> {});
         CountDownLatch statsRequested = new CountDownLatch(1);
         KnownServerSource source = source(_ -> statsRequested.countDown(), stats);
-        ServerAddressLookup lookup = lookup(source,
+        ServerLookup lookup = lookup(source,
                 _ -> PromiseFuture.newPromiseFuture(delayContext::set),
                 _ -> loopback());
 
@@ -138,7 +138,7 @@ class TestServerAddressLookup {
     void dnsAndStatsFailuresRemainDistinct() throws Exception {
         AtomicReference<AsyncContext<Void>> firstDelay = new AtomicReference<>();
         UnknownHostException dnsFailure = new UnknownHostException("missing");
-        ServerAddressLookup dnsLookup = lookup(source(_ -> {}, PromiseFuture.newPromiseFuture(_ -> {})),
+        ServerLookup dnsLookup = lookup(source(_ -> {}, PromiseFuture.newPromiseFuture(_ -> {})),
                 _ -> PromiseFuture.newPromiseFuture(firstDelay::set),
                 _ -> { throw dnsFailure; });
         PromiseFuture<MysterServer> dnsResult = dnsLookup.start(CANDIDATE, _ -> {});
@@ -149,7 +149,7 @@ class TestServerAddressLookup {
 
         AtomicReference<AsyncContext<Void>> secondDelay = new AtomicReference<>();
         IOException statsFailure = new IOException("no response");
-        ServerAddressLookup statsLookup = lookup(
+        ServerLookup statsLookup = lookup(
                 source(_ -> {}, PromiseFuture.newPromiseFutureException(statsFailure)),
                 _ -> PromiseFuture.newPromiseFuture(secondDelay::set),
                 _ -> loopback());
@@ -160,11 +160,67 @@ class TestServerAddressLookup {
         assertSame(statsFailure, statsThrown.getCause());
     }
 
-    private static ServerAddressLookup lookup(
+    @Test
+    void cidLookupWaitsForTheDelayAndBypassesHostnameDns() throws Exception {
+        var candidate = (ServerLookupCandidate.Cid) ServerLookupCandidate.parse(
+                "46e22ea215589a03f3d8751d241405fb").orElseThrow();
+        AtomicReference<AsyncContext<Void>> delayContext = new AtomicReference<>();
+        KnownServerSource source = Mockito.mock(KnownServerSource.class);
+        MysterServer server = Mockito.mock(MysterServer.class);
+        Mockito.when(source.resolveServerCid(candidate.cid())).thenReturn(PromiseFuture.newPromiseFuture(server));
+        List<ServerLookup.Stage> stages = new ArrayList<>();
+        ServerLookup lookup = lookup(source,
+                _ -> PromiseFuture.newPromiseFuture(delayContext::set),
+                _ -> { throw new AssertionError("CID input must use 3DNS instead of hostname DNS"); });
+
+        PromiseFuture<MysterServer> result = lookup.start(candidate,
+                update -> stages.add(update.stage()));
+        Mockito.verifyNoInteractions(source);
+        delayContext.get().setResult(null);
+
+        assertSame(server, result.get(2, TimeUnit.SECONDS));
+        assertEquals(List.of(ServerLookup.Stage.WAITING, ServerLookup.Stage.RESOLVING), stages);
+        Mockito.verify(source).resolveServerCid(candidate.cid());
+        Mockito.verifyNoMoreInteractions(source);
+    }
+
+    @Test
+    void cancellingCidInputDuringDelayNeverStartsLookup() {
+        var candidate = ServerLookupCandidate.parse("46e22ea215589a03f3d8751d241405fb").orElseThrow();
+        KnownServerSource source = Mockito.mock(KnownServerSource.class);
+        PromiseFuture<Void> delay = PromiseFuture.newPromiseFuture(_ -> {});
+        ServerLookup lookup = lookup(source, _ -> delay,
+                _ -> { throw new AssertionError("No address lookup expected"); });
+
+        PromiseFuture<MysterServer> result = lookup.start(candidate, _ -> {});
+        result.cancel();
+
+        assertTrue(delay.isCancelled());
+        Mockito.verifyNoInteractions(source);
+    }
+
+    @Test
+    void cancellationDuringCidResolutionCancelsTheSourceRequest() {
+        var candidate = (ServerLookupCandidate.Cid) ServerLookupCandidate.parse(
+                "46e22ea215589a03f3d8751d241405fb").orElseThrow();
+        KnownServerSource source = Mockito.mock(KnownServerSource.class);
+        PromiseFuture<MysterServer> resolution = PromiseFuture.newPromiseFuture(_ -> {});
+        Mockito.when(source.resolveServerCid(candidate.cid())).thenReturn(resolution);
+        ServerLookup lookup = lookup(source,
+                _ -> PromiseFuture.newPromiseFuture((Void) null),
+                _ -> { throw new AssertionError("No address lookup expected"); });
+
+        PromiseFuture<MysterServer> result = lookup.start(candidate, _ -> {});
+        result.cancel();
+
+        assertTrue(resolution.isCancelled());
+    }
+
+    private static ServerLookup lookup(
             KnownServerSource source,
             java.util.function.Function<Duration, PromiseFuture<Void>> delayFactory,
-            ServerAddressLookup.AddressResolver resolver) {
-        return new ServerAddressLookup(source,
+            ServerLookup.AddressResolver resolver) {
+        return new ServerLookup(source,
                 Duration.ofSeconds(1), delayFactory, resolver, Invoker.SYNCHRONOUS);
     }
 
@@ -192,6 +248,11 @@ class TestServerAddressLookup {
             public PromiseFuture<MysterServer> resolveServer(MysterAddress address) {
                 onResolve.accept(address);
                 return result;
+            }
+
+            @Override
+            public PromiseFuture<MysterServer> resolveServerCid(ServerCid cid) {
+                throw new AssertionError("Address input must not use 3DNS");
             }
         };
     }

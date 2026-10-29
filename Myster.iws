@@ -7,9 +7,18 @@
     <option name="selectedModelId" value="auto" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="fe0d93f5-a1b5-4669-89e3-19e762d0ae4a" name="Changes" comment="Rename menu items for clarity: change &quot;New Peer-to-Peer Connection&quot; to &quot;Connect to Server&quot; in MysterMenuBar and NewClientWindowAction.">
+    <list default="true" id="fe0d93f5-a1b5-4669-89e3-19e762d0ae4a" name="Changes" comment="Refactor UPnP port mapping logic: consolidate port mapping updates into a single method and improve logging for better diagnostics.">
       <change beforePath="$PROJECT_DIR$/Myster.iws" beforeDir="false" afterPath="$PROJECT_DIR$/Myster.iws" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/TODO.txt" beforeDir="false" afterPath="$PROJECT_DIR$/TODO.txt" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/docs/design/Myster 3DNS.md" beforeDir="false" afterPath="$PROJECT_DIR$/docs/design/Myster 3DNS.md" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/src/main/java/com/myster/Myster.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/com/myster/Myster.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/com/myster/search/ui/SearchWindow.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/com/myster/search/ui/SearchWindow.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/com/myster/tracker/ui/KnownServerSource.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/com/myster/tracker/ui/KnownServerSource.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/com/myster/tracker/ui/ServerAddressLookup.java" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/com/myster/tracker/ui/ServerPickerDialog.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/com/myster/tracker/ui/ServerPickerDialog.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/com/myster/tracker/ui/TrackerWindow.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/com/myster/tracker/ui/TrackerWindow.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/test/java/com/myster/tracker/ui/TestServerAddressLookup.java" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/test/java/com/myster/tracker/ui/TestServerPickerModel.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/test/java/com/myster/tracker/ui/TestServerPickerModel.java" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -243,23 +252,23 @@
   </component>
   <component name="NextEditCompletionFeaturesState">
     <decayedCancelled>
-      <entry key="MS100" value="2.3221479686321755" />
-      <entry key="MS500" value="4.1014792913547105" />
-      <entry key="S2" value="12.018353628302805" />
-      <entry key="S5" value="21.684900077295218" />
-      <entry key="S10" value="27.635345698979446" />
-      <entry key="S30" value="41.22157460980907" />
-      <entry key="S60" value="93.40793133004641" />
-      <entry key="M2" value="205.3963738058772" />
-      <entry key="M5" value="367.1231405354679" />
-      <entry key="M10" value="452.0038553326284" />
-      <entry key="M15" value="485.139857039652" />
-      <entry key="M30" value="521.0566590134002" />
-      <entry key="H1" value="540.1337920954406" />
-      <entry key="H2" value="549.9663944628393" />
-      <entry key="H4" value="555.1850947510535" />
-      <entry key="D1" value="1111.8849195293092" />
-      <entry key="W1" value="10472.325995198806" />
+      <entry key="MS100" value="1.1531255840028591" />
+      <entry key="MS500" value="3.631988927874578" />
+      <entry key="S2" value="12.344156097690849" />
+      <entry key="S5" value="23.15491884499286" />
+      <entry key="S10" value="30.564531927614247" />
+      <entry key="S30" value="37.60407958790755" />
+      <entry key="S60" value="39.72273299747644" />
+      <entry key="M2" value="41.662817431376325" />
+      <entry key="M5" value="61.3650254873367" />
+      <entry key="M10" value="99.78564464076435" />
+      <entry key="M15" value="124.99744922090407" />
+      <entry key="M30" value="163.79551493985443" />
+      <entry key="H1" value="208.91486288376916" />
+      <entry key="H2" value="297.38586146457146" />
+      <entry key="H4" value="472.2083274253694" />
+      <entry key="D1" value="1367.9145121578722" />
+      <entry key="W1" value="10644.957175441747" />
     </decayedCancelled>
     <decayedSelected>
       <entry key="MS100" value="0.0" />
@@ -270,34 +279,34 @@
       <entry key="S30" value="0.0" />
       <entry key="S60" value="0.0" />
       <entry key="M2" value="0.0" />
-      <entry key="M5" value="1.5770813308594008E-229" />
-      <entry key="M10" value="3.9712483312674127E-115" />
-      <entry key="M15" value="5.402789289278191E-77" />
-      <entry key="M30" value="7.350366854299214E-39" />
-      <entry key="H1" value="8.573428398565627E-20" />
-      <entry key="H2" value="2.928875607949419E-10" />
-      <entry key="H4" value="1.7519916687962408E-5" />
-      <entry key="D1" value="0.32059992597547904" />
-      <entry key="W1" value="4.541240718849298" />
+      <entry key="M5" value="7.560757906318734E-262" />
+      <entry key="M10" value="2.749683237450949E-131" />
+      <entry key="M15" value="9.110071330053585E-88" />
+      <entry key="M30" value="3.0182894708846557E-44" />
+      <entry key="H1" value="1.737322571003116E-22" />
+      <entry key="H2" value="1.3184507013767369E-11" />
+      <entry key="H4" value="3.717179392733964E-6" />
+      <entry key="D1" value="0.2475960233080887" />
+      <entry key="W1" value="4.376663226966792" />
     </decayedSelected>
     <decayedShown>
-      <entry key="MS100" value="2.2970380624191726" />
-      <entry key="MS500" value="4.091577874603646" />
-      <entry key="S2" value="12.010797472223745" />
-      <entry key="S5" value="21.679370311720245" />
-      <entry key="S10" value="27.631801997601045" />
-      <entry key="S30" value="41.21973421737912" />
-      <entry key="S60" value="93.40564290622815" />
-      <entry key="M2" value="205.39372173308428" />
-      <entry key="M5" value="367.1211919652636" />
-      <entry key="M10" value="452.0026456229791" />
-      <entry key="M15" value="485.1389890575061" />
-      <entry key="M30" value="521.0561916190114" />
-      <entry key="H1" value="540.1335495136314" />
-      <entry key="H2" value="549.966270880165" />
-      <entry key="H4" value="555.1850495886405" />
-      <entry key="D1" value="1112.2054683248373" />
-      <entry key="W1" value="10476.867166178003" />
+      <entry key="MS100" value="1.129394602703925" />
+      <entry key="MS500" value="3.6169730471511436" />
+      <entry key="S2" value="12.331646141461029" />
+      <entry key="S5" value="23.14542792628628" />
+      <entry key="S10" value="30.55820786745437" />
+      <entry key="S30" value="37.60146459906769" />
+      <entry key="S60" value="39.72134870686921" />
+      <entry key="M2" value="41.662093003809005" />
+      <entry key="M5" value="61.36461640878755" />
+      <entry key="M10" value="99.7853225827586" />
+      <entry key="M15" value="124.9971827636686" />
+      <entry key="M30" value="163.7953416921581" />
+      <entry key="H1" value="208.91475289774965" />
+      <entry key="H2" value="297.3857843576284" />
+      <entry key="H4" value="472.2082715918505" />
+      <entry key="D1" value="1368.162057717598" />
+      <entry key="W1" value="10649.333769759682" />
     </decayedShown>
   </component>
   <component name="PerforceConfiguration">
@@ -837,7 +846,15 @@
       <option name="project" value="LOCAL" />
       <updated>1793063308225</updated>
     </task>
-    <option name="localTasksCounter" value="28" />
+    <task id="LOCAL-00028" summary="Refactor UPnP port mapping logic: consolidate port mapping updates into a single method and improve logging for better diagnostics.">
+      <option name="closed" value="true" />
+      <created>1793204775859</created>
+      <option name="number" value="00028" />
+      <option name="presentableId" value="LOCAL-00028" />
+      <option name="project" value="LOCAL" />
+      <updated>1793204775859</updated>
+    </task>
+    <option name="localTasksCounter" value="29" />
     <servers />
   </component>
   <component name="TodoView" selected-index="0">
@@ -879,7 +896,6 @@
     <option name="version" value="3" />
   </component>
   <component name="VcsManagerConfiguration">
-    <MESSAGE value="Implement OS thumbnail integration and enhance JUnit test configurations" />
     <MESSAGE value="Fix XML encoding in project configuration for better compatibility" />
     <MESSAGE value="Enhance access control by integrating AccessListReader into server stats and file transaction protocols" />
     <MESSAGE value="Implement OS thumbnails Part 3: client preview with cancellable loading and metadata retention" />
@@ -904,7 +920,8 @@
     <MESSAGE value="Add Myster Design skill" />
     <MESSAGE value="Enhance public key handling: add null checks for PublicKey in PublicKeyIdentity, update IdentityResolver to return cached PublicKeyIdentity, and improve server resolution futures to allow independent cancellation." />
     <MESSAGE value="Rename menu items for clarity: change &quot;New Peer-to-Peer Connection&quot; to &quot;Connect to Server&quot; in MysterMenuBar and NewClientWindowAction." />
-    <option name="LAST_COMMIT_MESSAGE" value="Rename menu items for clarity: change &quot;New Peer-to-Peer Connection&quot; to &quot;Connect to Server&quot; in MysterMenuBar and NewClientWindowAction." />
+    <MESSAGE value="Refactor UPnP port mapping logic: consolidate port mapping updates into a single method and improve logging for better diagnostics." />
+    <option name="LAST_COMMIT_MESSAGE" value="Refactor UPnP port mapping logic: consolidate port mapping updates into a single method and improve logging for better diagnostics." />
   </component>
   <component name="VssConfiguration">
     <CheckoutOptions>

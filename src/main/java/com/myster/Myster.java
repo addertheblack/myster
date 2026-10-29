@@ -106,6 +106,7 @@ import com.myster.tracker.MysterServerPoolImpl;
 import com.myster.tracker.Tracker;
 import com.myster.tracker.ui.TrackerWindow;
 import com.myster.tracker.ui.KnownServerSource;
+import com.myster.tracker.ui.DefaultKnownServerSource;
 import com.myster.transaction.TransactionManager;
 import com.myster.threedns.ThreeDnsLookup;
 import com.myster.thumbnail.Thumbnails;
@@ -440,28 +441,7 @@ public class Myster {
                                                                       tracker,
                                                                       tdList);
 
-                KnownServerSource knownServerSource = new KnownServerSource() {
-                    @Override
-                    public void forEachServer(
-                            java.util.function.Consumer<com.myster.tracker.MysterServer> consumer) {
-                        pool.forEach(consumer);
-                    }
-
-                    @Override
-                    public Optional<String> resolveDisplayName(ServerCid cid) {
-                        return pool.lookupIdentityFromCid(cid)
-                                .map(com.myster.tracker.PublicKeyIdentity::new)
-                                .flatMap(pool::getCachedMysterServer)
-                                .map(com.myster.tracker.MysterServer::getServerName)
-                                .filter(name -> !name.isBlank());
-                    }
-
-                    @Override
-                    public com.general.thread.PromiseFuture<com.myster.tracker.MysterServer>
-                            resolveServer(MysterAddress address) {
-                        return pool.resolveServer(address);
-                    }
-                };
+                KnownServerSource knownServerSource = new DefaultKnownServerSource(pool, dnsLookup);
 
                 MysterLinkService linkService = new MysterLinkService(protocol,
                                                                       fileManager,

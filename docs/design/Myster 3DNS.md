@@ -123,6 +123,15 @@ receives only those capabilities, allowing `Tracker` and then `ThreeDnsLookup` t
 before the immutable `MysterProtocolImpl` aggregate is assembled. This avoids a protocol/tracker
 initialization setter while keeping 3DNS discoverable from the protocol stack.
 
+The shared server picker accepts a bare 128-bit server CID as exactly 32 hexadecimal digits,
+case-insensitively and with optional surrounding whitespace. Its normal input delay precedes an
+asynchronous 3DNS lookup through `DefaultKnownServerSource`. Only an exact verified peer with the
+requested CID is refreshed through server stats; the refreshed server must retain that peer's
+public-key identity before the picker offers it for selection. Editing the input or closing the
+dialog cancels the caller's lookup and stats request. Non-exact results and lookup failures leave
+the dialog open with an inline error. Hostname/IP input and local server-name filtering retain
+their existing behavior.
+
 `ThreeDnsPeerClient` owns this one-hop trust transition. It performs one expected-key UDP `FIND_CLOSEST` operation and returns a `ThreeDnsVerifiedQueryResult`: its `VerifiedThreeDnsPeer` responder is verified for that completed operation, while its `ThreeDnsAddressCandidateSet` remains untrusted. Cancelling the wrapper cancels the underlying UDP transaction, and late completion cannot create a verified result. The decoder also rejects an entry labelled exact when the entry's locally derived CID differs from the request target.
 
 The resolver tracks identities and addresses, permits at most one alternate address after a failed transport attempt, and requires every newly launched non-exact candidate to be strictly closer than the best verified responder. Exact candidates always take priority. Two queries may run concurrently, so a slower response can still improve the verified position or contribute a better untrusted hint without regressing global lookup state.

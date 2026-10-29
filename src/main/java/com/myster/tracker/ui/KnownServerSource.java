@@ -9,7 +9,7 @@ import com.myster.net.MysterAddress;
 import com.myster.tracker.MysterServer;
 
 /**
- * Fast UI-facing view of locally known servers plus explicit address resolution.
+ * Fast UI-facing view of locally known servers plus explicit address and CID resolution.
  *
  * <p>Enumeration is non-blocking and does not apply connection- or membership-specific policy;
  * each UI caller supplies its own eligibility rule. Explicit resolution performs the normal
@@ -40,4 +40,14 @@ public interface KnownServerSource {
      * @return independently cancellable future completed with the pool's refreshed server
      */
     PromiseFuture<MysterServer> resolveServer(MysterAddress address);
+
+    /**
+     * Resolves a server CID through 3DNS and refreshes the exact server through server stats.
+     * Only an authenticated exact match is accepted; closest peers are never substituted.
+     * The returned server must retain the verified peer's public-key identity.
+     *
+     * @param cid 128-bit server identity to find
+     * @return caller-owned future; cancellation cancels the lookup and its stats request
+     */
+    PromiseFuture<MysterServer> resolveServerCid(ServerCid cid);
 }

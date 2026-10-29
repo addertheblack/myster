@@ -77,14 +77,13 @@
 - BUG In the file manager. When you choose a folder.. Go into the Documents folder. Nothing is visible in there. Is this a permissions issue? New Folder button adds  a new folder but it's not visible in the folder chooser dialog.
 - Add server icon (needs to be something downloaded with its own tcp connection section.. similar design to thumbnail)
     - needs a place in the server prefs when an icon can be imported or copied and pasted.
-- Add server description - limite 255 chars. Can be placed into server stats protocol block.
+- Add server description - limit 255 chars. Can be placed into server stats protocol block.
 - Need server search - searches names and server descriptions for servers matching. Searches the servers in the tracker then crawls network
 - Allow copy of the type create link for type on this server. Inviatation link
 - Fix invitation link for public custom types
 - Add plus for new search tabs - currently menu is not super obvious
 - Check to make sure the array of last resort is used if there's no good public ips available.
 - Connect by ip button to tracker
-- Add check for "external ip" if it's a LAN addr or a carrier grade NAT then disable upnp binding.
 
 - Important things to do to get private types working
     - Implement type file that allows someone to import a type into myster.

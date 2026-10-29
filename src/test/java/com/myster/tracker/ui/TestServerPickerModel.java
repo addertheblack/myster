@@ -80,6 +80,18 @@ class TestServerPickerModel {
         assertSame(matchingKnownServer, rows.get(1).server());
     }
 
+    @Test
+    void resolvedCidRemainsVisibleWhenNeitherNameNorAddressContainsTheCid() throws Exception {
+        MysterServer resolved = server("Remote Server", "127.0.0.1");
+        String cid = "46e22ea215589a03f3d8751d241405fb";
+
+        List<ServerPickerModel.Row> rows = ServerPickerModel.filterIncluding(
+                ServerPickerModel.upsert(List.of(), resolved), cid, resolved);
+
+        assertEquals(1, rows.size());
+        assertSame(resolved, rows.getFirst().server());
+    }
+
     private static KnownServerSource source(List<MysterServer> servers) {
         return new KnownServerSource() {
             @Override
@@ -94,6 +106,12 @@ class TestServerPickerModel {
 
             @Override
             public PromiseFuture<MysterServer> resolveServer(MysterAddress address) {
+                return PromiseFuture.newPromiseFutureException(
+                        new UnsupportedOperationException());
+            }
+
+            @Override
+            public PromiseFuture<MysterServer> resolveServerCid(ServerCid cid) {
                 return PromiseFuture.newPromiseFutureException(
                         new UnsupportedOperationException());
             }

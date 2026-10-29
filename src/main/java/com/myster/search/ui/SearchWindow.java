@@ -13,8 +13,7 @@ import java.awt.BorderLayout;
 import java.awt.Component;
 import java.awt.Dimension;
 import java.awt.FlowLayout;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
+import java.awt.Insets;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.awt.event.WindowAdapter;
@@ -44,8 +43,8 @@ import com.myster.ui.WindowPrefDataKeeper.PrefData;
 /**
  * A window containing multiple search tabs. Each tab provides an independent
  * search interface with its own search field, type selector, results list, and
- * status. Users can add new tabs, close existing tabs, and have multiple
- * SearchWindow instances open simultaneously.
+ * status. Users can add new tabs with the + button, close existing tabs, and have
+ * multiple SearchWindow instances open simultaneously.
  * <p>
  * Keyboard shortcuts:
  * <ul>
@@ -124,6 +123,18 @@ public class SearchWindow extends MysterFrame {
         tabbedPane = new JTabbedPane();
         tabbedPane.setTabLayoutPolicy(JTabbedPane.SCROLL_TAB_LAYOUT);
 
+        JButton newTabButton = new JButton("+");
+        newTabButton.setToolTipText("New Search Tab");
+        newTabButton.getAccessibleContext().setAccessibleName("New Search Tab");
+        newTabButton.setFocusable(false);
+        newTabButton.setMargin(new Insets(0, 6, 0, 6));
+        newTabButton.addActionListener(_ -> addNewTab());
+
+        // Keep the add button in a disabled trailing tab so it cannot become a search tab.
+        tabbedPane.addTab("", new JPanel());
+        tabbedPane.setTabComponentAt(0, newTabButton);
+        tabbedPane.setEnabledAt(0, false);
+
         setLayout(new BorderLayout());
         add(tabbedPane, BorderLayout.CENTER);
 
@@ -132,7 +143,7 @@ public class SearchWindow extends MysterFrame {
             @Override
             public void windowClosing(WindowEvent e) {
                 // Stop all searches when window closes
-                for (int i = 0; i < tabbedPane.getTabCount(); i++) {
+                for (int i = 0; i < getSearchTabCount(); i++) {
                     SearchTab tab = (SearchTab) tabbedPane.getComponentAt(i);
                     tab.stopSearch();
                 }
@@ -141,10 +152,10 @@ public class SearchWindow extends MysterFrame {
 
         // Register with preferences keeper
         savePrefs = c.keeper().addFrame(this, (p) -> {
-            p.putInt(TAB_COUNT_KEY, tabbedPane.getTabCount());
+            p.putInt(TAB_COUNT_KEY, getSearchTabCount());
             p.putInt(SELECTED_TAB_KEY, tabbedPane.getSelectedIndex());
 
-            for (int i = 0; i < tabbedPane.getTabCount(); i++) {
+            for (int i = 0; i < getSearchTabCount(); i++) {
                 SearchTab tab = (SearchTab) tabbedPane.getComponentAt(i);
                 p.put(TAB_SEARCH_PREFIX + i, tab.getSearchString());
                 MysterType type = tab.getMysterType();
@@ -161,7 +172,7 @@ public class SearchWindow extends MysterFrame {
             for (TabData tabData : savedData.tabs()) {
                 addNewTab(tabData.searchString(), tabData.type());
             }
-            if (savedData.selectedTabIndex() >= 0 && savedData.selectedTabIndex() < tabbedPane.getTabCount()) {
+            if (savedData.selectedTabIndex() >= 0 && savedData.selectedTabIndex() < getSearchTabCount()) {
                 tabbedPane.setSelectedIndex(savedData.selectedTabIndex());
             }
         } else {
@@ -178,7 +189,7 @@ public class SearchWindow extends MysterFrame {
         super.setVisible(visible);
 
         // When window is made visible, ensure focus is on the search field of the current tab
-        if (visible && tabbedPane.getTabCount() > 0) {
+        if (visible && getSearchTabCount() > 0) {
             int selectedIndex = tabbedPane.getSelectedIndex();
             if (selectedIndex >= 0) {
                 SearchTab tab = (SearchTab) tabbedPane.getComponentAt(selectedIndex);
@@ -210,8 +221,8 @@ public class SearchWindow extends MysterFrame {
             tab.restoreSearchState(searchString);
         }
 
-        int index = tabbedPane.getTabCount();
-        tabbedPane.addTab(tab.getTabTitle(), tab);
+        int index = getSearchTabCount();
+        tabbedPane.insertTab(tab.getTabTitle(), null, tab, null, index);
         tabbedPane.setTabComponentAt(index, createTabComponent(tab));
         tabbedPane.setSelectedIndex(index);
 
@@ -228,6 +239,11 @@ public class SearchWindow extends MysterFrame {
         if (savePrefs != null) {
             savePrefs.run();
         }
+    }
+
+    /** Returns the number of search tabs, excluding the trailing add button. */
+    private int getSearchTabCount() {
+        return tabbedPane.getTabCount() - 1;
     }
 
     /**
@@ -278,7 +294,7 @@ public class SearchWindow extends MysterFrame {
      * Removes the tab at the given index.
      */
     private void removeTab(int index) {
-        if (index < 0 || index >= tabbedPane.getTabCount()) {
+        if (index < 0 || index >= getSearchTabCount()) {
             return;
         }
 
@@ -287,9 +303,13 @@ public class SearchWindow extends MysterFrame {
         tabbedPane.removeTabAt(index);
 
         // If no tabs left, close the window
-        if (tabbedPane.getTabCount() == 0) {
+        if (getSearchTabCount() == 0) {
             dispose();
         } else {
+            // Removing the rightmost search can select the disabled add-button tab.
+            if (tabbedPane.getSelectedIndex() >= getSearchTabCount()) {
+                tabbedPane.setSelectedIndex(getSearchTabCount() - 1);
+            }
             updateWindowTitle();
             if (savePrefs != null) {
                 savePrefs.run();
@@ -352,7 +372,7 @@ public class SearchWindow extends MysterFrame {
 
     @Override
     public void dispose() {
-        for (int i = 0; i < tabbedPane.getTabCount(); i++) {
+        for (int i = 0; i < getSearchTabCount(); i++) {
             SearchTab tab = (SearchTab) tabbedPane.getComponentAt(i);
             tab.dispose();
         }

@@ -50,9 +50,10 @@ import static com.myster.tracker.ui.ServerPickerModel.filter;
  * Document-modal chooser that returns a caller-eligible {@link MysterServer}.
  *
  * <p>The dialog takes a snapshot of known servers, debounces and filters that snapshot off the
- * EDT, and also recognizes strict address input. Direct input follows a cancellable delay, DNS,
- * and server-stats chain with inline status. Every edit and dialog disposal cancels the prior UI
- * operation; an identity token additionally prevents late completion from changing Swing state.
+ * EDT, and also recognizes strict address or 32-hex-digit server CID input. Direct input follows
+ * a cancellable delay, DNS or 3DNS, and server-stats chain with inline status. Every edit and
+ * dialog disposal cancels the prior UI operation; an identity token additionally prevents late
+ * completion from changing Swing state.
  * Enter confirms the selected row even while the table owns keyboard focus. Up and Down move the
  * selected row while focus remains in the search field. {@link #showAndWait()} returns empty for
  * Cancel, Escape, or window close.
@@ -65,7 +66,7 @@ public final class ServerPickerDialog extends JDialog {
     private final Predicate<MysterServer> eligibility;
     private final String ineligibleText;
     private final String confirmationText;
-    private final ServerAddressLookup addressLookup;
+    private final ServerLookup serverLookup;
 
     private List<ServerPickerModel.Row> allRows;
     private JMCList<MysterServer> serverList;
@@ -100,7 +101,7 @@ public final class ServerPickerDialog extends JDialog {
         this.eligibility = Objects.requireNonNull(eligibility, "eligibility");
         this.ineligibleText = Objects.requireNonNull(ineligibleText, "ineligibleText");
         this.confirmationText = Objects.requireNonNull(confirmationText, "confirmationText");
-        this.addressLookup = new ServerAddressLookup(source);
+        this.serverLookup = new ServerLookup(source);
         this.allRows = ServerPickerModel.snapshot(source, eligibility);
     }
 
@@ -138,7 +139,7 @@ public final class ServerPickerDialog extends JDialog {
         JPanel north = new JPanel(new BorderLayout(0, 6));
         JPanel searchPanel = new JPanel(new GridBagLayout());
         var gbc = new GridBagBuilder().withInsets(new Insets(0, 0, 0, 4));
-        searchPanel.add(new JLabel("Search or enter a server address:"),
+        searchPanel.add(new JLabel("Search, server address, or CID:"),
                 gbc.withGridLoc(0, 0).withWeight(0, 0));
         searchField = new JTextField(24);
         searchPanel.add(searchField,
@@ -248,28 +249,28 @@ public final class ServerPickerDialog extends JDialog {
     private void inputChanged() {
         cancelActiveQuery();
         String term = searchField.getText().trim();
-        Optional<ServerAddressCandidate> candidate = ServerAddressCandidate.parse(term);
+        Optional<ServerLookupCandidate> candidate = ServerLookupCandidate.parse(term);
         Object token = new Object();
         activeToken = token;
         showStatus(term.isEmpty() ? " " : candidate.isPresent()
-                ? "Waiting to check " + candidate.get().addressText() + "…"
+                ? "Waiting to check " + candidate.get().displayText() + "…"
                 : "Waiting to search…", !term.isEmpty());
 
         activeQuery = PromiseFuture.newPromiseFuture(context -> {
             startFiltering(context, token, term, candidate.isPresent());
-            candidate.ifPresent(value -> startAddressLookup(context, token, value, term));
+            candidate.ifPresent(value -> startServerLookup(context, token, value, term));
         });
     }
 
     private void startFiltering(AsyncContext<Void> owner,
                                 Object token,
                                 String term,
-                                boolean addressCandidate) {
-        List<ServerPickerModel.Row> snapshot = List.copyOf(allRows);
+                                boolean lookupCandidate) {
+        List<ServerPickerModel.Row> snapshot = allRows;
         PromiseFuture<List<ServerPickerModel.Row>> filtering =
-                PromiseFutures.delay(ServerAddressLookup.DEFAULT_DELAY)
+                PromiseFutures.delay(ServerLookup.DEFAULT_DELAY)
                         .mapAsyncInline(_ -> {
-                            if (!addressCandidate) {
+                            if (!lookupCandidate) {
                                 Invoker.EDT.invoke(() -> {
                                     if (isCurrent(token)) {
                                         showStatus("Searching…", true);
@@ -281,52 +282,58 @@ public final class ServerPickerDialog extends JDialog {
         owner.trackForCancellation(filtering);
         filtering.withInvoker(Invoker.EDT)
                 .addResultListener(rows -> {
-                    if (isCurrent(token)) {
+                    // A resolved target may have replaced this snapshot while filtering ran.
+                    if (isCurrent(token) && snapshot == allRows) {
                         renderRows(rows);
-                        if (!addressCandidate) {
+                        if (!lookupCandidate) {
                             showStatus(" ", false);
                         }
                     }
                 })
                 .addExceptionListener(_ -> {
-                    if (isCurrent(token) && !addressCandidate) {
+                    if (isCurrent(token) && !lookupCandidate) {
                         showStatus("Could not search known servers.", false);
                     }
                 });
     }
 
-    private void startAddressLookup(AsyncContext<Void> owner,
-                                    Object token,
-                                    ServerAddressCandidate candidate,
-                                    String term) {
-        PromiseFuture<MysterServer> lookup = addressLookup.start(candidate,
-                update -> addressStageChanged(token, candidate, update));
+    private void startServerLookup(AsyncContext<Void> owner,
+                                   Object token,
+                                   ServerLookupCandidate candidate,
+                                   String term) {
+        PromiseFuture<MysterServer> lookup = serverLookup.start(candidate,
+                update -> lookupStageChanged(token, candidate, update));
         owner.trackForCancellation(lookup);
-        lookup.useEdt()
+        lookup.withInvoker(Invoker.EDT)
                 .addResultListener(server -> resolvedServer(owner, token, term, server))
                 .addExceptionListener(exception -> {
                     if (!isCurrent(token)) {
                         return;
                     }
-                    String message = exception instanceof UnknownHostException
-                            ? "Could not resolve " + candidate.addressText() + "."
-                            : "No Myster response from " + candidate.addressText() + ".";
+                    String message = candidate instanceof ServerLookupCandidate.Cid
+                            ? "Could not resolve server CID " + candidate.displayText() + " via 3DNS."
+                            : exception instanceof UnknownHostException
+                                    ? "Could not resolve " + candidate.displayText() + "."
+                                    : "No Myster response from " + candidate.displayText() + ".";
                     showStatus(message, false);
                 });
     }
 
-    private void addressStageChanged(Object token,
-                                     ServerAddressCandidate candidate,
-                                     ServerAddressLookup.StageUpdate update) {
+    private void lookupStageChanged(Object token,
+                                    ServerLookupCandidate candidate,
+                                    ServerLookup.StageUpdate update) {
         if (!isCurrent(token)) {
             return;
         }
         String message = switch (update.stage()) {
-            case WAITING -> "Waiting to check " + candidate.addressText() + "…";
-            case RESOLVING -> "Resolving " + candidate.host() + "…";
+            case WAITING -> "Waiting to check " + candidate.displayText() + "…";
+            case RESOLVING -> switch (candidate) {
+                case ServerLookupCandidate.Address(var address) -> "Resolving " + address.host() + "…";
+                case ServerLookupCandidate.Cid(var cid) -> "Looking up " + cid.asHex() + " via 3DNS…";
+            };
             case CONTACTING -> "Contacting "
                     + update.resolvedAddress().map(MysterAddress::toString)
-                            .orElse(candidate.addressText()) + "…";
+                            .orElse(candidate.displayText()) + "…";
         };
         showStatus(message, true);
     }

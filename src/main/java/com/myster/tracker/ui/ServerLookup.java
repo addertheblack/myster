@@ -14,14 +14,15 @@ import com.myster.net.MysterAddress;
 import com.myster.tracker.MysterServer;
 
 /**
- * Owns the cancellable delay, DNS, and server-stats stages for one typed address.
+ * Owns the cancellable delay, DNS or 3DNS, and server-stats stages for one typed target.
  *
- * <p>The exact sequence is {@link Stage#WAITING}, delay, {@link Stage#RESOLVING}, asynchronous
- * address resolution, {@link Stage#CONTACTING}, and pool resolution. Stage notifications are
+ * <p>Address input follows {@link Stage#WAITING}, delay, {@link Stage#RESOLVING}, asynchronous
+ * address resolution, {@link Stage#CONTACTING}, and pool resolution. CID input instead uses
+ * the source's exact 3DNS and server-stats resolution after the delay. Stage notifications are
  * delivered through the supplied invoker. Cancelling the returned future propagates through all
  * created stages and makes late results moot even when underlying work cannot stop immediately.
  */
-final class ServerAddressLookup {
+final class ServerLookup {
     static final Duration DEFAULT_DELAY = Duration.ofSeconds(1);
 
     enum Stage {
@@ -48,7 +49,7 @@ final class ServerAddressLookup {
     private final AddressResolver addressResolver;
     private final Invoker stageInvoker;
 
-    ServerAddressLookup(KnownServerSource serverSource) {
+    ServerLookup(KnownServerSource serverSource) {
         this(serverSource,
              DEFAULT_DELAY,
              PromiseFutures::delay,
@@ -56,11 +57,11 @@ final class ServerAddressLookup {
              Invoker.EDT);
     }
 
-    ServerAddressLookup(KnownServerSource serverSource,
-                        Duration delay,
-                        Function<Duration, PromiseFuture<Void>> delayFactory,
-                        AddressResolver addressResolver,
-                        Invoker stageInvoker) {
+    ServerLookup(KnownServerSource serverSource,
+                 Duration delay,
+                 Function<Duration, PromiseFuture<Void>> delayFactory,
+                 AddressResolver addressResolver,
+                 Invoker stageInvoker) {
         this.serverSource = Objects.requireNonNull(serverSource, "serverSource");
         this.delay = Objects.requireNonNull(delay, "delay");
         this.delayFactory = Objects.requireNonNull(delayFactory, "delayFactory");
@@ -68,8 +69,8 @@ final class ServerAddressLookup {
         this.stageInvoker = Objects.requireNonNull(stageInvoker, "stageInvoker");
     }
 
-    PromiseFuture<MysterServer> start(ServerAddressCandidate candidate,
-                                      Consumer<StageUpdate> stageListener) {
+    PromiseFuture<MysterServer> start(ServerLookupCandidate candidate,
+                                     Consumer<StageUpdate> stageListener) {
         Objects.requireNonNull(candidate, "candidate");
         Objects.requireNonNull(stageListener, "stageListener");
 
@@ -77,8 +78,16 @@ final class ServerAddressLookup {
         return delayFactory.apply(delay)
                 .mapAsyncInline(_ -> {
                     notifyStage(stageListener, new StageUpdate(Stage.RESOLVING, Optional.empty()));
-                    return PromiseFutures.execute(() -> addressResolver.resolve(candidate.addressText()));
-                })
+                    return switch (candidate) {
+                        case ServerLookupCandidate.Address(var address) -> resolveAddress(address, stageListener);
+                        case ServerLookupCandidate.Cid(var cid) -> serverSource.resolveServerCid(cid);
+                    };
+                });
+    }
+
+    private PromiseFuture<MysterServer> resolveAddress(ServerAddressCandidate candidate,
+                                                       Consumer<StageUpdate> stageListener) {
+        return PromiseFutures.execute(() -> addressResolver.resolve(candidate.addressText()))
                 .mapAsyncInline(address -> {
                     notifyStage(stageListener,
                                 new StageUpdate(Stage.CONTACTING, Optional.of(address)));

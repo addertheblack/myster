@@ -1,5 +1,6 @@
 package com.myster.tracker.ui;
 
+import javax.swing.JButton;
 import javax.swing.JLabel;
 import javax.swing.JMenuItem;
 import javax.swing.JPanel;
@@ -42,6 +43,7 @@ import com.myster.ui.MysterFrame;
 import com.myster.ui.MysterFrameContext;
 import com.myster.ui.WindowPrefDataKeeper;
 import com.myster.ui.WindowPrefDataKeeper.PrefData;
+import com.myster.ui.menubar.event.NewClientWindowAction;
 import com.myster.util.ContextMenu;
 import com.myster.util.TypeChoice;
 
@@ -151,7 +153,14 @@ public class TrackerWindow extends MysterFrame {
         //add Objects
         add(new JLabel("Tracked servers on network: "), builder.withGridLoc(0, 0).withSize(1, 1).withWeight(0, 0));
         add(choice, builder.withGridLoc(1, 0).withSize(1, 1).withWeight(1, 0));
-        add(new JPanel(), builder.withGridLoc(2, 0).withSize(1, 1).withWeight(1, 0));
+
+        JButton newConnectionButton = new JButton("+");
+        newConnectionButton.setToolTipText("Open a Direct Connection");
+        newConnectionButton.getAccessibleContext().setAccessibleName("Open a Direct Connection");
+        newConnectionButton.setMargin(new Insets(0, 6, 0, 6));
+        newConnectionButton.addActionListener(new NewClientWindowAction(c));
+        add(newConnectionButton, builder.withGridLoc(2, 0).withSize(1, 1).withWeight(0, 0));
+
         add(listHolder, builder.withGridLoc(0, 1).withSize(3, 1).withWeight(99, 99));
 
         //Add Event handlers
