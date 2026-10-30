@@ -11,7 +11,6 @@ package com.myster.net.stream.server;
  */
 
 import java.io.IOException;
-import java.util.Base64;
 import java.util.Optional;
 import java.util.function.Supplier;
 
@@ -21,6 +20,7 @@ import com.myster.cid.ServerCid;
 import com.myster.filemanager.FileTypeListManager;
 import com.myster.identity.Identity;
 import com.myster.mml.MessagePak;
+import com.myster.net.ServerDescriptionUtils;
 import com.myster.net.server.ConnectionContext;
 import com.myster.net.stream.StreamConstants;
 import com.myster.pref.MysterPreferences;
@@ -34,20 +34,24 @@ public class ServerStats extends ServerStreamHandler {
     public static final String MYSTER_VERSION = "/MysterVersion";
     public static final String SPEED = "/Speed";
     public static final String SERVER_NAME = "/ServerName";
+    public static final String SERVER_DESCRIPTION = "/ServerDescription";
     public static final String IDENTITY = "/Identity";
     public static final String UPTIME = "/Uptime";
     public static final String PORT = "/Port";
     
     private final Supplier<String> getServerName;
+    private final Supplier<String> getServerDescription;
     private final Identity identity;
     private final Supplier<Integer> getPort;
     private final AccessListReader accessListReader;
 
     public ServerStats(Supplier<String> getServerName,
+                      Supplier<String> getServerDescription,
                       Supplier<Integer> getPort,
                       Identity identity,
                       AccessListReader accessListReader) {
         this.getServerName = getServerName;
+        this.getServerDescription = getServerDescription;
         this.getPort = getPort;
         this.identity = identity;
         this.accessListReader = accessListReader == null ? (type -> Optional.empty()) : accessListReader;
@@ -61,11 +65,12 @@ public class ServerStats extends ServerStreamHandler {
         MessagePak messagePackToSend;
         try {
             messagePackToSend = getServerStatsMessagePack(getServerName.get(),
-                                                        getPort.get(),
-                                                        identity,
-                                                        context.fileManager(),
-                                                        context.callerCid(),
-                                                        accessListReader);
+                                                          getServerDescription.get(),
+                                                          getPort.get(),
+                                                          identity,
+                                                          context.fileManager(),
+                                                          context.callerCid(),
+                                                          accessListReader);
             context.socket().out.writeMessagePack(messagePackToSend);
         } catch (NotInitializedException _) {
             throw new IOException("File list not initialized");
@@ -74,11 +79,12 @@ public class ServerStats extends ServerStreamHandler {
 
     //Returns a MessagePack that would be sent as bytes via a connection.
     public static MessagePak getServerStatsMessagePack(String serverName,
-                                                      int port,
-                                                      Identity identity,
-                                                      FileTypeListManager fileManager)
-            throws NotInitializedException {
+                                                       String serverDescription,
+                                                       int port,
+                                                       Identity identity,
+                                                       FileTypeListManager fileManager) throws NotInitializedException {
         return getServerStatsMessagePack(serverName,
+                                        serverDescription,
                                         port,
                                         identity,
                                         fileManager,
@@ -87,6 +93,7 @@ public class ServerStats extends ServerStreamHandler {
     }
 
     public static MessagePak getServerStatsMessagePack(String serverName,
+                                                      String serverDescription,
                                                       int port,
                                                       Identity identity,
                                                       FileTypeListManager fileManager,
@@ -114,6 +121,8 @@ public class ServerStats extends ServerStreamHandler {
                 }
             }
 
+            serverStats.putString(SERVER_DESCRIPTION, ServerDescriptionUtils.truncate(serverDescription));
+
             identity.getMainIdentity().ifPresent(pair -> {
                 var publicKey = pair.getPublic();
                 serverStats.putByteArray(IDENTITY, publicKey.getEncoded());
@@ -138,15 +147,18 @@ public class ServerStats extends ServerStreamHandler {
      * listings are unavailable.
      *
      * @param serverName server name to include when non-blank
+     * @param serverDescription description limited to 255 characters
      * @param port advertised Myster server port
      * @param identity identity whose public key is included when available
      * @return server stats containing the port and all available identity fields
      */
     public static MessagePak getMinimalServerStatsMessagePack(String serverName,
+                                                               String serverDescription,
                                                                int port,
                                                                Identity identity) {
         MessagePak serverStats = MessagePak.newEmpty();
         serverStats.putInt(PORT, port);
+        serverStats.putString(SERVER_DESCRIPTION, ServerDescriptionUtils.truncate(serverDescription));
 
         if (serverName != null && !serverName.isBlank()) {
             serverStats.putString(SERVER_NAME, serverName);

@@ -143,7 +143,7 @@ public class TrackerWindow extends MysterFrame {
             .withInsets(new Insets(5, 5, 5, 5));
 
 
-        list = MCListFactory.buildMCList(8, true, this);
+        list = MCListFactory.buildMCList(9, true, this);
         threeDnsPanel = new TrackerThreeDnsPanel(tracker, c);
         listCardLayout = new CardLayout();
         listHolder = new JPanel(listCardLayout);
@@ -168,21 +168,23 @@ public class TrackerWindow extends MysterFrame {
         //other stuff
         list.setColumnName(0, ""); // Bookmark column - no header text
         list.setColumnName(1, "Server Name");
-        list.setColumnName(2, "# Files");
-        list.setColumnName(3, "Status");
-        list.setColumnName(4, "IP");
-        list.setColumnName(5, "Ping");
-        list.setColumnName(6, "Rank");
-        list.setColumnName(7, "Uptime");
+        list.setColumnName(2, "Description");
+        list.setColumnName(3, "# Files");
+        list.setColumnName(4, "Status");
+        list.setColumnName(5, "IP");
+        list.setColumnName(6, "Ping");
+        list.setColumnName(7, "Rank");
+        list.setColumnName(8, "Uptime");
 
         list.setColumnWidth(0, 30); // Small width for bookmark icon
         list.setColumnWidth(1, 150);
-        list.setColumnWidth(2, 70);
+        list.setColumnWidth(2, 150);
         list.setColumnWidth(3, 70);
-        list.setColumnWidth(4, 150);
-        list.setColumnWidth(5, 70);
+        list.setColumnWidth(4, 70);
+        list.setColumnWidth(5, 150);
         list.setColumnWidth(6, 70);
         list.setColumnWidth(7, 70);
+        list.setColumnWidth(8, 70);
 
         // Set up custom renderer for bookmark column
         list.getTableHeader().getColumnModel().getColumn(0).setCellRenderer(new javax.swing.table.DefaultTableCellRenderer() {
@@ -501,7 +503,7 @@ public class TrackerWindow extends MysterFrame {
         private final MysterServer server;
         private final Optional<MysterType> type;
 
-        private final Sortable<?>[] sortables = new Sortable<?>[8];
+        private final Sortable<?>[] sortables = new Sortable<?>[9];
 
         public TrackerMCListItem(MysterServer s, Optional<MysterType> t) {
             server = s;
@@ -517,20 +519,20 @@ public class TrackerWindow extends MysterFrame {
         public void refresh() {
             // Column 0: Bookmark status
             sortables[0] = new SortableBookmark(tracker.getBookmark(server.getIdentity()).isPresent());
-            // Column 1-7: Existing data shifted by one
             sortables[1] = new SortableString(server.getServerName());
-            sortables[2] = type.isPresent() ? new SortableLong(server.getNumberOfFiles(type.get()))
+            sortables[2] = new SortableString(server.getServerDescription());
+            sortables[3] = type.isPresent() ? new SortableLong(server.getNumberOfFiles(type.get()))
                     : new SortableString("");
-            sortables[3] = new SortableStatus(server.isUp(), server.isUntried());
-            sortables[4] = new SortableString("" + String.join(", ",
+            sortables[4] = new SortableStatus(server.isUp(), server.isUntried());
+            sortables[5] = new SortableString("" + String.join(", ",
                                                                Stream.of(server.getAddresses())
                                                                        .map(Object::toString)
                                                                        .toArray(String[]::new)));
-            sortables[5] = new SortablePing(server.getPingTime());
-            sortables[6] =
+            sortables[6] = new SortablePing(server.getPingTime());
+            sortables[7] =
                     type.isPresent() ? new SortableRank(((long) (100 * server.getRank(type.get()))))
                             : new SortableString("");
-            sortables[7] = new SortableUptime((server.isUp() ? server.getUptime() : -2));
+            sortables[8] = new SortableUptime((server.isUp() ? server.getUptime() : -2));
         }
 
         public MysterServer getObject() {

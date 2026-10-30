@@ -81,9 +81,7 @@
 - Need server search - searches names and server descriptions for servers matching. Searches the servers in the tracker then crawls network
 - Allow copy of the type create link for type on this server. Inviatation link
 - Fix invitation link for public custom types
-- Add plus for new search tabs - currently menu is not super obvious
 - Check to make sure the array of last resort is used if there's no good public ips available.
-- Connect by ip button to tracker
 
 - Important things to do to get private types working
     - Implement type file that allows someone to import a type into myster.

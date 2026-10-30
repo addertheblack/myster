@@ -7,10 +7,15 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.BiConsumer;
 
+import javax.swing.JLabel;
+import javax.swing.JTextField;
+import javax.swing.SwingUtilities;
+
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 import com.general.util.Util;
+import com.general.util.MapPreferences;
 import com.myster.net.server.ServerPreferences;
 
 /**
@@ -25,6 +30,7 @@ class TestServerPreferencesPane {
         mockPreferences = mock(ServerPreferences.class);
         when(mockPreferences.getServerPort()).thenReturn(6669);
         when(mockPreferences.getIdentityName()).thenReturn("TestServer");
+        when(mockPreferences.getDescription()).thenReturn("");
         when(mockPreferences.getDownloadSlots()).thenReturn(5);
         when(mockPreferences.isKickFreeloaders()).thenReturn(false);
     }
@@ -144,6 +150,50 @@ class TestServerPreferencesPane {
             pane.reset();
             assertDoesNotThrow(() -> pane.save());
         });
+    }
+
+    @Test
+    void descriptionLimitsEditsAndSupportsSaveResetAndClear() throws Exception {
+        ServerPreferences preferences = new ServerPreferences(new MapPreferences());
+        assertEquals("", preferences.getDescription());
+        preferences.setDescription("Original description");
+
+        SwingUtilities.invokeAndWait(() -> {
+            ServerPreferencesPane pane = new ServerPreferencesPane(preferences);
+            JTextField field = java.util.Arrays.stream(pane.getComponents())
+                    .filter(component -> component instanceof JLabel label
+                            && label.getText().equals("Description:"))
+                    .map(component -> (JTextField) ((JLabel) component).getLabelFor())
+                    .findFirst().orElseThrow();
+            assertEquals("Original description", field.getText());
+
+            String description = "🙂".repeat(255);
+            field.setText(description + "extra");
+            assertEquals(description, field.getText());
+            field.setCaretPosition(field.getDocument().getLength());
+            field.replaceSelection("x");
+            assertEquals(description, field.getText());
+
+            field.select(0, 2);
+            field.replaceSelection("A");
+            String edited = "A" + "🙂".repeat(254);
+            assertEquals(edited, field.getText());
+            pane.save();
+            assertEquals(edited, preferences.getDescription());
+
+            field.setText("Unsaved edit");
+            pane.reset();
+            assertEquals(edited, field.getText());
+
+            field.setText("");
+            pane.save();
+            pane.reset();
+            assertEquals("", preferences.getDescription());
+            assertEquals("", field.getText());
+        });
+
+        preferences.setDescription("x".repeat(256));
+        assertEquals("x".repeat(255), preferences.getDescription());
     }
 }
 

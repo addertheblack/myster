@@ -69,6 +69,7 @@ class TestBidirectionalServerStatsDatagramProtocol {
         assertEquals(1, replies.size());
         MessagePak response = client.getObjectFromTransaction(replies.getFirst());
         assertEquals("server", response.getString(ServerStats.SERVER_NAME).orElseThrow());
+        assertEquals("Server description", response.getString(ServerStats.SERVER_DESCRIPTION).orElseThrow());
         assertEquals(7002, response.getInt(ServerStats.PORT).orElseThrow());
         assertArrayEquals(serverKeyPair.getPublic().getEncoded(),
                           response.getByteArray(ServerStats.IDENTITY).orElseThrow());
@@ -190,7 +191,7 @@ class TestBidirectionalServerStatsDatagramProtocol {
     }
 
     @Test
-    void minimalResponseRetainsResponderIdentityNameAndPort() throws Exception {
+    void minimalResponseRetainsResponderIdentityNameDescriptionAndPort() throws Exception {
         MysterType type = new MysterType(new byte[16]);
         FileTypeListManager fileManager = mock(FileTypeListManager.class);
         when(fileManager.getFileTypeListing()).thenReturn(new MysterType[] { type });
@@ -207,6 +208,7 @@ class TestBidirectionalServerStatsDatagramProtocol {
         MessagePak response = client.getObjectFromTransaction(replies.getFirst());
         assertEquals(7002, response.getInt(ServerStats.PORT).orElseThrow());
         assertEquals("server", response.getString(ServerStats.SERVER_NAME).orElseThrow());
+        assertEquals("Server description", response.getString(ServerStats.SERVER_DESCRIPTION).orElseThrow());
         assertArrayEquals(serverKeyPair.getPublic().getEncoded(),
                           response.getByteArray(ServerStats.IDENTITY).orElseThrow());
     }
@@ -214,6 +216,7 @@ class TestBidirectionalServerStatsDatagramProtocol {
     @Test
     void legacyAndBidirectionalStatsCodesRemainIndependent() {
         ServerStatsDatagramServer legacy = new ServerStatsDatagramServer(() -> "server",
+                                                                         () -> "Server description",
                                                                          () -> 7002,
                                                                          serverIdentity(),
                                                                          initializedFileManager(), type -> Optional.empty());
@@ -231,7 +234,7 @@ class TestBidirectionalServerStatsDatagramProtocol {
             Identity identity,
             FileTypeListManager fileManager) {
         return new BidirectionalServerStatsDatagramClient(
-                "client", 7001, identity, fileManager);
+                "client", "Client description", 7001, identity, fileManager);
     }
 
     private static BidirectionalServerStatsDatagramServer businessCardServer(
@@ -239,6 +242,7 @@ class TestBidirectionalServerStatsDatagramProtocol {
             Identity identity,
             FileTypeListManager fileManager) {
         return new BidirectionalServerStatsDatagramServer(() -> "server",
+                                                          () -> "Server description",
                                                           () -> 7002,
                                                           identity,
                                                           fileManager,

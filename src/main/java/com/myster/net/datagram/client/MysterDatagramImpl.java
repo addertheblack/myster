@@ -42,6 +42,7 @@ public class MysterDatagramImpl implements MysterDatagram {
     private final PublicKeyLookup lookup;
     
     private final Supplier<String> serverName;
+    private final Supplier<String> serverDescription;
     private final Supplier<Integer> serverPort;
     private final Identity identity;
     private final FileTypeListManager fileManager;
@@ -50,6 +51,7 @@ public class MysterDatagramImpl implements MysterDatagram {
                               UDPPingClient pingClient,
                               PublicKeyLookup lookup,
                               Supplier<String> serverName,
+                              Supplier<String> serverDescription,
                               Supplier<Integer> serverPort,
                               Identity identity,
                               FileTypeListManager fileManager) {
@@ -57,6 +59,7 @@ public class MysterDatagramImpl implements MysterDatagram {
         this.pingClient = pingClient;
         this.lookup = lookup;
         this.serverName = serverName;
+        this.serverDescription = serverDescription;
         this.serverPort = serverPort;
         this.identity = identity;
         this.fileManager = fileManager;
@@ -106,6 +109,7 @@ public class MysterDatagramImpl implements MysterDatagram {
 
         return doSection(params, new BidirectionalServerStatsDatagramClient(
             serverName.get(),
+            serverDescription.get(),
             serverPort.get(),
             identity,
             fileManager

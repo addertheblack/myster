@@ -4,10 +4,12 @@ package com.myster.net.server;
 import java.util.prefs.Preferences;
 
 import com.myster.application.MysterGlobals;
+import com.myster.net.ServerDescriptionUtils;
 
 public class ServerPreferences {
     private static final String PATH_IN_PREFS = "Server Download Slots";
     private static final String IDENTITY_NAME_KEY = "Server Identity";
+    private static final String DESCRIPTION_KEY = "Server Description";
     private static final String SERVER_PORT = "Server Port";
     private static final String FREELOAD_KEY = "ServerFreeloaderKey";
 
@@ -23,6 +25,14 @@ public class ServerPreferences {
 
     public String getIdentityName() {
         return preferences.get(IDENTITY_NAME_KEY, "");
+    }
+
+    public void setDescription(String description) {
+        preferences.put(DESCRIPTION_KEY, ServerDescriptionUtils.truncate(description));
+    }
+
+    public String getDescription() {
+        return ServerDescriptionUtils.truncate(preferences.get(DESCRIPTION_KEY, ""));
     }
 
     public Integer getServerPort() {

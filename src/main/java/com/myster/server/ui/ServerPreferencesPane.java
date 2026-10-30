@@ -14,13 +14,19 @@ import javax.swing.JPanel;
 import javax.swing.JSpinner;
 import javax.swing.JTextField;
 import javax.swing.SpinnerNumberModel;
+import javax.swing.text.AbstractDocument;
+import javax.swing.text.AttributeSet;
+import javax.swing.text.BadLocationException;
+import javax.swing.text.DocumentFilter;
 
 import com.general.util.GridBagBuilder;
+import com.myster.net.ServerDescriptionUtils;
 import com.myster.net.server.ServerPreferences;
 import com.myster.pref.ui.PreferencesPanel;
 
 public class ServerPreferencesPane extends PreferencesPanel {
     private final JTextField serverIdentityField;
+    private final JTextField serverDescriptionField;
     private final JLabel serverIdentityLabel;
     private final JComboBox<String> openSlotChoice;
     private final JLabel openSlotLabel;
@@ -82,21 +88,37 @@ public class ServerPreferencesPane extends PreferencesPanel {
                     .withAnchor(GridBagConstraints.WEST)
                     .withInsets(new Insets(5, DISTANCE_BETWEEN_COLUMNS, 0, 0)));
 
+        JLabel descriptionLabel = new JLabel("Description:");
+        add(descriptionLabel,
+            constraints.withGridLoc(0, 3)
+                    .withAnchor(GridBagConstraints.WEST)
+                    .withInsets(new Insets(5, 0, 0, 0)));
+
+        serverDescriptionField = new JTextField(25);
+        serverDescriptionField.setToolTipText("Server description (maximum 255 characters)");
+        descriptionLabel.setLabelFor(serverDescriptionField);
+        ((AbstractDocument) serverDescriptionField.getDocument())
+                .setDocumentFilter(new DescriptionLengthFilter());
+        add(serverDescriptionField,
+            constraints.withGridLoc(1, 3)
+                    .withAnchor(GridBagConstraints.WEST)
+                    .withInsets(new Insets(5, DISTANCE_BETWEEN_COLUMNS, 0, 0)));
+
         spacerLabel = new JLabel(" ");
         add(spacerLabel,
-            constraints.withGridLoc(0, 3)
+            constraints.withGridLoc(0, 4)
                     .withAnchor(GridBagConstraints.WEST)
                     .withInsets(new Insets(5, 0, 0, 0)));
 
         leech = new FreeLoaderPref();
         add(leech,
-            constraints.withGridLoc(1, 3)
+            constraints.withGridLoc(1, 4)
                     .withAnchor(GridBagConstraints.WEST)
                     .withInsets(new Insets(5, DISTANCE_BETWEEN_COLUMNS, 0, 0)));
 
-        add(new JPanel(), constraints.withGridLoc(0, 4).withWeight(1, 1).withSize(3, 1));
+        add(new JPanel(), constraints.withGridLoc(0, 5).withWeight(1, 1).withSize(3, 1));
 
-        add(new JPanel(), constraints.withGridLoc(2, 0).withWeight(1, 0).withSize(1, 4));
+        add(new JPanel(), constraints.withGridLoc(2, 0).withWeight(1, 0).withSize(1, 5));
 
         reset();
     }
@@ -121,7 +143,7 @@ public class ServerPreferencesPane extends PreferencesPanel {
     }
 
     public Dimension getPreferredSize() {
-        return new Dimension(STD_XSIZE, 140);
+        return new Dimension(STD_XSIZE, 170);
     }
 
     public String getKey() {
@@ -135,6 +157,7 @@ public class ServerPreferencesPane extends PreferencesPanel {
         int newPort = (int) serverThreadsChoice.getModel().getValue();
 
         preferences.setIdentityName(newName);
+        preferences.setDescription(serverDescriptionField.getText());
         preferences.setDownloadSlots(Integer.parseInt((String) openSlotChoice.getSelectedItem()));
         preferences.setPort(newPort);
         preferences.setKickFreeloaders(leech.isSet());
@@ -152,9 +175,33 @@ public class ServerPreferencesPane extends PreferencesPanel {
 
     public void reset() {
         serverIdentityField.setText(preferences.getIdentityName());
+        serverDescriptionField.setText(preferences.getDescription());
         openSlotChoice.setSelectedItem("" + preferences.getDownloadSlots());
         serverThreadsChoice.getModel().setValue(preferences.getServerPort());
         leech.reset(preferences.isKickFreeloaders());
+    }
+
+    private static class DescriptionLengthFilter extends DocumentFilter {
+        @Override
+        public void insertString(FilterBypass bypass, int offset, String text, AttributeSet attributes) throws
+                BadLocationException {
+            replace(bypass, offset, 0, text, attributes);
+        }
+
+        @Override
+        public void replace(FilterBypass bypass, int offset, int length, String text, AttributeSet attributes) throws
+                BadLocationException {
+            String current = bypass.getDocument().getText(0, bypass.getDocument().getLength());
+            int retainedLength = current.codePointCount(0, offset) + current.codePointCount(offset + length,
+                                                                                            current.length());
+            int available = ServerDescriptionUtils.MAX_LENGTH - retainedLength;
+            String replacement = text == null ? "" : text;
+            int count = Math.min(available, replacement.codePointCount(0, replacement.length()));
+            bypass.replace(offset,
+                           length,
+                           replacement.substring(0, replacement.offsetByCodePoints(0, count)),
+                           attributes);
+        }
     }
 
     public static class FreeLoaderPref extends JPanel {

@@ -284,6 +284,7 @@ public class Myster {
                 new UDPPingClient(datagramManager),
                 serverLookup,
                 serverPreferences::getIdentityName,
+                serverPreferences::getDescription,
                 serverPreferences::getServerPort,
                 identity,
                 fileManager); // AddressLookup - placeholder for now
@@ -822,6 +823,7 @@ public class Myster {
         serverFacade.addConnectionSection(new com.myster.net.stream.server.RequestSearchThread(accessListManager));
         serverFacade
                 .addConnectionSection(new com.myster.net.stream.server.ServerStats(preferences::getIdentityName,
+                                                                               preferences::getDescription,
                                                                                preferences::getServerPort,
                                                                                identity,
                                                                                accessListManager));
@@ -843,11 +845,13 @@ public class Myster {
                                          new TypeDatagramServer(fileManager, accessListManager),
                                          new SearchDatagramServer(fileManager, accessListManager),
                                          new ServerStatsDatagramServer(preferences::getIdentityName,
+                                                                       preferences::getDescription,
                                                                        preferences::getServerPort,
                                                                        identity,
                                                                        fileManager,
                                                                        accessListManager),
                                          new BidirectionalServerStatsDatagramServer(preferences::getIdentityName,
+                                                                                    preferences::getDescription,
                                                                                     preferences::getServerPort,
                                                                                     identity,
                                                                                     fileManager,

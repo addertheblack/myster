@@ -16,8 +16,9 @@ support the newer operation.
 The request and successful response each contain one length-prefixed
 MessagePak using the `ServerStats` field paths. `/Port` is required and must be
 within `1..65535`. `/Identity` contains the encoded RSA public key when an
-identity is available. Name, version, uptime, speed, and file counts are
-included when available.
+identity is available. Name, description, version, uptime, speed, and file counts
+are included when available. `/ServerDescription` is a string limited to 255
+Unicode characters; an absent field is treated as an empty description.
 
 The requester sends transaction `102` only after all locally shared file lists
 are initialized. Before that point, `MysterDatagramImpl` selects legacy
@@ -27,7 +28,7 @@ illegal state rather than constructing a partial request.
 
 A transaction `102` responder whose file lists are not initialized sends a
 minimal response containing `/Port` plus available `/Identity` and
-`/ServerName`. A malformed payload, invalid port, or malformed encoded identity
+`/ServerName` and `/ServerDescription`. A malformed payload, invalid port, or malformed encoded identity
 rejects the request without suggesting an address to the pool.
 
 ## Address and CID discovery

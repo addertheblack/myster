@@ -52,6 +52,7 @@ public class BidirectionalServerStatsDatagramServer implements TransactionProtoc
     private static final Logger log = Logger.getLogger(BidirectionalServerStatsDatagramServer.class.getName());
 
     private final Supplier<String> getServerName;
+    private final Supplier<String> getServerDescription;
     private final Supplier<Integer> getPort;
     private final Identity identity;
     private final FileTypeListManager fileManager;
@@ -59,12 +60,14 @@ public class BidirectionalServerStatsDatagramServer implements TransactionProtoc
     private final AccessListReader accessListReader;
 
     public BidirectionalServerStatsDatagramServer(Supplier<String> getServerName,
+                                                   Supplier<String> getServerDescription,
                                                    Supplier<Integer> getPort,
                                                    Identity identity,
                                                    FileTypeListManager fileManager,
                                                    MysterServerPool pool,
                                                    AccessListReader accessListReader) {
         this.getServerName = getServerName;
+        this.getServerDescription = getServerDescription;
         this.getPort = getPort;
         this.identity = identity;
         this.fileManager = fileManager;
@@ -111,6 +114,7 @@ public class BidirectionalServerStatsDatagramServer implements TransactionProtoc
         try {
             responseStats = ServerStats.getServerStatsMessagePack(
                     getServerName.get(),
+                    getServerDescription.get(),
                     getPort.get(),
                     identity,
                     fileManager,
@@ -118,7 +122,7 @@ public class BidirectionalServerStatsDatagramServer implements TransactionProtoc
                     accessListReader);
         } catch (NotInitializedException exception) {
             responseStats = ServerStats.getMinimalServerStatsMessagePack(
-                    getServerName.get(), getPort.get(), identity);
+                    getServerName.get(), getServerDescription.get(), getPort.get(), identity);
         }
 
         try {

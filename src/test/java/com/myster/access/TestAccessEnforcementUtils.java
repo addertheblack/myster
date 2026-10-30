@@ -137,6 +137,7 @@ class TestAccessEnforcementUtils {
 
         MessagePak stats = ServerStats.getServerStatsMessagePack(
                 "server",
+                "",
                 1234,
                 identity,
                 fileManager,
@@ -166,6 +167,7 @@ class TestAccessEnforcementUtils {
 
         MessagePak stats = ServerStats.getServerStatsMessagePack(
                 "server",
+                "",
                 1234,
                 identity,
                 fileManager,

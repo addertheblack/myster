@@ -56,9 +56,24 @@ class TestBidirectionalServerStatsDatagramClient {
                      client.getCode());
         assertEquals(7001, card.getInt(ServerStats.PORT).orElseThrow());
         assertEquals("client", card.getString(ServerStats.SERVER_NAME).orElseThrow());
+        assertEquals("Client description", card.getString(ServerStats.SERVER_DESCRIPTION).orElseThrow());
         assertArrayEquals(keyPair.getPublic().getEncoded(),
                           card.getByteArray(ServerStats.IDENTITY).orElseThrow());
         assertTrue(card.getString(ServerStats.MYSTER_VERSION).isPresent());
+    }
+
+    @Test
+    void fullAndMinimalStatsLimitDescriptionWithoutSplittingUnicodeCharacters() throws Exception {
+        Identity identity = mock(Identity.class);
+        String description = "🙂".repeat(256);
+
+        MessagePak full = ServerStats.getServerStatsMessagePack(
+                "client", description, 7001, identity, initializedFileManager());
+        MessagePak minimal = ServerStats.getMinimalServerStatsMessagePack(
+                "client", description, 7001, identity);
+
+        assertEquals("🙂".repeat(255), full.getString(ServerStats.SERVER_DESCRIPTION).orElseThrow());
+        assertEquals("🙂".repeat(255), minimal.getString(ServerStats.SERVER_DESCRIPTION).orElseThrow());
     }
 
     @Test
@@ -94,6 +109,7 @@ class TestBidirectionalServerStatsDatagramClient {
                 mock(UDPPingClient.class),
                 lookup,
                 () -> "client",
+                () -> "Client description",
                 () -> 7001,
                 mock(Identity.class),
                 fileManager);
@@ -130,6 +146,7 @@ class TestBidirectionalServerStatsDatagramClient {
                 mock(UDPPingClient.class),
                 lookup,
                 () -> "client",
+                () -> "Client description",
                 () -> 7001,
                 identity,
                 fileManager);
@@ -173,6 +190,7 @@ class TestBidirectionalServerStatsDatagramClient {
                 mock(UDPPingClient.class),
                 mock(PublicKeyLookup.class),
                 () -> "client",
+                () -> "Client description",
                 () -> 7001,
                 null,
                 fileManager);
@@ -213,7 +231,7 @@ class TestBidirectionalServerStatsDatagramClient {
         Identity identity = mock(Identity.class);
         when(identity.getMainIdentity()).thenReturn(Optional.of(keyPair));
         return new BidirectionalServerStatsDatagramClient(
-                "client", 7001, identity, fileManager);
+                "client", "Client description", 7001, identity, fileManager);
     }
 
     private static FileTypeListManager initializedFileManager() {

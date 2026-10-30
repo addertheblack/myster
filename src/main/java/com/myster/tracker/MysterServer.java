@@ -70,6 +70,11 @@ public interface MysterServer {
     public String getServerName();
 
     /**
+     * @return server description, at most 255 characters, or an empty string when unavailable
+     */
+    public String getServerDescription();
+
+    /**
      * @return ping or {@link MysterServer#UNTRIED} if not checked or {@link MysterServer#DOWN} if down
      */
     public int getPingTime();

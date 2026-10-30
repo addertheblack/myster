@@ -80,6 +80,7 @@ class TestMysterDatagramExpectedKey {
                                                              mock(UDPPingClient.class),
                                                              lookup,
                                                              () -> "test",
+                                                             () -> "",
                                                              () -> 6669,
                                                              null,
                                                              mock(FileTypeListManager.class));

@@ -29,6 +29,7 @@ import com.myster.transaction.Transaction;
  */
 public class BidirectionalServerStatsDatagramClient implements StandardDatagramClientImpl<MessagePak> {
     private final String serverName;
+    private final String serverDescription;
     private final int port;
     private final Identity identity;
     private final FileTypeListManager fileManager;
@@ -37,15 +38,18 @@ public class BidirectionalServerStatsDatagramClient implements StandardDatagramC
      * Creates a new bidirectional server stats client.
      *
      * @param serverName our server's name
+     * @param serverDescription our server's description
      * @param port our server's port
      * @param identity our server's identity
      * @param fileManager file manager for generating file statistics
      */
     public BidirectionalServerStatsDatagramClient(String serverName,
+                                                   String serverDescription,
                                                    int port,
                                                    Identity identity,
                                                    FileTypeListManager fileManager) {
         this.serverName = serverName;
+        this.serverDescription = serverDescription;
         this.port = port;
         this.identity = identity;
         this.fileManager = fileManager;
@@ -72,7 +76,7 @@ public class BidirectionalServerStatsDatagramClient implements StandardDatagramC
     public byte[] getDataForOutgoingPacket() throws IOException {
         try {
             return serialize(ServerStats.getServerStatsMessagePack(
-                    serverName, port, identity, fileManager));
+                    serverName, serverDescription, port, identity, fileManager));
         } catch (NotInitializedException exception) {
             throw new IllegalStateException(
                     "Transaction 102 requires initialized shared file lists", exception);

@@ -7,18 +7,30 @@
     <option name="selectedModelId" value="auto" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="fe0d93f5-a1b5-4669-89e3-19e762d0ae4a" name="Changes" comment="Refactor UPnP port mapping logic: consolidate port mapping updates into a single method and improve logging for better diagnostics.">
+    <list default="true" id="fe0d93f5-a1b5-4669-89e3-19e762d0ae4a" name="Changes" comment="Add server CID resolution and enhance server lookup functionality: introduce ServerLookupCandidate for parsing server addresses and CIDs, implement resolveServerCid method in DefaultKnownServerSource, and update ServerPickerDialog to support CID input.">
       <change beforePath="$PROJECT_DIR$/Myster.iws" beforeDir="false" afterPath="$PROJECT_DIR$/Myster.iws" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/TODO.txt" beforeDir="false" afterPath="$PROJECT_DIR$/TODO.txt" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/docs/design/Myster 3DNS.md" beforeDir="false" afterPath="$PROJECT_DIR$/docs/design/Myster 3DNS.md" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/docs/design/Myster Bidirectional Server Stats Protocol.md" beforeDir="false" afterPath="$PROJECT_DIR$/docs/design/Myster Bidirectional Server Stats Protocol.md" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/src/main/java/com/myster/Myster.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/com/myster/Myster.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/com/myster/search/ui/SearchWindow.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/com/myster/search/ui/SearchWindow.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/com/myster/tracker/ui/KnownServerSource.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/com/myster/tracker/ui/KnownServerSource.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/com/myster/tracker/ui/ServerAddressLookup.java" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/com/myster/tracker/ui/ServerPickerDialog.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/com/myster/tracker/ui/ServerPickerDialog.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/com/myster/net/datagram/client/BidirectionalServerStatsDatagramClient.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/com/myster/net/datagram/client/BidirectionalServerStatsDatagramClient.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/com/myster/net/datagram/client/MysterDatagramImpl.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/com/myster/net/datagram/client/MysterDatagramImpl.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/com/myster/net/server/ServerFacade.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/com/myster/net/server/ServerFacade.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/com/myster/net/server/ServerPreferences.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/com/myster/net/server/ServerPreferences.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/com/myster/net/server/datagram/BidirectionalServerStatsDatagramServer.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/com/myster/net/server/datagram/BidirectionalServerStatsDatagramServer.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/com/myster/net/server/datagram/ServerStatsDatagramServer.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/com/myster/net/server/datagram/ServerStatsDatagramServer.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/com/myster/net/stream/server/ServerStats.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/com/myster/net/stream/server/ServerStats.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/com/myster/server/ui/ServerPreferencesPane.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/com/myster/server/ui/ServerPreferencesPane.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/com/myster/tracker/MysterServer.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/com/myster/tracker/MysterServer.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/com/myster/tracker/MysterServerImplementation.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/com/myster/tracker/MysterServerImplementation.java" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/src/main/java/com/myster/tracker/ui/TrackerWindow.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/com/myster/tracker/ui/TrackerWindow.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/test/java/com/myster/tracker/ui/TestServerAddressLookup.java" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/test/java/com/myster/tracker/ui/TestServerPickerModel.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/test/java/com/myster/tracker/ui/TestServerPickerModel.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/test/java/com/myster/access/TestAccessEnforcementUtils.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/test/java/com/myster/access/TestAccessEnforcementUtils.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/test/java/com/myster/net/datagram/client/TestBidirectionalServerStatsDatagramClient.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/test/java/com/myster/net/datagram/client/TestBidirectionalServerStatsDatagramClient.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/test/java/com/myster/net/datagram/client/TestMysterDatagramExpectedKey.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/test/java/com/myster/net/datagram/client/TestMysterDatagramExpectedKey.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/test/java/com/myster/net/datagram/client/TestMysterDatagramFailureDetails.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/test/java/com/myster/net/datagram/client/TestMysterDatagramFailureDetails.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/test/java/com/myster/server/ui/TestServerPreferencesPane.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/test/java/com/myster/server/ui/TestServerPreferencesPane.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/test/java/com/myster/threedns/TestThreeDnsServerList.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/test/java/com/myster/threedns/TestThreeDnsServerList.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/test/java/com/myster/tracker/TestMysterServerImplementation.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/test/java/com/myster/tracker/TestMysterServerImplementation.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/test/java/com/myster/transaction/TestBidirectionalServerStatsDatagramProtocol.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/test/java/com/myster/transaction/TestBidirectionalServerStatsDatagramProtocol.java" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -252,23 +264,23 @@
   </component>
   <component name="NextEditCompletionFeaturesState">
     <decayedCancelled>
-      <entry key="MS100" value="1.1531255840028591" />
-      <entry key="MS500" value="3.631988927874578" />
-      <entry key="S2" value="12.344156097690849" />
-      <entry key="S5" value="23.15491884499286" />
-      <entry key="S10" value="30.564531927614247" />
-      <entry key="S30" value="37.60407958790755" />
-      <entry key="S60" value="39.72273299747644" />
-      <entry key="M2" value="41.662817431376325" />
-      <entry key="M5" value="61.3650254873367" />
-      <entry key="M10" value="99.78564464076435" />
-      <entry key="M15" value="124.99744922090407" />
-      <entry key="M30" value="163.79551493985443" />
-      <entry key="H1" value="208.91486288376916" />
-      <entry key="H2" value="297.38586146457146" />
-      <entry key="H4" value="472.2083274253694" />
-      <entry key="D1" value="1367.9145121578722" />
-      <entry key="W1" value="10644.957175441747" />
+      <entry key="MS100" value="1.000000246826933" />
+      <entry key="MS500" value="1.0515401616285869" />
+      <entry key="S2" value="1.9065365107788992" />
+      <entry key="S5" value="3.0827917545644636" />
+      <entry key="S10" value="3.855778211353774" />
+      <entry key="S30" value="4.566424572627606" />
+      <entry key="S60" value="4.77584940274998" />
+      <entry key="M2" value="4.886013655930071" />
+      <entry key="M5" value="4.953937478914094" />
+      <entry key="M10" value="4.9768899502641055" />
+      <entry key="M15" value="4.984575732287912" />
+      <entry key="M30" value="4.992286653242698" />
+      <entry key="H1" value="5.052134452962979" />
+      <entry key="H2" value="9.834513652138961" />
+      <entry key="H4" value="51.08251890859575" />
+      <entry key="D1" value="801.7709723782406" />
+      <entry key="W1" value="9631.3879584243" />
     </decayedCancelled>
     <decayedSelected>
       <entry key="MS100" value="0.0" />
@@ -279,34 +291,34 @@
       <entry key="S30" value="0.0" />
       <entry key="S60" value="0.0" />
       <entry key="M2" value="0.0" />
-      <entry key="M5" value="7.560757906318734E-262" />
-      <entry key="M10" value="2.749683237450949E-131" />
-      <entry key="M15" value="9.110071330053585E-88" />
-      <entry key="M30" value="3.0182894708846557E-44" />
-      <entry key="H1" value="1.737322571003116E-22" />
-      <entry key="H2" value="1.3184507013767369E-11" />
-      <entry key="H4" value="3.717179392733964E-6" />
-      <entry key="D1" value="0.2475960233080887" />
-      <entry key="W1" value="4.376663226966792" />
+      <entry key="M5" value="0.0" />
+      <entry key="M10" value="5.2925562329010227E-197" />
+      <entry key="M15" value="1.4096468353869373E-131" />
+      <entry key="M30" value="3.754526382097799E-66" />
+      <entry key="H1" value="1.9376601060688495E-33" />
+      <entry key="H2" value="4.403139687826224E-17" />
+      <entry key="H4" value="6.793018616659983E-9" />
+      <entry key="D1" value="0.08657354721882095" />
+      <entry key="W1" value="3.766596212664615" />
     </decayedSelected>
     <decayedShown>
-      <entry key="MS100" value="1.129394602703925" />
-      <entry key="MS500" value="3.6169730471511436" />
-      <entry key="S2" value="12.331646141461029" />
-      <entry key="S5" value="23.14542792628628" />
-      <entry key="S10" value="30.55820786745437" />
-      <entry key="S30" value="37.60146459906769" />
-      <entry key="S60" value="39.72134870686921" />
-      <entry key="M2" value="41.662093003809005" />
-      <entry key="M5" value="61.36461640878755" />
-      <entry key="M10" value="99.7853225827586" />
-      <entry key="M15" value="124.9971827636686" />
-      <entry key="M30" value="163.7953416921581" />
-      <entry key="H1" value="208.91475289774965" />
-      <entry key="H2" value="297.3857843576284" />
-      <entry key="H4" value="472.2082715918505" />
-      <entry key="D1" value="1368.162057717598" />
-      <entry key="W1" value="10649.333769759682" />
+      <entry key="MS100" value="0.38958250470558525" />
+      <entry key="MS500" value="0.8783077992772211" />
+      <entry key="S2" value="1.8434714025586991" />
+      <entry key="S5" value="3.033974316289756" />
+      <entry key="S10" value="3.820761693646521" />
+      <entry key="S30" value="4.551034703018508" />
+      <entry key="S60" value="4.767571204142664" />
+      <entry key="M2" value="4.881718217719808" />
+      <entry key="M5" value="4.952180357204461" />
+      <entry key="M10" value="4.976004776175556" />
+      <entry key="M15" value="4.983984137448115" />
+      <entry key="M30" value="4.99199011412052" />
+      <entry key="H1" value="5.051985973148208" />
+      <entry key="H2" value="9.834438314745109" />
+      <entry key="H4" value="51.082476658300095" />
+      <entry key="D1" value="801.8575160791349" />
+      <entry key="W1" value="9635.154493179181" />
     </decayedShown>
   </component>
   <component name="PerforceConfiguration">
@@ -409,7 +421,7 @@
       <recent name="$PROJECT_DIR$" />
     </key>
   </component>
-  <component name="RunManager" selected="Maven.Myster [package]">
+  <component name="RunManager" selected="Application.Myster">
     <configuration selected="false" default="true" type="Applet" factoryName="Applet">
       <module name="" />
       <option name="MAIN_CLASS_NAME" />
@@ -854,7 +866,15 @@
       <option name="project" value="LOCAL" />
       <updated>1793204775859</updated>
     </task>
-    <option name="localTasksCounter" value="29" />
+    <task id="LOCAL-00029" summary="Add server CID resolution and enhance server lookup functionality: introduce ServerLookupCandidate for parsing server addresses and CIDs, implement resolveServerCid method in DefaultKnownServerSource, and update ServerPickerDialog to support CID input.">
+      <option name="closed" value="true" />
+      <created>1793244533155</created>
+      <option name="number" value="00029" />
+      <option name="presentableId" value="LOCAL-00029" />
+      <option name="project" value="LOCAL" />
+      <updated>1793244533155</updated>
+    </task>
+    <option name="localTasksCounter" value="30" />
     <servers />
   </component>
   <component name="TodoView" selected-index="0">
@@ -896,7 +916,6 @@
     <option name="version" value="3" />
   </component>
   <component name="VcsManagerConfiguration">
-    <MESSAGE value="Fix XML encoding in project configuration for better compatibility" />
     <MESSAGE value="Enhance access control by integrating AccessListReader into server stats and file transaction protocols" />
     <MESSAGE value="Implement OS thumbnails Part 3: client preview with cancellable loading and metadata retention" />
     <MESSAGE value="Implement OS thumbnails — Part 3: integrate client preview pane with cancellable thumbnail loading and metadata retention" />
@@ -921,7 +940,8 @@
     <MESSAGE value="Enhance public key handling: add null checks for PublicKey in PublicKeyIdentity, update IdentityResolver to return cached PublicKeyIdentity, and improve server resolution futures to allow independent cancellation." />
     <MESSAGE value="Rename menu items for clarity: change &quot;New Peer-to-Peer Connection&quot; to &quot;Connect to Server&quot; in MysterMenuBar and NewClientWindowAction." />
     <MESSAGE value="Refactor UPnP port mapping logic: consolidate port mapping updates into a single method and improve logging for better diagnostics." />
-    <option name="LAST_COMMIT_MESSAGE" value="Refactor UPnP port mapping logic: consolidate port mapping updates into a single method and improve logging for better diagnostics." />
+    <MESSAGE value="Add server CID resolution and enhance server lookup functionality: introduce ServerLookupCandidate for parsing server addresses and CIDs, implement resolveServerCid method in DefaultKnownServerSource, and update ServerPickerDialog to support CID input." />
+    <option name="LAST_COMMIT_MESSAGE" value="Add server CID resolution and enhance server lookup functionality: introduce ServerLookupCandidate for parsing server addresses and CIDs, implement resolveServerCid method in DefaultKnownServerSource, and update ServerPickerDialog to support CID input." />
   </component>
   <component name="VssConfiguration">
     <CheckoutOptions>

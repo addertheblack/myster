@@ -23,17 +23,20 @@ public class ServerStatsDatagramServer implements TransactionProtocol {
     private static final Logger log = Logger.getLogger(ServerStatsDatagramServer.class.getName());
     
     private final Supplier<String> getServerName;
+    private final Supplier<String> getServerDescription;
     private final Supplier<Integer> getPort;
     private final Identity identity;
     private final FileTypeListManager fileManager;
     private final AccessListReader accessListReader;
 
     public ServerStatsDatagramServer(Supplier<String> getServerName,
+                                     Supplier<String> getServerDescription,
                                      Supplier<Integer> getPort,
                                      Identity identity,
                                      FileTypeListManager fileManager,
                                      AccessListReader accessListReader) {
         this.getServerName = getServerName;
+        this.getServerDescription = getServerDescription;
         this.getPort = getPort;
         this.identity = identity;
         this.fileManager = fileManager;
@@ -54,6 +57,7 @@ public class ServerStatsDatagramServer implements TransactionProtocol {
         try (var out = new MysterDataOutputStream(byteOutputStream)) {
             out.writeMessagePack(com.myster.net.stream.server.ServerStats
                     .getServerStatsMessagePack(getServerName.get(),
+                                               getServerDescription.get(),
                                                getPort.get(),
                                                identity,
                                                fileManager,

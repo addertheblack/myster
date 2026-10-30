@@ -141,6 +141,7 @@ public class ServerFacade {
                 DatagramConstants.SERVER_STATS_TRANSACTION_CODE);
         addDatagramTransactions(MysterGlobals.DEFAULT_SERVER_PORT,
                                 new ServerStatsDatagramServer(preferences::getIdentityName,
+                                                              preferences::getDescription,
                                                               preferences::getServerPort,
                                                               identity,
                                                               fileManager,

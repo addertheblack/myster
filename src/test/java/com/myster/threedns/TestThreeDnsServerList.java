@@ -347,6 +347,11 @@ class TestThreeDnsServerList {
         }
 
         @Override
+        public String getServerDescription() {
+            return "";
+        }
+
+        @Override
         public int getPingTime() {
             return up ? 1 : DOWN;
         }

@@ -1,5 +1,8 @@
 package com.myster.tracker;
 
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
+
 import java.io.File;
 import java.net.UnknownHostException;
 import java.nio.file.Path;
@@ -73,5 +76,43 @@ class TestMysterServerImplementation {
         sem.acquire();
         
         Assertions.assertArrayEquals(new MysterAddress[]{MysterAddress.createMysterAddress("127.0.0.1:1234")},  server.getUpAddresses()); 
+    }
+
+    @Test
+    void descriptionIsBoundedPersistedAndClearedForLegacyStats() throws Exception {
+        MapPreferences preferences = new MapPreferences();
+        MysterAddress address = MysterAddress.createMysterAddress("127.0.0.1");
+        MysterIdentity serverIdentity = new MysterAddressIdentity(address);
+        IdentityProvider provider = mock(IdentityProvider.class);
+        when(provider.getAddresses(serverIdentity)).thenReturn(new MysterAddress[] { address });
+        MessagePak stats = MessagePak.newEmpty();
+        String fileCountPath = ServerStats.NUMBER_OF_FILES + new MysterType(new byte[16]);
+        stats.putInt(fileCountPath, 0);
+        stats.putString(ServerStats.SERVER_DESCRIPTION, "🙂".repeat(256));
+
+        MysterServerImplementation impl = new MysterServerImplementation(
+                preferences, provider, stats, serverIdentity, address);
+        Assertions.assertEquals("🙂".repeat(255), impl.getInterface().getServerDescription());
+        MysterServerImplementation reloaded = new MysterServerImplementation(
+                preferences, provider, serverIdentity);
+        Assertions.assertEquals("🙂".repeat(255), reloaded.getInterface().getServerDescription());
+
+        stats.putString(ServerStats.SERVER_DESCRIPTION, "");
+        impl.refreshStats(stats, address);
+        reloaded = new MysterServerImplementation(preferences, provider, serverIdentity);
+        Assertions.assertEquals("", reloaded.getInterface().getServerDescription());
+
+        stats.putString(ServerStats.SERVER_DESCRIPTION, "Description before legacy update");
+        impl.refreshStats(stats, address);
+        MessagePak legacyStats = MessagePak.newEmpty();
+        legacyStats.putInt(fileCountPath, 0);
+        impl.refreshStats(legacyStats, address);
+        Assertions.assertEquals("", impl.getInterface().getServerDescription());
+        reloaded = new MysterServerImplementation(preferences, provider, serverIdentity);
+        Assertions.assertEquals("", reloaded.getInterface().getServerDescription());
+
+        preferences.remove(MysterServerImplementation.SERVER_DESCRIPTION);
+        reloaded = new MysterServerImplementation(preferences, provider, serverIdentity);
+        Assertions.assertEquals("", reloaded.getInterface().getServerDescription());
     }
 }

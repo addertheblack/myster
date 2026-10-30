@@ -71,7 +71,7 @@ class TestMysterDatagramFailureDetails {
             return 1;
         });
         return new MysterDatagramImpl(transactions, mock(UDPPingClient.class), mock(PublicKeyLookup.class),
-                () -> "test", () -> 6669, null, mock(FileTypeListManager.class));
+                () -> "test", () -> "", () -> 6669, null, mock(FileTypeListManager.class));
     }
 
     private static TransactionEvent reply(byte[] payload) {

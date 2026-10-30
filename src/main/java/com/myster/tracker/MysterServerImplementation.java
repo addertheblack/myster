@@ -26,6 +26,7 @@ import com.myster.mml.MMLException;
 import com.myster.mml.MessagePak;
 import com.myster.mml.RobustMML;
 import com.myster.net.MysterAddress;
+import com.myster.net.ServerDescriptionUtils;
 import com.myster.net.stream.server.ServerStats;
 import com.myster.type.MysterType;
 
@@ -45,12 +46,13 @@ class MysterServerImplementation {
     private NumOfFiles numberOfFiles;
     private int numberofhits;
     private String serverName;
+    private String serverDescription = "";
     private long uptime;
 
     // time internalRefreshStatus() was last
     // called.
 
-    private long timeoflastupdate = 0;
+    private long timeOfLastUpdate = 0;
 
     //These are the paths in the MML peer:
     //ip = root!
@@ -62,6 +64,7 @@ class MysterServerImplementation {
     public static final String NUMBEROFHITS = "numberOfHits";
     public static final String NUMBEROFFILES = "numberOfFiles";
     public static final String SERVER_NAME = "serverName";
+    public static final String SERVER_DESCRIPTION = "serverDescription";
     public static final String UPTIME = "uptime";
     
     // value pointed to by this key might be null in which case use IDENTITY_ADDRESS
@@ -95,6 +98,7 @@ class MysterServerImplementation {
                                   node.get(SERVER_NAME, ""),
                                   (node.get(UPTIME, "") == null ? -1
                                         : Long.valueOf(node.get(UPTIME, ""))));
+        serverDescription = ServerDescriptionUtils.truncate(node.get(SERVER_DESCRIPTION, ""));
     }
     
     /**
@@ -138,11 +142,13 @@ class MysterServerImplementation {
         
         identityProvider.addIdentity(identity, address);
         
-        server.timeoflastupdate = System.currentTimeMillis();
+        server.timeOfLastUpdate = System.currentTimeMillis();
         String temp = serverStats.getString(ServerStats.SPEED).orElse("1");
         server.speed = Double.valueOf(temp).doubleValue();
 
         server.serverName = serverStats.getString(ServerStats.SERVER_NAME).orElse(null);
+        server.serverDescription = ServerDescriptionUtils.truncate(
+                serverStats.getString(ServerStats.SERVER_DESCRIPTION).orElse(""));
 
         server.uptime = serverStats.getLong(ServerStats.UPTIME).orElse(-1L);
 
@@ -234,7 +240,7 @@ class MysterServerImplementation {
         timeup = tu;
         timedown = td;
         numberofhits = h;
-        timeoflastupdate = t;
+        timeOfLastUpdate = t;
         uptime = u;
         
         try {
@@ -388,6 +394,11 @@ class MysterServerImplementation {
         }
 
         @Override
+        public String getServerDescription() {
+            return serverDescription;
+        }
+
+        @Override
         public int getPingTime() {
             return getBestAddress().map(a -> identityProvider.getPing(a)).orElse(UNTRIED);
         }
@@ -424,11 +435,12 @@ class MysterServerImplementation {
 
     void save() {
         preferences.put(SPEED, "" + speed);
-        preferences.put(TIMESINCEUPDATE, "" + timeoflastupdate);
+        preferences.put(TIMESINCEUPDATE, "" + timeOfLastUpdate);
         preferences.put(TIMEUP, "" + timeup);
         preferences.put(TIMEDOWN, "" + timedown);
         preferences.put(NUMBEROFHITS, "" + numberofhits);
         preferences.put(UPTIME, "" + uptime);
+        preferences.put(SERVER_DESCRIPTION, serverDescription);
         
         if (serverName != null && !serverName.isEmpty()) {
             preferences.put(SERVER_NAME, "" + serverName);
@@ -458,11 +470,12 @@ class MysterServerImplementation {
             MML workingmml = new MML();
 
             workingmml.put("/"+SPEED, "" + speed);
-            workingmml.put("/"+TIMESINCEUPDATE, "" + timeoflastupdate);
+            workingmml.put("/"+TIMESINCEUPDATE, "" + timeOfLastUpdate);
             workingmml.put("/"+TIMEUP, "" + timeup);
             workingmml.put("/"+TIMEDOWN, "" + timedown);
             workingmml.put("/"+NUMBEROFHITS, "" + numberofhits);
             workingmml.put("/"+UPTIME, "" + uptime);
+            workingmml.put("/"+SERVER_DESCRIPTION, serverDescription);
             
             if (identity != null) {
                 workingmml.put("/"+IDENTITY_PUBLIC_KEY, ADDRESSES);
