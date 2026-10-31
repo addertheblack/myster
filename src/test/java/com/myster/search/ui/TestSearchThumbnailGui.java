@@ -7,19 +7,16 @@ import java.awt.Color;
 import java.awt.Component;
 import java.awt.Container;
 import java.awt.Point;
-import java.awt.Rectangle;
 import java.awt.Robot;
 import java.awt.Window;
 import java.awt.image.BufferedImage;
 import java.net.InetAddress;
-import java.nio.file.Path;
 import java.security.KeyPairGenerator;
 import java.util.Optional;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
 
-import javax.imageio.ImageIO;
 import javax.swing.JFrame;
 import javax.swing.JToolTip;
 import javax.swing.SwingUtilities;
@@ -120,10 +117,6 @@ class TestSearchThumbnailGui {
                 previewRequested.await(25, TimeUnit.MILLISECONDS);
             }
             boolean requested = previewRequested.getCount() == 0;
-            if (!requested) {
-                ImageIO.write(robot.createScreenCapture(frame.get().getBounds()), "png",
-                        Path.of("/tmp/myster-search-thumbnails-failure.png").toFile());
-            }
             assertTrue(requested, "hover request at " + location.get());
             long deadline = System.nanoTime() + TimeUnit.SECONDS.toNanos(5);
             AtomicReference<JToolTip> tooltip = new AtomicReference<>();
@@ -142,28 +135,33 @@ class TestSearchThumbnailGui {
                 }
             }
             assertNotNull(tooltip.get(), "the real Swing popup must be showing");
-            AtomicReference<Rectangle> bounds = new AtomicReference<>();
+            CountDownLatch dismissed = new CountDownLatch(1);
             SwingUtilities.invokeAndWait(() -> {
                 assertEquals(-1, list.get().getSelectedIndex());
-                Rectangle rectangle = new Rectangle(frame.get().getBounds());
-                rectangle.add(new Rectangle(tooltip.get().getLocationOnScreen(), tooltip.get().getSize()));
-                bounds.set(rectangle);
+                // Check the displayed component's real layout and painting without relying on
+                // native screen-capture permissions, compositing, or display colour conversion.
+                JToolTip shown = tooltip.get();
+                BufferedImage painted = new BufferedImage(shown.getWidth(), shown.getHeight(),
+                        BufferedImage.TYPE_INT_ARGB);
+                var paintGraphics = painted.createGraphics();
+                try {
+                    shown.paint(paintGraphics);
+                } finally {
+                    paintGraphics.dispose();
+                }
+                assertEquals(new Color(30, 110, 170),
+                        new Color(painted.getRGB(painted.getWidth() / 2, painted.getHeight() / 2)),
+                        "the showing tooltip must paint its thumbnail");
+                shown.addHierarchyListener(event -> {
+                    if (!shown.isShowing()) {
+                        dismissed.countDown();
+                    }
+                });
             });
-            robot.waitForIdle();
-            java.awt.Toolkit.getDefaultToolkit().sync();
-            long paintDeadline = System.nanoTime() + TimeUnit.SECONDS.toNanos(2);
-            Point center = new Point(tooltip.get().getLocationOnScreen());
-            center.translate(96, 96);
-            while (!robot.getPixelColor(center.x, center.y).equals(new Color(30, 110, 170))
-                    && System.nanoTime() < paintDeadline) {
-                robot.delay(25);
-            }
-            assertEquals(new Color(30, 110, 170), robot.getPixelColor(center.x, center.y),
-                    "native tooltip must actually paint its image");
-            ImageIO.write(robot.createScreenCapture(bounds.get()), "png", Path.of("/tmp/myster-search-thumbnails.png").toFile());
             robot.mouseMove(100, 100);
             robot.waitForIdle();
-            TestSearchThumbnails.flush();
+            // Native mouse-exit events may arrive after the current EDT queue has drained.
+            assertTrue(dismissed.await(5, TimeUnit.SECONDS), "moving away must dismiss the tooltip");
             SwingUtilities.invokeAndWait(() -> assertFalse(tooltip.get().isShowing()));
         } finally {
             SwingUtilities.invokeAndWait(() -> {

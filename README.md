@@ -14,6 +14,13 @@ It scales via **virtual overlay networks** that segment the broader network by i
 mvn clean test
 ```
 
+Tests run headless by default, skipping tests that require a desktop. To include
+the desktop smoke test on a local machine with a GUI:
+
+```bash
+mvn test -Djava.awt.headless=false
+```
+
 To build artifacts:
 
 ```bash

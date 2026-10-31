@@ -216,6 +216,8 @@
           <argLine>-javaagent:${settings.localRepository}/org/mockito/mockito-core/${mockito.version}/mockito-core-${mockito.version}.jar</argLine>
           <useFile>false</useFile>
           <systemPropertyVariables>
+            <!-- CI builds skip desktop-only tests; opt in locally with -Djava.awt.headless=false. -->
+            <java.awt.headless>true</java.awt.headless>
             <java.util.logging.config.file>
               src/test/resources/test.logging.properties</java.util.logging.config.file>
           </systemPropertyVariables>
