@@ -15,6 +15,7 @@ This document captures Myster-specific coding conventions, preferred libraries, 
 - **Preferences** — Java `Preferences` API; `MysterType.toHexString()` as key
 - **Testing** — add `main()` to UI panels for standalone testing
 - **Test mocks** — prefer Mockito for mocks/stubs
+- **Test constructors** — no extra production constructors for test convenience; keep setup helpers in tests
 - **Test access** — keep minimal visibility and mark methods exposed for unit tests
 - **Unused code** — do not keep methods whose only callers are tests
 - **Preference Panel save semantics** — add = immediate; edit/delete = on save
@@ -54,6 +55,7 @@ This document captures Myster-specific coding conventions, preferred libraries, 
 - [Data Persistence](#data-persistence)
 - [Testing](#testing)
   - [Use Mockito for Mocks](#use-mockito-for-mocks)
+  - [Avoid Test-Only Constructors](#avoid-test-only-constructors)
   - [Do Not Keep Test-Only Production Methods](#do-not-keep-test-only-production-methods)
   - [Visibility Widened for Unit Tests](#visibility-widened-for-unit-tests)
 - [Preference Panels](#preference-panels)
@@ -420,6 +422,22 @@ public static void main(String[] args) {
 **Rule**: Prefer Mockito for test mocks, stubs, spies, and interaction verification.
 
 Avoid hand-written fake/mock classes when Mockito can express the behavior clearly. Hand-written fakes are still acceptable when they model meaningful domain behavior, are reused across several tests, or are simpler than Mockito setup.
+
+### Avoid Test-Only Constructors
+
+**Rule**: A constructor used only by unit tests is allowed when absolutely required for a test
+to work. Do not add constructor overloads just to make test setup shorter or more convenient.
+
+Keep production construction easy to follow. Use the production constructors and mock existing
+dependencies. Put repetitive setup and convenience methods in the test class or test fixtures
+under `src/test/java`. Shorter test setup does not justify extra production constructors,
+constructor delegation, factory interfaces, or other test-only scaffolding.
+
+Before adding a constructor as a test seam, establish that the production API and existing
+mocking facilities cannot reasonably exercise the behavior. Keep any necessary seam minimal.
+Its declaration must have a comment containing `Added for unit tests only` and explaining why
+the test requires it. Apply this requirement alongside the test-only method and visibility
+rules below.
 
 ### Do Not Keep Test-Only Production Methods
 

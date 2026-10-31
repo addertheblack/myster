@@ -32,6 +32,8 @@ import com.myster.net.stream.client.MysterDataOutputStream;
 /**
  * TLS implementation of MysterSocket that uses explicit TLS negotiation (STARTTLS pattern).
  * The connection starts as plaintext and upgrades to TLS after protocol negotiation.
+ * Client TCP connection setup has a 30-second timeout; socket reads use a 120-second timeout,
+ * including protocol negotiation and the TLS handshake.
  */
 public class TLSSocket extends MysterSocket {
     /** Maximum time to establish a TCP connection, in milliseconds. */

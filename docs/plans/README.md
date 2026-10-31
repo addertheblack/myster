@@ -22,7 +22,7 @@ When adding or substantially changing an authoritative plan, update this index w
 | [OS Thumbnails — Part 2: Thumbnail Transfer Protocol](os-thumbnails-part-2.md) | Adds a TCP thumbnail request capped at 256 pixels per dimension and 256 KiB per image body, with a MessagePack header followed by unpadded PNG or raw ARGB32 bytes. |
 | [OS Thumbnails — Part 3: Client Preview Pane](os-thumbnails-part-3.md) | Connects section 79 remote thumbnails to the visible client details/preview pane with cancellable, HiDPI-aware loading. |
 | [OS Thumbnails — Part 4: Client File-List Thumbnails](os-thumbnails-part-4.md) | Loads thumbnails only for eligible file rows currently visible in the client file-list viewport. |
-| [OS Thumbnails — Part 5: Search-Result Thumbnails](os-thumbnails-part-5.md) | Loads thumbnails only for eligible visible search-result rows with captured type and tab lifecycle isolation. |
+| [OS Thumbnails — Part 5: Search-Result Thumbnails and Hover Previews](os-thumbnails-part-5.md) | Implemented: shares visible-row loading across client/search, with verified same-socket identity discovery, per-tab caches and larger hover previews. |
 | [Bidirectional Server Stats Exchange](bidirectional-server-stats.md) | Adds UDP transaction `102` so peers exchange server stats in both directions and learn the requester's advertised Myster port safely. |
 | [Domain-Specific CID Types](cid-domain-types.md) | Replaces shared raw `Cid128` API usage with non-interchangeable `MysterTypeCid` and `ServerCid` domain values. |
 | [Custom Type Auto-Update](custom-type-auto-update.md) | Makes enable/disable changes for custom and default types immediately update tracker lists, search windows, and tracker UI choices. |

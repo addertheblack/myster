@@ -79,6 +79,7 @@ import com.myster.search.HashCrawlerManager;
 import com.myster.search.MysterFileStub;
 import com.myster.thumbnail.RemoteThumbnailCache;
 import com.myster.thumbnail.ui.ThumbnailUiUtils;
+import com.myster.thumbnail.ui.VisibleRowThumbnailController;
 import com.myster.tracker.MysterServer;
 import com.myster.tracker.PublicKeyIdentity;
 import com.myster.tracker.Tracker;
@@ -132,7 +133,7 @@ public class ClientWindow extends MysterFrame implements Sayable {
     private TypeMetadataCache typeMetadataCache;
     private RemoteThumbnailCache thumbnailCache;
     private ClientPreviewController previewController;
-    private ClientFileThumbnailController<String> fileThumbnailController;
+    private VisibleRowThumbnailController<String> fileThumbnailController;
     private MysterType listedType;
     private MysterAddress thumbnailAddress;
     private final Map<MysterType, MutableSortableString> typeDisplayNames = new HashMap<>();
@@ -295,10 +296,22 @@ public class ClientWindow extends MysterFrame implements Sayable {
                 thumbnailCache,
                 this::buildThumbnailRequest,
                 () -> previewPane.isShowing() && (getExtendedState() & ICONIFIED) == 0 && !isSelectedFileListItemADir());
-        fileThumbnailController = new ClientFileThumbnailController<>(
-                fileList, thumbnailCache, this::buildFileThumbnailRequest,
-                () -> thumbnailAddress != null && fileList.isShowing()
-                        && (getExtendedState() & ICONIFIED) == 0);
+        fileThumbnailController = new VisibleRowThumbnailController<>(fileList,
+                                                                      thumbnailCache,
+                                                                      this::buildFileThumbnailRequest,
+                                                                      row -> {
+                                                                          java.awt.Rectangle bounds = TreeMCList.getItemIconBounds(
+                                                                                  fileList,
+                                                                                  row);
+                                                                          int side = fileList.getRowHeight(row);
+                                                                          bounds.x += side + 4;
+                                                                          bounds.width = side;
+                                                                          return bounds.intersection(fileList.getCellRect(
+                                                                                  row,
+                                                                                  0,
+                                                                                  false));
+                                                                      },
+                                                                      () -> thumbnailAddress != null && fileList.isShowing() && (getExtendedState() & ICONIFIED) == 0);
     }
 
     /**
@@ -732,9 +745,15 @@ public class ClientWindow extends MysterFrame implements Sayable {
         if (fileThumbnailController != null) {
             fileThumbnailController.close();
         }
+
         if (previewController != null) {
             previewController.close();
         }
+
+        if (thumbnailCache != null) {
+            thumbnailCache.close();
+        }
+
         initialData = Optional.empty();
         super.dispose();
         stopConnect();
@@ -963,9 +982,11 @@ public class ClientWindow extends MysterFrame implements Sayable {
         }
     }
 
-    private Optional<RemoteThumbnailCache.Request> buildFileThumbnailRequest(
-            TreeMCListItem<String> item, int logicalSize,
-            java.awt.GraphicsConfiguration configuration, boolean allowResolution) {
+    private Optional<RemoteThumbnailCache.Request> buildFileThumbnailRequest(com.general.mclist.MCListItemInterface<String> rawItem,
+                                                                             int logicalSize,
+                                                                             java.awt.GraphicsConfiguration configuration,
+                                                                             boolean allowResolution) {
+        var item = (TreeMCListItem<String>) rawItem;
         if (item.isContainer() || thumbnailAddress == null || listedType == null) {
             return Optional.empty();
         }

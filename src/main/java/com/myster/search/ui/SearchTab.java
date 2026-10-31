@@ -68,6 +68,9 @@ import com.myster.util.TypeChoice;
  * <p>
  * Each SearchTab manages its own {@link SearchEngine} instance and implements
  * {@link SearchResultListener} to receive search results independently.
+ * Displayed rows retain their generation's type, columns and thumbnail profile. Engine callbacks
+ * are generation-guarded; Stop preserves displayed demand, while replacement and disposal cancel
+ * it. Rendering and acquisition are composed by {@link SearchThumbnailSupport}, outside the widget.
  */
 public class SearchTab extends JPanel implements SearchResultListener, Sayable {
     private static final Logger log = Logger.getLogger(SearchTab.class.getName());
@@ -89,6 +92,11 @@ public class SearchTab extends JPanel implements SearchResultListener, Sayable {
     private final Tracker tracker;
 
     private SearchEngine searchEngine;
+    private final SearchThumbnailSupport thumbnails;
+    private MysterType resultsType;
+    private FileTypeColumnHandler resultsColumnHandler;
+    private long generation;
+    private boolean disposed;
     private FileTypeColumnHandler metaDateHandler;
     private int resultCount = 0;
     private String lastSearchString = "";
@@ -169,6 +177,7 @@ public class SearchTab extends JPanel implements SearchResultListener, Sayable {
 
         textEntry.setSelectionStart(0);
         textEntry.setSelectionEnd(textEntry.getText().length());
+        thumbnails = new SearchThumbnailSupport(fileList, protocol.getStream());
     }
 
     private void addPopUpMenus() {
@@ -281,9 +290,20 @@ public class SearchTab extends JPanel implements SearchResultListener, Sayable {
      * Starts a search using the current search string and type.
      */
     public void startSearch() {
+        if (disposed || choice.getSelectedTypeDescription().isEmpty()) {
+            return;
+        }
         if (searchEngine != null) {
             stopSearch();
         }
+
+        long token = ++generation;
+        var description = choice.getSelectedTypeDescription().orElseThrow();
+        resultsType = description.getType();
+        resultsColumnHandler = ClientInfoFactoryUtils.getHandler(tdList, resultsType);
+        fileList.clearAll();
+        resultCount = 0;
+        thumbnails.beginGeneration(resultsType, description.getMetadataTypeId());
 
         // Capture the search parameters for tab title
         lastSearchString = getSearchString();
@@ -297,9 +317,9 @@ public class SearchTab extends JPanel implements SearchResultListener, Sayable {
                                         hashManager,
                                         context,
                                         tracker,
-                                        this,
-                                        this,
-                                        getMysterType(),
+                                        listenerFor(token),
+                                        message -> forGeneration(token, () -> say(message)),
+                                        resultsType,
                                         lastSearchString);
         searchEngine.run();
         onStateChange.accept(this);
@@ -318,8 +338,7 @@ public class SearchTab extends JPanel implements SearchResultListener, Sayable {
     }
 
     private void recolumnize() {
-        FileTypeColumnHandler typeHandler = ClientInfoFactoryUtils.getHandler(tdList, getMysterType());
-        metaDateHandler = new SearchColumnDecorator(typeHandler);
+        metaDateHandler = new SearchColumnDecorator(resultsColumnHandler);
         int max = metaDateHandler.getColumnCount();
         fileList.setNumberOfColumns(max);
 
@@ -327,6 +346,7 @@ public class SearchTab extends JPanel implements SearchResultListener, Sayable {
             fileList.setColumnName(i, metaDateHandler.getHeader(i));
             fileList.setColumnWidth(i, metaDateHandler.getHeaderSize(i));
         }
+        thumbnails.columnsRebuilt();
     }
 
     @Override
@@ -343,7 +363,37 @@ public class SearchTab extends JPanel implements SearchResultListener, Sayable {
 
     @Override
     public void searchStats(SearchResult s) {
-        Util.invokeNowOrLater(() -> fileList.getPane().repaint());
+        Util.invokeNowOrLater(() -> {
+            fileList.getPane().repaint();
+            thumbnails.resultsChanged();
+        });
+    }
+
+    /** Window activity affects thumbnail demand, independently of search discovery. */
+    void setThumbnailActive(boolean active) {
+        thumbnails.setActive(active);
+    }
+
+    private void forGeneration(long token, Runnable callback) {
+        Util.invokeNowOrLater(() -> {
+            if (!disposed && token == generation) {
+                callback.run();
+            }
+        });
+    }
+
+    private SearchResultListener listenerFor(long token) {
+        return new SearchResultListener() {
+            @Override public void searchStart() { forGeneration(token, SearchTab.this::searchStart); }
+            @Override public void searchOver() { forGeneration(token, SearchTab.this::searchOver); }
+            @Override public void searchStats(SearchResult result) {
+                forGeneration(token, () -> SearchTab.this.searchStats(result));
+            }
+            @Override public boolean addSearchResults(SearchResult[] results) {
+                forGeneration(token, () -> SearchTab.this.addSearchResults(results));
+                return !disposed && token == generation;
+            }
+        };
     }
 
     /**
@@ -431,10 +481,16 @@ public class SearchTab extends JPanel implements SearchResultListener, Sayable {
     }
 
     /**
-     * Cleans up resources when this tab is closed.
+     * Terminal, idempotent cleanup; queued old engine/image callbacks become irrelevant.
      */
     public void dispose() {
+        if (disposed) {
+            return;
+        }
+        disposed = true;
+        generation++;
         stopSearch();
+        thumbnails.close();
         choice.dispose();
     }
 

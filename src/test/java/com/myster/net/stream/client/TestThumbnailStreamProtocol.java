@@ -41,7 +41,8 @@ import com.myster.type.MysterType;
 
 class TestThumbnailStreamProtocol {
     private static final MysterType TYPE = new MysterType(new byte[16]);
-    private final MysterStream stream = new MysterStreamImpl(mock(MSDownloadLocalQueue.class));
+    private final MysterStream stream = new MysterStreamImpl(
+            mock(MSDownloadLocalQueue.class), _ -> Optional.empty());
 
     @Test
     void facadeWritesOnlyThreeFieldsAfterSectionAcknowledgement() throws Exception {

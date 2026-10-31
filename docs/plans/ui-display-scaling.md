@@ -1,5 +1,7 @@
 # Arbitrary display scaling
 
+> **Related plan:** [Search-result thumbnails and hover previews](./os-thumbnails-part-5.md) — required by: row and hover requests use arbitrary monitor scale within the existing protocol cap.
+
 ## Design Section (for the owner/reviewer)
 
 ### 1. Summary

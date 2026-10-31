@@ -1,5 +1,7 @@
 # AsyncTaskTracker completion context
 
+> **Related plan:** [Search-result thumbnails and hover previews](./os-thumbnails-part-5.md) — context for: independently owned list/hover futures and generation guards preserve cancellation boundaries.
+
 > **Related plan:** [Myster resource links](./myster-resource-links.md) — context: uses cancellation guards for pending window requests while preserving shared pool discovery.
 
 ## Design Section

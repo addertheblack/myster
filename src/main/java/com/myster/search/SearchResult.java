@@ -36,6 +36,7 @@ public interface SearchResult {
     // gets the host address
     MysterAddress getHostAddress();
 
+    // Will return null if the server is not in the cache. This is a non-blocking call.
     MysterServer getServer();
 
     // this might be an abstraction violation.. I'm not sure.

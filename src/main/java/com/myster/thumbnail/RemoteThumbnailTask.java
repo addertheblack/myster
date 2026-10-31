@@ -3,6 +3,7 @@ package com.myster.thumbnail;
 import java.awt.image.BufferedImage;
 import java.security.PublicKey;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.concurrent.CancellationException;
 
 import com.general.thread.AbstractCancellableCallable;
@@ -24,7 +25,8 @@ public final class RemoteThumbnailTask extends AbstractCancellableCallable<Buffe
     private final MysterType type;
     private final String filename;
     private final int size;
-    private final PublicKey expectedKey;
+    private final Optional<PublicKey> expectedKey;
+    private PublicKey verifiedKey;
 
     /** Every thumbnail connection must verify this key, even after earlier verification. */
     public RemoteThumbnailTask(MysterStream stream,
@@ -34,6 +36,13 @@ public final class RemoteThumbnailTask extends AbstractCancellableCallable<Buffe
                                String filename,
                                int size,
                                PublicKey expectedKey) {
+        this(stream, transferLock, address, type, filename, size,
+                Optional.of(Objects.requireNonNull(expectedKey)));
+    }
+
+    /** Empty expected key asks the stream to discover identity on this transfer's own socket. */
+    RemoteThumbnailTask(MysterStream stream, Object transferLock, MysterAddress address,
+                         MysterType type, String filename, int size, Optional<PublicKey> expectedKey) {
         this.expectedKey = Objects.requireNonNull(expectedKey);
         this.stream = Objects.requireNonNull(stream);
         this.transferLock = Objects.requireNonNull(transferLock);
@@ -48,12 +57,25 @@ public final class RemoteThumbnailTask extends AbstractCancellableCallable<Buffe
         synchronized (transferLock) {
             checkCancelled();
 
-            ParamBuilder params = new ParamBuilder(address).withExpectedServerPublicKey(expectedKey);
+            ParamBuilder params = new ParamBuilder(address);
+            if (expectedKey.isPresent()) {
+                params = params.withExpectedServerPublicKey(expectedKey.get());
+            }
             try (MysterSocket opened = stream.makeStreamConnection(params)) {
                 checkCancelled();
+                verifiedKey = expectedKey.orElse(null);
+                if (verifiedKey == null) {
+                    verifiedKey = opened.getAuthenticatedPeerKey()
+                            .orElseThrow(() -> new java.io.IOException("Thumbnail peer has no public key"));
+                }
                 return stream.getThumbnail(opened, type, filename, size);
             }
         }
+    }
+
+    /** Valid after the transfer future completes; null means connection establishment failed. */
+    PublicKey verifiedKey() {
+        return verifiedKey;
     }
 
     private void checkCancelled() {

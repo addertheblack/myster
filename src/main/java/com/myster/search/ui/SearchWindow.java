@@ -14,6 +14,9 @@ import java.awt.Component;
 import java.awt.Dimension;
 import java.awt.FlowLayout;
 import java.awt.Insets;
+import java.awt.Frame;
+import java.awt.event.ComponentAdapter;
+import java.awt.event.ComponentEvent;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.awt.event.WindowAdapter;
@@ -122,6 +125,19 @@ public class SearchWindow extends MysterFrame {
 
         tabbedPane = new JTabbedPane();
         tabbedPane.setTabLayoutPolicy(JTabbedPane.SCROLL_TAB_LAYOUT);
+        tabbedPane.addChangeListener(_ -> {
+            refreshThumbnailActivity();
+            if (tabbedPane.getSelectedComponent() instanceof SearchTab tab) {
+                getRootPane().setDefaultButton(tab.getSearchButton());
+                updateWindowTitle();
+            }
+        });
+        addWindowStateListener(_ -> refreshThumbnailActivity());
+        addPropertyChangeListener("graphicsConfiguration", _ -> refreshThumbnailActivity());
+        addComponentListener(new ComponentAdapter() {
+            @Override public void componentShown(ComponentEvent event) { refreshThumbnailActivity(); }
+            @Override public void componentHidden(ComponentEvent event) { refreshThumbnailActivity(); }
+        });
 
         JButton newTabButton = new JButton("+");
         newTabButton.setToolTipText("New Search Tab");
@@ -187,6 +203,7 @@ public class SearchWindow extends MysterFrame {
     @Override
     public void setVisible(boolean visible) {
         super.setVisible(visible);
+        refreshThumbnailActivity();
 
         // When window is made visible, ensure focus is on the search field of the current tab
         if (visible && getSearchTabCount() > 0) {
@@ -346,8 +363,7 @@ public class SearchWindow extends MysterFrame {
      */
     private void updateWindowTitle() {
         int selectedIndex = tabbedPane.getSelectedIndex();
-        if (selectedIndex >= 0) {
-            SearchTab tab = (SearchTab) tabbedPane.getComponentAt(selectedIndex);
+        if (selectedIndex >= 0 && tabbedPane.getComponentAt(selectedIndex) instanceof SearchTab tab) {
             String search = tab.getSearchString();
             if (search != null && !search.trim().isEmpty()) {
                 setTitle("Search for \"" + search + "\"");
@@ -367,6 +383,18 @@ public class SearchWindow extends MysterFrame {
         } else {
             // No tabs, close the window
             super.closeWindowEvent();
+        }
+    }
+
+    private void refreshThumbnailActivity() {
+        if (tabbedPane == null) {
+            return;
+        }
+        Component selected = tabbedPane.getSelectedComponent();
+        boolean visible = isShowing() && (getExtendedState() & Frame.ICONIFIED) == 0;
+        for (int i = 0; i < getSearchTabCount(); i++) {
+            SearchTab tab = (SearchTab) tabbedPane.getComponentAt(i);
+            tab.setThumbnailActive(visible && selected == tab);
         }
     }
 

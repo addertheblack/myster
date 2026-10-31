@@ -1,5 +1,7 @@
 # OS thumbnails — Part 3: client preview pane
 
+> **Related plan:** [Search-result thumbnails and hover previews](./os-thumbnails-part-5.md) — follow-up: reuses remote acquisition and completed-image caching for search rows and hover.
+
 > **Related plan:** [Myster resource links](./myster-resource-links.md) — parallel work: pins preview requests to immutable window identity and resets the cache on endpoint changes.
 
 ## Design Section (for the owner/reviewer)

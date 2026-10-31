@@ -1,5 +1,7 @@
 # OS thumbnails — Part 4: per-item tree icons and client file-list thumbnails
 
+> **Related plan:** [Search-result thumbnails and hover previews](./os-thumbnails-part-5.md) — follow-up: generalizes the implemented visible-row controller for flat search lists while preserving tree behavior.
+
 > **Related plan:** [Myster resource links](./myster-resource-links.md) — parallel work: keeps file-row thumbnail requests pinned while navigation changes files or endpoints.
 
 ## Design Section (for the owner/reviewer)

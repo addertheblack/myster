@@ -113,6 +113,8 @@ Application-specific logic for the Myster P2P network:
   - `AsyncNetworkCrawler` - Asynchronous network crawling
   - `HashCrawlerManager` - Hash-based file verification
   - **`search.ui`** - Search window and tab UI
+    - `SearchThumbnailSupport` - Per-tab thumbnail cache, external renderer and generation wiring
+    - `SearchThumbnailHoverController` - Cancellable larger image tooltips for visible result rows
 
 #### Client UI
 - **`com.myster.client.ui`** - Client browsing windows
@@ -170,6 +172,8 @@ Application-specific logic for the Myster P2P network:
   - `Thumbnails` - Blocking worker API and asynchronous Swing API
   - `ThumbnailPlatform` - Per-platform extension whitelists and provider selection
   - `ThumbnailPreview` - Standalone folder/size thumbnail grid using the platform whitelist, with load timings
+  - `RemoteThumbnailCache` - Bounded multi-server cache with verified peer identity and independent consumers
+  - `thumbnail.ui.VisibleRowThumbnailController` - Shared visible-only loading for client trees/search tables
   - Remote access uses `MysterStream.getThumbnail` / `ThumbnailStreamServer` (TCP section 79),
     reusing the local facade and workers with a 256-pixel network limit
 - **`com.myster.util`** - Myster-specific utilities

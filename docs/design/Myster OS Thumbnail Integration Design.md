@@ -564,3 +564,49 @@ to the fitted image's height. Landscape images therefore leave more room for met
 of reserving an empty square around the image. Portrait images remain horizontally centered.
 The acquisition bound depends only on pane geometry, so receiving an image does not change the
 request size or trigger another download.
+
+
+### Search thumbnails and common connection identity (Part 5)
+
+`VisibleRowThumbnailController` now supplies the connection-window and search-row algorithm.
+It accepts ordinary MCList items and owner-specific request/slot adapters, waits 75 ms for viewport
+settling, loads one missing visible image at a time and retains successful pixels until demand
+leaves. Its cache is borrowed; owners explicitly close it after their consumers. Tree drawing and
+navigation remain unchanged. The retained-pixel rule fixes a reproduced old state where a success
+flag survived cache eviction and prevented further image loading for a visible item.
+
+Each `SearchTab` owns a `SearchThumbnailSupport` with one multi-server cache, the shared row
+controller and one hover controller. A search generation captures its type, metadata profile and
+column handler. Generation-bound engine callbacks prevent old start/finish/results/status events
+from changing replacement searches. Stop/completion preserve displayed demand. Window/tab
+visibility and state gate loading; the external generic `IconTextCellRenderer` performs passive
+icon lookup and provides actual clipped slot bounds. Generic/Audio/unknown types remain text-only;
+eligible types keep a file icon when thumbnails are unavailable.
+
+Hover waits 500 ms on any visible row cell, shows cached row pixels while upgrading through the
+same cache, and uses a maximum logical side of 192 with the existing device-pixel cap. The native
+image tooltip has explicit preferred dimensions, stable geometry and monitor-bound placement.
+Exit, model/viewport changes, clicks, Escape, hiding, deactivation and closure dismiss/cancel it.
+Both consumers own their futures; one physical transfer per cache remains the limit.
+
+`MysterStreamImpl.makeStreamConnection` now obtains missing identity on the same socket: explicit
+expected key first, otherwise cached key, otherwise an open-socket server-stats section whose key
+must match the TLS peer. Transport creation sets a 30-second TCP connect timeout and 120-second
+`SO_TIMEOUT` read timeout. Stats leaves those settings alone. This uses native socket settings;
+it does not add per-operation watchdogs, write deadlines or unused-connection expiry. This does
+not call server-pool refresh or open a second discovery connection. The protocol aggregate exposes its
+initialized local public key. Other transports' discovery and future address variants remain
+separate work.
+
+Search does not pre-query a protocol key cache. The stream facade only needs connection
+establishment; its implementation handles cached/discovered identity internally.
+
+A remote-thumbnail `Request` may initially contain an empty optional expected key. The worker
+uses that common connection path, observes the authenticated key before the thumbnail section,
+and exposes it at completion. The cache canonicalizes images/misses/unsupported-peer outcomes
+under the verified request before consumer callbacks and remembers a bounded generation key
+binding. Search pins resolved item keys. Existing client requests still supply their immutable
+window key directly. No thumbnail framing, provider or server authorization changes are needed.
+
+See [the plan](../plans/os-thumbnails-part-5.md) and
+[validation summary](../impl_summary/os-thumbnails-part-5.md).

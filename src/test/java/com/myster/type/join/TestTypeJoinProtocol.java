@@ -49,7 +49,8 @@ class TestTypeJoinProtocol {
         new MysterDataOutputStream(serverBytes).writeMessagePack(response);
         TestSocket socket = new TestSocket(serverBytes.toByteArray());
 
-        MysterStream stream = new MysterStreamImpl(mock(MSDownloadLocalQueue.class));
+        MysterStream stream = new MysterStreamImpl(
+                mock(MSDownloadLocalQueue.class), _ -> Optional.empty());
         TypeJoinStatus status = stream.redeemTypeInvitation(
                 socket, new MysterType(TYPE_BYTES), INVITATION_ID, "secret");
 

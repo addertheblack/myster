@@ -12,7 +12,9 @@ class TestMysterProtocolImpl {
         MysterDatagram datagram = mock(MysterDatagram.class);
         DnsLookupProtocol dnsLookup = mock(DnsLookupProtocol.class);
 
-        MysterProtocol protocol = new MysterProtocolImpl(stream, datagram, dnsLookup);
+        java.security.PublicKey localKey = mock(java.security.PublicKey.class);
+        MysterProtocolImpl protocol = new MysterProtocolImpl(stream, datagram, dnsLookup, localKey);
+        assertSame(localKey, protocol.getLocalPublicKey());
 
         assertSame(stream, protocol.getStream());
         assertSame(datagram, protocol.getDatagram());

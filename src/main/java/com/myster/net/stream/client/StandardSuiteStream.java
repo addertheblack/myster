@@ -83,9 +83,6 @@ public class StandardSuiteStream {
 
     
     public static MessagePak getServerStats(MysterSocket socket) throws IOException {
-        socket.setSoTimeout(90000); // ? Probably important in some way or
-        // other.
-
         socket.out.writeInt(StreamConstants.SERVER_STATS_SECTION_NUMBER);
         socket.out.flush();
 

@@ -344,4 +344,58 @@ class TestRemoteThumbnailCache {
                 .map(value -> value.getExpectedServerPublicKey().orElseThrow()).toList());
         verify(stream, never()).makeStreamConnection(any(MysterAddress.class));
     }
+    @Test
+    void addressOnlyDiscoveryStoresPixelsUnderVerifiedPeerKey() throws Exception {
+        BufferedImage image = new BufferedImage(20, 10, BufferedImage.TYPE_INT_ARGB);
+        when(socket.getAuthenticatedPeerKey()).thenReturn(java.util.Optional.of(key));
+        when(stream.getThumbnail(socket, type, "discovered", 128)).thenReturn(image);
+        Request target = new Request(address, type, "discovered", 128, java.util.Optional.empty());
+        load(target);
+        SwingUtilities.invokeAndWait(() -> {
+            assertEquals(java.util.Optional.of(key), thumbnailCache.resolve(target).expectedKey());
+            assertSame(image, thumbnailCache.lookup(request("discovered", 64)).orElseThrow());
+            assertSame(image, thumbnailCache.lookup(target).orElseThrow());
+        });
+        var params = ArgumentCaptor.forClass(ParamBuilder.class);
+        verify(stream).makeStreamConnection(params.capture());
+        assertTrue(params.getValue().getExpectedServerPublicKey().isEmpty());
+        verify(socket, times(1)).close();
+    }
+
+    @Test
+    void largerAddressOnlyRequestReusesTheIdentityVerifiedByItsFirstTransfer() throws Exception {
+        BufferedImage small = new BufferedImage(128, 64, BufferedImage.TYPE_INT_ARGB);
+        BufferedImage large = new BufferedImage(256, 128, BufferedImage.TYPE_INT_ARGB);
+        when(socket.getAuthenticatedPeerKey()).thenReturn(java.util.Optional.of(key));
+        when(stream.getThumbnail(socket, type, "discovered", 128)).thenReturn(small);
+        when(stream.getThumbnail(socket, type, "discovered", 256)).thenReturn(large);
+
+        load(new Request(address, type, "discovered", 128, java.util.Optional.empty()));
+        load(new Request(address, type, "discovered", 256, java.util.Optional.empty()));
+
+        var params = ArgumentCaptor.forClass(ParamBuilder.class);
+        verify(stream, times(2)).makeStreamConnection(params.capture());
+        assertTrue(params.getAllValues().get(0).getExpectedServerPublicKey().isEmpty());
+        assertEquals(java.util.Optional.of(key), params.getAllValues().get(1).getExpectedServerPublicKey());
+        verify(socket, times(1)).getAuthenticatedPeerKey();
+        verify(socket, times(2)).close();
+        SwingUtilities.invokeAndWait(() ->
+                assertSame(large, thumbnailCache.lookup(request("discovered", 256)).orElseThrow()));
+    }
+
+    @Test
+    void unsupportedServerDoesNotSuppressAnotherEndpoint() throws Exception {
+        Request first = request("same", 128);
+        Request second = new Request(MysterAddress.createMysterAddress("127.0.0.1:7777"), type, "same", 128, key);
+        BufferedImage image = new BufferedImage(10, 10, BufferedImage.TYPE_INT_ARGB);
+        when(stream.getThumbnail(socket, type, "same", 128)).thenThrow(new UnknownProtocolException(79)).thenReturn(image);
+        load(first);
+        load(second);
+        SwingUtilities.invokeAndWait(() -> {
+            assertTrue(thumbnailCache.lookup(first).isEmpty());
+            assertSame(image, thumbnailCache.lookup(second).orElseThrow());
+        });
+        verify(stream, times(2)).makeStreamConnection(any(ParamBuilder.class));
+    }
+
 }

@@ -139,6 +139,7 @@ Before writing the summary, verify:
 - [ ] Inline comments are not obvious or trivial.
 - [ ] Implementation is consistent with `docs/conventions/*`.
 - [ ] Implementation summary is written to `docs/impl_summary/<feature-slug>.md`.
+- [ ] Use review-agent to review implementation for errors, omissions, and style issues before submitting for human review.
 
 ## Related
 

@@ -69,6 +69,9 @@
   (e.g. Ollama, llama.cpp, or a Python Transformers helper) to generate a short
   `/ImageCaption` description. Keep it opt-in, cached under its own metadata schema,
   and privacy-reviewed because captions can expose sensitive image contents.
+- Recheck the reported intermittent thumbnail-loading stall (scrolling wakes it up).
+  Part 5 fixed a debugger-reproduced case where visible success flags outlived cached pixels,
+  and added stationary-viewport progress tests. Confirm the original symptom/trigger is gone.
 - Revisit retaining/reusing already-encoded PNG thumbnail bytes to avoid re-encoding:
     - Reuse them only when the image already meets the requested dimensions and protocol
       format/body limits; preserve file-freshness checks and omit local-path cache metadata.
@@ -79,9 +82,11 @@
     - needs a place in the server prefs when an icon can be imported or copied and pasted.
 - Add server description - limit 255 chars. Can be placed into server stats protocol block.
 - Need server search - searches names and server descriptions for servers matching. Searches the servers in the tracker then crawls network
-- Allow copy of the type create link for type on this server. Inviatation link
+- Allow copy of the type create link for type on this server. Invitation link
 - Fix invitation link for public custom types
 - Check to make sure the array of last resort is used if there's no good public ips available.
+- refactgor icon drawing code out of MCListTree - it should be a std add on not hard coded into the list tree.
+- MysterAddress will eventually represent hostname:port, IP:port, server CID or public key. Callers pass the target through to the protocol; target resolution and peer verification must not be implemented in search or renderer code.
 
 - Important things to do to get private types working
     - Implement type file that allows someone to import a type into myster.
@@ -98,7 +103,7 @@ type file can be sent to other admins
 
 - switch from d/ling names only to getting full paths. Should list dirs much faster on slow systems
   Add new section for file lister thread to also send path information so we can see the list of files with paths
-    without needing to get the entire meta data blob which is often very slow to arrive.
+    without needing to get the entire metadata blob which is often very slow to arrive.
 
 - Chat
  - Chat rooms must allow for folders withing folder with chat rooms inside them.

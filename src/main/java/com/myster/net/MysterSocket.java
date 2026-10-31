@@ -46,6 +46,9 @@ public abstract class MysterSocket implements AutoCloseable {
 
     public abstract int getSoLinger() throws SocketException;
 
+    /**
+     * Sets the socket read timeout in milliseconds; zero disables the read timeout.
+     */
     public abstract void setSoTimeout(int timeout) throws SocketException;
 
     public abstract int getSoTimeout() throws SocketException;

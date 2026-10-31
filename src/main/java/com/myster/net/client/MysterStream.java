@@ -18,7 +18,12 @@ import com.myster.type.join.TypeJoinStatus;
 
 public interface MysterStream {
     /**
-     * Creates a stream connection using common transport parameters.
+     * Creates a verified stream connection using common transport parameters. Without an explicit
+     * key, checks cached identity first, then fetches server stats on the new TLS socket and verifies
+     * its reported identity against that socket's peer key before returning the same socket.
+     * This blocking operation belongs on a worker thread, including on a cache miss.
+     * Transport defaults set a 30-second TCP connect timeout and a 120-second socket read timeout;
+     * discovery and subsequent sections retain these settings.
      *
      * <p>An expected server public key requires the TLS certificate presented by the remote server
      * to contain that key. Stream connections are TLS regardless of the datagram encryption flags

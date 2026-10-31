@@ -278,7 +278,7 @@ public class Myster {
         MSDownloadLocalQueue downloadQueue =
                 new MSDownloadLocalQueue(Preferences.userRoot().node("Downloads"));
         
-        MysterStream stream = new MysterStreamImpl(downloadQueue);
+        MysterStream stream = new MysterStreamImpl(downloadQueue, serverLookup::getCached);
         MysterDatagram datagram = new MysterDatagramImpl(
                 transactionManager,
                 new UDPPingClient(datagramManager),
@@ -312,7 +312,7 @@ public class Myster {
                 new SecureRandom(),
                 invitationClock);
         DnsLookupProtocol dnsLookup = new ThreeDnsLookup(tracker, datagram);
-        MysterProtocol protocol = new MysterProtocolImpl(stream, datagram, dnsLookup);
+        MysterProtocol protocol = new MysterProtocolImpl(stream, datagram, dnsLookup, mainIdentity.getPublic());
         TypeJoinCoordinator joinCoordinator = new TypeJoinCoordinator(
                 protocol.getDnsLookup(),
                 tdList,

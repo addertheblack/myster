@@ -5,6 +5,9 @@ import java.io.IOException;
 import java.security.PublicKey;
 import java.util.List;
 import java.util.Optional;
+import java.util.LinkedHashMap;
+import java.util.Map;
+import java.util.function.Function;
 
 import com.myster.access.AccessList;
 import com.myster.access.AccessListGetClient;
@@ -20,26 +23,86 @@ import com.myster.search.MysterFileStub;
 import com.myster.type.MysterType;
 import com.myster.type.join.TypeJoinStatus;
 
+/**
+ * Blocking stream facade with cache-first identity discovery on the caller-owned TLS connection.
+ * The transport sets connect/read timeouts before discovery; individual sections retain them.
+ */
 public class MysterStreamImpl implements MysterStream {
+    private static final int MAX_DISCOVERED_KEYS = 512;
+
     private final MSDownloadLocalQueue downloadQueue;
-    private final ConnectionFactory connectionFactory;
+    private final Function<MysterAddress, Optional<PublicKey>> cachedKeys;
+    private final Map<MysterAddress, PublicKey> discoveredKeys = new LinkedHashMap<>(16, .75f, true);
 
-    public MysterStreamImpl(MSDownloadLocalQueue downloadQueue) {
-        this(downloadQueue, MysterStreamImpl::openConnection);
-    }
-
-    MysterStreamImpl(MSDownloadLocalQueue downloadQueue, ConnectionFactory connectionFactory) {
+    /** Shares the existing server-key cache; discovery itself uses the socket's stats section. */
+    public MysterStreamImpl(MSDownloadLocalQueue downloadQueue,
+                            Function<MysterAddress, Optional<PublicKey>> cachedKeys) {
         this.downloadQueue = downloadQueue;
-        this.connectionFactory = java.util.Objects.requireNonNull(
-                connectionFactory, "connectionFactory");
+        this.cachedKeys = java.util.Objects.requireNonNull(cachedKeys, "cachedKeys");
     }
-    
+
     @Override
     public MysterSocket makeStreamConnection(ParamBuilder params) throws IOException {
         java.util.Objects.requireNonNull(params, "params");
         MysterAddress address = params.getAddress().orElseThrow(() ->
                 new IllegalArgumentException("ParamBuilder must contain an address"));
-        return connectionFactory.open(address, params.getExpectedServerPublicKey());
+
+        Optional<PublicKey> key = params.getExpectedServerPublicKey()
+                .or(() -> findCachedServerKey(address));
+
+        MysterSocket socket = key.isPresent()
+                ? MysterSocketFactory.makeStreamConnection(address, key.orElseThrow())
+                : MysterSocketFactory.makeStreamConnection(address);
+
+        boolean handedOff = false;
+
+        try {
+            PublicKey verifiedKey;
+            if (key.isPresent()) {
+                verifiedKey = key.get();
+            } else {
+                verifiedKey = downloadKeyFromServer(socket);
+            }
+
+            synchronized (discoveredKeys) {
+                discoveredKeys.put(address, verifiedKey);
+                while (discoveredKeys.size() > MAX_DISCOVERED_KEYS) {
+                    discoveredKeys.remove(discoveredKeys.keySet().iterator().next());
+                }
+            }
+
+            handedOff = true;
+
+            return socket;
+        } finally {
+            if (!handedOff) {
+                socket.close();
+            }
+        }
+    }
+
+    private PublicKey downloadKeyFromServer(MysterSocket socket) throws IOException {
+        MessagePak stats = getServerStats(socket);
+        PublicKey verifiedKey = stats.getByteArray(com.myster.net.stream.server.ServerStats.IDENTITY)
+                .flatMap(com.myster.identity.Util::publicKeyFromBytes)
+                .orElseThrow(() -> new IOException("Server stats did not contain a public key"));
+        PublicKey peerKey = socket.getAuthenticatedPeerKey()
+                                  .orElseThrow(() -> new IOException("Connection has no authenticated peer key"));
+        if (!verifiedKey.equals(peerKey)) {
+            throw new IOException("Server stats identity does not match the TLS peer");
+        }
+
+        return verifiedKey;
+    }
+
+    private Optional<PublicKey> findCachedServerKey(MysterAddress address) {
+        synchronized (discoveredKeys) {
+            PublicKey key = discoveredKeys.get(address);
+            if (key != null) {
+                return Optional.of(key);
+            }
+        }
+        return cachedKeys.apply(address);
     }
     
     @Override
@@ -101,20 +164,5 @@ public class MysterStreamImpl implements MysterStream {
     public TypeJoinStatus redeemTypeInvitation(MysterSocket socket, MysterType type,
             byte[] invitationId, String code) throws IOException {
         return TypeJoinClient.redeem(socket, type, invitationId, code);
-    }
-
-    private static MysterSocket openConnection(MysterAddress address,
-            Optional<PublicKey> expectedServerPublicKey) throws IOException {
-        if (expectedServerPublicKey.isPresent()) {
-            return MysterSocketFactory.makeStreamConnection(
-                    address, expectedServerPublicKey.orElseThrow());
-        }
-        return MysterSocketFactory.makeStreamConnection(address);
-    }
-
-    @FunctionalInterface
-    interface ConnectionFactory {
-        MysterSocket open(MysterAddress address, Optional<PublicKey> expectedServerPublicKey)
-                throws IOException;
     }
 }

@@ -1,5 +1,7 @@
 # Peer-to-Peer Connection Server Picker
 
+> **Related plan:** [Search-result thumbnails and hover previews](./os-thumbnails-part-5.md) — context for: existing server-pool statistics/key resolution informs the planned protocol-owned discovery path.
+
 > **Related plan:** [Myster resource links](./myster-resource-links.md) — follow-up: requires a public-key identity after picker selection and resolves missing keys in the window provider.
 
 ## 1. Summary

@@ -1,5 +1,7 @@
 # Myster resource links
 
+> **Related plan:** [Search-result thumbnails and hover previews](./os-thumbnails-part-5.md) — predecessor to: search thumbnail requests preserve expected public keys in the existing cache/task contract.
+
 > **Related plan:** [Peer-to-Peer Connection Server Picker](./peer-to-peer-server-picker.md) — predecessor: provides the shared server picker and asynchronous server-stats resolver reused for missing-key opening.
 
 > **Related plan:** [Bidirectional Server Stats Exchange](./bidirectional-server-stats.md) — depends on: provides the normal pool refresh and server identity used by address-only window discovery.

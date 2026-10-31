@@ -7,30 +7,48 @@
     <option name="selectedModelId" value="auto" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="fe0d93f5-a1b5-4669-89e3-19e762d0ae4a" name="Changes" comment="Add server CID resolution and enhance server lookup functionality: introduce ServerLookupCandidate for parsing server addresses and CIDs, implement resolveServerCid method in DefaultKnownServerSource, and update ServerPickerDialog to support CID input.">
+    <list default="true" id="fe0d93f5-a1b5-4669-89e3-19e762d0ae4a" name="Changes" comment="Add server description handling: implement getServerDescription method in MysterServer interface, update related classes to support server description, and ensure description is limited to 255 characters.">
+      <change beforePath="$PROJECT_DIR$/.agents/skills/myster-impl/SKILL.md" beforeDir="false" afterPath="$PROJECT_DIR$/.agents/skills/myster-impl/SKILL.md" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/Myster.iws" beforeDir="false" afterPath="$PROJECT_DIR$/Myster.iws" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/TODO.txt" beforeDir="false" afterPath="$PROJECT_DIR$/TODO.txt" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/docs/design/Myster Bidirectional Server Stats Protocol.md" beforeDir="false" afterPath="$PROJECT_DIR$/docs/design/Myster Bidirectional Server Stats Protocol.md" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/docs/codebase-structure.md" beforeDir="false" afterPath="$PROJECT_DIR$/docs/codebase-structure.md" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/docs/conventions/myster-coding-conventions.md" beforeDir="false" afterPath="$PROJECT_DIR$/docs/conventions/myster-coding-conventions.md" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/docs/conventions/myster-important-patterns.md" beforeDir="false" afterPath="$PROJECT_DIR$/docs/conventions/myster-important-patterns.md" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/docs/design/Myster OS Thumbnail Integration Design.md" beforeDir="false" afterPath="$PROJECT_DIR$/docs/design/Myster OS Thumbnail Integration Design.md" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/docs/impl_summary/README.md" beforeDir="false" afterPath="$PROJECT_DIR$/docs/impl_summary/README.md" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/docs/plans/README.md" beforeDir="false" afterPath="$PROJECT_DIR$/docs/plans/README.md" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/docs/plans/async-task-tracker-context.md" beforeDir="false" afterPath="$PROJECT_DIR$/docs/plans/async-task-tracker-context.md" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/docs/plans/custom-type-metadata-profile.md" beforeDir="false" afterPath="$PROJECT_DIR$/docs/plans/custom-type-metadata-profile.md" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/docs/plans/metadata-type-provider.md" beforeDir="false" afterPath="$PROJECT_DIR$/docs/plans/metadata-type-provider.md" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/docs/plans/myster-resource-links.md" beforeDir="false" afterPath="$PROJECT_DIR$/docs/plans/myster-resource-links.md" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/docs/plans/os-thumbnails-part-2.md" beforeDir="false" afterPath="$PROJECT_DIR$/docs/plans/os-thumbnails-part-2.md" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/docs/plans/os-thumbnails-part-3.md" beforeDir="false" afterPath="$PROJECT_DIR$/docs/plans/os-thumbnails-part-3.md" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/docs/plans/os-thumbnails-part-4.md" beforeDir="false" afterPath="$PROJECT_DIR$/docs/plans/os-thumbnails-part-4.md" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/docs/plans/os-thumbnails-part-5.md" beforeDir="false" afterPath="$PROJECT_DIR$/docs/plans/os-thumbnails-part-5.md" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/docs/plans/peer-to-peer-server-picker.md" beforeDir="false" afterPath="$PROJECT_DIR$/docs/plans/peer-to-peer-server-picker.md" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/docs/plans/split-type-columns-from-search-columns.md" beforeDir="false" afterPath="$PROJECT_DIR$/docs/plans/split-type-columns-from-search-columns.md" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/docs/plans/tabbed-search-window.md" beforeDir="false" afterPath="$PROJECT_DIR$/docs/plans/tabbed-search-window.md" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/docs/plans/ui-display-scaling.md" beforeDir="false" afterPath="$PROJECT_DIR$/docs/plans/ui-display-scaling.md" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/src/main/java/com/myster/Myster.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/com/myster/Myster.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/com/myster/net/datagram/client/BidirectionalServerStatsDatagramClient.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/com/myster/net/datagram/client/BidirectionalServerStatsDatagramClient.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/com/myster/net/datagram/client/MysterDatagramImpl.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/com/myster/net/datagram/client/MysterDatagramImpl.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/com/myster/net/server/ServerFacade.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/com/myster/net/server/ServerFacade.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/com/myster/net/server/ServerPreferences.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/com/myster/net/server/ServerPreferences.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/com/myster/net/server/datagram/BidirectionalServerStatsDatagramServer.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/com/myster/net/server/datagram/BidirectionalServerStatsDatagramServer.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/com/myster/net/server/datagram/ServerStatsDatagramServer.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/com/myster/net/server/datagram/ServerStatsDatagramServer.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/com/myster/net/stream/server/ServerStats.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/com/myster/net/stream/server/ServerStats.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/com/myster/server/ui/ServerPreferencesPane.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/com/myster/server/ui/ServerPreferencesPane.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/com/myster/tracker/MysterServer.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/com/myster/tracker/MysterServer.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/com/myster/tracker/MysterServerImplementation.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/com/myster/tracker/MysterServerImplementation.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/com/myster/tracker/ui/TrackerWindow.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/com/myster/tracker/ui/TrackerWindow.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/test/java/com/myster/access/TestAccessEnforcementUtils.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/test/java/com/myster/access/TestAccessEnforcementUtils.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/test/java/com/myster/net/datagram/client/TestBidirectionalServerStatsDatagramClient.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/test/java/com/myster/net/datagram/client/TestBidirectionalServerStatsDatagramClient.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/test/java/com/myster/net/datagram/client/TestMysterDatagramExpectedKey.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/test/java/com/myster/net/datagram/client/TestMysterDatagramExpectedKey.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/test/java/com/myster/net/datagram/client/TestMysterDatagramFailureDetails.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/test/java/com/myster/net/datagram/client/TestMysterDatagramFailureDetails.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/test/java/com/myster/server/ui/TestServerPreferencesPane.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/test/java/com/myster/server/ui/TestServerPreferencesPane.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/test/java/com/myster/threedns/TestThreeDnsServerList.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/test/java/com/myster/threedns/TestThreeDnsServerList.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/test/java/com/myster/tracker/TestMysterServerImplementation.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/test/java/com/myster/tracker/TestMysterServerImplementation.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/test/java/com/myster/transaction/TestBidirectionalServerStatsDatagramProtocol.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/test/java/com/myster/transaction/TestBidirectionalServerStatsDatagramProtocol.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/com/myster/client/ui/ClientFileThumbnailController.java" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/com/myster/client/ui/ClientWindow.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/com/myster/client/ui/ClientWindow.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/com/myster/net/MysterSocket.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/com/myster/net/MysterSocket.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/com/myster/net/TLSSocket.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/com/myster/net/TLSSocket.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/com/myster/net/client/MysterProtocolImpl.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/com/myster/net/client/MysterProtocolImpl.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/com/myster/net/client/MysterStream.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/com/myster/net/client/MysterStream.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/com/myster/net/datagram/client/PublicKeyLookupImpl.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/com/myster/net/datagram/client/PublicKeyLookupImpl.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/com/myster/net/stream/client/MysterStreamImpl.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/com/myster/net/stream/client/MysterStreamImpl.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/com/myster/net/stream/client/StandardSuiteStream.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/com/myster/net/stream/client/StandardSuiteStream.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/com/myster/search/SearchResult.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/com/myster/search/SearchResult.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/com/myster/search/ui/SearchTab.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/com/myster/search/ui/SearchTab.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/com/myster/search/ui/SearchWindow.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/com/myster/search/ui/SearchWindow.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/com/myster/thumbnail/RemoteThumbnailCache.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/com/myster/thumbnail/RemoteThumbnailCache.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/com/myster/thumbnail/RemoteThumbnailTask.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/com/myster/thumbnail/RemoteThumbnailTask.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/test/java/com/myster/net/client/TestMysterProtocolImpl.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/test/java/com/myster/net/client/TestMysterProtocolImpl.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/test/java/com/myster/net/stream/client/TestMysterStreamImpl.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/test/java/com/myster/net/stream/client/TestMysterStreamImpl.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/test/java/com/myster/net/stream/client/TestThumbnailStreamProtocol.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/test/java/com/myster/net/stream/client/TestThumbnailStreamProtocol.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/test/java/com/myster/thumbnail/TestRemoteThumbnailCache.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/test/java/com/myster/thumbnail/TestRemoteThumbnailCache.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/test/java/com/myster/type/join/TestTypeJoinProtocol.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/test/java/com/myster/type/join/TestTypeJoinProtocol.java" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -264,23 +282,23 @@
   </component>
   <component name="NextEditCompletionFeaturesState">
     <decayedCancelled>
-      <entry key="MS100" value="1.000000246826933" />
-      <entry key="MS500" value="1.0515401616285869" />
-      <entry key="S2" value="1.9065365107788992" />
-      <entry key="S5" value="3.0827917545644636" />
-      <entry key="S10" value="3.855778211353774" />
-      <entry key="S30" value="4.566424572627606" />
-      <entry key="S60" value="4.77584940274998" />
-      <entry key="M2" value="4.886013655930071" />
-      <entry key="M5" value="4.953937478914094" />
-      <entry key="M10" value="4.9768899502641055" />
-      <entry key="M15" value="4.984575732287912" />
-      <entry key="M30" value="4.992286653242698" />
-      <entry key="H1" value="5.052134452962979" />
-      <entry key="H2" value="9.834513652138961" />
-      <entry key="H4" value="51.08251890859575" />
-      <entry key="D1" value="801.7709723782406" />
-      <entry key="W1" value="9631.3879584243" />
+      <entry key="MS100" value="2.6160556181500665" />
+      <entry key="MS500" value="6.611741640237806" />
+      <entry key="S2" value="15.751810445059613" />
+      <entry key="S5" value="24.113174408248856" />
+      <entry key="S10" value="28.779999745079195" />
+      <entry key="S30" value="32.7220771106585" />
+      <entry key="S60" value="34.07293583041478" />
+      <entry key="M2" value="39.24230801513762" />
+      <entry key="M5" value="96.52448669006073" />
+      <entry key="M10" value="286.8932866603372" />
+      <entry key="M15" value="478.85106513428593" />
+      <entry key="M30" value="858.4044845004672" />
+      <entry key="H1" value="1178.6513811853447" />
+      <entry key="H2" value="1419.9161730991118" />
+      <entry key="H4" value="1847.071211528616" />
+      <entry key="D1" value="4470.085091593684" />
+      <entry key="W1" value="13803.180385904965" />
     </decayedCancelled>
     <decayedSelected>
       <entry key="MS100" value="0.0" />
@@ -292,33 +310,33 @@
       <entry key="S60" value="0.0" />
       <entry key="M2" value="0.0" />
       <entry key="M5" value="0.0" />
-      <entry key="M10" value="5.2925562329010227E-197" />
-      <entry key="M15" value="1.4096468353869373E-131" />
-      <entry key="M30" value="3.754526382097799E-66" />
-      <entry key="H1" value="1.9376601060688495E-33" />
-      <entry key="H2" value="4.403139687826224E-17" />
-      <entry key="H4" value="6.793018616659983E-9" />
-      <entry key="D1" value="0.08657354721882095" />
-      <entry key="W1" value="3.766596212664615" />
+      <entry key="M10" value="1.2430371719953233E-240" />
+      <entry key="M15" value="1.1560840533269267E-160" />
+      <entry key="M30" value="1.075213491975756E-80" />
+      <entry key="H1" value="1.0369250595838368E-40" />
+      <entry key="H2" value="1.018585172182291E-20" />
+      <entry key="H4" value="1.033190128080422E-10" />
+      <entry key="D1" value="0.04309280719806622" />
+      <entry key="W1" value="3.4093072919087617" />
     </decayedSelected>
     <decayedShown>
-      <entry key="MS100" value="0.38958250470558525" />
-      <entry key="MS500" value="0.8783077992772211" />
-      <entry key="S2" value="1.8434714025586991" />
-      <entry key="S5" value="3.033974316289756" />
-      <entry key="S10" value="3.820761693646521" />
-      <entry key="S30" value="4.551034703018508" />
-      <entry key="S60" value="4.767571204142664" />
-      <entry key="M2" value="4.881718217719808" />
-      <entry key="M5" value="4.952180357204461" />
-      <entry key="M10" value="4.976004776175556" />
-      <entry key="M15" value="4.983984137448115" />
-      <entry key="M30" value="4.99199011412052" />
-      <entry key="H1" value="5.051985973148208" />
-      <entry key="H2" value="9.834438314745109" />
-      <entry key="H4" value="51.082476658300095" />
-      <entry key="D1" value="801.8575160791349" />
-      <entry key="W1" value="9635.154493179181" />
+      <entry key="MS100" value="2.5701988613423485" />
+      <entry key="MS500" value="6.587712230048687" />
+      <entry key="S2" value="15.737837388942364" />
+      <entry key="S5" value="24.104618612706087" />
+      <entry key="S10" value="28.774884581008433" />
+      <entry key="S30" value="32.72013505671584" />
+      <entry key="S60" value="34.071924157675184" />
+      <entry key="M2" value="39.24171623547586" />
+      <entry key="M5" value="96.52304990090693" />
+      <entry key="M10" value="286.88968641067424" />
+      <entry key="M15" value="478.84671651576224" />
+      <entry key="M30" value="858.4004762244853" />
+      <entry key="H1" value="1178.6486444932743" />
+      <entry key="H2" value="1419.914563973383" />
+      <entry key="H4" value="1847.0703014246167" />
+      <entry key="D1" value="4470.127963278935" />
+      <entry key="W1" value="13806.589604848734" />
     </decayedShown>
   </component>
   <component name="PerforceConfiguration">
@@ -358,6 +376,7 @@
   <component name="ProjectSessionTemplates">
     <option name="panelTemplate">
       <template>
+        <option name="ensembleEnabled" value="false" />
         <option name="modeId" value="Agent" />
         <option name="model">
           <model>
@@ -369,6 +388,7 @@
         <option name="worktreeMode" value="WORKSPACE" />
       </template>
     </option>
+    <option name="version" value="1" />
   </component>
   <component name="ProjectViewSettings">
     <navigator currentView="ProjectPane" flattenPackages="false" showMembers="false" showStructure="false" autoscrollToSource="false" splitterProportion="0.5" />
@@ -387,10 +407,14 @@
     &quot;Application.Myster.executor&quot;: &quot;Run&quot;,
     &quot;Application.MysterServerPoolStressMain.executor&quot;: &quot;Debug&quot;,
     &quot;Application.ThumbnailPreview.executor&quot;: &quot;Run&quot;,
+    &quot;JUnit.TestClientFileThumbnailController.visibleCompletedImageSurvivesSharedCacheEviction.executor&quot;: &quot;Debug&quot;,
     &quot;JUnit.TestFileStatsBatch.executor&quot;: &quot;Run&quot;,
     &quot;JUnit.TestFileTypeList.executor&quot;: &quot;Debug&quot;,
     &quot;JUnit.TestFileTypeList.testChangingPathTriggersReindexing.executor&quot;: &quot;Debug&quot;,
     &quot;JUnit.TestFileTypeList.testMaximumDepthIndexing.executor&quot;: &quot;Debug&quot;,
+    &quot;JUnit.TestSearchThumbnailGui.actualHoverPopupAppearsAndDismissesWithoutSelection.executor&quot;: &quot;Debug&quot;,
+    &quot;JUnit.TestSearchThumbnailHoverController.escapeWorksWithoutTableFocusAndRestoresWindowBinding.executor&quot;: &quot;Debug&quot;,
+    &quot;JUnit.TestSearchThumbnailHoverController.wheelOverResultsScrollsParentAndDismissesPreview.executor&quot;: &quot;Run&quot;,
     &quot;JUnit.TestThreeDnsLookup.failedCandidateFallsBackAndClosestExhaustionIsExplicit.executor&quot;: &quot;Debug&quot;,
     &quot;KEY_CHAT_IN_TOOLWINDOW&quot;: &quot;false&quot;,
     &quot;Maven.Myster [package].executor&quot;: &quot;Run&quot;,
@@ -432,57 +456,23 @@
       <option name="POLICY_FILE" value="$APPLICATION_HOME_DIR$/bin/appletviewer.policy" />
       <option name="VM_PARAMETERS" />
     </configuration>
-    <configuration name="MysterServerPoolStressMain" type="Application" factoryName="Application" temporary="true" nameIsGenerated="true">
-      <option name="MAIN_CLASS_NAME" value="com.myster.tracker.MysterServerPoolStressMain" />
-      <module name="Myster" />
-      <option name="WORKING_DIRECTORY" value="$PROJECT_DIR$" />
-      <extension name="coverage">
-        <pattern>
-          <option name="PATTERN" value="com.myster.tracker.*" />
-          <option name="ENABLED" value="true" />
-        </pattern>
-      </extension>
-      <method v="2">
-        <option name="Make" enabled="true" />
-      </method>
-    </configuration>
     <configuration default="true" type="Application" factoryName="Application">
       <option name="WORKING_DIRECTORY" value="$PROJECT_DIR$" />
       <method v="2">
         <option name="Make" enabled="true" />
       </method>
     </configuration>
-    <configuration name="TestFileTypeList" type="JUnit" factoryName="JUnit" temporary="true" nameIsGenerated="true">
+    <configuration name="TestClientFileThumbnailController.visibleCompletedImageSurvivesSharedCacheEviction" type="JUnit" factoryName="JUnit" temporary="true" nameIsGenerated="true">
       <module name="Myster" />
       <extension name="coverage">
         <pattern>
-          <option name="PATTERN" value="com.myster.filemanager.*" />
+          <option name="PATTERN" value="com.myster.client.ui.*" />
           <option name="ENABLED" value="true" />
         </pattern>
       </extension>
-      <option name="PACKAGE_NAME" value="com.myster.filemanager" />
-      <option name="MAIN_CLASS_NAME" value="com.myster.filemanager.TestFileTypeList" />
-      <option name="TEST_OBJECT" value="class" />
-      <option name="VM_PARAMETERS" />
-      <option name="WORKING_DIRECTORY" value="$PROJECT_DIR$" />
-      <option name="TEST_SEARCH_SCOPE">
-        <value defaultName="wholeProject" />
-      </option>
-      <method v="2">
-        <option name="Make" enabled="true" />
-      </method>
-    </configuration>
-    <configuration name="TestFileTypeList.testChangingPathTriggersReindexing" type="JUnit" factoryName="JUnit" temporary="true" nameIsGenerated="true">
-      <module name="Myster" />
-      <extension name="coverage">
-        <pattern>
-          <option name="PATTERN" value="com.myster.filemanager.*" />
-          <option name="ENABLED" value="true" />
-        </pattern>
-      </extension>
-      <option name="PACKAGE_NAME" value="com.myster.filemanager" />
-      <option name="MAIN_CLASS_NAME" value="com.myster.filemanager.TestFileTypeList" />
-      <option name="METHOD_NAME" value="testChangingPathTriggersReindexing" />
+      <option name="PACKAGE_NAME" value="com.myster.client.ui" />
+      <option name="MAIN_CLASS_NAME" value="com.myster.client.ui.TestClientFileThumbnailController" />
+      <option name="METHOD_NAME" value="visibleCompletedImageSurvivesSharedCacheEviction" />
       <option name="TEST_OBJECT" value="method" />
       <option name="VM_PARAMETERS" />
       <option name="WORKING_DIRECTORY" value="$PROJECT_DIR$" />
@@ -493,17 +483,59 @@
         <option name="Make" enabled="true" />
       </method>
     </configuration>
-    <configuration name="TestFileTypeList.testMaximumDepthIndexing" type="JUnit" factoryName="JUnit" temporary="true" nameIsGenerated="true">
+    <configuration name="TestSearchThumbnailGui.actualHoverPopupAppearsAndDismissesWithoutSelection" type="JUnit" factoryName="JUnit" temporary="true" nameIsGenerated="true">
       <module name="Myster" />
       <extension name="coverage">
         <pattern>
-          <option name="PATTERN" value="com.myster.filemanager.*" />
+          <option name="PATTERN" value="com.myster.search.ui.*" />
           <option name="ENABLED" value="true" />
         </pattern>
       </extension>
-      <option name="PACKAGE_NAME" value="com.myster.filemanager" />
-      <option name="MAIN_CLASS_NAME" value="com.myster.filemanager.TestFileTypeList" />
-      <option name="METHOD_NAME" value="testMaximumDepthIndexing" />
+      <option name="PACKAGE_NAME" value="com.myster.search.ui" />
+      <option name="MAIN_CLASS_NAME" value="com.myster.search.ui.TestSearchThumbnailGui" />
+      <option name="METHOD_NAME" value="actualHoverPopupAppearsAndDismissesWithoutSelection" />
+      <option name="TEST_OBJECT" value="method" />
+      <option name="VM_PARAMETERS" />
+      <option name="WORKING_DIRECTORY" value="$PROJECT_DIR$" />
+      <option name="TEST_SEARCH_SCOPE">
+        <value defaultName="wholeProject" />
+      </option>
+      <method v="2">
+        <option name="Make" enabled="true" />
+      </method>
+    </configuration>
+    <configuration name="TestSearchThumbnailHoverController.escapeWorksWithoutTableFocusAndRestoresWindowBinding" type="JUnit" factoryName="JUnit" temporary="true" nameIsGenerated="true">
+      <module name="Myster" />
+      <extension name="coverage">
+        <pattern>
+          <option name="PATTERN" value="com.myster.search.ui.*" />
+          <option name="ENABLED" value="true" />
+        </pattern>
+      </extension>
+      <option name="PACKAGE_NAME" value="com.myster.search.ui" />
+      <option name="MAIN_CLASS_NAME" value="com.myster.search.ui.TestSearchThumbnailHoverController" />
+      <option name="METHOD_NAME" value="escapeWorksWithoutTableFocusAndRestoresWindowBinding" />
+      <option name="TEST_OBJECT" value="method" />
+      <option name="VM_PARAMETERS" />
+      <option name="WORKING_DIRECTORY" value="$PROJECT_DIR$" />
+      <option name="TEST_SEARCH_SCOPE">
+        <value defaultName="wholeProject" />
+      </option>
+      <method v="2">
+        <option name="Make" enabled="true" />
+      </method>
+    </configuration>
+    <configuration name="TestSearchThumbnailHoverController.wheelOverResultsScrollsParentAndDismissesPreview" type="JUnit" factoryName="JUnit" temporary="true" nameIsGenerated="true">
+      <module name="Myster" />
+      <extension name="coverage">
+        <pattern>
+          <option name="PATTERN" value="com.myster.search.ui.*" />
+          <option name="ENABLED" value="true" />
+        </pattern>
+      </extension>
+      <option name="PACKAGE_NAME" value="com.myster.search.ui" />
+      <option name="MAIN_CLASS_NAME" value="com.myster.search.ui.TestSearchThumbnailHoverController" />
+      <option name="METHOD_NAME" value="wheelOverResultsScrollsParentAndDismissesPreview" />
       <option name="TEST_OBJECT" value="method" />
       <option name="VM_PARAMETERS" />
       <option name="WORKING_DIRECTORY" value="$PROJECT_DIR$" />
@@ -580,20 +612,20 @@
     </configuration>
     <list>
       <item itemvalue="Application.Myster" />
-      <item itemvalue="Application.MysterServerPoolStressMain" />
+      <item itemvalue="JUnit.TestSearchThumbnailHoverController.escapeWorksWithoutTableFocusAndRestoresWindowBinding" />
+      <item itemvalue="JUnit.TestSearchThumbnailHoverController.wheelOverResultsScrollsParentAndDismissesPreview" />
+      <item itemvalue="JUnit.TestClientFileThumbnailController.visibleCompletedImageSurvivesSharedCacheEviction" />
+      <item itemvalue="JUnit.TestSearchThumbnailGui.actualHoverPopupAppearsAndDismissesWithoutSelection" />
       <item itemvalue="JUnit.TestThreeDnsLookup.failedCandidateFallsBackAndClosestExhaustionIsExplicit" />
-      <item itemvalue="JUnit.TestFileTypeList" />
-      <item itemvalue="JUnit.TestFileTypeList.testChangingPathTriggersReindexing" />
-      <item itemvalue="JUnit.TestFileTypeList.testMaximumDepthIndexing" />
       <item itemvalue="Maven.Myster [package]" />
     </list>
     <recent_temporary>
       <list>
+        <item itemvalue="JUnit.TestSearchThumbnailHoverController.wheelOverResultsScrollsParentAndDismissesPreview" />
+        <item itemvalue="JUnit.TestSearchThumbnailHoverController.escapeWorksWithoutTableFocusAndRestoresWindowBinding" />
+        <item itemvalue="JUnit.TestSearchThumbnailGui.actualHoverPopupAppearsAndDismissesWithoutSelection" />
+        <item itemvalue="JUnit.TestClientFileThumbnailController.visibleCompletedImageSurvivesSharedCacheEviction" />
         <item itemvalue="JUnit.TestThreeDnsLookup.failedCandidateFallsBackAndClosestExhaustionIsExplicit" />
-        <item itemvalue="JUnit.TestFileTypeList.testMaximumDepthIndexing" />
-        <item itemvalue="Application.MysterServerPoolStressMain" />
-        <item itemvalue="JUnit.TestFileTypeList.testChangingPathTriggersReindexing" />
-        <item itemvalue="JUnit.TestFileTypeList" />
       </list>
     </recent_temporary>
   </component>
@@ -874,7 +906,15 @@
       <option name="project" value="LOCAL" />
       <updated>1793244533155</updated>
     </task>
-    <option name="localTasksCounter" value="30" />
+    <task id="LOCAL-00030" summary="Add server description handling: implement getServerDescription method in MysterServer interface, update related classes to support server description, and ensure description is limited to 255 characters.">
+      <option name="closed" value="true" />
+      <created>1793366076694</created>
+      <option name="number" value="00030" />
+      <option name="presentableId" value="LOCAL-00030" />
+      <option name="project" value="LOCAL" />
+      <updated>1793366076694</updated>
+    </task>
+    <option name="localTasksCounter" value="31" />
     <servers />
   </component>
   <component name="TodoView" selected-index="0">
@@ -916,7 +956,6 @@
     <option name="version" value="3" />
   </component>
   <component name="VcsManagerConfiguration">
-    <MESSAGE value="Enhance access control by integrating AccessListReader into server stats and file transaction protocols" />
     <MESSAGE value="Implement OS thumbnails Part 3: client preview with cancellable loading and metadata retention" />
     <MESSAGE value="Implement OS thumbnails — Part 3: integrate client preview pane with cancellable thumbnail loading and metadata retention" />
     <MESSAGE value="Refactor ClientFilePreviewPane to optimize preview layout and enhance metadata display" />
@@ -941,7 +980,8 @@
     <MESSAGE value="Rename menu items for clarity: change &quot;New Peer-to-Peer Connection&quot; to &quot;Connect to Server&quot; in MysterMenuBar and NewClientWindowAction." />
     <MESSAGE value="Refactor UPnP port mapping logic: consolidate port mapping updates into a single method and improve logging for better diagnostics." />
     <MESSAGE value="Add server CID resolution and enhance server lookup functionality: introduce ServerLookupCandidate for parsing server addresses and CIDs, implement resolveServerCid method in DefaultKnownServerSource, and update ServerPickerDialog to support CID input." />
-    <option name="LAST_COMMIT_MESSAGE" value="Add server CID resolution and enhance server lookup functionality: introduce ServerLookupCandidate for parsing server addresses and CIDs, implement resolveServerCid method in DefaultKnownServerSource, and update ServerPickerDialog to support CID input." />
+    <MESSAGE value="Add server description handling: implement getServerDescription method in MysterServer interface, update related classes to support server description, and ensure description is limited to 255 characters." />
+    <option name="LAST_COMMIT_MESSAGE" value="Add server description handling: implement getServerDescription method in MysterServer interface, update related classes to support server description, and ensure description is limited to 255 characters." />
   </component>
   <component name="VssConfiguration">
     <CheckoutOptions>

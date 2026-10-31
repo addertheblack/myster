@@ -8,13 +8,21 @@ public final class MysterProtocolImpl implements MysterProtocol {
     private final MysterDatagram datagram;
     private final MysterStream stream;
     private final DnsLookupProtocol dnsLookup;
+    private final java.security.PublicKey localPublicKey;
 
     public MysterProtocolImpl(MysterStream stream,
                               MysterDatagram datagram,
-                              DnsLookupProtocol dnsLookup) {
+                              DnsLookupProtocol dnsLookup,
+                              java.security.PublicKey localPublicKey) {
         this.stream = Objects.requireNonNull(stream, "stream");
         this.datagram = Objects.requireNonNull(datagram, "datagram");
         this.dnsLookup = Objects.requireNonNull(dnsLookup, "dnsLookup");
+        this.localPublicKey = Objects.requireNonNull(localPublicKey, "localPublicKey");
+    }
+
+    /** Package protected for unit tests only */
+    java.security.PublicKey getLocalPublicKey() {
+        return localPublicKey;
     }
 
     @Override

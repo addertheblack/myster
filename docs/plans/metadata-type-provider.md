@@ -1,5 +1,7 @@
 # Metadata Type Registry Refactor
 
+> **Related plan:** [Search-result thumbnails and hover previews](./os-thumbnails-part-5.md) — required by: explicit metadata profiles determine search thumbnail eligibility.
+
 **Feature slug:** `metadata-type-provider`  
 **Date:** 2026-08-21  
 **Status:** Ready for implementation

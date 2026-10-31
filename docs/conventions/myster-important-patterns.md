@@ -492,6 +492,40 @@ makes the result moot while an in-flight read may finish. Do not build a second 
 just to support cancellation. Use `PromiseFutures.delay` for cancellable settling delays.
 See [Part 3](../plans/os-thumbnails-part-3.md) for the implemented preview integration.
 
+**Shared search/client thumbnails (Part 5):** `VisibleRowThumbnailController` owns visible demand
+and borrows its cache. Client adapters supply existing tree geometry and skip containers; search
+uses the external `IconTextCellRenderer` and its actual clipped slot bounds. Neither `JMCList`
+nor `TreeMCList` needs thumbnail-specific changes. Close consumers before their owner closes the
+cache; clear owned futures before cancellation and guard queued callbacks by future identity.
+
+Keep successful images referenced for current visible demand. A debugger reproduction of the
+old loader showed `successful=true, cached=false, pending=false`: its success flag outlived LRU
+eviction of the image, leaving no image and no new load until demand changed. The extracted
+controller retains those pixels, repaints cache hits and advances work without another scroll.
+The original reported intermittent trigger is still unknown and remains in TODO for confirmation.
+
+Search captures type/profile/column handler before asynchronous engine startup and wraps engine
+lifecycle/results/status callbacks with generation guards. Stop/completion preserve displayed
+thumbnail demand. `SearchResult.getProtocol()` supplies transport independently of nullable
+`getServer()`; the UI does not fetch identity through cached server objects or a UI resolver.
+Do not expose a key-cache getter on the stream facade or pre-query it from the UI just to feed
+that key back into connection establishment. Connect with the address; connection setup owns
+cache lookup/discovery. Keep a key already learned for an item pinned on later requests.
+Initially address-only thumbnail requests have an empty optional expected key. The stream verifies
+the peer on the transfer's own socket; the cache stores images/unsupported outcomes under the
+verified key before delivering image callbacks. Resolved item keys stay pinned for the generation.
+
+The remote cache supports many endpoints within one owner (512 outcomes, 8 MiB decoded pixels,
+bounded identity/unsupported maps). Never reset it just because the next visible row belongs to
+another server. Row and hover consumers own independent futures sharing one serial-transfer
+monitor. Image-only tooltips need explicit preferred dimensions: the text tooltip UI otherwise
+reports zero size even when a child image label has a preferred size. Escape must also be bound
+at focused-window scope because hovering need not focus the table.
+Observe wheel dismissal on the scroll pane, not its table: registering a wheel listener on the
+table stops AWT from retargeting those events to the scroll pane and disables ordinary scrolling.
+See the [Part 5 plan](../plans/os-thumbnails-part-5.md) and
+[implementation summary](../impl_summary/os-thumbnails-part-5.md).
+
 `MysterProtocol` is the immutable aggregate of client protocol capabilities. Higher-level network
 concepts belong there behind narrow interfaces in `com.myster.net.client`; for example,
 `DnsLookupProtocol` is exposed by the aggregate and implemented by `ThreeDnsLookup`. Consumers
@@ -691,6 +725,28 @@ operation so that the operation uses the appropriate encrypted transport. 3DNS r
 already supplies the server's public key as part of its lookup. Move callers and operation APIs
 toward CIDs/public keys as this flow develops, while retaining IP/port as a supported entry point.
 This describes future work, not a guarantee that all current address-based calls discover keys.
+
+`MysterProtocol.getLocalPublicKey()` now exposes the initialized identity's public key.
+`MysterStreamImpl.makeStreamConnection` honors an explicit expected key, otherwise checks its
+bounded verified-key cache and the injected existing server cache. A miss opens TLS once, reads
+server stats on that socket, matches the stats key to `getAuthenticatedPeerKey()` and returns
+that same verified socket. Transport creation sets a 30-second TCP connect timeout and a
+120-second `SO_TIMEOUT` read timeout; individual sections, including server stats, leave those
+settings alone. Configure them once during connection setup. Do not add per-operation timers or
+stream wrappers to enforce a stronger deadline policy without an explicit requirement.
+`SO_TIMEOUT` limits blocked reads; it does not bound writes or expire an unused connection.
+Discovery failures close the socket; discovery never calls pool refresh recursively. Stream
+operations remain blocking and run on caller workers.
+`MysterDatagramImpl.doSection` still uses cached keys only, and
+`PublicKeyLookupImpl.fetchPublicKey` remains unimplemented; transparent discovery for every
+transport/caller is future work rather than a guarantee of this stream integration.
+
+The future `MysterAddress` model is intended to accept hostname:port, IP:port, server CID or public
+key. It currently stores an eagerly DNS-resolved `InetAddress` and port; identity-only targets are
+not implemented. Keep target interpretation in the protocol/connection layer. Resolve a future
+CID to the exact peer identity/endpoint; a public-key target already fixes identity but still needs
+an endpoint lookup. UI and thumbnail adapters must not parse address display strings or assume
+every future address form has an IP field. The address-model migration is separate from thumbnails.
 
 Authentication is also a result-correctness requirement: as operations depend on authenticated
 identity, an unencrypted request can succeed yet return incomplete or different results. For

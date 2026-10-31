@@ -1,5 +1,7 @@
 # Tabbed Search Window
 
+> **Related plan:** [Search-result thumbnails and hover previews](./os-thumbnails-part-5.md) — predecessor to: thumbnail work adds per-tab visibility demand and cleanup to the established tab lifecycle.
+
 ## Summary
 
 Evolve the existing `SearchWindow` to support multiple tabs, where each tab contains its own independent search interface and results. Also support multiple search windows (each with their own tabs).

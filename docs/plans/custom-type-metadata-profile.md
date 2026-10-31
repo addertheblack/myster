@@ -1,5 +1,7 @@
 # Custom Myster Type Metadata Profile
 
+> **Related plan:** [Search-result thumbnails and hover previews](./os-thumbnails-part-5.md) — required by: custom Image/Video profiles qualify for search thumbnails without extension inference.
+
 **Feature slug:** `custom-type-metadata-profile`  
 **Date:** 2026-08-26  
 **Status:** Ready for implementation; owner decisions confirmed

@@ -1,5 +1,7 @@
 # OS thumbnails — Part 2: thumbnail transfer protocol
 
+> **Related plan:** [Search-result thumbnails and hover previews](./os-thumbnails-part-5.md) — required by: search rows and hover previews reuse section 79 without protocol changes.
+
 ## Design Section (for the owner/reviewer)
 
 ### 1. Summary

@@ -1,5 +1,7 @@
 # Split Type Columns from Search-Only Columns
 
+> **Related plan:** [Search-result thumbnails and hover previews](./os-thumbnails-part-5.md) — predecessor to: adds a passive name renderer without changing type columns or the Server/Ping decorator.
+
 > **Related plan:** [Myster resource links](./myster-resource-links.md) — parallel work: navigates and refreshes files through the same type-selection and column-rebuilding events.
 
 **Feature slug:** `split-type-columns-from-search-columns`  
