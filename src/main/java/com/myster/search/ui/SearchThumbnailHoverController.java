@@ -220,8 +220,10 @@ final class SearchThumbnailHoverController implements AutoCloseable {
     }
 
     private void load(long captured) {
-        Optional<RemoteThumbnailCache.Request> request = requests.requestFor(item, SIDE,
-                                                                             list.getGraphicsConfiguration(), true);'
+        Optional<RemoteThumbnailCache.Request> request = requests.requestFor(item,
+                                                                             SIDE,
+                                                                             list.getGraphicsConfiguration(),
+                                                                             true);
 
         if (request.isEmpty()) {
             return;

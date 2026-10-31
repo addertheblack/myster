@@ -39,6 +39,9 @@ The Implementation Agent writes a summary **after** completing all code changes,
 
 ## Related
 
+- [Client Window Server Header](client-window-server-header.md): copyable server name,
+  explicit endpoint and CID with CID-first width compression.
+
 - Plans: `docs/plans/README.md`
 - Implementation agent spec: `docs/agents/implementation-agent.md`
 

@@ -794,6 +794,14 @@ Implemented contracts are described in [Myster Resource Links](../design/Myster%
   clears address-bound rows/caches before refreshing. The provider registry uses only
   PublicKeyIdentity keys; cleanup removes the exact identity/window pair so late close
   notifications cannot remove a replacement window.
+- ClientWindow header: PublicKeyIdentity.toString() encodes the full public key; derive a
+  compact server CID with ServerCid.fromPublicKey(...).asHex(), not getExternalName().
+  MysterAddress.toString() omits the default port; an always-explicit port display needs
+  local formatting without changing persistence or global address serialization.
+  MessagePanel.createNew() already supplies borderless, selectable, noneditable text but
+  enables wrapping by default; single-line header uses must disable wrapping locally.
+  Tracker.getQuickServerStats() is cache-only and address-indexed: check the returned
+  identity before presenting its name as metadata for a fixed-identity window.
 - Snapshot the required key into listing/metadata workers, thumbnail requests, and type import;
   never downgrade a pinned request to an address-only fallback. Window preferences persist
   the public key independently of the endpoint.

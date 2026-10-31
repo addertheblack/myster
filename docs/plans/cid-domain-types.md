@@ -1,5 +1,7 @@
 # Domain-Specific CID Types
 
+> **Related plan:** [Client Window Server Header](./client-window-server-header.md) — required by: renders the existing ServerCid derived from the window's fixed public key.
+
 > **Related plan:** [Myster resource links](./myster-resource-links.md) — required by: uses ServerCid for resource links and PublicKeyIdentity for immutable window ownership.
 
 ## 1. Summary

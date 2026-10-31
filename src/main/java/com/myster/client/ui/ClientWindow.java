@@ -11,12 +11,12 @@
 package com.myster.client.ui;
 
 import javax.swing.JButton;
+import javax.swing.JLabel;
 import javax.swing.JMenuItem;
 import javax.swing.JPanel;
 import javax.swing.JPopupMenu;
 import javax.swing.JSplitPane;
 import javax.swing.JTextArea;
-import javax.swing.JTextField;
 import javax.swing.ListSelectionModel;
 import java.awt.Dimension;
 import java.awt.GridBagConstraints;
@@ -66,6 +66,7 @@ import com.general.util.MessagePanel;
 import com.general.util.StandardWindowBehavior;
 import com.general.util.Util;
 import com.myster.access.AccessList;
+import com.myster.cid.ServerCid;
 import com.myster.link.ui.FileLinkCopyActionUtils;
 import com.myster.client.ui.FileListerThread.FileRecord;
 import com.myster.search.ui.ClientGenericHandleObject;
@@ -100,6 +101,7 @@ import com.myster.util.Sayable;
 public class ClientWindow extends MysterFrame implements Sayable {
     private static final String WINDOW_KEEPER_KEY = "Myster's Client Windows";
     private static final String CLIENT_WINDOW_TITLE_PREFIX = "Direct Connection ";
+    private static final String UNKNOWN_SERVER_NAME = "Unknown server";
     
     private static final int XDEFAULT = 640;
     private static final int YDEFAULT = 400;
@@ -117,7 +119,8 @@ public class ClientWindow extends MysterFrame implements Sayable {
 
     private JButton refreshButton;
     private JButton toggleStatsButton;
-    private JTextField serverAddressField;
+    private JTextArea serverNameField;
+    private JTextArea serverAddressField;
     private MCList<MysterType> fileTypeList;
     private JMCList<String> fileList;
     private JTextArea statsPanel;
@@ -340,7 +343,7 @@ public class ClientWindow extends MysterFrame implements Sayable {
 
         boolean addressChanged = !serverAddress.equals(data.ip());
         serverAddress = data.ip();
-        serverAddressField.setText(serverAddress.toString());
+        updateServerHeader();
 
         // Step 1: Set the initial data
         this.initialData = Optional.of(data);
@@ -510,12 +513,12 @@ public class ClientWindow extends MysterFrame implements Sayable {
         // Create toggle button for stats panel
         toggleStatsButton = new JButton("≡");
         toggleStatsButton.setToolTipText("Show/Hide Stats Panel");
-        toggleStatsButton.setPreferredSize(new Dimension(30, refreshButton.getPreferredSize().height));
+        toggleStatsButton.setPreferredSize(new Dimension(Math.max(30, toggleStatsButton.getPreferredSize().width),
+                                                         refreshButton.getPreferredSize().height));
         toggleStatsButton.setFocusable(false);
 
-        serverAddressField = new JTextField(serverAddress.toString());
-        serverAddressField.setEditable(false);
-        serverAddressField.setToolTipText("Server address. Open another connection to use a different server.");
+        JPanel serverHeader = createServerHeader();
+        updateServerHeader();
 
         fileTypeList = MCListFactory.buildMCList(1, true, this);
         fileTypeList.sortBy(-1);
@@ -631,10 +634,7 @@ public class ClientWindow extends MysterFrame implements Sayable {
         // Start with stats panel collapsed (divider all the way to the right)
         splitPane.setDividerLocation(1.0);
         
-        // Add components to the frame: top row (address/refresh/toggle), middle (split pane), bottom (message)
-        add(serverAddressField, builder.withGridLoc(0, 0).withSize(1, 1).withWeight(1, 0));
-        add(refreshButton, builder.withGridLoc(1, 0).withSize(1, 1).withWeight(0, 0));
-        add(toggleStatsButton, builder.withGridLoc(2, 0).withSize(1, 1).withWeight(0, 0));
+        add(serverHeader, builder.withGridLoc(0, 0).withSize(3, 1).withWeight(1, 0));
         add(splitPane, builder.withGridLoc(0, 1).withSize(3, 1).withWeight(1, 1));
         add(msg, builder.withGridLoc(0, 2).withSize(3, 1).withWeight(1, 0));
         
@@ -913,14 +913,127 @@ public class ClientWindow extends MysterFrame implements Sayable {
 
     public void refreshIP(final MysterAddress address) {
         thumbnailAddress = address;
-        MysterServer server = tracker.getQuickServerStats(address);
-
-        String fallbackWindowName = address.getInetAddress().isLoopbackAddress() ? "myself" : serverAddress.toString();
-        String windowName =
-                (server == null ? fallbackWindowName : "\"" + server.getServerName() + "\" ("
-                        + fallbackWindowName + ")");
-        setTitle(CLIENT_WINDOW_TITLE_PREFIX + "to " + windowName);
+        updateServerHeader();
         refreshThumbnailDemand();
+    }
+
+    private JPanel createServerHeader() {
+        serverNameField = createHeaderText(UNKNOWN_SERVER_NAME, "Server name");
+        serverAddressField = createHeaderText("", "Server address and port");
+        JTextArea cidField = createHeaderText(ServerCid.fromPublicKey(serverIdentity.getPublicKey()).asHex(),
+                                             "Server CID");
+        JLabel cidLabel = new JLabel("CID");
+        cidLabel.setLabelFor(cidField);
+
+        JPanel serverDetails = new JPanel(new GridBagLayout());
+        var detailsBuilder = new com.general.util.GridBagBuilder()
+                .withFill(GridBagConstraints.HORIZONTAL)
+                .withAnchor(GridBagConstraints.NORTHWEST)
+                .withWeight(1, 0);
+        serverDetails.add(serverNameField, detailsBuilder.withGridLoc(0, 0));
+        serverDetails.add(serverAddressField, detailsBuilder.withGridLoc(0, 1));
+
+        JPanel header = new JPanel(new GridBagLayout()) {
+            private int detailsWidth() {
+                int nameWidth = Math.min(textWidth(serverNameField), serverNameField.getFontMetrics(serverNameField.getFont())
+                        .charWidth('m') * 20);
+                return Math.max(nameWidth, textWidth(serverAddressField));
+            }
+
+            @Override
+            public Dimension getPreferredSize() {
+                int width = detailsWidth() + textWidth(cidField)
+                        + cidLabel.getPreferredSize().width + refreshButton.getPreferredSize().width
+                        + toggleStatsButton.getPreferredSize().width + 36;
+                int height = Math.max(refreshButton.getPreferredSize().height,
+                                      Math.max(toggleStatsButton.getPreferredSize().height,
+                                               textHeight(serverNameField) + textHeight(serverAddressField)));
+                return new Dimension(width, height);
+            }
+
+            @Override
+            public void doLayout() {
+                int available = Math.max(0, getWidth() - refreshButton.getPreferredSize().width
+                        - toggleStatsButton.getPreferredSize().width - 20);
+                int detailsWidth = Math.min(available, detailsWidth());
+
+                // Reserve the stacked name/address column before giving the CID any width.
+                int cidWidth = Math.min(textWidth(cidField), Math.max(0, available - detailsWidth
+                        - cidLabel.getPreferredSize().width - 16));
+                boolean showCid = cidWidth >= cidField.getFontMetrics(cidField.getFont()).charWidth('m');
+                cidLabel.setVisible(showCid);
+                cidField.setVisible(showCid);
+
+                sizeHeaderText(serverNameField, detailsWidth);
+                sizeHeaderText(serverAddressField, detailsWidth);
+                sizeHeaderText(cidField, cidWidth);
+                super.doLayout();
+            }
+        };
+        var builder = new com.general.util.GridBagBuilder()
+                .withFill(GridBagConstraints.HORIZONTAL)
+                .withAnchor(GridBagConstraints.NORTHWEST);
+        header.add(serverDetails, builder.withGridLoc(0, 0).withWeight(1, 0));
+        header.add(cidLabel, builder.withGridLoc(1, 0).withInsets(new Insets(0, 10, 0, 0)));
+        header.add(cidField, builder.withGridLoc(2, 0).withInsets(new Insets(0, 6, 0, 0)));
+        header.add(refreshButton, builder.withGridLoc(3, 0).withInsets(new Insets(0, 10, 0, 0)));
+        header.add(toggleStatsButton, builder.withGridLoc(4, 0).withInsets(new Insets(0, 10, 0, 0)));
+        return header;
+    }
+
+    private static JTextArea createHeaderText(String text, String accessibleName) {
+        JTextArea field = MessagePanel.createNew(text);
+        field.setLineWrap(false);
+        field.setWrapStyleWord(false);
+        field.setRows(1);
+        field.setMinimumSize(new Dimension(0, field.getPreferredSize().height));
+        field.setToolTipText(text);
+        field.getAccessibleContext().setAccessibleName(accessibleName);
+        return field;
+    }
+
+    private static int textWidth(JTextArea field) {
+        return field.getFontMetrics(field.getFont()).stringWidth(field.getText()) + 2;
+    }
+
+    private static int textHeight(JTextArea field) {
+        Insets insets = field.getInsets();
+        return field.getFontMetrics(field.getFont()).getHeight() + insets.top + insets.bottom;
+    }
+
+    private static void sizeHeaderText(JTextArea field, int width) {
+        Dimension size = new Dimension(width, textHeight(field));
+        if (!size.equals(field.getPreferredSize())) {
+            field.setPreferredSize(size);
+        }
+    }
+
+    private static void setHeaderText(JTextArea field, String text) {
+        if (!field.getText().equals(text)) {
+            field.setText(text);
+            field.setCaretPosition(0);
+        }
+        field.setToolTipText(text);
+    }
+
+    /** Keeps known names across cache misses; address-cached metadata must match this window's identity. */
+    private void updateServerHeader() {
+        Util.ensureEventDispatchThread();
+        MysterServer server = tracker.getQuickServerStats(serverAddress);
+        if (server != null && serverIdentity.equals(server.getIdentity())) {
+            String name = server.getServerName();
+            if (name != null && !name.isBlank()) {
+                setHeaderText(serverNameField, name.replaceAll("[\\r\\n\\t]+", " ").strip());
+            }
+        }
+
+        String ip = serverAddress.getIP();
+        setHeaderText(serverAddressField, (ip.contains(":") ? "[" + ip + "]" : ip) + ":" + serverAddress.getPort());
+
+        String fallback = serverAddress.getInetAddress().isLoopbackAddress() ? "myself" : serverAddress.toString();
+        String name = serverNameField.getText();
+        String windowName = UNKNOWN_SERVER_NAME.equals(name) ? fallback : "\"" + name + "\" (" + fallback + ")";
+        setTitle(CLIENT_WINDOW_TITLE_PREFIX + "to " + windowName);
     }
 
     /** Returns the current endpoint of this window's immutable server identity. */
@@ -1092,6 +1205,7 @@ public class ClientWindow extends MysterFrame implements Sayable {
 
     public void refresh() {
         Util.ensureEventDispatchThread();
+        updateServerHeader();
         // Every refresh uses the constructor-bound identity, even with no pending navigation.
         PublicKey expectedKey = serverIdentity.getPublicKey();
         stopConnect();
@@ -1105,6 +1219,7 @@ public class ClientWindow extends MysterFrame implements Sayable {
                     }
 
                     public void finished() {
+                        updateServerHeader();
                         selectTypeIfRequired();
                     }
 

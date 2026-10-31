@@ -23,7 +23,6 @@ import java.util.prefs.Preferences;
 
 import javax.swing.JButton;
 import javax.swing.JTextArea;
-import javax.swing.JTextField;
 import javax.swing.SwingUtilities;
 
 import org.junit.jupiter.api.BeforeEach;
@@ -105,7 +104,8 @@ class TestClientWindow {
                 field("initialData", Optional.empty());
                 field("typeDisplayNames", new HashMap<>());
                 field("containers", new HashMap<>());
-                field("serverAddressField", new JTextField("127.0.0.1:7777"));
+                field("serverNameField", new JTextArea("Unknown server"));
+                field("serverAddressField", new JTextArea("127.0.0.1:7777"));
                 field("refreshButton", connect);
                 field("fileTypeList", types);
                 field("fileList", files);
@@ -342,7 +342,7 @@ class TestClientWindow {
             try {
                 var field = ClientWindow.class.getDeclaredField("serverAddressField");
                 field.setAccessible(true);
-                ((JTextField) field.get(window)).setText("192.0.2.1:7777");
+                ((JTextArea) field.get(window)).setText("192.0.2.1:7777");
             } catch (Exception error) { throw new AssertionError(error); }
             connect.doClick();
             assertEquals(address, window.getCurrentIP());

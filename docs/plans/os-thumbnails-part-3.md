@@ -1,5 +1,7 @@
 # OS thumbnails — Part 3: client preview pane
 
+> **Related plan:** [Client Window Server Header](./client-window-server-header.md) — parallel work: updates the shared header while retaining the preview/statistics toggle and split-pane behavior.
+
 > **Related plan:** [Search-result thumbnails and hover previews](./os-thumbnails-part-5.md) — follow-up: reuses remote acquisition and completed-image caching for search rows and hover.
 
 > **Related plan:** [Myster resource links](./myster-resource-links.md) — parallel work: pins preview requests to immutable window identity and resets the cache on endpoint changes.

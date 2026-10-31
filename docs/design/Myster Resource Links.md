@@ -51,7 +51,11 @@ are never applied implicitly.
 
 `ClientWindowData` requires a `MysterAddress` and `PublicKeyIdentity`; only the type and
 filename are optional. Each ClientWindow stores that identity in a final constructor field.
-Its address display is read-only, and Refresh reloads the same server using that identity.
+Its header shows a copyable, borderless server name with explicit IP/port underneath,
+and server CID alongside, followed
+by Refresh and the preview/statistics toggle. CID space compresses first on narrow windows.
+The CID derives from the fixed public key; cached names must match that identity. The address
+display is read-only, and Refresh reloads the same server using that identity.
 Window preferences save the full encoded public key, the last endpoint, and selected type.
 
 `initialData` is the pending destination, used by new and recycled windows alike:
