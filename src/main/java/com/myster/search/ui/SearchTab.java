@@ -90,9 +90,9 @@ public class SearchTab extends JPanel implements SearchResultListener, Sayable {
     private final MysterProtocol protocol;
     private final HashCrawlerManager hashManager;
     private final Tracker tracker;
+    private final SearchThumbnailSupport thumbnails;
 
     private SearchEngine searchEngine;
-    private final SearchThumbnailSupport thumbnails;
     private MysterType resultsType;
     private FileTypeColumnHandler resultsColumnHandler;
     private long generation;

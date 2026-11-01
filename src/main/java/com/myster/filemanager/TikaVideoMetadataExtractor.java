@@ -1,9 +1,6 @@
 package com.myster.filemanager;
 
-import java.io.BufferedInputStream;
 import java.io.IOException;
-import java.io.InputStream;
-import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Locale;
 import java.util.Optional;
@@ -16,7 +13,9 @@ import java.util.regex.Pattern;
 
 import com.myster.mml.MessagePak;
 import org.apache.tika.exception.TikaException;
+import org.apache.tika.io.TikaInputStream;
 import org.apache.tika.metadata.Metadata;
+import org.apache.tika.metadata.TIFF;
 import org.apache.tika.metadata.TikaCoreProperties;
 import org.apache.tika.metadata.XMPDM;
 import org.apache.tika.parser.AutoDetectParser;
@@ -47,7 +46,7 @@ public class TikaVideoMetadataExtractor implements TypedMetadataExtractor {
         Metadata metadata = new Metadata();
         metadata.set(TikaCoreProperties.RESOURCE_NAME_KEY, path.getFileName().toString());
 
-        try (InputStream in = new BufferedInputStream(Files.newInputStream(path))) {
+        try (TikaInputStream in = TikaInputStream.get(path, metadata)) {
             new AutoDetectParser().parse(in, new DefaultHandler(), metadata, new ParseContext());
         } catch (IOException | SAXException | TikaException ex) {
             log.warning("Could not read video metadata for: " + path + " - " + ex.getMessage());
@@ -75,9 +74,9 @@ public class TikaVideoMetadataExtractor implements TypedMetadataExtractor {
             }
         }
 
-        parsePositiveLong(metadata.get(Metadata.IMAGE_WIDTH))
+        parsePositiveLong(metadata.get(TIFF.IMAGE_WIDTH))
                 .ifPresent(value -> messagePack.putLong("/VideoWidth", value));
-        parsePositiveLong(metadata.get(Metadata.IMAGE_LENGTH))
+        parsePositiveLong(metadata.get(TIFF.IMAGE_LENGTH))
                 .ifPresent(value -> messagePack.putLong("/VideoHeight", value));
         putIfNotBlank(messagePack, "/VideoCodec", metadata.get(XMPDM.VIDEO_COMPRESSOR));
 

@@ -1,15 +1,13 @@
 package com.myster.filemanager;
 
-import java.io.BufferedInputStream;
 import java.io.IOException;
-import java.io.InputStream;
-import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.OptionalDouble;
 import java.util.logging.Logger;
 
 import com.myster.mml.MessagePak;
 import org.apache.tika.exception.TikaException;
+import org.apache.tika.io.TikaInputStream;
 import org.apache.tika.metadata.Metadata;
 import org.apache.tika.metadata.TikaCoreProperties;
 import org.apache.tika.metadata.XMPDM;
@@ -27,7 +25,7 @@ public class TikaAudioMetadataExtractor implements TypedMetadataExtractor {
     @Override
     public void enrich(MessagePak messagePack, Path path) {
         Metadata tikaMetadata = new Metadata();
-        try (InputStream in = new BufferedInputStream(Files.newInputStream(path))) {
+        try (TikaInputStream in = TikaInputStream.get(path, tikaMetadata)) {
             new Mp3Parser().parse(in, new DefaultHandler(), tikaMetadata, new ParseContext());
         } catch (IOException | SAXException | TikaException ex) {
             log.warning("Could not read ID3 tag info for: " + path + " - " + ex.getMessage());

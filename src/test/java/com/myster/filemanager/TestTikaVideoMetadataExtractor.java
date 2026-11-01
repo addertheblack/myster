@@ -14,6 +14,7 @@ import java.util.OptionalLong;
 
 import com.myster.mml.MessagePak;
 import org.apache.tika.metadata.Metadata;
+import org.apache.tika.metadata.TIFF;
 import org.apache.tika.metadata.XMPDM;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
@@ -28,8 +29,8 @@ class TestTikaVideoMetadataExtractor {
     void addMetadata_convertsTikaProperties() {
         Metadata tika = new Metadata();
         tika.set(XMPDM.DURATION, "6138.4");
-        tika.set(Metadata.IMAGE_WIDTH, 1920);
-        tika.set(Metadata.IMAGE_LENGTH, 1080);
+        tika.set(TIFF.IMAGE_WIDTH, 1920);
+        tika.set(TIFF.IMAGE_LENGTH, 1080);
         tika.set(XMPDM.VIDEO_COMPRESSOR, " H.264 ");
         tika.set(XMPDM.FILE_DATA_RATE, "4.5 Mbps");
         MessagePak metadata = MessagePak.newEmpty();

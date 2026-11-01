@@ -1,8 +1,6 @@
 package com.myster.filemanager;
 
-import java.io.BufferedInputStream;
 import java.io.IOException;
-import java.io.InputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Date;
@@ -12,6 +10,8 @@ import java.util.logging.Logger;
 
 import com.myster.mml.MessagePak;
 import org.apache.tika.exception.TikaException;
+import org.apache.tika.io.TikaInputStream;
+import org.apache.tika.metadata.HttpHeaders;
 import org.apache.tika.metadata.Metadata;
 import org.apache.tika.metadata.Property;
 import org.apache.tika.metadata.TIFF;
@@ -36,8 +36,8 @@ public class TikaImageMetadataExtractor implements TypedMetadataExtractor {
     @Override
     public void enrich(MessagePak messagePack, Path path) {
         Metadata metadata = new Metadata();
-        try (InputStream in = new BufferedInputStream(Files.newInputStream(path))) {
-            detectContentType(path).ifPresent(contentType -> metadata.set(Metadata.CONTENT_TYPE,
+        try (TikaInputStream in = TikaInputStream.get(path, metadata)) {
+            detectContentType(path).ifPresent(contentType -> metadata.set(HttpHeaders.CONTENT_TYPE,
                     contentType));
             parserFor(path).parse(in, new DefaultHandler(), metadata, new ParseContext());
         } catch (IOException | SAXException | TikaException ex) {
