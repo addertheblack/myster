@@ -66,6 +66,12 @@ public class PromiseFutureListImpl<T> extends PromiseFutureImpl<List<T>> impleme
         }
         elements.add(t);
 
+        // Results can arrive before the caller assigns an invoker or registers a listener.
+        // A listener added later receives these buffered elements through replay.
+        if (elementListeners.isEmpty()) {
+            return true;
+        }
+
         List<Consumer<T>> elementListenersCopy = new ArrayList<>(elementListeners);
         getInvoker().invoke(() -> {
             elementListenersCopy.forEach(l -> dispatchElement(l, t));
