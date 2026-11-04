@@ -8,6 +8,7 @@ import java.awt.GridLayout;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
 import java.awt.image.BufferedImage;
+import java.io.File;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.text.ParseException;
@@ -37,6 +38,8 @@ import javax.swing.SwingUtilities;
 import com.formdev.flatlaf.FlatLightLaf;
 import com.general.thread.PromiseFuture;
 import com.general.thread.PromiseFutures;
+import com.general.util.MacDirectoryChooser;
+import com.myster.application.MysterGlobals;
 
 /**
  * Standalone thumbnail timing grid using the platform whitelist; run without Myster's network services.
@@ -81,6 +84,22 @@ public final class ThumbnailPreview extends JPanel {
     }
 
     private void chooseFolder() {
+        Path selectedFolder = askForFolder();
+        if (selectedFolder != null) {
+            folder = selectedFolder;
+            folderField.setText(folder.toString());
+            loadFolder();
+        }
+    }
+
+    private Path askForFolder() {
+        if (MysterGlobals.ON_MAC) {
+            File selectedDirectory = MacDirectoryChooser.showDialog(this,
+                    "Choose a folder containing " + allowedFormats() + " files",
+                    folder == null ? null : folder.toFile());
+            return selectedDirectory == null ? null : selectedDirectory.toPath();
+        }
+
         JFileChooser chooser = new JFileChooser();
         chooser.setDialogTitle("Choose a folder containing " + allowedFormats() + " files");
         chooser.setFileSelectionMode(JFileChooser.DIRECTORIES_ONLY);
@@ -88,10 +107,9 @@ public final class ThumbnailPreview extends JPanel {
             chooser.setCurrentDirectory(folder.toFile());
         }
         if (chooser.showOpenDialog(this) == JFileChooser.APPROVE_OPTION) {
-            folder = chooser.getSelectedFile().toPath();
-            folderField.setText(folder.toString());
-            loadFolder();
+            return chooser.getSelectedFile().toPath();
         }
+        return null;
     }
 
     private void cancelLoads() {

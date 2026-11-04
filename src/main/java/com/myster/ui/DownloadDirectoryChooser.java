@@ -2,11 +2,14 @@ package com.myster.ui;
 
 import javax.swing.JFileChooser;
 import java.awt.Frame;
+import java.io.File;
 import java.nio.file.Path;
 import java.util.Objects;
 import java.util.Optional;
 
 import com.general.util.AnswerDialog;
+import com.general.util.MacDirectoryChooser;
+import com.myster.application.MysterGlobals;
 import com.myster.filemanager.FileTypeListManager;
 import com.myster.net.stream.client.msdownload.DownloadDirectoryValidator;
 import com.myster.net.stream.client.msdownload.DownloadTargetException;
@@ -47,7 +50,7 @@ public final class DownloadDirectoryChooser {
                                                alwaysAskForDirectory,
                                                fileManager,
                                                type,
-                                               new SwingFolderDialog());
+                                               new PlatformFolderDialog());
     }
 
     static Optional<Path> chooseWritableDownloadDirectory(Frame parentFrame,
@@ -120,9 +123,15 @@ public final class DownloadDirectoryChooser {
         String showAlert(Frame parentFrame, String message, String[] buttons);
     }
 
-    private static class SwingFolderDialog implements FolderDialog {
+    private static class PlatformFolderDialog implements FolderDialog {
         @Override
         public Path askForFolder(Frame parentFrame, String title) {
+            if (MysterGlobals.ON_MAC) {
+                File selectedDirectory = MacDirectoryChooser.showDialog(parentFrame == null
+                        ? AnswerDialog.getCenteredFrame() : parentFrame, title, null);
+                return selectedDirectory == null ? null : selectedDirectory.toPath();
+            }
+
             JFileChooser chooser = new JFileChooser(title);
             chooser.setDialogTitle(title);
             chooser.setFileSelectionMode(JFileChooser.DIRECTORIES_ONLY);

@@ -48,8 +48,10 @@ import com.formdev.flatlaf.extras.FlatSVGIcon;
 import com.general.thread.PromiseFutures;
 import com.general.util.GridBagBuilder;
 import com.general.util.IconLoader;
+import com.general.util.MacDirectoryChooser;
 import com.general.util.MessageField;
 import com.general.util.Timer;
+import com.myster.application.MysterGlobals;
 import com.myster.filemanager.FileTypeListManager;
 import com.myster.pref.ui.PreferencesPanel;
 import com.myster.type.MysterType;
@@ -161,14 +163,8 @@ public class FmiChooser extends PreferencesPanel {
 
         button = new JButton("Choose Folder");
         button.addActionListener((ActionEvent _) -> {
-            JFileChooser fileChooser = new JFileChooser();
-            fileChooser.setFileSelectionMode(JFileChooser.DIRECTORIES_ONLY);
-            fileChooser.setDialogTitle("Choose a directory");
-
-            int returnValue =
-                    fileChooser.showOpenDialog(SwingUtilities.getWindowAncestor(FmiChooser.this));
-            if (returnValue == JFileChooser.APPROVE_OPTION) {
-                File selectedDirectory = fileChooser.getSelectedFile();
+            File selectedDirectory = chooseDirectory();
+            if (selectedDirectory != null) {
                 path = selectedDirectory.getAbsolutePath();
 
                 setPathField(path);
@@ -294,6 +290,18 @@ public class FmiChooser extends PreferencesPanel {
             pathField.setCaretPosition(0);
         }
         pathField.setToolTipText(newPath);
+    }
+
+    private File chooseDirectory() {
+        if (MysterGlobals.ON_MAC) {
+            return MacDirectoryChooser.showDialog(this, "Choose a directory", null);
+        }
+
+        JFileChooser fileChooser = new JFileChooser();
+        fileChooser.setFileSelectionMode(JFileChooser.DIRECTORIES_ONLY);
+        fileChooser.setDialogTitle("Choose a directory");
+        int returnValue = fileChooser.showOpenDialog(SwingUtilities.getWindowAncestor(this));
+        return returnValue == JFileChooser.APPROVE_OPTION ? fileChooser.getSelectedFile() : null;
     }
 
     private void openFolder() {
