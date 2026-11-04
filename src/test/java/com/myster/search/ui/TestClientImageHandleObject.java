@@ -1,22 +1,17 @@
 package com.myster.search.ui;
 
+import static com.myster.search.ui.MetadataColumnTestUtils.searchResult;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
-import java.nio.file.Path;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.util.Map;
-import java.util.function.Consumer;
 
 import com.general.mclist.ColumnSortable;
 import com.general.mclist.MCListItemInterface;
 import com.myster.client.ui.FileListerThread.FileRecord;
 import com.myster.mml.MessagePak;
-import com.myster.net.MysterAddress;
-import com.myster.net.client.MysterProtocol;
-import com.myster.net.stream.client.msdownload.DownloadStartException;
 import com.myster.search.SearchResult;
-import com.myster.tracker.MysterServer;
 import org.junit.jupiter.api.Test;
 
 class TestClientImageHandleObject {
@@ -81,17 +76,17 @@ class TestClientImageHandleObject {
     }
 
     @Test
-    void getSearchItem_formatsImageColumnsFromStrings() {
+    void getSearchItem_formatsImageColumnsFromTypedMetadata() throws Exception {
         long taken = epochMillis(2026, 1, 2, 3, 4);
         MCListItemInterface<SearchResult> item = new ClientImageHandleObject()
-                .getSearchItem(new StubSearchResult(Map.of(
-                        "/ImageWidth", "1024",
-                        "/ImageHeight", "768",
-                        "/ImageTakenAtMillis", Long.toString(taken),
+                .getSearchItem(searchResult(Map.of(
+                        "/ImageWidth", 1024L,
+                        "/ImageHeight", 768L,
+                        "/ImageTakenAtMillis", taken,
                         "/CameraMake", "Apple",
                         "/CameraModel", "iPhone 12",
-                        "/ImageOrientation", "1",
-                        "/ImageBitDepth", "24")));
+                        "/ImageOrientation", 1L,
+                        "/ImageBitDepth", 24L)));
 
         assertEquals("1024 x 768", item.getValueOfColumn(2).toString());
         assertEquals("2026-01-02 03:04", item.getValueOfColumn(3).toString());
@@ -101,9 +96,9 @@ class TestClientImageHandleObject {
     }
 
     @Test
-    void getSearchItem_missingValuesShowUnknown() {
+    void getSearchItem_missingValuesShowUnknown() throws Exception {
         MCListItemInterface<SearchResult> item = new ClientImageHandleObject()
-                .getSearchItem(new StubSearchResult(Map.of()));
+                .getSearchItem(searchResult(Map.of()));
 
         assertEquals("-", item.getValueOfColumn(2).toString());
         assertEquals("-", item.getValueOfColumn(3).toString());
@@ -117,46 +112,5 @@ class TestClientImageHandleObject {
                 .atZone(ZoneId.systemDefault())
                 .toInstant()
                 .toEpochMilli();
-    }
-
-    private record StubSearchResult(Map<String, String> metadata) implements SearchResult {
-        @Override
-        public void downloadTo(Path baseDirectory,
-                               Consumer<DownloadStartException> startFailureHandler) {}
-
-        @Override
-        public String getNetwork() {
-            return "test";
-        }
-
-        @Override
-        public String getMetaData(String key) {
-            return metadata.get(key);
-        }
-
-        @Override
-        public String[] getKeyList() {
-            return metadata.keySet().toArray(new String[] {});
-        }
-
-        @Override
-        public String getName() {
-            return "photo.jpg";
-        }
-
-        @Override
-        public MysterAddress getHostAddress() {
-            return null;
-        }
-
-        @Override
-        public MysterServer getServer() {
-            return null;
-        }
-
-        @Override
-        public MysterProtocol getProtocol() {
-            return null;
-        }
     }
 }

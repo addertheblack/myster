@@ -1,10 +1,9 @@
 package com.myster.search.ui;
 
+import static com.myster.search.ui.MetadataColumnTestUtils.searchResult;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
-import java.nio.file.Path;
 import java.util.Map;
-import java.util.function.Consumer;
 
 import org.junit.jupiter.api.Test;
 
@@ -12,11 +11,7 @@ import com.general.mclist.ColumnSortable;
 import com.general.mclist.MCListItemInterface;
 import com.myster.client.ui.FileListerThread.FileRecord;
 import com.myster.mml.MessagePak;
-import com.myster.net.MysterAddress;
-import com.myster.net.client.MysterProtocol;
-import com.myster.net.stream.client.msdownload.DownloadStartException;
 import com.myster.search.SearchResult;
-import com.myster.tracker.MysterServer;
 
 class TestClientMPG3HandleObject {
 
@@ -57,59 +52,18 @@ class TestClientMPG3HandleObject {
     }
 
     @Test
-    void getSearchItem_lengthColumnFormatsSeconds() {
+    void getSearchItem_lengthColumnFormatsSeconds() throws Exception {
         MCListItemInterface<SearchResult> item = new ClientMPG3HandleObject()
-                .getSearchItem(new StubSearchResult(Map.of("/LengthSec", "204")));
+                .getSearchItem(searchResult(Map.of("/LengthSec", 204L)));
 
         assertEquals("3:24", item.getValueOfColumn(7).toString());
     }
 
     @Test
-    void getSearchItem_missingLengthShowsUnknown() {
+    void getSearchItem_missingLengthShowsUnknown() throws Exception {
         MCListItemInterface<SearchResult> item = new ClientMPG3HandleObject()
-                .getSearchItem(new StubSearchResult(Map.of()));
+                .getSearchItem(searchResult(Map.of()));
 
         assertEquals("-", item.getValueOfColumn(7).toString());
-    }
-
-    private record StubSearchResult(Map<String, String> metadata) implements SearchResult {
-        @Override
-        public void downloadTo(Path baseDirectory,
-                               Consumer<DownloadStartException> startFailureHandler) {}
-
-        @Override
-        public String getNetwork() {
-            return "test";
-        }
-
-        @Override
-        public String getMetaData(String key) {
-            return metadata.get(key);
-        }
-
-        @Override
-        public String[] getKeyList() {
-            return metadata.keySet().toArray(new String[] {});
-        }
-
-        @Override
-        public String getName() {
-            return "song.mp3";
-        }
-
-        @Override
-        public MysterAddress getHostAddress() {
-            return null;
-        }
-
-        @Override
-        public MysterServer getServer() {
-            return null;
-        }
-
-        @Override
-        public MysterProtocol getProtocol() {
-            return null;
-        }
     }
 }

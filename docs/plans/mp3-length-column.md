@@ -1,5 +1,7 @@
 # MP3 Length Column in GUI
 
+> **Related plan:** [Typed Search-Result Metadata](./typed-search-result-metadata.md) — follow-up: reads duration, bitrate, and Hz as longs instead of parsing strings.
+
 **Feature slug:** `mp3-length-column`  
 **Date:** 2026-06-18  
 **Status:** Ready for implementation

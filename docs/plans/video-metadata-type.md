@@ -1,5 +1,7 @@
 # Video Metadata Type
 
+> **Related plan:** [Typed Search-Result Metadata](./typed-search-result-metadata.md) — follow-up: removes the video numeric-to-string adapter and search reparsing.
+
 **Feature slug:** `video-metadata-type`  
 **Date:** 2026-08-21  
 **Status:** Ready for implementation

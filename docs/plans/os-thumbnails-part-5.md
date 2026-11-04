@@ -1,5 +1,7 @@
 # OS thumbnails — Part 5: search-result thumbnails and hover previews
 
+> **Related plan:** [Typed Search-Result Metadata](./typed-search-result-metadata.md) — parallel work: preserves EDT-confined result updates, row identity, and search column decoration.
+
 > **Related plan:** [Thumbnail transfer protocol](./os-thumbnails-part-2.md) — depends on: reuses section 79 and existing image-size bounds.
 
 > **Related plan:** [Client preview pane](./os-thumbnails-part-3.md) — predecessor: supplies cancellable remote acquisition and preview sizing.

@@ -1,5 +1,7 @@
 # Metadata Type Registry Refactor
 
+> **Related plan:** [Typed Search-Result Metadata](./typed-search-result-metadata.md) — follow-up: supplies protected typed reads to registry-selected column handlers.
+
 > **Related plan:** [Search-result thumbnails and hover previews](./os-thumbnails-part-5.md) — required by: explicit metadata profiles determine search thumbnail eligibility.
 
 **Feature slug:** `metadata-type-provider`  

@@ -1,22 +1,17 @@
 package com.myster.search.ui;
 
+import static com.myster.search.ui.MetadataColumnTestUtils.searchResult;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
-import java.nio.file.Path;
 import java.util.Map;
-import java.util.function.Consumer;
 
 import com.general.mclist.ColumnSortable;
 import com.general.mclist.MCListItemInterface;
 import com.general.mclist.Sortable;
 import com.myster.client.ui.FileListerThread.FileRecord;
 import com.myster.mml.MessagePak;
-import com.myster.net.MysterAddress;
-import com.myster.net.client.MysterProtocol;
-import com.myster.net.stream.client.msdownload.DownloadStartException;
 import com.myster.search.SearchResult;
-import com.myster.tracker.MysterServer;
 import org.junit.jupiter.api.Test;
 
 class TestClientVideoHandleObject {
@@ -45,14 +40,14 @@ class TestClientVideoHandleObject {
     }
 
     @Test
-    void getSearchItem_formatsVideoColumnsFromStrings() {
+    void getSearchItem_formatsVideoColumnsFromTypedMetadata() throws Exception {
         MCListItemInterface<SearchResult> item = new ClientVideoHandleObject()
-                .getSearchItem(new StubSearchResult(Map.of(
-                        "/VideoLengthSec", "125",
-                        "/VideoWidth", "1280",
-                        "/VideoHeight", "720",
+                .getSearchItem(searchResult(Map.of(
+                        "/VideoLengthSec", 125L,
+                        "/VideoWidth", 1280L,
+                        "/VideoHeight", 720L,
                         "/VideoCodec", "HEVC",
-                        "/VideoBitRate", "900000")));
+                        "/VideoBitRate", 900000L)));
 
         assertEquals("2:05", item.getValueOfColumn(2).toString());
         assertEquals("1280x720", item.getValueOfColumn(3).toString());
@@ -61,16 +56,16 @@ class TestClientVideoHandleObject {
     }
 
     @Test
-    void missingAndMalformedValuesShowUnknown() {
+    void missingAndMalformedValuesShowUnknown() throws Exception {
         MessagePak metadata = MessagePak.newEmpty();
         metadata.putString("/VideoCodec", " ");
         ColumnSortable<String> fileItem = new ClientVideoHandleObject()
                 .getFileItem(new FileRecord("film.mkv", metadata));
         MCListItemInterface<SearchResult> searchItem = new ClientVideoHandleObject()
-                .getSearchItem(new StubSearchResult(Map.of(
+                .getSearchItem(searchResult(Map.of(
                         "/VideoLengthSec", "bad",
-                        "/VideoWidth", "1920",
-                        "/VideoBitRate", "-1")));
+                        "/VideoWidth", 1920L,
+                        "/VideoBitRate", -1L)));
 
         for (int column = 2; column < 6; column++) {
             assertEquals("-", fileItem.getValueOfColumn(column).toString());
@@ -115,46 +110,5 @@ class TestClientVideoHandleObject {
         metadata.putLong("/VideoHeight", height);
         metadata.putLong("/VideoBitRate", bitRate);
         return metadata;
-    }
-
-    private record StubSearchResult(Map<String, String> metadata) implements SearchResult {
-        @Override
-        public void downloadTo(Path baseDirectory,
-                               Consumer<DownloadStartException> startFailureHandler) {}
-
-        @Override
-        public String getNetwork() {
-            return "test";
-        }
-
-        @Override
-        public String getMetaData(String key) {
-            return metadata.get(key);
-        }
-
-        @Override
-        public String[] getKeyList() {
-            return metadata.keySet().toArray(new String[] {});
-        }
-
-        @Override
-        public String getName() {
-            return "film.mp4";
-        }
-
-        @Override
-        public MysterAddress getHostAddress() {
-            return null;
-        }
-
-        @Override
-        public MysterServer getServer() {
-            return null;
-        }
-
-        @Override
-        public MysterProtocol getProtocol() {
-            return null;
-        }
     }
 }

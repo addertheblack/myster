@@ -27,9 +27,7 @@
         - Consider chat and other general-connectivity features separately; their relay and
           presence requirements are broader than the single-type file-sharing case.
 - Add reverse connection protocol.
-- Pick a default place for downloads in progress (e.g. ~/mysterdata or platform app-data dir on Windows).
 - Split off concurrency library from Myster and publish to Maven.
-- Make Myster modules compatible.
 - Fix naming — probably want to use myster.org and not the current com.myster etc....
 - Audit and enforce access controls on all Myster endpoints:
     - Inventory every TCP stream section and UDP transaction; document intentionally public
@@ -59,8 +57,7 @@
     that the "size" of the concurrent UDP connection should be measured in some k/s of packets per second
     proportional to the k/s that the server can effectively handle.
 - Fix DefaultTypeDescriptionList to interact with preferences in a sane way (not using MML).
-
-- Add 3DNS for resolving public keys to hosted ip addresses.
+- Add 3DNS crawler to find servers by CID and public key, and to discover new servers for an exponential offset address.
 - Fix search-result metadata access: `SearchResult#getMetaData(String)` currently stringifies
   typed `MessagePak` values, forcing column handlers to parse numbers back out for sorting.
   Add a read-only `MessagePak` view/interface for search items so handlers can use typed
@@ -95,7 +92,6 @@
         Import network type command that allows you to import a type file into your myster.
         Add system file type binding so that if someone opens a myster network file it automatically imports the type into myster.
         Add business cards .. send server stats without being requested in order to get your node discovered if it's on a different port.
-
 
 
 - We also need to enable multiple admins on a type history file. This requires a voting system or other way in which a

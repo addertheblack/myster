@@ -48,7 +48,9 @@ public class ClientGenericHandleObject implements FileTypeColumnHandler {
                     default -> throw new RuntimeException("Column " + column + " doesn't exist");
                 };
             }
-            public String getObject() { return record.file(); }
+            public String getObject() {
+                return record.file();
+            }
         };
     }
 
@@ -62,17 +64,17 @@ public class ClientGenericHandleObject implements FileTypeColumnHandler {
                     default -> throw new RuntimeException("Column " + column + " doesn't exist");
                 };
             }
-            public String getObject() { return folderName; }
+            public String getObject() {
+                return folderName;
+            }
         };
     }
 
     protected class GenericSearchItem extends AbstractMCListItemInterface<SearchResult> {
         private static final SortableByte NOT_IN = new SortableByte(-1);
-        private static final SortableByte NUMBER_ERR = new SortableByte(-2);
 
         protected final SearchResult result;
         private final SortableString sortableName;
-        private SortableByte sortableSize;
 
         public GenericSearchItem(SearchResult s) {
             result = s;
@@ -84,15 +86,8 @@ public class ClientGenericHandleObject implements FileTypeColumnHandler {
             case 0:
                 return sortableName;
             case 1:
-                String size = result.getMetaData(keyarray[1]);
-                try {
-                    if (size != null && sortableSize == null) {
-                        sortableSize = new SortableByte(Long.parseLong(size));
-                    }
-                    return (size == null ? NOT_IN : sortableSize);
-                } catch (NumberFormatException ex) {
-                    return NUMBER_ERR;
-                }
+                return result.getMetaData().getLong(keyarray[1])
+                        .map(SortableByte::new).orElse(NOT_IN);
             default:
                 throw new RuntimeException("Requested a column that doesn't exist.");
             }

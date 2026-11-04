@@ -1,5 +1,7 @@
 # Custom Myster Type Metadata Profile
 
+> **Related plan:** [Typed Search-Result Metadata](./typed-search-result-metadata.md) — follow-up: shared typed column conversion applies to custom and bundled profiles alike.
+
 > **Related plan:** [Search-result thumbnails and hover previews](./os-thumbnails-part-5.md) — required by: custom Image/Video profiles qualify for search thumbnails without extension inference.
 
 **Feature slug:** `custom-type-metadata-profile`  

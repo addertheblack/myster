@@ -8,6 +8,7 @@ When adding or substantially changing an authoritative plan, update this index w
 
 | Plan | Abstract |
 |---|---|
+| [Typed Search-Result Metadata](typed-search-result-metadata.md) | Exposes protected typed MessagePak views to search columns and removes numeric string round trips from shared handlers. |
 | [Client Window Server Header](client-window-server-header.md) | Adds copyable, borderless server name, explicit address/port, and CID before the existing Refresh and preview controls; CID yields space first. |
 | [Myster Resource Links](myster-resource-links.md) | Adds hierarchical link/v1 URLs that navigate to a server/type or highlight a file by name, reusing one ClientWindow per server without starting downloads. |
 | [Tree MCList Multi-Folder Arrow Keys](tree-mclist-multi-folder-arrows.md) | Makes Right/Left open or close every selected tree folder in one operation while preserving visible selections. |

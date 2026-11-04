@@ -13,6 +13,9 @@ import com.myster.search.SearchResult;
  *
  * <p>Implementations are returned by {@link ClientInfoFactoryUtils#getHandler} and may be
  * used by both {@code SearchTab} (via the decorator) and {@code ClientWindow} directly.
+ * Numeric columns read typed metadata rather than display strings, sharing conversion between
+ * both row contexts. Search rows must re-read {@link SearchResult#getMetaData()} when supplying
+ * cells so metadata installed after row creation is visible.
  */
 public interface FileTypeColumnHandler {
 

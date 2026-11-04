@@ -14,7 +14,21 @@ import com.general.util.Util;
  * for easier migration. Implementations use a more efficient binary format while maintaining
  * a similar tree-like structure for data storage.
  */
-public interface MessagePak {
+public interface MessagePak extends ReadOnlyMessagePak {
+    /**
+     * Returns a live read view that cannot be cast back to MessagePak. Mutable values returned
+     * through this view are detached, including nested arrays/maps and dates. Owner writes remain
+     * visible; the view adds no thread-safety guarantee. Existing reads through this MessagePak
+     * retain their original behavior and references.
+     * Arbitrary unsupported Java objects are rejected when read through the view's generic
+     * value/object-array getters; only MessagePak value trees are supported there.
+     *
+     * @return a protected read view of this pack
+     */
+    default ReadOnlyMessagePak asReadOnly() {
+        return new ReadOnlyMessagePakView(this);
+    }
+
     public static MessagePak newEmpty() {
         return new MessagePackSerializer();
     }

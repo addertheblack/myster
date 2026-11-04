@@ -39,6 +39,9 @@ The Implementation Agent writes a summary **after** completing all code changes,
 
 ## Related
 
+- [Typed Search-Result Metadata](typed-search-result-metadata.md): protected typed reads and
+  shared column conversion while preserving the original MessagePak API semantics.
+
 - [Client Window Server Header](client-window-server-header.md): copyable server name,
   explicit endpoint and CID with CID-first width compression.
 

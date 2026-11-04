@@ -812,6 +812,35 @@ Implemented contracts are described in [Myster Resource Links](../design/Myster%
 - Copy File Link is one name-based command. `FmiChooser` guards saved indexed state, pending
   sharing/folder edits, placeholder/count rows, multiple selection, and its 350-file display cap.
 
+## Typed search-result metadata
+
+`SearchResult.getMetaData()` returns a protected `ReadOnlyMessagePak` view. Generic, Audio,
+Image and Video columns read typed values directly and share media conversion with browsing.
+The keyed `getMetaData(String)` accessor remains for display conversion, not numeric sorting.
+See the [plan](../plans/typed-search-result-metadata.md) and
+[implementation summary](../impl_summary/typed-search-result-metadata.md).
+
+`MessagePak` remains the combined read-write API with its existing declarations and behavior;
+it also implements the read interface. A narrower type alone does not prevent downcasts or
+mutation of returned arrays/dates. `asReadOnly()` creates a wrapper that implements only the read
+interface and detaches mutable return values recursively, including maps inside object arrays.
+The original mutable getters retain their reference-return semantics. Unsupported arbitrary
+objects are rejected only when copying values out of the protected view.
+
+Views are live, not snapshots, and add no independent thread-safety guarantee. Search metadata
+is read/published on the EDT; before stats arrive the result exposes an empty protected pack.
+Cell providers re-read the result's accessor to observe installed/replaced stats instead of
+capturing an initial view or permanently caching size. Retained older views retain their packs.
+
+`MessagePak.newEmpty()` creates the strict writer, whose mismatched typed getters can throw.
+`MessagePak.fromBytes()` creates the robust reader, whose expected type/branch mismatches
+return empty Optionals. Use decoded fixtures when testing malformed remote metadata.
+Typed numeric getters do not parse strings. `putInt` and `putShort` normalize to stored longs.
+
+Date serialization writes epoch millis as an ordinary integer; decoding does not restore a Date
+object. `/ImageTakenAtMillis` remains a long. The view delegates display conversion unchanged,
+including the existing exception when converting an object array containing null to text.
+
 ## Shared WebRTC transport planning constraints
 
 For the planned call feature, `DatagramProtocolManager` identifies the two-byte transport code

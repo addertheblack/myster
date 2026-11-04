@@ -1,5 +1,7 @@
 # Image Metadata for Pictures
 
+> **Related plan:** [Typed Search-Result Metadata](./typed-search-result-metadata.md) — follow-up: unifies search/browse column conversion through typed reads while retaining epoch-millis capture time.
+
 **Feature slug:** `image-metadata-for-pictures`  
 **Date:** 2026-08-21  
 **Status:** Ready for implementation

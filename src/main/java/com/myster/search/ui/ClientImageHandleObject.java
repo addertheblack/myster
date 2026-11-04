@@ -3,7 +3,6 @@ package com.myster.search.ui;
 import java.time.Instant;
 import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
-import java.util.OptionalLong;
 
 import com.general.mclist.ColumnSortable;
 import com.general.mclist.MCListItemInterface;
@@ -11,7 +10,7 @@ import com.general.mclist.Sortable;
 import com.general.mclist.SortableLong;
 import com.general.mclist.SortableString;
 import com.myster.client.ui.FileListerThread.FileRecord;
-import com.myster.mml.MessagePak;
+import com.myster.mml.ReadOnlyMessagePak;
 import com.myster.search.SearchResult;
 
 /**
@@ -109,7 +108,7 @@ public class ClientImageHandleObject extends ClientGenericHandleObject {
         };
     }
 
-    private static Sortable imageColumn(int imageColumn, MessagePak metadata) {
+    private static Sortable imageColumn(int imageColumn, ReadOnlyMessagePak metadata) {
         return switch (imageColumn) {
             case 0 -> new SortableResolution(metadata.getLong(KEY_WIDTH).orElse(-1L),
                     metadata.getLong(KEY_HEIGHT).orElse(-1L));
@@ -118,20 +117,6 @@ public class ClientImageHandleObject extends ClientGenericHandleObject {
                     metadata.getString(KEY_CAMERA_MODEL).orElse(null)));
             case 3 -> new SortableOrientation(metadata.getLong(KEY_ORIENTATION).orElse(-1L));
             case 4 -> new SortableBitDepth(metadata.getLong(KEY_BIT_DEPTH).orElse(-1L));
-            default -> throw new RuntimeException("Column " + imageColumn + " doesn't exist");
-        };
-    }
-
-    private static Sortable imageColumn(int imageColumn, SearchResult result) {
-        return switch (imageColumn) {
-            case 0 -> new SortableResolution(parseLong(result.getMetaData(KEY_WIDTH)).orElse(-1L),
-                    parseLong(result.getMetaData(KEY_HEIGHT)).orElse(-1L));
-            case 1 -> new SortableTimestamp(parseLong(result.getMetaData(KEY_TAKEN)).orElse(-1L));
-            case 2 -> new SortableString(camera(result.getMetaData(KEY_CAMERA_MAKE),
-                    result.getMetaData(KEY_CAMERA_MODEL)));
-            case 3 -> new SortableOrientation(
-                    parseLong(result.getMetaData(KEY_ORIENTATION)).orElse(-1L));
-            case 4 -> new SortableBitDepth(parseLong(result.getMetaData(KEY_BIT_DEPTH)).orElse(-1L));
             default -> throw new RuntimeException("Column " + imageColumn + " doesn't exist");
         };
     }
@@ -152,17 +137,6 @@ public class ClientImageHandleObject extends ClientGenericHandleObject {
         return value == null || value.isBlank() ? "-" : value.trim();
     }
 
-    private static OptionalLong parseLong(String raw) {
-        if (raw == null || raw.isBlank()) {
-            return OptionalLong.empty();
-        }
-        try {
-            return OptionalLong.of(Long.parseLong(raw.trim()));
-        } catch (NumberFormatException e) {
-            return OptionalLong.empty();
-        }
-    }
-
     private class ImageSearchItem extends GenericSearchItem {
         public ImageSearchItem(SearchResult s) {
             super(s);
@@ -173,7 +147,7 @@ public class ClientImageHandleObject extends ClientGenericHandleObject {
             if (index < numOfColumns) {
                 return super.getValueOfColumn(index);
             }
-            return imageColumn(index - numOfColumns, result);
+            return imageColumn(index - numOfColumns, result.getMetaData());
         }
     }
 

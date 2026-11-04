@@ -1,8 +1,6 @@
 package com.myster.search.ui;
 
 import java.util.Locale;
-import java.util.Optional;
-import java.util.OptionalLong;
 
 import com.general.mclist.ColumnSortable;
 import com.general.mclist.MCListItemInterface;
@@ -10,7 +8,7 @@ import com.general.mclist.Sortable;
 import com.general.mclist.SortableLong;
 import com.general.mclist.SortableString;
 import com.myster.client.ui.FileListerThread.FileRecord;
-import com.myster.mml.MessagePak;
+import com.myster.mml.ReadOnlyMessagePak;
 import com.myster.search.SearchResult;
 
 /**
@@ -71,7 +69,8 @@ public class ClientVideoHandleObject extends ClientGenericHandleObject {
                 if (column < numOfColumns) {
                     return base.getValueOfColumn(column);
                 }
-                return videoColumn(column - numOfColumns, new MessagePakValues(record.metaData()));
+
+                return videoColumn(column - numOfColumns, record.metaData());
             }
 
             @Override
@@ -100,52 +99,22 @@ public class ClientVideoHandleObject extends ClientGenericHandleObject {
         };
     }
 
-    private static Sortable videoColumn(int column, MetadataValues metadata) {
+    private static Sortable videoColumn(int column, ReadOnlyMessagePak metadata) {
         return switch (column) {
-            case 0 -> new SortableDuration(parsePositiveLong(metadata.getNumeric(KEY_DURATION))
-                    .orElse(-1L));
-            case 1 -> new SortableResolution(parsePositiveLong(metadata.getNumeric(KEY_WIDTH))
-                    .orElse(-1L), parsePositiveLong(metadata.getNumeric(KEY_HEIGHT)).orElse(-1L));
-            case 2 -> new SortableString(normalize(metadata.getText(KEY_CODEC)));
-            case 3 -> new SortableBitRate(parsePositiveLong(metadata.getNumeric(KEY_BIT_RATE))
-                    .orElse(-1L));
+            case 0 -> new SortableDuration(metadata.getLong(KEY_DURATION)
+                    .filter(value -> value > 0).orElse(-1L));
+            case 1 -> new SortableResolution(metadata.getLong(KEY_WIDTH)
+                    .filter(value -> value > 0).orElse(-1L), metadata.getLong(KEY_HEIGHT)
+                    .filter(value -> value > 0).orElse(-1L));
+            case 2 -> new SortableString(normalize(metadata.getString(KEY_CODEC).orElse(null)));
+            case 3 -> new SortableBitRate(metadata.getLong(KEY_BIT_RATE)
+                    .filter(value -> value > 0).orElse(-1L));
             default -> throw new RuntimeException("Column " + column + " doesn't exist");
         };
     }
 
-    private static OptionalLong parsePositiveLong(String raw) {
-        if (raw == null || raw.isBlank()) {
-            return OptionalLong.empty();
-        }
-        try {
-            long value = Long.parseLong(raw.trim());
-            return value > 0 ? OptionalLong.of(value) : OptionalLong.empty();
-        } catch (NumberFormatException ex) {
-            return OptionalLong.empty();
-        }
-    }
-
     private static String normalize(String value) {
         return value == null || value.isBlank() ? "-" : value.trim();
-    }
-
-    private interface MetadataValues {
-        String getNumeric(String key);
-
-        String getText(String key);
-    }
-
-    private record MessagePakValues(MessagePak messagePak) implements MetadataValues {
-        @Override
-        public String getNumeric(String key) {
-            Optional<Long> longValue = messagePak.getLong(key);
-            return longValue.map(Object::toString).orElse(null);
-        }
-
-        @Override
-        public String getText(String key) {
-            return messagePak.getString(key).orElse(null);
-        }
     }
 
     private class VideoSearchItem extends GenericSearchItem {
@@ -158,17 +127,8 @@ public class ClientVideoHandleObject extends ClientGenericHandleObject {
             if (index < numOfColumns) {
                 return super.getValueOfColumn(index);
             }
-            return videoColumn(index - numOfColumns, new MetadataValues() {
-                @Override
-                public String getNumeric(String key) {
-                    return result.getMetaData(key);
-                }
 
-                @Override
-                public String getText(String key) {
-                    return result.getMetaData(key);
-                }
-            });
+            return videoColumn(index - numOfColumns, result.getMetaData());
         }
     }
 

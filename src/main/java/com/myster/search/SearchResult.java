@@ -3,6 +3,7 @@ package com.myster.search;
 import java.nio.file.Path;
 import java.util.function.Consumer;
 
+import com.myster.mml.ReadOnlyMessagePak;
 import com.myster.net.MysterAddress;
 import com.myster.net.client.MysterProtocol;
 import com.myster.net.stream.client.msdownload.DownloadStartException;
@@ -24,8 +25,20 @@ public interface SearchResult {
     // returns the network the search result is on.
     String getNetwork();
 
-    // gets a value for a meta data thingy
-    String getMetaData(String key);
+    /**
+     * Returns protected typed file stats, or an empty view until stats arrive. Call on the EDT.
+     * Re-read this accessor to observe replacement stats; retaining a view retains the previous
+     * pack. Mutable values obtained from the view cannot mutate the backing stats.
+     */
+    ReadOnlyMessagePak getMetaData();
+
+    /**
+     * Returns the MessagePak display conversion at the key, or null if absent.
+     * Use {@link #getMetaData()} for typed reads, particularly numeric sorting. Call on the EDT.
+     */
+    default String getMetaData(String key) {
+        return getMetaData().get(key).orElse(null);
+    }
 
     // gets the list of known meta data types for this item.
     String[] getKeyList();
