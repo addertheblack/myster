@@ -371,6 +371,7 @@ public class Myster {
 
         INSTRUMENTATION.info("-------->> Creating ServerFacade " + (System.currentTimeMillis() - startTime));
         ServerFacade serverFacade = new ServerFacade(tracker,
+                                                     pool,
                                                      serverPreferences,
                                                      datagramManager,
                                                      transactionManager,

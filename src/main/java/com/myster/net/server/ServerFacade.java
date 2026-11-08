@@ -25,11 +25,14 @@ import com.myster.net.datagram.DatagramConstants;
 import com.myster.net.datagram.DatagramEncryptUtil;
 import com.myster.net.datagram.DatagramProtocolManager;
 import com.myster.net.mdns.MysterMdnsAnnouncer;
+import com.myster.net.server.datagram.BidirectionalServerStatsDatagramServer;
 import com.myster.net.server.datagram.PingTransport;
 import com.myster.net.server.datagram.ServerStatsDatagramServer;
+import com.myster.net.stream.server.ServerStats;
 import com.myster.net.stream.server.transferqueue.ServerQueue;
 import com.myster.net.stream.server.transferqueue.TransferQueue;
 import com.myster.server.event.ServerEventDispatcher;
+import com.myster.tracker.MysterServerPool;
 import com.myster.tracker.Tracker;
 import com.myster.transaction.TransactionManager;
 import com.myster.transaction.TransactionProtocol;
@@ -44,6 +47,7 @@ public class ServerFacade {
     private final ServerEventDispatcher serverDispatcher;
     private final Map<Integer, ConnectionSection> connectionSections = new HashMap<>();
     private final Tracker tracker;
+    private final MysterServerPool pool;
     private final ServerPreferences preferences;
     private final DatagramProtocolManager datagramManager;
     private final TransactionManager transactionManager;
@@ -59,6 +63,7 @@ public class ServerFacade {
     private DatagramEncryptUtil.Lookup encryptionLookup;
 
     public ServerFacade(Tracker tracker,
+                        MysterServerPool pool,
                         ServerPreferences preferences,
                         DatagramProtocolManager datagramManager,
                         TransactionManager transactionManager,
@@ -67,6 +72,7 @@ public class ServerFacade {
                         AccessListReader accessListReader,
                         ServerEventDispatcher serverDispatcher) {
         this.tracker = tracker;
+        this.pool = pool;
         this.preferences = preferences;
         this.datagramManager = datagramManager;
         this.transactionManager = transactionManager;
@@ -107,21 +113,29 @@ public class ServerFacade {
 
     /**
      * Initializes LAN resource discovery on DEFAULT_SERVER_PORT.
-     * This creates operators bound to LAN addresses only for local discovery,
-     * and adds PingTransport and ServerStatsDatagramServer for UDP-based discovery.
+     * Creates TCP operators bound to LAN addresses with only the server-stats
+     * section (101), in addition to the built-in connection controls. Registers
+     * UDP ping and server-stats transactions 101 and 102 on the discovery port.
+     * All stats responses advertise the configured main server port.
      * <p>
-     * This method is idempotent - it will remove any existing LAN discovery protocols
-     * before adding new ones, so it's safe to call during port changes.
+     * Replaces existing discovery protocols, so it can be called during port
+     * changes after the main protocols have been moved off the discovery port.
      */
     public void initLanResourceDiscovery(List<Operator> operatorList)
             throws  SocketException {
+        Map<Integer, ConnectionSection> discoverySections = Map.of(ServerStats.NUMBER,
+                new ServerStats(preferences::getIdentityName,
+                                preferences::getDescription,
+                                preferences::getServerPort,
+                                identity,
+                                accessListReader));
         Consumer<Socket> serviceDiscoveryPort =
                 (socket) -> connectionExecutor.execute(new ConnectionRunnable(socket,
                                                                               identity,
                                                                               serverDispatcher,
                                                                               transferQueue,
                                                                               fileManager,
-                                                                              new HashMap<>()));
+                                                                              discoverySections));
         List<InetAddress> publicLandAddresses = ServerUtils.findMyLanAddress();
         for (InetAddress publicLandAddress : publicLandAddresses) {
             operatorList.add(new Operator(serviceDiscoveryPort,
@@ -136,16 +150,25 @@ public class ServerFacade {
             return null;
         });
 
-        // Remove existing ServerStats if present, then add new one
+        // Replace both legacy and bidirectional discovery stats handlers.
         transactionManager.removeTransactionProtocol(MysterGlobals.DEFAULT_SERVER_PORT,
                 DatagramConstants.SERVER_STATS_TRANSACTION_CODE);
+        transactionManager.removeTransactionProtocol(MysterGlobals.DEFAULT_SERVER_PORT,
+                DatagramConstants.BIDIRECTIONAL_SERVER_STATS_TRANSACTION_CODE);
         addDatagramTransactions(MysterGlobals.DEFAULT_SERVER_PORT,
                                 new ServerStatsDatagramServer(preferences::getIdentityName,
                                                               preferences::getDescription,
                                                               preferences::getServerPort,
                                                               identity,
                                                               fileManager,
-                                                              accessListReader));
+                                                              accessListReader),
+                                new BidirectionalServerStatsDatagramServer(preferences::getIdentityName,
+                                                                           preferences::getDescription,
+                                                                           preferences::getServerPort,
+                                                                           identity,
+                                                                           fileManager,
+                                                                           pool,
+                                                                           accessListReader));
 
     }
 
@@ -233,6 +256,10 @@ public class ServerFacade {
                                                                               connectionSections));
         newOperators.add(new Operator(socketConsumer, newPort, Optional.empty()));
 
+        // Move main protocols first: otherwise moving off DEFAULT_SERVER_PORT
+        // would remove the discovery handlers installed below.
+        moveDatagramProtocolsToNewPort(oldPort, newPort);
+
         // LAN operators if not on default port
         if (!goingToDefault) {
             try {
@@ -248,9 +275,6 @@ public class ServerFacade {
         }
 
         operators = newOperators;
-
-        // Move datagram transaction protocols to new port
-        moveDatagramProtocolsToNewPort(oldPort, newPort);
 
         // Restart mDNS with new port
         shutdownMdns();
@@ -287,9 +311,11 @@ public class ServerFacade {
                 t.removeTransport(DatagramConstants.PING_TRANSPORT_CODE);
                 return null;
             });
-            // ServerStatsDatagramServer is a TransactionProtocol, remove it too
+            // Remove both discovery stats transactions before adding main protocols.
             transactionManager.removeTransactionProtocol(MysterGlobals.DEFAULT_SERVER_PORT,
                     DatagramConstants.SERVER_STATS_TRANSACTION_CODE);
+            transactionManager.removeTransactionProtocol(MysterGlobals.DEFAULT_SERVER_PORT,
+                    DatagramConstants.BIDIRECTIONAL_SERVER_STATS_TRANSACTION_CODE);
         }
 
         if (!wasOnDefault) {

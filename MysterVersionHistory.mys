@@ -1,5 +1,5 @@
 //!Internal! version history from Dev6 onward
-//� Andrew Trumper 2001-2005
+//� Andrew Trumper 2001-2027
 
 //NOTE TO READERS:
 //THIS DOCUMENT IS MENT FOR INTERNAL USE ONLY
@@ -1122,6 +1122,30 @@ Work on DEV 8:
 	  
 	  => PR 9
 	  			
+2005 (continued)
+  Fixed several multi-source download and progress-window freezes.
+  Improved handling of read-only download destinations and fixed progress-bar rendering issues.
+  Fixed blank Tracker entries and client-window position restoration.
+  Added a TCP listener on port 80 alongside the normal Myster port.
+
+2006
+  Fixed the pause when starting the first search and improved search/crawler behavior.
+  Continued replacing AWT widgets with Swing components.
+  Dropped Java 1.1 compatibility.
+
+2014
+  Converted menu bars to Swing and fixed the Server Stats window layout around the menu bar.
+  Replaced the custom timer implementation with Java's built-in timer and fixed compilation issues.
+  Refreshed Eclipse project configuration and cleaned up older code.
+
+2016
+  Finished the main conversion from AWT to Swing, including dialogs, preferences, messaging,
+    progress windows, and other remaining UI components.
+  Replaced the old MP3 metadata reader with a newer library for more reliable ID3 tag handling.
+
+2017
+  Added a README with project background and build instructions, a GPLv3 license, and a code of conduct.
+
 2023-12-01
 
     -> Refactored standard protocol suite code
@@ -1313,7 +1337,38 @@ keys for myster types.
   Launching Myster a second time now brings the existing window to the front, even during startup.
   Added .zip files to the built-in Macintosh type.
 
-
 Myster now at 81083/56619 lines of code. Andrew sighs wearily.
+
+2026-11-04
+  Added picture and video thumbnails to client file lists and search results, with larger previews
+    in the client details pane and when hovering over search results.
+  Integrated operating-system thumbnail generation and added thumbnail caching for faster loading.
+    Thumbnails load in the background as files become visible.
+  Added server descriptions, configurable in Server preferences and displayed in the Tracker.
+  Added Myster resource links for opening a particular server, shared type, or file in Myster.
+    Added "Copy File Link" to client windows, search results, and the File Manager.
+  Added password-protected, expiring invitation links for private types. Recipients can open or
+    paste a link to preview the type and join it. Added more useful connection errors and copyable
+    diagnostic details when joining fails.
+  Custom types can now choose Generic, Audio, Image, or Video metadata profiles. The choice is
+    shared with members so file lists and search results show the appropriate media information.
+  Added a searchable "Connect to Server" dialog. Connect using a known server, hostname or IP
+    address with an optional port, or a server CID resolved through 3DNS. The same picker is used
+    when adding private-type members.
+  Client windows now show the server name, address and port, and full server CID in a selectable,
+    copyable header. Windows follow the server's identity when its address changes.
+  Downloads now remember servers that supplied their data and use 3DNS to find them again after
+    restarting or resuming, even if their addresses or ports have changed. Files can also be
+    found again by hash if the server has renamed them.
+  Download speeds now reflect the recent transfer rate rather than the average since the download
+    started, and reset correctly when pausing, resuming, or queuing.
+  Added Open Folder and Refresh actions to the File Manager, along with selectable, copyable full
+    folder paths. Refresh re-indexes the shared folder in the background.
+  Left and Right arrow keys now close or open all selected folders together in client file lists.
+  Improved icon and thumbnail rendering at fractional and higher display scaling settings.
+  Added native macOS folder selection for shared folders and download destinations.
+  Tightened private-type access checks for searches, file information, server file counts, and
+    thumbnail requests.
+
 
 (See TODO.txt for the outstanding work list.)

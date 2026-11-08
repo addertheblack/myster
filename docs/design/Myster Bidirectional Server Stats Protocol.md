@@ -66,6 +66,14 @@ port changes move them together. The transaction encryption wrapper forwards
 the inner `102` code and payload and encrypts the response without changing the
 bidirectional server-stats codec.
 
+When the main server uses a non-default port, the LAN discovery listener on
+port `6669` also serves TCP section `101` and UDP transactions `101` and `102`.
+Discovery stats advertise the configured main port rather than `6669`; the UDP
+`102` handler uses the same requester-card validation and pool suggestion path
+as the main-port handler. Other TCP application sections remain unavailable on
+the discovery listener. During port changes, main-port UDP handlers move first,
+then discovery handlers are reinstalled so migration cannot remove them.
+
 ## Failure behavior
 
 - Missing or out-of-range `/Port`: reject the request.
