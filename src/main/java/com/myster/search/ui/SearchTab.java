@@ -10,12 +10,14 @@
 package com.myster.search.ui;
 
 import javax.swing.JButton;
+import javax.swing.JComboBox;
 import javax.swing.JMenuItem;
 import javax.swing.JPanel;
 import javax.swing.SwingUtilities;
 import javax.swing.JTextField;
 import javax.swing.ListSelectionModel;
 import java.awt.Dimension;
+import java.awt.CardLayout;
 import java.awt.Frame;
 import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
@@ -34,6 +36,8 @@ import com.general.mclist.MCListEvent;
 import com.general.mclist.MCListEventAdapter;
 import com.general.mclist.MCListFactory;
 import com.general.mclist.MCListItemInterface;
+import com.general.thread.Cancellable;
+import com.general.thread.Invoker;
 import com.general.util.AnswerDialog;
 import com.general.util.GridBagBuilder;
 import com.general.util.IconLoader;
@@ -47,12 +51,14 @@ import com.myster.net.client.MysterProtocol;
 import com.myster.net.stream.client.msdownload.DownloadStartException;
 import com.myster.search.HashCrawlerManager;
 import com.myster.search.SearchEngine;
+import com.myster.search.ServerSearch;
 import com.myster.search.SearchResult;
 import com.myster.search.SearchResultListener;
 import com.myster.tracker.BookmarkMysterServerList;
 import com.myster.tracker.MysterServer;
 import com.myster.tracker.Tracker;
 import com.myster.type.MysterType;
+import com.myster.type.MetadataTypeId;
 import com.myster.type.TypeDescriptionList;
 import com.myster.ui.DownloadStartErrorDialog;
 import com.myster.ui.MysterFrameContext;
@@ -66,11 +72,13 @@ import com.myster.util.TypeChoice;
  * search button, results list, and status message. Used as a tab within
  * {@link SearchWindow}.
  * <p>
- * Each SearchTab manages its own {@link SearchEngine} instance and implements
- * {@link SearchResultListener} to receive search results independently.
- * Displayed rows retain their generation's type, columns and thumbnail profile. Engine callbacks
- * are generation-guarded; Stop preserves displayed demand, while replacement and disposal cancel
- * it. Rendering and acquisition are composed by {@link SearchThumbnailSupport}, outside the widget.
+ * Each tab owns one cancellable file or server search. File callbacks use
+ * {@link SearchResultListener}; server rows have their own typed table and actions.
+ * Selected mode/type edits prepare the next search and never reinterpret displayed results.
+ * Displayed rows retain their search's type, columns and thumbnail profile. Search implementations
+ * deliver callbacks on the EDT and suppress them after cancellation, including queued deliveries.
+ * Stop preserves displayed demand; replacement and disposal cancel it. Rendering and acquisition
+ * are composed by {@link SearchThumbnailSupport}, outside the widget.
  */
 public class SearchTab extends JPanel implements SearchResultListener, Sayable {
     private static final Logger log = Logger.getLogger(SearchTab.class.getName());
@@ -92,10 +100,14 @@ public class SearchTab extends JPanel implements SearchResultListener, Sayable {
     private final Tracker tracker;
     private final SearchThumbnailSupport thumbnails;
 
-    private SearchEngine searchEngine;
+    private final JComboBox<SearchMode> modeChoice = new JComboBox<>(SearchMode.values());
+    private final JPanel resultPanes = new JPanel(new CardLayout());
+    private final ServerSearchResults serverResults;
+    private SearchMode resultsMode = SearchMode.FILES;
+    private boolean thumbnailActive;
+    private Cancellable activeSearch;
     private MysterType resultsType;
     private FileTypeColumnHandler resultsColumnHandler;
-    private long generation;
     private boolean disposed;
     private FileTypeColumnHandler metaDateHandler;
     private int resultCount = 0;
@@ -152,11 +164,17 @@ public class SearchTab extends JPanel implements SearchResultListener, Sayable {
         fileList.setSelectionMode(ListSelectionModel.MULTIPLE_INTERVAL_SELECTION);
 
         msg = new MessageField("Idle...");
+        modeChoice.setToolTipText("Search for files or servers within the selected type");
+        modeChoice.addActionListener(_ -> onStateChange.accept(this));
+        serverResults = new ServerSearchResults(context, tracker);
+        resultPanes.add(fileList.getPane(), SearchMode.FILES.name());
+        resultPanes.add(serverResults, SearchMode.SERVERS.name());
 
         add(textEntry, gbc.withGridLoc(0, 0).withSize(1, 1).withWeight(1, 0).withFill(GridBagConstraints.HORIZONTAL));
-        add(choice, gbc.withGridLoc(1, 0).withSize(1, 1).withWeight(0, 0).withFill(GridBagConstraints.HORIZONTAL));
-        add(searchButton, gbc.withGridLoc(2, 0).withSize(1, 1).withWeight(0, 0).withFill(GridBagConstraints.HORIZONTAL));
-        add(fileList.getPane(), gbc.withGridLoc(0, 1).withSize(4, 1).withWeight(1, 1).withFill(GridBagConstraints.BOTH));
+        add(modeChoice, gbc.withGridLoc(1, 0).withSize(1, 1).withWeight(0, 0).withFill(GridBagConstraints.HORIZONTAL));
+        add(choice, gbc.withGridLoc(2, 0).withSize(1, 1).withWeight(0, 0).withFill(GridBagConstraints.HORIZONTAL));
+        add(searchButton, gbc.withGridLoc(3, 0).withSize(1, 1).withWeight(0, 0).withFill(GridBagConstraints.HORIZONTAL));
+        add(resultPanes, gbc.withGridLoc(0, 1).withSize(4, 1).withWeight(1, 1).withFill(GridBagConstraints.BOTH));
         add(msg, gbc.withGridLoc(0, 2).withSize(4, 1).withWeight(1, 0).withFill(GridBagConstraints.HORIZONTAL));
 
         searchButton.addActionListener(new SearchButtonHandler());
@@ -272,38 +290,46 @@ public class SearchTab extends JPanel implements SearchResultListener, Sayable {
     @Override
     public void searchStart() {
         searchButton.setText("Stop");
-        msg.say("Clearing File List...");
-        fileList.clearAll();
+        msg.say("Searching for " + resultsMode.toString().toLowerCase(java.util.Locale.ROOT) + "...");
+        if (resultsMode == SearchMode.FILES) {
+            fileList.clearAll();
+            recolumnize();
+        } else {
+            serverResults.clear(resultsType);
+        }
         resultCount = 0;
-        recolumnize();
         onStateChange.accept(this);
     }
 
     @Override
     public void searchOver() {
-        msg.say("Search done. " + fileList.length() + " file" + (fileList.length() == 1 ? "" : "s")
-                + " found...");
-        searchButton.setText("Search");
+        activeSearch = null;
+        showFinished("Search done.");
     }
 
     /**
-     * Starts a search using the current search string and type.
+     * Starts a search using the current query, type and mode, replacing the displayed generation.
      */
     public void startSearch() {
         if (disposed || choice.getSelectedTypeDescription().isEmpty()) {
             return;
         }
-        if (searchEngine != null) {
-            stopSearch();
-        }
+        stopSearch();
 
-        long token = ++generation;
         var description = choice.getSelectedTypeDescription().orElseThrow();
         resultsType = description.getType();
-        resultsColumnHandler = ClientInfoFactoryUtils.getHandler(tdList, resultsType);
+        resultsMode = getSearchMode();
         fileList.clearAll();
+        serverResults.clear(resultsType);
         resultCount = 0;
-        thumbnails.beginGeneration(resultsType, description.getMetadataTypeId());
+        thumbnails.setActive(false);
+        thumbnails.beginGeneration(resultsType, resultsMode == SearchMode.FILES
+                ? description.getMetadataTypeId() : MetadataTypeId.GENERIC);
+        thumbnails.setActive(thumbnailActive && resultsMode == SearchMode.FILES);
+        ((CardLayout) resultPanes.getLayout()).show(resultPanes, resultsMode.name());
+        if (resultsMode == SearchMode.FILES) {
+            resultsColumnHandler = ClientInfoFactoryUtils.getHandler(tdList, resultsType);
+        }
 
         // Capture the search parameters for tab title
         lastSearchString = getSearchString();
@@ -313,15 +339,30 @@ public class SearchTab extends JPanel implements SearchResultListener, Sayable {
             lastSearchTypeName = "Search";
         }
 
-        searchEngine = new SearchEngine(protocol,
-                                        hashManager,
-                                        context,
-                                        tracker,
-                                        listenerFor(token),
-                                        message -> forGeneration(token, () -> say(message)),
-                                        resultsType,
-                                        lastSearchString);
-        searchEngine.run();
+        if (resultsMode == SearchMode.FILES) {
+            SearchEngine engine = new SearchEngine(protocol, hashManager, context, tracker,
+                    this, this,
+                    resultsType, lastSearchString);
+            activeSearch = engine::flagToEnd;
+            engine.run();
+        } else {
+            searchStart();
+            var future = new ServerSearch(protocol, tracker, context.knownServerSource())
+                    .search(resultsType, lastSearchString,
+                            batch -> {
+                                serverResults.addResults(batch);
+                                resultCount = serverResults.sizeOfResults();
+                                onStateChange.accept(this);
+                            }, this);
+            activeSearch = future;
+            future.withInvoker(Invoker.EDT)
+                    .addResultListener(_ -> searchOver())
+                    .addExceptionListener(error -> {
+                        log.log(java.util.logging.Level.WARNING, "Server search failed", error);
+                        activeSearch = null;
+                        showFinished("Search failed.");
+                    });
+        }
         onStateChange.accept(this);
     }
 
@@ -329,12 +370,19 @@ public class SearchTab extends JPanel implements SearchResultListener, Sayable {
      * Stops the current search if one is running.
      */
     public void stopSearch() {
-        if (searchEngine == null) {
+        if (activeSearch == null) {
             return;
         }
+        Cancellable previous = activeSearch;
+        activeSearch = null;
+        previous.cancel();
+        showFinished("Search stopped.");
+    }
 
-        searchEngine.flagToEnd();
-        searchEngine = null;
+    private void showFinished(String status) {
+        String noun = resultsMode == SearchMode.SERVERS ? "server" : "file";
+        msg.say(status + " " + resultCount + " " + noun + (resultCount == 1 ? "" : "s") + " found...");
+        searchButton.setText("Search");
     }
 
     private void recolumnize() {
@@ -371,29 +419,17 @@ public class SearchTab extends JPanel implements SearchResultListener, Sayable {
 
     /** Window activity affects thumbnail demand, independently of search discovery. */
     void setThumbnailActive(boolean active) {
-        thumbnails.setActive(active);
+        thumbnailActive = active;
+        thumbnails.setActive(active && resultsMode == SearchMode.FILES);
     }
 
-    private void forGeneration(long token, Runnable callback) {
-        Util.invokeNowOrLater(() -> {
-            if (!disposed && token == generation) {
-                callback.run();
-            }
-        });
+    /** Current input mode; changes apply only when the next search starts. */
+    public SearchMode getSearchMode() {
+        return (SearchMode) modeChoice.getSelectedItem();
     }
 
-    private SearchResultListener listenerFor(long token) {
-        return new SearchResultListener() {
-            @Override public void searchStart() { forGeneration(token, SearchTab.this::searchStart); }
-            @Override public void searchOver() { forGeneration(token, SearchTab.this::searchOver); }
-            @Override public void searchStats(SearchResult result) {
-                forGeneration(token, () -> SearchTab.this.searchStats(result));
-            }
-            @Override public boolean addSearchResults(SearchResult[] results) {
-                forGeneration(token, () -> SearchTab.this.addSearchResults(results));
-                return !disposed && token == generation;
-            }
-        };
+    public void setSearchMode(SearchMode mode) {
+        modeChoice.setSelectedItem(java.util.Objects.requireNonNull(mode));
     }
 
     /**
@@ -440,12 +476,15 @@ public class SearchTab extends JPanel implements SearchResultListener, Sayable {
 
     /**
      * Restores the last search state (for preferences restoration).
-     * This updates the tab title without performing a search.
+     * This updates the tab title and empty result pane without performing a search.
      *
      * @param searchString the search string that was used
      */
     public void restoreSearchState(String searchString) {
         lastSearchString = searchString != null ? searchString : "";
+        resultsMode = getSearchMode();
+        ((CardLayout) resultPanes.getLayout()).show(resultPanes, resultsMode.name());
+        thumbnails.setActive(thumbnailActive && resultsMode == SearchMode.FILES);
         try {
             lastSearchTypeName = choice.getSelectedDescription();
         } catch (Exception e) {
@@ -472,6 +511,10 @@ public class SearchTab extends JPanel implements SearchResultListener, Sayable {
             }
         }
 
+        if (resultsMode == SearchMode.SERVERS) {
+            displayText = "Servers: " + displayText;
+        }
+
         // Add result count if we have results
         if (resultCount > 0) {
             return displayText + " (" + resultCount + ")";
@@ -481,14 +524,13 @@ public class SearchTab extends JPanel implements SearchResultListener, Sayable {
     }
 
     /**
-     * Terminal, idempotent cleanup; queued old engine/image callbacks become irrelevant.
+     * Terminal, idempotent cleanup; cancelling the search suppresses its queued callbacks.
      */
     public void dispose() {
         if (disposed) {
             return;
         }
         disposed = true;
-        generation++;
         stopSearch();
         thumbnails.close();
         choice.dispose();

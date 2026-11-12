@@ -1,5 +1,7 @@
 # Search Download To Shared Folder
 
+> **Related plan:** [Search for Servers by Name and Description](./server-name-description-search.md) — parallel work: server mode has separate activation actions and leaves file-download behavior intact.
+
 ## 1. Summary
 
 Search result multi-selection currently invokes each selected result's `downloadTo()` method independently, so every item opens its own destination chooser. Change top-level download commands to choose or resolve the destination folder before scheduling downloads, validate/report folder errors at that command level, and pass the shared base directory into each selected download. The lower multi-source target-file code should prepare one concrete file path from an already-decided folder, not ask the user for folders after download scheduling has started.

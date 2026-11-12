@@ -7,7 +7,6 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
-import javax.swing.JScrollPane;
 import javax.swing.SwingUtilities;
 
 import org.junit.jupiter.api.Test;
@@ -31,7 +30,7 @@ import com.myster.ui.MysterFrameContext;
 
 class TestSearchTabThumbnailLifecycle {
     @Test
-    void selectorEditsAndStaleEngineCallbacksCannotReinterpretDisplayedGeneration() throws Exception {
+    void selectorEditsPreserveDisplayedColumnsAndReplacementCancelsEngine() throws Exception {
         MysterType image = new MysterType(new byte[16]);
         byte[] other = new byte[16];
         other[15] = 1;
@@ -70,34 +69,67 @@ class TestSearchTabThumbnailLifecycle {
                 listeners.get(0).searchStart();
                 tab.setMysterType(audio);
                 listeners.get(0).addSearchResults(new SearchResult[] {result});
-                JMCList<?> list = (JMCList<?>) java.util.Arrays.stream(tab.getComponents())
-                        .filter(component -> component instanceof JScrollPane).map(component ->
-                                ((JScrollPane) component).getViewport().getView()).findFirst().orElseThrow();
+                var field = SearchTab.class.getDeclaredField("fileList");
+                field.setAccessible(true);
+                JMCList<?> list = (JMCList<?>) field.get(tab);
                 assertEquals(1, list.getRowCount());
                 assertEquals("Resolution", list.getColumnName(2));
 
                 tab.startSearch();
                 listeners.get(1).searchStart();
                 assertEquals("Stop", tab.getSearchButton().getText());
-                listeners.get(0).searchOver();
-                listeners.get(0).searchStart();
-                assertFalse(listeners.get(0).addSearchResults(new SearchResult[] {result}));
+                verify(engines.constructed().get(0)).flagToEnd();
                 assertEquals("Stop", tab.getSearchButton().getText());
                 assertEquals(0, list.getRowCount());
                 assertEquals(List.of(image, audio), searchedTypes);
 
                 tab.stopSearch();
-                listeners.get(1).searchOver();
                 assertEquals("Search", tab.getSearchButton().getText());
                 verify(engines.constructed().get(1)).flagToEnd();
                 tab.dispose();
                 tab.dispose();
-                listeners.get(1).searchStart();
                 assertEquals("Search", tab.getSearchButton().getText());
+            } catch (ReflectiveOperationException exception) {
+                throw new AssertionError(exception);
             }
         });
         TestSearchThumbnails.flush();
         verifyNoInteractions(stream);
         verify(types, times(1)).removeTypeListener(any());
     }
+    @Test
+    void replacementBeforeStartupUsesEngineCancellationWithoutTabGenerationState() throws Exception {
+        var type = new MysterType(new byte[16]);
+        var description = new TypeDescription(type, "generic", "Generic", new String[0],
+                false, true, TypeSource.CUSTOM, false, MetadataTypeId.GENERIC);
+        var types = mock(TypeDescriptionList.class);
+        when(types.getEnabledTypes()).thenReturn(new TypeDescription[] {description});
+        when(types.get(type)).thenReturn(Optional.of(description));
+        var context = mock(MysterFrameContext.class);
+        when(context.tdList()).thenReturn(types);
+        var protocol = mock(MysterProtocol.class);
+        when(protocol.getStream()).thenReturn(mock(MysterStream.class));
+        var tracker = mock(Tracker.class);
+        var seed = mock(com.myster.tracker.MysterServer.class);
+        when(tracker.getTop(type, 50)).thenReturn(new com.myster.tracker.MysterServer[] {
+                seed, seed, seed, seed, seed});
+        var tabRef = new java.util.concurrent.atomic.AtomicReference<SearchTab>();
+        SwingUtilities.invokeAndWait(() -> {
+            var tab = spy(new SearchTab(context, protocol, null, tracker, _ -> {}));
+            tabRef.set(tab);
+            tab.setSearchString("old");
+            tab.startSearch();
+            tab.setSearchString("new");
+            tab.startSearch();
+        });
+        SwingUtilities.invokeAndWait(() -> {
+            SearchTab tab = tabRef.get();
+            verify(tab, times(1)).searchStart();
+            verify(tab, times(1)).searchOver();
+            assertEquals("new", tab.getTabTitle());
+            assertEquals("Search", tab.getSearchButton().getText());
+            tab.dispose();
+        });
+    }
+
 }

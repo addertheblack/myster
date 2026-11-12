@@ -1,5 +1,7 @@
 # Split Type Columns from Search-Only Columns
 
+> **Related plan:** [Search for Servers by Name and Description](./server-name-description-search.md) — parallel work: server-search rows use separate columns while file-type handlers retain their existing contract.
+
 > **Related plan:** [Typed Search-Result Metadata](./typed-search-result-metadata.md) — follow-up: replaces string-only search metadata with protected typed reads in the shared handlers.
 
 > **Related plan:** [Search-result thumbnails and hover previews](./os-thumbnails-part-5.md) — predecessor to: adds a passive name renderer without changing type columns or the Server/Ping decorator.

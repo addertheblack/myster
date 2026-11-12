@@ -1,5 +1,7 @@
 # Bidirectional Server Stats Exchange
 
+> **Related plan:** [Search for Servers by Name and Description](./server-name-description-search.md) — required by: uses cached server metadata and the pool-owned stats exchange for server-search cache misses.
+
 > **Related plan:** [Myster resource links](./myster-resource-links.md) — required by: uses pool-backed server stats to obtain an identity before constructing a browser window.
 
 Implementation record: [Bidirectional Server Stats Exchange](../impl_summary/bidirectional-server-stats.md).

@@ -504,8 +504,9 @@ eviction of the image, leaving no image and no new load until demand changed. Th
 controller retains those pixels, repaints cache hits and advances work without another scroll.
 The original reported intermittent trigger is still unknown and remains in TODO for confirmation.
 
-Search captures type/profile/column handler before asynchronous engine startup and wraps engine
-lifecycle/results/status callbacks with generation guards. Stop/completion preserve displayed
+Search captures type/profile/column handler before asynchronous engine startup. Search implementations
+check their own cancellation state when delivering lifecycle/results/status callbacks on the EDT;
+SearchTab does not maintain a separate generation counter for discovery callbacks. Stop/completion preserve displayed
 thumbnail demand. `SearchResult.getProtocol()` supplies transport independently of nullable
 `getServer()`; the UI does not fetch identity through cached server objects or a UI resolver.
 Do not expose a key-cache getter on the stream facade or pre-query it from the UI just to feed
@@ -865,3 +866,31 @@ a competing reader. `ServerFacade.changePort` migrates tracked transaction proto
 media transports; the planned bridge needs an explicit registration/termination lifecycle. Native
 packet-factory injection is a feasibility gate, not an existing Java wrapper capability. See
 [the shared-transport phase plan](../plans/webrtc-phase-3-shared-transport.md).
+
+
+## Cache-first server search integration constraints
+
+Implementation plan: [Search for Servers by Name and Description](../plans/server-name-description-search.md).
+
+- `AsyncNetworkCrawler` already accepts a pluggable `SearchIp` operation alongside type-scoped
+  top-server discovery. `MysterSearch` separately coordinates file text search; reusing the shared
+  crawler does not require changing `SearchResult`, which contains file metadata/download APIs.
+- Server search candidates come from the selected type’s tracker list and top-server crawl.
+  `Tracker.getQuickServerStats(address)` is a cache-only lookup for an encountered endpoint;
+  the wider pool supplies reusable stats, not a separate candidate source. Do not enumerate
+  `KnownServerSource.forEachServer` or `MysterServerPool.forEach` for server search. A cached
+  server outside the type’s initial tracker list can match when that type’s crawl encounters it.
+- The shared crawler's discovered-address callback is independent of its per-address operation.
+  Passing `Tracker.addIp` can initiate pool stats before a cache-first operation gets to check
+  the cache. Server search should leave this callback empty and let its cache-miss resolver
+  perform normal pool onboarding.
+- `MysterTypeServerList.getTop(int)` currently returns all eligible up entries rather than
+  enforcing its requested count. Callers needing an actual seed cap must enforce it locally;
+  do not assume the parameter is a bound.
+
+The Files/Servers dropdown is an input for the next search. `SearchTab` retains displayed mode and
+search type separately, so changing inputs cannot turn server rows into file downloads. Server
+replacement resets the old file thumbnail generation with the ineligible generic profile and
+suspends acquisition; Stop preserves displayed file demand. Search implementations deliver result/status callbacks on the EDT and check their existing cancellation
+state at dispatch. Stop cancels the originating search, which suppresses queued callbacks; SearchTab
+does not duplicate that state with a generation counter.

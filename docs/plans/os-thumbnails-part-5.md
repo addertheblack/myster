@@ -1,5 +1,7 @@
 # OS thumbnails — Part 5: search-result thumbnails and hover previews
 
+> **Related plan:** [Search for Servers by Name and Description](./server-name-description-search.md) — parallel work: server mode must release replaced file demand and preserve file-only thumbnails and generation guards.
+
 > **Related plan:** [Typed Search-Result Metadata](./typed-search-result-metadata.md) — parallel work: preserves EDT-confined result updates, row identity, and search column decoration.
 
 > **Related plan:** [Thumbnail transfer protocol](./os-thumbnails-part-2.md) — depends on: reuses section 79 and existing image-size bounds.
@@ -71,8 +73,9 @@ viewport, including partially visible rows. Hidden icon columns, deselected tabs
 minimized windows have no row demand. Painting only reads available pixels.
 
 **Keep the tab's identity stable.** Capture the type, profile and column handler at search start.
-Wrap engine callbacks with that generation so queued old start/finish/results/status notifications
-cannot affect a replacement search. Stop and completion preserve displayed demand. The tab's
+Search implementations suppress cancelled callbacks at EDT dispatch so queued old
+start/finish/results/status notifications cannot affect a replacement search. The tab does not
+need a separate discovery generation counter. Stop and completion preserve displayed demand. The tab's
 support object owns its cache, list/hover consumers and item-key snapshots; window events supply
 activity. Replacement resets the generation; closing is terminal and idempotent.
 
@@ -223,8 +226,8 @@ The optional key is client-side request state, not a new protocol field.
 7. Create one support object per tab. It borrows the engine/results' stream, owns cache/row/hover
    consumers and pins each item's resolved key. Unknown-key requests go through the normal
    thumbnail worker/connection, so no separate UI identity preparation path is necessary.
-8. Capture type/profile/column handler before `SearchEngine.run()`. Wrap listener/status callbacks
-   with generation guards. Clear/reset at replacement; preserve demand on Stop/completion.
+8. Capture type/profile/column handler before `SearchEngine.run()`. SearchEngine/MysterSearch own
+   cancellation checks at EDT listener/status delivery. Clear/reset at replacement; preserve demand on Stop/completion.
    Install the renderer after column changes and on structure events.
 9. Notify tab activity from selection and window visibility/state/graphics-configuration changes.
    Treat the trailing disabled add tab safely. List showing state additionally gates demand.

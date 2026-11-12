@@ -107,7 +107,8 @@ public interface MysterServerPool {
     void forEach(Consumer<MysterServer> consumer);
 
     /**
-     * Explicitly checks a user-entered address and completes with the exact server inserted or
+     * Checks an address for a user-initiated lookup (including cache misses in a type-scoped crawl)
+     * and completes with the exact server inserted or
      * refreshed in this pool. Concurrent requests for the same address share in-flight work,
      * but each call returns an independently cancellable future. Cancelling one request does
      * not cancel other requests or the pool-owned refresh, which may still update pool state.

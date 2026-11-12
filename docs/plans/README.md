@@ -8,6 +8,7 @@ When adding or substantially changing an authoritative plan, update this index w
 
 | Plan | Abstract |
 |---|---|
+| [Search for Servers by Name and Description](server-name-description-search.md) | Implemented: per-tab Files/Servers mode using type-scoped top-ten crawling, cached stats for encountered servers and identity-keyed client window activation. |
 | [Typed Search-Result Metadata](typed-search-result-metadata.md) | Exposes protected typed MessagePak views to search columns and removes numeric string round trips from shared handlers. |
 | [Client Window Server Header](client-window-server-header.md) | Adds copyable, borderless server name, explicit address/port, and CID before the existing Refresh and preview controls; CID yields space first. |
 | [Myster Resource Links](myster-resource-links.md) | Adds hierarchical link/v1 URLs that navigate to a server/type or highlight a file by name, reusing one ClientWindow per server without starting downloads. |

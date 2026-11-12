@@ -1,5 +1,7 @@
 # Typed Search-Result Metadata
 
+> **Related plan:** [Search for Servers by Name and Description](./server-name-description-search.md) — parallel work: server results stay separate from the file-only SearchResult metadata and download contract.
+
 > **Related plan:** [Split Type Columns from Search-Only Columns](./split-type-columns-from-search-columns.md) — follow-up: gives the shared column handlers the same typed metadata input for search and browsing.
 
 > **Related plan:** [MP3 Length Column in GUI](./mp3-length-column.md) — follow-up: replaces duration and other audio string parsing with typed reads.

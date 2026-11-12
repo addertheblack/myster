@@ -57,6 +57,10 @@ public class SearchEngine extends MysterThread {
         }
     }
     
+    /**
+     * Suppresses subsequent listener/status delivery, including callbacks already queued on the
+     * EDT. Cancellation does not emit searchOver(); the caller owns its stopped UI state.
+     */
     public void flagToEnd() {
         mysterSearch.flagToEnd();
     }

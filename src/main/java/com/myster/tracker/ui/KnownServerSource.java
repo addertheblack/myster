@@ -32,7 +32,8 @@ public interface KnownServerSource {
     Optional<String> resolveDisplayName(ServerCid cid);
 
     /**
-     * Explicitly refreshes a user-entered address through server stats.
+     * Refreshes an address through server stats for a user-initiated lookup or type-scoped crawl.
+     * Crawl callers must check cached stats first and resolve only encountered cache misses.
      * Each call returns a caller-owned future; cancellation does not affect other callers
      * even when the implementation shares an underlying pool refresh.
      *

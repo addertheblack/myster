@@ -66,6 +66,7 @@ public class SearchWindow extends MysterFrame {
     private static final String SELECTED_TAB_KEY = "SelectedTab";
     private static final String TAB_SEARCH_PREFIX = "TabSearch_";
     private static final String TAB_TYPE_PREFIX = "TabType_";
+    private static final String TAB_MODE_PREFIX = "TabMode_";
 
     private static int windowCounter = 0;
 
@@ -174,6 +175,7 @@ public class SearchWindow extends MysterFrame {
             for (int i = 0; i < getSearchTabCount(); i++) {
                 SearchTab tab = (SearchTab) tabbedPane.getComponentAt(i);
                 p.put(TAB_SEARCH_PREFIX + i, tab.getSearchString());
+                p.put(TAB_MODE_PREFIX + i, tab.getSearchMode().preferenceValue());
                 MysterType type = tab.getMysterType();
                 if (type != null) {
                     p.put(TAB_TYPE_PREFIX + i, type.toHexString());
@@ -186,7 +188,7 @@ public class SearchWindow extends MysterFrame {
         // Restore tabs from saved data or create one new tab
         if (savedData != null && !savedData.tabs().isEmpty()) {
             for (TabData tabData : savedData.tabs()) {
-                addNewTab(tabData.searchString(), tabData.type());
+                addNewTab(tabData.searchString(), tabData.type(), tabData.mode());
             }
             if (savedData.selectedTabIndex() >= 0 && savedData.selectedTabIndex() < getSearchTabCount()) {
                 tabbedPane.setSelectedIndex(savedData.selectedTabIndex());
@@ -225,6 +227,11 @@ public class SearchWindow extends MysterFrame {
      * @param type initial type selection
      */
     public void addNewTab(String searchString, Optional<MysterType> type) {
+        addNewTab(searchString, type, SearchMode.FILES);
+    }
+
+    /** Restores mode and inputs without initiating network work. */
+    public void addNewTab(String searchString, Optional<MysterType> type, SearchMode mode) {
         SearchTab tab = new SearchTab(context, protocol, hashManager, tracker, this::onTabStateChange);
 
         // Set initial values if provided
@@ -232,9 +239,10 @@ public class SearchWindow extends MysterFrame {
             tab.setSearchString(searchString);
         }
         type.ifPresent(tab::setMysterType);
+        tab.setSearchMode(mode);
 
         // Restore the search state for proper tab title (when restoring from preferences)
-        if (searchString != null && !searchString.isEmpty()) {
+        if (mode == SearchMode.SERVERS || (searchString != null && !searchString.isEmpty())) {
             tab.restoreSearchState(searchString);
         }
 
@@ -424,7 +432,7 @@ public class SearchWindow extends MysterFrame {
             for (int i = 0; i < tabCount; i++) {
                 String search = p.get(TAB_SEARCH_PREFIX + i, "");
                 Optional<MysterType> type = getTypeFromPrefs(p, TAB_TYPE_PREFIX + i);
-                tabs.add(new TabData(search, type));
+                tabs.add(new TabData(search, type, SearchMode.fromPreference(p.get(TAB_MODE_PREFIX + i, "files"))));
             }
 
             return new SearchWindowData(tabs, selectedTab);
@@ -459,8 +467,9 @@ public class SearchWindow extends MysterFrame {
     public record SearchWindowData(List<TabData> tabs, int selectedTabIndex) {}
 
     /**
-     * Data for restoring a single tab.
+     * Inputs for restoring a single tab without rerunning its search. Older mode preferences
+     * default to Files; persisted values use SearchMode.preferenceValue(), not enum ordinals.
      */
-    public record TabData(String searchString, Optional<MysterType> type) {}
+    public record TabData(String searchString, Optional<MysterType> type, SearchMode mode) {}
 }
 

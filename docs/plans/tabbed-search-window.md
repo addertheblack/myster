@@ -1,5 +1,7 @@
 # Tabbed Search Window
 
+> **Related plan:** [Search for Servers by Name and Description](./server-name-description-search.md) — predecessor to: adds a per-tab server-search mode while retaining the existing file-search and window lifecycle.
+
 > **Related plan:** [Search-result thumbnails and hover previews](./os-thumbnails-part-5.md) — predecessor to: thumbnail work adds per-tab visibility demand and cleanup to the established tab lifecycle.
 
 ## Summary

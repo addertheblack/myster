@@ -78,12 +78,12 @@ public class MysterSearch {
      * search actually stops. That is the "endFlag" and the isDone flag are not set at the same
      * time. <b>
      */
-    private boolean endFlag = false;
+    private volatile boolean endFlag = false;
 
     /**
      * Is set to true when there are no more searches left outstanding (when the search is over).
      */
-    private boolean isDone = false; //we're done... start shutting down.
+    private volatile boolean isDone = false; //we're done... start shutting down.
 
     /** Contains the search string being used to search. */
     private String searchString;
@@ -116,17 +116,17 @@ public class MysterSearch {
         this.protocol = protocol;
         this.hashManager = hashManager;
         this.context = context;
-        this.msg = (String s) -> Util.invokeNowOrLater(() -> msg.say(s));
+        this.msg = message -> deliver(() -> msg.say(message));
+        this.listener = new SearchListener(listener);
         this.searcher = new StandardMysterSearch(protocol,
                                                  hashManager,
                                                  context,
                                                  tracker,
                                                  searchString,
                                                  type,
-                                                 listener);
+                                                 this.listener);
         this.type = type;
         this.searchString = searchString;
-        this.listener = listener;
         this.tracker = tracker;
 
         outStandingFutures = new HashSet<>();
@@ -148,6 +148,10 @@ public class MysterSearch {
          */
         Util.invokeLater(new Runnable() {
             public void run() {
+                if (endFlag) {
+                    checkForDone();
+                    return;
+                }
                 listener.searchStart();
 
                 IPQueue queue = createPrimedIpQueue();
@@ -168,15 +172,18 @@ public class MysterSearch {
     /**
      * Call this routine to request the file search to end. While there is a lag between when this
      * command is issued and when the searching actually stops (due to some technical issues) this
-     * object guarantees that the listener will not receiving any new search results or search
-     * result stats updates after this function returns.
+     * object suppresses all subsequent EDT listener and status deliveries, including queued
+     * startup/completion callbacks. Cancellation itself does not emit searchOver(); the caller
+     * already knows it stopped the search. Cancelling after natural completion also suppresses
+     * any deliveries still queued.
      * <p>
      * Can be called on any thread.
      */
     public void flagToEnd() {
         synchronized (this) {
-            if (isDone)
-                return; //don't cancel if done. This is not a speed hack.
+            if (endFlag) {
+                return;
+            }
             endFlag = true;
         }
 
@@ -184,10 +191,10 @@ public class MysterSearch {
 
         Util.invokeLater(new Runnable() {
             public void run() {
-                for (Cancellable cancellable : outStandingFutures) {
+                for (Cancellable cancellable : Set.copyOf(outStandingFutures)) {
                     cancellable.cancel();
                 }
-                listener.searchOver();
+                checkForDone();
             }
         });
     }
@@ -446,39 +453,62 @@ public class MysterSearch {
      *  
      */
     private void checkForDone() {
-        if (outStandingFutures.size() == 0) {
-            synchronized (this) {
-                isDone = true;
-                notifyAll();
-                log.info("DONE search!");
-
-                if (endFlag)
-                    return; // don't call searchOver() if end flag is set (it
-                // has already been called).
-            }
-            Util.invokeNowOrLater(() -> {
-                if (endFlag)
-                    return;
-                
-                listener.searchOver();
-            });
+        if (!outStandingFutures.isEmpty()) {
+            return;
         }
+        synchronized (this) {
+            if (isDone) {
+                return;
+            }
+            isDone = true;
+            notifyAll();
+        }
+        log.info("DONE search!");
+        listener.searchOver();
     }
 
-    /**
-     * Adds search results to the search listener. This routine must be synchronized to make sure
-     * that flagToEnd() hasen't been called (and returned) while still adding search results to the
-     * listener. (The search cancelling routines of this object are thread safe)
-     * 
-     * @param mysterSearchResults
-     */
-    private synchronized void addResults(final MysterSearchResult[] mysterSearchResults) {
-        Util.invokeNowOrLater(() -> {
-            if (endFlag)
-                return;
+    private void addResults(MysterSearchResult[] results) {
+        listener.addSearchResults(results);
+    }
 
-            listener.addSearchResults(mysterSearchResults);
+    /** Checks the originating search's cancellation state when its callback actually runs. */
+    private void deliver(Runnable callback) {
+        Util.invokeNowOrLater(() -> {
+            synchronized (MysterSearch.this) {
+                if (!endFlag) {
+                    callback.run();
+                }
+            }
         });
+    }
+
+    private final class SearchListener implements SearchResultListener {
+        private final SearchResultListener delegate;
+
+        private SearchListener(SearchResultListener delegate) {
+            this.delegate = delegate;
+        }
+
+        @Override
+        public void searchStart() {
+            deliver(delegate::searchStart);
+        }
+
+        @Override
+        public void searchOver() {
+            deliver(delegate::searchOver);
+        }
+
+        @Override
+        public void searchStats(SearchResult result) {
+            deliver(() -> delegate.searchStats(result));
+        }
+
+        @Override
+        public boolean addSearchResults(SearchResult[] results) {
+            deliver(() -> delegate.addSearchResults(results));
+            return !endFlag;
+        }
     }
 
     private final class UdpSearch extends CancellableCallableRemover<List<String>> {

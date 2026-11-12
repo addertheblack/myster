@@ -286,7 +286,12 @@ doing so avoids bootstrap cycles.
   - Returns results via `SearchResultListener` callbacks
   
 - **`MysterSearchResult`** - Search result with download capability
-- **UI**: `SearchWindow` with multiple `SearchTab` instances
+- **`ServerSearch`** - Searches server names/descriptions in one selected type's network
+  - Reuses `AsyncNetworkCrawler` with per-address cached stats and pool-backed resolution on misses
+  - Emits immutable `ServerSearchResult` batches; never enumerates the whole pool for candidates
+- **UI**: `SearchWindow` with multiple `SearchTab` instances and persisted Files/Servers selection
+  - `ServerSearchResults` displays server name, description, address, type file count and cached ping
+  - Server activation uses `ClientWindowProvider` to open or raise the identity's browsing window
 
 ### 7. **Multi-Source Download**
 

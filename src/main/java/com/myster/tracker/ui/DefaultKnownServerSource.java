@@ -14,7 +14,7 @@ import com.myster.tracker.MysterServer;
 import com.myster.tracker.MysterServerPool;
 import com.myster.tracker.PublicKeyIdentity;
 
-/** Adapts the shared server pool and 3DNS resolver for server-picker callers. */
+/** Adapts the shared server pool and 3DNS resolver for pickers, window opening and server search. */
 public final class DefaultKnownServerSource implements KnownServerSource {
     private final MysterServerPool pool;
     private final DnsLookupProtocol dnsLookup;
